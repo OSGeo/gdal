@@ -36,7 +36,7 @@
 
 #include <string>
 
-class ReflectanceCalculator  
+class ReflectanceCalculator
 {
 public:
 	ReflectanceCalculator(std::string sTimeStamp, double rRTOA);

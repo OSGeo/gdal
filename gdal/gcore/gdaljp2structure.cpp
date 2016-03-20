@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALJP2Stucture - Dump structure of a JP2/J2K file
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
@@ -136,7 +136,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
             CPLXMLNode* psXMLVRT = CPLParseXMLString((const char*)pabyXML);
             if( psXMLVRT )
             {
-                CPLXMLNode* psXMLContentNode = 
+                CPLXMLNode* psXMLContentNode =
                     CPLCreateXMLNode( psBox, CXT_Element, "DecodedGeoTIFF" );
                 psXMLContentNode->psChild = psXMLVRT;
                 CPLXMLNode* psPrev = NULL;
@@ -172,7 +172,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -221,7 +221,7 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -291,7 +291,7 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -316,7 +316,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -368,7 +368,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -436,7 +436,7 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -482,7 +482,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -555,7 +555,7 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     char chC = oBox.GetType()[3];
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -635,7 +635,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     GByte* pabyBoxData = oBox.ReadBoxData();
     if( pabyBoxData )
     {
-        CPLXMLNode* psDecodedContent = 
+        CPLXMLNode* psDecodedContent =
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
@@ -1298,13 +1298,13 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                             }
                             if( psXMLContentBox )
                             {
-                                CPLXMLNode* psXMLContentNode = 
+                                CPLXMLNode* psXMLContentNode =
                                     CPLCreateXMLNode( psBox, CXT_Element, "XMLContent" );
                                 psXMLContentNode->psChild = psXMLContentBox;
                             }
                             else
                             {
-                                CPLCreateXMLNode( 
+                                CPLCreateXMLNode(
                                     CPLCreateXMLNode( psBox, CXT_Element, "TextContent" ),
                                         CXT_Text, (const char*)pabyBoxData);
                             }

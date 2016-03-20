@@ -152,7 +152,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
     }
     else
-        nCurOffset = nOffset;   
+        nCurOffset = nOffset;
 
     return 0;
 }

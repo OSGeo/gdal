@@ -282,7 +282,7 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
         while (iPoint < iNextPoint)
         {
             if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
-            {  
+            {
                 if ( chProps & SP_HASZVALUES )
                     poRing->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
                 else
@@ -381,7 +381,7 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 /************************************************************************/
 
 
-OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput, 
+OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
                                 int nLen, OGRGeometry **poGeom)
 {
     if (nLen < 10)
@@ -560,4 +560,3 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
     return OGRERR_NONE;
 }
-

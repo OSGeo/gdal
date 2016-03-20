@@ -122,7 +122,7 @@ int SpheroidList :: SpheroidInList( const char *spheroid_name )
   /* Return 1 if the spheroid name is recognized; 0 otherwise */
   for( int index = 0; index < num_spheroids; index++)
   {
-    if EQUAL(spheroids[index].spheroid_name,spheroid_name) 
+    if EQUAL(spheroids[index].spheroid_name,spheroid_name)
       return 1;
   }
 

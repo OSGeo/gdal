@@ -37,14 +37,14 @@
 CPL_CVSID("$Id$");
 
 /* used by bagdataset.cpp */
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
+OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
                                    const char *pszISOXML );
 
 /************************************************************************/
 /*                     OGR_SRS_ImportFromISO19115()                     */
 /************************************************************************/
 
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
+OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
                                    const char *pszISOXML )
 
 {
@@ -78,10 +78,10 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 /* -------------------------------------------------------------------- */
 /*      First, set the datum.                                           */
 /* -------------------------------------------------------------------- */
-    const char *pszDatum = 
+    const char *pszDatum =
         CPLGetXMLValue( psRSI, "MD_CRS.datum.RS_Identifier.code", "" );
 
-    if( strlen(pszDatum) > 0 
+    if( strlen(pszDatum) > 0
         && poThis->SetWellKnownGeogCS( pszDatum ) != OGRERR_NONE )
     {
         CPLDestroyXMLNode( psRoot );
@@ -91,7 +91,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 /* -------------------------------------------------------------------- */
 /*      Then try to extract the projection.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection = 
+    const char *pszProjection =
         CPLGetXMLValue( psRSI, "MD_CRS.projection.RS_Identifier.code", "" );
 
     if( EQUAL(pszProjection,"UTM") )
@@ -102,7 +102,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         ** We have encountered files (#5152) that identify the southern
         ** hemisphere with a false northing of 10000000 value.  The existing
         ** code checked for negative zones but it isn't clear if any actual
-        ** files use that. 
+        ** files use that.
         */
         int bNorth =  nZone > 0;
         if( bNorth )
@@ -124,7 +124,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     }
     else if( EQUAL(pszProjection,"Geodetic") )
     {
-        const char *pszEllipsoid = 
+        const char *pszEllipsoid =
             CPLGetXMLValue( psRSI, "MD_CRS.ellipsoid.RS_Identifier.code", "" );
 
         if( !EQUAL(pszDatum, "WGS84") ||
@@ -136,7 +136,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
             return OGRERR_FAILURE;
         }
     }
-    else 
+    else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "projection = %s not recognised by ISO 19115 parser.",
@@ -149,4 +149,3 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 
     return OGRERR_NONE;
 }
-

@@ -73,9 +73,8 @@ class DDFField;
 /**
   The primary class for reading ISO 8211 files.  This class contains all
   the information read from the DDR record, and is used to read records
-  from the file.           
-
-*/  
+  from the file.
+*/
 
 class CPL_ODLL DDFModule
 {
@@ -88,7 +87,7 @@ class CPL_ODLL DDFModule
     void        Close();
 
     int         Initialize( char chInterchangeLevel = '3',
-                            char chLeaderIden = 'L', 
+                            char chLeaderIden = 'L',
                             char chCodeExtensionIndicator = 'E',
                             char chVersionNumber = '1',
                             char chAppIndicator = ' ',
@@ -150,7 +149,7 @@ class CPL_ODLL DDFModule
     int _sizeFieldPos;
     int _sizeFieldTag;
 
-    // One DirEntry per field.  
+    // One DirEntry per field.
     int         nFieldDefnCount;
     DDFFieldDefn **papoFieldDefns;
 
@@ -166,12 +165,12 @@ class CPL_ODLL DDFModule
 /************************************************************************/
 
   typedef enum { dsc_elementary, dsc_vector, dsc_array, dsc_concatenated } DDF_data_struct_code;
-  typedef enum { dtc_char_string, 
-                 dtc_implicit_point, 
-                 dtc_explicit_point, 
-                 dtc_explicit_point_scaled, 
-                 dtc_char_bit_string, 
-                 dtc_bit_string, 
+  typedef enum { dtc_char_string,
+                 dtc_implicit_point,
+                 dtc_explicit_point,
+                 dtc_explicit_point_scaled,
+                 dtc_char_bit_string,
+                 dtc_bit_string,
                  dtc_mixed_data_type } DDF_data_type_code;
 
 /**
@@ -195,7 +194,7 @@ class CPL_ODLL DDFFieldDefn
     void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
                              int bDontAddToFormat = FALSE );
     void        AddSubfield( const char *pszName, const char *pszFormat );
-    int         GenerateDDREntry( DDFModule * poModule, char **ppachData, int *pnLength ); 
+    int         GenerateDDREntry( DDFModule * poModule, char **ppachData, int *pnLength );
 
     int         Initialize( DDFModule * poModule, const char *pszTag,
                             int nSize, const char * pachRecord );
@@ -245,7 +244,7 @@ class CPL_ODLL DDFFieldDefn
     const char  *GetFormatControls() const { return _formatControls; }
     DDF_data_struct_code GetDataStructCode() const { return _data_struct_code; }
     DDF_data_type_code GetDataTypeCode() const { return _data_type_code; }
-    
+
     void        SetFormatControls(const char* pszVal);
 
   private:
@@ -260,7 +259,7 @@ class CPL_ODLL DDFFieldDefn
     char *      _formatControls;
 
     int         bRepeatingSubfields;
-    int         nFixedWidth;    // zero if variable. 
+    int         nFixedWidth;    // zero if variable.
 
     int         BuildSubfields();
     int         ApplyFormats();
@@ -322,27 +321,27 @@ public:
     int         GetDataLength( const char *, int, int * );
     void        DumpData( const char *pachData, int nMaxBytes, FILE * fp );
 
-    int         FormatStringValue( char *pachData, int nBytesAvailable, 
-                                   int *pnBytesUsed, const char *pszValue, 
+    int         FormatStringValue( char *pachData, int nBytesAvailable,
+                                   int *pnBytesUsed, const char *pszValue,
                                    int nValueLength = -1 );
 
-    int         FormatIntValue( char *pachData, int nBytesAvailable, 
+    int         FormatIntValue( char *pachData, int nBytesAvailable,
                                 int *pnBytesUsed, int nNewValue );
 
-    int         FormatFloatValue( char *pachData, int nBytesAvailable, 
+    int         FormatFloatValue( char *pachData, int nBytesAvailable,
                                   int *pnBytesUsed, double dfNewValue );
 
     /** Get the subfield width (zero for variable). */
     int         GetWidth() { return nFormatWidth; } // zero for variable.
 
-    int         GetDefaultValue( char *pachData, int nBytesAvailable, 
+    int         GetDefaultValue( char *pachData, int nBytesAvailable,
                                  int *pnBytesUsed );
 
     void        Dump( FILE * fp );
 
 /**
   Binary format: this is the digit immediately following the B or b for
-  binary formats. 
+  binary formats.
   */
 typedef enum {
     NotBinary=0,
@@ -359,7 +358,7 @@ typedef enum {
 private:
 
   char      *pszName;   // a.k.a. subfield mnemonic
-  char      *pszFormatString; 
+  char      *pszFormatString;
 
   DDFDataType           eType;
   DDFBinaryFormat       eBinaryFormat;
@@ -418,13 +417,13 @@ class CPL_ODLL DDFRecord
     const char *GetStringSubfield( const char *, int, const char *, int,
                                    int * = NULL );
 
-    int         SetIntSubfield( const char *pszField, int iFieldIndex, 
+    int         SetIntSubfield( const char *pszField, int iFieldIndex,
                                 const char *pszSubfield, int iSubfieldIndex,
                                 int nValue );
-    int         SetStringSubfield( const char *pszField, int iFieldIndex, 
+    int         SetStringSubfield( const char *pszField, int iFieldIndex,
                                    const char *pszSubfield, int iSubfieldIndex,
                                    const char *pszValue, int nValueLength=-1 );
-    int         SetFloatSubfield( const char *pszField, int iFieldIndex, 
+    int         SetFloatSubfield( const char *pszField, int iFieldIndex,
                                   const char *pszSubfield, int iSubfieldIndex,
                                   double dfNewValue );
 
@@ -433,7 +432,7 @@ class CPL_ODLL DDFRecord
 
     /**
      * Fetch the raw data for this record.  The returned pointer is effectively
-     * to the data for the first field of the record, and is of size 
+     * to the data for the first field of the record, and is of size
      * GetDataSize().
      */
     const char  *GetData() { return pachData; }
@@ -450,9 +449,9 @@ class CPL_ODLL DDFRecord
 
     int CreateDefaultFieldInstance( DDFField *poField, int iIndexWithinField );
 
-    int SetFieldRaw( DDFField *poField, int iIndexWithinField, 
+    int SetFieldRaw( DDFField *poField, int iIndexWithinField,
                      const char *pachRawData, int nRawDataSize );
-    int UpdateFieldRaw( DDFField *poField, int iIndexWithinField, 
+    int UpdateFieldRaw( DDFField *poField, int iIndexWithinField,
                         int nStartOffset, int nOldSize,
                         const char *pachRawData, int nRawDataSize );
 
@@ -480,7 +479,7 @@ class CPL_ODLL DDFRecord
 
     DDFModule   *poModule;
 
-    int         nReuseHeader;   
+    int         nReuseHeader;
 
     int         nFieldOffset;   // field data area, not dir entries.
 

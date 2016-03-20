@@ -189,7 +189,7 @@ json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
 
 OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
 {
-    if( bEOF ) 
+    if( bEOF )
         return NULL;
 
     if( iNextInFetchedObjects >= nFetchedObjects )

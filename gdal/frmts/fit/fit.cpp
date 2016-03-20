@@ -35,13 +35,13 @@ CPL_CVSID("$Id$");
 GDALDataType fitDataType(int dtype) {
     switch (dtype) {
     case 1: // iflBit   /* single-bit */
-        fprintf(stderr, 
+        fprintf(stderr,
                 "GDAL unsupported data type (single-bit) in fitDataType\n");
         return GDT_Unknown;
     case 2: // iflUChar    /* unsigned character (byte) */
         return GDT_Byte;
     case 4: // iflChar     /* signed character (byte) */
-        fprintf(stderr, 
+        fprintf(stderr,
                 "GDAL unsupported data type (signed char) in fitDataType\n");
         return GDT_Unknown;
 //         return Byte;
@@ -61,7 +61,7 @@ GDALDataType fitDataType(int dtype) {
     case 256: // iflDouble /* double precision floating point */
         return GDT_Float64;
     default:
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT - unknown data type %i in fitDataType", dtype);
         return GDT_Unknown;
     } // switch
@@ -84,7 +84,7 @@ int fitGetDataType(GDALDataType eDataType) {
     case GDT_Float64:
         return 256; // iflDouble - double precision floating point
     default:
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT - unsupported GDALDataType %i in fitGetDataType",
                  eDataType);
         return 0;
@@ -114,7 +114,7 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
         } // switch
 
     case GCI_PaletteIndex:
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT write - unsupported ColorInterp PaletteIndex\n");
         return 0;
 
@@ -168,7 +168,7 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
     case GCI_MagentaBand:
     case GCI_YellowBand:
     case GCI_BlackBand:
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT write - unsupported combination (band 1 = %s) "
                  "- ignoring color model",
                  GDALGetColorInterpretationName(colorInterp));
@@ -188,7 +188,7 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
             return 5; // iflRGBA - full color with transparency (alpha channel)
         } // switch
 
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT write - unrecognized colorInterp %i and "
                  "unrecognized number of bands (%i)", colorInterp, nBands);
 

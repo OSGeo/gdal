@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes libwebp headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -39,4 +39,3 @@
 #include "webp/encode.h"
 
 #endif /* GDAL_LIBWEBP_HEADERS_H */
-

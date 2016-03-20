@@ -53,10 +53,10 @@ OGRCircularString::OGRCircularString()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -80,10 +80,10 @@ OGRCircularString::~OGRCircularString()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -487,7 +487,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
             double dfSegLength = fabs(alpha2 - alpha0) * R;
             if (dfSegLength > 0)
             {
-                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
                     double      dfRatio;
@@ -516,7 +516,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
             double dfSegLength = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
             if (dfSegLength > 0)
             {
-                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
                     double      dfRatio;

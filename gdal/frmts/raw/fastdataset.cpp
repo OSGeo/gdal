@@ -466,7 +466,7 @@ void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention()
             for (int j = 0; j < 2; j ++)
             {
                 char* pszChannelFilename = CPLStrdup(pszFilename);
-                pszChannelFilename[strlen(pszChannelFilename)-1] 
+                pszChannelFilename[strlen(pszChannelFilename)-1]
                     = static_cast<char>( '1' + j );
                 if (OpenChannel( pszChannelFilename, nBands ))
                     nBands++;
@@ -1032,7 +1032,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pasGCPList[3].pszId);
 
         /* Let's order the GCP in TL, TR, BR, BL order to benefit from the */
-        /* GDALGCPsToGeoTransform optimization */ 
+        /* GDALGCPsToGeoTransform optimization */
         pasGCPList[0].pszId = CPLStrdup("UPPER_LEFT");
         pasGCPList[0].dfGCPX = dfULX;
         pasGCPList[0].dfGCPY = dfULY;
@@ -1107,7 +1107,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The FAST driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;

@@ -336,6 +336,45 @@ def test_ogr2ogr_lib_15():
 
     return 'success'
 
+###############################################################################
+# Test -dim
+
+def test_ogr2ogr_lib_16():
+
+    tests = [ [ 'POINT M (1 2 3)', None, 'POINT M (1 2 3)' ],
+              [ 'POINT M (1 2 3)', 'XY', 'POINT (1 2)' ],
+              [ 'POINT M (1 2 3)', 'XYZ', 'POINT Z (1 2 0)' ],
+              [ 'POINT M (1 2 3)', 'XYM', 'POINT M (1 2 3)' ],
+              [ 'POINT M (1 2 3)', 'XYZM', 'POINT ZM (1 2 0 3)' ],
+              [ 'POINT M (1 2 3)', 'layer_dim', 'POINT M (1 2 3)' ],
+              [ 'POINT ZM (1 2 3 4)', None, 'POINT ZM (1 2 3 4)' ],
+              [ 'POINT ZM (1 2 3 4)', 'XY', 'POINT (1 2)' ],
+              [ 'POINT ZM (1 2 3 4)', 'XYZ', 'POINT Z (1 2 3)' ],
+              [ 'POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)' ],
+              [ 'POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)' ],
+              [ 'POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)' ],
+            ]
+    for (wkt_before, dim, wkt_after) in tests:
+        srcDS = gdal.GetDriverByName('Memory').Create('',0,0,0)
+        geom = ogr.CreateGeometryFromWkt(wkt_before)
+        lyr = srcDS.CreateLayer('test', geom_type = geom.GetGeometryType())
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(geom)
+        lyr.CreateFeature(f)
+
+        ds = gdal.VectorTranslate('',srcDS, format = 'Memory', dim = dim)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToIsoWkt() != wkt_after:
+            gdaltest.post_reason('failure')
+            print(wkt_before)
+            print(dim)
+            print(wkt_after)
+            print(f.GetGeometryRef().ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -351,7 +390,8 @@ gdaltest_list = [
     test_ogr2ogr_lib_12,
     test_ogr2ogr_lib_13,
     test_ogr2ogr_lib_14,
-    test_ogr2ogr_lib_15
+    test_ogr2ogr_lib_15,
+    test_ogr2ogr_lib_16
     ]
 
 if __name__ == '__main__':

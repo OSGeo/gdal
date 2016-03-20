@@ -258,7 +258,7 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDSIn, int nBandIn,
 /*      matching the tile size. (#4672)                                 */
 /* -------------------------------------------------------------------- */
     if( nBlockXSize != poDSIn->nBlockPreferredXSize
-        || nBlockYSize != poDSIn->nBlockPreferredYSize ) 
+        || nBlockYSize != poDSIn->nBlockPreferredYSize )
     {
         poDSIn->bReadTile = FALSE;
     }
@@ -1621,7 +1621,7 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
     // Middle of pixel adjustment.
     adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
     adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
-    
+
     CSLDestroy(papszTokens);
 }
 
@@ -2283,7 +2283,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 
         int iXGeo = CSLFindString( papszGeoDimList, szXGeo );
         int iYGeo = CSLFindString( papszGeoDimList, szYGeo );
-        if( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS 
+        if( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS
             || iXGeo < 0
             || iYGeo < 0 )
         {
@@ -3797,7 +3797,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     VSILFILE* fpVSIL = VSIFOpenL( pszFilename, "wb" );
     if( fpVSIL == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                 "Failed to create %s.", pszFilename );
         return NULL;
     }

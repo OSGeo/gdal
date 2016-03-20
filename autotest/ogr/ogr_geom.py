@@ -560,19 +560,23 @@ def ogr_geom_flattenTo2D():
 
     # Point is 0 dimension, LineString 1, ...
     if geom.GetDimension() != 0:
+        gdaltest.post_reason('fail')
         print(geom.GetDimension())
         return 'fail'
 
     if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason('fail')
         print(geom.GetCoordinateDimension())
         return 'fail'
 
     geom.FlattenTo2D()
     if geom.GetCoordinateDimension() != 2:
+        gdaltest.post_reason('fail')
         print(geom.GetCoordinateDimension())
         return 'fail'
 
     if geom.ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason('fail')
         print(geom.ExportToWkt())
         return 'fail'
 
@@ -3061,8 +3065,12 @@ def ogr_geom_gt_functions():
     # GT_HasZ
     tuples = [ (ogr.wkbPoint, 0),
                (ogr.wkbPoint25D, 1),
+               (ogr.wkbPointM, 0),
+               (ogr.wkbPointZM, 1),
                (ogr.wkbCircularString, 0),
-               (ogr.wkbCircularStringZ, 1) ]
+               (ogr.wkbCircularStringZ, 1),
+               (ogr.wkbCircularStringM, 0),
+               (ogr.wkbCircularStringZM, 1) ]
     for (gt, res) in tuples:
         if ogr.GT_HasZ(gt) != res:
             gdaltest.post_reason('fail')
@@ -3072,25 +3080,69 @@ def ogr_geom_gt_functions():
     # GT_SetZ
     tuples = [ (ogr.wkbPoint, ogr.wkbPoint25D),
                (ogr.wkbPoint25D, ogr.wkbPoint25D),
+               (ogr.wkbPointM, ogr.wkbPointZM),
+               (ogr.wkbPointZM, ogr.wkbPointZM),
                (ogr.wkbCircularString, ogr.wkbCircularStringZ),
-               (ogr.wkbCircularStringZ, ogr.wkbCircularStringZ) ]
+               (ogr.wkbCircularStringZ, ogr.wkbCircularStringZ),
+               (ogr.wkbCircularStringM, ogr.wkbCircularStringZM),
+               (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM)]
     for (gt, res) in tuples:
         if ogr.GT_SetZ(gt) != res:
             gdaltest.post_reason('fail')
             print(gt)
             return 'fail'
 
+    # GT_HasM
+    tuples = [ (ogr.wkbPoint, 0),
+               (ogr.wkbPoint25D, 0),
+               (ogr.wkbPointM, 1),
+               (ogr.wkbPointZM, 1),
+               (ogr.wkbCircularString, 0),
+               (ogr.wkbCircularStringZ, 0),
+               (ogr.wkbCircularStringM, 1),
+               (ogr.wkbCircularStringZM, 1) ]
+    for (gt, res) in tuples:
+        if ogr.GT_HasM(gt) != res:
+            gdaltest.post_reason('fail')
+            print(gt)
+            return 'fail'
+
+    # GT_SetM
+    tuples = [ (ogr.wkbPoint, ogr.wkbPointM),
+               (ogr.wkbPoint25D, ogr.wkbPointZM),
+               (ogr.wkbPointM, ogr.wkbPointM),
+               (ogr.wkbPointZM, ogr.wkbPointZM),
+               (ogr.wkbCircularString, ogr.wkbCircularStringM),
+               (ogr.wkbCircularStringZ, ogr.wkbCircularStringZM),
+               (ogr.wkbCircularStringM, ogr.wkbCircularStringM),
+               (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM)]
+    for (gt, res) in tuples:
+        if ogr.GT_SetM(gt) != res:
+            gdaltest.post_reason('fail')
+            print(gt)
+            return 'fail'
+
     # OGR_GT_SetModifier
-    tuples = [ (ogr.wkbPoint, 1, ogr.wkbPoint25D),
-               (ogr.wkbPoint25D, 1, ogr.wkbPoint25D),
-               (ogr.wkbCircularString, 1, ogr.wkbCircularStringZ),
-               (ogr.wkbCircularStringZ, 1, ogr.wkbCircularStringZ),
-               (ogr.wkbPoint, 0, ogr.wkbPoint),
-               (ogr.wkbPoint25D, 0, ogr.wkbPoint),
-               (ogr.wkbCircularString, 0, ogr.wkbCircularString),
-               (ogr.wkbCircularStringZ, 0, ogr.wkbCircularString)]
-    for (gt, mod, res) in tuples:
-        if ogr.GT_SetModifier(gt, mod) != res:
+    tuples = [ (ogr.wkbPoint, 0, 0, ogr.wkbPoint),
+               (ogr.wkbPoint, 1, 0, ogr.wkbPoint25D),
+               (ogr.wkbPoint, 0, 1, ogr.wkbPointM),
+               (ogr.wkbPoint, 1, 1, ogr.wkbPointZM),
+               (ogr.wkbPoint25D, 0, 0, ogr.wkbPoint),
+               (ogr.wkbPoint25D, 1, 0, ogr.wkbPoint25D),
+               (ogr.wkbPoint25D, 0, 1, ogr.wkbPointM),
+               (ogr.wkbPoint25D, 1, 1, ogr.wkbPointZM),
+               (ogr.wkbPointM, 0, 0, ogr.wkbPoint),
+               (ogr.wkbPointM, 1, 0, ogr.wkbPoint25D),
+               (ogr.wkbPointM, 0, 1, ogr.wkbPointM),
+               (ogr.wkbPointM, 1, 1, ogr.wkbPointZM),
+               (ogr.wkbCircularString, 1, 0, ogr.wkbCircularStringZ),
+               (ogr.wkbCircularStringZ, 1, 0, ogr.wkbCircularStringZ),
+               (ogr.wkbPoint, 0, 0, ogr.wkbPoint),
+               (ogr.wkbPoint25D, 0, 0, ogr.wkbPoint),
+               (ogr.wkbCircularString, 0, 0, ogr.wkbCircularString),
+               (ogr.wkbCircularStringZ, 0, 0, ogr.wkbCircularString)]
+    for (gt, modZ, modM, res) in tuples:
+        if ogr.GT_SetModifier(gt, modZ, modM) != res:
             gdaltest.post_reason('fail')
             print(gt)
             return 'fail'
@@ -3098,8 +3150,12 @@ def ogr_geom_gt_functions():
     # GT_Flatten
     tuples = [ (ogr.wkbPoint, ogr.wkbPoint),
                (ogr.wkbPoint25D, ogr.wkbPoint),
+               (ogr.wkbPointM, ogr.wkbPoint),
+               (ogr.wkbPointZM, ogr.wkbPoint),
                (ogr.wkbCircularString, ogr.wkbCircularString),
-               (ogr.wkbCircularStringZ, ogr.wkbCircularString)]
+               (ogr.wkbCircularStringZ, ogr.wkbCircularString),
+               (ogr.wkbCircularStringM, ogr.wkbCircularString),
+               (ogr.wkbCircularStringZM, ogr.wkbCircularString)]
     for (gt, res) in tuples:
         if ogr.GT_Flatten(gt) != res:
             gdaltest.post_reason('fail')
@@ -3127,10 +3183,16 @@ def ogr_geom_gt_functions():
 
     # GT_IsCurve
     tuples = [ (ogr.wkbPoint, 0),
+               (ogr.wkbPoint25D, 0),
+               (ogr.wkbPointM, 0),
+               (ogr.wkbPointZM, 0),
                (ogr.wkbCircularString, 1),
                (ogr.wkbCircularStringZ, 1),
                (ogr.wkbLineString, 1),
                (ogr.wkbCompoundCurve, 1),
+               (ogr.wkbCompoundCurveZ, 1),
+               (ogr.wkbCompoundCurveM, 1),
+               (ogr.wkbCompoundCurveZM, 1),
                (ogr.wkbCurvePolygon, 0) ]
     for (gt, res) in tuples:
         if ogr.GT_IsCurve(gt) != res:
@@ -3140,8 +3202,14 @@ def ogr_geom_gt_functions():
 
     # GT_IsSurface
     tuples = [ (ogr.wkbPoint, 0),
+               (ogr.wkbPoint25D, 0),
+               (ogr.wkbPointM, 0),
+               (ogr.wkbPointZM, 0),
                (ogr.wkbCircularString, 0),
                (ogr.wkbCurvePolygon, 1),
+               (ogr.wkbCurvePolygonZ, 1),
+               (ogr.wkbCurvePolygonM, 1),
+               (ogr.wkbCurvePolygonZM, 1),
                (ogr.wkbPolygon, 1) ]
     for (gt, res) in tuples:
         if ogr.GT_IsSurface(gt) != res:
@@ -3151,6 +3219,9 @@ def ogr_geom_gt_functions():
 
     # GT_GetCollection
     tuples = [ (ogr.wkbPoint, ogr.wkbMultiPoint),
+               (ogr.wkbPoint25D, ogr.wkbMultiPoint25D),
+               (ogr.wkbPointM, ogr.wkbMultiPointM),
+               (ogr.wkbPointZM, ogr.wkbMultiPointZM),
                (ogr.wkbCircularString, ogr.wkbMultiCurve),
                (ogr.wkbCompoundCurve, ogr.wkbMultiCurve),
                (ogr.wkbCurvePolygon, ogr.wkbMultiSurface),
@@ -3164,7 +3235,13 @@ def ogr_geom_gt_functions():
 
     # GT_IsNonLinear
     tuples = [ (ogr.wkbPoint, 0),
+               (ogr.wkbPoint25D, 0),
+               (ogr.wkbPointM, 0),
+               (ogr.wkbPointZM, 0),
                (ogr.wkbCircularString, 1),
+               (ogr.wkbCircularStringM, 1),
+               (ogr.wkbCircularStringZ, 1),
+               (ogr.wkbCircularStringZM, 1),
                (ogr.wkbCompoundCurve, 1),
                (ogr.wkbCurvePolygon, 1),
                (ogr.wkbMultiCurve, 1),
@@ -3179,7 +3256,13 @@ def ogr_geom_gt_functions():
 
     # GT_GetCurve
     tuples = [ (ogr.wkbPoint, ogr.wkbPoint),
+               (ogr.wkbPoint25D, ogr.wkbPoint25D),
+               (ogr.wkbPointM, ogr.wkbPointM),
+               (ogr.wkbPointZM, ogr.wkbPointZM),
                (ogr.wkbCircularString, ogr.wkbCircularString),
+               (ogr.wkbCircularStringZ, ogr.wkbCircularStringZ),
+               (ogr.wkbCircularStringM, ogr.wkbCircularStringM),
+               (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM),
                (ogr.wkbCompoundCurve, ogr.wkbCompoundCurve),
                (ogr.wkbCurvePolygon, ogr.wkbCurvePolygon),
                (ogr.wkbLineString, ogr.wkbCompoundCurve),
@@ -3196,7 +3279,13 @@ def ogr_geom_gt_functions():
 
     # GT_GetLinear
     tuples = [ (ogr.wkbPoint, ogr.wkbPoint),
+               (ogr.wkbPoint25D, ogr.wkbPoint25D),
+               (ogr.wkbPointM, ogr.wkbPointM),
+               (ogr.wkbPointZM, ogr.wkbPointZM),
                (ogr.wkbCircularString, ogr.wkbLineString),
+               (ogr.wkbCircularStringM, ogr.wkbLineStringM),
+               (ogr.wkbCircularStringZ, ogr.wkbLineString25D),
+               (ogr.wkbCircularStringZM, ogr.wkbLineStringZM),
                (ogr.wkbCompoundCurve, ogr.wkbLineString),
                (ogr.wkbCurvePolygon, ogr.wkbPolygon),
                (ogr.wkbLineString, ogr.wkbLineString),
@@ -3332,6 +3421,133 @@ def ogr_geom_equals():
     return 'success'
 
 ###############################################################################
+# Test FlattenTo2D(), SetCoordinateDimension(2) and SetCoordinateDimension(3) with Measured geometries
+
+def ogr_geom_measured_geometries_to_2D_or_3D():
+
+    list_wkt = [ [ 'POINT M (1 2 3)', 'POINT (1 2)', 'POINT Z (1 2 0)' ],
+                 [ 'POINT ZM (1 2 3 4)', 'POINT (1 2)', 'POINT Z (1 2 3)' ],
+                 [ 'LINESTRING M (1 2 3)', 'LINESTRING (1 2)', 'LINESTRING Z (1 2 0)' ],
+                 [ 'LINESTRING ZM (1 2 3 4)', 'LINESTRING (1 2)', 'LINESTRING Z (1 2 3)' ],
+                 [ 'POLYGON M ((1 2 3))', 'POLYGON ((1 2))', 'POLYGON Z ((1 2 0))' ],
+                 [ 'POLYGON ZM ((1 2 3 4))', 'POLYGON ((1 2))', 'POLYGON Z ((1 2 3))' ],
+                 [ 'CIRCULARSTRING M (1 2 3,4 5 6,7 8 9)', 'CIRCULARSTRING (1 2,4 5,7 8)', 'CIRCULARSTRING Z (1 2 0,4 5 0,7 8 0)' ],
+                 [ 'CIRCULARSTRING ZM (1 2 3 0,4 5 6 0,7 8 9 0)', 'CIRCULARSTRING (1 2,4 5,7 8)', 'CIRCULARSTRING Z (1 2 3,4 5 6,7 8 9)' ],
+                 [ 'COMPOUNDCURVE M ((1 2 3,4 5 6))', 'COMPOUNDCURVE ((1 2,4 5))', 'COMPOUNDCURVE Z ((1 2 0,4 5 0))' ],
+                 [ 'COMPOUNDCURVE ZM ((1 2 3 4,5 6 7 8))', 'COMPOUNDCURVE ((1 2,5 6))', 'COMPOUNDCURVE Z ((1 2 3,5 6 7))' ],
+                 [ 'MULTIPOINT M ((1 2 3))', 'MULTIPOINT ((1 2))', 'MULTIPOINT Z ((1 2 0))' ],
+                 [ 'MULTIPOINT ZM ((1 2 3 4))', 'MULTIPOINT ((1 2))', 'MULTIPOINT Z ((1 2 3))' ],
+                 [ 'MULTILINESTRING M ((1 2 3))', 'MULTILINESTRING ((1 2))', 'MULTILINESTRING Z ((1 2 0))' ],
+                 [ 'MULTILINESTRING ZM ((1 2 3 4))', 'MULTILINESTRING ((1 2))', 'MULTILINESTRING Z ((1 2 3))' ],
+                 [ 'MULTICURVE M ((1 2 3))', 'MULTICURVE ((1 2))', 'MULTICURVE Z ((1 2 0))' ],
+                 [ 'MULTICURVE ZM ((1 2 3 4))', 'MULTICURVE ((1 2))', 'MULTICURVE Z ((1 2 3))' ],
+                 [ 'MULTIPOLYGON M (((1 2 3)))', 'MULTIPOLYGON (((1 2)))', 'MULTIPOLYGON Z (((1 2 0)))' ],
+                 [ 'MULTIPOLYGON ZM (((1 2 3 4)))', 'MULTIPOLYGON (((1 2)))', 'MULTIPOLYGON Z (((1 2 3)))' ],
+                 [ 'MULTISURFACE M (((1 2 3)))', 'MULTISURFACE (((1 2)))', 'MULTISURFACE Z (((1 2 0)))' ],
+                 [ 'MULTISURFACE ZM (((1 2 3 4)))', 'MULTISURFACE (((1 2)))', 'MULTISURFACE Z (((1 2 3)))' ],
+                 [ 'GEOMETRYCOLLECTION M (POINT M (1 2 3))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 0))' ],
+                 [ 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))' ],
+               ]
+    for (before, after_2D, after_3D) in list_wkt:
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.FlattenTo2D()
+        if geom.ExportToIsoWkt() != after_2D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_2D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.SetCoordinateDimension(2)
+        if geom.ExportToIsoWkt() != after_2D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_2D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.SetCoordinateDimension(3)
+        if geom.ExportToIsoWkt() != after_3D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_3D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        # Test no-op
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.Set3D(geom.Is3D())
+        geom.SetMeasured(geom.IsMeasured())
+        if geom.ExportToIsoWkt() != before:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT (1 2)').CoordinateDimension() != 2 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT M (1 2 3)').CoordinateDimension() != 3 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT Z (1 2 3)').CoordinateDimension() != 3 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)').CoordinateDimension() != 4 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test PostGIS EWKT with XYM
+
+def ogr_geom_postgis_ewkt_xym():
+
+    list_wkt = [ [ 'POINTM(1 2 3)', 'POINT M (1 2 3)' ],
+                 [ 'GEOMETRYCOLLECTIONM(POINTM(1 2 3))', 'GEOMETRYCOLLECTION M (POINT M (1 2 3))' ],
+               ]
+    for (before, after) in list_wkt:
+        geom = ogr.CreateGeometryFromWkt(before)
+        if geom.ExportToIsoWkt() != after:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ogr.wkbCurve / ogr.wkbSurface
+
+def ogr_geom_curve_surface():
+
+    tests = [ [ ogr.wkbCurve, "Curve" ],
+              [ ogr.wkbCurveZ, "3D Curve" ],
+              [ ogr.wkbCurveM, "Measured Curve" ],
+              [ ogr.wkbCurveZM, "3D Measured Curve" ],
+              [ ogr.wkbSurface, "Surface" ],
+              [ ogr.wkbSurfaceZ, "3D Surface" ],
+              [ ogr.wkbSurfaceM, "Measured Surface" ],
+              [ ogr.wkbSurfaceZM, "3D Measured Surface" ] ]
+
+    for (wkb_type, name) in tests:
+        if ogr.GeometryTypeToName(wkb_type) != name:
+            gdaltest.post_reason('fail')
+            print(wkb_type)
+            print(name)
+            print(ogr.GeometryTypeToName(wkb_type))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3382,6 +3598,9 @@ gdaltest_list = [
     ogr_geom_gt_functions,
     ogr_geom_api_limit_tests,
     ogr_geom_equals,
+    ogr_geom_measured_geometries_to_2D_or_3D,
+    ogr_geom_postgis_ewkt_xym,
+    ogr_geom_curve_surface,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':

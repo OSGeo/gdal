@@ -52,10 +52,18 @@ def GeomType2Name( type ):
             ogr.wkbCompoundCurve : ('wkbCompoundCurve', 'Z'),
             ogr.wkbCurvePolygon : ('wkbCurvePolygon', 'Z'),
             ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
-            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z') }
+            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z'),
+            ogr.wkbCurve : ('wkbCurve', 'Z'),
+            ogr.wkbSurface : ('wkbSurface', 'Z') }
     ret = dic[flat_type][0]
     if flat_type != type:
-        ret += dic[flat_type][1]
+        if ogr.GT_HasM(type):
+          if ogr.GT_HasZ(type):
+            ret += "ZM"
+          else:
+            ret += "M"
+        else:
+          ret += dic[flat_type][1]
     return ret
 
 #############################################################################

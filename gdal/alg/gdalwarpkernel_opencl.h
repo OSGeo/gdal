@@ -29,7 +29,7 @@
 
 #if defined(HAVE_OPENCL)
 
-/* The following relates to the profiling calls to 
+/* The following relates to the profiling calls to
    clSetCommandQueueProperty() which are not available by default
    with some OpenCL implementation (i.e. ATI) */
 
@@ -67,21 +67,21 @@ struct oclWarper {
     cl_device_id dev;
     cl_kernel kern1;
     cl_kernel kern4;
-    
+
     int srcWidth;
     int srcHeight;
     int dstWidth;
     int dstHeight;
-    
+
     int useUnifiedSrcDensity;
     int useUnifiedSrcValid;
     int useDstDensity;
     int useDstValid;
-    
+
     int numBands;
     int numImages;
     OCLResampAlg resampAlg;
-    
+
     cl_channel_type imageFormat;
     cl_mem *realWorkCL;
     union {
@@ -92,7 +92,7 @@ struct oclWarper {
         unsigned short **us;
         float **f;
     } realWork;
-    
+
     cl_mem *imagWorkCL;
     union {
         void **v;
@@ -102,7 +102,7 @@ struct oclWarper {
         unsigned short **us;
         float **f;
     } imagWork;
-    
+
     cl_mem *dstRealWorkCL;
     union {
         void **v;
@@ -112,7 +112,7 @@ struct oclWarper {
         unsigned short **us;
         float **f;
     } dstRealWork;
-    
+
     cl_mem *dstImagWorkCL;
     union {
         void **v;
@@ -122,29 +122,29 @@ struct oclWarper {
         unsigned short **us;
         float **f;
     } dstImagWork;
-    
+
     unsigned int imgChSize1;
     cl_channel_order imgChOrder1;
     unsigned int imgChSize4;
     cl_channel_order imgChOrder4;
 	char    useVec;
-    
+
     cl_mem useBandSrcValidCL;
     char *useBandSrcValid;
-    
+
     cl_mem nBandSrcValidCL;
     float *nBandSrcValid;
-    
+
     cl_mem xyWorkCL;
     float *xyWork;
-    
+
     int xyWidth;
     int xyHeight;
     int coordMult;
-    
+
     unsigned int xyChSize;
     cl_channel_order xyChOrder;
-    
+
     cl_mem fDstNoDataRealCL;
     float *fDstNoDataReal;
 
@@ -195,4 +195,3 @@ cl_int GDALWarpKernelOpenCL_deleteEnv(struct oclWarper *warper);
 #endif
 
 #endif /* defined(HAVE_OPENCL) */
-

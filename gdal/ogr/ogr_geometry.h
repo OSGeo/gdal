@@ -195,7 +195,7 @@ class CPL_DLL OGRGeometry
 
     virtual void closeRings();
 
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
 
@@ -236,7 +236,7 @@ class CPL_DLL OGRGeometry
 
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
 
-    // backward compatibility to non-standard method names. 
+    // backward compatibility to non-standard method names.
     OGRBoolean  Intersect( OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use Intersects() instead");
     OGRBoolean  Equal( OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use Equals() instead");
     OGRGeometry *SymmetricDifference( const OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use SymDifference() instead");
@@ -294,13 +294,13 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRBoolean  IsEmpty() const { return !(flags & OGR_G_NOT_EMPTY_POINT); }
 
     // IPoint
-    double      getX() const { return x; } 
+    double      getX() const { return x; }
     double      getY() const { return y; }
     double      getZ() const { return z; }
     double      getM() const { return m; }
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     void        setX( double xIn ) { x = xIn; flags |= OGR_G_NOT_EMPTY_POINT; }
     void        setY( double yIn ) { y = yIn; flags |= OGR_G_NOT_EMPTY_POINT; }
     void        setZ( double zIn ) { z = zIn; flags |= (OGR_G_NOT_EMPTY_POINT | OGR_G_3D); }
@@ -464,7 +464,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
 
     // non standard.
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
     void        setNumPoints( int nNewPointCount, int bZeroizeNewContent = TRUE );
@@ -500,7 +500,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                            void* pabyZ, int nZStride,
                            void* pabyM, int nMStride ) const;
 
-    void        addSubLineString( const OGRLineString *, 
+    void        addSubLineString( const OGRLineString *,
                                   int nStartVertex = 0, int nEndVertex = -1 );
     void        reversePoints( void );
     virtual OGRPointIterator* getPointIterator() const;
@@ -564,17 +564,17 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
  *
  * This class is functionally equivalent to an OGRLineString, but has a
  * separate identity to maintain alignment with the OpenGIS simple feature
- * data model.  It exists to serve as a component of an OGRPolygon.  
+ * data model.  It exists to serve as a component of an OGRPolygon.
  *
  * The OGRLinearRing has no corresponding free standing well known binary
  * representation, so importFromWkb() and exportToWkb() will not actually
  * work.  There is a non-standard GDAL WKT representation though.
  *
- * Because OGRLinearRing is not a "proper" free standing simple features 
+ * Because OGRLinearRing is not a "proper" free standing simple features
  * object, it cannot be directly used on a feature via SetGeometry(), and
- * cannot generally be used with GEOS for operations like Intersects(). 
+ * cannot generally be used with GEOS for operations like Intersects().
  * Instead the polygon should be used, or the OGRLinearRing should be
- * converted to an OGRLineString for such operations. 
+ * converted to an OGRLineString for such operations.
  *
  * Note: this class exists in SFSQL 1.2, but not in ISO SQL/MM Part 3.
  */
@@ -582,13 +582,13 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 class CPL_DLL OGRLinearRing : public OGRLineString
 {
   protected:
-    friend class OGRPolygon; 
+    friend class OGRPolygon;
 
     // These are not IWks compatible ... just a convenience for OGRPolygon.
     virtual int _WkbSize( int _flags ) const;
     virtual OGRErr _importFromWkb( OGRwkbByteOrder, int _flags,
                                    unsigned char *, int=-1 );
-    virtual OGRErr _exportToWkb( OGRwkbByteOrder, int _flags, 
+    virtual OGRErr _exportToWkb( OGRwkbByteOrder, int _flags,
                                  unsigned char * ) const;
 
     static OGRLineString* CastToLineString(OGRLinearRing* poLR);
@@ -615,7 +615,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 
     // IWks Interface - Note this isn't really a first class object
     // for the purposes of WKB form.  These methods always fail since this
-    // object can't be serialized on its own. 
+    // object can't be serialized on its own.
     virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
@@ -833,7 +833,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     const OGRCurve *getCurve( int ) const;
 
     // non standard.
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
 
@@ -960,7 +960,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual OGRBoolean  Contains( const OGRGeometry * ) const;
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
 
@@ -1121,7 +1121,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension ); 
+    virtual void setCoordinateDimension( int nDimension );
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
     virtual OGRErr addGeometry( const OGRGeometry * );
@@ -1362,10 +1362,10 @@ class CPL_DLL OGRGeometryFactory
                                               OGRCoordinateTransformation *poCT,
                                               char** papszOptions );
 
-    static OGRGeometry* 
+    static OGRGeometry*
         approximateArcAngles( double dfX, double dfY, double dfZ,
-                              double dfPrimaryRadius, double dfSecondaryAxis, 
-                              double dfRotation, 
+                              double dfPrimaryRadius, double dfSecondaryAxis,
+                              double dfRotation,
                               double dfStartAngle, double dfEndAngle,
                               double dfMaxAngleStepSizeDegrees );
 

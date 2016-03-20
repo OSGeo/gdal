@@ -144,7 +144,7 @@ class PCIDSK2Band : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
 
     virtual void        SetDescription( const char * );
 

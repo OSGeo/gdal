@@ -147,10 +147,10 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
     CPLString           osWHERE;
     CPLString           osSELECTWithoutWHERE;
 
-    std::vector<std::string> vsDeferedInsertChangesets;
+    std::vector<std::string> vsDeferredInsertChangesets;
     GIntBig             nNextFID;
 
-    int                 bDeferedCreation;
+    int                 bDeferredCreation;
     int                 nMaxChunkSize;
 
     void                BuildWhere();
@@ -187,17 +187,17 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
         virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
         virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
 
-        void                SetDeferedCreation(OGRwkbGeometryType eGType,
+        void                SetDeferredCreation(OGRwkbGeometryType eGType,
                                    OGRSpatialReference *poSRS,
                                    int bGeomNullable);
 
         CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
 
-        OGRErr              RunDeferedCreationIfNecessary();
-        int                 GetDeferedCreation() const { return bDeferedCreation; }
-        void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
+        OGRErr              RunDeferredCreationIfNecessary();
+        int                 GetDeferredCreation() const { return bDeferredCreation; }
+        void                CancelDeferredCreation() { bDeferredCreation = FALSE; }
 
-        void                FlushDeferedInsert();
+        void                FlushDeferredInsert();
         bool                IsDatasetExists();
 };
 
@@ -290,7 +290,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
                                                         OGRGeometry *poSpatialFilter = NULL,
                                                         const char *pszDialect = NULL,
-                                                        int bRunDeferedActions = FALSE );
+                                                        int bRunDeferredActions = FALSE );
 };
 
 #endif /* ndef OGR_AMIGOCLOUD_H_INCLUDED */

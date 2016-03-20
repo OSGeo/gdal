@@ -51,7 +51,7 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     int        nOffset;
     int        bHasDESOFLW;
     int        nDESSHL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing DES accessor if there       */
 /*      is one.                                                         */
@@ -84,12 +84,12 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     }
 
 retry:
-    if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart, 
-                  SEEK_SET ) != 0 
-        || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize, 
+    if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
+                  SEEK_SET ) != 0
+        || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize,
                      psFile->fp ) != psSegInfo->nSegmentHeaderSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u byte DES subheader from " CPL_FRMT_GUIB ".",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
@@ -267,8 +267,8 @@ retry:
     if ((int)psSegInfo->nSegmentHeaderSize > nOffset)
     {
         char* pszEscapedDESDATA =
-                CPLEscapeString( pachHeader + nOffset, 
-                                 (int)psSegInfo->nSegmentHeaderSize - nOffset, 
+                CPLEscapeString( pachHeader + nOffset,
+                                 (int)psSegInfo->nSegmentHeaderSize - nOffset,
                                  CPLES_BackslashQuotable );
         psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                 "NITF_DESDATA",
@@ -279,19 +279,18 @@ retry:
     {
 
 #define TEN_MEGABYTES 10485760
-            
+
         if (psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
             const char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
             const char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
-            
+
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_OFFSET",
                                                     pszOffset );
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_LENGTH",
                                                     pszSize);
-            
         }
         else
         {
@@ -320,7 +319,6 @@ retry:
                                                         "NITF_DESDATA",
                                                         pszEscapedDESDATA );
                 CPLFree(pszEscapedDESDATA);
-                
             }
             CPLFree(pachData);
         }
@@ -359,7 +357,6 @@ retry:
         }
 #endif
 
-        
     }
 
     return psDES;

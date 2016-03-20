@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  JP2 Box Reader (and GMLJP2 Interpreter)
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -32,10 +32,10 @@
 #define GDAL_JP2READER_H_INCLUDED
 
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "cpl_minixml.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
@@ -104,7 +104,7 @@ public:
     static GDALJP2Box *CreateLblBox( const char *pszLabel );
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
                                                const char *pszXML );
-    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID, 
+    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID,
                                       int nDataSize, const GByte *pabyData );
 };
 
@@ -170,7 +170,7 @@ public:
     int     ReadAndParse( VSILFILE * fpVSIL );
     int     ReadAndParse( const char *pszFilename );
 
-    // Write oriented. 
+    // Write oriented.
     void    SetProjection( const char *pszWKT );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );

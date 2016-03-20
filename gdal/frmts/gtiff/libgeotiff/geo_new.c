@@ -17,7 +17,7 @@
 #include "geotiffio.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
-#include "geo_simpletags.h" 
+#include "geo_simpletags.h"
 
 /* private local routines */
 static int ReadKey(GTIF* gt, TempKeyData* tempData,
@@ -32,16 +32,16 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
 
 
 /**
- * Given an open TIFF file, look for GTIF keys and 
+ * Given an open TIFF file, look for GTIF keys and
  *  values and return GTIF structure.
 
 This function creates a GeoTIFF information interpretation handle
-(GTIF *) based on a passed in TIFF handle originally from 
-XTIFFOpen().  Even though the argument 
+(GTIF *) based on a passed in TIFF handle originally from
+XTIFFOpen().  Even though the argument
 (<b>tif</b>) is shown as type <tt>void *</tt>, it is really normally
 of type <tt>TIFF *</tt>.<p>
 
-The returned GTIF handle can be used to read or write GeoTIFF tags 
+The returned GTIF handle can be used to read or write GeoTIFF tags
 using the various GTIF functions.  The handle should be destroyed using
 GTIFFree() before the file is closed with TIFFClose().<p>
 
@@ -89,19 +89,19 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
 
     memset( &tempData, 0, sizeof(tempData) );
     gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
-    if (!gt) goto failure;	
-	
+    if (!gt) goto failure;
+
     /* install TIFF file and I/O methods */
     gt->gt_tif = (tiff_t *)tif;
     memcpy( &gt->gt_methods, methods, sizeof(TIFFMethod) );
 
     /* since this is an array, GTIF will allocate the memory */
-    if ( tif == NULL 
+    if ( tif == NULL
          || !(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
     {
         /* No ProjectionInfo, create a blank one */
         data=(pinfo_t*)_GTIFcalloc((4+MAX_VALUES)*sizeof(pinfo_t));
-        if (!data) goto failure;	
+        if (!data) goto failure;
         header = (KeyHeader *)data;
         header->hdr_version = GvCurrentVersion;
         header->hdr_rev_major = GvCurrentRevision;
@@ -115,18 +115,18 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     }
     gt->gt_short = data;
     header = (KeyHeader *)data;
-	
+
     if (header->hdr_version > GvCurrentVersion) goto failure;
     if (header->hdr_rev_major > GvCurrentRevision)
     {
         /* issue warning */
     }
-	
+
     /* If we got here, then the geokey can be parsed */
     count = header->hdr_num_keys;
 
-    if (count * sizeof(KeyEntry) >= (4 + MAX_VALUES) * sizeof(pinfo_t)) 
-        goto failure; 
+    if (count * sizeof(KeyEntry) >= (4 + MAX_VALUES) * sizeof(pinfo_t))
+        goto failure;
 
     gt->gt_num_keys = count;
     gt->gt_version  = header->hdr_version;
@@ -141,7 +141,7 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
                                  &gt->gt_ndoubles, &gt->gt_double ))
     {
         gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
-        if (!gt->gt_double) goto failure;	
+        if (!gt->gt_double) goto failure;
     }
     else
     {
@@ -160,7 +160,7 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     else
     {
         /* last NULL doesn't count; "|" used for delimiter */
-        if( tempData.tk_asciiParamsLength > 0 
+        if( tempData.tk_asciiParamsLength > 0
             && tempData.tk_asciiParams[tempData.tk_asciiParamsLength-1] == '\0')
         {
             --tempData.tk_asciiParamsLength;
@@ -172,7 +172,7 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     if (!gt->gt_keys) goto failure;
     gt->gt_keyindex = (int *)_GTIFcalloc( sizeof(int)*(MAX_KEYINDEX+1));
     if (!gt->gt_keyindex) goto failure;
-	
+
     /*  Loop to get all GeoKeys */
     entptr = ((KeyEntry *)data) + 1;
     keyptr = gt->gt_keys;
@@ -182,20 +182,20 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     {
         if (!ReadKey(gt, &tempData, entptr, ++keyptr))
             goto failure;
-			
+
         /* Set up the index (start at 1, since 0=unset) */
-        gt->gt_keyindex[entptr->ent_key] = nIndex;		
+        gt->gt_keyindex[entptr->ent_key] = nIndex;
     }
 
     if( tempData.tk_asciiParams != NULL )
         _GTIFFree( tempData.tk_asciiParams );
-	
+
     return gt;
-	
+
   failure:
     /* Notify of error */
     if( tempData.tk_asciiParams != NULL )
-        _GTIFFree( tempData.tk_asciiParams );    
+        _GTIFFree( tempData.tk_asciiParams );
     GTIFFree (gt);
     return (GTIF *)0;
 }
@@ -247,12 +247,12 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
         case GTIFF_ASCIIPARAMS:
             if( tempData->tk_asciiParams == NULL )
                 return 0;
-            if( offset + count == tempData->tk_asciiParamsLength + 1 
+            if( offset + count == tempData->tk_asciiParamsLength + 1
                 && count > 0 )
             {
-                /* some vendors seem to feel they should not use the 
+                /* some vendors seem to feel they should not use the
                    terminating '|' char, but do include a terminating '\0'
-                   which we lose in the low level reading code.  
+                   which we lose in the low level reading code.
                    If this is the case, drop the extra character */
                 count--;
             }
@@ -263,7 +263,7 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                 /* issue warning... if we could */
             }
             else if (offset + count > tempData->tk_asciiParamsLength)
-                return (0);
+                return 0;
 
             keyptr->gk_count = MAX(1,count+1);
             keyptr->gk_data = (char *) _GTIFcalloc (keyptr->gk_count);
@@ -282,6 +282,6 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
             return 0; /* failure */
     }
     keyptr->gk_size = _gtiff_size[keyptr->gk_type];
-	
+
     return 1; /* success */
 }

@@ -91,7 +91,7 @@ void mc_info(const char *msg, ...)
 #if HAVE_VSYSLOG
     if(_syslog) {
 		vsyslog(LOG_INFO, msg, ap);
-	} else 
+	} else
 #endif
 		vfprintf(stderr, msg, ap);
   va_end(ap);

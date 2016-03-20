@@ -28,18 +28,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi_error.h"
-#include "ogr_featurestyle.h"
-#include "swq.h"
-#include "ogr_gensql.h"
+#include "gdal_priv.h"
 #include "ogr_attrind.h"
+#include "ogr_featurestyle.h"
+#include "ogr_gensql.h"
 #include "ogr_p.h"
-#include "ogrunionlayer.h"
 #include "ograpispy.h"
+#include "ogrunionlayer.h"
+#include "swq.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
@@ -62,10 +62,18 @@ GDALGetDefaultAsyncReader( GDALDataset *poDS,
                              int nBandSpace, char **papszOptions);
 CPL_C_END
 
+typedef enum
+{
+    RW_MUTEX_STATE_UNKNOW,
+    RW_MUTEX_STATE_ALLOWED,
+    RW_MUTEX_STATE_DISABLED
+} GDALAllowReadWriteMutexState;
+
 typedef struct
 {
     CPLMutex* hMutex;
     int       nMutexTakenCount;
+    GDALAllowReadWriteMutexState eStateReadWriteMutex;
 } GDALDatasetPrivate;
 
 typedef struct
@@ -208,6 +216,8 @@ void GDALDataset::Init(int bForceCachedIOIn)
 
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_UNKNOW;
 }
 
 /************************************************************************/
@@ -2555,7 +2565,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * the papszSiblingFiles parameter.
  * This is the list of all files at the same level in the file system as the
  * target file, including the target file. The filenames must not include any
- * path components, are an essentially just the output of CPLReadDir() on the
+ * path components, are an essentially just the output of VSIReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
  * then the file list should be NULL.
  *
@@ -6006,7 +6016,8 @@ OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
 /************************************************************************/
 
 /**
- \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction.
+ \brief For datasources which support transactions, RollbackTransaction will
+ roll back a datasource to its state before the start of the current transaction.
  If no transaction is active, or the rollback fails, will return
  OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_UNSUPPORTED_OPERATION.
@@ -6026,7 +6037,8 @@ OGRErr GDALDataset::RollbackTransaction()
 /************************************************************************/
 
 /**
- \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction.
+ \brief For datasources which support transactions, RollbackTransaction will
+ roll back a datasource to its state before the start of the current transaction.
  If no transaction is active, or the rollback fails, will return
  OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_UNSUPPORTED_OPERATION.
@@ -6055,17 +6067,35 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    if( psPrivate != NULL && eAccess == GA_Update && (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
+    if( psPrivate != NULL && eAccess == GA_Update )
     {
-        // There should be no race related to creating this mutex since
-        // it should be first created through IWriteBlock() / IRasterIO()
-        // and then GDALRasterBlock might call it from another thread
-        if( psPrivate->hMutex == NULL )
-            psPrivate->hMutex = CPLCreateMutex();
-        else
-            CPLAcquireMutex(psPrivate->hMutex, 1000.0);
-        psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
-        return TRUE;
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOW )
+        {
+            // In case dead-lock would occur, which is not impossible,
+            // this can be used to prevent it, but at the risk of other
+            // issues
+            if( CSLTestBoolean(CPLGetConfigOption( "GDAL_ENABLE_READ_WRITE_MUTEX", "YES") ) )
+            {
+                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
+            }
+            else
+            {
+                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+            }
+        }
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
+            (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
+        {
+            // There should be no race related to creating this mutex since
+            // it should be first created through IWriteBlock() / IRasterIO()
+            // and then GDALRasterBlock might call it from another thread
+            if( psPrivate->hMutex == NULL )
+                psPrivate->hMutex = CPLCreateMutex();
+            else
+                CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+            psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -6081,6 +6111,23 @@ void GDALDataset::LeaveReadWrite()
     {
         psPrivate->nMutexTakenCount --;
         CPLReleaseMutex(psPrivate->hMutex);
+    }
+}
+
+/************************************************************************/
+/*                       DisableReadWriteMutex()                        */
+/************************************************************************/
+
+/* The mutex logic is broken in multi-threaded situations, for example */
+/* with 2 WarpedVRT datasets being read at the same time. In that */
+/* particular case, the mutex is not needed, so allow the VRTWarpedDataset code */
+/* to disable it. */
+void GDALDataset::DisableReadWriteMutex()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( psPrivate )
+    {
+        psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
     }
 }
 

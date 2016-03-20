@@ -196,7 +196,7 @@ void OGR2SQLITE_Transform(sqlite3_context* pContext,
         poGeom->transform(poCT) == OGRERR_NONE &&
         OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poGeom, nDstSRSId, wkbNDR, FALSE,
-                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
+                    FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
     }
@@ -266,7 +266,7 @@ static
 void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
                             int argc, sqlite3_value** argv)
 {
-    if( argc != 1 || 
+    if( argc != 1 ||
         sqlite3_value_type (argv[0]) != SQLITE_BLOB )
     {
         sqlite3_result_null (pContext);
@@ -317,7 +317,7 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
             GByte* pabyGeomBLOB = NULL;
             int nGeomBLOBLen = 0;
             if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE, FALSE,
+                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE,
                     &pabyGeomBLOB,
                     &nGeomBLOBLen ) != OGRERR_NONE )
             {
@@ -492,7 +492,7 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
     {
         iAfterGeomIdx = 2;
     }
-    else if( argc >= 2 && 
+    else if( argc >= 2 &&
              sqlite3_value_type (argv[0]) == SQLITE_BLOB &&
              sqlite3_value_type (argv[1]) == SQLITE_TEXT )
     {
@@ -757,7 +757,7 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context* pContext,
     GByte* pabySLBLOB = NULL;
     int nBLOBLen = 0;
     if( poGeom != NULL && OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poGeom, nSRSId, wkbNDR, FALSE,
+                    poGeom, nSRSId, wkbNDR,
                     FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);

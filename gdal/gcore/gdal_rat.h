@@ -43,7 +43,7 @@
 //! Raster Attribute Table interface.
 class GDALDefaultRasterAttributeTable;
 
-class CPL_DLL GDALRasterAttributeTable 
+class CPL_DLL GDALRasterAttributeTable
 {
 public:
     virtual ~GDALRasterAttributeTable();
@@ -75,14 +75,14 @@ public:
      *
      * This method is the same as the C function GDALRATGetNameOfCol().
      *
-     * @param iCol the column index (zero based). 
+     * @param iCol the column index (zero based).
      *
      * @return the column name or an empty string for invalid column numbers.
      */
     virtual const char   *GetNameOfCol( int ) const = 0;
 
     /**
-     * \brief Fetch column usage value. 
+     * \brief Fetch column usage value.
      *
      * This method is the same as the C function GDALRATGetUsageOfCol().
      *
@@ -106,23 +106,23 @@ public:
     /**
      * \brief Fetch column index for given usage.
      *
-     * Returns the index of the first column of the requested usage type, or -1 
-     * if no match is found. 
+     * Returns the index of the first column of the requested usage type, or -1
+     * if no match is found.
      *
      * This method is the same as the C function GDALRATGetUsageOfCol().
      *
      * @param eUsage usage type to search for.
      *
-     * @return column index, or -1 on failure. 
+     * @return column index, or -1 on failure.
      */
     virtual int           GetColOfUsage( GDALRATFieldUsage ) const = 0;
 
     /**
      * \brief Fetch row count.
-     * 
+     *
      * This method is the same as the C function GDALRATGetRowCount().
      *
-     * @return the number of rows. 
+     * @return the number of rows.
      */
     virtual int           GetRowCount() const = 0;
 
@@ -135,13 +135,13 @@ public:
      *
      * The returned string is temporary and cannot be expected to be
      * available after the next GDAL call.
-     * 
+     *
      * This method is the same as the C function GDALRATGetValueAsString().
      *
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
-     * 
-     * @return field value. 
+     *
+     * @return field value.
      */
     virtual const char   *GetValueAsString( int iRow, int iField ) const = 0;
 
@@ -156,7 +156,7 @@ public:
      *
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
-     * 
+     *
      * @return field value
      */
     virtual int           GetValueAsInt( int iRow, int iField ) const = 0;
@@ -167,12 +167,12 @@ public:
      * The value of the requested column in the requested row is returned
      * as a double.   Non double fields will be converted to double with
      * the possibility of data loss.
-     * 
+     *
      * This method is the same as the C function GDALRATGetValueAsDouble().
      *
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
-     * 
+     *
      * @return field value
      */
     virtual double        GetValueAsDouble( int iRow, int iField ) const = 0;
@@ -224,7 +224,7 @@ public:
 
     /**
      * \brief Determine whether changes made to this RAT are reflected directly in the dataset
-     * 
+     *
      * If this returns FALSE then GDALRasterBand.SetDefaultRAT() should be called. Otherwise
      * this is unnecessary since changes to this object are reflected in the dataset.
      *
@@ -241,15 +241,15 @@ public:
     virtual int           GetRowOfValue( double dfValue ) const;
     virtual int           GetRowOfValue( int nValue ) const;
 
-    virtual CPLErr        CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+    virtual CPLErr        CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage );
     virtual CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
     virtual int           GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const;
 
     /**
      * \brief Serialize
-     * 
+     *
      * May fail (return NULL) if the attribute table is too large to serialize
      * (GetRowCount() * GetColCount() > RAT_MAX_ELEM_FOR_CLONE)
      */
@@ -338,8 +338,8 @@ public:
     virtual int           GetRowOfValue( double dfValue ) const;
     virtual int           GetRowOfValue( int nValue ) const;
 
-    virtual CPLErr        CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+    virtual CPLErr        CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage );
     virtual CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
     virtual int           GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const;

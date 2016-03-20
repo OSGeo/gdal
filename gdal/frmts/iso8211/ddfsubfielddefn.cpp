@@ -261,7 +261,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
     {
         if( nFormatWidth > nMaxBytes )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Only %d bytes available for subfield %s with\n"
                       "format string %s ... returning shortened data.",
                       nMaxBytes, pszName, pszFormatString );
@@ -285,30 +285,30 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
         int     bAsciiField = TRUE;
         int     extraConsumedBytes = 0;
 
-        /* We only check for the field terminator because of some buggy 
+        /* We only check for the field terminator because of some buggy
          * datasets with missing format terminators.  However, we have found
-         * the field terminator and unit terminators are legal characters 
+         * the field terminator and unit terminators are legal characters
          * within the fields of some extended datasets (such as JP34NC94.000).
-         * So we don't check for the field terminator and unit terminators as 
-         * a single byte if the field appears to be multi-byte which we 
+         * So we don't check for the field terminator and unit terminators as
+         * a single byte if the field appears to be multi-byte which we
          * establish by checking for the buffer ending with 0x1e 0x00 (a
-         * two byte field terminator). 
+         * two byte field terminator).
          *
-         * In the case of S57, the subfield ATVL of the NATF field can be 
-         * encoded in lexical level 2 (see S57 specification, Edition 3.1, 
-         * paragraph 2.4 and 2.5). In that case the Unit Terminator and Field 
+         * In the case of S57, the subfield ATVL of the NATF field can be
+         * encoded in lexical level 2 (see S57 specification, Edition 3.1,
+         * paragraph 2.4 and 2.5). In that case the Unit Terminator and Field
          * Terminator are followed by the NULL character.
-         * A better fix would be to read the NALL tag in the DSSI to check 
-         * that the lexical level is 2, instead of relying on the value of 
+         * A better fix would be to read the NALL tag in the DSSI to check
+         * that the lexical level is 2, instead of relying on the value of
          * the first byte as we are doing - but that is not information
          * that is available at the libiso8211 level (bug #1526)
          */
 
         // If the whole field ends with 0x1e 0x00 then we assume this
         // field is a double byte character set.
-        if( nMaxBytes > 1 
+        if( nMaxBytes > 1
             && (pachSourceData[nMaxBytes-2] == chFormatDelimiter
-                || pachSourceData[nMaxBytes-2] == DDF_FIELD_TERMINATOR) 
+                || pachSourceData[nMaxBytes-2] == DDF_FIELD_TERMINATOR)
             && pachSourceData[nMaxBytes-1] == 0x00 )
             bAsciiField = FALSE;
 
@@ -325,9 +325,9 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
             }
             else
             {
-                if (nLength > 0 
-                    && (pachSourceData[nLength-1] == chFormatDelimiter 
-                        || pachSourceData[nLength-1] == DDF_FIELD_TERMINATOR) 
+                if (nLength > 0
+                    && (pachSourceData[nLength-1] == chFormatDelimiter
+                        || pachSourceData[nLength-1] == DDF_FIELD_TERMINATOR)
                     && pachSourceData[nLength] == 0)
                 {
                     // Suck up the field terminator if one follows
@@ -337,7 +337,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
                         pachSourceData[nLength+1] == DDF_FIELD_TERMINATOR)
                         extraConsumedBytes++;
                     break;
-                } 
+                }
             }
 
             nLength++;
@@ -484,9 +484,9 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
           // word aligned.
 #ifdef CPL_LSB
           if( pszFormatString[0] == 'B' )
-#else            
+#else
               if( pszFormatString[0] == 'b' )
-#endif            
+#endif
               {
                   for( int i = 0; i < nFormatWidth; i++ )
                       abyData[nFormatWidth-i-1] = pachSourceData[i];
@@ -536,7 +536,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   return 0.0;
               }
 
-            case NotBinary:            
+            case NotBinary:
             case FPReal:
             case FloatComplex:
               //CPLAssert( FALSE );
@@ -605,7 +605,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
           if( nFormatWidth > nMaxBytes || nFormatWidth >= (int)sizeof(abyData) )
           {
-              CPLError( CE_Warning, CPLE_AppDefined, 
+              CPLError( CE_Warning, CPLE_AppDefined,
                         "Attempt to extract int subfield %s with format %s\n"
                         "failed as only %d bytes available.  Using zero.",
                         pszName, pszFormatString, MIN(nMaxBytes, (int)sizeof(abyData)) );
@@ -620,9 +620,9 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
           // word aligned.
 #ifdef CPL_LSB
           if( pszFormatString[0] == 'B' )
-#else            
+#else
               if( pszFormatString[0] == 'b' )
-#endif            
+#endif
               {
                   for( int i = 0; i < nFormatWidth; i++ )
                       abyData[nFormatWidth-i-1] = pachSourceData[i];
@@ -672,7 +672,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   return 0;
               }
 
-            case NotBinary:            
+            case NotBinary:
             case FPReal:
             case FloatComplex:
               //CPLAssert( FALSE );
@@ -748,17 +748,17 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
 /************************************************************************/
 
 /**
- * Get default data. 
+ * Get default data.
  *
  * Returns the default subfield data contents for this subfield definition.
- * For variable length numbers this will normally be "0<unit-terminator>". 
+ * For variable length numbers this will normally be "0<unit-terminator>".
  * For variable length strings it will be "<unit-terminator>".  For fixed
  * length numbers it is zero filled.  For fixed length strings it is space
- * filled.  For binary numbers it is binary zero filled. 
+ * filled.  For binary numbers it is binary zero filled.
  *
  * @param pachData the buffer into which the returned default will be placed.
  * May be NULL if just querying default size.
- * @param nBytesAvailable the size of pachData in bytes. 
+ * @param nBytesAvailable the size of pachData in bytes.
  * @param pnBytesUsed will receive the size of the subfield default data in
  * bytes.
  *
@@ -766,7 +766,7 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
  * small to hold the default.
  */
 
-int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable, 
+int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable,
                                       int *pnBytesUsed )
 
 {
@@ -816,11 +816,11 @@ int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable,
  * Format string subfield value.
  *
  * Returns a buffer with the passed in string value reformatted in a way
- * suitable for storage in a DDFField for this subfield.  
+ * suitable for storage in a DDFField for this subfield.
  */
 
-int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable, 
-                                        int *pnBytesUsed, 
+int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
+                                        int *pnBytesUsed,
                                         const char *pszValue,
                                         int nValueLength )
 
@@ -835,7 +835,7 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
         nSize = nValueLength + 1;
     }
     else
-    {                                                                  
+    {
         nSize = nFormatWidth;
     }
 
@@ -878,10 +878,10 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
  * Format int subfield value.
  *
  * Returns a buffer with the passed in int value reformatted in a way
- * suitable for storage in a DDFField for this subfield.  
+ * suitable for storage in a DDFField for this subfield.
  */
 
-int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable, 
+int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
                                      int *pnBytesUsed, int nNewValue )
 
 {
@@ -895,7 +895,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
         nSize = static_cast<int>(strlen(szWork)) + 1;
     }
     else
-    {                                                                  
+    {
         nSize = nFormatWidth;
 
         if( GetBinaryFormat() == NotBinary && (int) strlen(szWork) > nSize )
@@ -970,10 +970,10 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
  * Format float subfield value.
  *
  * Returns a buffer with the passed in float value reformatted in a way
- * suitable for storage in a DDFField for this subfield.  
+ * suitable for storage in a DDFField for this subfield.
  */
 
-int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable, 
+int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
                                        int *pnBytesUsed, double dfNewValue )
 
 {

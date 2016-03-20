@@ -69,8 +69,8 @@ public:
 /************************************************************************/
 
 GDALDataset *
-DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS, 
-                       int bStrict, char ** papszOptions, 
+DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
+                       int bStrict, char ** papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData)
 
 {
@@ -81,9 +81,9 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     if (nBands != 3 && nBands != 4)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "DDS driver doesn't support %d bands. Must be 3 (rgb) \n"
-                 "or 4 (rgba) bands.\n", 
+                 "or 4 (rgba) bands.\n",
                  nBands);
 
         return NULL;
@@ -91,10 +91,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
     if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "DDS driver doesn't support data type %s. "
-                  "Only eight bit (Byte) bands supported. %s\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit (Byte) bands supported. %s\n",
+                  GDALGetDataTypeName(
                                       poSrcDS->GetRasterBand(1)->GetRasterDataType()),
                   (bStrict) ? "" : "Defaulting to Byte" );
 
@@ -118,8 +118,8 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
     if (fpImage == NULL)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
-                 "Unable to create dds file %s.\n", 
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Unable to create dds file %s.\n",
                  pszFilename);
         return NULL;
     }
@@ -129,10 +129,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
 
     /* Default values */
-    crn_format fmt = cCRNFmtDXT3; 
-    const uint cDXTBlockSize = 4;    
+    crn_format fmt = cCRNFmtDXT3;
+    const uint cDXTBlockSize = 4;
     crn_dxt_quality dxt_quality = cCRNDXTQualityNormal;
-    bool srgb_colorspace = true;    
+    bool srgb_colorspace = true;
     bool dxt1a_transparency = true;
     //bool generate_mipmaps = true;
 
@@ -166,7 +166,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     if (pszQuality)
     {
         if (EQUAL(pszQuality, "SUPERFAST"))
-            dxt_quality = cCRNDXTQualitySuperFast;            
+            dxt_quality = cCRNDXTQualitySuperFast;
         else if (EQUAL(pszQuality, "FAST"))
             dxt_quality = cCRNDXTQualityFast;
         else if (EQUAL(pszQuality, "NORMAL"))
@@ -174,7 +174,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         else if (EQUAL(pszQuality, "BETTER"))
             dxt_quality = cCRNDXTQualityBetter;
         else if (EQUAL(pszQuality, "UBER"))
-            dxt_quality = cCRNDXTQualityUber;        
+            dxt_quality = cCRNDXTQualityUber;
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -236,7 +236,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     const uint bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
     CPLErr eErr = CE_None;
-    const uint nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;  
+    const uint nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;
     const uint num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
     const uint total_compressed_size = num_blocks_x * bytesPerBlock;
 
@@ -252,10 +252,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         const uint size_y = (iLine*cDXTBlockSize+cDXTBlockSize) < (uint)nYSize ?
                            cDXTBlockSize : (cDXTBlockSize-((iLine*cDXTBlockSize+cDXTBlockSize)-(uint)nYSize));
 
-        eErr = poSrcDS->RasterIO(GF_Read, 0, iLine*cDXTBlockSize, nXSize, size_y, 
+        eErr = poSrcDS->RasterIO(GF_Read, 0, iLine*cDXTBlockSize, nXSize, size_y,
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
                                  nBands, NULL,
-                                 nBands, 
+                                 nBands,
                                  nBands * nXSize, 1, NULL);
 
         if (eErr != CE_None)
@@ -271,7 +271,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             {
                 int y = (i*3);
                 src_image[i] = (255<<24) | (pabyScanlines[y+2]<<16) | (pabyScanlines[y+1]<<8) |
-                  pabyScanlines[y];            
+                  pabyScanlines[y];
             }
 
             pSrc_image = &(src_image[0]);

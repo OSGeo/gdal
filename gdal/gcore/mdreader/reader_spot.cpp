@@ -40,7 +40,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     const char* pszDirName = CPLGetDirname(pszPath);
 
     if(m_osIMDSourceFilename.empty())
-    {        
+    {
         pszIMDSourceFilename = CPLFormFilename( pszDirName, "METADATA.DIM", NULL );
 
         if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))

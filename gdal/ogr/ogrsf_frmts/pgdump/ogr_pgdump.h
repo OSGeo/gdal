@@ -74,12 +74,12 @@ class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
         OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
-            OGRGeomFieldDefn(poGeomField), nSRSId(-1), nCoordDimension(2)
+            OGRGeomFieldDefn(poGeomField), nSRSId(-1), GeometryTypeFlags(0)
             {
             }
             
         int nSRSId;
-        int nCoordDimension;
+        int GeometryTypeFlags;
 };
 
 /************************************************************************/
@@ -93,6 +93,7 @@ class OGRPGDumpLayer : public OGRLayer
 {
     char                *pszSchemaName;
     char                *pszSqlTableName;
+    CPLString           osForcedDescription;
     char                *pszFIDColumn;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
@@ -105,6 +106,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bCreateTable;
     int                 nUnknownSRSId;
     int                 nForcedSRSId;
+    int                 nForcedGeometryTypeFlags;
     int                 bCreateSpatialIndexFlag;
     int                 nPostGISMajor;
     int                 nPostGISMinor;
@@ -147,6 +149,9 @@ class OGRPGDumpLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
 
+    virtual CPLErr      SetMetadata(char** papszMD, const char* pszDomain = "");
+    virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "");
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
@@ -158,11 +163,14 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nUnknownSRSId = nUnknownSRSIdIn; }
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }
+    void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
+                                { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
     void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
                                 { nPostGISMajor = nPostGISMajorIn; nPostGISMinor = nPostGISMinorIn; }
     void                SetGeometryFieldName( const char* pszGeomFieldName ) { m_osFirstGeometryFieldName = pszGeomFieldName; }
+    void                SetForcedDescription( const char* pszDescriptionIn );
     OGRErr              EndCopy();
 
     static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);

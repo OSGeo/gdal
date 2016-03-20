@@ -557,8 +557,8 @@ GNMGFID GNMGraph::GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const
     return -1;
 }
 
-void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue, 
-                            std::set<GNMGFID> &markedVertIds, 
+void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
+                            std::set<GNMGFID> &markedVertIds,
                             GNMPATH &connectedIds)
 {
     GNMCONSTVECTOR::const_iterator it;

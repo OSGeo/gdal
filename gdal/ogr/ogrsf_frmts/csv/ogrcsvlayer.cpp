@@ -1139,7 +1139,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount ++;
                         }
-                    } 
+                    }
                     else if ( aeFieldType[iField] == OFTReal )
                     {
                         if( eOGRFieldType != OFTInteger &&
@@ -1715,6 +1715,8 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -1760,14 +1762,14 @@ OGRCSVCreateFieldAction OGRCSVLayer::PreCreateField( OGRFeatureDefn* poFeatureDe
       default:
         if( bApproxOK )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Attempt to create field of type %s, but this is not supported\n"
                       "for .csv files.  Just treating as a plain string.",
                       poNewField->GetFieldTypeName( poNewField->GetType() ) );
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to create field of type %s, but this is not supported\n"
                       "for .csv files.",
                       poNewField->GetFieldTypeName( poNewField->GetType() ) );
@@ -1790,11 +1792,11 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( !TestCapability(OLCCreateField) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create new fields after first feature written.");
         return OGRERR_FAILURE;
     }
-    
+
     OGRCSVCreateFieldAction eAction = PreCreateField( poFeatureDefn, poNewField, bApproxOK );
     if( eAction == CREATE_FIELD_DO_NOTHING )
         return OGRERR_NONE;
@@ -1824,7 +1826,7 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
 {
     if( !TestCapability(OLCCreateGeomField) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create new fields after first feature written.");
         return OGRERR_FAILURE;
     }
@@ -1970,8 +1972,8 @@ OGRErr OGRCSVLayer::WriteHeader()
                 if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
 
-            pszEscaped = 
-                CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), 
+            pszEscaped =
+                CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
                                  -1, CPLES_CSV );
 
             if (fpCSV)
@@ -1994,7 +1996,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 
                 switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
                 {
-                  case OFTInteger:  
+                  case OFTInteger:
                   {
                       if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTBoolean )
                       {
@@ -2058,7 +2060,7 @@ OGRErr OGRCSVLayer::WriteHeader()
         if (fpCSVT) VSIFCloseL(fpCSVT);
     }
 
-    if (!bOK || fpCSV == NULL) 
+    if (!bOK || fpCSV == NULL)
         return OGRERR_FAILURE;
     else
         return OGRERR_NONE;
@@ -2075,7 +2077,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 
     if( !bInWriteMode )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "The CreateFeature() operation is not permitted on a read-only CSV." );
         return OGRERR_FAILURE;
     }
@@ -2176,7 +2178,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     {
         char *pszWKT = NULL;
         OGRGeometry     *poGeom = poNewFeature->GetGeomFieldRef(0);
-        if (poGeom && poGeom->exportToWkt(&pszWKT) == OGRERR_NONE)
+        if (poGeom && poGeom->exportToWkt(&pszWKT, wkbVariantIso) == OGRERR_NONE)
         {
             bNonEmptyLine = TRUE;
             bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
@@ -2202,7 +2204,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         {
             int iGeom = panGeomFieldIndex[iField];
             OGRGeometry     *poGeom = poNewFeature->GetGeomFieldRef(iGeom);
-            if (poGeom && poGeom->exportToWkt(&pszEscaped) == OGRERR_NONE)
+            if (poGeom && poGeom->exportToWkt(&pszEscaped, wkbVariantIso) == OGRERR_NONE)
             {
                 int nLenWKT = (int)strlen(pszEscaped);
                 char* pszNew = (char*) CPLMalloc(1 + nLenWKT + 1 + 1);

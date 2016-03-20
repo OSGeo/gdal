@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -36,7 +36,7 @@
 /*                           GMLPropertyDefn                            */
 /************************************************************************/
 
-GMLPropertyDefn::GMLPropertyDefn( const char *pszName, 
+GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
                                   const char *pszSrcElement )
 
 {
@@ -52,7 +52,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
         m_pszSrcElement = NULL;
     }
     m_eType = GMLPT_Untyped;
-    m_nWidth = 0; 
+    m_nWidth = 0;
     m_nPrecision = 0;
     m_pszCondition = NULL;
     m_bNullable = true;
@@ -145,7 +145,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         CPLValueType valueType = CPLGetValueType(pszValue);
 
         if (valueType == CPL_VALUE_STRING
-            && m_eType != GMLPT_String 
+            && m_eType != GMLPT_String
             && m_eType != GMLPT_StringList )
         {
             if( (m_eType == GMLPT_Untyped || m_eType == GMLPT_Boolean) &&
@@ -175,7 +175,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
                 /* grow the Width to the length of the string passed in */
                 int nWidth;
                 nWidth = static_cast<int>(strlen(pszValue));
-                if ( m_nWidth < nWidth ) 
+                if ( m_nWidth < nWidth )
                     SetWidth( nWidth );
             }
         }

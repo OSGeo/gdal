@@ -428,7 +428,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGPXDataSource::Create( const char *pszFilename, 
+int OGRGPXDataSource::Create( const char *pszFilename,
                               char **papszOptions )
 {
     if( fpOutput != NULL)
@@ -468,8 +468,8 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         fpOutput = VSIFOpenL( pszFilename, "w+" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GPX file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GPX file %s.",
                   pszFilename );
         return FALSE;
     }

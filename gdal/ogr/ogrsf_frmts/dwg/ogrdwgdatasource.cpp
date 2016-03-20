@@ -114,21 +114,21 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    try 
+    try
     {
         OdString f(pszFilename);
-        poDb = poServices->readFile(f.c_str(), true, false, Oda::kShareDenyNo); 
+        poDb = poServices->readFile(f.c_str(), true, false, Oda::kShareDenyNo);
     }
     catch( OdError& e )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s",
                   (const char *) poServices->getErrorDescription(e.code()) );
     }
     catch( ... )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "DWG readFile(%s) failed with generic exception.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "DWG readFile(%s) failed with generic exception.",
                   pszFilename );
     }
 
@@ -181,7 +181,7 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         oLayerProperties["Exists"] = "1";
 
         OdDbLinetypeTableRecordPtr poLT = poLD->linetypeObjectId().safeOpenObject();
-        oLayerProperties["Linetype"] = 
+        oLayerProperties["Linetype"] =
             ACTextUnescape(poLT->getName(),GetEncoding());
 
         osValue.Printf( "%d", poLD->colorIndex() );
@@ -198,7 +198,7 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         oLayerTable[osLayerName] = oLayerProperties;
     }
 
-    CPLDebug( "DWG", "Read %d layer definitions.", 
+    CPLDebug( "DWG", "Read %d layer definitions.",
               (int) oLayerTable.size() );
 }
 
@@ -238,9 +238,9 @@ void OGRDWGDataSource::ReadLineTypeDefinitions()
 
         osLineTypeName = ACTextUnescape(poLT->getName(),GetEncoding());
 
-        if (poLT->numDashes()) 
+        if (poLT->numDashes())
         {
-            for (int i=0; i < poLT->numDashes(); i++) 
+            for (int i=0; i < poLT->numDashes(); i++)
             {
                 if( i > 0 )
                     osLineTypeDef += " ";
@@ -254,7 +254,7 @@ void OGRDWGDataSource::ReadLineTypeDefinitions()
 
             oLineTypeTable[osLineTypeName] = osLineTypeDef;
             CPLDebug( "DWG", "LineType '%s' = '%s'",
-                       osLineTypeName.c_str(), 
+                       osLineTypeName.c_str(),
                        osLineTypeDef.c_str() );
         }
     }
@@ -290,7 +290,7 @@ void OGRDWGDataSource::ReadHeaderSection()
     osValue.Printf( "%g", poDb->dimtxt() );
     oHeaderVariables["$DIMTXT"] = osValue;
 
-    CPLDebug( "DWG", "Read %d header variables.", 
+    CPLDebug( "DWG", "Read %d header variables.",
               (int) oHeaderVariables.size() );
 
 /* -------------------------------------------------------------------- */
@@ -301,7 +301,7 @@ void OGRDWGDataSource::ReadHeaderSection()
 
     // not strictly accurate but works even without iconv.
     if( osCodepage == "ANSI_1252" )
-        osEncoding = CPL_ENC_ISO8859_1; 
+        osEncoding = CPL_ENC_ISO8859_1;
     else if( STARTS_WITH_CI(osCodepage, "ANSI_") )
     {
         osEncoding = "CP";
@@ -309,7 +309,7 @@ void OGRDWGDataSource::ReadHeaderSection()
     }
     else
     {
-        // fallback to the default 
+        // fallback to the default
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
@@ -317,7 +317,7 @@ void OGRDWGDataSource::ReadHeaderSection()
         osEncoding = CPLGetConfigOption( "DWG_ENCODING", NULL );
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
-        CPLDebug( "DWG", "Treating DWG as encoding '%s', $DWGCODEPAGE='%s'", 
+        CPLDebug( "DWG", "Treating DWG as encoding '%s', $DWGCODEPAGE='%s'",
                   osEncoding.c_str(), osCodepage.c_str() );
 }
 
@@ -327,13 +327,13 @@ void OGRDWGDataSource::ReadHeaderSection()
 /*      Fetch a variable that came from the HEADER section.             */
 /************************************************************************/
 
-const char *OGRDWGDataSource::GetVariable( const char *pszName, 
+const char *OGRDWGDataSource::GetVariable( const char *pszName,
                                            const char *pszDefault )
 
 {
     if( oHeaderVariables.count(pszName) == 0 )
         return pszDefault;
-    else 
+    else
         return oHeaderVariables[pszName];
 }
 

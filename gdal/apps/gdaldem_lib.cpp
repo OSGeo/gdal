@@ -2,17 +2,17 @@
  * $Id$
  *
  * Project:  GDAL DEM Utilities
- * Purpose:  
+ * Purpose:
  * Authors:  Matthew Perry, perrygeo at gmail.com
  *           Even Rouault, even dot rouault at mines dash paris dot org
  *           Howard Butler, hobu.inc at gmail.com
  *           Chris Yesson, chris dot yesson at ioz dot ac dot uk
  *
  ******************************************************************************
- * Copyright (c) 2006, 2009 Matthew Perry 
+ * Copyright (c) 2006, 2009 Matthew Perry
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
- * Portions derived from GRASS 4.1 (public domain) See 
- * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding 
+ * Portions derived from GRASS 4.1 (public domain) See
+ * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding
  * history of this code
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -42,7 +42,7 @@
  *
  * Horn's formula is used to find the first order derivatives in x and y directions
  * for slope and aspect calculations: Horn, B. K. P. (1981).
- * "Hill Shading and the Reflectance Map", Proceedings of the IEEE, 69(1):14-47. 
+ * "Hill Shading and the Reflectance Map", Proceedings of the IEEE, 69(1):14-47.
  *
  * Other reference :
  * Burrough, P.A. and McDonell, R.A., 1998. Principles of Geographical Information
@@ -69,17 +69,17 @@
  * Dartnell (2000).
  *
  * References for TRI/TPI/Roughness:
- * Dartnell, P. 2000. Applying Remote Sensing Techniques to map Seafloor 
- *  Geology/Habitat Relationships. Masters Thesis, San Francisco State 
+ * Dartnell, P. 2000. Applying Remote Sensing Techniques to map Seafloor
+ *  Geology/Habitat Relationships. Masters Thesis, San Francisco State
  *  University, pp. 108.
- * Valentine, P. C., S. J. Fuller, L. A. Scully. 2004. Terrain Ruggedness 
+ * Valentine, P. C., S. J. Fuller, L. A. Scully. 2004. Terrain Ruggedness
  *  Analysis and Distribution of Boulder Ridges in the Stellwagen Bank National
- *  Marine Sanctuary Region (poster). Galway, Ireland: 5th International 
- *  Symposium on Marine Geological and Biological Habitat Mapping (GeoHAB), 
+ *  Marine Sanctuary Region (poster). Galway, Ireland: 5th International
+ *  Symposium on Marine Geological and Biological Habitat Mapping (GeoHAB),
  *  May 2004.
- * Weiss, A. D. 2001. Topographic Positions and Landforms Analysis (poster), 
+ * Weiss, A. D. 2001. Topographic Positions and Landforms Analysis (poster),
  *  ESRI International User Conference, July 2001. San Diego, CA: ESRI.
- * Wilson, M. F. J.; O'Connell, B.; Brown, C.; Guinan, J. C. & Grehan, A. J. 
+ * Wilson, M. F. J.; O'Connell, B.; Brown, C.; Guinan, J. C. & Grehan, A. J.
  *  Multiscale terrain analysis of multibeam bathymetry data for habitat mapping
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
@@ -120,7 +120,7 @@ struct GDALDEMProcessingOptions
     double scale;
     double az;
     double alt;
-    int slopeFormat; 
+    int slopeFormat;
     int bAddAlpha;
     int bZeroForFlat;
     int bAngleAsAzimuth ;
@@ -225,7 +225,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     int nLine2Off = 1*nXSize;
     int nLine3Off = 2*nXSize;
 
-    // Move a 3x3 pafWindow over each cell 
+    // Move a 3x3 pafWindow over each cell
     // (where the cell in question is #4)
     //
     //      0 1 2
@@ -594,7 +594,7 @@ float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, CPL_UNUSED float 
     // combined shading
     cang = 1 - cang * atan(sqrt(slope)) / psData->square_M_PI_2;
 
-    if (cang <= 0.0) 
+    if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
@@ -713,7 +713,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
           (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
+    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
           (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
     aspect = (float) (atan2(dy,-dx) / degreesToRadians);
@@ -725,7 +725,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0) 
+        if (aspect > 90.0)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -736,7 +736,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
             aspect += 360.0;
     }
 
-    if (aspect == 360.0) 
+    if (aspect == 360.0)
         aspect = 0.0;
 
     return aspect;
@@ -760,10 +760,10 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
     {
         /* Flat area */
         aspect = fDstNoDataValue;
-    } 
+    }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0) 
+        if (aspect > 90.0)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -774,7 +774,7 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
             aspect += 360.0;
     }
 
-    if (aspect == 360.0) 
+    if (aspect == 360.0)
         aspect = 0.0;
 
     return aspect;
@@ -1057,7 +1057,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
             bIsGMT_CPT = TRUE;
         }
 
-        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:", 
+        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:",
                                                       FALSE, FALSE );
         /* Skip comment lines */
         int nTokens = CSLCount(papszFields);
@@ -1659,7 +1659,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
     int bRelativeToVRT;
     CPLString osPath = CPLGetPath(pszDstFilename);
     char* pszSourceFilename = CPLStrdup(
-        CPLExtractRelativePath( osPath.c_str(), GDALGetDescription(hSrcDataset), 
+        CPLExtractRelativePath( osPath.c_str(), GDALGetDescription(hSrcDataset),
                                 &bRelativeToVRT ));
 
     for(iBand = 0; iBand < nBands; iBand++)
@@ -2421,13 +2421,13 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
     hDriver = GDALGetDriverByName(psOptions->pszFormat);
-    if( hDriver == NULL 
+    if( hDriver == NULL
         || (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL))
     {
         int	iDr;
 
-        CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.", 
+        CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.",
                  psOptions->pszFormat );
         fprintf( stderr, "The following format drivers are configured\n"
                 "and support output:\n" );
@@ -2630,8 +2630,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         }
 
         GDALDatasetH hOutDS = GDALCreateCopy(
-                                 hDriver, pszDest, hIntermediateDataset, 
-                                 TRUE, psOptions->papszCreateOptions, 
+                                 hDriver, pszDest, hIntermediateDataset,
+                                 TRUE, psOptions->papszCreateOptions,
                                  pfnProgress, pProgressData );
 
         GDALClose(hIntermediateDataset);
@@ -2672,7 +2672,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
 
     if (eUtilityMode == COLOR_RELIEF)
     {
-        GDALColorRelief (hSrcBand, 
+        GDALColorRelief (hSrcBand,
                          GDALGetRasterBand(hDstDataset, 1),
                          GDALGetRasterBand(hDstDataset, 2),
                          GDALGetRasterBand(hDstDataset, 3),
@@ -2731,7 +2731,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
     psOptions->az = 315.0;
     psOptions->alt = 45.0;
     // 0 = 'percent' or 1 = 'degrees'
-    psOptions->slopeFormat = 1; 
+    psOptions->slopeFormat = 1;
     psOptions->bAddAlpha = FALSE;
     psOptions->bZeroForFlat = FALSE;
     psOptions->bAngleAsAzimuth = TRUE;
@@ -2821,8 +2821,8 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
         {
             psOptions->eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
         }
-        else if( 
-            (EQUAL(papszArgv[i], "--s") || 
+        else if(
+            (EQUAL(papszArgv[i], "--s") ||
              EQUAL(papszArgv[i], "-s") ||
              EQUAL(papszArgv[i], "--scale") ||
              EQUAL(papszArgv[i], "-scale")) && i+1<argc
@@ -2837,8 +2837,8 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             }
             psOptions->scale = CPLAtof(papszArgv[i]);
         }
-        else if( 
-            (EQUAL(papszArgv[i], "--az") || 
+        else if(
+            (EQUAL(papszArgv[i], "--az") ||
              EQUAL(papszArgv[i], "-az") ||
              EQUAL(papszArgv[i], "--azimuth") ||
              EQUAL(papszArgv[i], "-azimuth")) && i+1<argc
@@ -2854,7 +2854,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             psOptions->az = CPLAtof(papszArgv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(papszArgv[i], "--alt") || 
+            (EQUAL(papszArgv[i], "--alt") ||
              EQUAL(papszArgv[i], "-alt") ||
              EQUAL(papszArgv[i], "--alt") ||
              EQUAL(papszArgv[i], "-alt")) && i+1<argc
@@ -2869,25 +2869,25 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             }
             psOptions->alt = CPLAtof(papszArgv[i]);
         }
-        else if( 
-            (EQUAL(papszArgv[i], "-combined") || 
+        else if(
+            (EQUAL(papszArgv[i], "-combined") ||
              EQUAL(papszArgv[i], "--combined"))
           )
         {
             psOptions->bCombined = TRUE;
         }
-        else if( 
+        else if(
                  EQUAL(papszArgv[i], "-alpha"))
         {
             psOptions->bAddAlpha = TRUE;
         }
-        else if( 
+        else if(
                  EQUAL(papszArgv[i], "-compute_edges"))
         {
             psOptions->bComputeAtEdges = TRUE;
         }
         else if( i + 1 < argc &&
-            (EQUAL(papszArgv[i], "--b") || 
+            (EQUAL(papszArgv[i], "--b") ||
              EQUAL(papszArgv[i], "-b"))
           )
         {

@@ -157,7 +157,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         }
         if( bError )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to initialize ODBC connection to DSN for %s,\n"
                     "%s", pszDSN, oSession.GetLastError() );
             CPLFree( pszDSN );
@@ -182,8 +182,8 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !oStmt.ExecuteSQL() )
     {
-        CPLDebug( "PGEO", 
-                  "SELECT on GDB_GeomColumns fails, perhaps not a personal geodatabase?\n%s", 
+        CPLDebug( "PGEO",
+                  "SELECT on GDB_GeomColumns fails, perhaps not a personal geodatabase?\n%s",
                   oSession.GetLastError() );
         return FALSE;
     }
@@ -193,7 +193,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         int i, iNew = static_cast<int>(apapszGeomColumns.size());
         char **papszRecord = NULL;
         for( i = 0; i < 9; i++ )
-            papszRecord = CSLAddString( papszRecord, 
+            papszRecord = CSLAddString( papszRecord,
                                         oStmt.GetColData(i) );
         apapszGeomColumns.resize(iNew+1);
         apapszGeomColumns[iNew] = papszRecord;
@@ -272,8 +272,8 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -284,7 +284,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
         return NULL;

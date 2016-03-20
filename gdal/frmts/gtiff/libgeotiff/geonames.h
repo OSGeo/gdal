@@ -1,8 +1,8 @@
 /*
  * geonames.h
  *
- *  This encapsulates all of the value-naming mechanism of 
- *  libgeotiff. 
+ *  This encapsulates all of the value-naming mechanism of
+ *  libgeotiff.
  *
  *  Written By: Niles Ritter
  *
@@ -21,8 +21,8 @@ struct _KeyInfo {
 };
 typedef struct _KeyInfo KeyInfo;
 
-/* If memory is a premium, then omitting the 
- * long name lists may save some space; simply 
+/* If memory is a premium, then omitting the
+ * long name lists may save some space; simply
  * #define OMIT_GEOTIFF_NAMES in the compile statement
  * to remove all key->string translation.
  */
@@ -51,11 +51,11 @@ static const KeyInfo _keyInfo[] =  {
    {KvUndefined, "Undefined"}, \
    {KvUserDefined,"User-Defined"}, \
    ValuePair(KvUndefined,KvUndefined) \
-   ValuePair(KvUserDefined,KvUserDefined) 
+   ValuePair(KvUserDefined,KvUserDefined)
 
 static const KeyInfo _csdefaultValue[] = {
    COMMON_VALUES
-   END_LIST  
+   END_LIST
 };
 
 /************************************************************
@@ -70,75 +70,74 @@ static const KeyInfo _modeltypeValue[] = {
     ValuePair(ModelProjected,1)     /* aliases */
     ValuePair(ModelGeographic,2)    /* aliases */
     ValuePair(ModelGeocentric,3)    /* aliases */
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _rastertypeValue[] = {
    COMMON_VALUES
     ValuePair(RasterPixelIsArea,1)
     ValuePair(RasterPixelIsPoint,2)
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _geounitsValue[] = {
    COMMON_VALUES
 #  include "epsg_units.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _geographicValue[] = {
    COMMON_VALUES
 #  include "epsg_gcs.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _geodeticdatumValue[] = {
    COMMON_VALUES
 #  include "epsg_datum.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _ellipsoidValue[] = {
    COMMON_VALUES
 #  include "epsg_ellipse.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _primemeridianValue[] = {
    COMMON_VALUES
 #  include "epsg_pm.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _pcstypeValue[] = {
    COMMON_VALUES
 #  include "epsg_pcs.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _projectionValue[] = {
    COMMON_VALUES
 #  include "epsg_proj.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _coordtransValue[] = {
    COMMON_VALUES
 #  include "geo_ctrans.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _vertcstypeValue[] = {
    COMMON_VALUES
 #  include "epsg_vertcs.inc"
-   END_LIST  
+   END_LIST
 };
 
 static const KeyInfo _vdatumValue[] = {
    COMMON_VALUES
     ValuePair(VDatumBase,1)
-   END_LIST  
+   END_LIST
 };
 
 #endif /* LIBGEOTIFF_GEONAMES_H_ */
-

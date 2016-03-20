@@ -90,7 +90,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
         CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
     if( bMemoryError )
@@ -111,7 +111,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
          psTable != NULL;
          psTable = psTable->psNext )
     {
-        if( EQUAL(psTable->pszFilename,pszFilename) )
+        if( EQUAL(psTable->pszFilename, pszFilename) )
         {
             /*
              * Eventually we should consider promoting to the front of
@@ -132,7 +132,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
 /* -------------------------------------------------------------------- */
-    CSVTable *psTable = reinterpret_cast<CSVTable *>(
+    CSVTable * const psTable = reinterpret_cast<CSVTable *>(
         VSI_CALLOC_VERBOSE( sizeof(CSVTable), 1 ) );
     if( psTable == NULL )
     {
@@ -190,7 +190,7 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
     CSVTable *psLast = NULL;
     CSVTable *psTable = *ppsCSVTableList;
     for( ;
-         psTable != NULL && !EQUAL(psTable->pszFilename,pszFilename);
+         psTable != NULL && !EQUAL(psTable->pszFilename, pszFilename);
          psTable = psTable->psNext )
     {
         psLast = psTable;
@@ -236,7 +236,7 @@ void CSVDeaccess( const char * pszFilename )
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
         CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
 
@@ -266,7 +266,6 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
     while( pszString != NULL && *pszString != '\0' )
     {
         bool bInString = false;
-
         int nTokenLen = 0;
 
         /* Try to find the next delimiter, marking end of token */
@@ -533,7 +532,9 @@ char CSVDetectSeperator (const char* pszLine)
             }
         }
         else if( !bInString && *pszLine == ' ' )
+        {
             nCountSpace++;
+        }
         else if( *pszLine == '"' )
         {
             if( !bInString || pszLine[1] != '"' )
@@ -625,7 +626,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         if (pszWorkLineTmp == NULL)
             break;
         pszWorkLine = pszWorkLineTmp;
-         // The newline gets lost in CPLReadLine().
+        // The newline gets lost in CPLReadLine().
         strcat( pszWorkLine + nWorkLineLength, "\n" );
         strcat( pszWorkLine + nWorkLineLength, pszLine );
 
@@ -659,11 +660,11 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
 {
     CPLAssert( fp != NULL );
     if( fp == NULL )
-        return( NULL );
+        return NULL;
 
     const char  *pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
-        return( NULL );
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If there are no quotes, then this is the simple case.           */
@@ -981,7 +982,7 @@ char **CSVGetNextLine( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     CPLAssert( pszFilename != NULL );
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
 
@@ -1025,7 +1026,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
     if( iKeyField < 0 )
         return NULL;
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
 
@@ -1101,7 +1102,7 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 }
 
 /************************************************************************/
-/*                           CPLGetFieldIdL()                            */
+/*                           CPLGetFieldIdL()                           */
 /*                                                                      */
 /*      Read the first record of a CSV file (rewinding to be sure),     */
 /*      and find the field with the indicated name.  Returns -1 if      */
@@ -1148,7 +1149,7 @@ int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
 /* -------------------------------------------------------------------- */
     CPLAssert( pszFilename != NULL );
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return -1;
 
@@ -1182,7 +1183,7 @@ char **CSVScanFileByName( const char * pszFilename,
                           const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    int iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
+    const int iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
     if( iKeyField == -1 )
         return NULL;
 
@@ -1209,7 +1210,7 @@ const char *CSVGetField( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Find the table.                                                 */
 /* -------------------------------------------------------------------- */
-    CSVTable    *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return "";
 
@@ -1254,14 +1255,14 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      Do we already have this file accessed?  If so, just return      */
 /*      the existing path without any further probing.                  */
 /* -------------------------------------------------------------------- */
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
       CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
     if( ppsCSVTableList != NULL )
     {
         const size_t nBasenameLen = strlen(pszBasename);
 
-        for( CSVTable *psTable = *ppsCSVTableList;
+        for( const CSVTable *psTable = *ppsCSVTableList;
              psTable != NULL;
              psTable = psTable->psNext )
         {

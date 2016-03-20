@@ -184,7 +184,7 @@ CPLErr IDARasterBand::SetOffset( double dfNewValue )
 
     if( poIDS->nImageType != 200 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Setting explicit offset only support for image type 200.");
         return CE_Failure;
     }
@@ -222,7 +222,7 @@ CPLErr IDARasterBand::SetScale( double dfNewValue )
 
     if( poIDS->nImageType != 200 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Setting explicit scale only support for image type 200.");
         return CE_Failure;
     }
@@ -264,7 +264,7 @@ GDALColorInterp IDARasterBand::GetColorInterpretation()
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT() 
+GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT()
 
 {
     if( poRAT )
@@ -325,36 +325,36 @@ void IDADataset::ProcessGeoref()
 {
     OGRSpatialReference oSRS;
 
-    if( nProjection == 3 ) 
+    if( nProjection == 3 )
     {
         oSRS.SetWellKnownGeogCS( "WGS84" );
     }
-    else if( nProjection == 4 ) 
+    else if( nProjection == 4 )
     {
-        oSRS.SetLCC( dfParallel1, dfParallel2, 
-                     dfLatCenter, dfLongCenter, 
+        oSRS.SetLCC( dfParallel1, dfParallel2,
+                     dfLatCenter, dfLongCenter,
                      0.0, 0.0 );
-        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866", 
+        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866",
                         6378206.4, 293.97869821389662 );
     }
-    else if( nProjection == 6 ) 
+    else if( nProjection == 6 )
     {
         oSRS.SetLAEA( dfLatCenter, dfLongCenter, 0.0, 0.0 );
-        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere", 
+        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere",
                         6370997.0, 0.0 );
     }
     else if( nProjection == 8 )
     {
-        oSRS.SetACEA( dfParallel1, dfParallel2, 
-                      dfLatCenter, dfLongCenter, 
+        oSRS.SetACEA( dfParallel1, dfParallel2,
+                      dfLatCenter, dfLongCenter,
                       0.0, 0.0 );
-        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866", 
+        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866",
                         6378206.4, 293.97869821389662 );
     }
-    else if( nProjection == 9 ) 
+    else if( nProjection == 9 )
     {
         oSRS.SetGH( dfLongCenter, 0.0, 0.0 );
-        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere", 
+        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere",
                         6370997.0, 0.0 );
     }
 
@@ -474,7 +474,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /* -------------------------------------------------------------------- */
     if( oSRS.IsGeographic() )
     {
-        // If no change, just return. 
+        // If no change, just return.
         if( nProjection == 3 )
             return CE_None;
 
@@ -564,11 +564,11 @@ void IDADataset::ReadColorTable()
     if( strlen(osCLRFilename) == 0 )
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
-    FILE *fp = VSIFOpen( osCLRFilename, "r" );
+    VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );
     if( fp == NULL )
     {
         osCLRFilename = CPLResetExtension(osCLRFilename, "CLR" );
-        fp = VSIFOpen( osCLRFilename, "r" );
+        fp = VSIFOpenL( osCLRFilename, "r" );
     }
 
     if( fp == NULL )
@@ -577,7 +577,7 @@ void IDADataset::ReadColorTable()
 /* -------------------------------------------------------------------- */
 /*      Skip first line, with the column titles.                        */
 /* -------------------------------------------------------------------- */
-    CPLReadLine( fp );
+    CPLReadLineL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create a RAT to populate.                                       */
@@ -594,12 +594,12 @@ void IDADataset::ReadColorTable()
 /* -------------------------------------------------------------------- */
 /*      Apply lines.                                                    */
 /* -------------------------------------------------------------------- */
-    const char *pszLine = CPLReadLine( fp );
+    const char *pszLine = CPLReadLineL( fp );
     int iRow = 0;
 
     while( pszLine != NULL )
     {
-        char **papszTokens = 
+        char **papszTokens =
             CSLTokenizeStringComplex( pszLine, " \t", FALSE, FALSE );
 
         if( CSLCount( papszTokens ) >= 5 )
@@ -610,7 +610,7 @@ void IDADataset::ReadColorTable()
             poRAT->SetValue( iRow, 3, atoi(papszTokens[3]) );
             poRAT->SetValue( iRow, 4, atoi(papszTokens[4]) );
 
-            // find name, first nonspace after 5th token. 
+            // find name, first nonspace after 5th token.
             const char *pszName = pszLine;
 
             // skip from
@@ -653,10 +653,10 @@ void IDADataset::ReadColorTable()
         }
 
         CSLDestroy( papszTokens );
-        pszLine = CPLReadLine( fp );
+        pszLine = CPLReadLineL( fp );
     }
 
-    CPL_IGNORE_RET_VAL(VSIFClose( fp ));
+    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Attach RAT to band.                                             */
@@ -686,14 +686,14 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 512 )
         return NULL;
 
-    // projection legal? 
+    // projection legal?
     if( poOpenInfo->pabyHeader[23] > 10 )
         return NULL;
 
-    // imagetype legal? 
-    if( (poOpenInfo->pabyHeader[22] > 14 
+    // imagetype legal?
+    if( (poOpenInfo->pabyHeader[22] > 14
          && poOpenInfo->pabyHeader[22] < 100)
-        || (poOpenInfo->pabyHeader[22] > 114 
+        || (poOpenInfo->pabyHeader[22] > 114
             && poOpenInfo->pabyHeader[22] != 200 ) )
         return NULL;
 
@@ -728,19 +728,19 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nImageType = poOpenInfo->pabyHeader[22];
     poDS->nProjection = poOpenInfo->pabyHeader[23];
 
-    poDS->nRasterYSize = poOpenInfo->pabyHeader[30] 
+    poDS->nRasterYSize = poOpenInfo->pabyHeader[30]
         + poOpenInfo->pabyHeader[31] * 256;
-    poDS->nRasterXSize = poOpenInfo->pabyHeader[32] 
+    poDS->nRasterXSize = poOpenInfo->pabyHeader[32]
         + poOpenInfo->pabyHeader[33] * 256;
 
     strncpy( poDS->szTitle, (const char *) poOpenInfo->pabyHeader+38, 80 );
     poDS->szTitle[80] = '\0';
 
     int nLastTitleChar = static_cast<int>(strlen(poDS->szTitle))-1;
-    while( nLastTitleChar > -1 
-           && (poDS->szTitle[nLastTitleChar] == 10 
-               || poDS->szTitle[nLastTitleChar] == 13 
-               || poDS->szTitle[nLastTitleChar] == ' ') ) 
+    while( nLastTitleChar > -1
+           && (poDS->szTitle[nLastTitleChar] == 10
+               || poDS->szTitle[nLastTitleChar] == 13
+               || poDS->szTitle[nLastTitleChar] == ' ') )
         poDS->szTitle[nLastTitleChar--] = '\0';
 
     poDS->dfLatCenter = tp2c( poOpenInfo->pabyHeader + 120 );
@@ -900,14 +900,14 @@ CALCULATED =200
         poDS->eAccess = GA_Update;
         if( poDS->fpRaw == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open %s for write access.", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open %s for write access.",
                       poOpenInfo->pszFilename );
             return NULL;
         }
     }
 
-    poDS->SetBand( 1, new IDARasterBand( poDS, poDS->fpRaw, 
+    poDS->SetBand( 1, new IDARasterBand( poDS, poDS->fpRaw,
                                          poDS->nRasterXSize ) );
 
 /* -------------------------------------------------------------------- */
@@ -1056,8 +1056,8 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
 
     if( VSIFWrite( abyHeader, 1, 512, fp ) != 512 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "IO error writing %s.\n%s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
         CPL_IGNORE_RET_VAL(VSIFClose( fp ));
         return NULL;
@@ -1071,8 +1071,8 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
     if( VSIFSeek( fp, nXSize * nYSize - 1, SEEK_CUR ) != 0
         || VSIFWrite( abyHeader, 1, 1, fp ) != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "IO error writing %s.\n%s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
         VSIFClose( fp );
         return NULL;
@@ -1080,8 +1080,8 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
 
     if( VSIFClose( fp ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "IO error writing %s.\n%s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
         return NULL;
     }

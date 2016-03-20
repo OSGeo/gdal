@@ -7,23 +7,23 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
@@ -101,7 +101,7 @@ kealib::KEADataType GDAL_to_KEA_Type( GDALDataType egdalType )
     return ekeaType;
 }
 
-// static function - pointer set in driver 
+// static function - pointer set in driver
 GDALDataset *KEADataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( Identify( poOpenInfo ) )
@@ -249,9 +249,9 @@ H5::H5File *KEADataset::CreateLL( const char * pszFilename,
         H5::H5File *keaImgH5File = kealib::KEAImageIO::createKEAImage( pszFilename,
                                                     keaDataType,
                                                     nXSize, nYSize, nBands,
-                                                    NULL, NULL, nimageblockSize, 
+                                                    NULL, NULL, nimageblockSize,
                                                     nattblockSize, nmdcElmts, nrdccNElmts,
-                                                    nrdccNBytes, nrdccW0, nsieveBuf, 
+                                                    nrdccNBytes, nrdccW0, nsieveBuf,
                                                     nmetaBlockSize, ndeflate );
         return keaImgH5File;
     }
@@ -307,7 +307,7 @@ GDALDataset *KEADataset::Create( const char * pszFilename,
 }
 
 GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrcDs,
-                                CPL_UNUSED int bStrict, char **  papszParmList, 
+                                CPL_UNUSED int bStrict, char **  papszParmList,
                                 GDALProgressFunc pfnProgress, void *pProgressData )
 {
     // get the data out of the input dataset
@@ -436,7 +436,7 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
             // read in overviews
             pBand->readExistingOverviews();
             // set the band into this dataset
-            this->SetBand( nCount + 1, pBand );            
+            this->SetBand( nCount + 1, pBand );
         }
 
         // read in the metadata
@@ -578,8 +578,8 @@ void * KEADataset::GetInternalHandle(const char *)
 
 // this is called by GDALDataset::BuildOverviews. we implement this function to support
 // building of overviews
-CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList, 
-                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress, 
+CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
+                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
     // go through the list of bands that have been passed in
@@ -645,12 +645,12 @@ const char *KEADataset::GetMetadataItem (const char *pszName, const char *pszDom
 
 // get the whole metadata as CSLStringList
 char **KEADataset::GetMetadata(const char *pszDomain)
-{ 
+{
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
     // this is what we store it as anyway
-    return m_papszMetadataList; 
+    return m_papszMetadataList;
 }
 
 // set the whole metadata as a CSLStringList
@@ -740,7 +740,7 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
     // note GDAL uses indices starting at 1 and so does kealib
     KEARasterBand *pBand = new KEARasterBand(this, this->nBands+1, this->eAccess,
             m_pImageIO, m_pnRefcount);
-    this->SetBand(this->nBands+1, pBand);            
+    this->SetBand(this->nBands+1, pBand);
 
     return CE_None;
 }
@@ -752,7 +752,7 @@ int KEADataset::GetGCPCount()
     {
         return m_pImageIO->getGCPCount();
     }
-    catch (const kealib::KEAIOException &) 
+    catch (const kealib::KEAIOException &)
     {
         return 0;
     }
@@ -768,7 +768,7 @@ const char* KEADataset::GetGCPProjection()
             std::string sProj = m_pImageIO->getGCPProjection();
             m_pszGCPProjection = CPLStrdup( sProj.c_str() );
         }
-        catch (const kealib::KEAIOException &) 
+        catch (const kealib::KEAIOException &)
         {
             return NULL;
         }
@@ -804,7 +804,7 @@ const GDAL_GCP* KEADataset::GetGCPs()
 
             delete pKEAGCPs;
         }
-        catch (const kealib::KEAIOException &) 
+        catch (const kealib::KEAIOException &)
         {
             return NULL;
         }
@@ -837,7 +837,7 @@ CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char
     {
         m_pImageIO->setGCPs(pKEAGCPs, pszGCPProjection);
     }
-    catch (const kealib::KEAIOException &e) 
+    catch (const kealib::KEAIOException &e)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                 "Unable to write GCPs: %s", e.what() );

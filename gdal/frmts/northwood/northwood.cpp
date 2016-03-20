@@ -209,7 +209,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Read failure, file short?" );
             return FALSE;
         }
@@ -235,7 +235,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
             unsigned char cTmp[256];
             if( !VSIFReadL( &cTmp, 9, 1, pGrd->fp ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                           "Read failure, file short?" );
                 return FALSE;
             }
@@ -258,7 +258,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
             if ( psItem->usLen > sizeof(psItem->szClassName)-1 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Unexpected long class name, %d characters long - unable to read file.",
                           psItem->usLen );
                 return FALSE;

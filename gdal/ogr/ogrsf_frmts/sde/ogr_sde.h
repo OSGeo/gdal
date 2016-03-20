@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR SDE driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net>
  * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  ******************************************************************************
@@ -88,7 +88,7 @@ class OGRSDELayer : public OGRLayer
 
     int                 iShapeColumn;
 
-    int                 bUseNSTRING; 
+    int                 bUseNSTRING;
 
 
     char              **papszAllColumns;
@@ -178,8 +178,8 @@ class OGRSDEDataSource : public OGRDataSource
                         ~OGRSDEDataSource();
 
     int                 Open( const char *, int );
-    int                 OpenTable( const char *pszTableName, 
-                                   const char *pszFIDColumn, 
+    int                 OpenTable( const char *pszTableName,
+                                   const char *pszFIDColumn,
                                    const char *pszShapeColumn,
                                    LONG nFIDColumnType );
 
@@ -204,7 +204,7 @@ class OGRSDEDataSource : public OGRDataSource
 
     OGRErr              ConvertOSRtoSDESpatRef( OGRSpatialReference *,
                                                 SE_COORDREF * );
-    int                 IsOpenForUpdate() { return bDSUpdate; } 
+    int                 IsOpenForUpdate() { return bDSUpdate; }
     int                 UseVersionEdits() { return bDSUseVersionEdits; }
 
   protected:
@@ -235,5 +235,3 @@ class OGRSDEDriver : public OGRSFDriver
 
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
-

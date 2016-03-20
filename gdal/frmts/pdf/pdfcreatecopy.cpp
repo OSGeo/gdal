@@ -2502,7 +2502,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             oDict.Add("Border", &(new GDALPDFArrayRW())->Add(0).Add(0).Add(0));
             oDict.Add("H", GDALPDFObjectRW::CreateName("I"));
 
-            if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon && 
+            if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon &&
                 OGR_G_GetGeometryCount(hGeom) == 1 )
             {
                 OGRGeometryH hSubGeom = OGR_G_GetGeometryRef(hGeom, 0);
@@ -2682,7 +2682,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                         dfX - dfRadius * dfKappa, dfY + dfRadius,
                         dfX - dfRadius, dfY + dfRadius * dfKappa,
                         dfX - dfRadius, dfY);
-            if (osSymbolId == "ogr-sym-2") 
+            if (osSymbolId == "ogr-sym-2")
                 VSIFPrintfL(fp, "s\n"); /* not filled */
             else
                 VSIFPrintfL(fp, "b*\n"); /* filled */

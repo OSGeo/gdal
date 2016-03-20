@@ -28,14 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
 #include "cpl_conv.h"
+#include "cpl_vsi.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include <vector>
+
 CPL_CVSID("$Id$");
+
+using std::vector;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -48,8 +53,19 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
-                            char **papszSiblingsIn )
-
+                            char **papszSiblingsIn ) :
+    bHasGotSiblingFiles(false),
+    papszSiblingFiles(NULL),
+    nHeaderBytesTried(0),
+    pszFilename(CPLStrdup(pszFilenameIn)),
+    papszOpenOptions(NULL),
+    eAccess(nOpenFlagsIn & GDAL_OF_UPDATE ? GA_Update : GA_ReadOnly),
+    nOpenFlags(nOpenFlagsIn),
+    bStatOK(FALSE),
+    bIsDirectory(FALSE),
+    fpL(NULL),
+    nHeaderBytes(0),
+    pabyHeader(NULL)
 {
 
 /* -------------------------------------------------------------------- */
@@ -63,45 +79,28 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
 
         strcpy( szAltPath, pszFilenameIn );
         strcat( szAltPath, "\\" );
+        CPLFree( pszFilename );
         pszFilename = CPLStrdup( szAltPath );
     }
-    else
-#endif
-        pszFilename = CPLStrdup( pszFilenameIn );
-
-/* -------------------------------------------------------------------- */
-/*      Initialize.                                                     */
-/* -------------------------------------------------------------------- */
-
-    nHeaderBytes = 0;
-    nHeaderBytesTried = 0;
-    pabyHeader = NULL;
-    bStatOK = FALSE;
-    bIsDirectory = FALSE;
-    nOpenFlags = nOpenFlagsIn;
-    eAccess = (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
-    fpL = NULL;
-    papszOpenOptions = NULL;
-
-#ifdef HAVE_READLINK
-    bool bHasRetried = false;
-#endif
+#endif  // WIN32
 
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
 /* -------------------------------------------------------------------- */
-    VSIStatBufL  sStat;
 
 #ifdef HAVE_READLINK
-retry:
-#endif
+    bool bHasRetried = false;
+
+retry:  // TODO(schwehr): Stop using goto.
+
+#endif  // HAVE_READLINK
 
 #ifdef __FreeBSD__
     /* FreeBSD 8 oddity: fopen(a_directory, "rb") returns non NULL */
     bool bPotentialDirectory = (eAccess == GA_ReadOnly);
 #else
     bool bPotentialDirectory = false;
-#endif
+#endif  // __FreeBDS__
 
     /* Check if the filename might be a directory of a special virtual file system */
     if( STARTS_WITH(pszFilename, "/vsizip/") ||
@@ -110,9 +109,9 @@ retry:
         const char* pszExt = CPLGetExtension(pszFilename);
         if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz")
 #ifdef DEBUG
-            /* For AFL, so that .cur_input is detected as the archive filename */
+            // For AFL, so that .cur_input is detected as the archive filename.
             || EQUAL( CPLGetFilename(pszFilename), ".cur_input" )
-#endif
+#endif  // DEBUG
           )
         {
             bPotentialDirectory = true;
@@ -129,9 +128,11 @@ retry:
         if(nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR)
             nStatFlags |= VSI_STAT_SET_ERROR_FLAG;
 
-        /* For those special files, opening them with VSIFOpenL() might result */
-        /* in content, even if they should be considered as directories, so */
-        /* use stat */
+        // For those special files, opening them with VSIFOpenL() might result
+        // in content, even if they should be considered as directories, so
+        // use stat.
+        VSIStatBufL sStat;
+
         if(VSIStatExL( pszFilename, &sStat, nStatFlags) == 0) {
             bStatOK = TRUE;
             if( VSI_ISDIR( sStat.st_mode ) )
@@ -145,12 +146,15 @@ retry:
     if( fpL != NULL )
     {
         bStatOK = TRUE;
-        pabyHeader = (GByte *) CPLCalloc(1025,1);
-        nHeaderBytesTried = 1024;
-        nHeaderBytes = (int) VSIFReadL( pabyHeader, 1, nHeaderBytesTried, fpL );
+        const int nBufSize = 1025;
+        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize, 1) );
+        nHeaderBytesTried = nBufSize - 1;
+        nHeaderBytes = static_cast<int>(
+            VSIFReadL( pabyHeader, 1, nHeaderBytesTried, fpL ) );
         VSIRewindL( fpL );
 
         /* If we cannot read anything, check if it is not a directory instead */
+        VSIStatBufL sStat;
         if( nHeaderBytes == 0 &&
             VSIStatExL( pszFilename, &sStat,
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 &&
@@ -165,6 +169,7 @@ retry:
     }
     else if( !bStatOK )
     {
+        VSIStatBufL sStat;
         if( !bPotentialDirectory && VSIStatExL( pszFilename, &sStat,
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
         {
@@ -175,14 +180,19 @@ retry:
 #ifdef HAVE_READLINK
         else if ( !bHasRetried && !STARTS_WITH(pszFilename, "/vsi") )
         {
-            /* If someone creates a file with "ln -sf /vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif my_remote_utm.tif" */
-            /* we will be able to open it by passing my_remote_utm.tif */
-            /* This helps a lot for GDAL based readers that only provide file explorers to open datasets */
-            char szPointerFilename[2048];
-            int nBytes = static_cast<int>(readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename)));
+            // If someone creates a file with "ln -sf
+            // /vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif
+            // my_remote_utm.tif" we will be able to open it by passing
+            // my_remote_utm.tif.  This helps a lot for GDAL based readers that
+            // only provide file explorers to open datasets.
+            const int nBufSize = 2048;
+            vector<char> oFilename(nBufSize);
+            char *szPointerFilename = &oFilename[0];
+            int nBytes = static_cast<int>(
+                readlink( pszFilename, szPointerFilename, nBufSize ) );
             if (nBytes != -1)
             {
-                szPointerFilename[MIN(nBytes, (int)sizeof(szPointerFilename)-1)] = 0;
+                szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 papszSiblingsIn = NULL;
@@ -190,7 +200,7 @@ retry:
                 goto retry;
             }
         }
-#endif
+#endif  // HAVE_READLINK
     }
 
 /* -------------------------------------------------------------------- */
@@ -200,7 +210,7 @@ retry:
     if( papszSiblingsIn != NULL )
     {
         papszSiblingFiles = CSLDuplicate( papszSiblingsIn );
-        bHasGotSiblingFiles = TRUE;
+        bHasGotSiblingFiles = true;
     }
     else if( bStatOK && !bIsDirectory )
     {
@@ -208,26 +218,27 @@ retry:
             CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
         if (EQUAL(pszOptionVal, "EMPTY_DIR"))
         {
-            papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );
-            bHasGotSiblingFiles = TRUE;
+            papszSiblingFiles =
+                CSLAddString( NULL, CPLGetFilename(pszFilename) );
+            bHasGotSiblingFiles = true;
         }
         else if( CPLTestBool(pszOptionVal) )
         {
             /* skip reading the directory */
             papszSiblingFiles = NULL;
-            bHasGotSiblingFiles = TRUE;
+            bHasGotSiblingFiles = true;
         }
         else
         {
             /* will be lazy loaded */
             papszSiblingFiles = NULL;
-            bHasGotSiblingFiles = FALSE;
+            bHasGotSiblingFiles = false;
         }
     }
     else
     {
         papszSiblingFiles = NULL;
-        bHasGotSiblingFiles = TRUE;
+        bHasGotSiblingFiles = true;
     }
 }
 
@@ -254,11 +265,11 @@ char** GDALOpenInfo::GetSiblingFiles()
 {
     if( bHasGotSiblingFiles )
         return papszSiblingFiles;
-    bHasGotSiblingFiles = TRUE;
+    bHasGotSiblingFiles = true;
 
     CPLString osDir = CPLGetDirname( pszFilename );
-    const int nMaxFiles = atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-
+    const int nMaxFiles =
+        atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     papszSiblingFiles = VSIReadDirEx( osDir, nMaxFiles );
     if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
     {
@@ -301,7 +312,7 @@ char** GDALOpenInfo::StealSiblingFiles()
 
 bool GDALOpenInfo::AreSiblingFilesLoaded() const
 {
-    return bHasGotSiblingFiles != FALSE;
+    return bHasGotSiblingFiles;
 }
 
 /************************************************************************/
@@ -314,11 +325,11 @@ int GDALOpenInfo::TryToIngest(int nBytes)
         return FALSE;
     if( nHeaderBytes < nHeaderBytesTried )
         return TRUE;
-    pabyHeader = (GByte*) CPLRealloc(pabyHeader, nBytes + 1);
+    pabyHeader = static_cast<GByte *>( CPLRealloc(pabyHeader, nBytes + 1) );
     memset(pabyHeader, 0, nBytes + 1);
     VSIRewindL(fpL);
     nHeaderBytesTried = nBytes;
-    nHeaderBytes = (int) VSIFReadL(pabyHeader, 1, nBytes, fpL);
+    nHeaderBytes = static_cast<int>( VSIFReadL(pabyHeader, 1, nBytes, fpL) );
     VSIRewindL(fpL);
 
     return TRUE;

@@ -2230,6 +2230,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     std::string fid_name = FGDB_OID_NAME;
     std::string esri_type;
     bool has_z = false;
+    bool has_m = false;
 
 #ifdef EXTENT_WORKAROUND
     m_bLayerJustCreated = true;
@@ -2319,7 +2320,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         {
             return GDBErr(-1, "FGDB layers cannot be created with a wkbUnknown layer geometry type.");
         }
-        if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z) )
+        if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z, &has_m) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
 
         if( wkbFlatten(eType) == wkbMultiPolygon &&
@@ -2394,7 +2395,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         FGDB_CPLAddXMLAttribute(geom_xml, "xsi:type", "esri:GeometryDef");
         CPLCreateXMLElementAndValue(geom_xml, "AvgNumPoints", "0");
         CPLCreateXMLElementAndValue(geom_xml, "GeometryType", esri_type.c_str());
-        CPLCreateXMLElementAndValue(geom_xml,"HasM", "false");
+        CPLCreateXMLElementAndValue(geom_xml,"HasM", (has_m ? "true" : "false"));
         CPLCreateXMLElementAndValue(geom_xml,"HasZ", (has_z ? "true" : "false"));
 
         /* Add the SRS if we have one */
@@ -2447,7 +2448,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(defn_xml,"ShapeFieldName", geometry_name.c_str());
 
         /* Dimensionality */
-        CPLCreateXMLElementAndValue(defn_xml,"HasM", "false");
+        CPLCreateXMLElementAndValue(defn_xml,"HasM", (has_m ? "true" : "false"));
         CPLCreateXMLElementAndValue(defn_xml,"HasZ", (has_z ? "true" : "false"));
 
         /* TODO: Handle spatial indexes (layer creation option?) */
@@ -2627,7 +2628,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
     CPLXMLNode *psGeometryDefItem;
 
     string geometryType;
-    bool hasZ = false;
+    bool hasZ = false, hasM = false;
     string wkt, wkid, latestwkid;
 
     for (psGeometryDefItem = psRoot->psChild;
@@ -2654,17 +2655,15 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
                 ParseSpatialReference(psGeometryDefItem, &wkt, &wkid, &latestwkid); // we don't check for success because it
                                                                 // may not be there
             }
-            /* No M support in OGR yet
-            else if (EQUAL(psFieldNode->pszValue,"HasM")
+            else if (EQUAL(psGeometryDefItem->pszValue,"HasM"))
             {
-                char* pszUnescaped = CPLUnescapeString(psNode->psChild->pszValue, NULL, CPLES_XML);
+                char* pszUnescaped = CPLUnescapeString(psGeometryDefItem->psChild->pszValue, NULL, CPLES_XML);
 
-                if (!strcmp(szUnescaped, "true"))
-                hasM = true;
+                if (!strcmp(pszUnescaped, "true"))
+                    hasM = true;
 
                 CPLFree(pszUnescaped);
             }
-            */
             else if (EQUAL(psGeometryDefItem->pszValue,"HasZ"))
             {
                 char* pszUnescaped = CPLUnescapeString(
@@ -2680,7 +2679,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
     }
 
     OGRwkbGeometryType ogrGeoType;
-    if (!GDBToOGRGeometry(geometryType, hasZ, &ogrGeoType))
+    if (!GDBToOGRGeometry(geometryType, hasZ, hasM, &ogrGeoType))
         return false;
 
     m_pFeatureDefn->SetGeomType(ogrGeoType);
@@ -3723,6 +3722,9 @@ int FGdbLayer::TestCapability( const char* pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCIgnoreFields) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
 
     else 

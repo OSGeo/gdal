@@ -95,7 +95,7 @@ void OGRDWGDriver::ErrorHandler( OdResult oResult )
 
 {
     CPLError( CE_Failure, CPLE_AppDefined,
-              "GeError:%s", 
+              "GeError:%s",
               (const char *) OdError(oResult).description().c_str() );
 }
 
@@ -154,4 +154,3 @@ void RegisterOGRDWG()
                                 "drv_dwg.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

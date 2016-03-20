@@ -87,7 +87,7 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  *      Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
  *      <li> \f$r_i\f$ is an Euclidean distance from the grid node
@@ -103,11 +103,11 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  *  \f]
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridInverseDistanceToAPowerOptions object. 
+ * GDALGridInverseDistanceToAPowerOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -154,7 +154,7 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower / 2;
     const double    dfSmoothing =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
-    const GUInt32   nMaxPoints = 
+    const GUInt32   nMaxPoints =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMaxPoints;
     double  dfNominator = 0.0, dfDenominator = 0.0;
     GUInt32 i, n = 0;
@@ -515,7 +515,7 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
  *      Z=\frac{\sum_{i=1}^n{Z_i}}{n}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -523,11 +523,11 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridMovingAverageOptions object. 
+ * GDALGridMovingAverageOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -618,11 +618,11 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
  * NODATA value will be returned.
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridNearestNeighborOptions object. 
+ * GDALGridNearestNeighborOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -769,7 +769,7 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
  *      Z=\min{(Z_1,Z_2,\ldots,Z_n)}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -777,11 +777,11 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -881,7 +881,7 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
  *      Z=\max{(Z_1,Z_2,\ldots,Z_n)}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -889,11 +889,11 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -994,7 +994,7 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
  *      Z=\max{(Z_1,Z_2,\ldots,Z_n)}-\min{(Z_1,Z_2,\ldots,Z_n)}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -1002,11 +1002,11 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -1107,18 +1107,18 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
  *      Z=n
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -1208,7 +1208,7 @@ GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
  *      Z=\frac{\sum_{i = 1}^n r_i}{n}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$r_i\f$ is an Euclidean distance from the grid node
@@ -1217,11 +1217,11 @@ GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -1319,7 +1319,7 @@ GDALGridDataMetricAverageDistance( const void *poOptions, GUInt32 nPoints,
  *      Z=\frac{\sum_{i = 1}^{n-1}\sum_{j=i+1}^{n} r_{ij}}{\left(n-1\right)\,n-\frac{n+{\left(n-1\right)}^{2}-1}{2}}
  * \f]
  *
- *  where 
+ *  where
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$r_{ij}\f$ is an Euclidean distance between points
@@ -1328,11 +1328,11 @@ GDALGridDataMetricAverageDistance( const void *poOptions, GUInt32 nPoints,
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridDataMetricsOptions object. 
+ * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -1396,14 +1396,14 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
         if ( dfRadius2 * dfRX1 * dfRX1 + dfRadius1 * dfRY1 * dfRY1 <= dfR12 )
         {
             GUInt32 j;
-            
+
             // Search all the remaining points within the ellipse and compute
             // distances between them and the first point
             for ( j = i + 1; j < nPoints; j++ )
             {
                 double  dfRX2 = padfX[j] - dfXPoint;
                 double  dfRY2 = padfY[j] - dfYPoint;
-                
+
                 if ( bRotated )
                 {
                     double dfRXRotated = dfRX2 * dfCoeff1 + dfRY2 * dfCoeff2;
@@ -1453,11 +1453,11 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
  * algorithm will use the value of the nearest point or the nodata value.
  *
  * @param poOptions Algorithm parameters. This should point to
- * GDALGridLinearOptions object. 
+ * GDALGridLinearOptions object.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -1486,7 +1486,7 @@ GDALGridLinear( const void *poOptions, CPL_UNUSED GUInt32 nPoints,
     CPLAssert(nOutputFacetIdx >= 0);
     // Reuse output facet idx as next initial index since we proceed line by line
     psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
-    
+
     if( bRet )
     {
         double lambda1, lambda2, lambda3;
@@ -1500,7 +1500,7 @@ GDALGridLinear( const void *poOptions, CPL_UNUSED GUInt32 nPoints,
         int i3 = psTriangulation->pasFacets[nOutputFacetIdx].anVertexIdx[2];
         *pdfValue = lambda1 * padfZ[i1] + lambda2 * padfZ[i2] + lambda3 * padfZ[i3];
     }
-    else 
+    else
     {
         double dfRadius = ((GDALGridLinearOptions*)poOptions)->dfRadius;
         if( dfRadius == 0 )
@@ -1896,7 +1896,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         case GGA_MovingAverage:
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridMovingAverageOptions));
-            
+
             pfnGDALGridMethod = GDALGridMovingAverage;
             break;
 
@@ -2009,7 +2009,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->pabyX = pabyX;
     psContext->pabyY = pabyY;
     psContext->pabyZ = pabyZ;
-    
+
 /* -------------------------------------------------------------------- */
 /*  Create quadtree if requested and possible.                          */
 /* -------------------------------------------------------------------- */
@@ -2690,18 +2690,18 @@ int CPLHaveRuntimeSSE()
 #if _MSC_VER <= 1310
 static void inline __cpuid(int cpuinfo[4], int level)
 {
-    __asm 
+    __asm
     {
         push   ebx
         push   esi
 
         mov    esi,cpuinfo
-        mov    eax,level  
-        cpuid  
+        mov    eax,level
+        cpuid
         mov    dword ptr [esi], eax
-        mov    dword ptr [esi+4],ebx  
-        mov    dword ptr [esi+8],ecx  
-        mov    dword ptr [esi+0Ch],edx 
+        mov    dword ptr [esi+4],ebx
+        mov    dword ptr [esi+8],ecx
+        mov    dword ptr [esi+0Ch],edx
 
         pop    esi
         pop    ebx

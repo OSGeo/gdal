@@ -46,7 +46,7 @@ VFKProperty::VFKProperty()
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty(int iValue) 
+VFKProperty::VFKProperty(int iValue)
     : m_bIsNull(FALSE), m_nValue(iValue), m_dValue(0.0)
 {
 }

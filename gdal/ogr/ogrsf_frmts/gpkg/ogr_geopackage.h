@@ -260,10 +260,10 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
         static GDALDataset* CreateCopy( const char *pszFilename,
-                                                   GDALDataset *poSrcDS, 
+                                                   GDALDataset *poSrcDS,
                                                    int bStrict,
                                                    char ** papszOptions,
-                                                   GDALProgressFunc pfnProgress, 
+                                                   GDALProgressFunc pfnProgress,
                                                    void * pProgressData );
     private:
 
@@ -364,11 +364,11 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
-    bool                        m_bDeferedSpatialIndexCreation;
+    bool                        m_bDeferredSpatialIndexCreation;
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
     bool                        m_bDropRTreeTable;
-    bool                        m_abHasGeometryExtension[wkbMultiSurface+1];
+    bool                        m_abHasGeometryExtension[wkbTIN+1];
     bool                        m_bPreservePrecision;
     bool                        m_bTruncateFields;
     bool                        m_bDeferredCreation;
@@ -423,8 +423,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                                const char* pszFIDColumnName,
                                                const char* pszIdentifier,
                                                const char* pszDescription );
-    void                SetDeferedSpatialIndexCreation( bool bFlag )
-                                { m_bDeferedSpatialIndexCreation = bFlag; }
+    void                SetDeferredSpatialIndexCreation( bool bFlag )
+                                { m_bDeferredSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex();
@@ -483,7 +483,7 @@ class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOG
     virtual OGRErr      ResetStatement();
 
   public:
-                        OGRGeoPackageSelectLayer( GDALGeoPackageDataset *, 
+                        OGRGeoPackageSelectLayer( GDALGeoPackageDataset *,
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,

@@ -60,11 +60,11 @@ CPL_CVSID("$Id$");
 #define EQRECT  17L     // Equirectangular
 #define MILLER  18L     // Miller Cylindrical
 #define VGRINT  19L     // Van der Grinten
-#define HOM     20L     // (Hotine) Oblique Mercator 
+#define HOM     20L     // (Hotine) Oblique Mercator
 #define ROBIN   21L     // Robinson
 #define SOM     22L     // Space Oblique Mercator (SOM)
 #define ALASKA  23L     // Alaska Conformal
-#define GOODE   24L     // Interrupted Goode Homolosine 
+#define GOODE   24L     // Interrupted Goode Homolosine
 #define MOLL    25L     // Mollweide
 #define IMOLL   26L     // Interrupted Mollweide
 #define HAMMER  27L     // Hammer
@@ -73,11 +73,11 @@ CPL_CVSID("$Id$");
 #define OBEQA   30L     // Oblated Equal Area
 #define ISINUS1 31L     // Integerized Sinusoidal Grid (the same as 99)
 #define CEA     97L     // Cylindrical Equal Area (Grid corners set
-                        // in meters for EASE grid) 
+                        // in meters for EASE grid)
 #define BCEA    98L     // Cylindrical Equal Area (Grid corners set
                         // in DMS degs for EASE grid)
 #define ISINUS  99L     // Integerized Sinusoidal Grid
-                        // (added by Raj Gejjagaraguppe ARC for MODIS) 
+                        // (added by Raj Gejjagaraguppe ARC for MODIS)
 
 /************************************************************************/
 /*  GCTP ellipsoid codes.                                               */
@@ -204,13 +204,13 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
  *        <h4>Projection Transformation Package Projection Parameters</h4>
  * <pre>
  * ----------------------------------------------------------------------------
- *                         |                    Array Element                  
+ *                         |                    Array Element
  *  Code & Projection Id   |---------------------------------------------------
  *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
  * ----------------------------------------------------------------------------
- *  0 Geographic           |      |      |      |      |       |         |  |  
- *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |  
- *  2 State Plane          |      |      |      |      |       |         |  |  
+ *  0 Geographic           |      |      |      |      |       |         |  |
+ *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |
+ *  2 State Plane          |      |      |      |      |       |         |  |
  *  3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
  *  4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
  *  5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN
@@ -235,19 +235,19 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
  * 22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN
  *    Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN
  * 23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN
- * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |  
+ * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |
  * 25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN
- * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |  
+ * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |
  * 27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN
  * 28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN
  * 29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN
  * 30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN
  * ----------------------------------------------------------------------------
- * 
+ *
  *       ----------------------------------------------------
  *                               |      Array Element       |
  *         Code & Projection Id  |---------------------------
- *                               |  8  |  9 |  10 | 11 | 12 |  
+ *                               |  8  |  9 |  10 | 11 | 12 |
  *       ----------------------------------------------------
  *        0 Geographic           |     |    |     |    |    |
  *        1 U T M                |     |    |     |    |    |
@@ -257,12 +257,12 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
  *        5 Mercator             |     |    |     |    |    |
  *        6 Polar Stereographic  |     |    |     |    |    |
  *        7 Polyconic            |     |    |     |    |    |
- *        8 Equid. Conic A       |zero |    |     |    |    |   
+ *        8 Equid. Conic A       |zero |    |     |    |    |
  *          Equid. Conic B       |one  |    |     |    |    |
  *        9 Transverse Mercator  |     |    |     |    |    |
  *       10 Stereographic        |     |    |     |    |    |
- *       11 Lambert Azimuthal    |     |    |     |    |    |    
- *       12 Azimuthal            |     |    |     |    |    |    
+ *       11 Lambert Azimuthal    |     |    |     |    |    |
+ *       12 Azimuthal            |     |    |     |    |    |
  *       13 Gnomonic             |     |    |     |    |    |
  *       14 Orthographic         |     |    |     |    |    |
  *       15 Gen. Vert. Near Per  |     |    |     |    |    |
@@ -270,10 +270,10 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
  *       17 Equirectangular      |     |    |     |    |    |
  *       18 Miller Cylindrical   |     |    |     |    |    |
  *       19 Van der Grinten      |     |    |     |    |    |
- *       20 Hotin Oblique Merc A |Long1|Lat1|Long2|Lat2|zero|   
+ *       20 Hotin Oblique Merc A |Long1|Lat1|Long2|Lat2|zero|
  *          Hotin Oblique Merc B |     |    |     |    |one |
  *       21 Robinson             |     |    |     |    |    |
- *       22 Space Oblique Merc A |PSRev|LRat|PFlag|    |zero|    
+ *       22 Space Oblique Merc A |PSRev|LRat|PFlag|    |zero|
  *          Space Oblique Merc B |     |    |     |    |one |
  *       23 Alaska Conformal     |     |    |     |    |    |
  *       24 Interrupted Goode    |     |    |     |    |    |
@@ -405,12 +405,12 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
  *
  * @param nUSGSAngleFormat one of USGS_ANGLE_DECIMALDEGREES, USGS_ANGLE_PACKEDDMS, or USGS_ANGLE_RADIANS (default is USGS_ANGLE_PACKEDDMS).
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                             double *padfPrjParams,
-                                            long iDatum, 
+                                            long iDatum,
                                             int nUSGSAngleFormat  )
 
 {
@@ -698,7 +698,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     SetGeogCS( CPLString().Printf(
                                     "Unknown datum based upon the %s ellipsoid",
                                     pszName ),
-                               CPLString().Printf( 
+                               CPLString().Printf(
                                     "Not specified (based on %s spheroid)",
                                     pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
@@ -741,7 +741,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to lookup datum code %d, likely due to missing GDAL gcs.csv\n"
-                          " file.  Falling back to use WGS84.", 
+                          " file.  Falling back to use WGS84.",
                           (int) iDatum );
                 SetWellKnownGeogCS("WGS84" );
             }
@@ -773,7 +773,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 /************************************************************************/
 /*                          OSRExportToUSGS()                           */
 /************************************************************************/
-/** 
+/**
  * \brief Export coordinate system in USGS GCTP projection definition.
  *
  * This function is the same as OGRSpatialReference::exportToUSGS().
@@ -807,15 +807,15 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
  *
  * @param piZone Pointer to variable, where the zone for UTM and State Plane
  * projection systems will be returned.
- * 
+ *
  * @param ppadfPrjParams Pointer to which dynamically allocated array of
  * 15 projection parameters will be assigned. See importFromUSGS() for
  * the list of parameters. Caller responsible to free this array.
  *
  * @param piDatum Pointer to variable, where the datum code will
  * be returned.
- * 
- * @return OGRERR_NONE on success or an error code on failure. 
+ *
+ * @return OGRERR_NONE on success or an error code on failure.
  */
 
 OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
@@ -941,7 +941,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
             *piProjSys = UTM;
             if( !bNorth )
                 *piZone = - *piZone;
-        }            
+        }
         else
         {
             *piProjSys = TM;
@@ -1198,4 +1198,3 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 
     return OGRERR_NONE;
 }
-

@@ -1,7 +1,7 @@
 %extend OGRDriverShadow {
 // File: ogrsfdriver_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrsfdriver.cpp
-23413 2011-11-22 21:53:32Z rouault $\") ";
+32177 2015-12-14 07:25:30Z goatbar $\") ";
 
 %feature("docstring")  CreateDataSource "OGRDataSourceH
 OGR_Dr_CreateDataSource(OGRSFDriverH hDriver, const char *pszName,
@@ -17,8 +17,7 @@ specific documentation.
 It is important to call OGR_DS_Destroy() when the datasource is no
 longer used to ensure that all data has been properly flushed to disk.
 
-This function is the same as the C++ method
-OGRSFDriver::CreateDataSource().
+Deprecated Use GDALCreate() in GDAL 2.0
 
 Parameters:
 -----------
@@ -47,8 +46,7 @@ time.
 Whether this is a supported operation on this driver case be tested
 using TestCapability() on ODrCDeleteDataSource.
 
-This method is the same as the C++ method
-OGRSFDriver::DeleteDataSource().
+Deprecated Use GDALDeleteDataset() in GDAL 2
 
 Parameters:
 -----------
@@ -63,9 +61,10 @@ not supported by this driver. ";
 %feature("docstring")  GetName "const char*
 OGR_Dr_GetName(OGRSFDriverH hDriver)
 
-Fetch name of driver (file format). This name should be relatively
-short (10-40 characters), and should reflect the underlying file
-format. For instance \"ESRI Shapefile\".
+Fetch name of driver (file format).
+
+This name should be relatively short (10-40 characters), and should
+reflect the underlying file format. For instance \"ESRI Shapefile\".
 
 This function is the same as the C++ method OGRSFDriver::GetName().
 
@@ -82,7 +81,12 @@ hDriver, const char *pszName, int bUpdate)
 
 Attempt to open file with this driver.
 
-This function is the same as the C++ method OGRSFDriver::Open().
+NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned
+handle to OGRDataSource*. If a C++ object is needed, the handle should
+be cast to GDALDataset*. Similarly, the returned OGRSFDriverH handle
+should be cast to GDALDriver*, and NOT* OGRSFDriver*.
+
+Deprecated Use GDALOpenEx() in GDAL 2.0
 
 Parameters:
 -----------
@@ -95,7 +99,7 @@ bUpdate:  TRUE if update access is required, otherwise FALSE (the
 default).
 
 NULL on error or if the pass name is not supported by this driver,
-otherwise an handle to an OGRDataSource. This OGRDataSource should be
+otherwise an handle to a GDALDataset. This GDALDataset should be
 closed by deleting the object when it is no longer needed. ";
 
 %feature("docstring")  TestCapability "int
@@ -116,8 +120,8 @@ sources.
 The #define macro forms of the capability names should be used in
 preference to the strings themselves to avoid misspelling.
 
-This function is the same as the C++ method
-OGRSFDriver::TestCapability().
+Deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE) in GDAL
+2.0
 
 Parameters:
 -----------
@@ -138,8 +142,7 @@ the source datasource.
 It is important to call OGR_DS_Destroy() when the datasource is no
 longer used to ensure that all data has been properly flushed to disk.
 
-This function is the same as the C++ method
-OGRSFDriver::CopyDataSource().
+Deprecated Use GDALCreateCopy() in GDAL 2.0
 
 Parameters:
 -----------

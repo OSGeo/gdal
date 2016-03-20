@@ -163,7 +163,7 @@ class WMTSDataset : public GDALPamDataset
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -453,7 +453,7 @@ int WMTSDataset::CloseDependentDatasets()
 CPLErr  WMTSDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -476,7 +476,7 @@ CPLErr  WMTSDataset::IRasterIO( GDALRWFlag eRWFlag,
             return eErr;
     }
 
-    return apoDatasets[0]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+    return apoDatasets[0]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType, nBandCount, panBandMap,
                                   nPixelSpace, nLineSpace, nBandSpace,

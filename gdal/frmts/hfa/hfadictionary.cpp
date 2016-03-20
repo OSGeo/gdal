@@ -39,8 +39,8 @@ static const char * const apszDefDefn[] = {
     "Edsc_Table",
     "{1:lnumrows,}Edsc_Table",
 
-    "Edsc_Column", 
-    "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column", 
+    "Edsc_Column",
+    "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column",
 
     "Eprj_Size",
     "{1:dwidth,1:dheight,}Eprj_Size",
@@ -48,19 +48,19 @@ static const char * const apszDefDefn[] = {
     "Eprj_Coordinate",
     "{1:dx,1:dy,}Eprj_Coordinate",
 
-    "Eprj_MapInfo", 
+    "Eprj_MapInfo",
     "{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo",
 
-    "Eimg_StatisticsParameters830", 
+    "Eimg_StatisticsParameters830",
     "{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830",
 
-    "Esta_Statistics", 
+    "Esta_Statistics",
     "{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics",
 
-    "Edsc_BinFunction", 
+    "Edsc_BinFunction",
     "{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction",
 
-    "Eimg_NonInitializedValue", 
+    "Eimg_NonInitializedValue",
     "{1:*bvalueBD,}Eimg_NonInitializedValue",
 
     "Eprj_MapProjection842",

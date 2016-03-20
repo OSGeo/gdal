@@ -2,7 +2,7 @@
  * $Id: pdsdataset.cpp 12658 2007-11-07 23:14:33Z warmerdam $
  *
  * Project:  PDS Driver; Planetary Data System Format
- * Purpose:  Implementation of NASAKeywordHandler - a class to read 
+ * Purpose:  Implementation of NASAKeywordHandler - a class to read
  *           keyword data from PDS, ISIS2 and ISIS3 data products.
  * Author:   Frank Warmerdam <warmerdam@pobox.com
  *
@@ -36,13 +36,13 @@
  * This is also known as PVL (Parameter Value Language) which is written
  * about at http://www.orrery.us/node/44 where it notes:
  *
- * The PVL syntax that the PDS uses is specified by the Consultative Committee 
- * for Space Data Systems in their Blue Book publication: "Parameter Value 
- * Language Specification (CCSD0006 and CCSD0008)", June 2000 
- * [CCSDS 641.0-B-2], and Green Book publication: "Parameter Value Language - 
+ * The PVL syntax that the PDS uses is specified by the Consultative Committee
+ * for Space Data Systems in their Blue Book publication: "Parameter Value
+ * Language Specification (CCSD0006 and CCSD0008)", June 2000
+ * [CCSDS 641.0-B-2], and Green Book publication: "Parameter Value Language -
  * A Tutorial", June 2000 [CCSDS 641.0-G-2]. PVL has also been accepted by the
- * International Standards Organization (ISO), as a Final Draft International 
- * Standard (ISO 14961:2002) keyword value type language for naming and 
+ * International Standards Organization (ISO), as a Final Draft International
+ * Standard (ISO 14961:2002) keyword value type language for naming and
  * expressing data values.
  * --
  * also of interest, on PDS ODL:
@@ -111,9 +111,9 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck,"\r\nEND\r\n") != NULL 
-            || strstr(pszCheck,"\nEND\n") != NULL 
-            || strstr(pszCheck,"\r\nEnd\r\n") != NULL 
+        if( strstr(pszCheck,"\r\nEND\r\n") != NULL
+            || strstr(pszCheck,"\nEND\n") != NULL
+            || strstr(pszCheck,"\r\nEnd\r\n") != NULL
             || strstr(pszCheck,"\nEnd\n") != NULL )
             break;
     }
@@ -144,7 +144,7 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;
         }
-        else if( EQUAL(osName,"END") 
+        else if( EQUAL(osName,"END")
                  || EQUAL(osName,"END_GROUP" )
                  || EQUAL(osName,"END_OBJECT" ) )
         {
@@ -153,7 +153,7 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
         else
         {
             osName = pszPathPrefix + osName;
-            papszKeywordList = CSLSetNameValue( papszKeywordList, 
+            papszKeywordList = CSLSetNameValue( papszKeywordList,
                                                 osName, osValue );
         }
     }
@@ -183,7 +183,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
 
     if( *pszHeaderNext != '=' )
     {
-        // ISIS3 does not have anything after the end group/object keyword. 
+        // ISIS3 does not have anything after the end group/object keyword.
         if( EQUAL(osName,"End_Group") || EQUAL(osName,"End_Object") )
             return TRUE;
 
@@ -226,7 +226,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         }
     }
 
-    else // Handle more normal "single word" values. 
+    else // Handle more normal "single word" values.
     {
         if( !ReadWord( osValue ) )
             return FALSE;
@@ -234,7 +234,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
 
     SkipWhite();
 
-    // No units keyword?   
+    // No units keyword?
     if( *pszHeaderNext != '<' )
         return TRUE;
 
@@ -322,9 +322,9 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
     }
 
     /*
-     * Extract normal text.  Terminated by '=' or whitespace. 
+     * Extract normal text.  Terminated by '=' or whitespace.
      *
-     * A special exception is that a line may terminate with a '-' 
+     * A special exception is that a line may terminate with a '-'
      * which is taken as a line extender, and we suck up white space to new
      * text.
      */
@@ -335,7 +335,7 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
         osWord += *pszHeaderNext;
         pszHeaderNext++;
 
-        if( *pszHeaderNext == '-' 
+        if( *pszHeaderNext == '-'
             && (pszHeaderNext[1] == 10 || pszHeaderNext[1] == 13) )
         {
             pszHeaderNext += 2;
@@ -356,13 +356,13 @@ void NASAKeywordHandler::SkipWhite()
 {
     for( ; true; )
     {
-        // Skip C style comments 
+        // Skip C style comments
         if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
         {
             pszHeaderNext += 2;
 
-            while( *pszHeaderNext != '\0' 
-                   && (*pszHeaderNext != '*' 
+            while( *pszHeaderNext != '\0'
+                   && (*pszHeaderNext != '*'
                        || pszHeaderNext[1] != '/' ) )
             {
                 pszHeaderNext++;
@@ -381,7 +381,7 @@ void NASAKeywordHandler::SkipWhite()
             continue;
         }
 
-        // Skip # style comments 
+        // Skip # style comments
         if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
  	     *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
               && pszHeaderNext[1] == '#' )
@@ -389,7 +389,7 @@ void NASAKeywordHandler::SkipWhite()
             pszHeaderNext += 2;
 
             // consume till end of line.
-            while( *pszHeaderNext != '\0' 
+            while( *pszHeaderNext != '\0'
                    && *pszHeaderNext != 10
                    && *pszHeaderNext != 13 )
             {
@@ -401,11 +401,11 @@ void NASAKeywordHandler::SkipWhite()
         // Skip white space (newline, space, tab, etc )
         if( isspace( static_cast<unsigned char>( *pszHeaderNext ) ) )
         {
-            pszHeaderNext++; 
+            pszHeaderNext++;
             continue;
         }
 
-        // not white space, return. 
+        // not white space, return.
         return;
     }
 }

@@ -1,7 +1,7 @@
 %extend OGRFeatureShadow {
 // File: ogrfeature_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeature.cpp
-23414 2011-11-23 05:50:05Z warmerdam $\") ";
+33440 2016-02-12 12:02:43Z ajolma $\") ";
 
 %feature("docstring")  Create "OGRFeatureH
 OGR_F_Create(OGRFeatureDefnH hDefn)
@@ -21,8 +21,8 @@ Parameters:
 hDefn:  handle to the feature class (layer) definition to which the
 feature will adhere.
 
-an handle to the new feature object with null fields and no geometry.
-";
+an handle to the new feature object with null fields and no geometry,
+or, starting with GDAL 2.1, NULL in case out of memory situation. ";
 
 %feature("docstring")  Destroy "void OGR_F_Destroy(OGRFeatureH hFeat)
 
@@ -64,7 +64,7 @@ Set feature geometry.
 
 This function updates the features geometry, and operate exactly as
 SetGeometry(), except that this function assumes ownership of the
-passed geometry.
+passed geometry (even in case of failure of that function).
 
 This function is the same as the C++ method
 OGRFeature::SetGeometryDirectly.
@@ -131,6 +131,78 @@ hFeat:  handle to the feature to get geometry from.
 
 an handle to internal feature geometry. This object should not be
 modified. ";
+
+%feature("docstring")  GetGeomFieldRef "OGRGeometryH
+OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
+
+Fetch an handle to feature geometry.
+
+This function is the same as the C++ method
+OGRFeature::GetGeomFieldRef().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature to get geometry from.
+
+iField:  geometry field to get.
+
+an handle to internal feature geometry. This object should not be
+modified.
+
+GDAL 1.11 ";
+
+%feature("docstring")  SetGeomFieldDirectly "OGRErr
+OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField, OGRGeometryH
+hGeom)
+
+Set feature geometry of a specified geometry field.
+
+This function updates the features geometry, and operate exactly as
+SetGeomField(), except that this function assumes ownership of the
+passed geometry (even in case of failure of that function).
+
+This function is the same as the C++ method
+OGRFeature::SetGeomFieldDirectly.
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature on which to apply the geometry.
+
+iField:  geometry field to set.
+
+hGeom:  handle to the new geometry to apply to feature.
+
+OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,
+or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for
+the OGRFeatureDefn (checking not yet implemented).
+
+GDAL 1.11 ";
+
+%feature("docstring")  SetGeomField "OGRErr
+OGR_F_SetGeomField(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)
+
+Set feature geometry of a specified geometry field.
+
+This function updates the features geometry, and operate exactly as
+SetGeometryDirectly(), except that this function does not assume
+ownership of the passed geometry, but instead makes a copy of it.
+
+This function is the same as the C++ OGRFeature::SetGeomField().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature on which new geometry is applied to.
+
+iField:  geometry field to set.
+
+hGeom:  handle to the new geometry to apply to feature.
+
+OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
+geometry type is illegal for the OGRFeatureDefn (checking not yet
+implemented). ";
 
 %feature("docstring")  Clone "OGRFeatureH OGR_F_Clone(OGRFeatureH
 hFeat)
@@ -202,6 +274,66 @@ pszName:  the name of the field to search for.
 
 the field index, or -1 if no matching field is found. ";
 
+%feature("docstring")  GetGeomFieldCount "int
+OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
+
+Fetch number of geometry fields on this feature This will always be
+the same as the geometry field count for the OGRFeatureDefn.
+
+This function is the same as the C++ method
+OGRFeature::GetGeomFieldCount().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature to get the geometry fields count from.
+
+count of geometry fields.
+
+GDAL 1.11 ";
+
+%feature("docstring")  GetGeomFieldDefnRef "OGRGeomFieldDefnH
+OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)
+
+Fetch definition for this geometry field.
+
+This function is the same as the C++ method
+OGRFeature::GetGeomFieldDefnRef().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature on which the field is found.
+
+i:  the field to fetch, from 0 to GetGeomFieldCount()-1.
+
+an handle to the field definition (from the OGRFeatureDefn). This is
+an internal reference, and should not be deleted or modified.
+
+GDAL 1.11 ";
+
+%feature("docstring")  GetGeomFieldIndex "int
+OGR_F_GetGeomFieldIndex(OGRFeatureH hFeat, const char *pszName)
+
+Fetch the geometry field index given geometry field name.
+
+This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method.
+
+This function is the same as the C++ method
+OGRFeature::GetGeomFieldIndex().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature on which the geometry field is found.
+
+pszName:  the name of the geometry field to search for.
+
+the geometry field index, or -1 if no matching geometry field is
+found.
+
+GDAL 1.11 ";
+
 %feature("docstring")  IsFieldSet "int OGR_F_IsFieldSet(OGRFeatureH
 hFeat, int iField)
 
@@ -271,14 +403,38 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
 the field value. ";
 
+%feature("docstring")  GetFieldAsInteger64 "GIntBig
+OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
+
+Fetch field value as integer 64 bit.
+
+OFTInteger are promoted to 64 bit. OFTString features will be
+translated using CPLAtoGIntBig(). OFTReal fields will be cast to
+integer. Other field types, or errors will result in a return value of
+zero.
+
+This function is the same as the C++ method
+OGRFeature::GetFieldAsInteger64().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+the field value.
+
+GDAL 2.0 ";
+
 %feature("docstring")  GetFieldAsDouble "double
 OGR_F_GetFieldAsDouble(OGRFeatureH hFeat, int iField)
 
 Fetch field value as a double.
 
-OFTString features will be translated using atof(). OFTInteger fields
-will be cast to double. Other field types, or errors will result in a
-return value of zero.
+OFTString features will be translated using CPLAtof(). OFTInteger
+fields will be cast to double. Other field types, or errors will
+result in a return value of zero.
 
 This function is the same as the C++ method
 OGRFeature::GetFieldAsDouble().
@@ -291,6 +447,11 @@ hFeat:  handle to the feature that owned the field.
 iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
 the field value. ";
+
+%feature("docstring")  OGRFeatureFormatDateTimeBuffer "static void
+OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
+int nYear, int nMonth, int nDay, int nHour, int nMinute, float
+fSecond, int nTZFlag) ";
 
 %feature("docstring")  GetFieldAsString "const char*
 OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)
@@ -337,6 +498,32 @@ pnCount:  an integer to put the list count (number of integers) into.
 the field value. This list is internal, and should not be modified, or
 freed. Its lifetime may be very brief. If *pnCount is zero on return
 the returned pointer may be NULL or non-NULL. ";
+
+%feature("docstring")  GetFieldAsInteger64List "const GIntBig*
+OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField, int
+*pnCount)
+
+Fetch field value as a list of 64 bit integers.
+
+Currently this function only works for OFTInteger64List fields.
+
+This function is the same as the C++ method
+OGRFeature::GetFieldAsInteger64List().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+pnCount:  an integer to put the list count (number of integers) into.
+
+the field value. This list is internal, and should not be modified, or
+freed. Its lifetime may be very brief. If *pnCount is zero on return
+the returned pointer may be NULL or non-NULL.
+
+GDAL 2.0 ";
 
 %feature("docstring")  GetFieldAsDoubleList "const double*
 OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
@@ -390,7 +577,7 @@ OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int *pnBytes)
 
 Fetch field value as binary.
 
-Currently this method only works for OFTBinary fields.
+This method only works for OFTBinary and OFTString fields.
 
 This function is the same as the C++ method
 OGRFeature::GetFieldAsBinary().
@@ -442,17 +629,62 @@ pnSecond:  (0-59)
 pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
 details)
 
-TRUE on success or FALSE on failure. ";
+TRUE on success or FALSE on failure.
+
+See:  Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond
+accuracy. ";
+
+%feature("docstring")  GetFieldAsDateTimeEx "int
+OGR_F_GetFieldAsDateTimeEx(OGRFeatureH hFeat, int iField, int *pnYear,
+int *pnMonth, int *pnDay, int *pnHour, int *pnMinute, float *pfSecond,
+int *pnTZFlag)
+
+Fetch field value as date and time.
+
+Currently this method only works for OFTDate, OFTTime and OFTDateTime
+fields.
+
+This function is the same as the C++ method
+OGRFeature::GetFieldAsDateTime().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+pnYear:  (including century)
+
+pnMonth:  (1-12)
+
+pnDay:  (1-31)
+
+pnHour:  (0-23)
+
+pnMinute:  (0-59)
+
+pfSecond:  (0-59 with millisecond accuracy)
+
+pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
+details)
+
+TRUE on success or FALSE on failure.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGRFeatureGetIntegerValue "static int
+OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue) ";
 
 %feature("docstring")  SetFieldInteger "void
 OGR_F_SetFieldInteger(OGRFeatureH hFeat, int iField, int nValue)
 
 Set field to integer value.
 
-OFTInteger and OFTReal fields will be set directly. OFTString fields
-will be assigned a string representation of the value, but not
-necessarily taking into account formatting constraints on this field.
-Other field types may be unaffected.
+OFTInteger, OFTInteger64 and OFTReal fields will be set directly.
+OFTString fields will be assigned a string representation of the
+value, but not necessarily taking into account formatting constraints
+on this field. Other field types may be unaffected.
 
 This function is the same as the C++ method OGRFeature::SetField().
 
@@ -465,15 +697,38 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
 nValue:  the value to assign. ";
 
+%feature("docstring")  SetFieldInteger64 "void
+OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
+
+Set field to 64 bit integer value.
+
+OFTInteger, OFTInteger64 and OFTReal fields will be set directly.
+OFTString fields will be assigned a string representation of the
+value, but not necessarily taking into account formatting constraints
+on this field. Other field types may be unaffected.
+
+This function is the same as the C++ method OGRFeature::SetField().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+nValue:  the value to assign.
+
+GDAL 2.0 ";
+
 %feature("docstring")  SetFieldDouble "void
 OGR_F_SetFieldDouble(OGRFeatureH hFeat, int iField, double dfValue)
 
 Set field to double value.
 
-OFTInteger and OFTReal fields will be set directly. OFTString fields
-will be assigned a string representation of the value, but not
-necessarily taking into account formatting constraints on this field.
-Other field types may be unaffected.
+OFTInteger, OFTInteger64 and OFTReal fields will be set directly.
+OFTString fields will be assigned a string representation of the
+value, but not necessarily taking into account formatting constraints
+on this field. Other field types may be unaffected.
 
 This function is the same as the C++ method OGRFeature::SetField().
 
@@ -493,8 +748,10 @@ OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char
 Set field to string value.
 
 OFTInteger fields will be set based on an atoi() conversion of the
-string. OFTReal fields will be set based on an atof() conversion of
-the string. Other field types may be unaffected.
+string. OFTInteger64 fields will be set based on an CPLAtoGIntBig()
+conversion of the string. OFTReal fields will be set based on an
+CPLAtof() conversion of the string. Other field types may be
+unaffected.
 
 This function is the same as the C++ method OGRFeature::SetField().
 
@@ -513,7 +770,8 @@ int *panValues)
 
 Set field to list of integers value.
 
-This function currently on has an effect of OFTIntegerList fields.
+This function currently on has an effect of OFTIntegerList,
+OFTInteger64List and OFTRealList fields.
 
 This function is the same as the C++ method OGRFeature::SetField().
 
@@ -528,13 +786,38 @@ nCount:  the number of values in the list being assigned.
 
 panValues:  the values to assign. ";
 
+%feature("docstring")  SetFieldInteger64List "void
+OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,
+const GIntBig *panValues)
+
+Set field to list of 64 bit integers value.
+
+This function currently on has an effect of OFTIntegerList,
+OFTInteger64List and OFTRealList fields.
+
+This function is the same as the C++ method OGRFeature::SetField().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to set, from 0 to GetFieldCount()-1.
+
+nCount:  the number of values in the list being assigned.
+
+panValues:  the values to assign.
+
+GDAL 2.0 ";
+
 %feature("docstring")  SetFieldDoubleList "void
 OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,
 double *padfValues)
 
 Set field to list of doubles value.
 
-This function currently on has an effect of OFTRealList fields.
+This function currently on has an effect of OFTIntegerList,
+OFTInteger64List, OFTRealList fields.
 
 This function is the same as the C++ method OGRFeature::SetField().
 
@@ -618,7 +901,43 @@ nMinute:  (0-59)
 nSecond:  (0-59)
 
 nTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
-details) ";
+details)
+
+See:  Use OGR_F_SetFieldDateTimeEx() for second with millisecond
+accuracy. ";
+
+%feature("docstring")  SetFieldDateTimeEx "void
+OGR_F_SetFieldDateTimeEx(OGRFeatureH hFeat, int iField, int nYear, int
+nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag)
+
+Set field to datetime.
+
+This method currently only has an effect for OFTDate, OFTTime and
+OFTDateTime fields.
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature that owned the field.
+
+iField:  the field to set, from 0 to GetFieldCount()-1.
+
+nYear:  (including century)
+
+nMonth:  (1-12)
+
+nDay:  (1-31)
+
+nHour:  (0-23)
+
+nMinute:  (0-59)
+
+fSecond:  (0-59, with millisecond accuracy)
+
+nTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
+details)
+
+GDAL 2.0 ";
 
 %feature("docstring")  SetFieldRaw "void
 OGR_F_SetFieldRaw(OGRFeatureH hFeat, int iField, OGRField *psValue)
@@ -660,11 +979,14 @@ hFeat:  handle to the feature to dump.
 
 fpOut:  the stream to write to, such as strout. ";
 
-%feature("docstring")  GetFID "long OGR_F_GetFID(OGRFeatureH hFeat)
+%feature("docstring")  GetFID "GIntBig OGR_F_GetFID(OGRFeatureH
+hFeat)
 
 Get feature identifier.
 
 This function is the same as the C++ method OGRFeature::GetFID().
+Note: since GDAL 2.0, this method returns a GIntBig (previously a
+long)
 
 Parameters:
 -----------
@@ -675,7 +997,7 @@ identifier.
 feature id or OGRNullFID if none has been assigned. ";
 
 %feature("docstring")  SetFID "OGRErr OGR_F_SetFID(OGRFeatureH hFeat,
-long nFID)
+GIntBig nFID)
 
 Set the feature identifier.
 
@@ -802,9 +1124,11 @@ isn't one. ";
 %feature("docstring")  SetStyleString "void
 OGR_F_SetStyleString(OGRFeatureH hFeat, const char *pszStyle)
 
-Set feature style string. This method operate exactly as
-OGR_F_SetStyleStringDirectly() except that it does not assume
-ownership of the passed string, but instead makes a copy of it.
+Set feature style string.
+
+This method operate exactly as OGR_F_SetStyleStringDirectly() except
+that it does not assume ownership of the passed string, but instead
+makes a copy of it.
 
 This function is the same as the C++ method
 OGRFeature::SetStyleString().
@@ -820,9 +1144,10 @@ pszStyle:  the style string to apply to this feature, cannot be NULL.
 %feature("docstring")  SetStyleStringDirectly "void
 OGR_F_SetStyleStringDirectly(OGRFeatureH hFeat, char *pszStyle)
 
-Set feature style string. This method operate exactly as
-OGR_F_SetStyleString() except that it assumes ownership of the passed
-string.
+Set feature style string.
+
+This method operate exactly as OGR_F_SetStyleString() except that it
+assumes ownership of the passed string.
 
 This function is the same as the C++ method
 OGRFeature::SetStyleStringDirectly().
@@ -844,5 +1169,173 @@ hStyleTable) ";
 
 %feature("docstring")  SetStyleTable "void
 OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable) ";
+
+%feature("docstring")  FillUnsetWithDefault "void
+OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
+char **papszOptions)
+
+Fill unset fields with default values that might be defined.
+
+This function is the same as the C++ method
+OGRFeature::FillUnsetWithDefault().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature.
+
+bNotNullableOnly:  if we should fill only unset fields with a not-null
+constraint.
+
+papszOptions:  unused currently. Must be set to NULL.
+
+GDAL 2.0 ";
+
+%feature("docstring")  Validate "int OGR_F_Validate(OGRFeatureH
+hFeat, int nValidateFlags, int bEmitError)
+
+Validate that a feature meets constraints of its schema.
+
+The scope of test is specified with the nValidateFlags parameter.
+
+Regarding OGR_F_VAL_WIDTH, the test is done assuming the string width
+must be interpreted as the number of UTF-8 characters. Some drivers
+might interpret the width as the number of bytes instead. So this test
+is rather conservative (if it fails, then it will fail for all
+interpretations).
+
+This function is the same as the C++ method OGRFeature::Validate().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature to validate.
+
+nValidateFlags:  OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
+OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and
+OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT with '|' operator
+
+bEmitError:  TRUE if a CPLError() must be emitted when a check fails
+
+TRUE if all enabled validation tests pass.
+
+GDAL 2.0 ";
+
+%feature("docstring")  GetNativeData "const char*
+OGR_F_GetNativeData(OGRFeatureH hFeat)
+
+Returns the native data for the feature.
+
+The native data is the representation in a \"natural\" form that comes
+from the driver that created this feature, or that is aimed at an
+output driver. The native data may be in different format, which is
+indicated by OGR_F_GetNativeMediaType().
+
+Note that most drivers do not support storing the native data in the
+feature object, and if they do, generally the NATIVE_DATA open option
+must be passed at dataset opening.
+
+The \"native data\" does not imply it is something more performant or
+powerful than what can be obtained with the rest of the API, but it
+may be useful in round-tripping scenarios where some characteristics
+of the underlying format are not captured otherwise by the OGR
+abstraction.
+
+This function is the same as the C++ method
+OGRFeature::GetNativeData().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature.
+
+a string with the native data, or NULL if there is none.
+
+GDAL 2.1
+
+See:
+https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+";
+
+%feature("docstring")  GetNativeMediaType "const char*
+OGR_F_GetNativeMediaType(OGRFeatureH hFeat)
+
+Returns the native media type for the feature.
+
+The native media type is the identifier for the format of the native
+data. It follows the IANA RFC 2045
+(seehttps://en.wikipedia.org/wiki/Media_type), e.g.
+\"application/vnd.geo+json\" for JSon.
+
+This function is the same as the C function
+OGR_F_GetNativeMediaType().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature.
+
+a string with the native media type, or NULL if there is none.
+
+GDAL 2.1
+
+See:
+https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+";
+
+%feature("docstring")  SetNativeData "void
+OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
+
+Sets the native data for the feature.
+
+The native data is the representation in a \"natural\" form that comes
+from the driver that created this feature, or that is aimed at an
+output driver. The native data may be in different format, which is
+indicated by OGR_F_GetNativeMediaType().
+
+This function is the same as the C++ method
+OGRFeature::SetNativeData().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature.
+
+pszNativeData:  a string with the native data, or NULL if there is
+none.
+
+GDAL 2.1
+
+See:
+https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+";
+
+%feature("docstring")  SetNativeMediaType "void
+OGR_F_SetNativeMediaType(OGRFeatureH hFeat, const char
+*pszNativeMediaType)
+
+Sets the native media type for the feature.
+
+The native media type is the identifier for the format of the native
+data. It follows the IANA RFC 2045
+(seehttps://en.wikipedia.org/wiki/Media_type), e.g.
+\"application/vnd.geo+json\" for JSon.
+
+This function is the same as the C++ method
+OGRFeature::SetNativeMediaType().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature.
+
+pszNativeMediaType:  a string with the native media type, or NULL if
+there is none.
+
+GDAL 2.1
+
+See:
+https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+";
 
 }

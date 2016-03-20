@@ -191,7 +191,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
     {
         osTruncated = pszStart;
         osTruncated.resize(pszSQLCommand - pszStart);
-        osModifiedSQL += osTruncated; 
+        osModifiedSQL += osTruncated;
     }
     else
     {

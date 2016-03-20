@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -376,7 +376,7 @@ typedef enum
     OGRGML_XERCES_INIT_SUCCESSFUL
 } OGRGMLXercesState;
 
-class GMLReader : public IGMLReader 
+class GMLReader : public IGMLReader
 {
 private:
     static OGRGMLXercesState    m_eXercesInitState;
@@ -455,7 +455,7 @@ private:
 
     bool          m_bEmptyAsNull;
 
-    bool          ParseXMLHugeFile( const char *pszOutputFilename, 
+    bool          ParseXMLHugeFile( const char *pszOutputFilename,
                                     const bool bSqliteIsTempFile,
                                     const int iSqliteCacheMB );
 
@@ -500,7 +500,7 @@ public:
     bool             ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
 
-// --- 
+// ---
 
     GMLReadState     *GetState() const { return m_poState; }
     void             PopState();
@@ -512,7 +512,7 @@ public:
     int         GetAttributeElementIndex( const char *pszElement, int nLen, const char* pszAttrKey = NULL );
     bool        IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
-    void        PushFeature( const char *pszElement, 
+    void        PushFeature( const char *pszElement,
                              const char *pszFID,
                              int nClassIndex );
 

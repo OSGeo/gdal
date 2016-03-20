@@ -128,17 +128,17 @@ COASPMetadataItem::~COASPMetadataItem()
     CPLFree(pszItemValue);
 }
 
-char *COASPMetadataItem::GetItemName() 
+char *COASPMetadataItem::GetItemName()
 {
 	return VSIStrdup(pszItemName);
 }
 
-char *COASPMetadataItem::GetItemValue() 
+char *COASPMetadataItem::GetItemValue()
 {
 	return VSIStrdup(pszItemValue);
 }
 
-COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nIdIn, int nPixelsIn, 
+COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nIdIn, int nPixelsIn,
 	int nLinesIn, double ndLatIn, double ndLongIn)
 {
 	this->nId = nIdIn;
@@ -149,7 +149,7 @@ COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nIdIn, int nPixelsI
         pszItemName = VSIStrdup("georef_grid");
 }
 
-GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue() 
+GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue()
 {
 	return NULL;
 }
@@ -174,7 +174,7 @@ COASPMetadataReader::~COASPMetadataReader()
     CSLDestroy(papszMetadata);
 }
 
-COASPMetadataItem *COASPMetadataReader::GetNextItem() 
+COASPMetadataItem *COASPMetadataReader::GetNextItem()
 {
 	if (nCurrentItem >= nMetadataCount)
 		return NULL;
@@ -243,7 +243,7 @@ class COASPRasterBand;
 
 /* A couple of observations based on the data I have available to me:
  * a) the headers don't really change, beyond indicating data sources
- *    and such. As such, I only read the first header specified by the 
+ *    and such. As such, I only read the first header specified by the
  *    user. Note that this is agnostic: you can specify hh, vv, vh, hv and
  *    all the data needed will be immediately available.
  * b) Lots of GCPs are present in the headers. This is most excellent.
@@ -282,7 +282,7 @@ class COASPRasterBand : public GDALRasterBand {
 	int ePol;
 public:
 	COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType, int ePol, VSILFILE *fp );
-	virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, 
+	virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
 		void *pImage);
 };
 
@@ -311,11 +311,11 @@ CPLErr COASPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 	VSIFSeekL(this->fp, nByteNum, SEEK_SET);
 	int nReadSize = (GDALGetDataTypeSize(eDataType)/8) * poDS->GetRasterXSize();
-	VSIFReadL((char *)pImage, 1, nReadSize, 
+	VSIFReadL((char *)pImage, 1, nReadSize,
 		this->fp);
 
 #ifdef CPL_LSB
-	GDALSwapWords( pImage, 4, nBlockXSize * 2, 4 ); 
+	GDALSwapWords( pImage, 4, nBlockXSize * 2, 4 );
 #endif
 	return CE_None;
 }
@@ -349,7 +349,7 @@ const GDAL_GCP *COASPDataset::GetGCPs()
 /*                              Identify()                              */
 /************************************************************************/
 
-int COASPDataset::Identify( GDALOpenInfo *poOpenInfo ) 
+int COASPDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
 	if(poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 256)
 		return 0;
@@ -367,7 +367,7 @@ int COASPDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo ) 
+GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 {
 	if (!COASPDataset::Identify(poOpenInfo))
 		return NULL;
@@ -377,7 +377,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The COASP driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -461,13 +461,13 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	if (poDS->fpBinHH != NULL) {
 		/* Set raster band */
-		poDS->SetBand(1, new COASPRasterBand(poDS, GDT_CFloat32, 
+		poDS->SetBand(1, new COASPRasterBand(poDS, GDT_CFloat32,
 			hh , poDS->fpBinHH));
 	}
 
 	/* Horizontal transmit, vertical receive */
-    psChan[0] = 'h'; 
-    psChan[1] = 'v'; 
+    psChan[0] = 'h';
+    psChan[1] = 'v';
     pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
 
 	poDS->fpBinHV = VSIFOpenL(pszFilename, "r");
@@ -478,8 +478,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	}
 
 	/* Vertical transmit, horizontal receive */
-    psChan[0] = 'v'; 
-    psChan[1] = 'h'; 
+    psChan[0] = 'v';
+    psChan[1] = 'h';
     pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
 
 	poDS->fpBinVH = VSIFOpenL(pszFilename, "r");
@@ -490,8 +490,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	}
 
 	/* Vertical transmit, vertical receive */
-    psChan[0] = 'v'; 
-    psChan[1] = 'v'; 
+    psChan[0] = 'v';
+    psChan[1] = 'v';
     pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
 
 	poDS->fpBinVV = VSIFOpenL(pszFilename, "r");
@@ -504,15 +504,15 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	/* Oops, missing all the data? */
 
-	if (poDS->fpBinHH == NULL && poDS->fpBinHV == NULL 
-		&& poDS->fpBinVH == NULL && poDS->fpBinVV == NULL) 
+	if (poDS->fpBinHH == NULL && poDS->fpBinHV == NULL
+		&& poDS->fpBinVH == NULL && poDS->fpBinVV == NULL)
 	{
 		CPLError(CE_Fatal,CPLE_AppDefined,"Unable to find any data! Aborting.");
 		free(pszBase);
 		free(pszDir);
 		delete poDS;
                 delete poItem;
-                delete poReader; 
+                delete poReader;
 		return NULL;
 	}
 
@@ -524,7 +524,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	free(pszDir);
 
 	delete poItem;
-	delete poReader; 
+	delete poReader;
 
 	return poDS;
 }

@@ -107,19 +107,19 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
         if( i > 10 )
         {
             if (/* && pszBuffer[i-1] == '1' &&*/
-                pszBuffer[i-2] == '0' 
-                && pszBuffer[i-3] == '0' 
-                && pszBuffer[i-4] == '0' 
-                && pszBuffer[i-5] == '0' 
+                pszBuffer[i-2] == '0'
+                && pszBuffer[i-3] == '0'
+                && pszBuffer[i-4] == '0'
+                && pszBuffer[i-5] == '0'
                 && pszBuffer[i-6] == '0' )
             {
                 pszBuffer[--i] = '\0';
             }
             else if( i - 8 > iDotPos && /* pszBuffer[i-1] == '1' */
                   /* && pszBuffer[i-2] == '0' && */
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0') 
-                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0') 
-                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0') 
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0')
                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '0')
                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '0')
                     && pszBuffer[i-8] == '0'
@@ -145,10 +145,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
             nPrecision + nTruncations >= 15)
         {
             if (/*pszBuffer[i-1] == '9' && */
-                 pszBuffer[i-2] == '9' 
-                && pszBuffer[i-3] == '9' 
-                && pszBuffer[i-4] == '9' 
-                && pszBuffer[i-5] == '9' 
+                 pszBuffer[i-2] == '9'
+                && pszBuffer[i-3] == '9'
+                && pszBuffer[i-4] == '9'
+                && pszBuffer[i-5] == '9'
                 && pszBuffer[i-6] == '9' )
             {
                 nPrecision --;
@@ -161,9 +161,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
             }
             else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
                      /*pszBuffer[i-2] == '9' && */
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9') 
-                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9') 
-                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9') 
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9')
                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '9')
                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '9')
                     && pszBuffer[i-8] == '9'
@@ -195,7 +195,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 /*      characters barring the X or Y value being extremely large.      */
 /************************************************************************/
 
-void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z, 
+void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
@@ -251,9 +251,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     if( nLenX + 1 + nLenY + ((nDimension == 3) ? (1 + strlen(szZ)) : 0) >= maxTargetSize )
     {
 #ifdef DEBUG
-        CPLDebug( "OGR", 
+        CPLDebug( "OGR",
                   "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
-                  "%s %s %s", 
+                  "%s %s %s",
                   szX, szY, szZ );
 #endif
         if( nDimension == 3 )
@@ -362,9 +362,9 @@ void OGRMakeWktCoordinateM( char *pszTarget, double x, double y, double z, doubl
     if( nLen >= maxTargetSize )
     {
 #ifdef DEBUG
-        CPLDebug( "OGR", 
+        CPLDebug( "OGR",
                   "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
-                  "%s %s %s %s", 
+                  "%s %s %s %s",
                   szX, szY, szZ, szM );
 #endif
         if( hasZ && hasM )
@@ -443,8 +443,8 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
                && ((*pszInput >= 'a' && *pszInput <= 'z')
                    || (*pszInput >= 'A' && *pszInput <= 'Z')
                    || (*pszInput >= '0' && *pszInput <= '9')
-                   || *pszInput == '.' 
-                   || *pszInput == '+' 
+                   || *pszInput == '.'
+                   || *pszInput == '+'
                    || *pszInput == '-') )
         {
             pszToken[iChar++] = *(pszInput++);
@@ -691,7 +691,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      If there are unexpectedly more coordinates, they are Z.         */
 /* -------------------------------------------------------------------- */
 
-        if( !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED) && 
+        if( !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED) &&
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ))
         {
             *flags |= OGRGeometry::OGR_G_3D;
@@ -768,7 +768,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      This is allowed in BNF.                                         */
 /* -------------------------------------------------------------------- */
 
-        if( !(*flags & OGRGeometry::OGR_G_3D) && 
+        if( !(*flags & OGRGeometry::OGR_G_3D) &&
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.') )
         {
             *flags |= OGRGeometry::OGR_G_3D;
@@ -854,28 +854,28 @@ void OGRFree( void * pMemory )
 /**
  * General utility option processing.
  *
- * This function is intended to provide a variety of generic commandline 
+ * This function is intended to provide a variety of generic commandline
  * options for all OGR commandline utilities.  It takes care of the following
  * commandline options:
- *  
- *  --version: report version of GDAL in use. 
+ *
+ *  --version: report version of GDAL in use.
  *  --license: report GDAL license info.
- *  --format [format]: report details of one format driver. 
+ *  --format [format]: report details of one format driver.
  *  --formats: report all format drivers configured.
- *  --optfile filename: expand an option file into the argument list. 
- *  --config key value: set system configuration option. 
+ *  --optfile filename: expand an option file into the argument list.
+ *  --config key value: set system configuration option.
  *  --debug [on/off/value]: set debug level.
  *  --pause: Pause for user input (allows time to attach debugger)
  *  --locale [locale]: Install a locale using setlocale() (debugging)
- *  --help-general: report detailed help on general options. 
+ *  --help-general: report detailed help on general options.
  *
- * The argument array is replaced "in place" and should be freed with 
+ * The argument array is replaced "in place" and should be freed with
  * CSLDestroy() when no longer needed.  The typical usage looks something
  * like the following.  Note that the formats should be registered so that
  * the --formats option will work properly.
  *
  *  int main( int argc, char ** argv )
- *  { 
+ *  {
  *    OGRRegisterAll();
  *
  *    argc = OGRGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -883,10 +883,10 @@ void OGRFree( void * pMemory )
  *        exit( -argc );
  *
  * @param nArgc number of values in the argument list.
- * @param ppapszArgv pointer to the argument list array (will be updated in place). 
+ * @param ppapszArgv pointer to the argument list array (will be updated in place).
  * @param nOptions unused.
  *
- * @return updated nArgc argument count.  Return of 0 requests terminate 
+ * @return updated nArgc argument count.  Return of 0 requests terminate
  * without error, return of -1 requests exit with error code.
  */
 
@@ -907,18 +907,18 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * Parse date string.
  *
  * This function attempts to parse a date string in a variety of formats
- * into the OGRField.Date format suitable for use with OGR.  Generally 
+ * into the OGRField.Date format suitable for use with OGR.  Generally
  * speaking this function is expecting values like:
- * 
+ *
  *   YYYY-MM-DD HH:MM:SS[.sss]+nn
  *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
  *
  * The seconds may also have a decimal portion (which is ignored).  And
- * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported. 
+ * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
  * The date may also be in YYYY/MM/DD format.  If the year is less than 100
  * and greater than 30 a "1900" century value will be set.  If it is less than
- * 30 and greater than -1 then a "2000" century value will be set.  In 
- * the future this function may be generalized, and additional control 
+ * 30 and greater than -1 then a "2000" century value will be set.  In
+ * the future this function may be generalized, and additional control
  * provided through nOptions, but an nOptions value of "0" should always do
  * a reasonable default form of processing.
  *
@@ -968,22 +968,22 @@ int OGRParseDate( const char *pszInput,
         else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
             psField->Date.Year += 2000;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Month = (GByte)atoi(pszInput);
         if( psField->Date.Month > 12 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Day = (GByte)atoi(pszInput);
@@ -1012,18 +1012,18 @@ int OGRParseDate( const char *pszInput,
         if( psField->Date.Hour > 23 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != ':' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Minute = (GByte)atoi(pszInput);
         if( psField->Date.Minute > 59 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput == ':' )
         {
@@ -1068,7 +1068,7 @@ int OGRParseDate( const char *pszInput,
         else if( pszInput[3] == ':'  // +HH:MM offset
                  && atoi(pszInput+4) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + atoi(pszInput+1) * 4
                 + (atoi(pszInput+4) / 15));
 
@@ -1078,7 +1078,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
                  && atoi(pszInput+3) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + static_cast<GByte>(CPLScanLong(pszInput+1,2)) * 4
                 + (atoi(pszInput+3) / 15));
 
@@ -1088,7 +1088,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
                  && atoi(pszInput+2) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + static_cast<GByte>(CPLScanLong(pszInput+1,1)) * 4
                 + (atoi(pszInput+2) / 15));
 
@@ -1613,14 +1613,14 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
     if ( 0x40000000 & iRawType )
     {
         iRawType &= ~0x40000000;
-        bIsMeasured = TRUE;        
+        bIsMeasured = TRUE;
     }
     /* Old-style OGC z-bit is flipped? Tests also Z bit in PostGIS WKB */
     if ( wkb25DBitInternalUse & iRawType )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;        
+        bIs3D = TRUE;
     }
 
     /*  ISO SQL/MM Part3 draft -> Deprecated */
@@ -1640,11 +1640,11 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
     else if (iRawType == 2000002)
         iRawType = wkbLineStringZM;
     else if (iRawType == 2000003)
-        iRawType = wkbCircularStringZM; 
+        iRawType = wkbCircularStringZM;
     else if (iRawType == 2000004)
-        iRawType = wkbCompoundCurveZM; 
+        iRawType = wkbCompoundCurveZM;
     else if (iRawType == 2000005)
-        iRawType = wkbPolygonZM; 
+        iRawType = wkbPolygonZM;
     else if (iRawType == 2000006)
         iRawType = wkbCurvePolygonZM;
     else if (iRawType == 2000007)
@@ -1713,7 +1713,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;        
+        bIs3D = TRUE;
     }
 
     if( eWkbVariant == wkbVariantPostGIS1 )
@@ -1741,7 +1741,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
            (iRawType > 2000 && iRawType <= 2016) ||
            (iRawType > 3000 && iRawType <= 3016)) )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 

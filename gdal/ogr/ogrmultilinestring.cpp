@@ -51,10 +51,10 @@ OGRMultiLineString::OGRMultiLineString()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -77,10 +77,10 @@ OGRMultiLineString::~OGRMultiLineString()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -158,7 +158,7 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear
  * \brief Cast to multicurve.
  *
  * The passed in geometry is consumed and a new one returned .
- * 
+ *
  * @param poMLS the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

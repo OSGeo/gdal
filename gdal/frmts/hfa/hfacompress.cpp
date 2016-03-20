@@ -66,8 +66,8 @@ static GByte _FindNumBits( GUInt32 range )
 {
   if( range < 0xff )
   {
-    return 8; 
-  } 
+    return 8;
+  }
 
   if( range < 0xffff )
   {
@@ -92,25 +92,25 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   }
   else if( m_nDataTypeNumBits == 32 )
   {
-    val = ((GUInt32*)m_pData)[iPixel]; 
+    val = ((GUInt32*)m_pData)[iPixel];
   }
   else if( m_nDataTypeNumBits == 4 )
   {
       if( iPixel % 2 == 0 )
-          val = ((GByte*)m_pData)[iPixel/2] & 0x0f;  
+          val = ((GByte*)m_pData)[iPixel/2] & 0x0f;
       else
           val = (((GByte*)m_pData)[iPixel/2] & 0xf0) >> 4;
   }
   else if( m_nDataTypeNumBits == 2 )
   {
       if( iPixel % 4 == 0 )
-          val = ((GByte*)m_pData)[iPixel/4] & 0x03;  
+          val = ((GByte*)m_pData)[iPixel/4] & 0x03;
       else if( iPixel % 4 == 1 )
-          val = (((GByte*)m_pData)[iPixel/4] & 0x0c) >> 2;  
+          val = (((GByte*)m_pData)[iPixel/4] & 0x0c) >> 2;
       else if( iPixel % 4 == 2 )
-          val = (((GByte*)m_pData)[iPixel/4] & 0x30) >> 4;  
-      else 
-          val = (((GByte*)m_pData)[iPixel/4] & 0xc0) >> 6;  
+          val = (((GByte*)m_pData)[iPixel/4] & 0x30) >> 4;
+      else
+          val = (((GByte*)m_pData)[iPixel/4] & 0xc0) >> 6;
   }
   else if( m_nDataTypeNumBits == 1 )
   {
@@ -121,9 +121,9 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   }
   else
   {
-    /* Should not get to here - check in compressBlock() should return false if 
+    /* Should not get to here - check in compressBlock() should return false if
     we can't compress this blcok because we don't know about the type */
-    CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n", 
+    CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n",
           m_eDataType,
           m_nDataTypeNumBits );
     CPLAssert( FALSE );
@@ -134,7 +134,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
 
 /* Finds the minimum value in a type specific fashion. This value is
   subtracted from each value in the compressed dataset. The maxmimum
-  value is also found and the number of bits that the range can be stored 
+  value is also found and the number of bits that the range can be stored
   is also returned. */
 /* TODO: Minimum value returned as pNumBits is now 8 - Imagine
   can handle 1, 2, and 4 bits as well */
@@ -215,7 +215,7 @@ void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
     /* Only storing 16 bits per value as the range is small */
     *(GUInt16*)m_pCurrValues = GUInt16(val - m_nMin);
 #ifndef CPL_MSB
-   CPL_SWAP16PTR( m_pCurrValues );      
+   CPL_SWAP16PTR( m_pCurrValues );
 #endif /* ndef CPL_MSB */
     m_pCurrValues += sizeof( GUInt16 );
   }
@@ -223,7 +223,7 @@ void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
   {
     *(GUInt32*)m_pCurrValues = GUInt32(val - m_nMin);
 #ifndef CPL_MSB
-   CPL_SWAP32PTR( m_pCurrValues );      
+   CPL_SWAP32PTR( m_pCurrValues );
 #endif /* ndef CPL_MSB */
     m_pCurrValues += sizeof( GUInt32 );
   }

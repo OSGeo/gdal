@@ -6504,7 +6504,7 @@ SWIG Perl
  * Add wrappers for field types datetime and lists. Do not use the overloaded (field name) versions of the get/set functions.
  * GetField and SetField methods, which check for goodness of the field (name, index) and support dates, times, datetimes, and lists. In Row and Tuple the field value may be a listref.
  * Support HEXWKB in Geo::OGR::Geometry::create.
- * As* methods for Geometry as aliases for ExportTo; SpatialReference->create constuctor
+ * As* methods for Geometry as aliases for ExportTo; SpatialReference->create constructor
  * made needed links from parameters to typemaps to make Get- and SetDefaultHistogram methods work in Perl
  * support for mingw Windows builds
 

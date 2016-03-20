@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes JP2KAK SDK headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *

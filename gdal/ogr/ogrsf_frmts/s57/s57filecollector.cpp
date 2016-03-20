@@ -63,7 +63,7 @@ char **S57FileCollector( const char *pszDataset )
 
     if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char    **papszDirFiles = CPLReadDir( pszDataset );
+        char    **papszDirFiles = VSIReadDir( pszDataset );
         DDFModule oModule;
 
         for( int iFile = 0;

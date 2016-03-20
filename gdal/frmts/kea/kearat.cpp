@@ -7,23 +7,23 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
@@ -123,11 +123,11 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 CPLFree(panColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, panColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, panColData[iRow]);
             }
             CPLFree(panColData);
         }
@@ -145,11 +145,11 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 CPLFree(padfColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, padfColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, padfColData[iRow]);
             }
             CPLFree(padfColData);
         }
@@ -168,7 +168,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 CPLFree(papszColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
@@ -202,7 +202,7 @@ GDALRATFieldUsage KEARasterAttributeTable::GetUsageOfCol( int nCol ) const
         return GFU_Generic;
 
     GDALRATFieldUsage eGDALUsage;
-    std::string keausage = m_aoFields[nCol].usage;    
+    std::string keausage = m_aoFields[nCol].usage;
 
     if( keausage == "PixelCount" )
         eGDALUsage = GFU_PixelCount;
@@ -838,8 +838,8 @@ void KEARasterAttributeTable::SetRowCount( int iCount )
     // can't shrink
 }
 
-CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage )
 {
     /*if( this->eAccess == GA_ReadOnly )

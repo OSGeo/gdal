@@ -107,14 +107,14 @@ struct ImageRec
 /*                            ConvertLong()                             */
 /************************************************************************/
 #ifdef CPL_LSB
-static void ConvertLong(GUInt32* array, GInt32 length) 
+static void ConvertLong(GUInt32* array, GInt32 length)
 {
    GUInt32* ptr = reinterpret_cast<GUInt32*>( array );
    while(length--)
      CPL_SWAP32PTR(ptr++);
 }
 #else
-static void ConvertLong(GUInt32* /*array*/, GInt32 /*length */) 
+static void ConvertLong(GUInt32* /*array*/, GInt32 /*length */)
 {
 }
 #endif
@@ -122,7 +122,7 @@ static void ConvertLong(GUInt32* /*array*/, GInt32 /*length */)
 /************************************************************************/
 /*                            ImageGetRow()                             */
 /************************************************************************/
-static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z) 
+static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 {
     y = image->ysize - 1 - y;
 
@@ -314,13 +314,13 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
     if( image->type == 0 )
     {
-        VSIFSeekL(image->file, 
+        VSIFSeekL(image->file,
                   512 + (nBlockYOff*static_cast<vsi_l_offset>(image->xsize))
-                  + ((nBand-1)*static_cast<vsi_l_offset>(image->xsize)*static_cast<vsi_l_offset>(image->ysize) ), 
+                  + ((nBand-1)*static_cast<vsi_l_offset>(image->xsize)*static_cast<vsi_l_offset>(image->ysize) ),
                   SEEK_SET);
         if(VSIFWriteL(pImage, 1, image->xsize, image->file) != image->xsize)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed, 
+            CPLError(CE_Failure, CPLE_OpenFailed,
                      "file write error: row (%d)\n", nBlockYOff );
             return CE_Failure;
         }
@@ -346,12 +346,12 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
                && pabyRawBuf[iX + nRepeatCount] == pabyRawBuf[iX] )
             nRepeatCount++;
 
-        if( nRepeatCount > 2 
+        if( nRepeatCount > 2
             || iX + nRepeatCount == image->xsize
             || (iX + nRepeatCount < image->xsize - 2
-                && pabyRawBuf[iX + nRepeatCount + 1] 
+                && pabyRawBuf[iX + nRepeatCount + 1]
                 == pabyRawBuf[iX + nRepeatCount + 2]
-                && pabyRawBuf[iX + nRepeatCount + 1] 
+                && pabyRawBuf[iX + nRepeatCount + 1]
                 == pabyRawBuf[iX + nRepeatCount + 3]) )
         { // encode a constant run.
             pabyRLEBuf[nRLEBytes++] = static_cast<GByte>( nRepeatCount );
@@ -359,7 +359,7 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
             iX += nRepeatCount;
         }
         else
-        { // copy over mixed data. 
+        { // copy over mixed data.
             for( nRepeatCount = 1;
                  iX + nRepeatCount < image->xsize && nRepeatCount < 127;
                  nRepeatCount++ )
@@ -368,16 +368,16 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
                     continue;
 
                 // quit if the next 3 pixels match
-                if( pabyRawBuf[iX + nRepeatCount] 
-                    == pabyRawBuf[iX + nRepeatCount+1] 
-                    && pabyRawBuf[iX + nRepeatCount] 
+                if( pabyRawBuf[iX + nRepeatCount]
+                    == pabyRawBuf[iX + nRepeatCount+1]
+                    && pabyRawBuf[iX + nRepeatCount]
                     == pabyRawBuf[iX + nRepeatCount+2] )
                     break;
             }
 
             pabyRLEBuf[nRLEBytes++] = static_cast<GByte>( 0x80 | nRepeatCount );
-            memcpy( pabyRLEBuf + nRLEBytes, 
-                    pabyRawBuf + iX, 
+            memcpy( pabyRLEBuf + nRLEBytes,
+                    pabyRawBuf + iX,
                     nRepeatCount );
 
             nRLEBytes += nRepeatCount;
@@ -403,7 +403,7 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
         != nRLEBytes )
     {
         CPLFree( pabyRLEBuf );
-        CPLError(CE_Failure, CPLE_OpenFailed, 
+        CPLError(CE_Failure, CPLE_OpenFailed,
                  "file write error: row (%d)\n", nBlockYOff );
         return CE_Failure;
     }
@@ -557,7 +557,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if(tmpImage.bpc != 1)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "The SGI driver only supports 1 byte channel values.\n");
         return NULL;
     }
@@ -577,8 +577,8 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
     if(poDS->fpImage == NULL)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
-                 "VSIFOpenL(%s) failed unexpectedly in sgidataset.cpp\n%s", 
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "VSIFOpenL(%s) failed unexpectedly in sgidataset.cpp\n%s",
                  poOpenInfo->pszFilename,
                  VSIStrerror( errno ) );
         delete poDS;
@@ -608,7 +608,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->nRasterYSize = poDS->image.ysize;
     if (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
+        CPLError(CE_Failure, CPLE_OpenFailed,
                      "Invalid image dimensions : %d x %d", poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
@@ -616,7 +616,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->nBands = MAX(1,poDS->image.zsize);
     if (poDS->nBands > 256)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
+        CPLError(CE_Failure, CPLE_OpenFailed,
                      "Too many bands : %d", poDS->nBands);
         delete poDS;
         return NULL;
@@ -659,14 +659,14 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         if( VSIFReadL(poDS->image.rowStart, 1, x, poDS->image.file ) != x )
         {
             delete poDS;
-            CPLError(CE_Failure, CPLE_OpenFailed, 
+            CPLError(CE_Failure, CPLE_OpenFailed,
                      "file read error while reading start positions in sgidataset.cpp");
             return NULL;
         }
         if( VSIFReadL(poDS->image.rowSize, 1, x, poDS->image.file) != x)
         {
             delete poDS;
-            CPLError(CE_Failure, CPLE_OpenFailed, 
+            CPLError(CE_Failure, CPLE_OpenFailed,
                      "file read error while reading row lengths in sgidataset.cpp");
             return NULL;
         }
@@ -690,8 +690,8 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile(poOpenInfo->pszFilename, ".wld", 
+    poDS->bGeoTransformValid =
+        GDALReadWorldFile(poOpenInfo->pszFilename, ".wld",
                           poDS->adfGeoTransform);
 
 /* -------------------------------------------------------------------- */
@@ -735,8 +735,8 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     VSILFILE *fp = VSIFOpenL( pszFilename, "w" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create file '%s': %s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create file '%s': %s",
                   pszFilename, VSIStrerror( errno ) );
         return NULL;
     }
@@ -818,9 +818,9 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     if( static_cast<GInt32>( VSIFWriteL( pabyRLELine, 1, nRLEBytes, fp ) )
         != nRLEBytes )
     {
-        CPLError( CE_Failure, CPLE_FileIO,  
-                  "Failure writing SGI file '%s'.\n%s", 
-                  pszFilename, 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failure writing SGI file '%s'.\n%s",
+                  pszFilename,
                   VSIStrerror( errno ) );
         return NULL;
     }

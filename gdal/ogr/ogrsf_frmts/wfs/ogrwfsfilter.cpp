@@ -627,7 +627,7 @@ static swq_field_type OGRWFSSpatialBooleanPredicateChecker( swq_expr_node *op,
 /*                           OGRWFSCheckSRIDArg()                       */
 /************************************************************************/
 
-static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex ) 
+static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex )
 {
     if( op->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
     {

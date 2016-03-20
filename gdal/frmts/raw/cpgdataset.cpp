@@ -202,7 +202,7 @@ class CPG_STOKESRasterBand : public GDALRasterBand
 /*      Return TRUE if file found otherwise FALSE.                      */
 /************************************************************************/
 
-int CPGDataset::AdjustFilename( char **pszFilename, 
+int CPGDataset::AdjustFilename( char **pszFilename,
                                 const char *pszPolarization,
                                 const char *pszExtension )
 
@@ -255,7 +255,7 @@ int CPGDataset::FindType1( const char *pszFilename )
 {
   const int nNameLen = static_cast<int>(strlen(pszFilename));
 
-  if ((strstr(pszFilename,"sso") == NULL) && 
+  if ((strstr(pszFilename,"sso") == NULL) &&
       (strstr(pszFilename,"polgasp") == NULL))
       return FALSE;
 
@@ -302,7 +302,7 @@ int CPGDataset::FindType3( const char *pszFilename )
 {
   const int nNameLen = static_cast<int>(strlen( pszFilename ));
 
-  if ((strstr(pszFilename,"sso") == NULL) && 
+  if ((strstr(pszFilename,"sso") == NULL) &&
       (strstr(pszFilename,"polgasp") == NULL))
       return FALSE;
 
@@ -348,14 +348,14 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
     {
         const int offset = nRasterXSize * iLine * nDataSize * 16;
         const int nBytesToRead = nDataSize * nRasterXSize*16;
-        if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) || 
+        if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
             static_cast<int>( VSIFRead(
                 reinterpret_cast<GByte *>( padfStokesMatrix ),
                 1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
             CPLFree( padfStokesMatrix );
             padfStokesMatrix = NULL;
@@ -370,15 +370,15 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
             const int offset = nDataSize * (nRasterXSize * iLine +
                                             nRasterXSize*band_index);
             const int nBytesToRead = nDataSize * nRasterXSize;
-            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) || 
+            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
                static_cast<int>( VSIFRead(
                    reinterpret_cast<GByte *>(
                        padfStokesMatrix + nBytesToRead*band_index ),
                    1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
                 CPLFree( padfStokesMatrix );
                 padfStokesMatrix = NULL;
@@ -396,15 +396,15 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 nDataSize * ( nRasterXSize * iLine +
                               nRasterXSize * nRasterYSize * band_index );
             const int nBytesToRead = nDataSize * nRasterXSize;
-            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) || 
+            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
                static_cast<int>( VSIFRead(
                    reinterpret_cast<GByte *>(
                        padfStokesMatrix + nBytesToRead * band_index ),
                    1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
                 CPLFree( padfStokesMatrix );
                 padfStokesMatrix = NULL;
@@ -503,18 +503,18 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         else if( EQUAL(papszTokens[0],"number_samples") )
             nSamples = atoi(papszTokens[1]);
 
-        else if( (EQUAL(papszTokens[0],"header_offset") 
-                  && atoi(papszTokens[1]) != 0) 
-                 || (EQUAL(papszTokens[0],"number_channels") 
+        else if( (EQUAL(papszTokens[0],"header_offset")
+                  && atoi(papszTokens[1]) != 0)
+                 || (EQUAL(papszTokens[0],"number_channels")
                      && (atoi(papszTokens[1]) != 1)
-                     && (atoi(papszTokens[1]) != 10)) 
-                 || (EQUAL(papszTokens[0],"datatype") 
-                     && atoi(papszTokens[1]) != 1) 
-                 || (EQUAL(papszTokens[0],"number_format") 
+                     && (atoi(papszTokens[1]) != 10))
+                 || (EQUAL(papszTokens[0],"datatype")
+                     && atoi(papszTokens[1]) != 1)
+                 || (EQUAL(papszTokens[0],"number_format")
                      && !EQUAL(papszTokens[1],"float32")
                      && !EQUAL(papszTokens[1],"int8")))
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
        "Keyword %s has value %s which does not match CPG driver expectation.",
                       papszTokens[0], papszTokens[1] );
             nError = 1;
@@ -563,7 +563,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
     if( nLines <= 0 || nSamples <= 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
           "Did not find valid number_lines or number_samples keywords in %s.",
                   pszWorkname );
         CPLFree(pszWorkname);
@@ -593,8 +593,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         poDS->afpImage[0] = VSIFOpen( pszWorkname, "rb" );
         if( poDS->afpImage[0] == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open .img file: %s", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open .img file: %s",
                       pszWorkname );
             CPLFree(pszWorkname);
             delete poDS;
@@ -606,7 +606,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
             poBand = new SIRC_QSLCRasterBand( poDS, iBand+1, GDT_CFloat32 );
             poDS->SetBand( iBand+1, poBand );
-            poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
+            poBand->SetMetadataItem( "POLARIMETRIC_INTERP",
                                  apszPolarizations[iBand] );
         }
     }
@@ -619,8 +619,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             poDS->afpImage[iBand] = VSIFOpen( pszWorkname, "rb" );
             if( poDS->afpImage[iBand] == NULL )
             {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
-                          "Failed to open .img file: %s", 
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "Failed to open .img file: %s",
                           pszWorkname );
                 CPLFree(pszWorkname);
                 delete poDS;
@@ -633,7 +633,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                                      GDT_CFloat32, !CPL_IS_LSB, FALSE );
             poDS->SetBand( iBand+1, poBand );
 
-            poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
+            poBand->SetMetadataItem( "POLARIMETRIC_INTERP",
                                  apszPolarizations[iBand] );
         }
     }
@@ -800,7 +800,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
                 iInterleave = BIP;
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                   "The interleaving type of the file (%s) is not supported.",
                   papszTokens[2] );
                 nError = 1;
@@ -814,7 +814,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
             if( !STARTS_WITH_CI(papszTokens[2], "RAW") &&
                 !STARTS_WITH_CI(papszTokens[2], "GEO") )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "The data state of the file (%s) is not "
                           "supported.\n.  Only RAW and GEO are currently "
                           "recognized.",
@@ -829,12 +829,12 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
         {
           if (!STARTS_WITH_CI(papszTokens[3], "Upper_Left"))
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
             "Unexpected value (%s) for data origin point- expect Upper_Left.",
                   papszTokens[3] );
                 nError = 1;
             }
-            iUTMParamsFound++;  
+            iUTMParamsFound++;
         }
         else if ( ( CSLCount( papszTokens ) >= 5 ) &&
                EQUAL(papszTokens[0],"map") &&
@@ -883,7 +883,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
                EQUAL(papszTokens[1],"of") &&
                EQUAL(papszTokens[2],"lines:"))
         {
-            nLines = atoi(papszTokens[3]); 
+            nLines = atoi(papszTokens[3]);
         }
         else if ( ( CSLCount( papszTokens ) >= 4 ) &&
                EQUAL(papszTokens[0],"number") &&
@@ -893,7 +893,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
             nBands = atoi(papszTokens[3]);
             if ( nBands != 16)
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Number of bands has a value %s which does not match "
                           "CPG driver\nexpectation (expect a value of 16).",
                       papszTokens[3] );
@@ -908,7 +908,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
             iBytesPerPixel = atoi(papszTokens[3]);
             if (iBytesPerPixel != 4)
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Bytes per pixel has a value %s which does not match "
                           "CPG driver\nexpectation (expect a value of 4).",
                       papszTokens[1] );
@@ -933,7 +933,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
         !GDALCheckBandCount(nBands, FALSE) || iInterleave == -1 ||
         iBytesPerPixel == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s is missing a required parameter (number of pixels, "
                   "number of lines,\nnumber of bands, bytes per pixel, or "
                   "data organization).",
@@ -965,8 +965,8 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
     poDS->afpImage[0] = VSIFOpen( pszWorkname, "rb" );
     if( poDS->afpImage[0] == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open .img file: %s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open .img file: %s",
                   pszWorkname );
         CPLFree(pszWorkname);
         delete poDS;
@@ -1059,24 +1059,24 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( CPGType == 0 )
     {
       int nNameLen = static_cast<int>(strlen(poOpenInfo->pszFilename));
-      if ( (nNameLen > 8) && 
+      if ( (nNameLen > 8) &&
            ( ( strstr(poOpenInfo->pszFilename,"sso") != NULL ) ||
              ( strstr(poOpenInfo->pszFilename,"polgasp") != NULL ) ) &&
            ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-7,"img_def") ) )
       {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
               "Apparent attempt to open Convair PolGASP data failed as\n"
               "one or more of the required files is missing (eight files\n"
               "are expected for scattering matrix format, two for Stokes)." );
       }
-      else if ( (nNameLen > 8) && 
+      else if ( (nNameLen > 8) &&
                 ( strstr(poOpenInfo->pszFilename,"SIRC") != NULL )  &&
            ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr")))
       {
-          CPLError( CE_Failure, CPLE_OpenFailed, 
+          CPLError( CE_Failure, CPLE_OpenFailed,
                 "Apparent attempt to open SIRC Convair PolGASP data failed \n"
                 "as one of the expected files is missing (hdr or img)!" );
       }
@@ -1088,7 +1088,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The CPG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -1114,7 +1114,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    // Need to think about this. 
+    // Need to think about this.
     // poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -1173,7 +1173,7 @@ const char *CPGDataset::GetProjectionRef()
 CPLErr CPGDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
     return( CE_None );
 }
 
@@ -1241,9 +1241,9 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             pabyRecord, 1, nBytesToRead, poGDS->afpImage[0] ) )
         != nBytesToRead )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of SIRC Convair at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, poGDS->GetDescription() );
         CPLFree( pabyRecord );
         return CE_Failure;

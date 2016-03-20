@@ -2,7 +2,8 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Command line application to build VRT datasets from raster products or content of SHP tile index
+ * Purpose:  Command line application to build VRT datasets from raster products
+ *           or content of SHP tile index
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -27,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_string.h"
+#include "gdal_proxy.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
-#include "gdal_proxy.h"
-#include "cpl_string.h"
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
@@ -127,7 +128,7 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     else
     {
         *pdfSrcXOff = 0.0;
-        *pdfDstXOff = 
+        *pdfDstXOff =
             ((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
     if ( maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
@@ -139,7 +140,7 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     else
     {
         *pdfSrcYOff = 0.0;
-        *pdfDstYOff = 
+        *pdfDstYOff =
             ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
     *pdfDstXSize = (psDP->nRasterXSize *
@@ -162,7 +163,7 @@ class VRTBuilder
     char              **ppszInputFilenames;
     GDALDatasetH       *pahSrcDS;
     int                 nBands;
-    int                *panBandList;   
+    int                *panBandList;
     int                 nMaxBandNo;
     ResolutionStrategy  resolutionStrategy;
     double              we_res;
@@ -523,7 +524,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 
     int _nBands = GDALGetRasterCount(hDS);
 
-    //if provided band list 
+    //if provided band list
     if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands >= nMaxBandNo)
     {
         if(_nBands < nMaxBandNo)
@@ -957,9 +958,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
             ((VRTSourcedRasterBand *) hVRTBand)->AddComplexSource(
                                             (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                                            dfSrcXOff, dfSrcYOff, 
-                                            dfSrcXSize, dfSrcYSize, 
-                                            dfDstXOff, dfDstYOff, 
+                                            dfSrcXOff, dfSrcYOff,
+                                            dfSrcXSize, dfSrcYSize,
+                                            dfDstXOff, dfDstYOff,
                                             dfDstXSize, dfDstYSize,
                                             255, 0, VRT_NODATA_UNSET);
         }
@@ -1085,7 +1086,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             return NULL;
         }
 
-        GDALDatasetH hDS = 
+        GDALDatasetH hDS =
             (pahSrcDS) ? pahSrcDS[i] :
                          GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
         pasDatasetProperties[i].isFileOK = FALSE;
@@ -1103,7 +1104,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined, 
+            CPLError(CE_Warning, CPLE_AppDefined,
                      "Can't open %s. Skipping it", dsFileName);
         }
     }
@@ -1200,7 +1201,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         if( hDS  == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to open shapefile `%s'.", 
+                      "Unable to open shapefile `%s'.",
                       filename );
             return false;
         }
@@ -1227,7 +1228,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         if( ti_field == OGR_FD_GetFieldCount(hFDefn) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to find field `%s' in DBF file `%s'.", 
+                     "Unable to find field `%s' in DBF file `%s'.",
                      tile_index, filename );
             return false;
         }
@@ -1315,7 +1316,8 @@ struct GDALBuildVRTOptions
 static
 GDALBuildVRTOptions* GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
 {
-    GDALBuildVRTOptions* psOptions = (GDALBuildVRTOptions*) CPLMalloc(sizeof(GDALBuildVRTOptions));
+    GDALBuildVRTOptions* psOptions = static_cast<GDALBuildVRTOptions*>(
+        CPLMalloc(sizeof(GDALBuildVRTOptions)) );
     memcpy(psOptions, psOptionsIn, sizeof(GDALBuildVRTOptions));
     if( psOptionsIn->pszResolution ) psOptions->pszResolution = CPLStrdup(psOptionsIn->pszResolution);
     if( psOptionsIn->pszSrcNoData ) psOptions->pszSrcNoData = CPLStrdup(psOptionsIn->pszSrcNoData);
@@ -1495,9 +1497,10 @@ static char *SanitizeSRS( const char *pszUserInput )
  */
 
 GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
-                                          GDALBuildVRTOptionsForBinary* psOptionsForBinary)
+                                            GDALBuildVRTOptionsForBinary* psOptionsForBinary)
 {
-    GDALBuildVRTOptions *psOptions = (GDALBuildVRTOptions *)CPLCalloc(1, sizeof(GDALBuildVRTOptions));
+    GDALBuildVRTOptions *psOptions = static_cast<GDALBuildVRTOptions *>(
+        CPLCalloc(1, sizeof(GDALBuildVRTOptions)) );
 
     const char *tile_index = "location";
 
@@ -1537,24 +1540,24 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             if( psOptionsForBinary )
             {
                 const char* input_file_list = papszArgv[iArg];
-                FILE* f = VSIFOpen(input_file_list, "r");
+                VSILFILE* f = VSIFOpenL(input_file_list, "r");
                 if (f)
                 {
                     while(1)
                     {
-                        const char* filename = CPLReadLine(f);
+                        const char* filename = CPLReadLineL(f);
                         if (filename == NULL)
                             break;
                         if( !add_file_to_list(filename, tile_index,
                                          &psOptionsForBinary->nSrcFiles,
                                          &psOptionsForBinary->papszSrcFiles) )
                         {
-                            VSIFClose(f);
+                            VSIFCloseL(f);
                             GDALBuildVRTOptionsFree(psOptions);
                             return NULL;
                         }
                     }
-                    VSIFClose(f);
+                    VSIFCloseL(f);
                 }
             }
             else
@@ -1635,7 +1638,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             }
 
             psOptions->nBandCount++;
-            psOptions->panBandList = (int *) 
+            psOptions->panBandList = (int *)
                 CPLRealloc(psOptions->panBandList, sizeof(int) * psOptions->nBandCount);
             psOptions->panBandList[psOptions->nBandCount-1] = nBand;
         }
@@ -1681,7 +1684,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             GDALBuildVRTOptionsFree(psOptions);
             return NULL;
         }
-        else 
+        else
         {
             if( psOptionsForBinary )
             {

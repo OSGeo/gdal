@@ -14,7 +14,7 @@
 #ifndef LIBGEOTIFF_GEOVALUES_H_
 #define LIBGEOTIFF_GEOVALUES_H_
 
-/* If code values are added or modified, the "GvCurrentMinorRev" 
+/* If code values are added or modified, the "GvCurrentMinorRev"
  * number should be incremented here. If new Keys are added, then the
  * GvCurrentRevision number should be incremented instead, and the
  * GvCurrentMinorRev should be reset to zero (see "geokeys.h").
@@ -22,7 +22,7 @@
  * In addition, any changes here should be reflected in "geo_names.c"
  *
  */
- 
+
 #define GvCurrentMinorRev  0  /* First Major Rev EPSG Code Release  */
 
 
@@ -41,7 +41,7 @@
  * The section numbers refer to the GeoTIFF Specification section
  * in which the code values are documented.
  */
- 
+
 /************************************************************
  *         6.3.1 GeoTIFF General Codes
  ************************************************************/
@@ -113,4 +113,3 @@ typedef enum {
 } vdatum_t;
 
 #endif /* LIBGEOTIFF_GEOVALUES_H_ */
-

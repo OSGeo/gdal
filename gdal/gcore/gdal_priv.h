@@ -237,7 +237,7 @@ class CPL_DLL GDALDefaultOverviews
 
 class CPL_DLL GDALOpenInfo
 {
-    int         bHasGotSiblingFiles;
+    bool        bHasGotSiblingFiles;
     char        **papszSiblingFiles;
     int         nHeaderBytesTried;
 
@@ -400,11 +400,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     friend class GDALRasterBand;
 
+    // The below methods related to read write mutex are fragile logic, and
+    // should not be used by out-of-tree code if possible.
     int                 EnterReadWrite(GDALRWFlag eRWFlag);
     void                LeaveReadWrite();
 
     void                TemporarilyDropReadWriteLock();
     void                ReacquireReadWriteLock();
+
+    void                DisableReadWriteMutex();
 
     int          AcquireMutex();
     void         ReleaseMutex();
@@ -1154,6 +1158,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     int         RegisterDriver( GDALDriver * );
     void        DeregisterDriver( GDALDriver * );
 
+    // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     void        AutoLoadDrivers();
     void        AutoSkipDrivers();
 };

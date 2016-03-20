@@ -128,11 +128,11 @@ public:
     unsigned char getType() const;
     int getColor() const;
 
-    void addPoint(double x, double y, GIntBig datetime, double altitude);  
+    void addPoint(double x, double y, GIntBig datetime, double altitude);
     int getNumPoints() const;
     const TrackPoint* getPoint(int pointNum) const;
 
-private: 
+private:
     char* pszName;
     unsigned char type;
     int color;

@@ -2,12 +2,12 @@
  * $Id$
  *
  * Project:  GDAL Warp API
- * Purpose:  Declarations for 2D Thin Plate Spline transformer. 
+ * Purpose:  Declarations for 2D Thin Plate Spline transformer.
  * Author:   VIZRT Development Team.
  *
- * This code was provided by Gilad Ronnen (gro at visrt dot com) with 
+ * This code was provided by Gilad Ronnen (gro at visrt dot com) with
  * permission to reuse under the following license.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2004, VIZRT Inc.
  *
@@ -40,7 +40,7 @@ typedef enum
 	VIZ_GEOREF_SPLINE_TWO_POINTS,
 	VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL,
 	VIZ_GEOREF_SPLINE_FULL,
-	
+
 	VIZ_GEOREF_SPLINE_POINT_WAS_ADDED,
 	VIZ_GEOREF_SPLINE_POINT_WAS_DELETED
 
@@ -125,7 +125,7 @@ class VizGeorefSpline2D
                 fprintf(stderr, "\n");
             }
 	}
-	
+
     int delete_list()
 	{
             _nof_points = 0;
@@ -154,7 +154,7 @@ class VizGeorefSpline2D
 #endif
     int solve(void);
 
-  private:	
+  private:
 
     vizGeorefInterType type;
 

@@ -49,8 +49,8 @@ class OGRKMLLayer : public OGRLayer
 {
 public:
 
-    OGRKMLLayer( const char* pszName_, 
-                 OGRSpatialReference* poSRS, 
+    OGRKMLLayer( const char* pszName_,
+                 OGRSpatialReference* poSRS,
                  bool bWriter,
                  OGRwkbGeometryType eType,
                  OGRKMLDataSource* poDS );
@@ -82,7 +82,7 @@ private:
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
 	OGRCoordinateTransformation *poCT_;
-	
+
     OGRFeatureDefn* poFeatureDefn_;
 
     int iNextKMLId_;
@@ -124,7 +124,7 @@ public:
     //
     // OGRKMLDataSource Interface
     //
-    int Create( const char* pszName, char** papszOptions );    
+    int Create( const char* pszName, char** papszOptions );
     const char* GetNameField() const { return pszNameField_; }
     const char* GetDescriptionField() const { return pszDescriptionField_; }
     const char* GetAltitudeMode() { return pszAltitudeMode_; }
@@ -152,19 +152,18 @@ private:
     char* pszNameField_;
     char* pszDescriptionField_;
 
-    //The KML altitude mode to use 
- 	char* pszAltitudeMode_; 
+    //The KML altitude mode to use
+ 	char* pszAltitudeMode_;
 
     char** papszCreateOptions_;
 
-    // output related parameters 
+    // output related parameters
     VSILFILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
-	
+
 	//Have we issued a coordinate transformation already for this datasource
-	bool bIssuedCTError_;		
+	bool bIssuedCTError_;
 };
 
 #endif /* OGR_KML_H_INCLUDED */
-

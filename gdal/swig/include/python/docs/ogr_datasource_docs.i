@@ -1,7 +1,7 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-23403 2011-11-20 21:01:21Z ajolma $\") ";
+33105 2016-01-23 15:27:32Z rouault $\") ";
 
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS)
@@ -10,6 +10,8 @@ Closes opened datasource and releases allocated resources.
 
 This method is the same as the C++ method
 OGRDataSource::DestroyDataSource().
+
+Deprecated Use GDALClose() in GDAL 2.0
 
 Parameters:
 -----------
@@ -40,8 +42,7 @@ The papszOptions argument can be used to control driver specific
 creation options. These options are normally documented in the format
 specific documentation.
 
-This function is the same as the C++ method
-OGRDataSource::CreateLayer().
+Deprecated Use GDALDatasetCreateLayer() in GDAL 2.0
 
 Parameters:
 -----------
@@ -77,7 +78,7 @@ creation options. These options are normally documented in the format
 specific documentation. The source layer may come from another
 dataset.
 
-This function is the same as the C++ method OGRDataSource::CopyLayer
+Deprecated Use GDALDatasetCopyLayer() in GDAL 2.0
 
 Parameters:
 -----------
@@ -101,8 +102,7 @@ Delete the indicated layer from the datasource.
 If this method is supported the ODsCDeleteLayer capability will test
 TRUE on the OGRDataSource.
 
-This method is the same as the C++ method
-OGRDataSource::DeleteLayer().
+Deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
 
 Parameters:
 -----------
@@ -122,8 +122,7 @@ Fetch a layer by name.
 The returned layer remains owned by the OGRDataSource and should not
 be deleted by the application.
 
-This function is the same as the C++ method
-OGRDataSource::GetLayerByName().
+Deprecated Use GDALDatasetGetLayerByName() in GDAL 2.0
 
 Parameters:
 -----------
@@ -134,10 +133,6 @@ pszLayerName:  Layer the layer name of the layer to fetch.
 
 an handle to the layer, or NULL if the layer is not found or an error
 occurs. ";
-
-%feature("docstring")  OGRDataSourceParseSQLType "static OGRFieldType
-OGRDataSourceParseSQLType(char *pszType, int &nWidth, int &nPrecision)
-";
 
 %feature("docstring")  ExecuteSQL "OGRLayerH
 OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,
@@ -153,11 +148,12 @@ OGR_DS_ReleaseResultSet() before the data source is closed
 (destroyed).
 
 For more information on the SQL dialect supported internally by OGR
-review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS) pass
-the SQL directly through to the underlying RDBMS.
+review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS)
+pass the SQL directly through to the underlying RDBMS.
 
-This function is the same as the C++ method
-OGRDataSource::ExecuteSQL();
+Starting with OGR 1.10, theSQLITE dialect can also be used.
+
+Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
 Parameters:
 -----------
@@ -172,7 +168,8 @@ filter. Can be NULL.
 pszDialect:  allows control of the statement dialect. If set to NULL,
 the OGR SQL engine will be used, except for RDBMS drivers that will
 use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-the dialect.
+the dialect. Starting with OGR 1.10, the SQLITE dialect can also be
+used.
 
 an handle to a OGRLayer containing the results of the query.
 Deallocate with OGR_DS_ReleaseResultSet(). ";
@@ -187,8 +184,7 @@ from an OGR_DS_ExecuteSQL() call on the same OGRDataSource. Failure to
 deallocate a results set before destroying the OGRDataSource may cause
 errors.
 
-This function is the same as the C++ method
-OGRDataSource::ReleaseResultSet().
+Deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
 
 Parameters:
 -----------
@@ -209,11 +205,19 @@ whether or not the capability is available for this object.
 
 ODsCCreateLayer: True if this datasource can create new layers.
 
+ODsCDeleteLayer: True if this datasource can delete existing layers.
+
+ODsCCreateGeomFieldAfterCreateLayer: True if the layers of this
+datasource support CreateGeomField() just after layer creation.
+
+ODsCCurveGeometries: True if this datasource supports writing curve
+geometries. (GDAL 2.0). In that case, OLCCurveGeometries must also be
+declared in layers of that dataset.
+
 The #define macro forms of the capability names should be used in
 preference to the strings themselves to avoid misspelling.
 
-This function is the same as the C++ method
-OGRDataSource::TestCapability().
+Deprecated Use GDALDatasetTestCapability() in GDAL 2.0
 
 Parameters:
 -----------
@@ -229,8 +233,7 @@ OGR_DS_GetLayerCount(OGRDataSourceH hDS)
 
 Get the number of layers in this data source.
 
-This function is the same as the C++ method
-OGRDataSource::GetLayerCount().
+Deprecated Use GDALDatasetGetLayerCount() in GDAL 2.0
 
 Parameters:
 -----------
@@ -248,7 +251,7 @@ Fetch a layer by index.
 The returned layer remains owned by the OGRDataSource and should not
 be deleted by the application.
 
-This function is the same as the C++ method OGRDataSource::GetLayer().
+Deprecated Use GDALDatasetGetLayer() in GDAL 2.0
 
 Parameters:
 -----------
@@ -270,7 +273,7 @@ the same OGRSFDriver that this data source was opened with, but it
 need not be exactly the same string that was used to open the data
 source. Normally this is a filename.
 
-This function is the same as the C++ method OGRDataSource::GetName().
+Deprecated Use GDALGetDescription() in GDAL 2.0
 
 Parameters:
 -----------
@@ -281,42 +284,18 @@ pointer to an internal name string which should not be modified or
 freed by the caller. ";
 
 %feature("docstring")  SyncToDisk "OGRErr
-OGR_DS_SyncToDisk(OGRDataSourceH hDS)
-
-Flush pending changes to disk.
-
-This call is intended to force the datasource to flush any pending
-writes to disk, and leave the disk file in a consistent state. It
-would not normally have any effect on read-only datasources.
-
-Some data sources do not implement this method, and will still return
-OGRERR_NONE. An error is only returned if an error occurs while
-attempting to flush to disk.
-
-The default implementation of this method just calls the SyncToDisk()
-method on each of the layers. Conceptionally, calling SyncToDisk() on
-a datasource should include any work that might be accomplished by
-calling SyncToDisk() on layers in that data source.
-
-In any event, you should always close any opened datasource with
-OGR_DS_Destroy() that will ensure all data is correctly flushed.
-
-This method is the same as the C++ method OGRDataSource::SyncToDisk()
-
-Parameters:
------------
-
-hDS:  handle to the data source
-
-OGRERR_NONE if no error occurs (even if nothing is done) or an error
-code. ";
+OGR_DS_SyncToDisk(OGRDataSourceH hDS) ";
 
 %feature("docstring")  GetDriver "OGRSFDriverH
 OGR_DS_GetDriver(OGRDataSourceH hDS)
 
 Returns the driver that the dataset was opened with.
 
-This method is the same as the C++ method OGRDataSource::GetDriver()
+NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned
+handle to OGRSFDriver*. If a C++ object is needed, the handle should
+be cast to GDALDriver*.
+
+Deprecated Use GDALGetDatasetDriver() in GDAL 2.0
 
 Parameters:
 -----------

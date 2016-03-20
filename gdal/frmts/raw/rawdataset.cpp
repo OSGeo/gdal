@@ -71,11 +71,11 @@ RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
     this->nLineOffset = nLineOffsetIn;
     this->bNativeOrder = bNativeOrderIn;
 
-    CPLDebug( "GDALRaw", 
+    CPLDebug( "GDALRaw",
               "RawRasterBand(%p,%d,%p,\n"
               "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
-              poDS, nBand, fpRaw, 
-              (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
+              poDS, nBand, fpRaw,
+              (unsigned int) nImgOffset, nPixelOffset, nLineOffset,
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
 /* -------------------------------------------------------------------- */
@@ -128,9 +128,9 @@ RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffsetIn,
     this->bNativeOrder = bNativeOrderIn;
 
 
-    CPLDebug( "GDALRaw", 
+    CPLDebug( "GDALRaw",
               "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
-              (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
+              (unsigned int) nImgOffset, nPixelOffset, nLineOffset,
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
 /* -------------------------------------------------------------------- */
@@ -423,7 +423,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
         if( GDALDataTypeIsComplex( eDataType ) )
         {
             const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
-            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, 
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize,
                            std::abs(nPixelOffset) );
             GDALSwapWords(
                 reinterpret_cast<GByte *>( pLineBuffer ) + nWordSize,
@@ -449,7 +449,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Seek to correct location.                                       */
 /* -------------------------------------------------------------------- */
-    if( Seek( nWriteStart, SEEK_SET ) == -1 ) 
+    if( Seek( nWriteStart, SEEK_SET ) == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB " to write to file.\n",
@@ -484,7 +484,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
         if( GDALDataTypeIsComplex( eDataType ) )
         {
             const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
-            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, 
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize,
                            std::abs(nPixelOffset) );
             GDALSwapWords( reinterpret_cast<GByte *>( pLineBuffer ) +
                            nWordSize, nWordSize, nBlockXSize,
@@ -665,8 +665,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( (nBufXSize < nXSize || nBufYSize < nYSize)
             && GetOverviewCount() > 0 )
         {
-            if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                                  pData, nBufXSize, nBufYSize, 
+            if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                  pData, nBufXSize, nBufYSize,
                                   eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
                 return CE_None;
         }
@@ -675,7 +675,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*   1. Simplest case when we should get contiguous block               */
 /*   of uninterleaved pixels.                                           */
 /* ==================================================================== */
-        if ( nXSize == GetXSize() 
+        if ( nXSize == GetXSize()
              && nXSize == nBufXSize
              && nYSize == nBufYSize
              && eBufType == eDataType
@@ -777,7 +777,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*   1. Simplest case when we should write contiguous block             */
 /*   of uninterleaved pixels.                                           */
 /* ==================================================================== */
-        if ( nXSize == GetXSize() 
+        if ( nXSize == GetXSize()
              && nXSize == nBufXSize
              && nYSize == nBufYSize
              && eBufType == eDataType
@@ -1174,11 +1174,11 @@ RawDataset::~RawDataset() {}
 /*      Multi-band raster io handler.                                   */
 /************************************************************************/
 
-CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag, 
+CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
+                              void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
+                              int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
@@ -1227,7 +1227,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     + iBandIndex * nBandSpace;
 
                 psExtraArg->pfnProgress = GDALScaledProgress;
-                psExtraArg->pProgressData = 
+                psExtraArg->pProgressData =
                     GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
                                             1.0 * (iBandIndex + 1) / nBandCount,
                                             pfnProgressGlobal,
@@ -1250,8 +1250,8 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     return  GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize, eBufType, 
-                                    nBandCount, panBandMap, 
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace,
                                     psExtraArg);
 }

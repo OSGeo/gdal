@@ -105,7 +105,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
 /************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
-OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature, 
+OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
                                   int pointIndex)
 
 {
@@ -119,7 +119,7 @@ OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
 
     WriteFields( psRTInfo, poFeature, szRecord );
 
-    if( poPoint != NULL 
+    if( poPoint != NULL
         && (poPoint->getGeometryType() == wkbPoint
             || poPoint->getGeometryType() == wkbPoint25D) ) {
         WritePoint( szRecord, pointIndex, poPoint->getX(), poPoint->getY() );

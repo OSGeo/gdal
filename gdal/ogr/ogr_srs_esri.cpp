@@ -31,6 +31,7 @@
 
 #include "cpl_csv.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
@@ -406,8 +407,7 @@ static void InitDatumMappingTable()
 /*      Try to open the datum.csv file.                                 */
 /* -------------------------------------------------------------------- */
     const char  *pszFilename = CSVFilename("gdal_datum.csv");
-    // TODO(schwehr): FILE -> VSILFILE.
-    FILE * fp = VSIFOpen( pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
 
 /* -------------------------------------------------------------------- */
 /*      Use simple default set if we can't find the file.               */
@@ -421,7 +421,7 @@ static void InitDatumMappingTable()
 /* -------------------------------------------------------------------- */
 /*      Figure out what fields we are interested in.                    */
 /* -------------------------------------------------------------------- */
-    char **papszFieldNames = CSVReadParseLine( fp );
+    char **papszFieldNames = CSVReadParseLineL( fp );
     const int nDatumCodeField = CSLFindString( papszFieldNames, "DATUM_CODE" );
     const int nEPSGNameField = CSLFindString( papszFieldNames, "DATUM_NAME" );
     const int nESRINameField =
@@ -436,7 +436,7 @@ static void InitDatumMappingTable()
                   "InitDatumMappingTable(), using default table setup." );
 
         papszDatumMapping = const_cast<char **>(apszDefaultDatumMapping);
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return;
     }
 
@@ -449,9 +449,9 @@ static void InitDatumMappingTable()
     papszDatumMapping = static_cast<char **>(
         CPLCalloc(sizeof(char*),nMaxDatumMappings*3) );
 
-    for( papszFields = CSVReadParseLine( fp );
+    for( papszFields = CSVReadParseLineL( fp );
          papszFields != NULL;
-         papszFields = CSVReadParseLine( fp ) )
+         papszFields = CSVReadParseLineL( fp ) )
     {
         const int nFieldCount = CSLCount(papszFields);
 
@@ -474,7 +474,7 @@ static void InitDatumMappingTable()
         CSLDestroy( papszFields );
     }
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     papszDatumMapping[nMappingCount*3+0] = NULL;
     papszDatumMapping[nMappingCount*3+1] = NULL;

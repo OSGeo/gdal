@@ -140,7 +140,7 @@ int main( int argc, char ** argv )
             int nBlockYSize;
             int nCompressionType;
 
-            HFAGetBandInfo( hHFA, i, &eDataType, &nBlockXSize, &nBlockYSize, 
+            HFAGetBandInfo( hHFA, i, &eDataType, &nBlockXSize, &nBlockYSize,
                             &nCompressionType );
             int nOverviews = HFAGetOverviewCount( hHFA, i );
 
@@ -149,16 +149,16 @@ int main( int argc, char ** argv )
 
             for( int iOverview=0; iOverview < nOverviews; iOverview++ )
             {
-                HFAGetOverviewInfo( hHFA, i, iOverview, 
-                                    &nXSize, &nYSize, 
+                HFAGetOverviewInfo( hHFA, i, iOverview,
+                                    &nXSize, &nYSize,
                                     &nBlockXSize, &nBlockYSize, NULL );
-                printf( "  Overview: %dx%d (blocksize %dx%d)\n", 
+                printf( "  Overview: %dx%d (blocksize %dx%d)\n",
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
 
             int nColors;
             double *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
-            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, 
+            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen,
 			   &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
             {
@@ -166,7 +166,7 @@ int main( int argc, char ** argv )
                 {
                     printf( "PCT[%d] = %f,%f,%f %f\n",
                             (padfBins != NULL) ? (int) padfBins[j] : j,
-                            padfRed[j], padfGreen[j], 
+                            padfRed[j], padfGreen[j],
 			    padfBlue[j], padfAlpha[j]);
                 }
             }

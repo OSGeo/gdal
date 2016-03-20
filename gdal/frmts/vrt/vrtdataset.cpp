@@ -123,9 +123,9 @@ void VRTDataset::FlushCache()
 
     m_bNeedsFlush = FALSE;
 
-    // We don't write to disk if there is no filename.  This is a 
+    // We don't write to disk if there is no filename.  This is a
     // memory only dataset.
-    if( strlen(GetDescription()) == 0 
+    if( strlen(GetDescription()) == 0
         || STARTS_WITH_CI(GetDescription(), "<VRTDataset") )
         return;
 
@@ -441,7 +441,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         if( psChild->eType == CXT_Element
             && EQUAL(psChild->pszValue,"VRTRasterBand") )
         {
-            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
+            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass",
                                                       "VRTSourcedRasterBand" );
 
             VRTRasterBand  *poBand = NULL;
@@ -462,7 +462,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                           "VRTRasterBand of unrecognized subclass '%s'.",
                           pszSubclass );
 
-            if( poBand != NULL 
+            if( poBand != NULL
                 && poBand->XMLInit( psChild, pszVRTPathIn ) == CE_None )
             {
                 SetBand( ++l_nBands, poBand );
@@ -470,7 +470,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
             else
             {
                 if( poBand )
-                    delete poBand; 
+                    delete poBand;
                 return CE_Failure;
             }
         }
@@ -613,8 +613,8 @@ CPLErr VRTDataset::SetMetadata( char **papszMetadata,
 /*                          SetMetadataItem()                           */
 /************************************************************************/
 
-CPLErr VRTDataset::SetMetadataItem( const char *pszName, 
-                                    const char *pszValue, 
+CPLErr VRTDataset::SetMetadataItem( const char *pszName,
+                                    const char *pszValue,
                                     const char *pszDomain )
 
 {
@@ -846,7 +846,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         || CPLGetXMLNode( psRoot, "rasterYSize" ) == NULL
         || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == NULL) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing one of rasterXSize, rasterYSize or bands on"
                   " VRTDataset." );
         CPLDestroyXMLNode( psTree );
@@ -946,7 +946,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 /*      Create and initialize the band.                                 */
 /* -------------------------------------------------------------------- */
 
-        VRTRawRasterBand *poBand = 
+        VRTRawRasterBand *poBand =
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
@@ -1067,7 +1067,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
  * @see VRTDataset::VRTAddBand().
  */
 
-int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType, 
+int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,
                             char **papszOptions )
 
 {
@@ -1110,7 +1110,7 @@ VRTDataset::Create( const char * pszName,
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "SUBCLASS=%s not recognised.", 
+                  "SUBCLASS=%s not recognised.",
                   pszSubclass );
         return NULL;
     }
@@ -1505,7 +1505,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
              iSource++ )
         {
             psExtraArg->pfnProgress = GDALScaledProgress;
-            psExtraArg->pProgressData = 
+            psExtraArg->pProgressData =
                 GDALCreateScaledProgress( 1.0 * iSource / poBand->nSources,
                                         1.0 * (iSource + 1) / poBand->nSources,
                                         pfnProgressGlobal,

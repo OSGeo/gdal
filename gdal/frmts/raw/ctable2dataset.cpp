@@ -211,18 +211,18 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup the bands.                                                */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand = 
-        new RawRasterBand( poDS, 1, poDS->fpImage, 
+    RawRasterBand *poBand =
+        new RawRasterBand( poDS, 1, poDS->fpImage,
                            160 + 4 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
-                           8, -8 * nRasterXSize, 
+                           8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Latitude Offset (radians)" );
     poDS->SetBand( 1, poBand );
 
-    poBand = 
-        new RawRasterBand( poDS, 2, poDS->fpImage, 
+    poBand =
+        new RawRasterBand( poDS, 2, poDS->fpImage,
                            160 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
-                           8, -8 * nRasterXSize, 
+                           8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Longitude Offset (radians)" );
     poDS->SetBand( 2, poBand );
@@ -262,14 +262,14 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
-                  "Unable to update geotransform on readonly file." ); 
+                  "Unable to update geotransform on readonly file." );
         return CE_Failure;
     }
 
     if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Rotated and sheared geotransforms not supported for CTable2."); 
+                  "Rotated and sheared geotransforms not supported for CTable2.");
         return CE_Failure;
     }
 
@@ -367,8 +367,8 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
     memcpy( achHeader+0, "CTABLE V2.0     ", 16 );
 
     if( CSLFetchNameValue( papszOptions, "DESCRIPTION" ) != NULL )
-        strncpy( achHeader + 16, 
-                 CSLFetchNameValue( papszOptions, "DESCRIPTION" ), 
+        strncpy( achHeader + 16,
+                 CSLFetchNameValue( papszOptions, "DESCRIPTION" ),
                  80 );
 
     // lower left origin (longitude, center of pixel, radians)
@@ -413,7 +413,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
         if( static_cast<int>( VSIFWriteL(
                pafLine, sizeof(float)*2, nXSize, fp ) ) != nXSize )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Write failed at line %d, perhaps the disk is full?",
                       i );
             return NULL;

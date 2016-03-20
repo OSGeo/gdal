@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Microstation DGN Access Library
- * Purpose:  Internal (privatE) datastructures, and prototypes for DGN Access 
+ * Purpose:  Internal (privatE) datastructures, and prototypes for DGN Access
  *           Library.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

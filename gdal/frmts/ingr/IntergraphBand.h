@@ -62,19 +62,19 @@ protected:
     int             nRLEOffset;
 
 public:
-    IntergraphRasterBand( IntergraphDataset *poDS, 
+    IntergraphRasterBand( IntergraphDataset *poDS,
         int nBand,
         int nBandOffset,
         GDALDataType eType = GDT_Unknown);
     ~IntergraphRasterBand();
 
     virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );    
+    virtual double GetMaximum( int *pbSuccess = NULL );
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
     virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual CPLErr SetColorTable( GDALColorTable *poColorTable ); 
+    virtual CPLErr SetColorTable( GDALColorTable *poColorTable );
     virtual CPLErr SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev );
 
 protected:
@@ -92,7 +92,7 @@ protected:
 class IntergraphRGBBand : public IntergraphRasterBand
 {
 public:
-    IntergraphRGBBand( IntergraphDataset *poDS, 
+    IntergraphRGBBand( IntergraphDataset *poDS,
         int nBand,
         int nBandOffset,
         int nRGorB );
@@ -115,7 +115,7 @@ private:
     int             nRGBBand;
 
 public:
-    IntergraphBitmapBand( IntergraphDataset *poDS, 
+    IntergraphBitmapBand( IntergraphDataset *poDS,
         int nBand,
         int nBandOffset,
         int nRGorB = 1 );
@@ -140,7 +140,7 @@ private:
     uint32         *panRLELineOffset;
 
 public:
-    IntergraphRLEBand( IntergraphDataset *poDS, 
+    IntergraphRLEBand( IntergraphDataset *poDS,
         int nBand,
         int nBandOffset,
         int nRGorB = 0);

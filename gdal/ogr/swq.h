@@ -3,7 +3,7 @@
  * Component: OGDI Driver Support Library
  * Purpose: Generic SQL WHERE Expression Evaluator Declarations.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2001 Information Interoperability Institute (3i)
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
@@ -11,8 +11,8 @@
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies, that
  * both the copyright notice and this permission notice appear in
- * supporting documentation, and that the name of 3i not be used 
- * in advertising or publicity pertaining to distribution of the software 
+ * supporting documentation, and that the name of 3i not be used
+ * in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.  3i makes no
  * representations about the suitability of this software for any purpose.
  * It is provided "as is" without express or implied warranty.
@@ -65,7 +65,7 @@ typedef enum {
     SWQ_INTEGER,
     SWQ_INTEGER64,
     SWQ_FLOAT,
-    SWQ_STRING, 
+    SWQ_STRING,
     SWQ_BOOLEAN,  // integer
     SWQ_DATE,     // string
     SWQ_TIME,     // string
@@ -119,7 +119,7 @@ public:
     swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
                           int bAllowMismatchTypeOnFieldComparison,
                           swq_custom_func_registrar* poCustomFuncRegistrar );
-    swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
+    swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher,
                              void *record );
     swq_expr_node* Clone();
 
@@ -211,8 +211,8 @@ public:
 };
 
 /* Compile an SQL WHERE clause into an internal form.  The field_list is
-** the list of fields in the target 'table', used to render where into 
-** field numbers instead of names. 
+** the list of fields in the target 'table', used to render where into
+** field numbers instead of names.
 */
 int swqparse( swq_parse_context *context );
 int swqlex( swq_expr_node **ppNode, swq_parse_context *context );
@@ -222,7 +222,7 @@ int swq_identify_field( const char* table_name,
                         const char *token, swq_field_list *field_list,
                         swq_field_type *this_type, int *table_id );
 
-CPLErr swq_expr_compile( const char *where_clause, 
+CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
                          char **field_list,
                          swq_field_type *field_types,
@@ -230,8 +230,8 @@ CPLErr swq_expr_compile( const char *where_clause,
                          swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_root );
 
-CPLErr swq_expr_compile2( const char *where_clause, 
-                          swq_field_list *field_list, 
+CPLErr swq_expr_compile2( const char *where_clause,
+                          swq_field_list *field_list,
                           int bCheck,
                           swq_custom_func_registrar* poCustomFuncRegistrar,
                           swq_expr_node **expr_root );
@@ -378,8 +378,8 @@ CPLErr swq_select_parse( swq_select *select_info,
                          int parse_flags );
 
 const char *swq_select_finish_summarize( swq_select *select_info );
-const char *swq_select_summarize( swq_select *select_info, 
-                                  int dest_column, 
+const char *swq_select_summarize( swq_select *select_info,
+                                  int dest_column,
                                   const char *value );
 
 int swq_is_reserved_keyword(const char* pszStr);

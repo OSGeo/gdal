@@ -7,23 +7,23 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
@@ -137,7 +137,7 @@ void KEARasterBand::UpdateMetadataList()
         // add to our list
         m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, iterMetaData->first.c_str(), iterMetaData->second.c_str());
     }
-    // we have a pseudo metadata item that tells if we are thematic 
+    // we have a pseudo metadata item that tells if we are thematic
     // or continuous like the HFA driver
     if( this->m_pImageIO->getImageBandLayerType(this->nBand) == kealib::kea_continuous )
     {
@@ -205,7 +205,7 @@ CPLErr KEARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
         }
         this->m_pImageIO->readImageBlock2Band( this->nBand, pImage, this->nBlockXSize * nBlockXOff,
                                             this->nBlockYSize * nBlockYOff,
-                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize, 
+                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize,
                                             this->m_eKEADataType );
         return CE_None;
     }
@@ -316,7 +316,7 @@ char **KEARasterBand::GetMetadata(const char *pszDomain)
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
     // conveniently we already have it in this format
-    return m_papszMetadataList; 
+    return m_papszMetadataList;
 }
 
 // set the metdata as a CSLStringList
@@ -884,7 +884,7 @@ void KEARasterBand::readExistingOverviews()
     m_nOverviews = this->m_pImageIO->getNumOfOverviews(this->nBand);
     m_panOverviewBands = (KEAOverview**)CPLMalloc(sizeof(KEAOverview*) * m_nOverviews);
 
-    uint64_t nXSize, nYSize;    
+    uint64_t nXSize, nYSize;
     for( int nCount = 0; nCount < m_nOverviews; nCount++ )
     {
         this->m_pImageIO->getOverviewSize(this->nBand, nCount + 1, &nXSize, &nYSize);
@@ -975,4 +975,3 @@ int KEARasterBand::GetMaskFlags()
     // none of the other flags seem to make sense...
     return 0;
 }
-

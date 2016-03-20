@@ -154,7 +154,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /*      Does it end in the extension .shp indicating the user likely    */
 /*      wants to create a single file set?                              */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(CPLGetExtension(pszName),"shp") 
+    else if( EQUAL(CPLGetExtension(pszName),"shp")
              || EQUAL(CPLGetExtension(pszName),"dbf") )
     {
         bSingleNewFile = TRUE;
@@ -202,8 +202,8 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 {
     int iExt;
     VSIStatBufL sStatBuf;
-    static const char * const apszExtensions[] = 
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", 
+    static const char * const apszExtensions[] =
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
           "qix", "cpg", NULL };
 
     if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
@@ -215,7 +215,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         return CE_Failure;
     }
 
-    if( VSI_ISREG(sStatBuf.st_mode) 
+    if( VSI_ISREG(sStatBuf.st_mode)
         && (EQUAL(CPLGetExtension(pszDataSource),"shp")
             || EQUAL(CPLGetExtension(pszDataSource),"shx")
             || EQUAL(CPLGetExtension(pszDataSource),"dbf")) )
@@ -230,18 +230,18 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
     }
     else if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char **papszDirEntries = CPLReadDir( pszDataSource );
+        char **papszDirEntries = VSIReadDir( pszDataSource );
         int  iFile;
 
-        for( iFile = 0; 
+        for( iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {
-            if( CSLFindString( (char **) apszExtensions, 
+            if( CSLFindString( (char **) apszExtensions,
                                CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
-                VSIUnlink( CPLFormFilename( pszDataSource, 
-                                            papszDirEntries[iFile], 
+                VSIUnlink( CPLFormFilename( pszDataSource,
+                                            papszDirEntries[iFile],
                                             NULL ) );
             }
         }
@@ -278,6 +278,11 @@ void RegisterOGRShape()
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DBF with any encoding supported by CPLRecode or to \"\" to avoid any recoding'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "  <Option name='ADJUST_TYPE' type='boolean' description='Whether to read whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer field types if possible' default='NO'/>"
+"  <Option name='ADJUST_GEOM_TYPE' type='string-select' description='Whether and how to adjust layer geometry type from actual shapes' default='FIRST_SHAPE'>"
+"    <Value>NO</Value>"
+"    <Value>FIRST_SHAPE</Value>"
+"    <Value>ALL_SHAPES</Value>"
+"  </Option>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

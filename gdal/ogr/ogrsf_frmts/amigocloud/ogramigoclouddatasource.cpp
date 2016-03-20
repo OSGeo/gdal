@@ -294,7 +294,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable);
+    poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable);
     papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -331,8 +331,8 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 
     CPLDebug( "AMIGOCLOUD", "DeleteLayer(%s)", osDatasetId.c_str() );
 
-    int bDeferedCreation = papoLayers[iLayer]->GetDeferedCreation();
-    papoLayers[iLayer]->CancelDeferedCreation();
+    int bDeferredCreation = papoLayers[iLayer]->GetDeferredCreation();
+    papoLayers[iLayer]->CancelDeferredCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -341,7 +341,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
     if (osDatasetId.size() == 0)
         return OGRERR_NONE;
 
-    if( !bDeferedCreation )
+    if( !bDeferredCreation )
     {
         std::stringstream url;
         url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
@@ -704,16 +704,16 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL HTML Response:%s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL) 
+    if (psResult->pszErrBuf != NULL)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult->nStatus != 0) 
+    else if (psResult->nStatus != 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Status:%d", psResult->nStatus );
     }
@@ -755,7 +755,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
                 poError = json_object_array_get_idx(poError, 0);
                 if( poError != NULL && json_object_get_type(poError) == json_type_string )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Failure, CPLE_AppDefined,
                             "Error returned by server : %s", json_object_get_string(poError));
                     json_object_put(poObj);
                     return NULL;
@@ -816,15 +816,15 @@ OGRLayer * OGRAmigoCloudDataSource::ExecuteSQL( const char *pszSQLCommand,
 OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
                                                      OGRGeometry *poSpatialFilter,
                                                      const char *,
-                                                     int bRunDeferedActions )
+                                                     int bRunDeferredActions )
 
 {
-    if( bRunDeferedActions )
+    if( bRunDeferredActions )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-            papoLayers[iLayer]->FlushDeferedInsert();
+            papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+            papoLayers[iLayer]->FlushDeferredInsert();
         }
     }
 

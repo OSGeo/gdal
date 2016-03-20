@@ -201,7 +201,7 @@ int OGRESRIFeatureServiceLayer::TestCapability( const char* pszCap )
 GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
 {
     GIntBig nFeatureCount = -1;
-    if( m_poAttrQuery == NULL && m_poFilterGeom == NULL ) 
+    if( m_poAttrQuery == NULL && m_poFilterGeom == NULL )
     {
         CPLString osNewURL = CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
         CPLHTTPResult* pResult = NULL;
@@ -425,7 +425,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     pszOpt = CPLGetConfigOption("ATTRIBUTES_SKIP", NULL);
     if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
-        poDS->SetAttributesTranslation( 
+        poDS->SetAttributesTranslation(
             OGRGeoJSONDataSource::eAttributesSkip );
     }
 

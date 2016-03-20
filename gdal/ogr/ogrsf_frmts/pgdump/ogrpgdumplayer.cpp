@@ -80,6 +80,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDSIn,
     papszOverrideColumnTypes = NULL;
     nUnknownSRSId = -1;
     nForcedSRSId = -2;
+    nForcedGeometryTypeFlags = -1;
     bCreateSpatialIndexFlag = TRUE;
     nPostGISMajor = 1;
     nPostGISMinor = 2;
@@ -123,7 +124,8 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCSequentialWrite) ||
         EQUAL(pszCap,OLCCreateField) ||
         EQUAL(pszCap,OLCCreateGeomField) ||
-        EQUAL(pszCap,OLCCurveGeometries) )
+        EQUAL(pszCap,OLCCurveGeometries) ||
+        EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
     else
         return FALSE;
@@ -165,7 +167,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    if( !poFeature->Validate(OGR_F_VAL_ALL & ~OGR_F_VAL_WIDTH, TRUE ) )
+    if( !poFeature->Validate((OGR_F_VAL_ALL & ~OGR_F_VAL_WIDTH) | OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM, TRUE ) )
         return OGRERR_FAILURE;
 
     // We avoid testing the config option too often. 
@@ -318,7 +320,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 (OGRPGDumpGeomFieldDefn*) poFeature->GetGeomFieldDefnRef(i);
 
             poGeom->closeRings();
-            poGeom->setCoordinateDimension( poGFldDefn->nCoordDimension );
+            poGeom->set3D(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D);
+            poGeom->setMeasured(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
 
             if( bNeedComma )
                 osCommand += ", ";
@@ -416,7 +419,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                 (OGRPGDumpGeomFieldDefn*) poFeature->GetGeomFieldDefnRef(i);
 
             poGeometry->closeRings();
-            poGeometry->setCoordinateDimension( poGFldDefn->nCoordDimension );
+            poGeometry->set3D(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D);
+            poGeometry->setMeasured(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
 
             //CheckGeomTypeCompatibility(poGeometry);
     
@@ -1197,6 +1201,8 @@ CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
     {
         if( oField.GetSubType() == OFSTBoolean )
             strcpy( szFieldType, "BOOLEAN[]" );
+        else if( oField.GetSubType() == OFSTInt16 )
+            strcpy( szFieldType, "INT2[]" );
         else
             strcpy( szFieldType, "INTEGER[]" );
     }
@@ -1206,7 +1212,10 @@ CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
     }
     else if( oField.GetType() == OFTRealList )
     {
-        strcpy( szFieldType, "FLOAT8[]" );
+        if( oField.GetSubType() == OFSTFloat32 )
+            strcpy( szFieldType, "REAL[]" );
+        else
+            strcpy( szFieldType, "FLOAT8[]" );
     }
     else if( oField.GetType() == OFTStringList )
     {
@@ -1287,6 +1296,33 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
         oField.SetSubType( OFSTBoolean );
         oField.SetWidth( 1 );
     }
+    else if( EQUAL(pszType,"_numeric") )
+    {
+        if( EQUAL(pszFormatType, "numeric[]") )
+            oField.SetType( OFTRealList );
+        else
+        {
+            const char *pszPrecision = strstr(pszFormatType,",");
+            int    nPrecision = 0;
+
+            nWidth = atoi(pszFormatType + 8);
+            if( pszPrecision != NULL )
+                nPrecision = atoi(pszPrecision+1);
+
+            if( nPrecision == 0 )
+            {
+                if( nWidth >= 10 )
+                    oField.SetType( OFTInteger64List );
+                else
+                    oField.SetType( OFTIntegerList );
+            }
+            else
+                oField.SetType( OFTRealList );
+
+            oField.SetWidth( nWidth );
+            oField.SetPrecision( nPrecision );
+        }
+    }
     else if( EQUAL(pszType,"numeric") )
     {
         if( EQUAL(pszFormatType, "numeric") )
@@ -1317,6 +1353,11 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
     else if( EQUAL(pszFormatType,"integer[]") )
     {
         oField.SetType( OFTIntegerList );
+    }
+    else if( EQUAL(pszFormatType,"smallint[]") )
+    {
+        oField.SetType( OFTIntegerList );
+        oField.SetSubType( OFSTInt16 );
     }
     else if( EQUAL(pszFormatType,"boolean[]") )
     {
@@ -1600,25 +1641,49 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                 nSRSId = 4326;
         }
     }
-    
-    int nDimension = 3;
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
+
     poGeomField->nSRSId = nSRSId;
-    poGeomField->nCoordDimension = nDimension;
+
+    int GeometryTypeFlags = 0;
+    if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+    if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+    if( nForcedGeometryTypeFlags >= 0 )
+    {
+        GeometryTypeFlags = nForcedGeometryTypeFlags;
+        eType = OGR_GT_SetModifier(eType, 
+                                   GeometryTypeFlags & OGRGeometry::OGR_G_3D, 
+                                   GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
+    }
+    poGeomField->SetType(eType);
+    poGeomField->GeometryTypeFlags = GeometryTypeFlags;
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
     if (bCreateTable)
     {
+        const char *suffix = "";
+        int dim = 2;
+        if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+            dim = 4;
+        else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+        {
+            if( wkbFlatten(poGeomField->GetType()) != wkbUnknown )
+                suffix = "M";
+            dim = 3;
+        }
+        else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
+            dim = 3;
+
         const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
         osCommand.Printf(
-                "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
+                "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s%s',%d)",
                 OGRPGDumpEscapeString(pszSchemaName).c_str(),
                 OGRPGDumpEscapeString(poFeatureDefn->GetName()).c_str(),
                 OGRPGDumpEscapeString(poGeomField->GetNameRef()).c_str(),
-                nSRSId, pszGeometryType, nDimension );
+                nSRSId, pszGeometryType, suffix, dim );
         
         poDS->Log(osCommand);
 
@@ -1690,4 +1755,73 @@ void OGRPGDumpLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes 
     }
     if( osCur.size() )
         papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
+}
+
+/************************************************************************/
+/*                              SetMetadata()                           */
+/************************************************************************/
+
+CPLErr OGRPGDumpLayer::SetMetadata(char** papszMD, const char* pszDomain)
+{
+    OGRLayer::SetMetadata(papszMD, pszDomain);
+    if( osForcedDescription.size() != 0 &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    {
+        OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
+    }
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        osForcedDescription.size() == 0 )
+    {
+        const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
+        CPLString osCommand;
+
+        osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                           pszSqlTableName,
+                           l_pszDescription && l_pszDescription[0] != '\0' ?
+                              OGRPGDumpEscapeString(l_pszDescription).c_str() : "NULL" );
+        poDS->Log( osCommand );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadataItem()                         */
+/************************************************************************/
+
+CPLErr OGRPGDumpLayer::SetMetadataItem(const char* pszName, const char* pszValue,
+                                       const char* pszDomain)
+{
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") && osForcedDescription.size() )
+    {
+        return CE_None;
+    }
+    OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") )
+    {
+        SetMetadata( GetMetadata() );
+    }
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      SetForcedDescription()                          */
+/************************************************************************/
+
+void OGRPGDumpLayer::SetForcedDescription( const char* pszDescriptionIn )
+{
+    osForcedDescription = pszDescriptionIn;
+    OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
+
+    if( pszDescriptionIn[0] != '\0' )
+    {
+        CPLString osCommand;
+        osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                            pszSqlTableName,
+                            OGRPGDumpEscapeString(pszDescriptionIn).c_str() );
+        poDS->Log( osCommand );
+    }
 }

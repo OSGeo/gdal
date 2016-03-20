@@ -27,7 +27,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -376,7 +376,7 @@ int TABINDFile::ReadHeader()
 
         /*-------------------------------------------------------------
          * And init root node for this index.
-         * Note that if nRootNodePtr==0 then this means that the 
+         * Note that if nRootNodePtr==0 then this means that the
          * corresponding index does not exist (i.e. has been deleted?)
          * so we simply do not allocate the root node in this case.
          * An error will be produced if the user tries to access this index
@@ -397,7 +397,7 @@ int TABINDFile::ReadHeader()
 
             // Alloc a temporary key buffer for this index.
             // This buffer will be used by the BuildKey() method
-            m_papbyKeyBuffers[iIndex] = (GByte *)CPLCalloc(nKeyLength+1, 
+            m_papbyKeyBuffers[iIndex] = (GByte *)CPLCalloc(nKeyLength+1,
                                                            sizeof(GByte));
         }
         else
@@ -507,7 +507,7 @@ int TABINDFile::WriteHeader()
  *
  * Private method to validate the index no parameter of some methods...
  * returns 0 if index no. is OK, or produces an error ands returns -1
- * if index no is not valid. 
+ * if index no is not valid.
  **********************************************************************/
 int TABINDFile::ValidateIndexNo(int nIndexNumber)
 {
@@ -519,7 +519,7 @@ int TABINDFile::ValidateIndexNo(int nIndexNumber)
     }
 
     if (nIndexNumber < 1 || nIndexNumber > m_numIndexes ||
-        m_papoIndexRootNodes == NULL || 
+        m_papoIndexRootNodes == NULL ||
         m_papoIndexRootNodes[nIndexNumber-1] == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -550,7 +550,7 @@ int TABINDFile::SetIndexFieldType(int nIndexNumber, TABFieldType eType)
 /**********************************************************************
  *                   TABINDFile::SetIndexUnique()
  *
- * Indicate that an index's keys are unique.  This allows for some 
+ * Indicate that an index's keys are unique.  This allows for some
  * optimization with read access.  By default, an index is treated as if
  * its keys could have duplicates.
  *
@@ -571,7 +571,7 @@ int TABINDFile::SetIndexUnique(int nIndexNumber, GBool bUnique/*=TRUE*/)
  *
  * Encode a field value in the form required to be compared with index
  * keys in the specified index.
- * 
+ *
  * Note that index numbers are positive values starting at 1.
  *
  * Returns a reference to an internal buffer that is valid only until the
@@ -601,12 +601,12 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, GInt32 nValue)
         m_papbyKeyBuffers[nIndexNumber-1][0] = (GByte)(nValue & 0xff)+0x80;
         break;
       case 2:
-        m_papbyKeyBuffers[nIndexNumber-1][0] = 
+        m_papbyKeyBuffers[nIndexNumber-1][0] =
                                        (GByte)(nValue/0x100 & 0xff)+0x80;
         m_papbyKeyBuffers[nIndexNumber-1][1] = (GByte)(nValue & 0xff);
         break;
       case 4:
-        m_papbyKeyBuffers[nIndexNumber-1][0] = 
+        m_papbyKeyBuffers[nIndexNumber-1][0] =
                                        (GByte)(nValue/0x1000000 &0xff)+0x80;
         m_papbyKeyBuffers[nIndexNumber-1][1] = (GByte)(nValue/0x10000 & 0xff);
         m_papbyKeyBuffers[nIndexNumber-1][2] = (GByte)(nValue/0x100 &0xff);
@@ -666,7 +666,7 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
     CPLAssert(nKeyLength == 8 && sizeof(double) == 8);
 
     /*-----------------------------------------------------------------
-     * Convert double and decimal values... 
+     * Convert double and decimal values...
      * Reverse the sign of the value, and convert to MSB
      *----------------------------------------------------------------*/
     dValue = -dValue;
@@ -684,7 +684,7 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
 /**********************************************************************
  *                   TABINDFile::FindFirst()
  *
- * Search one of the indexes for a key value.  
+ * Search one of the indexes for a key value.
  *
  * Note that index numbers are positive values starting at 1.
  *
@@ -704,7 +704,7 @@ GInt32 TABINDFile::FindFirst(int nIndexNumber, GByte *pKeyValue)
 /**********************************************************************
  *                   TABINDFile::FindNext()
  *
- * Continue the Search for pKeyValue previously initiated by FindFirst().  
+ * Continue the Search for pKeyValue previously initiated by FindFirst().
  * NOTE: FindFirst() MUST have been previously called for this call to
  *       work...
  *
@@ -742,7 +742,7 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
 {
     int i, nNewIndexNo = -1;
 
-    if (m_fp == NULL || 
+    if (m_fp == NULL ||
         (m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite))
         return -1;
 
@@ -810,10 +810,10 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
                       (eType == TABFLogical)  ? 4: MIN(128,nFieldSize));
 
     m_papoIndexRootNodes[nNewIndexNo] = new TABINDNode(m_eAccessMode);
-    if (m_papoIndexRootNodes[nNewIndexNo]->InitNode(m_fp, 0, nKeyLength, 
+    if (m_papoIndexRootNodes[nNewIndexNo]->InitNode(m_fp, 0, nKeyLength,
                                                     1,  // subtree depth=1
                                                     FALSE, // not unique
-                                                    &m_oBlockManager, 
+                                                    &m_oBlockManager,
                                                     NULL, 0, 0)!= 0)
     {
         // CPLError has already been called
@@ -842,7 +842,7 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
  **********************************************************************/
 int TABINDFile::AddEntry(int nIndexNumber, GByte *pKeyValue, GInt32 nRecordNo)
 {
-    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
         ValidateIndexNo(nIndexNumber) != 0)
         return -1;
 
@@ -952,15 +952,15 @@ TABINDNode::~TABINDNode()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr, 
-                         int nKeyLength, int nSubTreeDepth, 
+int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr,
+                         int nKeyLength, int nSubTreeDepth,
                          GBool bUnique,
                          TABBinBlockManager *poBlockMgr /*=NULL*/,
                          TABINDNode *poParentNode /*=NULL*/,
                          int nPrevNodePtr /*=0*/, int nNextNodePtr /*=0*/)
 {
     /*-----------------------------------------------------------------
-     * If the block already points to the right block, then don't do 
+     * If the block already points to the right block, then don't do
      * anything here.
      *----------------------------------------------------------------*/
     if (m_fp == fp && nBlockPtr> 0 && m_nCurDataBlockPtr == nBlockPtr)
@@ -994,7 +994,7 @@ int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr,
     if (m_poDataBlock == NULL)
         m_poDataBlock = new TABRawBinBlock(TABReadWrite, TRUE);
 
-    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) && 
+    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) &&
         nBlockPtr == 0 && m_poBlockManagerRef)
     {
         /*-------------------------------------------------------------
@@ -1042,14 +1042,14 @@ int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr,
 int TABINDNode::GotoNodePtr(GInt32 nNewNodePtr)
 {
     // First flush current changes if any.
-    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) && 
+    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) &&
         m_poDataBlock && m_poDataBlock->CommitToFile() != 0)
         return -1;
 
     CPLAssert(nNewNodePtr % 512 == 0);
 
     // Then move to the requested location.
-    return InitNode(m_fp, nNewNodePtr, m_nKeyLength, m_nSubTreeDepth, 
+    return InitNode(m_fp, nNewNodePtr, m_nKeyLength, m_nSubTreeDepth,
                     m_bUnique);
 }
 
@@ -1093,9 +1093,9 @@ GInt32 TABINDNode::ReadIndexEntry(int nEntryNo, GByte *pKeyValue)
 /**********************************************************************
  *                   TABINDNode::IndexKeyCmp()
  *
- * Compare the specified index entry with the key value, and 
- * return 0 if equal, an integer less than 0 if key is smaller than 
- * index entry, and an integer greater than 0 if key is bigger than 
+ * Compare the specified index entry with the key value, and
+ * return 0 if equal, an integer less than 0 if key is smaller than
+ * index entry, and an integer greater than 0 if key is bigger than
  * index entry.
  *
  * nEntryNo is the 0-based index of the index entry that we are interested
@@ -1114,7 +1114,7 @@ int   TABINDNode::IndexKeyCmp(GByte *pKeyValue, int nEntryNo)
 /**********************************************************************
  *                   TABINDNode::SetFieldType()
  *
- * Sets the field type for the current index and recursively set all 
+ * Sets the field type for the current index and recursively set all
  * children as well.
  * This information will then be used in building the key values, etc.
  *
@@ -1224,7 +1224,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
          * contain the value
          *
          * In the index tree at the node level, for each node entry inside
-         * the parent node, the key value (in the parent) corresponds to 
+         * the parent node, the key value (in the parent) corresponds to
          * the value of the first key that you will find when you access
          * the corresponding child node.
          *
@@ -1253,9 +1253,9 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
             else
             {
                 /*-----------------------------------------------------
-                 * We either found an indexkey >= pKeyValue or reached 
-                 * the last entry in this node... still have to decide 
-                 * what we're going to do... 
+                 * We either found an indexkey >= pKeyValue or reached
+                 * the last entry in this node... still have to decide
+                 * what we're going to do...
                  *----------------------------------------------------*/
                 if (nCmpStatus < 0 && m_nCurIndexEntry == 0)
                 {
@@ -1270,8 +1270,8 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                 }
 
                 /*-----------------------------------------------------
-                 * If we found an node for which pKeyValue < indexkey 
-                 * (or pKeyValue <= indexkey for non-unique indexes) then 
+                 * If we found an node for which pKeyValue < indexkey
+                 * (or pKeyValue <= indexkey for non-unique indexes) then
                  * we access the preceding child node.
                  *
                  * Note that for indexkey == pKeyValue in non-unique indexes
@@ -1294,7 +1294,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                  * OK, now it's time to load/access the candidate child nodes.
                  *----------------------------------------------------*/
                 int nRetValue = 0;
-                for(int iChild=0; nRetValue==0 && 
+                for(int iChild=0; nRetValue==0 &&
                                   iChild<numChildrenToVisit; iChild++)
                 {
                     // If we're doing a second pass then jump to next entry
@@ -1313,11 +1313,11 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                         /* Child node has never been initialized...do it now!*/
 
                         m_poCurChildNode = new TABINDNode(m_eAccessMode);
-                        if ( m_poCurChildNode->InitNode(m_fp, nChildNodePtr, 
-                                                        m_nKeyLength, 
+                        if ( m_poCurChildNode->InitNode(m_fp, nChildNodePtr,
+                                                        m_nKeyLength,
                                                         m_nSubTreeDepth-1,
                                                         m_bUnique,
-                                                        m_poBlockManagerRef, 
+                                                        m_poBlockManagerRef,
                                                         this) != 0 ||
                              m_poCurChildNode->SetFieldType(m_eFieldType)!=0)
                         {
@@ -1353,7 +1353,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
 /**********************************************************************
  *                   TABINDNode::FindNext()
  *
- * Continue the search previously started by FindFirst() in this node 
+ * Continue the search previously started by FindFirst() in this node
  * and its children for a key value.
  *
  * Return value:
@@ -1371,7 +1371,7 @@ GInt32 TABINDNode::FindNext(GByte *pKeyValue)
     }
 
     /*-----------------------------------------------------------------
-     * m_nCurIndexEntry is the index of the last item that has been 
+     * m_nCurIndexEntry is the index of the last item that has been
      * returned by FindFirst()/FindNext().
      *----------------------------------------------------------------*/
 
@@ -1429,7 +1429,7 @@ GInt32 TABINDNode::FindNext(GByte *pKeyValue)
  **********************************************************************/
 int TABINDNode::CommitToFile()
 {
-    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
         m_poDataBlock == NULL)
         return -1;
 
@@ -1455,7 +1455,7 @@ int TABINDNode::CommitToFile()
  * that will load the whole tree branch up to the insertion point.
  * Then AddEntry() is recursively called up to the leaf node level for
  * the insertion of the actual value.
- * If the leaf node is full then it will be split and if necessary the 
+ * If the leaf node is full then it will be split and if necessary the
  * split will propagate up in the tree through the pointer that each node
  * has on its parent.
  *
@@ -1474,7 +1474,7 @@ int TABINDNode::AddEntry(GByte *pKeyValue, GInt32 nRecordNo,
                          GBool bInsertAfterCurChild /*=FALSE*/,
                          GBool bMakeNewEntryCurChild /*=FALSE*/)
 {
-    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
         m_poDataBlock == NULL)
         return -1;
 
@@ -1494,8 +1494,8 @@ int TABINDNode::AddEntry(GByte *pKeyValue, GInt32 nRecordNo,
         /*-------------------------------------------------------------
          * Propagate the call down to our children
          * Note: this recursive call could result in new levels of nodes
-         * being added under our feet by SplitRootnode() so it is very 
-         * important to return right after this call or we might not be 
+         * being added under our feet by SplitRootnode() so it is very
+         * important to return right after this call or we might not be
          * able to recognize this node at the end of the call!
          *------------------------------------------------------------*/
         return m_poCurChildNode->AddEntry(pKeyValue, nRecordNo);
@@ -1535,14 +1535,14 @@ int TABINDNode::AddEntry(GByte *pKeyValue, GInt32 nRecordNo,
                  * Splitting a regular node will leave it 50% full.
                  *----------------------------------------------------*/
                 if (SplitNode() != 0)
-                    return -1; 
+                    return -1;
             }
         }
 
         /*-------------------------------------------------------------
          * Insert new key/value at the right position in node.
          *------------------------------------------------------------*/
-        if (InsertEntry(pKeyValue, nRecordNo, 
+        if (InsertEntry(pKeyValue, nRecordNo,
                         bInsertAfterCurChild, bMakeNewEntryCurChild) != 0)
             return -1;
     }
@@ -1566,7 +1566,7 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
     int iInsertAt=0;
 
     if (GetNumEntries() >= GetMaxNumEntries())
-    {   
+    {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Node is full!  Cannot insert key!");
         return -1;
@@ -1599,7 +1599,7 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
      *----------------------------------------------------------------*/
     if (iInsertAt < m_numEntriesInNode)
     {
-        // Since we use memmove() directly, we need to inform 
+        // Since we use memmove() directly, we need to inform
         // m_poDataBlock that the upper limit of the buffer will move
         m_poDataBlock->GotoByteInBlock(12 + (m_numEntriesInNode+1)*
                                                         (m_nKeyLength+4));
@@ -1678,7 +1678,7 @@ int TABINDNode::UpdateCurChildEntry(GByte *pKeyValue, GInt32 nRecordNo)
 /**********************************************************************
  *                   TABINDNode::UpdateSplitChild()
  *
- * Update the key and/or record ptr information corresponding to the 
+ * Update the key and/or record ptr information corresponding to the
  * current child node.
  *
  * Returns 0 on success, -1 on error
@@ -1707,11 +1707,11 @@ int TABINDNode::UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
     m_poDataBlock->WriteInt32(nRecordNo1);
 
     /*-----------------------------------------------------------------
-     * Add an entry for the second node after the current one and ask 
-     * AddEntry() to update m_nCurIndexEntry if the new node should 
+     * Add an entry for the second node after the current one and ask
+     * AddEntry() to update m_nCurIndexEntry if the new node should
      * become the new current child.
      *----------------------------------------------------------------*/
-    if (AddEntry(pKeyValue2, nRecordNo2, 
+    if (AddEntry(pKeyValue2, nRecordNo2,
                  TRUE, /* bInThisNodeOnly */
                  TRUE, /* bInsertAfterCurChild */
                  (nNewCurChildNo==2)) != 0)
@@ -1734,8 +1734,8 @@ int TABINDNode::UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
  *
  * The node is split in a way that the current child stays inside this
  * node object, and a new node is created for the other half of the
- * entries.  This way, the object references in this node's parent and in its 
- * current child all remain valid.  The new node is not kept in memory, 
+ * entries.  This way, the object references in this node's parent and in its
+ * current child all remain valid.  The new node is not kept in memory,
  * it is written to disk right away.
  *
  * Returns 0 on success, -1 on error
@@ -1761,9 +1761,9 @@ int TABINDNode::SplitNode()
         /*-------------------------------------------------------------
          * We will move the second half of the array to a new node.
          *------------------------------------------------------------*/
-        if (poNewNode->InitNode(m_fp, 0, m_nKeyLength, 
-                                m_nSubTreeDepth, m_bUnique, 
-                                m_poBlockManagerRef, m_poParentNodeRef, 
+        if (poNewNode->InitNode(m_fp, 0, m_nKeyLength,
+                                m_nSubTreeDepth, m_bUnique,
+                                m_poBlockManagerRef, m_poParentNodeRef,
                                 GetNodeBlockPtr(), m_nNextNodePtr)!= 0 ||
             poNewNode->SetFieldType(m_eFieldType) != 0 )
         {
@@ -1776,9 +1776,9 @@ int TABINDNode::SplitNode()
         if (m_nNextNodePtr)
         {
             TABINDNode *poTmpNode = new TABINDNode(m_eAccessMode);
-            if (poTmpNode->InitNode(m_fp, m_nNextNodePtr, 
+            if (poTmpNode->InitNode(m_fp, m_nNextNodePtr,
                                     m_nKeyLength, m_nSubTreeDepth,
-                                    m_bUnique, m_poBlockManagerRef, 
+                                    m_bUnique, m_poBlockManagerRef,
                                     m_poParentNodeRef) != 0 ||
                 poTmpNode->SetPrevNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
@@ -1795,7 +1795,7 @@ int TABINDNode::SplitNode()
         // Move half the entries to the new block
         m_poDataBlock->GotoByteInBlock(12 + numInNode1*(m_nKeyLength+4));
 
-        if (poNewNode->SetNodeBufferDirectly(numInNode2, 
+        if (poNewNode->SetNodeBufferDirectly(numInNode2,
                                         m_poDataBlock->GetCurDataPtr()) != 0)
         {
             delete poNewNode;
@@ -1828,9 +1828,9 @@ int TABINDNode::SplitNode()
         /*-------------------------------------------------------------
          * We will move the first half of the array to a new node.
          *------------------------------------------------------------*/
-        if (poNewNode->InitNode(m_fp, 0, m_nKeyLength, 
-                                m_nSubTreeDepth, m_bUnique, 
-                                m_poBlockManagerRef, m_poParentNodeRef, 
+        if (poNewNode->InitNode(m_fp, 0, m_nKeyLength,
+                                m_nSubTreeDepth, m_bUnique,
+                                m_poBlockManagerRef, m_poParentNodeRef,
                                 m_nPrevNodePtr, GetNodeBlockPtr())!= 0 ||
             poNewNode->SetFieldType(m_eFieldType) != 0 )
         {
@@ -1843,9 +1843,9 @@ int TABINDNode::SplitNode()
         if (m_nPrevNodePtr)
         {
             TABINDNode *poTmpNode = new TABINDNode(m_eAccessMode);
-            if (poTmpNode->InitNode(m_fp, m_nPrevNodePtr, 
+            if (poTmpNode->InitNode(m_fp, m_nPrevNodePtr,
                                     m_nKeyLength, m_nSubTreeDepth,
-                                    m_bUnique, m_poBlockManagerRef, 
+                                    m_bUnique, m_poBlockManagerRef,
                                     m_poParentNodeRef) != 0 ||
                 poTmpNode->SetNextNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
@@ -1862,7 +1862,7 @@ int TABINDNode::SplitNode()
         // Move half the entries to the new block
         m_poDataBlock->GotoByteInBlock(12 + 0);
 
-        if (poNewNode->SetNodeBufferDirectly(numInNode1, 
+        if (poNewNode->SetNodeBufferDirectly(numInNode1,
                                         m_poDataBlock->GetCurDataPtr()) != 0)
         {
             delete poNewNode;
@@ -1941,8 +1941,8 @@ int TABINDNode::SplitRootNode()
      *----------------------------------------------------------------*/
     TABINDNode *poNewNode = new TABINDNode(m_eAccessMode);
 
-    if (poNewNode->InitNode(m_fp, 0, m_nKeyLength, 
-                            m_nSubTreeDepth, m_bUnique, m_poBlockManagerRef, 
+    if (poNewNode->InitNode(m_fp, 0, m_nKeyLength,
+                            m_nSubTreeDepth, m_bUnique, m_poBlockManagerRef,
                             this, 0, 0)!= 0 ||
         poNewNode->SetFieldType(m_eFieldType) != 0)
     {
@@ -1952,7 +1952,7 @@ int TABINDNode::SplitRootNode()
 
     // Move all entries to the new child
     m_poDataBlock->GotoByteInBlock(12 + 0);
-    if (poNewNode->SetNodeBufferDirectly(m_numEntriesInNode, 
+    if (poNewNode->SetNodeBufferDirectly(m_numEntriesInNode,
                                          m_poDataBlock->GetCurDataPtr(),
                                          m_nCurIndexEntry,
                                          m_poCurChildNode) != 0)
@@ -2002,7 +2002,7 @@ int TABINDNode::SplitRootNode()
  * Returns 0 on success, -1 on error
  **********************************************************************/
 int TABINDNode::SetNodeBufferDirectly(int numEntries, GByte *pBuf,
-                                      int nCurIndexEntry/*=0*/, 
+                                      int nCurIndexEntry/*=0*/,
                                       TABINDNode *poCurChild/*=NULL*/)
 {
     m_poDataBlock->GotoByteInBlock(0);
@@ -2110,7 +2110,7 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "   m_nNextNodePtr       = %d\n", m_nNextNodePtr);
         fprintf(fpOut, "   m_nSubTreeDepth      = %d\n", m_nSubTreeDepth);
         fprintf(fpOut, "   m_nKeyLength         = %d\n", m_nKeyLength);
-        fprintf(fpOut, "   m_eFieldtype         = %s\n", 
+        fprintf(fpOut, "   m_eFieldtype         = %s\n",
                                         TABFIELDTYPE_2_STRING(m_eFieldType) );
         if (m_nSubTreeDepth > 0)
         {
@@ -2130,12 +2130,12 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
             {
               if (m_nSubTreeDepth > 1)
               {
-                fprintf(fpOut, "   >>>> Child %d of %d <<<<<\n", i, 
+                fprintf(fpOut, "   >>>> Child %d of %d <<<<<\n", i,
                                                          m_numEntriesInNode);
               }
               else
               {
-                fprintf(fpOut, "   >>>> Record (leaf) %d of %d <<<<<\n", i, 
+                fprintf(fpOut, "   >>>> Record (leaf) %d of %d <<<<<\n", i,
                                                          m_numEntriesInNode);
               }
 
@@ -2169,7 +2169,7 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
 
               if (m_nSubTreeDepth > 1)
               {
-                CPL_IGNORE_RET_VAL(oChildNode.InitNode(m_fp, nRecordPtr, m_nKeyLength, 
+                CPL_IGNORE_RET_VAL(oChildNode.InitNode(m_fp, nRecordPtr, m_nKeyLength,
                                     m_nSubTreeDepth - 1, FALSE));
                 oChildNode.SetFieldType(m_eFieldType);
                 oChildNode.Dump(fpOut);

@@ -1424,8 +1424,8 @@ OGRFeature *OGRSXFLayer::TranslatePolygon(const SXFRecordDescription& certifInfo
     delete poLS;
 
 /*****
- * TODO : 
- *          - Translate graphics 
+ * TODO :
+ *          - Translate graphics
  *          - Translate 3D vector
  */
     return poFeature;

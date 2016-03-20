@@ -54,7 +54,7 @@ int32    width in pixels
 Data
 ----
 
-float32  * width in pixels * length in pixels 
+float32  * width in pixels * length in pixels
 
 Values are an offset in meters between two vertical datums.
 
@@ -181,7 +181,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_MSBPTR64( poDS->adfGeoTransform + 3 );
     CPL_MSBPTR64( poDS->adfGeoTransform + 5 );
 
-    poDS->adfGeoTransform[3] += 
+    poDS->adfGeoTransform[3] +=
         poDS->adfGeoTransform[5] * (poDS->nRasterYSize-1);
 
     poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
@@ -210,7 +210,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage, 
+    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
                               (poDS->nRasterYSize-1)*poDS->nRasterXSize*nDTSize + 40,
                               nDTSize, poDS->nRasterXSize * -nDTSize,
                               eDT,
@@ -281,7 +281,7 @@ CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
     memcpy( header + 24, &dfWidth, 8 );
     CPL_MSBPTR64( header + 24 );
 
-    if( VSIFSeekL( fpImage, SEEK_SET, 0 ) != 0 
+    if( VSIFSeekL( fpImage, SEEK_SET, 0 ) != 0
         || VSIFWriteL( header, 32, 1, fpImage ) != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

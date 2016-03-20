@@ -238,11 +238,11 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_COORDINATE_SYSTEM") )
         {
-	    if( EQUAL(papszTokens[1],"UTM") ) 
+	    if( EQUAL(papszTokens[1],"UTM") )
                 nProjType = 1;
-	    else if( EQUAL(papszTokens[1],"SPCS") ) 
+	    else if( EQUAL(papszTokens[1],"SPCS") )
                 nProjType = 2;
-	    else if( EQUAL(papszTokens[1],"GEOGRAPHIC") ) 
+	    else if( EQUAL(papszTokens[1],"GEOGRAPHIC") )
                 nProjType = 0;
         }
         else if( EQUAL(papszTokens[0],"COORDINATE_ZONE") )
@@ -258,22 +258,22 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_DATUM") )
         {
-	    if( EQUAL(papszTokens[1],"NAD27") ) 
+	    if( EQUAL(papszTokens[1],"NAD27") )
             {
 		pszDatumLong = NAD27_DATUM;
 		pszDatumShort = "NAD 27";
             }
-	    else if( EQUAL(papszTokens[1],"WGS72") ) 
+	    else if( EQUAL(papszTokens[1],"WGS72") )
             {
 		pszDatumLong = WGS72_DATUM;
 		pszDatumShort = "WGS 72";
             }
-	    else if( EQUAL(papszTokens[1],"WGS84") ) 
+	    else if( EQUAL(papszTokens[1],"WGS84") )
             {
 		pszDatumLong = WGS84_DATUM;
 		pszDatumShort = "WGS 84";
             }
-	    else if( EQUAL(papszTokens[1],"NAD83") ) 
+	    else if( EQUAL(papszTokens[1],"NAD83") )
             {
 		pszDatumLong = NAD83_DATUM;
 		pszDatumShort = "NAD 83";
@@ -299,8 +299,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                     osMetaDataValue += " " ;
                 osMetaDataValue += papszTokens[iToken];
             }
-            papszMetadata = CSLAddNameValue( papszMetadata, 
-                                             papszTokens[0], 
+            papszMetadata = CSLAddNameValue( papszMetadata,
+                                             papszTokens[0],
                                              osMetaDataValue );
         }
 
@@ -343,7 +343,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CSLDestroy( papszMetadata );
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The DOQ2 driver does not support update access to existing"
                   " datasets.\n" );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -378,7 +378,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLErrorReset();
     for( int i = 0; i < nBandCount; i++ )
     {
-        poDS->SetBand( i+1, 
+        poDS->SetBand( i+1,
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
                                GDT_Byte, TRUE, TRUE ) );
@@ -394,8 +394,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (nProjType == 1)
     {
-	poDS->pszProjection = 
-            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort ? pszDatumShort : "", nZone, 
+	poDS->pszProjection =
+            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort ? pszDatumShort : "", nZone,
                                   pszDatumLong ? pszDatumLong : "",
                                   (nZone >= 1 && nZone <= 60) ? nZone * 6 - 183 : 0,
                                   pszUnits ? pszUnits : ""));

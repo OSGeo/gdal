@@ -106,7 +106,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
                         OGRGeomediaTableLayer( OGRGeomediaDataSource * );
                         ~OGRGeomediaTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     OGRSpatialReference* poSRS );
 
@@ -171,7 +171,7 @@ class OGRGeomediaDataSource : public OGRDataSource
                         ~OGRGeomediaDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 

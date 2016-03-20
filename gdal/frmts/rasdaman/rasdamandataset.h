@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  rasdaman Driver
- * Purpose:  Implement Rasdaman GDAL driver 
+ * Purpose:  Implement Rasdaman GDAL driver
  * Author:   Constantin Jucovschi, jucovschi@yahoo.com
  *
  ******************************************************************************

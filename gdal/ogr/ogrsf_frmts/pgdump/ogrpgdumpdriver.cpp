@@ -96,7 +96,7 @@ void RegisterOGRPGDump()
     "  </Option>"
     "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
     "  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
-    "  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D'/>"
+    "  <Option name='DIM' type='string' description='Set to 2 to force the geometries to be 2D, 3 to be 2.5D, XYM or XYZM'/>"
     "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Defaults to wkb_geometry for GEOM_TYPE=geometry or the_geog for GEOM_TYPE=geography'/>"
     "  <Option name='SCHEMA' type='string' description='Name of schema into which to create the new table'/>"
     "  <Option name='CREATE_SCHEMA' type='boolean' description='Whether to explicitly emit the CREATE SCHEMA statement to create the specified schema' default='YES'/>"
@@ -121,6 +121,7 @@ void RegisterOGRPGDump()
     "  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
     "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=pg_field_type (separated by comma) to force the PG column type of fields to be created'/>"
     "  <Option name='POSTGIS_VERSION' type='string' description='Can be set to 2.0 or 2.2 for PostGIS 2.0/2.2 compatibility. Important to set it correctly if using non-linear geometry types'/>"
+    "  <Option name='DESCRIPTION' type='string' description='Description string to put in the pg_description system table'/>"
     "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

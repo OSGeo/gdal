@@ -408,7 +408,7 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
         SetMetadataItem( "STATISTICS_MODE",        szMode );
         SetMetadataItem( "STATISTICS_STDDEV",      szStdDev );
         SetMetadataItem( "STATISTICS_SKIPFACTORX", szSampling );
-        SetMetadataItem( "STATISTICS_SKIPFACTORY", szSampling ); 
+        SetMetadataItem( "STATISTICS_SKIPFACTORY", szSampling );
 
         *pdfMin     = dfMin;
         *pdfMax     = dfMax;
@@ -463,7 +463,7 @@ double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 
 CPLErr GeoRasterRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    const char* pszFormat = 
+    const char* pszFormat =
         (eDataType == GDT_Float32 || eDataType == GDT_Float64) ? "%f" : "%.0f";
 
     poGeoRaster->SetNoData( (poDS->GetRasterCount() == 1) ? 0 : nBand,
@@ -569,7 +569,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     if( ! pszVATName )
     {
         pszVATName = CPLStrdup( CPLSPrintf(
-            "RAT_%s_%d_%d", 
+            "RAT_%s_%d_%d",
             poGeoRaster->sDataTable.c_str(),
             poGeoRaster->nRasterId,
             nBand ) );
@@ -620,7 +620,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     void** papWriteFields = (void**) VSIMalloc2(sizeof(void*), nColunsCount + 1);
 
-    papWriteFields[0] = 
+    papWriteFields[0] =
         (void*) VSIMalloc3(sizeof(int), sizeof(int), nEntryCount ); // ID field
 
     for(iCol = 0; iCol < nColunsCount; iCol++)
@@ -821,7 +821,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
             case SQLT_TIMESTAMP_LTZ:
             case SQLT_TIME:
             case SQLT_TIME_TZ:
-                    poDefaultRAT->CreateColumn( szField, GFT_String, 
+                    poDefaultRAT->CreateColumn( szField, GFT_String,
                         GFU_Generic );
                 break;
             default:

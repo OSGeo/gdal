@@ -18,16 +18,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -306,7 +306,7 @@ OGRFeature *IMapInfoFile::GetNextFeature()
         {
             // Avoid cloning feature... return the copy owned by the class
             CPLAssert(poFeatureRef == m_poCurFeature);
-            m_poCurFeature = NULL;  
+            m_poCurFeature = NULL;
             if( poFeatureRef->GetGeometryRef() != NULL )
                 poFeatureRef->GetGeometryRef()->assignSpatialReference(GetSpatialRef());
             return poFeatureRef;
@@ -411,7 +411,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
        *------------------------------------------------------------*/
       case wkbUnknown:
       default:
-         poTABFeature = new TABFeature(poFeature->GetDefnRef()); 
+         poTABFeature = new TABFeature(poFeature->GetDefnRef());
         break;
     }
 
@@ -432,7 +432,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
  *                   IMapInfoFile::ICreateFeature()
  *
  * Standard OGR CreateFeature implementation.  This method is used
- * to create a new feature in current dataset 
+ * to create a new feature in current dataset
  **********************************************************************/
 OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 {
@@ -456,7 +456,7 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  *                   IMapInfoFile::GetFeature()
  *
  * Standard OGR GetFeature implementation.  This method is used
- * to get the wanted (nFeatureId) feature, a NULL value will be 
+ * to get the wanted (nFeatureId) feature, a NULL value will be
  * returned on error.
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
@@ -470,7 +470,7 @@ OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
     {
         // Avoid cloning feature... return the copy owned by the class
         CPLAssert(poFeatureRef == m_poCurFeature);
-        m_poCurFeature = NULL;  
+        m_poCurFeature = NULL;
 
         return poFeatureRef;
     }
@@ -578,7 +578,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /**********************************************************************
  *                   IMapInfoFile::SetCharset()
  *
- * Set the charset for the tab header. 
+ * Set the charset for the tab header.
  *
  *
  * Returns 0 on success, -1 on error.
@@ -593,4 +593,3 @@ int IMapInfoFile::SetCharset(const char* pszCharset)
     }
     return -1;
 }
-

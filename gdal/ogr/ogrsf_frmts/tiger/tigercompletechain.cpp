@@ -125,7 +125,7 @@ static const TigerFieldInfo rt1_fields[] = {
   { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
   { "BLKL",       'L', 'N', OFTString,   183, 186,   4,       1,   1,     1 },
   { "BLKR",       'L', 'N', OFTString,   187, 190,   4,       1,   1,     1 }
-}; 
+};
 static const TigerRecordInfo rt1_info =
   {
     rt1_fields,
@@ -395,7 +395,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( fpPrimary == NULL )
         return NULL;
 
-    if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength, 
+    if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength,
                   SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -516,15 +516,15 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return FALSE;
         }
 
-        nBytesRead = static_cast<int>(VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength, 
+        nBytesRead = static_cast<int>(VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength,
                                 fpShape ));
 
-        /* 
+        /*
         ** Handle case where the last record in the file is full.  We will
         ** try to read another record but not find it.  We require that we
-        ** have found at least one shape record for this case though. 
+        ** have found at least one shape record for this case though.
         */
-        if( nBytesRead <= 0 && VSIFEofL( fpShape ) 
+        if( nBytesRead <= 0 && VSIFEofL( fpShape )
             && poLine->getNumPoints() > 0 )
             break;
 
@@ -673,7 +673,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 /************************************************************************/
 /*                           SetWriteModule()                           */
 /************************************************************************/
-int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen, 
+int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
                                         OGRFeature *poFeature )
 
 {
@@ -740,7 +740,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
     char        szRecord[OGR_TIGER_RECBUF_LEN];
     OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
 
-    if( poLine == NULL 
+    if( poLine == NULL
         || (poLine->getGeometryType() != wkbLineString
             && poLine->getGeometryType() != wkbLineString25D) )
         return OGRERR_FAILURE;
@@ -753,8 +753,8 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
     memset( szRecord, ' ', psRT1Info->nRecordLength );
     WriteFields( psRT1Info, poFeature, szRecord );
     WritePoint( szRecord, 191, poLine->getX(0), poLine->getY(0) );
-    WritePoint( szRecord, 210, 
-                poLine->getX(poLine->getNumPoints()-1), 
+    WritePoint( szRecord, 210,
+                poLine->getX(poLine->getNumPoints()-1),
                 poLine->getY(poLine->getNumPoints()-1) );
     WriteRecord( szRecord, psRT1Info->nRecordLength, "1" );
 
@@ -790,7 +790,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             for( i = 0; i < 10; i++ )
             {
                 if( iPoint < nPoints-1 )
-                    WritePoint( szRecord, 19+19*i, 
+                    WritePoint( szRecord, 19+19*i,
                                 poLine->getX(iPoint), poLine->getY(iPoint) );
                 else
                     WritePoint( szRecord, 19+19*i, 0.0, 0.0 );

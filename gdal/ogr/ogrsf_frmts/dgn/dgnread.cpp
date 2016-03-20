@@ -43,15 +43,15 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * );
 /**
  * Seek to indicated element.
  *
- * Changes what element will be read on the next call to DGNReadElement(). 
+ * Changes what element will be read on the next call to DGNReadElement().
  * Note that this function requires and index, and one will be built if
  * not already available.
  *
  * @param hDGN the file to affect.
  * @param element_id the element to seek to.  These values are sequentially
  * ordered starting at zero for the first element.
- * 
- * @return returns TRUE on success or FALSE on failure. 
+ *
+ * @return returns TRUE on success or FALSE on failure.
  */
 
 int DGNGotoElement( DGNHandle hDGN, int element_id )
@@ -64,7 +64,7 @@ int DGNGotoElement( DGNHandle hDGN, int element_id )
     if( element_id < 0 || element_id >= psDGN->element_count )
         return FALSE;
 
-    if( VSIFSeek( psDGN->fp, psDGN->element_index[element_id].offset, 
+    if( VSIFSeek( psDGN->fp, psDGN->element_index[element_id].offset,
                   SEEK_SET ) != 0 )
         return FALSE;
 
@@ -137,7 +137,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 
 static int
 DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
-                  GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin, 
+                  GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin,
                   GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
 
 {
@@ -188,27 +188,27 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
  *
  * This function will return the extents of the passed element if possible.
  * The extents are extracted from the element header if it contains them,
- * and transformed into master georeferenced format.  Some element types 
- * do not have extents at all and will fail.  
+ * and transformed into master georeferenced format.  Some element types
+ * do not have extents at all and will fail.
  *
  * This call will also fail if the extents raw data for the element is not
  * available.  This will occur if it was not the most recently read element,
- * and if the raw_data field is not loaded. 
+ * and if the raw_data field is not loaded.
  *
  * @param hDGN the handle of the file to read from.
  *
  * @param psElement the element to extract extents from.
  *
- * @param psMin structure loaded with X, Y and Z minimum values for the 
- * extent. 
+ * @param psMin structure loaded with X, Y and Z minimum values for the
+ * extent.
  *
- * @param psMax structure loaded with X, Y and Z maximum values for the 
- * extent. 
+ * @param psMax structure loaded with X, Y and Z maximum values for the
+ * extent.
  *
- * @return TRUE on success of FALSE if extracting extents fails. 
+ * @return TRUE on success of FALSE if extracting extents fails.
  */
 
-int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement, 
+int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
                           DGNPoint *psMin, DGNPoint *psMax )
 
 {
@@ -221,18 +221,18 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
 /*      loaded in the file buffer.                                      */
 /* -------------------------------------------------------------------- */
     if( psElement->raw_data != NULL )
-        bResult = DGNGetRawExtents( psDGN, psElement->type, 
-                                    psElement->raw_data, 
+        bResult = DGNGetRawExtents( psDGN, psElement->type,
+                                    psElement->raw_data,
                                     anMin + 0, anMin + 1, anMin + 2,
                                     anMax + 0, anMax + 1, anMax + 2 );
     else if( psElement->element_id == psDGN->next_element_id - 1 )
-        bResult = DGNGetRawExtents( psDGN, psElement->type, 
-                                    psDGN->abyElem + 0, 
+        bResult = DGNGetRawExtents( psDGN, psElement->type,
+                                    psDGN->abyElem + 0,
                                     anMin + 0, anMin + 1, anMin + 2,
                                     anMax + 0, anMax + 1, anMax + 2 );
     else
     {
-        CPLError(CE_Warning, CPLE_AppDefined, 
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "DGNGetElementExtents() fails because the requested element\n"
                  " does not have raw data available." );
         return FALSE;
@@ -280,7 +280,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemCellHeader *psCell;
 
-          psCell = (DGNElemCellHeader *) 
+          psCell = (DGNElemCellHeader *)
               CPLCalloc(sizeof(DGNElemCellHeader),1);
           psElement = (DGNElemCore *) psCell;
           psElement->stype = DGNST_CELL_HEADER;
@@ -288,9 +288,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
           psCell->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
-          DGNRad50ToAscii( psDGN->abyElem[38] + psDGN->abyElem[39] * 256, 
+          DGNRad50ToAscii( psDGN->abyElem[38] + psDGN->abyElem[39] * 256,
                            psCell->name + 0 );
-          DGNRad50ToAscii( psDGN->abyElem[40] + psDGN->abyElem[41] * 256, 
+          DGNRad50ToAscii( psDGN->abyElem[40] + psDGN->abyElem[41] * 256,
                            psCell->name + 3 );
 
           psCell->cclass = psDGN->abyElem[42] + psDGN->abyElem[43] * 256;
@@ -308,11 +308,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
               psCell->trans[0] =
                 1.0 * DGN_INT32( psDGN->abyElem + 68 ) / (1<<31);
-              psCell->trans[1] = 
+              psCell->trans[1] =
                 1.0 * DGN_INT32( psDGN->abyElem + 72 ) / (1<<31);
-              psCell->trans[2] = 
+              psCell->trans[2] =
                 1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
-              psCell->trans[3] = 
+              psCell->trans[3] =
                 1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
@@ -351,21 +351,21 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
               psCell->trans[0] =
                 1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
-              psCell->trans[1] = 
+              psCell->trans[1] =
                 1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
-              psCell->trans[2] = 
+              psCell->trans[2] =
                 1.0 * DGN_INT32( psDGN->abyElem + 84 ) / (1<<31);
-              psCell->trans[3] = 
+              psCell->trans[3] =
                 1.0 * DGN_INT32( psDGN->abyElem + 88 ) / (1<<31);
-              psCell->trans[4] = 
+              psCell->trans[4] =
                 1.0 * DGN_INT32( psDGN->abyElem + 92 ) / (1<<31);
-              psCell->trans[5] = 
+              psCell->trans[5] =
                 1.0 * DGN_INT32( psDGN->abyElem + 96 ) / (1<<31);
-              psCell->trans[6] = 
+              psCell->trans[6] =
                 1.0 * DGN_INT32( psDGN->abyElem + 100 ) / (1<<31);
-              psCell->trans[7] = 
+              psCell->trans[7] =
                 1.0 * DGN_INT32( psDGN->abyElem + 104 ) / (1<<31);
-              psCell->trans[8] = 
+              psCell->trans[8] =
                 1.0 * DGN_INT32( psDGN->abyElem + 108 ) / (1<<31);
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 112 );
@@ -384,18 +384,18 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNElemCellLibrary *psCell;
           int                 iWord;
 
-          psCell = (DGNElemCellLibrary *) 
+          psCell = (DGNElemCellLibrary *)
               CPLCalloc(sizeof(DGNElemCellLibrary),1);
           psElement = (DGNElemCore *) psCell;
           psElement->stype = DGNST_CELL_LIBRARY;
           DGNParseCore( psDGN, psElement );
 
-          DGNRad50ToAscii( psDGN->abyElem[32] + psDGN->abyElem[33] * 256, 
+          DGNRad50ToAscii( psDGN->abyElem[32] + psDGN->abyElem[33] * 256,
                            psCell->name + 0 );
-          DGNRad50ToAscii( psDGN->abyElem[34] + psDGN->abyElem[35] * 256, 
+          DGNRad50ToAscii( psDGN->abyElem[34] + psDGN->abyElem[35] * 256,
                            psCell->name + 3 );
 
-          psElement->properties = psDGN->abyElem[38] 
+          psElement->properties = psDGN->abyElem[38]
               + psDGN->abyElem[39] * 256;
 
           psCell->dispsymb = psDGN->abyElem[40] + psDGN->abyElem[41] * 256;
@@ -414,8 +414,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           {
               int iOffset = 52 + iWord * 2;
 
-              DGNRad50ToAscii( psDGN->abyElem[iOffset] 
-                               + psDGN->abyElem[iOffset+1] * 256, 
+              DGNRad50ToAscii( psDGN->abyElem[iOffset]
+                               + psDGN->abyElem[iOffset+1] * 256,
                                psCell->description + iWord * 3 );
           }
       }
@@ -425,7 +425,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemMultiPoint *psLine;
 
-          psLine = (DGNElemMultiPoint *) 
+          psLine = (DGNElemMultiPoint *)
               CPLCalloc(sizeof(DGNElemMultiPoint),1);
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
@@ -468,7 +468,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               CPLError(CE_Failure, CPLE_AssertionFailed, "count < 2");
               return NULL;
           }
-          psLine = (DGNElemMultiPoint *) 
+          psLine = (DGNElemMultiPoint *)
               CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
@@ -483,9 +483,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                   DGNFreeElement(psDGN, psElement);
                   return NULL;
               }
-              CPLError( CE_Warning, CPLE_AppDefined, 
+              CPLError( CE_Warning, CPLE_AppDefined,
                         "Trimming multipoint vertices to %d from %d because\n"
-                        "element is short.\n", 
+                        "element is short.\n",
                         new_count,
                         count );
               count = new_count;
@@ -493,12 +493,12 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psLine->num_vertices = count;
           for( i = 0; i < psLine->num_vertices; i++ )
           {
-              psLine->vertices[i].x = 
+              psLine->vertices[i].x =
                   DGN_INT32( psDGN->abyElem + 38 + i*pntsize );
-              psLine->vertices[i].y = 
+              psLine->vertices[i].y =
                   DGN_INT32( psDGN->abyElem + 42 + i*pntsize );
               if( psDGN->dimension == 3 )
-                  psLine->vertices[i].z = 
+                  psLine->vertices[i].z =
                       DGN_INT32( psDGN->abyElem + 46 + i*pntsize );
 
               DGNTransformPoint( psDGN, psLine->vertices + i );
@@ -727,19 +727,19 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNTransformPoint( psDGN, &(psText->origin) );
 
           /* experimental multibyte support from Ason Kang (hiska@netian.com)*/
-          if (*(psDGN->abyElem + text_off) == 0xFF 
-              && *(psDGN->abyElem + text_off + 1) == 0xFD) 
+          if (*(psDGN->abyElem + text_off) == 0xFF
+              && *(psDGN->abyElem + text_off + 1) == 0xFD)
           {
               int n=0;
               for (int i=0;i<num_chars/2-1;i++) {
                   unsigned short w;
                   memcpy(&w,psDGN->abyElem + text_off + 2 + i*2 ,2);
                   w = CPL_LSBWORD16(w);
-                  if (w<256) { // if alpa-numeric code area : Normal character 
-                      *(psText->string + n) = (char) (w & 0xFF); 
+                  if (w<256) { // if alpa-numeric code area : Normal character
+                      *(psText->string + n) = (char) (w & 0xFF);
                       n++; // skip 1 byte;
                   }
-                  else { // if extend code area : 2 byte Korean character 
+                  else { // if extend code area : 2 byte Korean character
                       *(psText->string + n)     = (char) (w >> 8);   // hi
                       *(psText->string + n + 1) = (char) (w & 0xFF); // lo
                       n+=2; // 2 byte
@@ -764,7 +764,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemComplexHeader *psHdr;
 
-          psHdr = (DGNElemComplexHeader *) 
+          psHdr = (DGNElemComplexHeader *)
               CPLCalloc(sizeof(DGNElemComplexHeader),1);
           psElement = (DGNElemCore *) psHdr;
           psElement->stype = DGNST_COMPLEX_HEADER;
@@ -779,7 +779,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemTagValue *psTag;
 
-          psTag = (DGNElemTagValue *) 
+          psTag = (DGNElemTagValue *)
               CPLCalloc(sizeof(DGNElemTagValue),1);
           psElement = (DGNElemCore *) psTag;
           psElement->stype = DGNST_TAG_VALUE;
@@ -793,19 +793,19 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
           if( psTag->tagType == 1 )
           {
-              psTag->tagValue.string = 
+              psTag->tagValue.string =
                   CPLStrdup( (char *) psDGN->abyElem + 154 );
           }
           else if( psTag->tagType == 3 )
           {
-              memcpy( &(psTag->tagValue.integer), 
+              memcpy( &(psTag->tagValue.integer),
                       psDGN->abyElem + 154, 4 );
-              psTag->tagValue.integer = 
+              psTag->tagValue.integer =
                   CPL_LSBWORD32( psTag->tagValue.integer );
           }
           else if( psTag->tagType == 4 )
           {
-              memcpy( &(psTag->tagValue.real), 
+              memcpy( &(psTag->tagValue.real),
                       psDGN->abyElem + 154, 8 );
               DGN2IEEEDouble( &(psTag->tagValue.real) );
           }
@@ -828,7 +828,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_CONE:
         {
           DGNElemCone *psCone;
-          
+
           if( psDGN->dimension != 3 )
           {
               CPLError(CE_Failure, CPLE_AssertionFailed, "psDGN->dimension != 3");
@@ -876,7 +876,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         {
           DGNElemComplexHeader *psShape;
 
-          psShape = 
+          psShape =
             (DGNElemComplexHeader *) CPLCalloc(sizeof(DGNElemComplexHeader),1);
           psElement = (DGNElemCore *) psShape;
           psElement->stype = DGNST_COMPLEX_HEADER;
@@ -976,7 +976,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNElemKnotWeight *psArray;
           // FIXME: Is it OK to assume that the # of elements corresponds
           // directly to the element size? kintel 20051215.
-          int attr_bytes = psDGN->nElemBytes - 
+          int attr_bytes = psDGN->nElemBytes -
             (psDGN->abyElem[30] + psDGN->abyElem[31]*256)*2 - 32;
           int numelems = (psDGN->nElemBytes - 36 - attr_bytes)/4;
 
@@ -998,7 +998,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemSharedCellDefn *psShared;
 
-          psShared = (DGNElemSharedCellDefn *) 
+          psShared = (DGNElemSharedCellDefn *)
               CPLCalloc(sizeof(DGNElemSharedCellDefn),1);
           psElement = (DGNElemCore *) psShared;
           psElement->stype = DGNST_SHARED_CELL_DEFN;
@@ -1021,7 +1021,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 /*      in "capture all" mode, record the complete binary image of      */
 /*      the element.                                                    */
 /* -------------------------------------------------------------------- */
-    if( psElement->stype == DGNST_CORE 
+    if( psElement->stype == DGNST_CORE
         || (psDGN->options & DGNO_CAPTURE_RAW_DATA) )
     {
         psElement->raw_bytes = psDGN->nElemBytes;
@@ -1049,12 +1049,12 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
  * Read a DGN element.
  *
  * This function will return the next element in the file, starting with the
- * first.  It is affected by DGNGotoElement() calls. 
+ * first.  It is affected by DGNGotoElement() calls.
  *
- * The element is read into a structure which includes the DGNElemCore 
+ * The element is read into a structure which includes the DGNElemCore
  * structure.  It is expected that applications will inspect the stype
  * field of the returned DGNElemCore and use it to cast the pointer to the
- * appropriate element structure type such as DGNElemMultiPoint. 
+ * appropriate element structure type such as DGNElemMultiPoint.
  *
  * @param hDGN the handle of the file to read from.
  *
@@ -1137,10 +1137,10 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /**
  * Does element type have display header.
  *
- * @param nElemType element type (0-63) to test. 
+ * @param nElemType element type (0-63) to test.
  *
  * @return TRUE if elements of passed in type have a display header after the
- * core element header, or FALSE otherwise. 
+ * core element header, or FALSE otherwise.
  */
 
 int DGNElemTypeHasDispHdr( int nElemType )
@@ -1211,7 +1211,7 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         psElement->attr_bytes = psDGN->nElemBytes - nAttIndex*2 - 32;
         if( psElement->attr_bytes > 0 )
         {
-            psElement->attr_data = (unsigned char *) 
+            psElement->attr_data = (unsigned char *)
                 CPLMalloc(psElement->attr_bytes);
             memcpy( psElement->attr_data, psData + nAttIndex * 2 + 32,
                     psElement->attr_bytes );
@@ -1219,7 +1219,7 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         else
         {
             CPLError(
-                CE_Warning, CPLE_AppDefined, 
+                CE_Warning, CPLE_AppDefined,
                 "Computed %d bytes for attribute info on element,\n"
                 "perhaps this element type doesn't really have a disphdr?",
                 psElement->attr_bytes );
@@ -1240,24 +1240,24 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
     DGNElemCore *psElement;
     DGNElemColorTable  *psColorTable;
 
-    psColorTable = (DGNElemColorTable *) 
+    psColorTable = (DGNElemColorTable *)
         CPLCalloc(sizeof(DGNElemColorTable),1);
     psElement = (DGNElemCore *) psColorTable;
     psElement->stype = DGNST_COLORTABLE;
 
     DGNParseCore( psDGN, psElement );
 
-    psColorTable->screen_flag = 
+    psColorTable->screen_flag =
         psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
     memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
-    memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 ); 
+    memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 );
 
     // We used to only install a color table as the default color
     // table if it was the first in the file.  But apparently we should
     // really be using the last one.  This doesn't necessarily accomplish
     // that either if the elements are being read out of order but it will
-    // usually do better at least. 
+    // usually do better at least.
     memcpy( psDGN->color_table, psColorTable->color_info, 768 );
     psDGN->got_color_table = 1;
 
@@ -1285,9 +1285,9 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 /* -------------------------------------------------------------------- */
 /*      Parse the overall information.                                  */
 /* -------------------------------------------------------------------- */
-    psTagSet->tagCount = 
+    psTagSet->tagCount =
         psDGN->abyElem[44] + psDGN->abyElem[45] * 256;
-    psTagSet->flags = 
+    psTagSet->flags =
         psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
     psTagSet->tagSetName = CPLStrdup( (const char *) (psDGN->abyElem + 48) );
 
@@ -1296,7 +1296,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 /* -------------------------------------------------------------------- */
     psTagSet->tagSet = -1;
 
-    if( psElement->attr_bytes >= 8 
+    if( psElement->attr_bytes >= 8
         && psElement->attr_data[0] == 0x03
         && psElement->attr_data[1] == 0x10
         && psElement->attr_data[2] == 0x2f
@@ -1307,10 +1307,10 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 /* -------------------------------------------------------------------- */
 /*      Parse each of the tag definitions.                              */
 /* -------------------------------------------------------------------- */
-    psTagSet->tagList = (DGNTagDef *) 
+    psTagSet->tagList = (DGNTagDef *)
         CPLCalloc(sizeof(DGNTagDef), psTagSet->tagCount);
 
-    nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1; 
+    nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1;
 
     for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
     {
@@ -1349,21 +1349,21 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         /* Get the default */
         if( tagDef->type == 1 )
         {
-            tagDef->defaultValue.string = 
+            tagDef->defaultValue.string =
                 CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
             nDataOffset += strlen(tagDef->defaultValue.string)+1;
         }
         else if( tagDef->type == 3 || tagDef->type == 5 )
         {
-            memcpy( &(tagDef->defaultValue.integer), 
+            memcpy( &(tagDef->defaultValue.integer),
                     psDGN->abyElem + nDataOffset, 4 );
-            tagDef->defaultValue.integer = 
+            tagDef->defaultValue.integer =
                 CPL_LSBWORD32( tagDef->defaultValue.integer );
             nDataOffset += 4;
         }
         else if( tagDef->type == 4 )
         {
-            memcpy( &(tagDef->defaultValue.real), 
+            memcpy( &(tagDef->defaultValue.real),
                     psDGN->abyElem + nDataOffset, 8 );
             DGN2IEEEDouble( &(tagDef->defaultValue.real) );
             nDataOffset += 8;
@@ -1421,11 +1421,11 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
     if( psTCB->uor_per_subunit != 0
         && psTCB->subunits_per_master != 0 )
     {
-        psTCB->origin_x = psTCB->origin_x / 
+        psTCB->origin_x = psTCB->origin_x /
             (psTCB->uor_per_subunit * psTCB->subunits_per_master);
-        psTCB->origin_y = psTCB->origin_y / 
+        psTCB->origin_y = psTCB->origin_y /
             (psTCB->uor_per_subunit * psTCB->subunits_per_master);
-        psTCB->origin_z = psTCB->origin_z / 
+        psTCB->origin_z = psTCB->origin_z /
             (psTCB->uor_per_subunit * psTCB->subunits_per_master);
     }
 
@@ -1439,7 +1439,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
 
         if( psTCB->uor_per_subunit != 0
             && psTCB->subunits_per_master != 0 )
-            psDGN->scale = 1.0 
+            psDGN->scale = 1.0
                 / (psTCB->uor_per_subunit * psTCB->subunits_per_master);
     }
 
@@ -1488,7 +1488,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
  * Free an element structure.
  *
  * This function will deallocate all resources associated with any element
- * structure returned by DGNReadElement(). 
+ * structure returned by DGNReadElement().
  *
  * @param hDGN handle to file from which the element was read.
  * @param psElement the element structure returned by DGNReadElement().
@@ -1535,7 +1535,7 @@ void DGNFreeElement( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 /**
  * Rewind element reading.
  *
- * Rewind the indicated DGN file, so the next element read with 
+ * Rewind the indicated DGN file, so the next element read with
  * DGNReadElement() will be the first.  Does not require indexing like
  * the more general DGNReadElement() function.
  *
@@ -1604,7 +1604,7 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
 
         nCTI = (GInt32) MAX(-2147483647,MIN(2147483647,adfCT[i]));
 
-#ifdef WORDS_BIGENDIAN 
+#ifdef WORDS_BIGENDIAN
         pabyTarget[i*4+0] = pabyCTI[1];
         pabyTarget[i*4+1] = pabyCTI[0];
         pabyTarget[i*4+2] = pabyCTI[3];
@@ -1614,7 +1614,7 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
         pabyTarget[i*4+2] = pabyCTI[0];
         pabyTarget[i*4+1] = pabyCTI[3];
         pabyTarget[i*4+0] = pabyCTI[2];
-#endif        
+#endif
     }
 }
 
@@ -1623,11 +1623,11 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
 /************************************************************************/
 
 /**
- * Load TCB if not already loaded. 
+ * Load TCB if not already loaded.
  *
  * This function will load the TCB element if it is not already loaded.
  * It is used primarily to ensure the TCB is loaded before doing any operations
- * that require TCB values (like creating new elements). 
+ * that require TCB values (like creating new elements).
  *
  * @return FALSE on failure or TRUE on success.
  */
@@ -1645,7 +1645,7 @@ int DGNLoadTCB( DGNHandle hDGN )
         DGNElemCore *psElem = DGNReadElement( hDGN );
         if( psElem == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "DGNLoadTCB() - unable to find TCB in file." );
             return FALSE;
         }
@@ -1704,12 +1704,12 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
  * Fetch overall file extents.
  *
  * The extents are collected for each element while building an index, so
- * if an index has not already been built, it will be built when 
- * DGNGetExtents() is called.  
- * 
+ * if an index has not already been built, it will be built when
+ * DGNGetExtents() is called.
+ *
  * The Z min/max values are generally meaningless (0 and 0xffffffff in uor
- * space). 
- * 
+ * space).
+ *
  * @param hDGN the file to get extents for.
  * @param padfExtents pointer to an array of six doubles into which are loaded
  * the values xmin, ymin, zmin, xmax, ymax, and zmax.
@@ -1762,7 +1762,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
     long nLastOffset;
     GUInt32 anRegion[6];
 
-    if( psDGN->index_built ) 
+    if( psDGN->index_built )
         return;
 
     psDGN->index_built = TRUE;
@@ -1780,8 +1780,8 @@ void DGNBuildIndex( DGNInfo *psDGN )
         {
             nMaxElements = (int) (nMaxElements * 1.5) + 500;
 
-            psDGN->element_index = (DGNElementInfo *) 
-                CPLRealloc( psDGN->element_index, 
+            psDGN->element_index = (DGNElementInfo *)
+                CPLRealloc( psDGN->element_index,
                             nMaxElements * sizeof(DGNElementInfo) );
         }
 
@@ -1811,7 +1811,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else if( nType == DGNT_ELLIPSE || nType == DGNT_ARC )
             psEI->stype = DGNST_ARC;
 
-        else if( nType == DGNT_COMPLEX_SHAPE_HEADER 
+        else if( nType == DGNT_COMPLEX_SHAPE_HEADER
                  || nType == DGNT_COMPLEX_CHAIN_HEADER
                  || nType == DGNT_3DSURFACE_HEADER
                  || nType == DGNT_3DSOLID_HEADER)
@@ -1842,13 +1842,13 @@ void DGNBuildIndex( DGNInfo *psDGN )
             psEI->stype = DGNST_CORE;
 
         if( !(psEI->flags & DGNEIF_DELETED)
-            && !(psEI->flags & DGNEIF_COMPLEX) 
+            && !(psEI->flags & DGNEIF_COMPLEX)
             && DGNGetRawExtents( psDGN, nType, NULL,
                                  anRegion+0, anRegion+1, anRegion+2,
                                  anRegion+3, anRegion+4, anRegion+5 ) )
         {
 #ifdef notdef
-            printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n", 
+            printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",
                     psDGN->element_count,
                     anRegion[0] - 2147483648.0,
                     anRegion[1] - 2147483648.0,
@@ -1856,7 +1856,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
                     anRegion[3] - 2147483648.0,
                     anRegion[4] - 2147483648.0,
                     anRegion[5] - 2147483648.0 );
-#endif            
+#endif
             if( psDGN->got_bounds )
             {
                 psDGN->min_x = MIN(psDGN->min_x, anRegion[0]);

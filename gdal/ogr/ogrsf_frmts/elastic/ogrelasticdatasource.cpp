@@ -582,7 +582,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
         {
-            if( EQUAL(m_papoLayers[iLayer]->GetName(), 
+            if( EQUAL(m_papoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );

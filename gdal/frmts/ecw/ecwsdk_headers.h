@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes ECW SDK headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -78,7 +78,7 @@
                 #endif
         #include <NCSECWHeaderEditor.h>
         #include "NCSEcw/SDK/Box.h"
-    #else 
+    #else
         #include <HeaderEditor.h>
     #endif
 #  define NCS_FASTCALL

@@ -26,7 +26,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -91,7 +91,7 @@
  * Revision 1.37  2002/10/15 14:33:30  warmerda
  * Added untested support in mitab_spatialref.cpp, and mitab_coordsys.cpp for
  * projections Regional Mercator (26), Polyconic (27), Azimuthal Equidistant -
- * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect 
+ * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect
  * (29).
  *
  * Revision 1.36  2002/09/05 15:38:16  warmerda
@@ -406,7 +406,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6610, 1017,"Xian 1980",                  53, 24, -123, -94, -0.02, -0.25, 0.13, 1.1, 0},
 { 0,    1018,"Lithuanian Pulkovo 1942",	   4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
 { 0,    1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
-{ 6818, 1020,"S-JTSK with Ferro prime meridian", 10, 589, 76, 480, 0, 0, 0, 0, -17.666666666667}, 
+{ 6818, 1020,"S-JTSK with Ferro prime meridian", 10, 589, 76, 480, 0, 0, 0, 0, -17.666666666667},
 
 { -1,   -1, NULL,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
@@ -1011,9 +1011,9 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          *-------------------------------------------------------------*/
       case 7:
         poSpatialRef->SetHOM( sTABProj.adProjParams[1],
-                                sTABProj.adProjParams[0], 
+                                sTABProj.adProjParams[0],
                                 sTABProj.adProjParams[2],
-                                90.0, 
+                                90.0,
                                 sTABProj.adProjParams[3],
                                 sTABProj.adProjParams[4],
                                 sTABProj.adProjParams[5] );
@@ -1266,7 +1266,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
 
     /*-----------------------------------------------------------------
      * Local (nonearth) coordinate systems have no Geographic relationship
-     * so we just return from here. 
+     * so we just return from here.
      *----------------------------------------------------------------*/
     if( sTABProj.nProjId == 0 )
         return poSpatialRef;
@@ -1292,7 +1292,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         psDatumInfo = asDatumInfoList + iDatumInfo;
 
         if( TAB_EQUAL(psDatumInfo->nEllipsoid, sTABProj.nEllipsoidId) &&
-            ((sTABProj.nDatumId > 0 && 
+            ((sTABProj.nDatumId > 0 &&
               sTABProj.nDatumId == psDatumInfo->nMapInfoDatumID) ||
              (sTABProj.nDatumId <= 0
               && TAB_EQUAL(psDatumInfo->dfShiftX, sTABProj.dDatumShiftX)
@@ -1316,20 +1316,20 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             && sTABProj.adDatumParams[3] == 0.0
             && sTABProj.adDatumParams[4] == 0.0 )
         {
-            snprintf( szDatumName, sizeof(szDatumName), 
-                     "MIF 999,%d,%.15g,%.15g,%.15g", 
+            snprintf( szDatumName, sizeof(szDatumName),
+                     "MIF 999,%d,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
-                     sTABProj.dDatumShiftX, 
-                     sTABProj.dDatumShiftY, 
+                     sTABProj.dDatumShiftX,
+                     sTABProj.dDatumShiftY,
                      sTABProj.dDatumShiftZ );
         }
         else
         {
-            snprintf( szDatumName, sizeof(szDatumName), 
+            snprintf( szDatumName, sizeof(szDatumName),
                      "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
-                     sTABProj.dDatumShiftX, 
-                     sTABProj.dDatumShiftY, 
+                     sTABProj.dDatumShiftX,
+                     sTABProj.dDatumShiftY,
                      sTABProj.dDatumShiftZ,
                      sTABProj.adDatumParams[0],
                      sTABProj.adDatumParams[1],
@@ -1437,7 +1437,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
 
     if( psDatumInfo != NULL )
     {
-        poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX, 
+        poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX,
                                     psDatumInfo->dfShiftY,
                                     psDatumInfo->dfShiftZ,
                                     psDatumInfo->dfDatumParm0 == 0 ? 0 : -psDatumInfo->dfDatumParm0, /* avoids 0 to be transformed into -0 */
@@ -1447,19 +1447,19 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     }
     else
     {
-        poSpatialRef->SetTOWGS84( sTABProj.dDatumShiftX, 
-                                    sTABProj.dDatumShiftY, 
-                                    sTABProj.dDatumShiftZ, 
-                                    sTABProj.adDatumParams[0] == 0 ? 0 : -sTABProj.adDatumParams[0], 
-                                    sTABProj.adDatumParams[1] == 0 ? 0 : -sTABProj.adDatumParams[1], 
-                                    sTABProj.adDatumParams[2] == 0 ? 0 : -sTABProj.adDatumParams[2], 
+        poSpatialRef->SetTOWGS84( sTABProj.dDatumShiftX,
+                                    sTABProj.dDatumShiftY,
+                                    sTABProj.dDatumShiftZ,
+                                    sTABProj.adDatumParams[0] == 0 ? 0 : -sTABProj.adDatumParams[0],
+                                    sTABProj.adDatumParams[1] == 0 ? 0 : -sTABProj.adDatumParams[1],
+                                    sTABProj.adDatumParams[2] == 0 ? 0 : -sTABProj.adDatumParams[2],
                                     sTABProj.adDatumParams[3] );
     }
 
     /*-----------------------------------------------------------------
      * Special case for Google Mercator (datum=157, ellipse=54, gdal #4115)
      *----------------------------------------------------------------*/
-    if( sTABProj.nProjId == 10 
+    if( sTABProj.nProjId == 10
         && sTABProj.nDatumId == 157
         && sTABProj.nEllipsoidId == 54 )
     {
@@ -1987,7 +1987,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
      * datum.  Try to look it up (using EPSG code first) and get the
      * parameters.  If we don't find it with either just use WGS84.
      *----------------------------------------------------------------*/
-    else 
+    else
     {
         int     i;
 
@@ -2083,7 +2083,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( dfLinearConv == CPLAtof(SRS_UL_FOOT_CONV)
              || EQUAL(pszLinearUnits,SRS_UL_FOOT) )
         sTABProj.nUnitsId = 3;
-    else if( EQUAL(pszLinearUnits,"YARD") || EQUAL(pszLinearUnits,"IYARD") 
+    else if( EQUAL(pszLinearUnits,"YARD") || EQUAL(pszLinearUnits,"IYARD")
              || dfLinearConv == 0.9144 )
         sTABProj.nUnitsId = 4;
     else if( dfLinearConv == 0.001 )
@@ -2097,15 +2097,15 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         sTABProj.nUnitsId = 8;
     else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
         sTABProj.nUnitsId = 9;
-    else if( EQUAL(pszLinearUnits,SRS_UL_LINK) 
+    else if( EQUAL(pszLinearUnits,SRS_UL_LINK)
              || EQUAL(pszLinearUnits,"GUNTERLINK") )
         sTABProj.nUnitsId = 30;
-    else if( EQUAL(pszLinearUnits,SRS_UL_CHAIN) 
+    else if( EQUAL(pszLinearUnits,SRS_UL_CHAIN)
              || EQUAL(pszLinearUnits,"GUNTERCHAIN") )
         sTABProj.nUnitsId = 31;
     else if( EQUAL(pszLinearUnits,SRS_UL_ROD) )
         sTABProj.nUnitsId = 32;
-    else if( EQUAL(pszLinearUnits,"Mile") 
+    else if( EQUAL(pszLinearUnits,"Mile")
              || EQUAL(pszLinearUnits,"IMILE") )
         sTABProj.nUnitsId = 0;
     else

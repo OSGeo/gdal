@@ -92,10 +92,10 @@ OGRCurveCollection::~OGRCurveCollection()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -649,7 +649,7 @@ OGRErr  OGRCurveCollection::transform( OGRGeometry* poGeom,
         {
             if( iGeom != 0 )
             {
-                CPLDebug("OGR", 
+                CPLDebug("OGR",
                          "OGRCurveCollection::transform() failed for a geometry other\n"
                          "than the first, meaning some geometries are transformed\n"
                          "and some are not!\n" );

@@ -40,7 +40,7 @@
 
 /* Recent mingw define struct timezone */
 #if !(defined(__GNUC__) && defined(_TIMEZONE_DEFINED))
-struct timezone 
+struct timezone
 {
   int  tz_minuteswest; /* minutes W of Greenwich */
   int  tz_dsttime;     /* type of DST correction */

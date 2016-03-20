@@ -51,7 +51,7 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
     char*                     pszSpatialDDoc;
 
     protected:
-            virtual int               GetFeaturesToFetch() { 
+            virtual int               GetFeaturesToFetch() {
                return atoi(CPLGetConfigOption("CLOUDANT_PAGE_SIZE", "200"));
             }
 
@@ -77,7 +77,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
   public:
                         OGRCloudantDataSource();
                         ~OGRCloudantDataSource();
-    virtual int Open( const char * pszFilename, int bUpdateIn);                       
+    virtual int Open( const char * pszFilename, int bUpdateIn);
     virtual OGRLayer   *ICreateLayer( const char *pszName,
              OGRSpatialReference *poSpatialRef = NULL,
              OGRwkbGeometryType eGType = wkbUnknown,

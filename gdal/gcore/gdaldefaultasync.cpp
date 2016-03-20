@@ -2,7 +2,7 @@
  * $Id: gdaldataset.cpp 16796 2009-04-17 23:35:04Z normanb $
  *
  * Project:  GDAL Core
- * Purpose:  Implementation of GDALDefaultAsyncReader and the 
+ * Purpose:  Implementation of GDALDefaultAsyncReader and the
  *           GDALAsyncReader base class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -125,9 +125,9 @@ GDALAsyncReader::~GDALAsyncReader()
 /*                     GDALARGetNextUpdatedRegion()                     */
 /************************************************************************/
 
-GDALAsyncStatusType CPL_STDCALL 
+GDALAsyncStatusType CPL_STDCALL
 GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double timeout,
-                           int* pnxbufoff, int* pnybufoff, 
+                           int* pnxbufoff, int* pnybufoff,
                            int* pnxbufsize, int* pnybufsize)
 {
     VALIDATE_POINTER1(hARIO, "GDALARGetNextUpdatedRegion", GARIO_ERROR);
@@ -260,7 +260,7 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
                           GDALDataType eBufTypeIn,
                           int nBandCountIn, int* panBandMapIn,
                           int nPixelSpaceIn, int nLineSpaceIn,
-                          int nBandSpaceIn, char **papszOptionsIn) 
+                          int nBandSpaceIn, char **papszOptionsIn)
 
 {
     poDS = poDSIn;

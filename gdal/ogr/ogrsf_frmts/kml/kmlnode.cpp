@@ -66,7 +66,7 @@ std::string Nodetype2String(Nodetype const& type)
 static
 bool isNumberDigit(const char cIn)
 {
-    return ( cIn == '-' || cIn == '+' || 
+    return ( cIn == '-' || cIn == '+' ||
             (cIn >= '0' && cIn <= '9') ||
              cIn == '.' || cIn == 'e' || cIn == 'E' );
 }
@@ -774,9 +774,9 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
        poFeat->eType_ == LineString ||
        poFeat->eType_ == Polygon)
         sElementName = Nodetype2String(poFeat->eType_);
-    else if (poFeat->eType_ == MultiGeometry || 
-             poFeat->eType_ == MultiPoint || 
-             poFeat->eType_ == MultiLineString || 
+    else if (poFeat->eType_ == MultiGeometry ||
+             poFeat->eType_ == MultiPoint ||
+             poFeat->eType_ == MultiLineString ||
              poFeat->eType_ == MultiPolygon)
         sElementName = "MultiGeometry";
     else

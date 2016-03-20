@@ -76,16 +76,16 @@ static void llSwapDouble(double *a, double *b)
 /************************************************************************/
 
 /*
- * NOTE: This code was originally adapted from the gdImageFilledPolygon() 
- * function in libgd.  
- * 
+ * NOTE: This code was originally adapted from the gdImageFilledPolygon()
+ * function in libgd.
+ *
  * http://www.boutell.com/gd/
  *
  * It was later adapted for direct inclusion in GDAL and relicensed under
- * the GDAL MIT/X license (pulled from the OpenEV distribution). 
+ * the GDAL MIT/X license (pulled from the OpenEV distribution).
  */
 
-void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
+void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, int *panPartSize,
                                double *padfX, double *padfY,
                                double *dfVariant,
@@ -136,14 +136,12 @@ No known bug
     }
     miny = (int) dminy;
     maxy = (int) dmaxy;
-    
-    
+
     if( miny < 0 )
         miny = 0;
     if( maxy >= nRasterYSize )
         maxy = nRasterYSize-1;
-   
-    
+
     minx = 0;
     maxx = nRasterXSize - 1;
 
@@ -152,7 +150,6 @@ No known bug
         int	partoffset = 0;
 
         dy = y +0.5; /* center height of line*/
-         
 
         part = 0;
         ints = 0;
@@ -161,8 +158,7 @@ No known bug
         memset(polyInts, -1, sizeof(int) * n);
 
         for (i=0; (i < n); i++) {
-        
-            
+
             if( i == partoffset + panPartSize[part] ) {
                 partoffset += panPartSize[part];
                 part++;
@@ -175,11 +171,9 @@ No known bug
                 ind1 = i-1;
                 ind2 = i;
             }
-	    
 
             dy1 = padfY[ind1];
             dy2 = padfY[ind2];
-            
 
             if( (dy1 < dy && dy2 < dy) || (dy1 > dy && dy2 > dy) )
                 continue;
@@ -194,15 +188,15 @@ No known bug
                 dx1 = padfX[ind2];
             } else /* if (fabs(dy1-dy2)< 1.e-6) */
             {
-                
-                /*AE: DO NOT skip bottom horizontal segments 
-                  -Fill them separately- 
+
+                /*AE: DO NOT skip bottom horizontal segments
+                  -Fill them separately-
                   They are not taken into account twice.*/
                 if (padfX[ind1] > padfX[ind2])
                 {
                     horizontal_x1 = (int) floor(padfX[ind2]+0.5);
                     horizontal_x2 = (int) floor(padfX[ind1]+0.5);
-		
+
                     if  ( (horizontal_x1 >  maxx) ||  (horizontal_x2 <= minx) )
                         continue;
 
@@ -275,7 +269,7 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
 /*                         GDALdllImageLine()                           */
 /************************************************************************/
 
-void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
+void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                        int nPartCount, int *panPartSize,
                        double *padfX, double *padfY, double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData )
@@ -298,7 +292,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             const int iY1 = (int)floor( padfY[n + j] );
 
             double dfVariant = 0, dfVariant1 = 0;
-            if( padfVariant != NULL && 
+            if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
             {
@@ -315,7 +309,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 
             // Determine the line slope.
             if ( nDeltaX >= nDeltaY )
-            {           
+            {
                 const int nXError = nDeltaY << 1;
                 const int nYError = nXError - (nDeltaX << 1);
                 int nError = nXError - nDeltaX;
@@ -333,13 +327,13 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                     dfVariant += dfDeltaVariant;
                     iX += nXStep;
                     if ( nError > 0 )
-                    { 
+                    {
                         iY += nYStep;
                         nError += nYError;
                     }
                     else
                         nError += nXError;
-                }		
+                }
             }
             else
             {
@@ -360,7 +354,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                     dfVariant += dfDeltaVariant;
                     iY += nYStep;
                     if ( nError > 0 )
-                    { 
+                    {
                         iX += nXStep;
                         nError += nYError;
                     }
@@ -385,8 +379,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 /*      will be drawn with the burn value.                              */
 /************************************************************************/
 
-void 
-GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
+void
+GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                            int nPartCount, int *panPartSize,
                            double *padfX, double *padfY, double *padfVariant,
                            llPointFunc pfnPointFunc, void *pCBData )
@@ -432,7 +426,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 llSwapDouble( &dfY, &dfYEnd );
                 llSwapDouble( &dfVariant, &dfVariantEnd );
             }
-            
+
             // Special case for vertical lines.
             if( floor(dfX) == floor(dfXEnd) )
             {
@@ -486,7 +480,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 int iX = (int) floor(dfX);
                 int iY = (int) floor(dfY);
                 int iXEnd = (int) floor(dfXEnd);
-                
+
                 if( iY >= nRasterYSize )
                     continue;
 

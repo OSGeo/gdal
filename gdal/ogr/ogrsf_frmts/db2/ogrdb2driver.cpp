@@ -49,10 +49,10 @@ static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRDB2DriverIdentify(poOpenInfo) )
         return NULL;
-    
+
     CPLDebug( "OGRDB2DriverOpen", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
-              
+
     OGRDB2DataSource   *poDS = new OGRDB2DataSource();
 
     if( !poDS->Open( poOpenInfo ) )

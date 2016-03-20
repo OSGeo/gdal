@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAEntry class for reading and relating
- *           one node in the HFA object tree structure. 
+ *           one node in the HFA object tree structure.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -439,15 +439,15 @@ HFAEntry *HFAEntry::GetNext()
         // Check if we have a loop on the next node in this sibling chain.
         HFAEntry *poPast;
 
-        for( poPast = this; 
-             poPast != NULL && poPast->nFilePos != nNextPos; 
+        for( poPast = this;
+             poPast != NULL && poPast->nFilePos != nNextPos;
              poPast = poPast->poPrev ) {}
 
         if( poPast != NULL )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Corrupt (looping) entry in %s, ignoring some entries after %s.",
-                      psHFA->pszFilename, 
+                      psHFA->pszFilename,
                       szName );
             nNextPos = 0;
             return NULL;
@@ -569,10 +569,10 @@ GByte *HFAEntry::MakeData( int nSize )
         {
             nFilePos = 0;
             nDataPos = 0;
-            if (poPrev != NULL) poPrev->MarkDirty(); 
-            if (poNext != NULL) poNext->MarkDirty(); 
-            if (poChild != NULL) poChild->MarkDirty(); 
-            if (poParent != NULL) poParent->MarkDirty(); 
+            if (poPrev != NULL) poPrev->MarkDirty();
+            if (poNext != NULL) poNext->MarkDirty();
+            if (poChild != NULL) poChild->MarkDirty();
+            if (poParent != NULL) poParent->MarkDirty();
         }
     }
     else
@@ -900,7 +900,7 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
 /*      from a file, or instantiating a new node.                       */
 /* -------------------------------------------------------------------- */
     LoadData();
-    if( MakeData() == NULL 
+    if( MakeData() == NULL
         || pabyData == NULL
         || poType == NULL )
     {
@@ -922,7 +922,7 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
 /*                           SetStringField()                           */
 /************************************************************************/
 
-CPLErr HFAEntry::SetStringField( const char * pszFieldPath, 
+CPLErr HFAEntry::SetStringField( const char * pszFieldPath,
                                  const char * pszValue )
 
 {
@@ -966,8 +966,8 @@ void HFAEntry::SetPosition()
 /* -------------------------------------------------------------------- */
     if( nFilePos == 0 )
     {
-        nFilePos = HFAAllocateSpace( psHFA, 
-                                     psHFA->nEntryHeaderLength 
+        nFilePos = HFAAllocateSpace( psHFA,
+                                     psHFA->nEntryHeaderLength
                                      + nDataSize );
 
         if( nDataSize > 0 )
@@ -977,7 +977,7 @@ void HFAEntry::SetPosition()
 /* -------------------------------------------------------------------- */
 /*      Force all children to set their position.                       */
 /* -------------------------------------------------------------------- */
-    for( HFAEntry *poThisChild = poChild; 
+    for( HFAEntry *poThisChild = poChild;
          poThisChild != NULL;
          poThisChild = poThisChild->poNext )
     {
@@ -1023,7 +1023,7 @@ CPLErr HFAEntry::FlushToDisk()
         //VSIFFlushL( psHFA->fp );
         if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d for writing, out of disk space?",
                       nFilePos );
             return CE_Failure;
@@ -1066,7 +1066,7 @@ CPLErr HFAEntry::FlushToDisk()
         bOK &= VSIFWriteL( &nLong, 4, 1, psHFA->fp ) > 0;
         if( !bOK )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to write HFAEntry %s(%s), out of disk space?",
                       szName, szType );
             return CE_Failure;
@@ -1078,10 +1078,10 @@ CPLErr HFAEntry::FlushToDisk()
         //VSIFFlushL( psHFA->fp );
         if( nDataSize > 0 && pabyData != NULL )
         {
-            if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) != 0 
+            if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) != 0
                 || VSIFWriteL( pabyData, nDataSize, 1, psHFA->fp ) != 1 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to write %d bytes HFAEntry %s(%s) data,\n"
                           "out of disk space?",
                           nDataSize, szName, szType );
@@ -1095,7 +1095,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
 /*      Process all the children of this node                           */
 /* -------------------------------------------------------------------- */
-    for( HFAEntry *poThisChild = poChild; 
+    for( HFAEntry *poThisChild = poChild;
          poThisChild != NULL;
          poThisChild = poThisChild->poNext )
     {

@@ -88,7 +88,7 @@ public:
 
     int         TestCapability( const char * ) { return FALSE; }
 
-    virtual const char * GetFIDColumn (); 
+    virtual const char * GetFIDColumn ();
     virtual const char * GetGeometryColumn ();
 };
 
@@ -111,7 +111,7 @@ public:
                         OGRWalkTableLayer( OGRWalkDataSource * );
                         ~OGRWalkTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     double minE,
                                     double maxE,
@@ -146,7 +146,7 @@ class OGRWalkSelectLayer : public OGRWalkLayer
     virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRWalkSelectLayer( OGRWalkDataSource *, 
+                        OGRWalkSelectLayer( OGRWalkDataSource *,
                                            CPLODBCStatement * );
                         ~OGRWalkSelectLayer();
 
@@ -164,7 +164,7 @@ class OGRWalkDataSource : public OGRDataSource
 {
     char               *pszName;
     OGRWalkLayer        **papoLayers;
-    int                 nLayers;   
+    int                 nLayers;
 
     int                 bDSUpdate;
     CPLODBCSession      oSession;

@@ -626,7 +626,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     if(nVersion != 1 && nVersion != 2)
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Incorrect file version (%d).", nVersion );
         return NULL;
     }
@@ -1065,7 +1065,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    dfTemp = dfDefaultNoDataValue;  
+    dfTemp = dfDefaultNoDataValue;
     CPL_LSBPTR64( &dfTemp );
     if( VSIFWriteL( (void *)&dfTemp, sizeof(double), 1, fp ) != 1 )
     {
@@ -1192,7 +1192,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Driver does not support source dataset with zero band.\n");
         return NULL;
     }

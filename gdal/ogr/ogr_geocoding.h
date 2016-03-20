@@ -35,7 +35,7 @@
 
 /**
  * \file ogr_geocoding.h
- * 
+ *
  * C API for geocoding client.
  */
 

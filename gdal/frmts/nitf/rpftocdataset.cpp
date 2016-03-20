@@ -656,17 +656,17 @@ void RPFTOCDataset::AddSubDataset( const char* pszFilename,  RPFTocEntry* tocEnt
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
-        CSLSetNameValue( papszSubDatasets, szName, 
+    papszSubDatasets =
+        CSLSetNameValue( papszSubDatasets, szName,
               CPLSPrintf( "NITF_TOC_ENTRY:%s:%s", MakeTOCEntryName(tocEntry), pszFilename ) );
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     if (tocEntry->seriesName && tocEntry->seriesAbbreviation)
-        papszSubDatasets = 
+        papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName,
                CPLSPrintf( "%s:%s:%s:%s:%s:%d", tocEntry->type, tocEntry->seriesAbbreviation, tocEntry->seriesName, tocEntry->scale, tocEntry->zone, tocEntry->boundaryId ));
     else
-        papszSubDatasets = 
+        papszSubDatasets =
             CSLSetNameValue( papszSubDatasets, szName,
                 CPLSPrintf( "%s:%s:%s:%d", tocEntry->type, tocEntry->scale, tocEntry->zone, tocEntry->boundaryId ));
 }
@@ -925,7 +925,7 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInforma
             /* Place the raster band at the right position in the VRT */
             poBand->AddSimpleSource(ds->GetRasterBand(j + 1),
                                     0, 0, sizeX, sizeY,
-                                    entry->frameEntries[i].frameCol * sizeX, 
+                                    entry->frameEntries[i].frameCol * sizeX,
                                     entry->frameEntries[i].frameRow * sizeY,
                                     sizeX, sizeY);
         }
@@ -1013,8 +1013,8 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
 
         if( fp == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                    "Failed to open file %s.", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "Failed to open file %s.",
                     pszFilename );
             return NULL;
         }
@@ -1048,7 +1048,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                     return ds;
                 }
             }
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                         "The entry %s does not exist in file %s.", entryName, pszFilename );
         }
         RPFTOCFree(toc);
@@ -1167,7 +1167,7 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
     if ( IsNonNITFFileTOC( poOpenInfo, pszFilename) )
         return TRUE;
 
-    if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") 
+    if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF")
         && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NSIF")
         && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") )
         return FALSE;
@@ -1263,7 +1263,7 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                           "File %s is not a TOC file.", pszFilename );
         NITFClose( psFile );
         CPLFree(entryName);

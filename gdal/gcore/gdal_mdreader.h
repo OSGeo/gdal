@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata (mainly the remote sensing imagery) from files of 
+ * Purpose:  Read metadata (mainly the remote sensing imagery) from files of
  *           different providers like DigitalGlobe, GeoEye etc.
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -99,8 +99,8 @@ public:
 
     /**
      * @brief Get specified metadata domain
-     * @param pszDomain The metadata domain to return  
-     * @return List of metadata items 
+     * @param pszDomain The metadata domain to return
+     * @return List of metadata items
      */
     virtual char ** GetMetadataDomain(const char *pszDomain);
     /**
@@ -110,7 +110,7 @@ public:
      */
     virtual bool FillMetadata(GDALMultiDomainMetadata* poMDMD);
     /**
-      * @brief Determine whether the input parameter correspond to the particular 
+      * @brief Determine whether the input parameter correspond to the particular
       *        provider of remote sensing data completely
       * @return True if all needed sources files found
       */
@@ -160,13 +160,13 @@ protected:
     char **m_papszRPCMD;
     char **m_papszIMAGERYMD;
     char **m_papszDEFAULTMD;
-    bool m_bIsMetadataLoad; 
+    bool m_bIsMetadataLoad;
 };
 
 /**
  * The metadata reader main class.
- * The main purpose of this class is to provide an correspondent reader 
- * for provided path. 
+ * The main purpose of this class is to provide an correspondent reader
+ * for provided path.
  */
 class CPL_DLL GDALMDReaderManager{
 public:
@@ -174,17 +174,17 @@ public:
     virtual ~GDALMDReaderManager();
 
     /**
-     * @brief Try to detect metadata reader correspondent to the provided 
-     *        datasource path 
-     * @param pszPath a path to GDALDataset 
+     * @brief Try to detect metadata reader correspondent to the provided
+     *        datasource path
+     * @param pszPath a path to GDALDataset
      * @param papszSiblingFiles file list for metadata search purposes
      * @param nType a preferable reader type (may be the OR of MDReaders)
      * @return an appropriate reader or NULL if no such reader or error.
      * The pointer delete by the GDALMDReaderManager, so the user have not
      * delete it.
      */
-    virtual GDALMDReaderBase* GetReader(const char *pszPath, 
-                                        char **papszSiblingFiles, 
+    virtual GDALMDReaderBase* GetReader(const char *pszPath,
+                                        char **papszSiblingFiles,
                                         GUInt32 nType = MDR_ANY);
 protected:
     GDALMDReaderBase *m_pReader;

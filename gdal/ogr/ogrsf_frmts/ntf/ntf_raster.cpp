@@ -211,7 +211,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     {
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
-            pafElev[iPixel] = (float) 
+            pafElev[iPixel] = (float)
            (atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5)) * GetZMult());
         }
     }
@@ -417,7 +417,7 @@ int OGRNTFRasterLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
@@ -427,6 +427,6 @@ int OGRNTFRasterLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else 
+    else
         return FALSE;
 }

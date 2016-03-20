@@ -71,7 +71,7 @@
   #define closesocket(s) close(s)
   #ifndef SOMAXCONN
   #define SOMAXCONN 128
-  #endif 
+  #endif
 #endif
 
 
@@ -395,7 +395,7 @@ int RunNewConnection()
 #endif
     nRet = GDALServerLoopSocket(nConnSocket);
 #ifdef _MSC_VER
-    } __except(1) 
+    } __except(1)
     {
         fprintf(stderr, "gdalserver exited with a fatal error.\n");
         nRet = 1;
@@ -706,14 +706,14 @@ int main(int argc, char* argv[])
     {
 #ifdef WIN32
 #ifdef _MSC_VER
-    __try 
+    __try
 #endif
-    { 
+    {
         nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
                               GetStdHandle(STD_OUTPUT_HANDLE));
     }
 #ifdef _MSC_VER
-    __except(1) 
+    __except(1)
     {
         fprintf(stderr, "gdalserver exited with a fatal error.\n");
         nRet = 1;

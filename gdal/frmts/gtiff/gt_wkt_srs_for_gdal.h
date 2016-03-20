@@ -50,7 +50,7 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
 
-CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer, 
+CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
                             char **ppszWKT, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
                             int *pbPixelIsPoint, char*** ppapszRPCMD );

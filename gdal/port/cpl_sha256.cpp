@@ -146,11 +146,10 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
         GUInt32 a, b, c, d, e, f, g, h;
         GUInt32 t1, t2;
         const GUInt32 *Kp;
-        int i;
 
         W = buf;
 
-        for (i = 15; i >= 0; i--) {
+        for ( int i = 15; i >= 0; i-- ) {
                 *(W++) = BYTESWAP(*cbuf);
                 cbuf++;
         }
@@ -160,7 +159,7 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
         W7 = &buf[9];
         W2 = &buf[14];
 
-        for (i = 47; i >= 0; i--) {
+        for ( int i = 47; i >= 0; i-- ) {
                 *(W++) = sigma1(*W2) + *(W7++) + sigma0(*W15) + *(W16++);
                 W2++;
                 W15++;
@@ -183,22 +182,22 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 #endif                          /* !CPL_SHA256_UNROLL */
 
 #if CPL_SHA256_UNROLL == 1
-        for (i = 63; i >= 0; i--)
+        for ( int i = 63; i >= 0; i-- )
                 DO_ROUND();
 #elif CPL_SHA256_UNROLL == 2
-        for (i = 31; i >= 0; i--) {
+        for ( int i = 31; i >= 0; i-- ) {
                 DO_ROUND();
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 4
-        for (i = 15; i >= 0; i--) {
+        for ( int i = 15; i >= 0; i-- ) {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 8
-        for (i = 7; i >= 0; i--) {
+        for ( int i = 7; i >= 0; i-- ) {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -209,7 +208,7 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 16
-        for (i = 3; i >= 0; i--) {
+        for ( int i = 3; i >= 0; i-- ) {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -228,7 +227,7 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 32
-        for (i = 1; i >= 0; i--) {
+        for ( int i = 1; i >= 0; i-- ) {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -404,7 +403,6 @@ void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
 {
         GUInt32 bytesToPad;
         GUInt64 lengthPad;
-        int i;
 
         bytesToPad = 120U - sc->bufferLength;
         if (bytesToPad > 64U)
@@ -416,10 +414,10 @@ void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
         CPL_SHA256Update(sc, &lengthPad, 8U);
 
         if (hash) {
-                for (i = 0; i < CPL_SHA256_HASH_WORDS; i++) {
-                        *((GUInt32 *) hash) = BYTESWAP(sc->hash[i]);
-                        hash += 4;
-                }
+            for ( int i = 0; i < CPL_SHA256_HASH_WORDS; i++ ) {
+                *((GUInt32 *) hash) = BYTESWAP(sc->hash[i]);
+                hash += 4;
+            }
         }
 }
 

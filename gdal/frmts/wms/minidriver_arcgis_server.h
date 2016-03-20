@@ -40,7 +40,7 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config);
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, 
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri,
                                    const GDALWMSTiledImageRequestInfo &tiri);
     virtual void GetTiledImageInfo(CPLString *url,
                                    const GDALWMSImageRequestInfo &iri,
@@ -54,10 +54,10 @@ protected:
 
 protected:
     CPLString m_base_url;
-	/* 
-	 * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32  
-	 * http://resources.arcgis.com/en/help/rest/apiref/  
-	 * Parameter - format 
+	/*
+	 * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
+	 * http://resources.arcgis.com/en/help/rest/apiref/
+	 * Parameter - format
 	 */
 	CPLString m_image_format;
 	CPLString m_transparent;
@@ -71,4 +71,3 @@ protected:
 
 	CPLString m_identification_tolerance;
 };
-

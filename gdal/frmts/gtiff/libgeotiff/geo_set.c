@@ -43,7 +43,7 @@ to read.  At this time all keys except for strings have only one value,
 so <b>index</b> should be zero, and <b>count</b> should be one.<p>
 
 The <b>key</b> indicates the key name to be written to the
-file and should from the geokey_t enumeration 
+file and should from the geokey_t enumeration
 (eg. <tt>ProjectedCSTypeGeoKey</tt>).  The full list of possible geokey_t
 values can be found in geokeys.inc, or in the online documentation for
 GTIFKeyGet().<p>
@@ -61,15 +61,15 @@ are passed by value rather than as pointers when count is 1, but as pointers
 if count is larger than 1.<p>
 
 Note that key values aren't actually flushed to the file until
-GTIFWriteKeys() is called.  Till then 
+GTIFWriteKeys() is called.  Till then
 the new values are just kept with the GTIF structure.<p>
 
 <b>Example:</b><p>
 
 <pre>
-    GTIFKeySet(gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1, 
+    GTIFKeySet(gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                RasterPixelIsArea);
-    GTIFKeySet(gtif, GTCitationGeoKey, TYPE_ASCII, 0, 
+    GTIFKeySet(gtif, GTCitationGeoKey, TYPE_ASCII, 0,
                "UTM 11 North / NAD27" );
 </pre>
 
@@ -88,7 +88,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 
     va_start(ap, count);
     /* pass singleton keys by value */
-    if (count>1 && type!=TYPE_ASCII) 
+    if (count>1 && type!=TYPE_ASCII)
     {
         val = va_arg(ap, char*);
     }
@@ -107,8 +107,8 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 
         while( nIndex < gtif->gt_num_keys )
         {
-            _GTIFmemcpy( gtif->gt_keys + nIndex, 
-                         gtif->gt_keys + nIndex + 1, 
+            _GTIFmemcpy( gtif->gt_keys + nIndex,
+                         gtif->gt_keys + nIndex + 1,
                          sizeof(GeoKey) );
             gtif->gt_keyindex[gtif->gt_keys[nIndex].gk_key] = nIndex;
             nIndex++;
@@ -125,7 +125,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     {
       case TYPE_SHORT:  sval=(pinfo_t) va_arg(ap, int); val=(char *)&sval;     break;
       case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
-      case TYPE_ASCII: 
+      case TYPE_ASCII:
         val=va_arg(ap, char*);
         count = (int)strlen(val) + 1; /* force = string length */
         break;
@@ -134,7 +134,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         break;
     }
     va_end(ap);
-    
+
     /* We assume here that there are no multi-valued SHORTS ! */
     if (nIndex)
     {
@@ -169,7 +169,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     {
         switch (type)
         {
-          case TYPE_SHORT:  
+          case TYPE_SHORT:
             if (count > 1) return 0;
             data = (char *)&key->gk_data; /* store value *in* data */
             break;
@@ -190,12 +190,12 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     /* this fixes a bug where if a request is made to write a duplicate
        key, we must initialize the data to a valid value.
        Bryan Wells (bryan@athena.bangor.autometric.com) */
-        
+
     else /* no new values, but still have something to write */
     {
         switch (type)
         {
-          case TYPE_SHORT:  
+          case TYPE_SHORT:
             if (count > 1) return 0;
             data = (char *)&key->gk_data; /* store value *in* data */
             break;
@@ -208,7 +208,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
             return 0;
         }
     }
-        
+
     switch (type)
     {
       case TYPE_ASCII:
@@ -226,7 +226,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     }
 
     _GTIFmemcpy(data, val, count*key->gk_size);
-    
+
     gtif->gt_flags |= FLAG_FILE_MODIFIED;
     return 1;
 }

@@ -43,8 +43,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
-                                double x_c1, double y_c1, 
-                                double x_c2, double y_c2, 
+                                double x_c1, double y_c1,
+                                double x_c2, double y_c2,
                                 double *x_center, double *y_center )
 
 {
@@ -138,7 +138,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
     double      dfStartAngle, dfEndAngle, dfAlongAngle;
     double      dfCenterX, dfCenterY, dfRadius;
 
-    if( !NTFArcCenterFromEdgePoints( dfStartX, dfStartY, dfAlongX, dfAlongY, 
+    if( !NTFArcCenterFromEdgePoints( dfStartX, dfStartY, dfAlongX, dfAlongY,
                                      dfEndX, dfEndY, &dfCenterX, &dfCenterY ) )
         return NULL;
 
@@ -196,8 +196,8 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
     dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
                      + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
 
-    return NTFStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
-                                             dfRadius, 
+    return NTFStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY,
+                                             dfRadius,
                                              dfStartAngle, dfEndAngle,
                                              nVertexCount );
 }
@@ -207,8 +207,8 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 /************************************************************************/
 
 OGRGeometry *
-NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY, 
-                                  double dfRadius, 
+NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
+                                  double dfRadius,
                                   double dfStartAngle, double dfEndAngle,
                                   int nVertexCount )
 

@@ -17,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -72,7 +72,7 @@
  * Add ifdef to remove CPLError if OGR is define
  *
  * Revision 1.2  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() to 
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() to
  * test correctly if we are on a feature
  *
  * Revision 1.1  1999/11/08 04:16:07  stephane
@@ -170,7 +170,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
 int MIDDATAFile::Rewind()
 {
-    if (m_fp == NULL || m_eAccessMode == TABWrite) 
+    if (m_fp == NULL || m_eAccessMode == TABWrite)
         return -1;
 
     else
@@ -262,7 +262,7 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
         osStr.vPrintf( pszFormat, args );
         VSIFWriteL( osStr.c_str(), 1, osStr.size(), m_fp);
         va_end(args);
-    } 
+    }
     else
     {
         CPLAssert(FALSE);
@@ -270,7 +270,7 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
 }
 
 
-void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul, 
+void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul,
                                  double dfXTran,
                                  double dfYTran)
 {

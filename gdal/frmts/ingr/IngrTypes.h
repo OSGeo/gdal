@@ -69,20 +69,20 @@ typedef float               real32;
 
 typedef struct {
 #if defined(CPL_LSB)
-    uint16 Version   : 6;        // ??????00 00000000 
-    uint16 Is2Dor3D  : 2;        // 000000?? 00000000 
+    uint16 Version   : 6;        // ??????00 00000000
+    uint16 Is2Dor3D  : 2;        // 000000?? 00000000
 #else
-    uint16 Is2Dor3D  : 2;        // 000000?? 00000000 
-    uint16 Version   : 6;        // ??????00 00000000 
+    uint16 Is2Dor3D  : 2;        // 000000?? 00000000
+    uint16 Version   : 6;        // ??????00 00000000
 #endif
-    uint16 Type      : 8;        // 00000000 ???????? 
+    uint16 Type      : 8;        // 00000000 ????????
 } INGR_HeaderType;
 
 //  ----------------------------------------------------------------------------
 //    Data type dependent Minimum and Maximum type
 //  ----------------------------------------------------------------------------
 
-typedef union 
+typedef union
 {
     uint8   AsUint8;
     uint16  AsUint16;
@@ -103,32 +103,32 @@ typedef enum {
     Integers32Bit                    = 4,
     FloatingPoint32Bit               = 5,
     FloatingPoint64Bit               = 6,
-    Complex                          = 7,   // 64 bits / pixel  
-    DoublePrecisionComplex           = 8,     
-    RunLengthEncoded                 = 9,   // Bi-level Images  
-    RunLengthEncodedC                = 10,  // Gray Scale, Color  
-    FigureOfMerit                    = 11,  // FOM  
-    DTMFlags                         = 12,    
-    RLEVariableValuesWithZS          = 13,  // Simple  
-    RLEBinaryValues                  = 14,  // w/ Edge Type  
-    RLEVariableValues                = 15,  // w/ Edge Type  
-    RLEVariableValuesWithZ           = 16,  // w/ Edge Type  
-    RLEVariableValuesC               = 17,  // Color Table and Shade  
-    RLEVariableValuesN               = 18,  // w/ Normals  
-    QuadTreeEncoded                  = 19,    
-    CCITTGroup4                      = 24,  // Bi-level Images  
-    RunLengthEncodedRGB              = 25,  // Full Color  
-    VariableRunLength                = 26,    
-    AdaptiveRGB                      = 27,  // Full Color  
-    Uncompressed24bit                = 28,  // Full Color  
-    AdaptiveGrayScale                = 29,    
-    JPEGGRAY                         = 30,  // Gray Scale  
-    JPEGRGB                          = 31,  // Full Color RGB  
-    JPEGCMYK                         = 32,  // CMYK  
+    Complex                          = 7,   // 64 bits / pixel
+    DoublePrecisionComplex           = 8,
+    RunLengthEncoded                 = 9,   // Bi-level Images
+    RunLengthEncodedC                = 10,  // Gray Scale, Color
+    FigureOfMerit                    = 11,  // FOM
+    DTMFlags                         = 12,
+    RLEVariableValuesWithZS          = 13,  // Simple
+    RLEBinaryValues                  = 14,  // w/ Edge Type
+    RLEVariableValues                = 15,  // w/ Edge Type
+    RLEVariableValuesWithZ           = 16,  // w/ Edge Type
+    RLEVariableValuesC               = 17,  // Color Table and Shade
+    RLEVariableValuesN               = 18,  // w/ Normals
+    QuadTreeEncoded                  = 19,
+    CCITTGroup4                      = 24,  // Bi-level Images
+    RunLengthEncodedRGB              = 25,  // Full Color
+    VariableRunLength                = 26,
+    AdaptiveRGB                      = 27,  // Full Color
+    Uncompressed24bit                = 28,  // Full Color
+    AdaptiveGrayScale                = 29,
+    JPEGGRAY                         = 30,  // Gray Scale
+    JPEGRGB                          = 31,  // Full Color RGB
+    JPEGCMYK                         = 32,  // CMYK
     TiledRasterData                  = 65,  // See tile directory Data Type Code (DTC)
-    NotUsedReserved                  = 66,   
-    ContinuousTone                   = 67,  // CMYK  
-    LineArt                          = 68   // CMYK/RGB  
+    NotUsedReserved                  = 66,
+    ContinuousTone                   = 67,  // CMYK
+    LineArt                          = 68   // CMYK/RGB
 } INGR_Format;
 
 struct INGR_FormatDescription {
@@ -144,16 +144,16 @@ struct INGR_FormatDescription {
 //  ----------------------------------------------------------------------------
 
 typedef enum {
-    GenericRasterImageFile           = 0, 
-    DigitalTerrainModeling           = 1, 
-    GridDataUtilities                = 2, 
-    DrawingScanning                  = 3, 
-    ImageProcessing                  = 4, 
-    HiddenSurfaces                   = 5, 
-    ImagitexScannerProduct           = 6, 
-    ScreenCopyPlotting               = 7, 
-    IMAGEandMicroStationImager       = 8, 
-    ModelView                        = 9 
+    GenericRasterImageFile           = 0,
+    DigitalTerrainModeling           = 1,
+    GridDataUtilities                = 2,
+    DrawingScanning                  = 3,
+    ImageProcessing                  = 4,
+    HiddenSurfaces                   = 5,
+    ImagitexScannerProduct           = 6,
+    ScreenCopyPlotting               = 7,
+    IMAGEandMicroStationImager       = 8,
+    ModelView                        = 9
 } INGR_Application;
 
 //  ----------------------------------------------------------------------------
@@ -176,23 +176,23 @@ typedef enum {
 //  ----------------------------------------------------------------------------
 
 typedef enum {
-    HasLineHeader                    = 1,   
-    // Every line of raster data has a 4 word 
+    HasLineHeader                    = 1,
+    // Every line of raster data has a 4 word
     // raster line header at the beginning of
-    // the line. In the line header, the Words 
+    // the line. In the line header, the Words
     // to Follow field specifies the amount
-    // of data following the field, indicating 
+    // of data following the field, indicating
     // the start of the next scanline of raster
     // data
-    NoLineHeader                     = 0    
-    // No raster line headers exist. The application 
-    // must calculate where lines of raster data 
-    // start and end. This process is simple for 
-    // non-run length encoded data. It is a fixed 
-    // value; therefore, the line length can be 
-    // calculated from the data type ( DTC ) and 
-    // the number of pixels per line ( PPL ). In 
-    // a run length compression case, the data must 
+    NoLineHeader                     = 0
+    // No raster line headers exist. The application
+    // must calculate where lines of raster data
+    // start and end. This process is simple for
+    // non-run length encoded data. It is a fixed
+    // value; therefore, the line length can be
+    // calculated from the data type ( DTC ) and
+    // the number of pixels per line ( PPL ). In
+    // a run length compression case, the data must
     // be decoded to find the end of a raster line.
 } INGR_IndexingMethod;
 
@@ -235,33 +235,33 @@ struct igds_slot
 //  ----------------------------------------------------------------------------
 
 typedef struct {
-    INGR_HeaderType     HeaderType;                 
-    uint16              WordsToFollow;              
-    uint16              DataTypeCode;               
-    uint16              ApplicationType;            
-    real64              XViewOrigin;                
-    real64              YViewOrigin;                
-    real64              ZViewOrigin;                
-    real64              XViewExtent;                
-    real64              YViewExtent;                
-    real64              ZViewExtent;                
-    real64              TransformationMatrix[16];   
-    uint32              PixelsPerLine;              
-    uint32              NumberOfLines;              
-    int16               DeviceResolution;           
-    uint8               ScanlineOrientation;        
-    uint8               ScannableFlag;              
-    real64              RotationAngle;              
-    real64              SkewAngle;                  
-    uint16              DataTypeModifier;           
-    char                DesignFileName[66];         
-    char                DataBaseFileName[66];       
-    char                ParentGridFileName[66];     
-    char                FileDescription[80];        
-    INGR_MinMax         Minimum;                    
-    INGR_MinMax         Maximum;                    
-    char                Reserved[3];                
-    uint8               GridFileVersion;            
+    INGR_HeaderType     HeaderType;
+    uint16              WordsToFollow;
+    uint16              DataTypeCode;
+    uint16              ApplicationType;
+    real64              XViewOrigin;
+    real64              YViewOrigin;
+    real64              ZViewOrigin;
+    real64              XViewExtent;
+    real64              YViewExtent;
+    real64              ZViewExtent;
+    real64              TransformationMatrix[16];
+    uint32              PixelsPerLine;
+    uint32              NumberOfLines;
+    int16               DeviceResolution;
+    uint8               ScanlineOrientation;
+    uint8               ScannableFlag;
+    real64              RotationAngle;
+    real64              SkewAngle;
+    uint16              DataTypeModifier;
+    char                DesignFileName[66];
+    char                DataBaseFileName[66];
+    char                ParentGridFileName[66];
+    char                FileDescription[80];
+    INGR_MinMax         Minimum;
+    INGR_MinMax         Maximum;
+    char                Reserved[3];
+    uint8               GridFileVersion;
 } INGR_HeaderOne;
 
 //  ----------------------------------------------------------------------------
@@ -269,25 +269,25 @@ typedef struct {
 //  ----------------------------------------------------------------------------
 
 typedef struct {
-    uint8               Gain;                       
-    uint8               OffsetThreshold;            
-    uint8               View1;                      
-    uint8               View2;                      
-    uint8               ViewNumber;                 
-    uint8               Reserved2;                  
-    uint16              Reserved3;                  
-    real64              AspectRatio;                
-    uint32              CatenatedFilePointer;       
-    uint16              ColorTableType;             
-    uint16              Reserved8;                  
-    uint32              NumberOfCTEntries;          
-    uint32              ApplicationPacketPointer;   
-    uint32              ApplicationPacketLength;    
-    uint16              Reserved[110];              
+    uint8               Gain;
+    uint8               OffsetThreshold;
+    uint8               View1;
+    uint8               View2;
+    uint8               ViewNumber;
+    uint8               Reserved2;
+    uint16              Reserved3;
+    real64              AspectRatio;
+    uint32              CatenatedFilePointer;
+    uint16              ColorTableType;
+    uint16              Reserved8;
+    uint32              NumberOfCTEntries;
+    uint32              ApplicationPacketPointer;
+    uint32              ApplicationPacketLength;
+    uint16              Reserved[110];
 } INGR_HeaderTwoA;
 
 typedef    struct {
-    uint16              ApplicationData[128];       
+    uint16              ApplicationData[128];
 } INGR_HeaderTwoB;
 
 //  ----------------------------------------------------------------------------
@@ -357,7 +357,7 @@ typedef     struct {
             |     512     |
             |             |
             +-------------+  -  512  -  Header Block Two ( First Half )
-            |     256     |             
+            |     256     |
             +-------------+  -  768  -  Header Block Two ( Second Half )
             |     256     |             ( Application Data )
             +-------------+  -  1024 -  Extra Header Info or Image Data
@@ -369,12 +369,12 @@ typedef     struct {
             |     512     |
             |             |
             +-------------+  -  512  -  Header Block Two ( First Half )
-            |     256     |             
+            |     256     |
             +-------------+  -  768  -  IGDS 256 Entries
-            |     768     |             Color Table 
+            |     768     |             Color Table
             |             |
             |             |
-            +-------------+  -  1536 -  Extra Header Info or Image Data  
+            +-------------+  -  1536 -  Extra Header Info or Image Data
             |     ...     |
 
                    Headers Blocks with EnvironV Color Table
@@ -383,13 +383,13 @@ typedef     struct {
             |     512     |
             |             |
             +-------------+  -  512  -  Header Block Two
-            |     512     |             
-            |             |                             
+            |     512     |
+            |             |
             +-------------+  -  1024 -  EnvironV Color
             :   n x 512   :             Table
             :             :
             :             :
-            +-------------+  ( n+2 )x512  - Extra Header Info or Image Data  
+            +-------------+  ( n+2 )x512  - Extra Header Info or Image Data
             |     ...     |
 
 */
@@ -430,7 +430,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
                                           INGR_TileHeader *pTileDir,
                                           INGR_TileItem **pahTiles);
 
-INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
                                         const char *pszCompression );
 
 const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
@@ -443,9 +443,9 @@ const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex );
 //    Transformation Matrix conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne, 
+void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
                                       double *padfGeoTransform );
-void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix,
                                       double *padfGeoTransform );
 
 //  ------------------------------------------------------------------
@@ -478,27 +478,27 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 //  ------------------------------------------------------------------
 
 int CPL_STDCALL
-INGR_Decode( INGR_Format eFormat, 
+INGR_Decode( INGR_Format eFormat,
              GByte *pabySrcData, GByte *pabyDstData,
              uint32 nSrcBytes, uint32 nBlockSize,
              uint32 *pnBytesConsumed );
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
                       uint32 nSrcBytes, uint32 nBlockSize,
                       uint32 *pnBytesConsumed );
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                              uint32 nSrcBytes, uint32 nBlockSize,
                              uint32 *pnBytesConsumed );
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
                                   uint32 nSrcBytes, uint32 nBlockSize,
                                   uint32 *pnBytesConsumed );
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
                               uint32 nSrcBytes, uint32 nBlockSize,
                               uint32 *pnBytesConsumed );
@@ -511,7 +511,7 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
 INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
                                                      INGR_Format eFormat,
-                                                     int nXSize, 
+                                                     int nXSize,
                                                      int nYSize,
                                                      int nTileSize,
                                                      int nQuality,

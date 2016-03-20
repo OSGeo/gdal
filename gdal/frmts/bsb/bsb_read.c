@@ -5,9 +5,9 @@
  * Purpose:  Low level BSB Access API Implementation (non-GDAL).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- * NOTE: This code is implemented on the basis of work by Mike Higgins.  The 
- * BSB format is subject to US patent 5,727,090; however, that patent 
- * apparently only covers *writing* BSB files, not reading them, so this code 
+ * NOTE: This code is implemented on the basis of work by Mike Higgins.  The
+ * BSB format is subject to US patent 5,727,090; however, that patent
+ * apparently only covers *writing* BSB files, not reading them, so this code
  * should not be affected.
  *
  ******************************************************************************
@@ -52,59 +52,59 @@ Subject: Re: GISTrans: Maptech / NDI BSB Chart Format
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; format=flowed
 
-         I did it! I just wrote a program that reads NOAA BSB chart files 
-and converts them to BMP files! BMP files are not the final goal of my 
-project, but it served as a proof-of-concept.  Next I will want to write 
-routines to extract pieces of the file at full resolution for printing, and 
-routines to filter pieces of the chart for display at lower resolution on 
-the screen.  (One of the terrible things about most chart display programs 
-is that they all sub-sample the charts instead of filtering it down). How 
+         I did it! I just wrote a program that reads NOAA BSB chart files
+and converts them to BMP files! BMP files are not the final goal of my
+project, but it served as a proof-of-concept.  Next I will want to write
+routines to extract pieces of the file at full resolution for printing, and
+routines to filter pieces of the chart for display at lower resolution on
+the screen.  (One of the terrible things about most chart display programs
+is that they all sub-sample the charts instead of filtering it down). How
 did I figure out how to read the BSB files?
 
-         If you recall, I have been trying to reverse engineer the file 
-formats of those nautical charts. When I am between projects I often do a 
-WEB search for the BSB file format to see if someone else has published a 
-hack for them. Monday I hit a NOAA project status report that mentioned 
-some guy named Marty Yellin who had recently completed writing a program to 
-convert BSB files to other file formats! I searched for him and found him 
-mentioned as a contact person for some NOAA program. I was composing a 
-letter to him in my head, or considering calling the NOAA phone number and 
-asking for his extension number, when I saw another NOAA status report 
-indicating that he had retired in 1998. His name showed up in a few more 
-reports, one of which said that he was the inventor of the BSB file format, 
-that it was patented (#5,727,090), and that the patent had been licensed to 
-Maptech (the evil company that will not allow anyone using their file 
-format to convert them to non-proprietary formats). Patents are readily 
-available on the WEB at the IBM patent server and this one is in the 
-dtabase!  I printed up a copy of the patent and of course it describes very 
-nicely (despite the usual typos and omissions of referenced items in the 
+         If you recall, I have been trying to reverse engineer the file
+formats of those nautical charts. When I am between projects I often do a
+WEB search for the BSB file format to see if someone else has published a
+hack for them. Monday I hit a NOAA project status report that mentioned
+some guy named Marty Yellin who had recently completed writing a program to
+convert BSB files to other file formats! I searched for him and found him
+mentioned as a contact person for some NOAA program. I was composing a
+letter to him in my head, or considering calling the NOAA phone number and
+asking for his extension number, when I saw another NOAA status report
+indicating that he had retired in 1998. His name showed up in a few more
+reports, one of which said that he was the inventor of the BSB file format,
+that it was patented (#5,727,090), and that the patent had been licensed to
+Maptech (the evil company that will not allow anyone using their file
+format to convert them to non-proprietary formats). Patents are readily
+available on the WEB at the IBM patent server and this one is in the
+dtabase!  I printed up a copy of the patent and of course it describes very
+nicely (despite the usual typos and omissions of referenced items in the
 figures) how to write one of these BSB files!
 
-         I was considering talking to a patent lawyer about the legality of 
+         I was considering talking to a patent lawyer about the legality of
 using information in the patent to read files without getting a license,
-when I noticed that the patent is only claiming programs that WRITE the 
-file format. I have noticed this before in RF patents where they describe 
-how to make a receiver and never bother to claim a transmitter. The logic 
-is that the transmitter is no good to anybody unless they license receivers 
-from the patent holder. But I think they did it backwards here! They should 
-have claimed a program that can READ the described file format. Now I can 
-read the files, build programs that read the files, and even sell them 
-without violating the claims in the patent! As long as I never try to write 
+when I noticed that the patent is only claiming programs that WRITE the
+file format. I have noticed this before in RF patents where they describe
+how to make a receiver and never bother to claim a transmitter. The logic
+is that the transmitter is no good to anybody unless they license receivers
+from the patent holder. But I think they did it backwards here! They should
+have claimed a program that can READ the described file format. Now I can
+read the files, build programs that read the files, and even sell them
+without violating the claims in the patent! As long as I never try to write
 one of the evil BSB files, I'm OK!!!
 
-         If you ever need to read these BSB chart programs, drop me a 
+         If you ever need to read these BSB chart programs, drop me a
 note.  I would be happy to send you a copy of this conversion program.
 
 ... later email ...
 
-         Well, here is my little proof of concept program. I hereby give 
+         Well, here is my little proof of concept program. I hereby give
 you permission to distribute it freely, modify for you own use, etc.
-I built it as a "WIN32 Console application" which means it runs in an MS 
-DOS box under Microsoft Windows. But the only Windows specific stuff in it 
-are the include files for the BMP file headers.  If you ripped out the BMP 
+I built it as a "WIN32 Console application" which means it runs in an MS
+DOS box under Microsoft Windows. But the only Windows specific stuff in it
+are the include files for the BMP file headers.  If you ripped out the BMP
 code it should compile under UNIX or anyplace else.
-         I'd be overjoyed to have you announce it to GISTrans or anywhere 
-else.  I'm philosophically opposed to the proprietary treatment of the  BSB 
+         I'd be overjoyed to have you announce it to GISTrans or anywhere
+else.  I'm philosophically opposed to the proprietary treatment of the  BSB
 file format and I want to break it open! Chart data for the People!
 
  ************************************************************************/
@@ -141,7 +141,7 @@ int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
     if( psInfo->nBufferOffset >= psInfo->nBufferSize )
     {
         psInfo->nBufferOffset = 0;
-        psInfo->nBufferSize = 
+        psInfo->nBufferSize =
             (int)VSIFReadL( psInfo->pabyBuffer, 1, psInfo->nBufferAllocation,
                        psInfo->fp );
         if( psInfo->nBufferSize <= 0 )
@@ -153,7 +153,7 @@ int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
     }
 
     nByte = psInfo->pabyBuffer[psInfo->nBufferOffset++];
-    
+
     if( bNO1 )
     {
         nByte = nByte - 9;
@@ -195,7 +195,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "File %s not found.", pszFilename );
         return NULL;
     }
@@ -204,12 +204,12 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*	Read the first 1000 bytes, and verify that it contains the	*/
 /*	"BSB/" keyword"							*/
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( achTestBlock, 1, sizeof(achTestBlock), fp ) 
+    if( VSIFReadL( achTestBlock, 1, sizeof(achTestBlock), fp )
         != sizeof(achTestBlock) )
     {
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Could not read first %d bytes for header!", 
+                  "Could not read first %d bytes for header!",
                   (int) sizeof(achTestBlock) );
         return NULL;
     }
@@ -217,7 +217,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     for( i = 0; (size_t)i < sizeof(achTestBlock) - 4; i++ )
     {
         /* Test for "BSB/" */
-        if( achTestBlock[i+0] == 'B' && achTestBlock[i+1] == 'S' 
+        if( achTestBlock[i+0] == 'B' && achTestBlock[i+1] == 'S'
             && achTestBlock[i+2] == 'B' && achTestBlock[i+3] == '/' )
             break;
 
@@ -238,7 +238,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     if( i == sizeof(achTestBlock) - 4 )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "This does not appear to be a BSB file, no BSB/ header." );
         return NULL;
     }
@@ -252,7 +252,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
     psInfo->nBufferAllocation = 1024;
     psInfo->pabyBuffer = (GByte *) CPLMalloc(psInfo->nBufferAllocation);
-    psInfo->nBufferSize = 0; 
+    psInfo->nBufferSize = 0;
     psInfo->nBufferOffset = 0;
     psInfo->nSavedCharacter = -1000;
 
@@ -269,7 +269,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         if( szLine[0] != '\0' && szLine[1] != '\0' && szLine[2] != '\0' && szLine[3] == '/' )
         {
             psInfo->papszHeader = CSLAddString( psInfo->papszHeader, szLine );
-            papszTokens = CSLTokenizeStringComplex( szLine+4, ",=", 
+            papszTokens = CSLTokenizeStringComplex( szLine+4, ",=",
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
         }
@@ -282,7 +282,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             if( nRAIndex < 0 || nRAIndex+2 >= nCount )
             {
                 CSLDestroy( papszTokens );
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Failed to extract RA from BSB/ line." );
                 BSBClose( psInfo );
                 return NULL;
@@ -293,7 +293,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         else if( STARTS_WITH_CI(szLine, "NOS/") )
         {
             int  nRAIndex;
-            
+
             nRAIndex = CSLFindString(papszTokens, "RA" );
             if( nRAIndex < 0 || nRAIndex+4 >= nCount )
             {
@@ -313,7 +313,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             if (iPCT < 0 || iPCT > 128)
             {
                 CSLDestroy( papszTokens );
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                             "BSBOpen : Invalid color table index. Probably due to corrupted BSB file (iPCT = %d).",
                             iPCT);
                 BSBClose( psInfo );
@@ -321,7 +321,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             }
             if( iPCT > psInfo->nPCTSize-1 )
             {
-                unsigned char* pabyNewPCT = (unsigned char *) 
+                unsigned char* pabyNewPCT = (unsigned char *)
                     VSI_REALLOC_VERBOSE(psInfo->pabyPCT,(iPCT+1) * 3);
                 if (pabyNewPCT == NULL)
                 {
@@ -330,7 +330,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
                     return NULL;
                 }
                 psInfo->pabyPCT = pabyNewPCT;
-                memset( psInfo->pabyPCT + psInfo->nPCTSize*3, 0, 
+                memset( psInfo->pabyPCT + psInfo->nPCTSize*3, 0,
                         (iPCT+1-psInfo->nPCTSize) * 3);
                 psInfo->nPCTSize = iPCT+1;
             }
@@ -346,22 +346,22 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
         CSLDestroy( papszTokens );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify we found required keywords.                              */
 /* -------------------------------------------------------------------- */
     if( psInfo->nXSize == 0 || psInfo->nPCTSize == 0 )
     {
         BSBClose( psInfo );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to find required RGB/ or BSB/ keyword in header." );
-        
+
         return NULL;
     }
 
     if( psInfo->nXSize <= 0 || psInfo->nYSize <= 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Wrong dimensions found in header : %d x %d.",
                   psInfo->nXSize, psInfo->nYSize );
         BSBClose( psInfo );
@@ -384,7 +384,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      at least some files (i.e. optech/World.kap) we find a few       */
 /*      bytes of extra junk in the way.                                 */
 /* -------------------------------------------------------------------- */
-/* from optech/World.kap 
+/* from optech/World.kap
 
    11624: 30333237 34353938 2C302E30 35373836 03274598,0.05786
    11640: 39303232 38332C31 332E3135 39363435 902283,13.159645
@@ -395,9 +395,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
     {
         int    nChar = -1;
 
-        while( nSkipped < 100 
-              && (BSBGetc( psInfo, bNO1, &bErrorFlag ) != 0x1A 
-                  || (nChar = BSBGetc( psInfo, bNO1, &bErrorFlag )) != 0x00) 
+        while( nSkipped < 100
+              && (BSBGetc( psInfo, bNO1, &bErrorFlag ) != 0x1A
+                  || (nChar = BSBGetc( psInfo, bNO1, &bErrorFlag )) != 0x00)
               && !bErrorFlag)
         {
             if( nChar == 0x1A )
@@ -411,7 +411,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         if( bErrorFlag )
         {
             BSBClose( psInfo );
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                         "Truncated BSB file or I/O error." );
             return NULL;
         }
@@ -419,7 +419,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         if( nSkipped == 100 )
         {
             BSBClose( psInfo );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to find compressed data segment of BSB file." );
             return NULL;
         }
@@ -432,14 +432,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
     /* The USGS files like 83116_1.KAP seem to use the ASCII number instead
        of the binary number for the colorsize value. */
-    
-    if( nSkipped > 0 
+
+    if( nSkipped > 0
         && psInfo->nColorSize >= 0x31 && psInfo->nColorSize <= 0x38 )
         psInfo->nColorSize -= 0x30;
 
     if( ! (psInfo->nColorSize > 0 && psInfo->nColorSize < 9) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "BSBOpen : Bad value for nColorSize (%d). Probably due to corrupted BSB file",
                   psInfo->nColorSize );
         BSBClose( psInfo );
@@ -449,7 +449,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Initialize memory for line offset list.                         */
 /* -------------------------------------------------------------------- */
-    psInfo->panLineOffset = (int *) 
+    psInfo->panLineOffset = (int *)
         VSI_MALLOC2_VERBOSE(sizeof(int), psInfo->nYSize);
     if (psInfo->panLineOffset == NULL)
     {
@@ -502,8 +502,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
         }
         else if (VSIFSeekL( fp, nOffsetIndexTable, SEEK_SET ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
-                "Seek to offset 0x%08x for first line offset failed.", 
+            CPLError( CE_Failure, CPLE_FileIO,
+                "Seek to offset 0x%08x for first line offset failed.",
                 nOffsetIndexTable);
         }
         else
@@ -646,13 +646,13 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
     {
         if (bVerboseIfError)
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
-                    "Seek to offset %d for scanline %d failed.", 
+            CPLError( CE_Failure, CPLE_FileIO,
+                    "Seek to offset %d for scanline %d failed.",
                     psInfo->panLineOffset[nScanline], nScanline );
         }
         else
         {
-            CPLDebug("BSB", "Seek to offset %d for scanline %d failed.", 
+            CPLDebug("BSB", "Seek to offset %d for scanline %d failed.",
                      psInfo->panLineOffset[nScanline], nScanline );
         }
         return FALSE;
@@ -680,26 +680,26 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
     {
         if (bVerboseIfError)
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                     "Truncated BSB file or I/O error." );
         }
         return FALSE;
     }
-    if( nLineMarker != nScanline 
+    if( nLineMarker != nScanline
         && nLineMarker != nScanline + 1 )
     {
-        int bIgnoreLineNumbers = 
+        int bIgnoreLineNumbers =
             CPLTestBoolean(CPLGetConfigOption("BSB_IGNORE_LINENUMBERS", "NO"));
 
         if (bVerboseIfError && !bIgnoreLineNumbers )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                     "Got scanline id %d when looking for %d @ offset %d.\nSet BSB_IGNORE_LINENUMBERS=TRUE configuration option to try file anyways.", 
+                     "Got scanline id %d when looking for %d @ offset %d.\nSet BSB_IGNORE_LINENUMBERS=TRUE configuration option to try file anyways.",
                      nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
         }
         else
         {
-            CPLDebug("BSB", "Got scanline id %d when looking for %d @ offset %d.", 
+            CPLDebug("BSB", "Got scanline id %d when looking for %d @ offset %d.",
                      nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
         }
 
@@ -715,7 +715,7 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
 /* @param nScanline zero based line number                              */
 /************************************************************************/
 
-int BSBReadScanline( BSBInfo *psInfo, int nScanline, 
+int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                      unsigned char *pabyScanlineBuf )
 
 {
@@ -730,8 +730,8 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
     if( nScanline < 0 || nScanline >= psInfo->nYSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Scanline %d out of range.", 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Scanline %d out of range.",
                    nScanline );
         return FALSE;
     }
@@ -765,7 +765,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
         ((((1 << psInfo->nColorSize)) - 1) << nValueShift);
     byCountMask = (unsigned char)
         (1 << (7 - psInfo->nColorSize)) - 1;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read and expand runs.                                           */
 /*      If for some reason the buffer is not filled,                    */
@@ -794,7 +794,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
             /* Prevent over-run of line data */
             if (nRunCount < 0 || nRunCount > INT_MAX - (iPixel + 1))
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                           "Corrupted run count : %d", nRunCount );
                 return FALSE;
             }
@@ -816,7 +816,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
         }
         if ( bErrorFlag )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                     "Truncated BSB file or I/O error." );
             return FALSE;
         }
@@ -839,7 +839,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                  nScanline != psInfo->nYSize-1 &&
                  psInfo->panLineOffset[nScanline+1] == -1)
         {
-            int nCurOffset = (int)(VSIFTellL( fp ) - psInfo->nBufferSize) + 
+            int nCurOffset = (int)(VSIFTellL( fp ) - psInfo->nBufferSize) +
                                 psInfo->nBufferOffset;
             psInfo->panLineOffset[nScanline+1] = nCurOffset;
             if (BSBSeekAndCheckScanlineNumber(psInfo, nScanline + 1, FALSE))
@@ -923,8 +923,8 @@ BSBInfo *BSBCreate( const char *pszFilename,
     fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open output file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open output file %s.",
                   pszFilename );
         return NULL;
     }
@@ -932,18 +932,18 @@ BSBInfo *BSBCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out BSB line.                                             */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "!Copyright unknown\n" );
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "VER/%.1f\n", nVersion / 100.0 );
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "BSB/NA=UNKNOWN,NU=999502,RA=%d,%d,DU=254\n",
                 nXSize, nYSize );
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "KNP/SC=25000,GD=WGS84,PR=Mercator\n" );
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "    PP=31.500000,PI=0.033333,SP=,SK=0.000000,TA=90.000000\n");
-    VSIFPrintfL( fp, 
+    VSIFPrintfL( fp,
                 "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
 
 
@@ -970,13 +970,13 @@ int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
 
 {
     int        i;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify the PCT not too large.                                   */
 /* -------------------------------------------------------------------- */
     if( nPCTSize > 128 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Pseudo-color table too large (%d entries), at most 128\n"
                   " entries allowed in BSB format.", nPCTSize );
         return FALSE;
@@ -985,8 +985,8 @@ int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
 /* -------------------------------------------------------------------- */
 /*      Compute the number of bits required for the colors.             */
 /* -------------------------------------------------------------------- */
-    for( psInfo->nColorSize = 1; 
-         (1 << psInfo->nColorSize) < nPCTSize; 
+    for( psInfo->nColorSize = 1;
+         (1 << psInfo->nColorSize) < nPCTSize;
          psInfo->nColorSize++ ) {}
 
 /* -------------------------------------------------------------------- */
@@ -995,8 +995,8 @@ int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < nPCTSize; i++ )
     {
-        VSIFPrintfL( psInfo->fp, 
-                    "RGB/%d,%d,%d,%d\n", 
+        VSIFPrintfL( psInfo->fp,
+                    "RGB/%d,%d,%d,%d\n",
                     i, pabyPCT[i*3+0], pabyPCT[i*3+1], pabyPCT[i*3+2] );
     }
 
@@ -1014,7 +1014,7 @@ int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
 
     if( psInfo->nLastLineWritten == psInfo->nYSize - 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to write too many scanlines." );
         return FALSE;
     }
@@ -1051,7 +1051,7 @@ int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
 /* -------------------------------------------------------------------- */
     for( iX = 0; iX < psInfo->nXSize; iX++ )
     {
-        VSIFPutcL( pabyScanlineBuf[iX] << (7-psInfo->nColorSize), 
+        VSIFPutcL( pabyScanlineBuf[iX] << (7-psInfo->nColorSize),
                     psInfo->fp );
     }
 

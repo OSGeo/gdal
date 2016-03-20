@@ -309,7 +309,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The MSG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -333,7 +333,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-		
+
     // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
     // Doing this per band is the only way to guarantee time-series when the satellite is changed
 
@@ -540,7 +540,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
           if (ibuf.get() == 0)
           {
-             CPLError( CE_Failure, CPLE_AppDefined, 
+             CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough memory to perform wavelet decompression\n");
             return CE_Failure;
           }
@@ -609,7 +609,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               if (poGDS->command.cDataConversion == 'B')
               {
                 for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
-                { 
+                {
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
@@ -621,7 +621,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               else
               {
                 for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
-                { 
+                {
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
@@ -757,4 +757,3 @@ void GDALRegister_MSG()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

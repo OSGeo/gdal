@@ -40,7 +40,7 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID);
 char** CitationStringParse(char* psCitation, geokey_t keyID);
 
 #define nCitationNameTypes 9
-typedef enum 
+typedef enum
 {
   CitCsName = 0,
   CitPcsName = 1,
@@ -61,7 +61,7 @@ void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitN
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
 void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
-                           geokey_t geoKey, 
+                           geokey_t geoKey,
                           char	**ppszGeogName,
                           char	**ppszDatumName,
                           char	**ppszPMName,

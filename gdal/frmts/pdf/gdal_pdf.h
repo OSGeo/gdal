@@ -250,7 +250,7 @@ class PDFDataset : public GDALPamDataset
     void         AddLayer(const char* pszLayerName);
 #endif
 
-#if defined(HAVE_POPPLER) 
+#if defined(HAVE_POPPLER)
     void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
     void         FindLayersPoppler();
     void         TurnLayersOnOffPoppler();

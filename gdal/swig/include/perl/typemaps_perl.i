@@ -216,7 +216,7 @@ typedef unsigned long      GUIntBig;
  *
  *    The function assumes that vector points to three consecutive doubles.
  *    This can be wrapped using:
- * 
+ *
  *    %apply (double_3 argin) { (double *vector) };
  *    FunctionOfDouble3( double *vector );
  *    %clear (double *vector);
@@ -239,7 +239,7 @@ typedef unsigned long      GUIntBig;
  *    %apply (double_17 *argoug) { (double **vector) };
  *    ReturnVector17( double **vector );
  *    %clear ( double **vector );
- *   
+ *
  *    Example:  SpatialReference.ExportToPCI().
  *
  */
@@ -250,6 +250,21 @@ typedef unsigned long      GUIntBig;
         AV *av = (AV*)sv_2mortal((SV*)newAV());
         for( unsigned int i=0; i<size; i++ ) {
             av_store(av,i,newSViv(*first));
+            ++first;
+        }
+        return sv_2mortal(newRV((SV*)av));
+    }
+    %}
+
+%fragment("CreateArrayFromGIntBigArray","header") %{
+#define LENGTH_OF_GIntBig_AS_STRING 30
+    static SV *
+        CreateArrayFromGIntBigArray( GIntBig *first, unsigned int size ) {
+        AV *av = (AV*)sv_2mortal((SV*)newAV());
+        for( unsigned int i=0; i<size; i++ ) {
+            char s[LENGTH_OF_GIntBig_AS_STRING];
+            snprintf(s, LENGTH_OF_GIntBig_AS_STRING-1, CPL_FRMT_GIB, *first);
+            av_store(av,i,newSVpv(s, 0));
             ++first;
         }
         return sv_2mortal(newRV((SV*)av));
@@ -312,6 +327,21 @@ typedef unsigned long      GUIntBig;
     argvi++;
 }
 
+/* typemaps for (int *nLen, const GIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+{
+    /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) */
+    $1 = &nLen;
+    $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGIntBigArray") (int *nLen, const GIntBig **pList)
+{
+    /* %typemap(argout) (int *nLen, const GIntBig **pList) */
+    $result = CreateArrayFromGIntBigArray( *($2), *($1) );
+    argvi++;
+}
+
 /* typemaps for (int *nLen, const GUIntBig **pList) */
 
 %typemap(in,numinputs=0) (int *nLen, const GUIntBig **pList) (int nLen, GUIntBig *pList)
@@ -339,7 +369,7 @@ typedef unsigned long      GUIntBig;
     /* %typemap(check) (int len, int *output) */
     if ($1 < 1) $1 = 1; /* stop idiocy */
     $2 = (int *)CPLMalloc( $1 * sizeof(int) );
-    
+
 }
 %typemap(argout,fragment="CreateArrayFromIntArray") (int len, int *output)
 {
@@ -373,7 +403,7 @@ typedef unsigned long      GUIntBig;
     /* %typemap(check) (int len, GUIntBig *output) */
     if ($1 < 1) $1 = 1; /* stop idiocy */
     $2 = (GUIntBig*)CPLMalloc( $1 * sizeof(GUIntBig) );
-    
+
 }
 %typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int len, GUIntBig *output)
 {
@@ -442,7 +472,7 @@ typedef unsigned long      GUIntBig;
     } else {
         $result = CreateArrayFromDoubleArray( $1, $dim0 );
         argvi++;
-    }  
+    }
 }
 
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
@@ -478,6 +508,10 @@ typedef unsigned long      GUIntBig;
 
 /* typemaps for (int nList, int* pList) */
 
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, int* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, int* pList */
+   $1 = 1;
+}
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
@@ -500,8 +534,40 @@ typedef unsigned long      GUIntBig;
     CPLFree((void*) $2);
 }
 
+/* typemaps for (int nList, GIntBig* pList) */
+
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GIntBig* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GIntBig* pList */
+   $1 = 1;
+}
+%typemap(in,numinputs=1) (int nList, GIntBig* pList)
+{
+    /* %typemap(in,numinputs=1) (int nList, GIntBig* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        do_confess(NEED_ARRAY_REF, 1);
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (GIntBig*)CPLMalloc($1*sizeof(GIntBig));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+        }
+    } else
+        SWIG_fail;
+}
+%typemap(freearg) (int nList, GIntBig* pList)
+{
+    /* %typemap(freearg) (int nList, GIntBig* pList) */
+    CPLFree((void*) $2);
+}
+
 /* typemaps for (int nList, GUIntBig* pList) */
 
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GUIntBig* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GUIntBig* pList */
+   $1 = 1;
+}
 %typemap(in,numinputs=1) (int nList, GUIntBig* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList) */
@@ -657,7 +723,7 @@ typedef unsigned long      GUIntBig;
  ***************************************************/
 
 %typemap(out) (retStringAndCPLFree*)
-%{ 
+%{
     /* %typemap(out) (retStringAndCPLFree*) */
     if($1)
     {
@@ -791,7 +857,7 @@ typedef unsigned long      GUIntBig;
     AV *av;
     if (ok)
         av = (AV*)(SvRV($input));
-    else 
+    else
         do_confess(NEED_ARRAY_REF, 1);
     SV **sv = av_fetch(av, 0, 0);
     if (sv)
@@ -866,6 +932,11 @@ typedef unsigned long      GUIntBig;
 /*
  * Typemap char **options <-> AV
  */
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) char **options
+{
+    /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) char **options */
+    $1 = 1;
+}
 %typemap(in, fragment="sv_to_utf8_string") char **options
 {
     /* %typemap(in) char **options */
@@ -894,7 +965,7 @@ typedef unsigned long      GUIntBig;
             } else
                 do_confess(NEED_REF, 1);
         } else
-            do_confess(NEED_REF, 1);   
+            do_confess(NEED_REF, 1);
     }
 }
 %typemap(freearg) char **options
@@ -1053,7 +1124,7 @@ typedef unsigned long      GUIntBig;
         int      nChildCount = 0, iChild, nType;
         CPLXMLNode *psThisNode;
         char       *pszText = NULL;
-    
+
         nChildCount = av_len(av) - 1; /* There are two non-children in the array */
         if (nChildCount < 0) {
             /* the input XML is empty */
@@ -1066,7 +1137,7 @@ typedef unsigned long      GUIntBig;
         char *tmp = sv_to_utf8_string(sv, NULL);
         psThisNode = CPLCreateXMLNode(NULL, (CPLXMLNodeType)nType, tmp);
         free(tmp);
-    
+
         for( iChild = 0; iChild < nChildCount; iChild++ )
         {
             SV **s = av_fetch(av, iChild+2, 0);
@@ -1122,8 +1193,8 @@ typedef unsigned long      GUIntBig;
         int      nChildCount = 0, iChild;
         CPLXMLNode *psChild;
 
-        for( psChild = psTree->psChild; 
-             psChild != NULL; 
+        for( psChild = psTree->psChild;
+             psChild != NULL;
              psChild = psChild->psNext )
             nChildCount++;
 
@@ -1133,9 +1204,9 @@ typedef unsigned long      GUIntBig;
         SV *sv = newSVpv(psTree->pszValue, strlen(psTree->pszValue));
         SvUTF8_on(sv); /* expecting UTF-8 from GDAL */
         av_store(av,1,sv);
-    
-        for( psChild = psTree->psChild, iChild = 2; 
-             psChild != NULL; 
+
+        for( psChild = psTree->psChild, iChild = 2;
+             psChild != NULL;
              psChild = psChild->psNext, iChild++ )
         {
             SV *s = newRV((SV*)XMLTreeToAV(psChild));
@@ -1325,26 +1396,31 @@ IF_UNDEF_NULL(const char *, target_key)
     void *argp = 0;
     int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
     if (!SWIG_IsOK(res)) {
-        do_confess(WRONG_CLASS, 1); 
+        do_confess(WRONG_CLASS, 1);
     }
     $1 = reinterpret_cast< GDALDatasetShadow * >(argp);
     if ($1 == NULL)
         do_confess(NEED_DEF, 1);
 }
 
-%typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects)
+%typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow **poObjects)
 {
     /* %typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects) */
-    $1 = 1;
-    void *argp = 0;
-    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-    if (!SWIG_IsOK(res)) {
-        do_confess(WRONG_CLASS, 1); 
-    }
-    GDALDatasetShadow* p = reinterpret_cast< GDALDatasetShadow * >(argp);
-    if (p == NULL)
-        do_confess(NEED_DEF, 1);
-    $2 = &p;
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        do_confess(NEED_ARRAY_REF, 1);
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    /* get the pointers from the array */
+    $2 = (GDALDatasetShadow **)CPLMalloc($1*sizeof(GDALDatasetShadow *));
+    if ($2) {
+        for (int i = 0; i < $1; i++) {
+            SV **sv = av_fetch(av, i, 0);
+            int ret = SWIG_ConvertPtr(*sv, &($2[i]), SWIGTYPE_p_GDALDatasetShadow, 0);
+            if (!SWIG_IsOK(ret))
+                do_confess(WRONG_ITEM_IN_ARRAY, 1);
+        }
+    } else
+        do_confess(OUT_OF_MEMORY, 1);
 }
 
 
@@ -1491,10 +1567,23 @@ IF_UNDEF_NULL(const char *, target_key)
         }
     } else
         do_confess(OUT_OF_MEMORY, 1);
-        
+
 }
 %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)
 {
     /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
     CPLFree($2);
+}
+
+%typemap(in,numinputs=1) (int nBytes, GByte* pabyBuf)
+{
+    /* %typemap(in,numinputs=1) (int nBytes, GByte* pabyBuf) */
+    $1 = SvCUR($input);
+    $2 = (GByte*)SvPV_nolen($input);
+}
+
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nBytes, GByte* pabyBuf
+{
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nBytes, GByte* pabyBuf */
+   $1 = 1;
 }

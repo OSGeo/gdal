@@ -100,7 +100,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
         pszAccess = "rb";
     else
         pszAccess = "r+b";
-    
+
     fp = VSIFOpenL( pszFilename, pszAccess );
 
     if( fp == NULL )
@@ -110,7 +110,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 #ifndef AVOID_CPL
             CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-            fprintf( stderr, 
+            fprintf( stderr,
 #endif
                       "Failed to open file %s.",
                       pszFilename );
@@ -156,7 +156,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 #ifndef AVOID_CPL
                CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-               fprintf( stderr, 
+               fprintf( stderr,
 #endif
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
@@ -174,7 +174,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 #ifndef AVOID_CPL
             CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-            fprintf( stderr, 
+            fprintf( stderr,
 #endif
                       "No UHL record.  %s is not a DTED file.",
                       pszFilename );
@@ -182,7 +182,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
         CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create and initialize the DTEDInfo structure.                   */
 /* -------------------------------------------------------------------- */
@@ -200,7 +200,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
     psDInfo->nDSIOffset = (int)VSIFTellL( fp );
     psDInfo->pachDSIRecord = (char *) CPLMalloc(DTED_DSI_SIZE);
     CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp ));
-    
+
     psDInfo->nACCOffset = (int)VSIFTellL( fp );
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
     CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp ));
@@ -211,11 +211,11 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                  "DSI or ACC record missing.  DTED access to\n%s failed.",
                  pszFilename );
-        
+
         DTEDClose(psDInfo);
         return NULL;
     }
@@ -491,7 +491,7 @@ int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_AppDefined,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Invalid raster coordinates (%d,%d) in DTED file.\n", nXOff, nYOff);
         return FALSE;
@@ -516,7 +516,7 @@ int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or read (%d,%d) at offset %d\n"
                   "in DTED file.\n",
@@ -604,7 +604,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or read profile %d at offset %d\n"
                   "in DTED file.\n",
@@ -744,7 +744,7 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 /*      Format the data record.                                         */
 /* -------------------------------------------------------------------- */
     pabyRecord = (GByte *) CPLMalloc(12 + psDInfo->nYSize*2);
-    
+
     for( i = 0; i < psDInfo->nYSize; i++ )
     {
         int     nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
@@ -786,7 +786,7 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or write profile %d at offset %d\n"
                   "in DTED file.\n",
@@ -798,15 +798,14 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     CPLFree( pabyRecord );
 
     return TRUE;
-    
 }
 
 /************************************************************************/
 /*                      DTEDGetMetadataLocation()                       */
 /************************************************************************/
 
-static void DTEDGetMetadataLocation( DTEDInfo *psDInfo, 
-                                     DTEDMetaDataCode eCode, 
+static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
+                                     DTEDMetaDataCode eCode,
                                      char **ppszLocation, int *pnLength )
 {
     int bIsWeirdDTED = psDInfo->pachUHLRecord[4] == ' ';
@@ -913,9 +912,9 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         if (bIsWeirdDTED)
             *ppszLocation = psDInfo->pachDSIRecord + 270;
         else
-            *ppszLocation = psDInfo->pachDSIRecord + 144; 
-        *pnLength = 5; 
-        break; 
+            *ppszLocation = psDInfo->pachDSIRecord + 144;
+        *pnLength = 5;
+        break;
 
       case DTEDMD_DIGITIZING_SYS:
         if (bIsWeirdDTED)
@@ -1014,7 +1013,7 @@ char *DTEDGetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode )
 /*                          DTEDSetMetadata()                           */
 /************************************************************************/
 
-int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode, 
+int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
                      const char *pszNewValue )
 
 {
@@ -1035,7 +1034,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /*      Update it, padding with spaces.                                 */
 /* -------------------------------------------------------------------- */
     memset( pszFieldSrc, ' ', nFieldLen );
-    strncpy( pszFieldSrc, pszNewValue, 
+    strncpy( pszFieldSrc, pszNewValue,
              MIN((size_t)nFieldLen,strlen(pszNewValue)) );
 
     /* Turn the flag on, so that the headers are rewritten at file */

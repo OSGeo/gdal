@@ -57,7 +57,7 @@ OGRDWGBlocksLayer::~OGRDWGBlocksLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DWG", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -184,4 +184,3 @@ int OGRDWGBlocksLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

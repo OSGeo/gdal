@@ -299,7 +299,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
                     }
                 }
 
-                // We might as well get rid of this grid chunk since we know 
+                // We might as well get rid of this grid chunk since we know
                 // it is now empty.
                 u.papapoBlocks[nSubBlock] = NULL;
                 CPLFree( papoSubBlockGrid );
@@ -427,7 +427,7 @@ CPLErr GDALArrayBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
 /*                        TryGetLockedBlockRef()                        */
 /************************************************************************/
 
-GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff, 
+GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
                                                                  int nYBlockOff )
 
 {

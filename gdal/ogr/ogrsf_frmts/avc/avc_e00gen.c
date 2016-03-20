@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -107,7 +107,7 @@ AVCE00GenInfo  *AVCE00GenInfoAlloc(int nCoverPrecision)
 
     psInfo = (AVCE00GenInfo*)CPLCalloc(1,sizeof(AVCE00GenInfo));
 
-    /* Allocate output buffer.  
+    /* Allocate output buffer.
      * 2k should be enough... the biggest thing we'll need to store
      * in it will be 1 complete INFO table record.
      */
@@ -153,7 +153,7 @@ void    AVCE00GenReset(AVCE00GenInfo  *psInfo)
  *
  * pszClassName applies only to JABBERWOCKY type of sections.
  **********************************************************************/
-const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType, 
+const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
                                   const char *pszClassName)
 {
     const char *pszName = "UNK";
@@ -162,7 +162,7 @@ const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
 
     if (eType == AVCFileTX6 || eType == AVCFileRXP || eType == AVCFileRPL)
     {
-        /* TX6/RXP/RPL sections start with the class name (the basename 
+        /* TX6/RXP/RPL sections start with the class name (the basename
          * of the file) in uppercase.
          * ex:  The section for "cities.txt" would start with "CITIES"
          */
@@ -221,7 +221,7 @@ const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
  * Generate the last line(s) of an E00 section.
  *
  * This function should be called once with bCont=FALSE to get the
- * first "end of section" line for the current section, and then call 
+ * first "end of section" line for the current section, and then call
  * with bCont=TRUE to get all the other lines.
  *
  * The function returns NULL when there are no more lines to generate
@@ -232,7 +232,7 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
 {
     if (bCont == FALSE)
     {
-        /*------------------------------------------------------------- 
+        /*-------------------------------------------------------------
          * Most section types end with only 1 line.
          *------------------------------------------------------------*/
         AVCE00GenReset(psInfo);
@@ -277,7 +277,7 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
               psInfo->nPrecision == AVC_DOUBLE_PREC &&
               (eType == AVCFilePAL || eType == AVCFileRPL)     )
     {
-        /*--------------------------------------------------------- 
+        /*---------------------------------------------------------
          * Return the 2nd line for the end of a PAL or RPL section.
          *--------------------------------------------------------*/
         snprintf(psInfo->pszBuf, psInfo->nBufSize,
@@ -287,7 +287,7 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
     }
     else
     {
-        /*----------------------------------------------------- 
+        /*-----------------------------------------------------
          * All other section types end with only one line, and thus
          * we return NULL when bCont==TRUE
          *----------------------------------------------------*/
@@ -305,13 +305,13 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
  * call the right function according to argument eType.
  *
  * Since there is no compiler type checking on psObj, you have to
- * be very careful to make sure you pass an object of the right type 
+ * be very careful to make sure you pass an object of the right type
  * when you use this function!
  *
  * The function returns NULL when there are no more lines to generate
  * for this ARC.
  **********************************************************************/
-const char *AVCE00GenObject(AVCE00GenInfo *psInfo, 
+const char *AVCE00GenObject(AVCE00GenInfo *psInfo,
                             AVCFileType eType, void *psObj, GBool bCont)
 {
     const char *pszLine = NULL;
@@ -541,7 +541,7 @@ const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, GBool bCont)
         }
         else
         {
-            snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d", 
+            snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d",
                                     psPal->pasArcs[iArc].nArcId,
                                     psPal->pasArcs[iArc].nFNode,
                                     psPal->pasArcs[iArc].nAdjPoly);
@@ -597,7 +597,7 @@ const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont)
     }
     else if (psInfo->iCurItem < psInfo->numItems)
     {
-        /* Return CNT Label Ids, 8 label Ids per line... 
+        /* Return CNT Label Ids, 8 label Ids per line...
          */
         int i, nFirstLabel, numLabels;
 
@@ -608,7 +608,7 @@ const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont)
         for(i=0; i < numLabels; i++)
         {
             snprintf(psInfo->pszBuf + strlen(psInfo->pszBuf),
-                     psInfo->nBufSize - strlen(psInfo->pszBuf), "%10d", 
+                     psInfo->nBufSize - strlen(psInfo->pszBuf), "%10d",
                                         psCnt->panLabelIds[nFirstLabel+i] );
         }
 
@@ -666,7 +666,7 @@ const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, GBool bCont)
     }
     else if (psInfo->iCurItem < psInfo->numItems)
     {
-        /* Return next Label coordinates... 
+        /* Return next Label coordinates...
          */
         if (psInfo->nPrecision != AVC_DOUBLE_PREC)
         {
@@ -736,7 +736,7 @@ const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, GBool bCont)
 {
     if (bCont == TRUE)
     {
-        /*--------------------------------------------------------- 
+        /*---------------------------------------------------------
          * TOL entries are only 1 line, we support the bCont flag
          * only for compatibility with the other AVCE00Gen*() functions.
          *--------------------------------------------------------*/
@@ -770,7 +770,7 @@ const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, GBool bCont)
 {
     if (bCont == FALSE)
     {
-        /*--------------------------------------------------------- 
+        /*---------------------------------------------------------
          * Initialize the psInfo structure with info about the
          * current PRJ. (numItems = Number of lines to output)
          *--------------------------------------------------------*/
@@ -780,7 +780,7 @@ const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, GBool bCont)
 
     if (psInfo->iCurItem < psInfo->numItems)
     {
-        /*--------------------------------------------------------- 
+        /*---------------------------------------------------------
          * Return the next PRJ section line.  Note that every
          * second line of the output is only a "~".
          *--------------------------------------------------------*/
@@ -837,7 +837,7 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
     int numFixedLines;
 
     /* numFixedLines is the number of lines to generate before the line(s)
-     * with the text string 
+     * with the text string
      */
     if (psInfo->nPrecision == AVC_SINGLE_PREC)
         numFixedLines = 4;
@@ -855,16 +855,16 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
 
         /* And return the TXT header line.
          */
-        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d", 
-                psTxt->nLevel, psTxt->numVerticesLine - 1, 
+        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d",
+                psTxt->nLevel, psTxt->numVerticesLine - 1,
                 psTxt->numVerticesArrow, psTxt->nSymbol, psTxt->numChars);
     }
     else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem < numFixedLines-1)
     {
         /*-------------------------------------------------------------
-         * Return next line of coordinates... start by placing the coord. 
-         * values in the order that they should appear, and then generate the 
+         * Return next line of coordinates... start by placing the coord.
+         * values in the order that they should appear, and then generate the
          * current line
          * (This is a little bit less efficient, but will give much easier
          *  code to read ;-)
@@ -904,9 +904,9 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
             /* Double precision
              */
             numValuesPerLine = 3;
-        }       
-     
-        nFirstValue = psInfo->iCurItem*numValuesPerLine; 
+        }
+
+        nFirstValue = psInfo->iCurItem*numValuesPerLine;
         psInfo->pszBuf[0] = '\0';
         for(i=0; i<numValuesPerLine; i++)
         {
@@ -940,7 +940,7 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
 
         if ((int)strlen((char*)psTxt->pszText) > (iLine*80))
             snprintf(psInfo->pszBuf, psInfo->nBufSize,"%-.80s", psTxt->pszText + (iLine*80) );
-        else 
+        else
             psInfo->pszBuf[0] = '\0';
 
         psInfo->iCurItem++;
@@ -985,18 +985,18 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
          * current TX6. (numItems = Number of lines excluding header)
          *------------------------------------------------------------*/
         psInfo->iCurItem = 0;
-        psInfo->numItems = 8 + psTxt->numVerticesLine + 
-                               ABS(psTxt->numVerticesArrow) + 
+        psInfo->numItems = 8 + psTxt->numVerticesLine +
+                               ABS(psTxt->numVerticesArrow) +
                                          ((psTxt->numChars-1)/80 + 1);
 
         /* And return the TX6 header line.
          */
-        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d%10d%10d", 
-                psTxt->nUserId, psTxt->nLevel, psTxt->numVerticesLine, 
+        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d%10d%10d",
+                psTxt->nUserId, psTxt->nLevel, psTxt->numVerticesLine,
                 psTxt->numVerticesArrow, psTxt->nSymbol, psTxt->n28,
                 psTxt->numChars);
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem < 6)
     {
         /*-------------------------------------------------------------
@@ -1012,20 +1012,20 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
         if (psInfo->iCurItem == 2 || psInfo->iCurItem == 5)
         {
             snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d%10d",
-                                pValue[0], pValue[1], pValue[2], 
+                                pValue[0], pValue[1], pValue[2],
                                 pValue[3], pValue[4], pValue[5]);
         }
         else
         {
             /* coverity[overrun-local] */
             snprintf(psInfo->pszBuf, psInfo->nBufSize,"%10d%10d%10d%10d%10d%10d%10d",
-                                pValue[0], pValue[1], pValue[2], 
+                                pValue[0], pValue[1], pValue[2],
                                 pValue[3], pValue[4], pValue[5], pValue[6]);
         }
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem == 6)
     {
         /*-------------------------------------------------------------
@@ -1036,7 +1036,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
                         psTxt->f_1e2 );
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem == 7)
     {
         /*-------------------------------------------------------------
@@ -1078,7 +1078,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
 
         if ((int)strlen((char*)psTxt->pszText) > (iLine*80))
             snprintf(psInfo->pszBuf, psInfo->nBufSize,"%-.80s", psTxt->pszText + (iLine*80) );
-        else 
+        else
             psInfo->pszBuf[0] = '\0';
 
         psInfo->iCurItem++;
@@ -1114,7 +1114,7 @@ const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, GBool bCont)
 {
     if (bCont == TRUE)
     {
-        /*--------------------------------------------------------- 
+        /*---------------------------------------------------------
          * RXP entries are only 1 line, we support the bCont flag
          * only for compatibility with the other AVCE00Gen*() functions.
          *--------------------------------------------------------*/
@@ -1138,7 +1138,7 @@ const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, GBool bCont)
  * Generate the next line of an E00 Table header.
  *
  * This function should be called once with bCont=FALSE to get the
- * first E00 line for the current table header, and then call with 
+ * first E00 line for the current table header, and then call with
  * bCont=TRUE to get all the other lines.
  *
  * The function returns NULL when there are no more lines to generate.
@@ -1175,7 +1175,7 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
 
         /* And return the header's header line(!).
          */
-        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%-32.32s%s%4d%4d%4d%10d", 
+        snprintf(psInfo->pszBuf, psInfo->nBufSize,"%-32.32s%s%4d%4d%4d%10d",
                                             psDef->szTableName,
                                             psDef->szExternal,
                                             psDef->numFields,
@@ -1193,9 +1193,9 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
 
 #ifdef AVC_MAP_TYPE40_TO_DOUBLE
         /* Type 40 fields with more than 12 digits written to E00 by Arc/Info
-         * will lose some digits of precision (and we starts losing them at 8 
-         * with the way AVC lib writes type 40).  This (optional) hack will 
-         * remap type 40 fields with more than 8 digits to double precision 
+         * will lose some digits of precision (and we starts losing them at 8
+         * with the way AVC lib writes type 40).  This (optional) hack will
+         * remap type 40 fields with more than 8 digits to double precision
          * floats which can carry up to 18 digits of precision.  (bug 599)
          */
         if (nType == AVC_FT_FIXNUM && nSize > 8)
@@ -1206,7 +1206,7 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
         }
 
         /* Adjust field offset if this field is preceded by any type40 fields
-         * that were remapped. 
+         * that were remapped.
          */
         {
             int i;
@@ -1223,7 +1223,7 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
 #endif
         /* Return next Field definition line
          */
-        snprintf(psInfo->pszBuf, psInfo->nBufSize, 
+        snprintf(psInfo->pszBuf, psInfo->nBufSize,
                 "%-16.16s%3d%2d%4d%1d%2d%4d%2d%3d%2d%4d%4d%2d%-16.16s%4d-",
                 psDef->pasFieldDef[psInfo->iCurItem].szName,
                 nSize,
@@ -1260,7 +1260,7 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
  * Generate the next line of an E00 Table Data Record.
  *
  * This function should be called once with bCont=FALSE to get the
- * first E00 line for the current table record, and then call with 
+ * first E00 line for the current table record, and then call with
  * bCont=TRUE to get all the other lines.
  *
  * The function returns NULL when there are no more lines to generate.
@@ -1274,7 +1274,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 
     if (bCont == FALSE)
     {
-        /*------------------------------------------------------------- 
+        /*-------------------------------------------------------------
          * Initialize the psInfo structure to be ready to process this
          * new Table Record
          *------------------------------------------------------------*/
@@ -1285,8 +1285,8 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
         psInfo->numItems = _AVCE00ComputeRecSize(numFields, pasDef, FALSE);
 #endif
 
-        /*------------------------------------------------------------- 
-         * First, we need to make sure that the output buffer is big 
+        /*-------------------------------------------------------------
+         * First, we need to make sure that the output buffer is big
          * enough to hold the whole record, plus 81 chars to hold
          * the line that we'll return to the caller.
          *------------------------------------------------------------*/
@@ -1299,10 +1299,10 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
             psInfo->nBufSize = nSize;
         }
 
-        /*------------------------------------------------------------- 
+        /*-------------------------------------------------------------
          * Generate the whole record now, and we'll return it to the
          * caller by chunks of 80 chars.
-         * The first 80 chars of the buffer will be used to return 
+         * The first 80 chars of the buffer will be used to return
          * one line at a time, and the rest of the buffer is used to
          * hold the whole record.
          *------------------------------------------------------------*/
@@ -1347,7 +1347,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                 pszBuf2[0] = '\0';
                 nLen = AVCPrintRealValue(pszBuf2,
                                          psInfo->nBufSize - (pszBuf2 - psInfo->pszBuf),
-                                         AVC_SINGLE_PREC, 
+                                         AVC_SINGLE_PREC,
                                          AVCFileTABLE,
                                          CPLAtof((char*)pasFields[i].pszStr));
                 pszBuf2 += nLen;
@@ -1371,7 +1371,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                  */
                 nLen = AVCPrintRealValue(pszBuf2,
                                          psInfo->nBufSize - (pszBuf2 - psInfo->pszBuf),
-                                         AVC_SINGLE_PREC, 
+                                         AVC_SINGLE_PREC,
                                          AVCFileTABLE,
                                          pasFields[i].fFloat);
                 pszBuf2 += nLen;
@@ -1419,9 +1419,9 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 
     if (psInfo->iCurItem < psInfo->numItems)
     {
-        /*------------------------------------------------------------- 
+        /*-------------------------------------------------------------
          * Return the next 80 chars chunk.
-         * The first 80 chars of the buffer is used to return 
+         * The first 80 chars of the buffer is used to return
          * one line at a time, and the rest of the buffer (chars 81+)
          * is used to hold the whole record.
          *------------------------------------------------------------*/
@@ -1435,8 +1435,8 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 
         psInfo->iCurItem += nLen;
 
-        /*------------------------------------------------------------- 
-         * Arc/Info removes spaces at the end of the lines... let's 
+        /*-------------------------------------------------------------
+         * Arc/Info removes spaces at the end of the lines... let's
          * remove them as well since it can reduce the E00 file size.
          *------------------------------------------------------------*/
         nLen--;
@@ -1455,4 +1455,3 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 
     return psInfo->pszBuf;
 }
-

@@ -91,7 +91,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", pszDSN, oSession.GetLastError() );
         CPLFree( pszDSN );
@@ -114,8 +114,8 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( !oStmt.ExecuteSQL() )
     {
-        CPLDebug( "Walk", 
-                  "SELECT on WalkLayers fails, perhaps not a walk database?\n%s", 
+        CPLDebug( "Walk",
+                  "SELECT on WalkLayers fails, perhaps not a walk database?\n%s",
                   oSession.GetLastError() );
         return FALSE;
     }
@@ -192,8 +192,8 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -207,7 +207,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
         return NULL;

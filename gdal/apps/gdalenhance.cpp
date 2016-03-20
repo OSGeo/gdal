@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Command line application to do image enhancement. 
+ * Purpose:  Command line application to do image enhancement.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************
@@ -39,10 +39,10 @@ CPL_CVSID("$Id$");
 
 static int
 ComputeEqualizationLUTs( GDALDatasetH hDataset,  int nLUTBins,
-                         double **ppadfScaleMin, double **padfScaleMax, 
+                         double **ppadfScaleMin, double **padfScaleMax,
                          int ***ppapanLUTs, GDALProgressFunc pfnProgress );
 
-static CPLErr EnhancerCallback( void *hCBData, 
+static CPLErr EnhancerCallback( void *hCBData,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void *pData );
 
@@ -68,7 +68,7 @@ static void Usage()
             "             CInt16/CInt32/CFloat32/CFloat64}]\n"
             "       [-src_scale[_n] src_min src_max]\n"
             "       [-dst_scale[_n] dst_min dst_max]\n"
-            "       [-lutbins count]\n" 
+            "       [-lutbins count]\n"
             "       [-s_nodata[_n] value]\n"
             "       [-stddev multiplier]\n"
             "       [-equalize]\n"
@@ -158,12 +158,12 @@ int main( int argc, char ** argv )
         {
             // TODO
             i += 1;
-        }   
+        }
 
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
-        }   
+        }
 
         else if( STARTS_WITH_CI(argv[i], "-src_scale") && i < argc-2)
         {
@@ -195,7 +195,7 @@ int main( int argc, char ** argv )
 
         else if( argv[i][0] == '-' )
         {
-            printf( "Option %s incomplete, or not recognised.\n\n", 
+            printf( "Option %s incomplete, or not recognised.\n\n",
                     argv[i] );
             Usage();
         }
@@ -272,8 +272,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszMethod,"equalize") )
     {
-        ComputeEqualizationLUTs( hDataset, nLUTBins, 
-                                 &padfScaleMin, &padfScaleMax, 
+        ComputeEqualizationLUTs( hDataset, nLUTBins,
+                                 &padfScaleMin, &padfScaleMax,
                                  &papanLUTs, pfnProgress );
     }
 
@@ -301,7 +301,7 @@ int main( int argc, char ** argv )
             int iLUT;
             char **papszTokens = CSLTokenizeString( papszLines[iBand] );
 
-            if( CSLCount(papszTokens) < 3 
+            if( CSLCount(papszTokens) < 3
                 || atoi(papszTokens[0]) != iBand+1 )
             {
                 fprintf( stderr, "Line %d seems to be corrupt.\n", iBand+1 );
@@ -346,7 +346,7 @@ int main( int argc, char ** argv )
         {
             fprintf( fpConfig, "%d:Band ", iBand+1 );
             if( padfScaleMin != NULL )
-                fprintf( fpConfig, "%g:ScaleMin %g:ScaleMax ", 
+                fprintf( fpConfig, "%g:ScaleMin %g:ScaleMax ",
                          padfScaleMin[iBand], padfScaleMax[iBand] );
 
             if( papanLUTs )
@@ -375,7 +375,7 @@ int main( int argc, char ** argv )
 /*      Create a virtual dataset.                                       */
 /* ==================================================================== */
     VRTDataset *poVDS;
-    EnhanceCBInfo *pasEInfo = (EnhanceCBInfo *) 
+    EnhanceCBInfo *pasEInfo = (EnhanceCBInfo *)
         CPLCalloc(nBandCount, sizeof(EnhanceCBInfo));
 
 /* -------------------------------------------------------------------- */
@@ -398,7 +398,7 @@ int main( int argc, char ** argv )
     }
     else
     {
-        poVDS->SetGCPs( GDALGetGCPCount(hDataset), 
+        poVDS->SetGCPs( GDALGetGCPCount(hDataset),
                         GDALGetGCPs(hDataset),
                         GDALGetGCPProjection( hDataset ) );
     }
@@ -452,7 +452,7 @@ int main( int argc, char ** argv )
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
     hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
-                             FALSE, papszCreateOptions, 
+                             FALSE, papszCreateOptions,
                              pfnProgress, NULL );
     if( hOutDS != NULL )
         GDALClose( hOutDS );
@@ -481,8 +481,8 @@ int main( int argc, char ** argv )
 
 static int
 ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
-                         double **ppadfScaleMin, double **ppadfScaleMax, 
-                         int ***ppapanLUTs, 
+                         double **ppadfScaleMin, double **ppadfScaleMax,
+                         int ***ppapanLUTs,
                          GDALProgressFunc pfnProgress )
 
 {
@@ -509,10 +509,10 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /*      Get a reasonable histogram.                                     */
 /* -------------------------------------------------------------------- */
         eErr =
-            GDALGetDefaultHistogramEx( hBand, 
+            GDALGetDefaultHistogramEx( hBand,
                                      *ppadfScaleMin + iBand,
                                      *ppadfScaleMax + iBand,
-                                     &nHistSize, &panHistogram, 
+                                     &nHistSize, &panHistogram,
                                      TRUE, pfnProgress, NULL );
 
         if( eErr != CE_None )
@@ -540,7 +540,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 
         if( nTotal == 0 )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Zero value entries in histogram, results will not be meaningful." );
             nTotal = 1;
         }
@@ -558,7 +558,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 
             panLUT[iLUT] = MAX(0,MIN(nLUTBins-1,nValue));
 
-        } 
+        }
 
         (*ppapanLUTs)[iBand] = panLUT;
     }
@@ -572,7 +572,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /*      This is the VRT callback that actually does the image rescaling.*/
 /************************************************************************/
 
-static CPLErr EnhancerCallback( void *hCBData, 
+static CPLErr EnhancerCallback( void *hCBData,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void *pData )
 
@@ -604,7 +604,7 @@ static CPLErr EnhancerCallback( void *hCBData,
     int iPixel;
     int bHaveNoData;
     float fNoData = (float)psEInfo->poSrcBand->GetNoDataValue( &bHaveNoData );
-    double dfScale = 
+    double dfScale =
         psEInfo->nLUTBins / (psEInfo->dfScaleMax - psEInfo->dfScaleMin);
 
     for( iPixel = 0; iPixel < nPixelCount; iPixel++ )
@@ -628,5 +628,3 @@ static CPLErr EnhancerCallback( void *hCBData,
 
     return CE_None;
 }
-
-

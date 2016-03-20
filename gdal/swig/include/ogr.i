@@ -93,7 +93,9 @@ typedef enum
                              *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-   wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
+    wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
                                *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
                                *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -106,6 +108,8 @@ typedef enum
     wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -121,6 +125,8 @@ typedef enum
     wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -136,6 +142,8 @@ typedef enum
     wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -201,6 +209,9 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
+#define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
+
 typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG
@@ -264,6 +275,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygon = 10;
 %constant wkbMultiCurve = 11;
 %constant wkbMultiSurface = 12;
+%constant wkbCurve = 13;
+%constant wkbSurface = 14;
 %constant wkbPolyhedralSurface = 15;
 %constant wkbTIN = 16;
 
@@ -275,6 +288,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonZ = 1010;
 %constant wkbMultiCurveZ = 1011;
 %constant wkbMultiSurfaceZ = 1012;
+%constant wkbCurveZ = 1013;
+%constant wkbSurfaceZ = 1014;
 %constant wkbPolyhedralSurfaceZ = 1015;
 %constant wkbTINZ = 1016;
 
@@ -290,6 +305,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonM = 2010;
 %constant wkbMultiCurveM = 2011;
 %constant wkbMultiSurfaceM = 2012;
+%constant wkbCurveM = 2013;
+%constant wkbSurfaceM = 2014;
 %constant wkbPolyhedralSurfaceM = 2015;
 %constant wkbTINM = 2016;
 
@@ -305,6 +322,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonZM = 3010;
 %constant wkbMultiCurveZM = 3011;
 %constant wkbMultiSurfaceZM = 3012;
+%constant wkbCurveZM = 3013;
+%constant wkbSurfaceZM = 3014;
 %constant wkbPolyhedralSurfaceZM = 3015;
 %constant wkbTINZM = 3016;
 
@@ -375,6 +394,7 @@ typedef void retGetPoints;
 %constant char *OLCIgnoreFields        = "IgnoreFields";
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
+%constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -382,6 +402,7 @@ typedef void retGetPoints;
 %constant char *ODsCCurveGeometries    = "CurveGeometries";
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
+%constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -413,6 +434,7 @@ typedef int OGRErr;
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
+#define OLCMeasuredGeometries  "MeasuredGeometries";
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -420,6 +442,7 @@ typedef int OGRErr;
 #define ODsCCurveGeometries    "CurveGeometries"
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
+#define ODsCMeasuredGeometries  "MeasuredGeometries";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -1202,11 +1225,11 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        return OGRERR_FAILURE;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return OGRERR_FAILURE;
       }
       else
-        return OGR_F_SetGeomField(self, iField, geom);
+          return OGR_F_SetGeomField(self, iField, geom);
   }
 
 /* The feature takes over ownership of the geometry. */
@@ -1220,11 +1243,11 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        return OGRERR_FAILURE;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return OGRERR_FAILURE;
       }
       else
-        return OGR_F_SetGeomFieldDirectly(self, iField, geom);
+          return OGR_F_SetGeomFieldDirectly(self, iField, geom);
   }
 %clear OGRGeometryShadow *geom;
 
@@ -1235,14 +1258,14 @@ public:
 
   /* Feature owns its geometry */
   OGRGeometryShadow *GetGeomFieldRef(const char* name) {
-    int i = OGR_F_GetGeomFieldIndex(self, name);
-    if (i == -1)
-    {
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
-      return NULL;
-    }
-    else
-      return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+      {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return NULL;
+      }
+      else
+          return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
   }
 
   %newobject Clone;
@@ -1268,9 +1291,9 @@ public:
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+          return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -1281,15 +1304,15 @@ public:
 
   /* ---- GetGeomFieldDefnRef --------------------- */
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(int id) {
-    return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
+      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
   }
 
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(const char* name) {
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
+          return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -1300,16 +1323,14 @@ public:
     return (const char *) OGR_F_GetFieldAsString(self, id);
   }
 
-#ifndef SWIGPERL
   const char* GetFieldAsString(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return (const char *) OGR_F_GetFieldAsString(self, i);
       return NULL;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger -------------------- */
@@ -1318,16 +1339,14 @@ public:
     return OGR_F_GetFieldAsInteger(self, id);
   }
 
-#ifndef SWIGPERL
   int GetFieldAsInteger(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger64 ------------------ */
@@ -1336,16 +1355,14 @@ public:
     return OGR_F_GetFieldAsInteger64(self, id);
   }
 
-#ifndef SWIGPERL
   GIntBig GetFieldAsInteger64(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return OGR_F_GetFieldAsInteger64(self, i);
+          return OGR_F_GetFieldAsInteger64(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsDouble --------------------- */
@@ -1354,16 +1371,14 @@ public:
     return OGR_F_GetFieldAsDouble(self, id);
   }
 
-#ifndef SWIGPERL
   double GetFieldAsDouble(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return OGR_F_GetFieldAsDouble(self, i);
+          return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   %apply (int *OUTPUT) {(int *)};
@@ -1372,6 +1387,17 @@ public:
 			  int *pnHour, int *pnMinute, float *pfSecond,
 			  int *pnTZFlag) {
       OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+			       pnHour, pnMinute, pfSecond,
+			       pnTZFlag);
+  }
+  void GetFieldAsDateTime(const char* name, int *pnYear, int *pnMonth, int *pnDay,
+			  int *pnHour, int *pnMinute, float *pfSecond,
+			  int *pnTZFlag) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
 			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
@@ -1395,12 +1421,30 @@ public:
   void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
+
+  void GetFieldAsIntegerList(const char* name, int *nLen, const int **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
+  }
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
+
+#if defined(SWIGPERL)
+  void GetFieldAsInteger64List(const char* name, int *nLen, const GIntBig **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
+  }
+#endif
 #endif
 
 #if defined(SWIGJAVA)
@@ -1420,6 +1464,14 @@ public:
   void GetFieldAsDoubleList(int id, int *nLen, const double **pList) {
       *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
+
+  void GetFieldAsDoubleList(const char* name, int *nLen, const double **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
+  }
 #endif
 
 #if defined(SWIGJAVA)
@@ -1438,6 +1490,14 @@ public:
   void GetFieldAsStringList(int id, char ***pList) {
       *pList = OGR_F_GetFieldAsStringList(self, id);
   }
+
+  void GetFieldAsStringList(const char* name, char ***pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsStringList(self, id);
+  }
 #endif
 
 #ifndef SWIGCSHARP
@@ -1454,7 +1514,7 @@ public:
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return NULL;
       }
       else
@@ -1474,12 +1534,11 @@ public:
     return OGRERR_NONE;
   }
 
-#ifndef SWIGPERL
   OGRErr GetFieldAsBinary(const char* name, int *nLen, char **pBuf) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return OGRERR_FAILURE;
       }
       else
@@ -1490,8 +1549,6 @@ public:
         return OGRERR_NONE;
       }
   }
-#endif /* SWIGPERL */
-
 #endif /* SWIGJAVA */
 
 #endif /* SWIGCSHARP */
@@ -1504,19 +1561,41 @@ public:
   bool IsFieldSet(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return (OGR_F_IsFieldSet(self, i) > 0);
       return false;
   }
   /* ------------------------------------------- */
 
+#ifdef SWIGPERL
+  int GetFieldIndex(int i) {
+      if (i < 0 || i >= OGR_F_GetFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      return i;
+  }
+#endif
+
   int GetFieldIndex(const char* name) {
-      return OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      return i;
   }
 
+#ifdef SWIGPERL
+  int GetGeomFieldIndex(int i) {
+      if (i < 0 || i >= OGR_F_GetGeomFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      return i;
+  }
+#endif
+
   int GetGeomFieldIndex(const char* name) {
-      return OGR_F_GetGeomFieldIndex(self, name);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      return i;
   }
 
   GIntBig GetFID() {
@@ -1535,15 +1614,13 @@ public:
     OGR_F_UnsetField(self, id);
   }
 
-#ifndef SWIGPERL
   void UnsetField(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_UnsetField(self, i);
+          OGR_F_UnsetField(self, i);
   }
-#endif
 
   /* ---- SetField ----------------------------- */
 #ifndef SWIGCSHARP
@@ -1555,15 +1632,13 @@ public:
     OGR_F_SetFieldString(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, const char* value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldString(self, i, value);
+          OGR_F_SetFieldString(self, i, value);
   }
-#endif
   %clear (const char* value );
 
   void SetFieldInteger64(int id, GIntBig value) {
@@ -1575,30 +1650,26 @@ public:
     OGR_F_SetFieldInteger(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, int value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldInteger(self, i, value);
   }
-#endif /* SWIGPERL */
 #endif /* SWIGPYTHON */
 
   void SetField(int id, double value) {
     OGR_F_SetFieldDouble(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, double value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldDouble(self, i, value);
   }
-#endif
 
   void SetField( int id, int year, int month, int day,
                              int hour, int minute, float second,
@@ -1608,39 +1679,91 @@ public:
                              tzflag);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, float second,
                              int tzflag ) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
 				 hour, minute, second,
 				 tzflag);
   }
-#endif
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPERL)
+  void SetFieldIntegerList(const char* name, int nList, int *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+       	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
+  }
+#endif
+
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
+
+#if defined(SWIGPERL)
+  void SetFieldInteger64List(const char* name, int nList, GIntBig *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldInteger64List(self, id, nList, pList);
+  }
+#endif
 #endif
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
       OGR_F_SetFieldDoubleList(self, id, nList, pList);
   }
 
+#if defined(SWIGPERL)
+  void SetFieldDoubleList(const char* name, int nList, double *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldDoubleList(self, id, nList, pList);
+  }
+#endif
+
 %apply (char **options) {char **pList};
   void SetFieldStringList(int id, char **pList) {
       OGR_F_SetFieldStringList(self, id, pList);
   }
+
+#if defined(SWIGPERL)
+  void SetFieldStringList(const char* name, char **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldStringList(self, id, pList);
+  }
+#endif
 %clear char**pList;
+
+#if defined(SWIGPERL)
+  void SetFieldBinary(int i, int nBytes, GByte* pabyBuf) {
+      OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+  }
+
+  void SetFieldBinary(const char* name, int nBytes, GByte* pabyBuf) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+  }
+#endif
 
   void SetFieldBinaryFromHexString(int id, const char* pszValue)
   {
@@ -1654,13 +1777,13 @@ public:
   {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       {
-        int nBytes;
-        GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
-        OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
-        CPLFree(pabyBuf);
+          int nBytes;
+          GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
+          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+          CPLFree(pabyBuf);
       }
   }
 
@@ -1707,7 +1830,7 @@ public:
   OGRFieldType GetFieldType(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1) {
-          CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
           return (OGRFieldType)0;
       } else
           return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, i ) );
@@ -1845,8 +1968,19 @@ public:
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
 
+#ifdef SWIGPERL
+  int GetFieldIndex(int i) {
+      if (i < 0 || i >= OGR_FD_GetFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      return i;
+  }
+#endif
+
   int GetFieldIndex(const char* name) {
-      return OGR_FD_GetFieldIndex(self, name);
+      int i = OGR_FD_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      return i;
   }
 
 %apply Pointer NONNULL {OGRFieldDefnShadow* defn};
@@ -1864,6 +1998,24 @@ public:
   OGRGeomFieldDefnShadow* GetGeomFieldDefn(int i){
     return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, i);
   }
+
+#ifdef SWIGPERL
+  OGRGeomFieldDefnShadow* GetGeomFieldDefn(const char* name) {
+      int iField = OGR_FD_GetGeomFieldIndex(self, name);
+      if (iField == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);    
+      else
+          return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, iField);
+      return NULL;
+  }
+
+  int GetGeomFieldIndex(int i) {
+      if (i < 0 || i >= OGR_FD_GetGeomFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      else
+          return i;
+  }
+#endif
 
   int GetGeomFieldIndex(const char* name) {
       return OGR_FD_GetGeomFieldIndex(self, name);
@@ -2647,6 +2799,13 @@ public:
 #endif
   double GetZ(int point=0) {
     return OGR_G_GetZ(self, point);
+  }
+
+#ifndef SWIGJAVA
+  %feature("kwargs") GetM;
+#endif
+  double GetM(int point=0) {
+    return OGR_G_GetM(self, point);
   }
 
 #ifdef SWIGJAVA

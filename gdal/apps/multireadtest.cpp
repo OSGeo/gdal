@@ -112,14 +112,14 @@ int main( int argc, char ** argv )
     if( hDS == NULL )
         exit( 1 );
 
-    nChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ), 
-                                   0, 0, 
-                                   GDALGetRasterXSize( hDS ), 
+    nChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ),
+                                   0, 0,
+                                   GDALGetRasterXSize( hDS ),
                                    GDALGetRasterYSize( hDS ) );
 
     GDALClose( hDS );
 
-    printf( "Got checksum %d, launching %d worker threads on %s, %d iterations.\n", 
+    printf( "Got checksum %d, launching %d worker threads on %s, %d iterations.\n",
             nChecksum, nThreadCount, pszFilename, nIterations );
 
 /* -------------------------------------------------------------------- */
@@ -180,9 +180,9 @@ static void WorkerFunc( void * )
         {
             int nMyChecksum;
 
-            nMyChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ), 
-                                             0, 0, 
-                                             GDALGetRasterXSize( hDS ), 
+            nMyChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ),
+                                             0, 0,
+                                             GDALGetRasterXSize( hDS ),
                                              GDALGetRasterYSize( hDS ) );
 
             if( nMyChecksum != nChecksum )

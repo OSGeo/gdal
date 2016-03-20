@@ -573,7 +573,7 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     if( GetGeomType() == wkbNone )
         return OGRERR_FAILURE;
 
-    if( poFClass != NULL && 
+    if( poFClass != NULL &&
         poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
     {
         psExtent->MinX = dfXMin;
@@ -583,7 +583,7 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
         return OGRERR_NONE;
     }
-    else 
+    else
         return OGRLayer::GetExtent( psExtent, bForce );
 }
 
@@ -646,7 +646,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         VSIFPrintfL(fp, "  ");
     if (bIsGML3Output)
     {
-        if( bRemoveAppPrefix ) 
+        if( bRemoveAppPrefix )
             poDS->PrintLine( fp, "<featureMember>" );
         else
             poDS->PrintLine( fp, "<%s:featureMember>", pszPrefix );
@@ -682,7 +682,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "    ");
     VSIFPrintfL(fp, "<");
-    if( !bRemoveAppPrefix ) 
+    if( !bRemoveAppPrefix )
         VSIFPrintfL(fp, "%s:", pszPrefix);
     if (bIsGML3Output)
     {
@@ -811,7 +811,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    // Write all "set" fields. 
+    // Write all "set" fields.
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
 
@@ -963,8 +963,8 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-        if( poFClass == NULL 
-            || m_poFilterGeom != NULL 
+        if( poFClass == NULL
+            || m_poFilterGeom != NULL
             || m_poAttrQuery != NULL )
             return FALSE;
 
@@ -977,7 +977,7 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return poDS->IsGML3Output();
 
-    else 
+    else
         return FALSE;
 }
 
@@ -1003,7 +1003,7 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         if( !bApproxOK )
         {
             CPLFree( pszName );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create field with name '%s', it would not\n"
                       "be valid as an XML element name.",
                       poField->GetNameRef() );
@@ -1011,7 +1011,7 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         }
 
         oCleanCopy.SetName( pszName );
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Field name '%s' adjusted to '%s' to be a valid\n"
                   "XML element name.",
                   poField->GetNameRef(), pszName );
@@ -1047,7 +1047,7 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
         if( !bApproxOK )
         {
             CPLFree( pszName );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create field with name '%s', it would not\n"
                       "be valid as an XML element name.",
                       poField->GetNameRef() );
@@ -1055,7 +1055,7 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
         }
 
         oCleanCopy.SetName( pszName );
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Field name '%s' adjusted to '%s' to be a valid\n"
                   "XML element name.",
                   poField->GetNameRef(), pszName );

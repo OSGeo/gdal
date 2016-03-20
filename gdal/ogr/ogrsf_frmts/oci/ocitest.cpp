@@ -65,13 +65,9 @@ int main( int nArgc, char ** papszArgv )
         printf( "\n" );
         for( i = 0; i < nColCount; i++ )
         {
-            printf( "  %s = %s\n", 
+            printf( "  %s = %s\n",
                     poDefn->GetFieldDefn(i)->GetNameRef(),
                     papszResult[i] );
         }
     }
 }
-
-
-
-

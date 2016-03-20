@@ -177,15 +177,15 @@ CPLErr HFABand::LoadOverviews()
 
             // Try finding the dependent file as this file with the
             // extension .rrd.  This is intended to address problems
-            // with users changing the names of their files. 
+            // with users changing the names of their files.
             if( psHFA == NULL )
             {
-                char *pszBasename = 
+                char *pszBasename =
                     CPLStrdup(CPLGetBasename(psInfo->pszFilename));
 
-                pszJustFilename = 
+                pszJustFilename =
                     CPLStrdup(CPLFormFilename(NULL, pszBasename, "rrd"));
-                CPLDebug( "HFA", "Failed to find overview file with expected name,\ntry %s instead.", 
+                CPLDebug( "HFA", "Failed to find overview file with expected name,\ntry %s instead.",
                           pszJustFilename );
                 psHFA = HFAGetDependent( psInfo, pszJustFilename );
                 CPLFree( pszJustFilename );
@@ -215,10 +215,10 @@ CPLErr HFABand::LoadOverviews()
                 continue;
 
             /*
-             * We have an overview node.  Instanatiate a HFABand from it, 
+             * We have an overview node.  Instanatiate a HFABand from it,
              * and add to the list.
              */
-            papoOverviews = (HFABand **) 
+            papoOverviews = (HFABand **)
                 CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
             papoOverviews[nOverviews-1] = new HFABand( psHFA, poOvEntry );
             if (papoOverviews[nOverviews-1]->nWidth == 0)
@@ -238,7 +238,7 @@ CPLErr HFABand::LoadOverviews()
     HFAEntry *poBandProxyNode = poNode;
     HFAInfo_t *psOvHFA = psInfo;
 
-    if( nOverviews == 0 
+    if( nOverviews == 0
         && EQUAL(CPLGetExtension(psInfo->pszFilename),"aux") )
     {
         CPLString osRRDFilename = CPLResetExtension( psInfo->pszFilename,"rrd");
@@ -250,7 +250,7 @@ CPLErr HFABand::LoadOverviews()
         {
             psOvHFA = HFAGetDependent( psInfo, osRRDFilename );
             if( psOvHFA )
-                poBandProxyNode = 
+                poBandProxyNode =
                     psOvHFA->poRoot->GetNamedChild( poNode->GetName() );
             else
                 psOvHFA = psInfo;
@@ -264,13 +264,13 @@ CPLErr HFABand::LoadOverviews()
 /* -------------------------------------------------------------------- */
     if( nOverviews == 0 && poBandProxyNode != NULL )
     {
-        for( HFAEntry *poChild = poBandProxyNode->GetChild(); 
+        for( HFAEntry *poChild = poBandProxyNode->GetChild();
              poChild != NULL;
-             poChild = poChild->GetNext() ) 
+             poChild = poChild->GetNext() )
         {
             if( EQUAL(poChild->GetType(),"Eimg_Layer_SubSample") )
             {
-                papoOverviews = (HFABand **) 
+                papoOverviews = (HFABand **)
                     CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
                 papoOverviews[nOverviews-1] = new HFABand( psOvHFA, poChild );
                 if (papoOverviews[nOverviews-1]->nWidth == 0)
@@ -288,7 +288,7 @@ CPLErr HFABand::LoadOverviews()
         {
             for( int i2 = 0; i2 < nOverviews-1; i2++ )
             {
-                if( papoOverviews[i2]->nWidth < 
+                if( papoOverviews[i2]->nWidth <
                     papoOverviews[i2+1]->nWidth )
                 {
                     HFABand *poTemp = papoOverviews[i2+1];
@@ -427,8 +427,8 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 	fpExternal = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpExternal == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to open external data file:\n%s\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to open external data file:\n%s\n",
                   pszFullFilename );
         return CE_Failure;
     }
@@ -460,17 +460,17 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      Load the validity bitmap.                                       */
 /* -------------------------------------------------------------------- */
     const int nBytesPerRow = (nBlocksPerRow + 7) / 8;
-    unsigned char *pabyBlockMap = (unsigned char *) 
+    unsigned char *pabyBlockMap = (unsigned char *)
         VSI_MALLOC_VERBOSE(nBytesPerRow*nBlocksPerColumn+20);
     if (pabyBlockMap == NULL)
     {
         return CE_Failure;
     }
 
-    if( VSIFSeekL( fpExternal, 
-               poDMS->GetBigIntField( "layerStackValidFlagsOffset" ),  
+    if( VSIFSeekL( fpExternal,
+               poDMS->GetBigIntField( "layerStackValidFlagsOffset" ),
                SEEK_SET ) < 0 ||
-        VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1, 
+        VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1,
                    fpExternal ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -514,7 +514,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
     if (nSrcBytes < (n)) goto not_enough_bytes;
 
 static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
-                               GByte *pabyDest, int nMaxPixels, 
+                               GByte *pabyDest, int nMaxPixels,
                                EPTType eDataType )
 
 {
@@ -650,10 +650,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 else
                     pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
             }
-            else if( eDataType == EPT_s8 ) 
-            { 
-                ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue; 
-            } 
+            else if( eDataType == EPT_s8 )
+            {
+                ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue;
+            }
             else if( eDataType == EPT_u16 )
             {
                 ((GUInt16 *) pabyDest)[nPixelsOutput] = (GUInt16) nDataValue;
@@ -682,7 +682,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to uncompress an unsupported pixel data type.");
                 return CE_Failure;
             }
@@ -934,7 +934,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to uncompress an unsupported pixel data type.");
             return CE_Failure;
         }
@@ -1005,7 +1005,7 @@ void HFABand::NullBlock( void *pData )
 
           case EPT_u4:
           {
-              unsigned char byVal = 
+              unsigned char byVal =
                   (unsigned char) MAX(0,MIN(15,(int)dfNoData));
 
               nWords = (nWords + 1)/2;
@@ -1015,12 +1015,12 @@ void HFABand::NullBlock( void *pData )
           break;
 
           case EPT_u8:
-            ((unsigned char *) abyTmp)[0] = 
+            ((unsigned char *) abyTmp)[0] =
                 (unsigned char) MAX(0,MIN(255,(int)dfNoData));
             break;
 
           case EPT_s8:
-            ((signed char *) abyTmp)[0] = 
+            ((signed char *) abyTmp)[0] =
                 (signed char) MAX(-128,MIN(127,(int)dfNoData));
             break;
 
@@ -1137,16 +1137,16 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 	// in update state and data for this block will be available later
         if ( psInfo->eAccess == HFA_Update )
         {
-            memset( pData, 0, 
+            memset( pData, 0,
                     HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
             return CE_None;
         }
         else
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Seek to %x:%08x on %p failed\n%s",
                       (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff), 
+                      (int) (nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -1171,17 +1171,17 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 	    // XXX: Suppose that file in update state
             if ( psInfo->eAccess == HFA_Update )
             {
-                memset( pData, 0, 
+                memset( pData, 0,
                     HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
                 return CE_None;
             }
             else
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Read of %d bytes at %x:%08x on %p failed.\n%s", 
-                          (int) nBlockSize, 
+                          "Read of %d bytes at %x:%08x on %p failed.\n%s",
+                          (int) nBlockSize,
                           (int) (nBlockOffset >> 32),
-                          (int) (nBlockOffset & 0xffffffff), 
+                          (int) (nBlockOffset & 0xffffffff),
                           fpData, VSIStrerror(errno) );
                 return CE_Failure;
             }
@@ -1209,15 +1209,15 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 
     if( VSIFReadL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
     {
-	memset( pData, 0, 
+	memset( pData, 0,
 	    HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
 
         if( fpData != fpExternal )
-            CPLDebug( "HFABand", 
-                      "Read of %x:%08x bytes at %d on %p failed.\n%s", 
-                      (int) nBlockSize, 
+            CPLDebug( "HFABand",
+                      "Read of %x:%08x bytes at %d on %p failed.\n%s",
+                      (int) nBlockSize,
                       (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff), 
+                      (int) (nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
 
 	return CE_None;
@@ -1326,10 +1326,10 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      file in the right size.                                         */
 /* -------------------------------------------------------------------- */
     if( (panBlockFlag[iBlock] & BFLG_VALID) == 0
-        && !(panBlockFlag[iBlock] & BFLG_COMPRESSED) 
+        && !(panBlockFlag[iBlock] & BFLG_COMPRESSED)
         && panBlockStart[iBlock] == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to write to invalid tile with number %d "
                   "(X position %d, Y position %d).  This\n operation currently "
                   "unsupported by HFABand::SetRasterBlock().\n",
@@ -1404,7 +1404,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             {
                 CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
                           (int) (nBlockOffset >> 32),
-                          (int) (nBlockOffset & 0xffffffff), 
+                          (int) (nBlockOffset & 0xffffffff),
                           fpData, VSIStrerror(errno) );
                 return CE_Failure;
             }
@@ -1501,7 +1501,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         {
             CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
                       (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff), 
+                      (int) (nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -1545,11 +1545,11 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
         if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Write of %d bytes at %x:%08x on %p failed.\n%s",
-                      (int) nBlockSize, 
+                      (int) nBlockSize,
                       (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff), 
+                      (int) (nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -1697,17 +1697,17 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
 /*      First confirm this is a "BFUnique" bin function.  We don't      */
 /*      know what to do with any other types.                           */
 /* -------------------------------------------------------------------- */
-    const char *pszBinFunctionType = 
+    const char *pszBinFunctionType =
         poBinFunc->GetStringField( "binFunction.type.string" );
 
-    if( pszBinFunctionType == NULL 
+    if( pszBinFunctionType == NULL
         || !EQUAL(pszBinFunctionType,"BFUnique") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Process dictionary.                                             */
 /* -------------------------------------------------------------------- */
-    const char *pszDict = 
+    const char *pszDict =
         poBinFunc->GetStringField( "binFunction.MIFDictionary.string" );
     if( pszDict == NULL )
         pszDict = poBinFunc->GetStringField( "binFunction.MIFDictionary" );
@@ -1723,7 +1723,7 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
 /* -------------------------------------------------------------------- */
 /*      Field the MIFObject raw data pointer.                           */
 /* -------------------------------------------------------------------- */
-    const GByte *pabyMIFObject = (const GByte *) 
+    const GByte *pabyMIFObject = (const GByte *)
         poBinFunc->GetStringField("binFunction.MIFObject");
 
     if( pabyMIFObject == NULL )
@@ -1838,7 +1838,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
 /* -------------------------------------------------------------------- */
 /*      Do we have a custom binning function? If so, try reading it.    */
 /* -------------------------------------------------------------------- */
-        HFAEntry *poBinFunc = 
+        HFAEntry *poBinFunc =
             poNode->GetNamedChild("Descriptor_Table.#Bin_Function840#");
 
         if( poBinFunc != NULL )
@@ -1903,9 +1903,9 @@ CPLErr HFABand::SetPCT( int nColors,
 /*      Create the Descriptor table.                                    */
 /* -------------------------------------------------------------------- */
     poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
-    if( poEdsc_Table == NULL 
+    if( poEdsc_Table == NULL
         || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
-        poEdsc_Table = HFAEntry::New( psInfo, "Descriptor_Table", 
+        poEdsc_Table = HFAEntry::New( psInfo, "Descriptor_Table",
                                      "Edsc_Table", poNode );
 
     poEdsc_Table->SetIntField( "numrows", nColors );
@@ -1916,13 +1916,13 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
     HFAEntry *poEdsc_BinFunction
         = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
-    if( poEdsc_BinFunction == NULL 
+    if( poEdsc_BinFunction == NULL
         || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
-        poEdsc_BinFunction = HFAEntry::New( psInfo, "#Bin_Function#", 
-                                           "Edsc_BinFunction", 
+        poEdsc_BinFunction = HFAEntry::New( psInfo, "#Bin_Function#",
+                                           "Edsc_BinFunction",
                                            poEdsc_Table );
 
-    // Because of the BaseData we have to hardcode the size. 
+    // Because of the BaseData we have to hardcode the size.
     poEdsc_BinFunction->MakeData( 30 );
 
     poEdsc_BinFunction->SetIntField( "numBins", nColors );
@@ -1951,9 +1951,9 @@ CPLErr HFABand::SetPCT( int nColors,
 /*      Create the Edsc_Column.                                         */
 /* -------------------------------------------------------------------- */
         HFAEntry *poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
-        if( poEdsc_Column == NULL 
+        if( poEdsc_Column == NULL
             || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
-            poEdsc_Column = HFAEntry::New( psInfo, pszName, "Edsc_Column", 
+            poEdsc_Column = HFAEntry::New( psInfo, pszName, "Edsc_Column",
                                           poEdsc_Table );
 
         poEdsc_Column->SetIntField( "numRows", nColors );
@@ -2016,7 +2016,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         // Need to create layer object.
         if( poParent == NULL )
         {
-            poParent = 
+            poParent =
                 HFAEntry::New( psRRDInfo, GetBandName(),
                               "Eimg_Layer", psRRDInfo->poRoot );
         }
@@ -2042,15 +2042,15 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         CPLGetConfigOption("USE_SPILL","NO") );
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
 
-    if( (psRRDInfo->nEndOfFile 
+    if( (psRRDInfo->nEndOfFile
          + (nOXSize * (double) nOYSize)
          * (HFAGetDataTypeBits(eOverviewDataType) / 8)) > 2000000000.0 )
         bCreateLargeRaster = TRUE;
 
     if( bCreateLargeRaster )
     {
-        if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1, 
-                                  64, eOverviewDataType, 
+        if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1,
+                                  64, eOverviewDataType,
                                   &nValidFlagsOffset, &nDataOffset ) )
 	{
 	    return -1;
@@ -2080,7 +2080,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     CPLString osLayerName;
     osLayerName.Printf( "_ss_%d_", nOverviewLevel );
 
-    if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
+    if( !HFACreateLayer( psRRDInfo, poParent, osLayerName,
                          TRUE, 64, bCompressionType, bCreateLargeRaster, FALSE,
                          nOXSize, nOYSize, eOverviewDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
@@ -2096,15 +2096,15 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     HFAEntry *poRRDNamesList = poNode->GetNamedChild("RRDNamesList");
     if( poRRDNamesList == NULL )
     {
-        poRRDNamesList = HFAEntry::New( psInfo, "RRDNamesList", 
-                                       "Eimg_RRDNamesList", 
+        poRRDNamesList = HFAEntry::New( psInfo, "RRDNamesList",
+                                       "Eimg_RRDNamesList",
                                        poNode );
         poRRDNamesList->MakeData( 23+16+8+ 3000 /* hack for growth room*/ );
 
         /* we need to hardcode file offset into the data, so locate it now */
         poRRDNamesList->SetPosition();
 
-        poRRDNamesList->SetStringField( "algorithm.string", 
+        poRRDNamesList->SetStringField( "algorithm.string",
                                         "IMAGINE 2X2 Resampling" );
     }
 
@@ -2117,7 +2117,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 
     snprintf( szName, sizeof(szName), "nameList[%d].string", iNextName );
 
-    osLayerName.Printf( "%s(:%s:_ss_%d_)", 
+    osLayerName.Printf( "%s(:%s:_ss_%d_)",
                         psRRDInfo->pszFilename, GetBandName(),
                         nOverviewLevel );
 
@@ -2132,7 +2132,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /* -------------------------------------------------------------------- */
 /*      Add to the list of overviews for this band.                     */
 /* -------------------------------------------------------------------- */
-    papoOverviews = (HFABand **) 
+    papoOverviews = (HFABand **)
         CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
     papoOverviews[nOverviews-1] = new HFABand( psRRDInfo, poOverLayer );
 

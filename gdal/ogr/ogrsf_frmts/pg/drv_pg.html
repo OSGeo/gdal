@@ -132,7 +132,7 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 layer to try and represent the width and precision information, if available
 using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
 FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
-<li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3. 
+<li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
@@ -158,6 +158,10 @@ as the separator between the schema and the table name. Defaults to YES.<p>
 <li> <b>COLUMN_TYPES</b>: (From GDAL 1.10) A list of strings of format field_name=pg_field_type (separated by comma)
 that should be use when CreateField() is invoked on them. This will override the default choice that OGR would have made.
 This can for example be used to create a column of type <a href="http://www.postgresql.org/docs/9.0/static/hstore.html">HSTORE</a>.<p>
+<li> <b>DESCRIPTION</b> (From GDAL 2.1) Description string to put in the pg_description system table. On
+reading, if such a description is found, it is exposed in the DESCRIPTION metadata item. The description
+can also be written with SetMetadataItem("DESCRIPTION", description_string). Descriptions are preserved
+by default by ogr2ogr, unless the -nomd option is used.</p>
 </ul>
 
 <h3>Configuration Options</h3>

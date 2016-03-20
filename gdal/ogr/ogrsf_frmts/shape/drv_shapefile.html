@@ -32,9 +32,8 @@ Shapefile with measures is created if the specified geometry type is
 measured or an appropriate layer creation option is used. When a
 shapefile which may have measured geometries is opened, the first
 shape is examined and if it uses measures, the geometry type of the
-layer is set accordingly. Note that currently "no data" values for the
-M coordinate (a floating point value smaller than -10^38) are not
-supported.</p>
+layer is set accordingly. This behaviour can be changed with the
+ADJUST_GEOM_TYPE open option.</p>
 
 <p>MultiPatch files are read and each patch geometry is turned into a
 multi-polygon representation with one polygon per triangle in triangle
@@ -75,6 +74,14 @@ can be used when field widths are ambiguous and that by default OGR would select
 the larger data type. For example, a numeric column with 0 decimal figures and with
 width of 10/11 character may hold Integer or Integer64, and with width 19/20 may
 hold Integer64 or larger integer (hold as Real)</li>
+<li><b>ADJUST_GEOM_TYPE</b>=NO/FIRST_SHAPE/ALL_SHAPES. (Starting with GDAL 2.1)
+Defines how layer geometry type is computed, in particular to distinguish
+shapefiles that have shapes with significant values in the M dimension from the
+ones where the M values are set to the nodata value. By default (FIRST_SHAPE),
+the driver will look at the first shape and if it has M values it will expose the
+layer as having a M dimension. By specifying
+ALL_SHAPES, the driver will iterate over features until a shape with a valid
+M value is found to decide the appropriate layer type.</li>
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>

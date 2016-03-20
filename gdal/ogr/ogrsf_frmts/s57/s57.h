@@ -98,7 +98,7 @@ char **S57FileCollector( const char * pszDataset );
 
 class S57ClassContentExplorer;
 
-class CPL_DLL S57AttrInfo 
+class CPL_DLL S57AttrInfo
 {
   public:
     CPLString    osName;
@@ -135,7 +135,7 @@ public:
     // attribute table methods.
     //int         GetMaxAttrIndex() { return nAttrMax; }
     const S57AttrInfo *GetAttrInfo(int i);
-    const char *GetAttrName( int i ) 
+    const char *GetAttrName( int i )
     { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName.c_str(); }
     const char *GetAttrAcronym( int i )
     { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osAcronym.c_str(); }
@@ -281,7 +281,7 @@ class CPL_DLL S57Reader
 
     char                **papszOptions;
 
-    int                 nOptionFlags; 
+    int                 nOptionFlags;
 
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
@@ -408,7 +408,7 @@ private:
 /* -------------------------------------------------------------------- */
 void           CPL_DLL  S57GenerateStandardAttributes( OGRFeatureDefn *, int );
 OGRFeatureDefn CPL_DLL *S57GenerateGeomFeatureDefn( OGRwkbGeometryType, int );
-OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *, 
+OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *,
                                                     S57ClassContentExplorer* poClassContentExplorer,
                                                     int, int );
 OGRFeatureDefn CPL_DLL  *S57GenerateVectorPrimitiveFeatureDefn( int, int );

@@ -132,7 +132,7 @@ class CPL_DLL OGREnvelope
 
     int Intersects(OGREnvelope const& other) const
     {
-        return MinX <= other.MaxX && MaxX >= other.MinX && 
+        return MinX <= other.MaxX && MaxX >= other.MinX &&
                MinY <= other.MaxY && MaxY >= other.MinY;
     }
 
@@ -330,7 +330,7 @@ typedef int     OGRBoolean;
  * but are also returned from OGRGeometry::getGeometryType() to identify the
  * type of a geometry object.
  */
-typedef enum 
+typedef enum
 {
     wkbUnknown = 0,         /**< unknown type, non-standard */
 
@@ -354,10 +354,13 @@ typedef enum
                              *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
-                               *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+                               *   ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
-                               *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+                               *    ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTriangle = 17,         /** < a Triangle. ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -367,8 +370,11 @@ typedef enum
     wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTriangleZ = 1017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
     wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -382,8 +388,11 @@ typedef enum
     wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
     wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -397,8 +406,11 @@ typedef enum
     wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
     wkbPoint25D = 0x80000001, /**< 2.5D extension as per 99-402 */
     wkbLineString25D = 0x80000002, /**< 2.5D extension as per 99-402 */
@@ -410,18 +422,8 @@ typedef enum
 
 } OGRwkbGeometryType;
 
-/* Outside of OGRwkbGeometryType since they are abstract types */
-#define wkbCurve            ((OGRwkbGeometryType)13)      /**< Curve (abstract type). SF-SQL 1.2 */
-#define wkbSurface          ((OGRwkbGeometryType)14)      /**< Surface (abstract type). SF-SQL 1.2 */
-#define wkbCurveZ           ((OGRwkbGeometryType)1013)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-#define wkbSurfaceZ         ((OGRwkbGeometryType)1014)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-#define wkbCurveM           ((OGRwkbGeometryType)2013)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-#define wkbSurfaceM         ((OGRwkbGeometryType)2014)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-#define wkbCurveZM          ((OGRwkbGeometryType)3013)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-#define wkbSurfaceZM        ((OGRwkbGeometryType)3014)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-
 /**
- * Output variants of WKB we support. 
+ * Output variants of WKB we support.
  *
  * 99-402 was a short-lived extension to SFSQL 1.1 that used a high-bit flag
  * to indicate the presence of Z coordinates in a WKB geometry.
@@ -434,7 +436,7 @@ typedef enum
  * The codes are also found in §8.2.3 of <a href="http://portal.opengeospatial.org/files/?artifact_id=25355">
  * OGC 06-103r4 "OpenGIS® Implementation Standard for Geographic information - Simple feature access - Part 1: Common architecture", v1.2.1</a>
  */
-typedef enum 
+typedef enum
 {
     wkbVariantOldOgc, /**< Old-style 99-402 extended dimension (Z) WKB types */
     wkbVariantIso,  /**< SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types */
@@ -493,7 +495,7 @@ OGRwkbGeometryType CPL_DLL OGR_GT_GetCollection( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetCurve( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 
-typedef enum 
+typedef enum
 {
     wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
@@ -571,11 +573,19 @@ typedef enum
  */
 #define OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT       0x00000008
 
-/** Enable all validation tests.
+/** Allow geometry fields to have a different coordinate dimension that their
+ * geometry column type.
+ * This flag only makes sense if OGR_F_VAL_GEOM_TYPE is set too.
+ * Used by OGR_F_Validate().
+ * @since GDAL 2.1
+ */
+#define OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM       0x00000010
+
+/** Enable all validation tests (except OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
  */
-#define OGR_F_VAL_ALL            0x7FFFFFFF
+#define OGR_F_VAL_ALL            (0x7FFFFFFF & ~OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
 
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */
@@ -587,7 +597,7 @@ typedef enum
  * field types can be known.
  */
 
-typedef enum 
+typedef enum
 {
   /** Simple 32bit integer */                   OFTInteger = 0,
   /** List of 32bit integers */                 OFTIntegerList = 1,
@@ -631,7 +641,7 @@ typedef enum
  * Display justification for field values.
  */
 
-typedef enum 
+typedef enum
 {
     OJUndefined = 0,
     OJLeft = 1,
@@ -691,7 +701,7 @@ typedef union {
         GByte   Day;
         GByte   Hour;
         GByte   Minute;
-        GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous), 
+        GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous),
                            100=GMT, 104=GMT+1, 80=GMT-5, etc */
         GByte   Reserved; /* must be set to 0 */
         float   Second; /* with millisecond accuracy. at the end of the structure, so as to keep it 12 bytes on 32 bit */
@@ -700,7 +710,7 @@ typedef union {
 
 #define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
 
-int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput, 
+int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
                           int nOptions );
 
 /* -------------------------------------------------------------------- */
@@ -780,9 +790,9 @@ typedef enum ogr_style_tool_units_id
  * List of parameters for use with OGRStylePen.
  */
 typedef enum ogr_style_tool_param_pen_id
-{  
-    OGRSTPenColor       = 0,                   
-    OGRSTPenWidth       = 1,                   
+{
+    OGRSTPenColor       = 0,
+    OGRSTPenWidth       = 1,
     OGRSTPenPattern     = 2,
     OGRSTPenId          = 3,
     OGRSTPenPerOffset   = 4,
@@ -797,11 +807,11 @@ typedef enum ogr_style_tool_param_pen_id
  * List of parameters for use with OGRStyleBrush.
  */
 typedef enum ogr_style_tool_param_brush_id
-{  
-    OGRSTBrushFColor    = 0,                   
-    OGRSTBrushBColor    = 1,                   
+{
+    OGRSTBrushFColor    = 0,
+    OGRSTBrushBColor    = 1,
     OGRSTBrushId        = 2,
-    OGRSTBrushAngle     = 3,                   
+    OGRSTBrushAngle     = 3,
     OGRSTBrushSize      = 4,
     OGRSTBrushDx        = 5,
     OGRSTBrushDy        = 6,
@@ -815,7 +825,7 @@ typedef enum ogr_style_tool_param_brush_id
  * List of parameters for use with OGRStyleSymbol.
  */
 typedef enum ogr_style_tool_param_symbol_id
-{  
+{
     OGRSTSymbolId       = 0,
     OGRSTSymbolAngle    = 1,
     OGRSTSymbolColor    = 2,
@@ -836,7 +846,7 @@ typedef enum ogr_style_tool_param_symbol_id
  * List of parameters for use with OGRStyleLabel.
  */
 typedef enum ogr_style_tool_param_label_id
-{  
+{
     OGRSTLabelFontName  = 0,
     OGRSTLabelSize      = 1,
     OGRSTLabelTextString = 2,

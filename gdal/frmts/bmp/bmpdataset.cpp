@@ -363,7 +363,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't read from offset %ld in input file.", 
+                      "Can't read from offset %ld in input file.",
                       (long) iScanOffset );
             return CE_Failure;
         }
@@ -442,10 +442,10 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for( int i = 0; i < nBlockXSize; i++ )
         {
             ((GByte *) pImage)[i] = (GByte)
-                (0.5f + fTo8bit[nBand-1] * 
+                (0.5f + fTo8bit[nBand-1] *
                     ((pScan16[i] & mask[nBand-1]) >> shift[nBand-1]));
 #if 0
-        // original code    
+        // original code
             switch ( nBand )
             {
                 case 1: // Red
@@ -453,7 +453,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 break;
 
                 case 2: // Green
-                ((GByte *) pImage)[i] = 
+                ((GByte *) pImage)[i] =
                     ((pabyScan[i] & 0x03) << 3) |
                     ((pabyScan[i + 1] & 0xE0) >> 5);
                 break;
@@ -611,11 +611,11 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
 
             poColorTable->GetColorEntryAsRGB( i, &oEntry );
             poGDS->pabyColorTable[i * poGDS->nColorElems + 3] = 0;
-            poGDS->pabyColorTable[i * poGDS->nColorElems + 2] = 
+            poGDS->pabyColorTable[i * poGDS->nColorElems + 2] =
                 (GByte) oEntry.c1; // Red
-            poGDS->pabyColorTable[i * poGDS->nColorElems + 1] = 
+            poGDS->pabyColorTable[i * poGDS->nColorElems + 1] =
                 (GByte) oEntry.c2; // Green
-            poGDS->pabyColorTable[i * poGDS->nColorElems] = 
+            poGDS->pabyColorTable[i * poGDS->nColorElems] =
                 (GByte) oEntry.c3;     // Blue
         }
 
@@ -736,13 +736,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         VSIFReadL( pabyComprBuf, 1, iComprSize, poDSIn->fp ) < iComprSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't read from offset %ld in input file.", 
+                  "Can't read from offset %ld in input file.",
                   (long) poDSIn->sFileHeader.iOffBits );
         CPLFree(pabyComprBuf);
         pabyComprBuf = NULL;
         CPLFree(pabyUncomprBuf);
         pabyUncomprBuf = NULL;
-        return;   
+        return;
     }
     unsigned int k, iLength = 0;
     unsigned int i = 0;
@@ -1012,26 +1012,26 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
 /*      for a given block together avoid extra seeks.                   */
 /************************************************************************/
 
-CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag, 
+CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
+                              void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
+                              int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
     if( nBandCount > 1 )
-        return GDALDataset::BlockBasedRasterIO( 
+        return GDALDataset::BlockBasedRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType, 
+            pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else
-        return 
+        return
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize, eBufType, 
-                                    nBandCount, panBandMap, 
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
@@ -1043,7 +1043,7 @@ int BMPDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 2
-        || poOpenInfo->pabyHeader[0] != 'B' 
+        || poOpenInfo->pabyHeader[0] != 'B'
         || poOpenInfo->pabyHeader[1] != 'M' )
         return FALSE;
 
@@ -1132,8 +1132,8 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( &poDS->sInfoHeader.iClrImportant, 1, 4, poDS->fp );
 
         // rcg, read win4/5 fields. If we're reading a
-        // legacy header that ends at iClrImportant, it turns 
-        // out that the three DWORD color table entries used 
+        // legacy header that ends at iClrImportant, it turns
+        // out that the three DWORD color table entries used
         // by the channel masks start here anyway.
         if(poDS->sInfoHeader.iCompression == BMPC_BITFIELDS)
         {
@@ -1205,7 +1205,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sInfoHeader.iXPelsPerMeter, poDS->sInfoHeader.iYPelsPerMeter,
               poDS->sInfoHeader.iClrUsed, poDS->sInfoHeader.iClrImportant );
 #endif
-    
+
     if( poDS->sInfoHeader.iHeight == INT_MIN )
     {
         delete poDS;
@@ -1218,9 +1218,9 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Invalid dimensions : %d x %d", 
-                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid dimensions : %d x %d",
+                  poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
     }
@@ -1481,7 +1481,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( VSIFWriteL( &poDS->sFileHeader.bType, 1, 2, poDS->fp ) != 2 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Write of first 2 bytes to BMP file %s failed.\n"
                   "Is file system full?",
                   pszFilename );
@@ -1529,10 +1529,10 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     if ( poDS->sInfoHeader.iClrUsed )
     {
         if( VSIFWriteL( poDS->pabyColorTable, 1,
-                        poDS->nColorElems * poDS->sInfoHeader.iClrUsed, poDS->fp ) 
+                        poDS->nColorElems * poDS->sInfoHeader.iClrUsed, poDS->fp )
             != poDS->nColorElems * poDS->sInfoHeader.iClrUsed )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Error writing color table.  Is disk full?" );
             delete poDS;
 

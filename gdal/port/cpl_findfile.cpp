@@ -71,7 +71,7 @@ static void CPLFindFileFreeTLS(void* pData)
 
 static FindFileTLS* CPLGetFindFileTLS()
 {
-    int bMemoryError;
+    int bMemoryError = FALSE;
     FindFileTLS* pTLSData =
         reinterpret_cast<FindFileTLS *>(
             CPLGetTLSEx( CTLS_FINDFILE, &bMemoryError ) );
@@ -132,8 +132,11 @@ void CPLFinderClean()
 {
     FindFileTLS* pTLSData = CPLGetFindFileTLS();
     CPLFindFileFreeTLS(pTLSData);
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CPLSetTLSWithFreeFuncEx( CTLS_FINDFILE, NULL, NULL, &bMemoryError );
+    // TODO: if( bMemoryError )
+    // {
+    // }
 }
 
 /************************************************************************/
@@ -198,7 +201,7 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
     pTLSData->papfnFinders = static_cast<CPLFileFinder *>(
         CPLRealloc(pTLSData->papfnFinders,
-            sizeof(CPLFileFinder *) * ++pTLSData->nFileFinders) );
+            sizeof(CPLFileFinder) * ++pTLSData->nFileFinders) );
     pTLSData->papfnFinders[pTLSData->nFileFinders-1] = pfnFinder;
 }
 

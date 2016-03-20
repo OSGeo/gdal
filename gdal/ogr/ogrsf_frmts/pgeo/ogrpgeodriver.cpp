@@ -68,7 +68,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( !STARTS_WITH_CI(pszFilename, "PGEO:") 
+    if( !STARTS_WITH_CI(pszFilename, "PGEO:")
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
@@ -123,7 +123,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     //
     if ( !InstallMdbDriver() )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
     }
     else
@@ -209,7 +209,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
         "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
     };
     const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
-    const char* libPath[] = { 
+    const char* libPath[] = {
         "/usr/lib",
         "/usr/local/lib"
     };
@@ -225,7 +225,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
 
         VSIStatBuf sStatBuf;
         if ( VSIStat( pszDrvCfg, &sStatBuf ) == 0
-             && VSI_ISDIR( sStatBuf.st_mode ) ) 
+             && VSI_ISDIR( sStatBuf.st_mode ) )
         {
             // Find default library in custom directory
             const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );

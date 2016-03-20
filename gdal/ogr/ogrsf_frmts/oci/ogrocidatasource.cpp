@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static const int anEPSGOracleMapping[] = 
+static const int anEPSGOracleMapping[] =
 {
     /* Oracle SRID, EPSG GCS/PCS Code */
 
@@ -112,7 +112,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
     {
         if( !bTestOpen )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "%s does not conform to Oracle OCI driver naming convention,"
                       " OCI:*\n", pszNewName );
         }
@@ -141,7 +141,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
     {
         pszUserid = CPLStrdup( pszNewName + 4 );
 
-        // Is there a table list? 
+        // Is there a table list?
         for( i = static_cast<int>(strlen(pszUserid))-1; i > 1; i-- )
         {
             if( pszUserid[i] == ':' )
@@ -156,7 +156,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
                 break;
         }
 
-        for( i = 0; 
+        for( i = 0;
             pszUserid[i] != '\0' && pszUserid[i] != '/' && pszUserid[i] != '@';
             i++ ) {}
 
@@ -177,7 +177,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OCI", "Userid=%s, Password=%s, Database=%s", 
+    CPLDebug( "OCI", "Userid=%s, Password=%s, Database=%s",
               pszUserid, pszPassword, pszDatabase );
 
     if( EQUAL(pszDatabase, "") &&
@@ -212,8 +212,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
     {
         OGROCIStatement oGetTables( poSession );
 
-        if( oGetTables.Execute( 
-            "SELECT TABLE_NAME, OWNER FROM ALL_SDO_GEOM_METADATA" ) 
+        if( oGetTables.Execute(
+            "SELECT TABLE_NAME, OWNER FROM ALL_SDO_GEOM_METADATA" )
             == CE_None )
         {
             char **papszRow;
@@ -225,11 +225,11 @@ int OGROCIDataSource::Open( const char * pszNewName,
                 if( EQUAL(papszRow[1],pszUserid) )
                     strcpy( szFullTableName, papszRow[0] );
                 else
-                    snprintf( szFullTableName, sizeof(szFullTableName), "%s.%s", 
+                    snprintf( szFullTableName, sizeof(szFullTableName), "%s.%s",
                              papszRow[1], papszRow[0] );
 
                 if( CSLFindString( papszTableList, szFullTableName ) == -1 )
-                    papszTableList = CSLAddString( papszTableList, 
+                    papszTableList = CSLAddString( papszTableList,
                                                    szFullTableName );
             }
         }
@@ -253,7 +253,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGROCIDataSource::OpenTable( const char *pszNewName, 
+int OGROCIDataSource::OpenTable( const char *pszNewName,
                                  int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
 
 {
@@ -262,7 +262,7 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
     OGROCITableLayer    *poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszNewName, wkbUnknown, nSRID, 
+    poLayer = new OGROCITableLayer( this, pszNewName, wkbUnknown, nSRID,
                                     bUpdate, FALSE );
 
     if( !poLayer->IsValid() )
@@ -301,8 +301,8 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 
     if( iLayer == nLayers )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "ValidateLayer(): %s is not a recognised layer.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ValidateLayer(): %s is not a recognised layer.",
                   pszLayerName );
         return;
     }
@@ -314,8 +314,8 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 
     if( strlen(poLayer->GetFIDColumn()) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "ValidateLayer(): %s lacks a fid column.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ValidateLayer(): %s lacks a fid column.",
                   pszLayerName );
 
         return;
@@ -379,13 +379,13 @@ OGRErr OGROCIDataSource::DeleteLayer( int iLayer )
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLString osLayerName = 
+    CPLString osLayerName =
         papoLayers[iLayer]->GetLayerDefn()->GetName();
 
     CPLDebug( "OCI", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
-    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
@@ -400,7 +400,7 @@ OGRErr OGROCIDataSource::DeleteLayer( int iLayer )
     if( oCommand.Execute( osCommand ) != CE_None )
         nFailures++;
 
-    osCommand.Printf( 
+    osCommand.Printf(
         "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = UPPER('%s')",
         osLayerName.c_str() );
 
@@ -495,7 +495,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         TruncateLayer( pszSafeLayerName );
     }
     else
-    {  
+    {
         for( iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             if( EQUAL(pszSafeLayerName,
@@ -508,17 +508,17 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                 }
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                               "Layer %s already exists, CreateLayer failed.\n"
                               "Use the layer creation option OVERWRITE=YES to "
                               "replace it.",
                               pszSafeLayerName );
                     CPLFree( pszSafeLayerName );
                     return NULL;
-                }              
+                }
             }
         }
-    } 
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the SRS Id of this spatial reference system,         */
@@ -527,7 +527,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     char szSRSId[100];
 
     if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
-        strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );     
+        strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );
     else if( poSRS != NULL )
         snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
@@ -536,7 +536,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Determine name of geometry column to use.                       */
 /* -------------------------------------------------------------------- */
-    const char *pszGeometryName = 
+    const char *pszGeometryName =
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
@@ -546,8 +546,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
-    const char *pszExpectedFIDName = 
-        CPLGetConfigOption( "OCI_FID", "OGR_FID" );    
+    const char *pszExpectedFIDName =
+        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
 
     OGROCIStatement oStatement( poSession );
 
@@ -593,8 +593,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                                         EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
                                         TRUE, TRUE );
     else
-        poLayer = 
-            new OGROCILoaderLayer( this, pszSafeLayerName, 
+        poLayer =
+            new OGROCILoaderLayer( this, pszSafeLayerName,
                                    pszGeometryName,
                                    EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
                                    pszLoaderFile );
@@ -668,8 +668,8 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -818,11 +818,11 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 /*      Insert authority information, if it is available.               */
 /* -------------------------------------------------------------------- */
     if( papszResult[1] != NULL && atoi(papszResult[1]) != 0
-        && papszResult[2] != NULL && strlen(papszResult[1]) != 0 
-        && poSRS->GetRoot() != NULL 
+        && papszResult[2] != NULL && strlen(papszResult[1]) != 0
+        && poSRS->GetRoot() != NULL
         && !bGotEPSGMapping )
     {
-        poSRS->SetAuthority( poSRS->GetRoot()->GetValue(), 
+        poSRS->SetAuthority( poSRS->GetRoot()->GetValue(),
                              papszResult[2], atoi(papszResult[1]) );
     }
 
@@ -830,7 +830,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 /*      Add to the cache.                                               */
 /* -------------------------------------------------------------------- */
     panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
-    papoSRS = (OGRSpatialReference **) 
+    papoSRS = (OGRSpatialReference **)
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
@@ -880,7 +880,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     if( pszAuthName != NULL && pszAuthCode != NULL )
     {
-        if( EQUAL(pszAuthName,"Oracle") 
+        if( EQUAL(pszAuthName,"Oracle")
             && atoi(pszAuthCode) != 0 )
             return atoi(pszAuthCode);
 

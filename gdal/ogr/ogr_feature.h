@@ -63,8 +63,8 @@ class CPL_DLL OGRFieldDefn
 {
   private:
     char                *pszName;
-    OGRFieldType        eType;                  
-    OGRJustification    eJustify;               
+    OGRFieldType        eType;
+    OGRJustification    eJustify;
     int                 nWidth;                 /* zero is variable */
     int                 nPrecision;
     char                *pszDefault;
@@ -200,7 +200,7 @@ public:
  * contain multiple geometry fields (OGRGeomFieldDefn class).
  *
  * It is reasonable for different translators to derive classes from
- * OGRFeatureDefn with additional translator specific information. 
+ * OGRFeatureDefn with additional translator specific information.
  */
 
 class CPL_DLL OGRFeatureDefn
@@ -284,14 +284,14 @@ class CPL_DLL OGRFeature
 
     bool                SetFieldInternal( int i, OGRField * puValue );
 
-  protected: 
+  protected:
     char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
     char *              m_pszTmpFieldValue;
 
   public:
                         OGRFeature( OGRFeatureDefn * );
-    virtual            ~OGRFeature();                        
+    virtual            ~OGRFeature();
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
 
@@ -337,13 +337,13 @@ class CPL_DLL OGRFeature
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
     GByte              *GetFieldAsBinary( int i, int *pnCount );
-    int                 GetFieldAsDateTime( int i, 
+    int                 GetFieldAsDateTime( int i,
                                      int *pnYear, int *pnMonth, int *pnDay,
-                                     int *pnHour, int *pnMinute, int *pnSecond, 
+                                     int *pnHour, int *pnMinute, int *pnSecond,
                                      int *pnTZFlag );
-    int                 GetFieldAsDateTime( int i, 
+    int                 GetFieldAsDateTime( int i,
                                      int *pnYear, int *pnMonth, int *pnDay,
-                                     int *pnHour, int *pnMinute, float *pfSecond, 
+                                     int *pnHour, int *pnMinute, float *pfSecond,
                                      int *pnTZFlag );
 
     int                 GetFieldAsInteger( const char *pszFName )
@@ -380,7 +380,7 @@ class CPL_DLL OGRFeature
     void                SetField( int i, OGRField * puValue );
     void                SetField( int i, int nCount, GByte * pabyBinary );
     void                SetField( int i, int nYear, int nMonth, int nDay,
-                                  int nHour=0, int nMinute=0, float fSecond=0.f, 
+                                  int nHour=0, int nMinute=0, float fSecond=0.f,
                                   int nTZFlag = 0 );
 
     void                SetField( const char *pszFName, int nValue )
@@ -404,12 +404,12 @@ class CPL_DLL OGRFeature
                            { SetField( GetFieldIndex(pszFName), papszValues); }
     void                SetField( const char *pszFName, OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
-    void                SetField( const char *pszFName, 
+    void                SetField( const char *pszFName,
                                   int nYear, int nMonth, int nDay,
-                                  int nHour=0, int nMinute=0, float fSecond=0.f, 
+                                  int nHour=0, int nMinute=0, float fSecond=0.f,
                                   int nTZFlag = 0 )
-                           { SetField( GetFieldIndex(pszFName), 
-                                       nYear, nMonth, nDay, 
+                           { SetField( GetFieldIndex(pszFName),
+                                       nYear, nMonth, nDay,
                                        nHour, nMinute, fSecond, nTZFlag ); }
 
     GIntBig             GetFID() { return nFID; }
@@ -419,11 +419,11 @@ class CPL_DLL OGRFeature
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
     OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
-    OGRErr              SetFieldsFrom( OGRFeature *, int *, int = TRUE ); 
+    OGRErr              SetFieldsFrom( OGRFeature *, int *, int = TRUE );
 
-    OGRErr              RemapFields( OGRFeatureDefn *poNewDefn, 
+    OGRErr              RemapFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
-    OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn, 
+    OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
 
     int                 Validate( int nValidateFlags,

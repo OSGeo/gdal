@@ -648,7 +648,8 @@ vsi_l_offset VSICurlHandle::GetFileSize(bool bSetError)
             const size_t nExtensionLen = strlen(papszExtensions[i]);
             if( EQUAL(papszExtensions[i], "{noext}") )
             {
-                if( nURLLen > 4 && strchr(pszURL + nURLLen - 4, '.') == NULL )
+                const char* pszLastSlash = strrchr(pszURL, '/');
+                if( pszLastSlash != NULL && strchr(pszLastSlash, '.') == NULL )
                 {
                     bFound = true;
                     break;
@@ -1127,9 +1128,8 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
             if (nBlocksToDownload < nMinBlocksToDownload)
                 nBlocksToDownload = nMinBlocksToDownload;
 
-            int i;
             /* Avoid reading already cached data */
-            for(i=1;i<nBlocksToDownload;i++)
+            for( int i=1; i < nBlocksToDownload; i++ )
             {
                 if (poFS->GetRegion(pszURL, nOffsetToDownload + i * DOWNLOAD_CHUNK_SIZE) != NULL)
                 {
@@ -1195,10 +1195,9 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         return -1;
 
     CPLString osRanges, osFirstRange, osLastRange;
-    int i;
     int nMergedRanges = 0;
     vsi_l_offset nTotalReqSize = 0;
-    for(i=0;i<nRanges;i++)
+    for( int i=0; i < nRanges; i++ )
     {
         CPLString osCurRange;
         if (i != 0)
@@ -1342,7 +1341,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         if ((vsi_l_offset)nSize < nTotalReqSize)
             goto end;
 
-        for(i=0;i<nRanges;i++)
+        for( int i=0; i < nRanges; i++ )
         {
             memcpy(ppData[i], pBuffer + nAccSize, panSizes[i]);
             nAccSize += panSizes[i];
@@ -1593,8 +1592,7 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler()
 
 VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
-    int i;
-    for(i=0;i<nRegions;i++)
+    for( int i=0; i < nRegions; i++ )
     {
         CPLFree(papsRegions[i]->pData);
         CPLFree(papsRegions[i]);
@@ -1689,15 +1687,15 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
     if (fp)
     {
         unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
-        unsigned long   pszURLHashCached;
         vsi_l_offset    nFileOffsetStartCached;
-        size_t          nSizeCached;
         while(true)
         {
+            unsigned long pszURLHashCached = 0;
             if (VSIFReadL(&pszURLHashCached, sizeof(unsigned long), 1, fp) == 0)
                 break;
             if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp) == 0)
                 break;
+            size_t nSizeCached = 0;
             if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0)
                 break;
             if (pszURLHash == pszURLHashCached &&
@@ -1744,15 +1742,15 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
     VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "r+b");
     if (fp)
     {
-        unsigned long   pszURLHashCached;
-        vsi_l_offset    nFileOffsetStartCached;
-        size_t          nSizeCached;
         while(true)
         {
+            unsigned long pszURLHashCached = 0;
             if (VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long), fp) == 0)
                 break;
+            vsi_l_offset nFileOffsetStartCached = 0;
             if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp) == 0 )
                 break;
+            size_t nSizeCached = 0;
             if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0 )
                 break;
             if (psRegion->pszURLHash == pszURLHashCached &&
@@ -1801,8 +1799,8 @@ const CachedRegion* VSICurlFilesystemHandler::GetRegion(const char* pszURL,
     unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
 
     nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
-    int i;
-    for(i=0;i<nRegions;i++)
+
+    for( int i=0; i < nRegions; i++ )
     {
         CachedRegion* psRegion = papsRegions[i];
         if (psRegion->pszURLHash == pszURLHash &&
@@ -2492,8 +2490,8 @@ static bool VSICurlParseFullFTPLine(char* pszLine,
     if (pszMonth == NULL || strlen(pszMonth) != 3)
         return false;
 
-    int i;
-    for(i = 0; i < 12; i++)
+    int i = 0;  // Used after for.
+    for( ; i < 12; i++ )
     {
         if (EQUALN(pszMonth, apszMonths[i], 3))
             break;

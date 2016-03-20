@@ -108,7 +108,7 @@ static const CPLErrorContext sFailureContext =
 static CPLErrorContext *CPLGetErrorContext()
 
 {
-    int bError;
+    int bError = FALSE;
     CPLErrorContext *psCtx =
         reinterpret_cast<CPLErrorContext *>(
             CPLGetTLSEx( CTLS_ERRORCONTEXT, &bError ) );
@@ -214,7 +214,7 @@ void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if( psCtx == NULL || IS_PREFEFINED_ERROR_CTX(psCtx) )
     {
-        int bMemoryError;
+        int bMemoryError = FALSE;
         if( eErrClass == CE_Warning )
         {
             CPLSetTLSWithFreeFuncEx(
@@ -265,7 +265,29 @@ void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /*      rather than just replacing the last error message.              */
 /* -------------------------------------------------------------------- */
         int nPreviousSize = 0;
-        int nPR;
+        if ( psCtx->psHandlerStack != NULL &&
+             EQUAL(CPLGetConfigOption( "CPL_ACCUM_ERROR_MSG", "" ), "ON"))
+        {
+            nPreviousSize = static_cast<int>(strlen(psCtx->szLastErrMsg));
+            if (nPreviousSize)
+            {
+                if (nPreviousSize + 1 + 1 >= psCtx->nLastErrMsgMax)
+                {
+                    psCtx->nLastErrMsgMax *= 3;
+                    psCtx = static_cast<CPLErrorContext *> (
+                        CPLRealloc( psCtx,
+                                    sizeof(CPLErrorContext)
+                                    - DEFAULT_LAST_ERR_MSG_SIZE
+                                    + psCtx->nLastErrMsgMax + 1));
+                    CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
+                }
+                psCtx->szLastErrMsg[nPreviousSize] = '\n';
+                psCtx->szLastErrMsg[nPreviousSize+1] = '0';
+                nPreviousSize ++;
+            }
+        }
+
+        int nPR = 0;
         while( ((nPR = CPLvsnprintf(
                      psCtx->szLastErrMsg+nPreviousSize,
                      psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
@@ -583,7 +605,7 @@ void CPL_STDCALL CPLErrorReset()
         return;
     if( IS_PREFEFINED_ERROR_CTX(psCtx) )
     {
-        int bMemoryError;
+        int bMemoryError = FALSE;
         CPLSetTLSWithFreeFuncEx(
             CTLS_ERRORCONTEXT,
             reinterpret_cast<void*>(
@@ -618,7 +640,7 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
         return;
     if( IS_PREFEFINED_ERROR_CTX(psCtx) )
     {
-        int bMemoryError;
+        int bMemoryError = FALSE;
         if( eErrClass == CE_None )
             CPLSetTLSWithFreeFuncEx(
                 CTLS_ERRORCONTEXT,

@@ -1,9 +1,9 @@
 /******************************************************************************
  * $Id$
- * 
+ *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of simple SQL WHERE style attributes queries
- *           for OGRFeatures.  
+ *           for OGRFeatures.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
 
-const char* const SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+const char* const SpecialFieldNames[SPECIAL_FIELD_COUNT]
 = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT", "OGR_GEOM_AREA"};
-const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
+const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT]
 = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING, SWQ_FLOAT};
 
 /************************************************************************/
@@ -71,7 +71,7 @@ OGRFeatureQuery::~OGRFeatureQuery()
 /*                                Parse                                 */
 /************************************************************************/
 
-OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn, 
+OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
                                  const char * pszExpression,
                                  int bCheck,
                                  swq_custom_func_registrar* poCustomFuncRegistrar )
@@ -95,9 +95,9 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
                               poDefn->GetGeomFieldCount();
 
-    papszFieldNames = (char **) 
+    papszFieldNames = (char **)
         CPLMalloc(sizeof(char *) * nFieldCount );
-    paeFieldTypes = (swq_field_type *) 
+    paeFieldTypes = (swq_field_type *)
         CPLMalloc(sizeof(swq_field_type) * nFieldCount );
 
     for( iField = 0; iField < poDefn->GetFieldCount(); iField++ )
@@ -173,7 +173,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 
     poTargetDefn = poDefn;
     eCPLErr = swq_expr_compile( pszExpression, nFieldCount,
-                                papszFieldNames, paeFieldTypes, 
+                                papszFieldNames, paeFieldTypes,
                                 bCheck,
                                 poCustomFuncRegistrar,
                                 (swq_expr_node **) &pSWQExpr );
@@ -211,22 +211,22 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
     {
       case SWQ_INTEGER:
       case SWQ_BOOLEAN:
-        poRetNode = new swq_expr_node( 
+        poRetNode = new swq_expr_node(
             poFeature->GetFieldAsInteger(op->field_index) );
         break;
 
       case SWQ_INTEGER64:
-        poRetNode = new swq_expr_node( 
+        poRetNode = new swq_expr_node(
             poFeature->GetFieldAsInteger64(op->field_index) );
         break;
 
       case SWQ_FLOAT:
-        poRetNode = new swq_expr_node( 
+        poRetNode = new swq_expr_node(
             poFeature->GetFieldAsDouble(op->field_index) );
         break;
 
       default:
-        poRetNode = new swq_expr_node( 
+        poRetNode = new swq_expr_node(
             poFeature->GetFieldAsString(op->field_index) );
         break;
     }
@@ -348,7 +348,7 @@ static int CompareGIntBig(const void *pa, const void *pb)
         return 0;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer, 
+GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
                                                OGRErr *peErr )
 
 {
@@ -655,7 +655,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
 /*      GetUsedFields().                                                */
 /************************************************************************/
 
-char **OGRFeatureQuery::FieldCollector( void *pBareOp, 
+char **OGRFeatureQuery::FieldCollector( void *pBareOp,
                                         char **papszList )
 
 {
@@ -683,7 +683,7 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
             pszFieldName = SpecialFieldNames[op->field_index - poTargetDefn->GetFieldCount()];
         else if( op->field_index >= 0
                  && op->field_index < poTargetDefn->GetFieldCount() )
-            pszFieldName = 
+            pszFieldName =
                 poTargetDefn->GetFieldDefn(op->field_index)->GetNameRef();
         else
         {
@@ -719,8 +719,8 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
  * All attribute fields are used in the expression of this feature
  * query are returned as a StringList of field names.  This function would
  * primarily be used within drivers to recognise special case conditions
- * depending only on attribute fields that can be very efficiently 
- * fetched. 
+ * depending only on attribute fields that can be very efficiently
+ * fetched.
  *
  * NOTE: If any fields in the expression are from tables other than the
  * primary table then NULL is returned indicating an error.  In successful

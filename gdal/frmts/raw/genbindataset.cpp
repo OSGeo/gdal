@@ -237,8 +237,8 @@ class GenBinBitRasterBand : public GDALPamRasterBand
 GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDSIn, int nBitsIn ) :
     nBits(nBitsIn)
 {
-    SetMetadataItem( "NBITS", 
-                     CPLString().Printf("%d",nBitsIn), 
+    SetMetadataItem( "NBITS",
+                     CPLString().Printf("%d",nBitsIn),
                      "IMAGE_STRUCTURE" );
 
     poDS = poDSIn;
@@ -441,7 +441,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
     if( CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) )
     {
         int i;
-        char **papszTokens = CSLTokenizeString( 
+        char **papszTokens = CSLTokenizeString(
             CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) );
 
         for( i = 0; i < 15 && papszTokens[i] != NULL; i++ )
@@ -458,7 +458,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
     if( EQUAL(pszProjName,"UTM") && nZone != 0 )
     {
-        // honestly, I'm just getting that the negative zone for 
+        // honestly, I'm just getting that the negative zone for
         // southern hemisphere is used.
         oSRS.SetUTM( ABS(nZone), nZone > 0 );
     }
@@ -485,7 +485,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
         else
             pszUnits = NULL;
 
-        oSRS.SetStatePlane( ABS(nZone), 
+        oSRS.SetStatePlane( ABS(nZone),
                             pszDatumName==NULL || !EQUAL(pszDatumName,"NAD27"),
                             pszUnits, dfUnits );
     }
@@ -495,12 +495,12 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 /* -------------------------------------------------------------------- */
     if( oSRS.GetAttrNode( "GEOGCS" ) == NULL )
     {
-        if( pszDatumName != NULL 
+        if( pszDatumName != NULL
             && oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
         {
             // good
         }
-        else if( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ) 
+        else if( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" )
                  && CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS" )
                  && CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS" ) )
         {
@@ -512,7 +512,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
             oSRS.SetGeogCS( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
                             CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
                             CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
-                            dfSemiMajor, 
+                            dfSemiMajor,
                             1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
         }
         else // fallback default.
@@ -585,8 +585,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     achHeader[nRead] = '\0';
     CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
 
-    if( strstr( achHeader, "BANDS:" ) == NULL 
-        || strstr( achHeader, "ROWS:" ) == NULL 
+    if( strstr( achHeader, "BANDS:" ) == NULL
+        || strstr( achHeader, "ROWS:" ) == NULL
         || strstr( achHeader, "COLS:" ) == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -598,11 +598,11 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( bSelectedHDR )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "The selected file is an Generic Binary header file, but to\n"
                   "open Generic Binary datasets, the data file should be selected\n"
                   "instead of the .hdr file.  Please try again selecting\n"
-                  "the raw data file corresponding to the header file: %s\n", 
+                  "the raw data file corresponding to the header file: %s\n",
                   poOpenInfo->pszFilename );
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return NULL;
@@ -621,7 +621,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLString osPP = pszLine;
 
             pszLine = CPLReadLineL(fp);
-            while( pszLine != NULL 
+            while( pszLine != NULL
                    && (*pszLine == '\t' || *pszLine == ' ') )
             {
                 osPP += pszLine;
@@ -683,8 +683,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %s with write permission.\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open %s with write permission.\n%s",
                   osName.c_str(), VSIStrerror( errno ) );
         delete poDS;
         return NULL;
@@ -711,7 +711,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Float64;
     else if( EQUAL(pszDataType,"U8") )
         eDataType = GDT_Byte;
-    else if( EQUAL(pszDataType,"U1") 
+    else if( EQUAL(pszDataType,"U1")
              || EQUAL(pszDataType,"U2")
              || EQUAL(pszDataType,"U4") )
     {
@@ -719,7 +719,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Byte;
         if( nBands != 1 )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Only one band is supported for U1/U2/U4 data type" );
             delete poDS;
             return NULL;
@@ -809,8 +809,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand( i+1, new GenBinBitRasterBand( poDS, nBits ) );
         }
         else
-            poDS->SetBand( 
-                i+1, 
+            poDS->SetBand(
+                i+1,
                 new RawRasterBand( poDS, i+1, poDS->fpImage,
                                    nBandOffset * i, nPixelOffset, nLineOffset,
                                    eDataType, bNative, TRUE ) );

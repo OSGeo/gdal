@@ -8,30 +8,30 @@
 * Copyright (c) 2010, LizardTech
 * All rights reserved.
 
-* Redistribution and use in source and binary forms, with or without 
+* Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
 *
-*   Redistributions of source code must retain the above copyright notice, 
+*   Redistributions of source code must retain the above copyright notice,
 *   this list of conditions and the following disclaimer.
 *
-*   Redistributions in binary form must reproduce the above copyright notice, 
+*   Redistributions in binary form must reproduce the above copyright notice,
 *   this list of conditions and the following disclaimer in the documentation
 *   and/or other materials provided with the distribution.
 *
-*   Neither the name of the LizardTech nor the names of its contributors may 
-*   be used to endorse or promote products derived from this software without 
+*   Neither the name of the LizardTech nor the names of its contributors may
+*   be used to endorse or promote products derived from this software without
 *   specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************************/
 
@@ -68,8 +68,8 @@ class CropableMG4PointReader : public MG4PointReader
          setBounds(*bounds);
    }
 };
-CropableMG4PointReader::CropableMG4PointReader() : MG4PointReader() {};   
-CropableMG4PointReader::~CropableMG4PointReader() {};   
+CropableMG4PointReader::CropableMG4PointReader() : MG4PointReader() {};
+CropableMG4PointReader::~CropableMG4PointReader() {};
 
 IMPLEMENT_OBJECT_CREATE(CropableMG4PointReader);
 
@@ -162,7 +162,7 @@ default:
    CPLError(CE_Failure, CPLE_AssertionFailed,
       "Invalid datatype in MG4 file");
    break;
-#undef DO_CASE      
+#undef DO_CASE
    }
    // Coerce datatypes as required.
    const char * ForceDataType =  CPLGetXMLValue(pods->poXMLPCView, "Datatype", NULL);
@@ -366,7 +366,7 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
    }
 
    double geoTrans[6];
-   poGDS->GetGeoTransform(geoTrans);   
+   poGDS->GetGeoTransform(geoTrans);
    double xres = geoTrans[1];
    double yres = geoTrans[5];
 
@@ -375,7 +375,7 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
    double xmax = xmin + nBlockXSize* xres;
    double ymax = reader->getBounds().y.max - (nBlockYOff * nBlockYSize* -yres);
    double ymin = ymax - nBlockYSize* -yres;
-   Bounds bounds(xmin, xmax,  ymin, ymax, -HUGE_VAL, +HUGE_VAL); 
+   Bounds bounds(xmin, xmax,  ymin, ymax, -HUGE_VAL, +HUGE_VAL);
    PointData pointdata;
    pointdata.init(reader->getPointInfo(), 4096);
    double fraction = 1.0/pow(RESOLUTION_RATIO, poGDS->iLevel);
@@ -400,13 +400,13 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
          col = floor (col);
          row = floor (row);
 
-         if (row < 0) 
+         if (row < 0)
             row = 0;
-         else if (row >= nBlockYSize) 
+         else if (row >= nBlockYSize)
             row = nBlockYSize - 1;
-         if (col < 0) 
+         if (col < 0)
             col = 0;
-         else if (col >= nBlockXSize ) 
+         else if (col >= nBlockXSize )
             col = nBlockXSize - 1;
 
          int iCol = (int) (col);
@@ -498,16 +498,16 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr MG4LidarRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                         double *pdfMin, double *pdfMax, 
+                                         double *pdfMin, double *pdfMax,
                                          double *pdfMean, double *pdfStdDev )
 
 {
-   bApproxOK = TRUE; 
+   bApproxOK = TRUE;
    bForce = TRUE;
 
-   return GDALPamRasterBand::GetStatistics( bApproxOK, bForce, 
-      pdfMin, pdfMax, 
-      pdfMean, pdfStdDev );   
+   return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
+      pdfMin, pdfMax,
+      pdfMean, pdfStdDev );
 
 }
 /************************************************************************/
@@ -568,7 +568,7 @@ CPLErr MG4LidarDataset::GetGeoTransform( double * padfTransform )
 
 {
    padfTransform[0] = reader->getBounds().x.min ;// Upper left X, Y
-   padfTransform[3] = reader->getBounds().y.max; // 
+   padfTransform[3] = reader->getBounds().y.max; //
    padfTransform[1] = reader->getBounds().x.length()/GetRasterXSize(); //xRes
    padfTransform[2] = 0.0;
 
@@ -587,7 +587,7 @@ const char *MG4LidarDataset::GetProjectionRef()
 {
    const char * wkt = CPLGetXMLValue(poXMLPCView, "GeoReference", NULL);
    if (wkt == NULL)
-      wkt = reader->getWKT(); 
+      wkt = reader->getWKT();
    return(wkt);
 }
 
@@ -616,7 +616,7 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
    nRasterYSize  = static_cast<int>(gHeight / yRes + 0.5);
 
    nBlockXSize = static_cast<int>(MIN(MaxBlockSideSize , GetRasterXSize()));
-   nBlockYSize = static_cast<int>(MIN(MaxBlockSideSize , GetRasterYSize())); 
+   nBlockYSize = static_cast<int>(MIN(MaxBlockSideSize , GetRasterYSize()));
 
    CPLDebug( "MG4Lidar", "Opened zoom level %d with size %dx%d.\n",
       iZoom, nRasterXSize, nRasterYSize );
@@ -734,7 +734,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    CPLXMLNode *psInputFile = CPLGetXMLNode( pxmlPCView, "InputFile" );
    if( psInputFile == NULL )
    {
-      CPLError( CE_Failure, CPLE_OpenFailed, 
+      CPLError( CE_Failure, CPLE_OpenFailed,
          "Failed to find <InputFile> in document." );
       CPLDestroyXMLNode(pxmlPCView);
       return NULL;
@@ -809,14 +809,14 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       int cslcount = CSLCount(papszClipExtent);
       if (cslcount != 4 && cslcount != 6)
       {
-         CPLError( CE_Failure, CPLE_OpenFailed, 
+         CPLError( CE_Failure, CPLE_OpenFailed,
             "Invalid ClipBox.  Must contain 4 or 6 floats." );
          CSLDestroy(papszClipExtent);
          delete poDS;
          RELEASE(r);
          RELEASE(io);
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-         if ( pwszFilename ) 
+         if ( pwszFilename )
             CPLFree( pwszFilename );
 #endif
          return NULL;
@@ -852,7 +852,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
    dynamic_cast<CropableMG4PointReader *>(poDS->reader)->init(poDS->fileIO, &bounds);
    poDS->SetDescription(poOpenInfo->pszFilename);
-   poDS->TryLoadXML(); 
+   poDS->TryLoadXML();
 
    double pts_per_area = ((double)r->getNumPoints())/(r->getBounds().x.length()*r->getBounds().y.length());
    double average_pt_spacing = sqrt(1.0 / pts_per_area) ;

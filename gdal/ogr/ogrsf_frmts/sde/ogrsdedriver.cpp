@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSDEDriver class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net>
  * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  ******************************************************************************
@@ -126,4 +126,3 @@ void RegisterOGRSDE()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSDEDriver );
 }
-

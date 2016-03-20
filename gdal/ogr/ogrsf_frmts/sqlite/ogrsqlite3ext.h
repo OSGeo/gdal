@@ -239,7 +239,7 @@ typedef struct sqlite3_backup ogr_sqlite3_backup;
 ** This header file defines the SQLite interface for use by
 ** shared libraries that want to be imported as extensions into
 ** an SQLite instance.  Shared libraries that intend to be loaded
-** as extensions by SQLite should #include this file instead of 
+** as extensions by SQLite should #include this file instead of
 ** sqlite3.h.
 */
 #ifndef SQLITE3EXT_H_

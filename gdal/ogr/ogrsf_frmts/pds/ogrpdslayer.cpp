@@ -184,7 +184,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                                     (nFields + 1) * sizeof(FieldDesc)) );
                 pasFieldDesc[nFields].nStartByte = atoi(osColumnStartByte) - 1;
                 pasFieldDesc[nFields].nByteCount = atoi(osColumnBytes);
-                if (pasFieldDesc[nFields].nStartByte >= 0 && 
+                if (pasFieldDesc[nFields].nStartByte >= 0 &&
                     pasFieldDesc[nFields].nByteCount > 0 &&
                     pasFieldDesc[nFields].nStartByte +
                     pasFieldDesc[nFields].nByteCount <= nRecordSize)

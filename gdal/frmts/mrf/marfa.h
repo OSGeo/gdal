@@ -91,7 +91,7 @@ NAMESPACE_MRF_START
 // Force LERC to be included, normally off, detected in the makefile
 // #define LERC
 
-// These are a pain to maintain in sync.  They should be replaced with 
+// These are a pain to maintain in sync.  They should be replaced with
 // C++11 uniform initializers.  The externs reside in util.cpp
 enum ILCompression {
     IL_PNG = 0, IL_PPNG, IL_JPEG, IL_NONE, IL_ZLIB, IL_TIF,
@@ -714,4 +714,3 @@ protected:
 NAMESPACE_MRF_END
 
 #endif // GDAL_FRMTS_MRF_MARFA_H_INCLUDED
-

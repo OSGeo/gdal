@@ -477,7 +477,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
                 poOgrFeature = kml2feat ( AsPlacemark ( poKmlFeature ),
                                           m_poOgrDS, this,
                                           m_poOgrFeatureDefn, m_poOgrSRS );
-                break;    
+                break;
 
             case kmldom::Type_GroundOverlay:
                 if (m_bReadGroundOverlay) {
@@ -683,13 +683,13 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount (
 {
 
 
-    int i = 0; 
+    int i = 0;
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL ) {
         i = static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
 
     else if( m_poKmlLayer != NULL ) {
-        size_t iKmlFeature; 
+        size_t iKmlFeature;
         size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  );
         FeaturePtr poKmlFeature;
 
@@ -725,7 +725,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount (
  GetExtent()
 
  Args:          psExtent    pointer to the Envelope to store the result in
-                bForce      no effect as of now 
+                bForce      no effect as of now
 
  Returns:       nothing
 
@@ -1163,7 +1163,7 @@ static int LIBKMLGetUnits(const char* pszUnits)
 static void LIBKMLSetVec2(kmldom::Vec2Ptr vec2, const char* pszX, const char* pszY,
                     const char* pszXUnits, const char* pszYUnits)
 {
-    double dfX = CPLAtof(pszX); 
+    double dfX = CPLAtof(pszX);
     double dfY = CPLAtof(pszY);
     vec2->set_x(dfX);
     vec2->set_y(dfY);

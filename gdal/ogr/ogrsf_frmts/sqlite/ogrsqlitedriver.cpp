@@ -9,7 +9,7 @@
  *
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
  * Portions of this module properly supporting SpatiaLite DB creation
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ******************************************************************************
@@ -38,22 +38,7 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 
-#ifdef HAVE_SPATIALITE
-#include "spatialite.h"
-#endif
-
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
-/************************************************************************/
-
-static void OGRSQLiteDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-#ifdef SPATIALITE_412_OR_LATER
-    spatialite_shutdown();
-#endif
-}
 
 /************************************************************************/
 /*                     OGRSQLiteDriverIdentify()                        */
@@ -197,7 +182,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 
     if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 

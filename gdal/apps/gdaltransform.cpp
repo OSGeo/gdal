@@ -41,12 +41,12 @@ CPL_CVSID("$Id: gdaltransform.cpp 12380 2007-10-12 17:35:00Z rouault $");
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( 
+    printf(
         "Usage: gdaltransform [--help-general]\n"
         "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
         "    [-order n] [-tps] [-rpc] [-geoloc] \n"
-        "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n" 
-        "    [srcfile [dstfile]]\n" 
+        "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n"
+        "    [srcfile [dstfile]]\n"
         "\n" );
 
     if( pszErrorMsg != NULL )
@@ -188,7 +188,7 @@ int main( int argc, char ** argv )
             /* -gcp pixel line easting northing [elev] */
 
             nGCPCount++;
-            pasGCPs = (GDAL_GCP *) 
+            pasGCPs = (GDAL_GCP *)
                 CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
@@ -196,7 +196,7 @@ int main( int argc, char ** argv )
             pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
-            if( argv[i+1] != NULL 
+            if( argv[i+1] != NULL
                 && (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
             {
                 /* Check that last argument is really a number and not a filename */
@@ -267,19 +267,19 @@ int main( int argc, char ** argv )
     if( nGCPCount != 0 && nOrder == -1 )
     {
         pfnTransformer = GDALTPSTransform;
-        hTransformArg = 
+        hTransformArg =
             GDALCreateTPSTransformer( nGCPCount, pasGCPs, FALSE );
     }
     else if( nGCPCount != 0 )
     {
         pfnTransformer = GDALGCPTransform;
-        hTransformArg = 
+        hTransformArg =
             GDALCreateGCPTransformer( nGCPCount, pasGCPs, nOrder, FALSE );
     }
     else
     {
         pfnTransformer = GDALGenImgProjTransform;
-        hTransformArg = 
+        hTransformArg =
             GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
     }
 
@@ -320,7 +320,7 @@ int main( int argc, char ** argv )
         }
 
         int bSuccess = TRUE;
-        if( pfnTransformer( hTransformArg, bInverse, 1, 
+        if( pfnTransformer( hTransformArg, bInverse, 1,
                             &dfX, &dfY, &dfZ, &bSuccess )
             && bSuccess )
         {

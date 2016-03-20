@@ -63,7 +63,7 @@ CPL_CVSID("$Id$");
 /*                           OGROGDILayer()                            */
 /************************************************************************/
 
-OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS, 
+OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
                             const char * pszName, ecs_Family eFamily )
 
 {
@@ -98,7 +98,7 @@ OGROGDILayer::~OGROGDILayer()
     if( m_nFeaturesRead > 0 && m_poFeatureDefn != NULL )
     {
         CPLDebug( "OGDI", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   m_poFeatureDefn->GetName() );
     }
 
@@ -208,7 +208,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     OGRFeature  *poFeature;
 
     /* Reset reading if we are not the current layer */
-    /* WARNING : this does not allow interleaved reading of layers */ 
+    /* WARNING : this does not allow interleaved reading of layers */
     if( m_poODS->GetCurrentLayer() != this )
     {
         m_poODS->SetCurrentLayer(this);
@@ -225,8 +225,8 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     /*      Do we need to apply an attribute test?                          */
     /* -------------------------------------------------------------------- */
         if( (m_poAttrQuery != NULL
-            && !m_poAttrQuery->Evaluate( poFeature ) ) 
-            || (m_poFilterGeom != NULL 
+            && !m_poAttrQuery->Evaluate( poFeature ) )
+            || (m_poFilterGeom != NULL
                 && !FilterGeometry( poFeature->GetGeometryRef() ) ) )
         {
             m_nFilteredOutShapes ++;
@@ -282,7 +282,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 
         poOGRLine->setNumPoints( psLine->c.c_len );
 
-        for( i=0; i < (int) psLine->c.c_len; i++ ) 
+        for( i=0; i < (int) psLine->c.c_len; i++ )
         {
             poOGRLine->setPoint(i, psLine->c.c_val[i].x, psLine->c.c_val[i].y);
         }
@@ -302,9 +302,9 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 
             poOGRRing->setNumPoints( psRing->c.c_len );
 
-            for( i=0; i < (int) psRing->c.c_len; i++ ) 
+            for( i=0; i < (int) psRing->c.c_len; i++ )
             {
-                poOGRRing->setPoint(i, psRing->c.c_val[i].x, 
+                poOGRRing->setPoint(i, psRing->c.c_val[i].x,
                                     psRing->c.c_val[i].y);
             }
             poOGRPolygon->addRingDirectly(poOGRRing);
@@ -481,7 +481,7 @@ int OGROGDILayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else 
+    else
         return FALSE;
 #endif
 
@@ -548,8 +548,8 @@ void OGROGDILayer::BuildFeatureDefn()
             *pszLeftParenthesis = '\0';
     }
     else
-        pszFeatureDefnName = CPLStrdup(CPLSPrintf("%s_%s", 
-                                                    m_pszOGDILayerName, 
+        pszFeatureDefnName = CPLStrdup(CPLSPrintf("%s_%s",
+                                                    m_pszOGDILayerName,
                                                     pszGeomName ));
 
     m_poFeatureDefn = new OGRFeatureDefn(pszFeatureDefnName);

@@ -111,19 +111,19 @@ static void netCDFWriteAttributesFromConf( int cdfid, int varid,
         }
         else if( EQUAL(oAtt.m_osType, "string") )
         {
-            status = nc_put_att_text( cdfid, varid, oAtt.m_osName, 
+            status = nc_put_att_text( cdfid, varid, oAtt.m_osName,
                                         oAtt.m_osValue.size(), oAtt.m_osValue );
         }
         else if( EQUAL(oAtt.m_osType, "integer") )
         {
             int nVal = atoi( oAtt.m_osValue );
-            status = nc_put_att_int( cdfid, varid, oAtt.m_osName, 
+            status = nc_put_att_int( cdfid, varid, oAtt.m_osName,
                                         NC_INT, 1, &nVal );
         }
         else if( EQUAL(oAtt.m_osType, "double") )
         {
             double dfVal = CPLAtof( oAtt.m_osValue );
-            status = nc_put_att_double( cdfid, varid, oAtt.m_osName, 
+            status = nc_put_att_double( cdfid, varid, oAtt.m_osName,
                                         NC_DOUBLE, 1, &dfVal );
         }
         NCDF_ERR(status);
@@ -134,7 +134,7 @@ static void netCDFWriteAttributesFromConf( int cdfid, int varid,
 /*                               Create()                               */
 /************************************************************************/
 
-bool netCDFLayer::Create(char** papszOptions, 
+bool netCDFLayer::Create(char** papszOptions,
                          const netCDFWriterConfigLayer* poLayerConfig)
 {
     m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
@@ -186,14 +186,14 @@ bool netCDFLayer::Create(char** papszOptions,
                 int status = nc_def_dim( m_nLayerCDFId, m_osProfileDimName,
                                          nProfileInitSize, &m_nProfileDimID );
                 NCDF_ERR(status);
-                if( status != NC_NOERR ) 
+                if( status != NC_NOERR )
                     return false;
 
                 status = nc_def_var( m_nLayerCDFId, m_osProfileDimName, NC_INT,
                                      1, &m_nProfileDimID,
                                      &m_nProfileVarID);
                 NCDF_ERR(status);
-                if( status != NC_NOERR ) 
+                if( status != NC_NOERR )
                     return false;
 
                 aoAutoVariables.push_back(
@@ -222,7 +222,7 @@ bool netCDFLayer::Create(char** papszOptions,
     status = nc_def_dim( m_nLayerCDFId, m_osRecordDimName,
                              NC_UNLIMITED, &m_nRecordDimID );
     NCDF_ERR(status);
-    if( status != NC_NOERR ) 
+    if( status != NC_NOERR )
         return false;
 
     if( m_osProfileDimName.size() )
@@ -230,7 +230,7 @@ bool netCDFLayer::Create(char** papszOptions,
         status = nc_def_var( m_nLayerCDFId, "parentIndex", NC_INT,
                              1, &m_nRecordDimID, &m_nParentIndexVarID );
         NCDF_ERR(status);
-        if( status != NC_NOERR ) 
+        if( status != NC_NOERR )
             return false;
 
         aoAutoVariables.push_back( std::pair<CPLString,int>("parentIndex", m_nParentIndexVarID) );
@@ -413,7 +413,7 @@ bool netCDFLayer::Create(char** papszOptions,
 
         if( m_nWKTVarID >= 0 && m_osGridMapping.size() != 0 )
         {
-            status = nc_put_att_text( m_nLayerCDFId, m_nWKTVarID, CF_GRD_MAPPING, 
+            status = nc_put_att_text( m_nLayerCDFId, m_nWKTVarID, CF_GRD_MAPPING,
                                       m_osGridMapping.size(), m_osGridMapping.c_str() );
             NCDF_ERR(status);
         }
@@ -725,7 +725,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
         return NULL;
 
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
-    
+
     if( m_nParentIndexVarID >= 0 )
     {
         int nProfileIdx = 0;
@@ -1062,7 +1062,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
                                              anIndex[0], m_uYVarNoData,
                                              &bYIsNoData );
 
-        if( !bXIsNoData && !bYIsNoData ) 
+        if( !bXIsNoData && !bYIsNoData )
         {
             OGRPoint* poPoint;
             if( m_nZVarID >= 0 && m_osProfileDimName.size() == 0 )
@@ -2037,7 +2037,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
     int nMainDimId = m_nRecordDimID;
     if( m_osProfileVariables.size() )
     {
-        char** papszTokens = CSLTokenizeString2( m_osProfileVariables,",", 
+        char** papszTokens = CSLTokenizeString2( m_osProfileVariables,",",
                                                             CSLT_HONOURSTRINGS );
         if( CSLFindString( papszTokens, poFieldDefn->GetNameRef() ) >= 0 )
             nMainDimId = m_nProfileDimID;
@@ -2219,7 +2219,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
             }
             nodata.nVal = NC_FILL_INT;
 
-            status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_UNITS, 
+            status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_UNITS,
                                       strlen("days since 1970-1-1"),
                                       "days since 1970-1-1" );
             NCDF_ERR(status);
@@ -2239,7 +2239,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
             }
             nodata.dfVal = NC_FILL_DOUBLE;
 
-            status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_UNITS, 
+            status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_UNITS,
                              strlen("seconds since 1970-1-1 0:0:0"),
                              "seconds since 1970-1-1 0:0:0" );
             NCDF_ERR(status);
@@ -2306,14 +2306,14 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
 
     if( m_osGridMapping.size() != 0 && nMainDimId == m_nRecordDimID )
     {
-        status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_GRD_MAPPING, 
+        status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_GRD_MAPPING,
                          m_osGridMapping.size(), m_osGridMapping.c_str() );
         NCDF_ERR(status);
     }
 
     if( m_osCoordinatesValue.size() && nMainDimId == m_nRecordDimID )
     {
-        status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_COORDINATES, 
+        status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_COORDINATES,
                         m_osCoordinatesValue.size(), m_osCoordinatesValue.c_str() );
         NCDF_ERR(status);
     }

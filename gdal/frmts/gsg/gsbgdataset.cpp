@@ -451,7 +451,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( bHeaderNeedsUpdate && dfMaxZ > dfMinZ )
     {
 	CPLErr eErr = poGDS->WriteHeader( poGDS->fp,
-					  (GInt16) nRasterXSize, 
+					  (GInt16) nRasterXSize,
                                           (GInt16) nRasterYSize,
 					  dfMinX, dfMaxX,
 					  dfMinY, dfMaxY,
@@ -558,8 +558,8 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fp == NULL )
     {
 	delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "VSIFOpenL(%s) failed unexpectedly.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "VSIFOpenL(%s) failed unexpectedly.",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -766,8 +766,8 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    eErr = WriteHeader( fp, 
-                        (GInt16) poGRB->nRasterXSize, 
+    eErr = WriteHeader( fp,
+                        (GInt16) poGRB->nRasterXSize,
                         (GInt16) poGRB->nRasterYSize,
 			dfMinX, dfMaxX, dfMinY, dfMaxY,
 			poGRB->dfMinZ, poGRB->dfMaxZ );
@@ -977,7 +977,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GSBG driver does not support source dataset with zero band.\n");
         return NULL;
     }

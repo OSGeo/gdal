@@ -329,7 +329,7 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
         for (int i = 0; i < poTrack->getNumPoints(); ++i)
         {
             const TrackPoint* psTrackPoint = poTrack->getPoint(i);
-            lineString->addPoint(psTrackPoint->x, 
+            lineString->addPoint(psTrackPoint->x,
                                  psTrackPoint->y);
         }
         if (poSRS)

@@ -77,7 +77,7 @@ CPL_CVSID("$Id$");
 		(x) = atoi(psBuf); \
 	} while (0);
 
-/* read string fields 
+/* read string fields
  * note: string must be size of field to be extracted + 1
  */
 #define READ_STRING(s, n, f) \
@@ -317,7 +317,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         nNumBytes = 2;
     }
 
-    int nOffset = IMAGE_OPT_DESC_LENGTH + ((nBlockYOff - 1) * nRecordSize) + 
+    int nOffset = IMAGE_OPT_DESC_LENGTH + ((nBlockYOff - 1) * nRecordSize) +
         (nFileType == level_11 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET);
 
     VSIFSeekL( fp, nOffset, SEEK_SET );
@@ -326,7 +326,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 #ifdef CPL_LSB
     if (nFileType == level_11)
         GDALSwapWords( pImage, 4, nBlockXSize * 2, 4 );
-    else 
+    else
         GDALSwapWords( pImage, 2, nBlockXSize, 2 );
 #endif
 
@@ -376,7 +376,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
     else {
         poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.5" );
         /* extract equivalent number of looks */
-        VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH + 
+        VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   EFFECTIVE_LOOKS_AZIMUTH_OFFSET, SEEK_SET );
         char szENL[17];
         double dfENL;
@@ -405,10 +405,10 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         char szProjName[33];
         READ_STRING(szProjName, 32, fp);
         poDS->SetMetadataItem( "PROJECTION_NAME", szProjName );
-		
+
         /* Extract corner GCPs */
         poDS->nGCPCount = 4;
-        poDS->pasGCPList = (GDAL_GCP *)CPLCalloc( sizeof(GDAL_GCP), 
+        poDS->pasGCPList = (GDAL_GCP *)CPLCalloc( sizeof(GDAL_GCP),
                                                   poDS->nGCPCount );
         GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
 
@@ -426,7 +426,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* seek to start of GCPs */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + TOP_LEFT_LAT_OFFSET, SEEK_SET );
-		
+
         /* top-left GCP */
         READ_CHAR_FLOAT(dfTemp, 16, fp);
         poDS->pasGCPList[0].dfGCPY = dfTemp;
@@ -481,7 +481,7 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if ( !STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL") 
+    if ( !STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL")
          || !STARTS_WITH_CI(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, "ALPSR") )
     {
         return 0;
@@ -533,7 +533,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The JAXAPALSAR driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -547,7 +547,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* Try to read each of the polarizations */
     const size_t nImgFileLen =
-        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
+        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) +
         strlen( pszSuffix ) + 8;
     char *pszImgFile = (char *)CPLMalloc( nImgFileLen );
 
@@ -555,17 +555,17 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* HH */
     VSILFILE *fpHH;
-    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHH = VSIFOpenL( pszImgFile, "rb" );
-    if (fpHH != NULL) { 
+    if (fpHH != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 0, fpHH ) );
         nBandNum++;
     }
 
     /* HV */
     VSILFILE *fpHV;
-    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHV = VSIFOpenL( pszImgFile, "rb" );
     if (fpHV != NULL) {
@@ -575,7 +575,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* VH */
     VSILFILE *fpVH;
-    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpVH = VSIFOpenL( pszImgFile, "rb" );
     if (fpVH != NULL) {
@@ -614,10 +614,10 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* read metadata from Leader file. */
-    const size_t nLeaderFilenameLen = strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
+    const size_t nLeaderFilenameLen = strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) +
         strlen(pszSuffix) + 5;
     char *pszLeaderFilename = (char *)CPLMalloc( nLeaderFilenameLen );
-    snprintf( pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s", 
+    snprintf( pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s",
              CPLGetDirname( poOpenInfo->pszFilename ) , SEP_STRING, pszSuffix );
 
     VSILFILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );

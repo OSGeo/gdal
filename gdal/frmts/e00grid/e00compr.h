@@ -54,7 +54,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  **********************************************************************/
 
 #ifndef E00COMPR_H_INCLUDED_
@@ -101,7 +101,7 @@ extern "C" {
 /*---------------------------------------------------------------------
  *                          E00ReadPtr
  *
- * A E00ReadPtr handle is used to hold information about the compressed 
+ * A E00ReadPtr handle is used to hold information about the compressed
  * file currently being read.
  *--------------------------------------------------------------------*/
 struct _E00ReadInfo
@@ -129,7 +129,7 @@ typedef struct _E00ReadInfo *E00ReadPtr;
 /*---------------------------------------------------------------------
  *                          E00WritePtr
  *
- * A E00WritePtr handle is used to hold information about the 
+ * A E00WritePtr handle is used to hold information about the
  * file currently being written.
  *--------------------------------------------------------------------*/
 struct _E00WriteInfo

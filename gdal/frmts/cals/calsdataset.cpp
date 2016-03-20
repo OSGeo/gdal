@@ -60,11 +60,11 @@ class CALSDataset : public GDALPamDataset
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char *pszFilename, 
+    static GDALDataset *CreateCopy( const char *pszFilename,
                                            GDALDataset *poSrcDS,
                                            int bStrict,
                                            char **papszOptions,
-                                           GDALProgressFunc pfnProgress, 
+                                           GDALProgressFunc pfnProgress,
                                            void *pProgressData );
 };
 
@@ -432,24 +432,24 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             CreateCopy()                             */
 /************************************************************************/
 
-GDALDataset *CALSDataset::CreateCopy( const char *pszFilename, 
+GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                       GDALDataset *poSrcDS,
                                       int bStrict,
                                       char ** /* papszOptionsUnused */,
-                                      GDALProgressFunc pfnProgress, 
+                                      GDALProgressFunc pfnProgress,
                                       void *pProgressData )
 {
     if( poSrcDS->GetRasterCount() == 0 ||
         (bStrict && poSrcDS->GetRasterCount() != 1) )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver only supports single band raster.");
         return NULL;
     }
     if( poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL ||
         !EQUAL(poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"), "1") )
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "CALS driver only supports 1-bit.");
         if( bStrict )
             return NULL;
@@ -458,7 +458,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     if( poSrcDS->GetRasterXSize() > 999999 ||
         poSrcDS->GetRasterYSize() > 999999 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver only supports datasets with dimension <= 999999.");
         return NULL;
     }
@@ -466,7 +466,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     GDALDriver* poGTiffDrv = (GDALDriver*)GDALGetDriverByName("GTiff");
     if( poGTiffDrv == NULL )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver needs GTiff driver.");
         return NULL;
     }

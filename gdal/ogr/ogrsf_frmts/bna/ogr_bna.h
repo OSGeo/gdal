@@ -137,7 +137,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 Open( const char * pszFilename,
                               int bUpdate );
 
-    int                 Create( const char *pszFilename, 
+    int                 Create( const char *pszFilename,
                               char **papszOptions );
 
     const char*         GetName() { return pszName; }

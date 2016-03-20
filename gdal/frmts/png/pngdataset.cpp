@@ -29,14 +29,14 @@
  ******************************************************************************
  *
  * ISSUES:
- *  o CollectMetadata() will only capture TEXT chunks before the image 
- *    data as the code is currently structured. 
+ *  o CollectMetadata() will only capture TEXT chunks before the image
+ *    data as the code is currently structured.
  *  o Interlaced images are read entirely into memory for use.  This is
  *    bad for large images.
  *  o Image reading is always strictly sequential.  Reading backwards will
  *    cause the file to be rewound, and access started again from the
- *    beginning. 
- *  o 16 bit alpha values are not scaled by to eight bit. 
+ *    beginning.
+ *  o 16 bit alpha values are not scaled by to eight bit.
  *
  */
 
@@ -189,7 +189,7 @@ class PNGDataset : public GDALPamDataset
 };
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 /************************************************************************/
@@ -524,7 +524,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                GByte* pabyScanline = pabyBuffer 
+                GByte* pabyScanline = pabyBuffer
                     + (y - nBufferStartLine) * nBands * nXSize;
                 if( nPixelSpace == nBandSpace * nBandCount )
                 {
@@ -547,7 +547,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                GByte* pabyScanline = pabyBuffer 
+                GByte* pabyScanline = pabyBuffer
                     + (y - nBufferStartLine) * nBands * nXSize;
                 for(int x = 0; x < nXSize; ++x)
                 {
@@ -561,8 +561,8 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                     pData, nBufXSize, nBufYSize, eBufType, 
-                                     nBandCount, panBandMap, 
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nBandCount, panBandMap,
                                      nPixelSpace, nLineSpace, nBandSpace,
                                      psExtraArg);
 }
@@ -695,7 +695,7 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
         }
 #ifdef notdef
         if( nMaxChunkLines < GetRasterYSize() )
-            CPLDebug( "PNG", 
+            CPLDebug( "PNG",
                       "Interlaced file being handled in %d line chunks.\n"
                       "Performance is likely to be quite poor.",
                       nMaxChunkLines );
@@ -725,7 +725,7 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
     for( int i = 0; i < GetRasterYSize(); i++ )
     {
         if( i >= nBufferStartLine && i < nBufferStartLine + nBufferLines )
-            png_rows[i] = pabyBuffer 
+            png_rows[i] = pabyBuffer
                 + (i-nBufferStartLine) * nPixelOffset * GetRasterXSize();
         else
             png_rows[i] = dummy_row;
@@ -841,7 +841,7 @@ void PNGDataset::CollectMetadata()
     {
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
-            GetRasterBand(iBand+1)->SetMetadataItem( 
+            GetRasterBand(iBand+1)->SetMetadataItem(
                 "NBITS", CPLString().Printf( "%d", nBitDepth ),
                 "IMAGE_STRUCTURE" );
         }
@@ -1010,7 +1010,7 @@ void PNGDataset::LoadICCProfile()
 
         png_get_gAMA(hPNG,psPNGInfo, &dfGamma);
 
-        SetMetadataItem( "PNG_GAMMA", 
+        SetMetadataItem( "PNG_GAMMA",
             CPLString().Printf( "%.9f", dfGamma ) , "COLOR_PROFILE" );
     }
 
@@ -1027,14 +1027,14 @@ void PNGDataset::LoadICCProfile()
                     &dfaCHR[4], &dfaCHR[5]);
 
         // Set all the colorimetric metadata.
-        SetMetadataItem( "SOURCE_PRIMARIES_RED", 
+        SetMetadataItem( "SOURCE_PRIMARIES_RED",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[0], dfaCHR[1] ) , "COLOR_PROFILE" );
-        SetMetadataItem( "SOURCE_PRIMARIES_GREEN", 
+        SetMetadataItem( "SOURCE_PRIMARIES_GREEN",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[2], dfaCHR[3] ) , "COLOR_PROFILE" );
-        SetMetadataItem( "SOURCE_PRIMARIES_BLUE", 
+        SetMetadataItem( "SOURCE_PRIMARIES_BLUE",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[4], dfaCHR[5] ) , "COLOR_PROFILE" );
 
-        SetMetadataItem( "SOURCE_WHITEPOINT", 
+        SetMetadataItem( "SOURCE_WHITEPOINT",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaWhitepoint[0], dfaWhitepoint[1] ) , "COLOR_PROFILE" );
 
     }
@@ -1111,7 +1111,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The PNG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -1126,18 +1126,18 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poOpenInfo->fpL = NULL;
     poDS->eAccess = poOpenInfo->eAccess;
 
-    poDS->hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, poDS, 
+    poDS->hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, poDS,
                                          NULL, NULL );
     if (poDS->hPNG == NULL)
     {
 #if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 2) || PNG_LIBPNG_VER_MAJOR > 1
         int version = static_cast<int>(png_access_version_number());
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The PNG driver failed to access libpng with version '%s',"
                   " library is actually version '%d'.\n",
                   PNG_LIBPNG_VER_STRING, version);
 #else
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The PNG driver failed to in png_create_read_struct().\n"
                   "This may be due to version compatibility problems." );
 #endif
@@ -1174,12 +1174,12 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nBands = png_get_channels( poDS->hPNG, poDS->psPNGInfo );
     poDS->nBitDepth = png_get_bit_depth( poDS->hPNG, poDS->psPNGInfo );
-    poDS->bInterlaced = png_get_interlace_type( poDS->hPNG, poDS->psPNGInfo ) 
+    poDS->bInterlaced = png_get_interlace_type( poDS->hPNG, poDS->psPNGInfo )
         != PNG_INTERLACE_NONE;
 
     poDS->nColorType = png_get_color_type( poDS->hPNG, poDS->psPNGInfo );
 
-    if( poDS->nColorType == PNG_COLOR_TYPE_PALETTE 
+    if( poDS->nColorType == PNG_COLOR_TYPE_PALETTE
         && poDS->nBands > 1 )
     {
         CPLDebug( "GDAL", "PNG Driver got %d from png_get_channels(),\n"
@@ -1211,14 +1211,14 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         png_color *pasPNGPalette;
         int nColorCount;
 
-        if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo, 
+        if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo,
                           &pasPNGPalette, &nColorCount ) == 0 )
             nColorCount = 0;
 
         unsigned char *trans = NULL;
         png_color_16 *trans_values = NULL;
         int num_trans = 0;
-        png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
+        png_get_tRNS( poDS->hPNG, poDS->psPNGInfo,
                       &trans, &num_trans, &trans_values );
 
         poDS->poColorTable = new GDALColorTable();
@@ -1267,8 +1267,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         unsigned char *trans;
         int num_trans;
 
-        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
-                          &trans, &num_trans, &trans_values ) != 0 
+        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo,
+                          &trans, &num_trans, &trans_values ) != 0
             && trans_values != NULL )
         {
             poDS->GetRasterBand(1)->SetNoDataValue(trans_values->gray);
@@ -1278,21 +1278,21 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for nodata color for RGB images.                          */
 /* -------------------------------------------------------------------- */
-    if( poDS->nColorType == PNG_COLOR_TYPE_RGB ) 
+    if( poDS->nColorType == PNG_COLOR_TYPE_RGB )
     {
         png_color_16 *trans_values = NULL;
         unsigned char *trans;
         int num_trans;
 
-        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
-                          &trans, &num_trans, &trans_values ) != 0 
+        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo,
+                          &trans, &num_trans, &trans_values ) != 0
             && trans_values != NULL )
         {
             CPLString oNDValue;
 
-            oNDValue.Printf( "%d %d %d", 
-                    trans_values->red, 
-                    trans_values->green, 
+            oNDValue.Printf( "%d %d %d",
+                    trans_values->red,
+                    trans_values->green,
                     trans_values->blue );
             poDS->SetMetadataItem( "NODATA_VALUES", oNDValue.c_str() );
 
@@ -1409,7 +1409,7 @@ void PNGDataset::WriteMetadataAsText(png_structp hPNG, png_infop psPNGInfo,
     sText.key = (png_charp) pszKey;
     sText.text = (png_charp) pszValue;
 #ifdef HAVE_ITXT_SUPPORT
-    // UTF-8 values should be written in iTXt, whereas TEXT should be LATIN-1 
+    // UTF-8 values should be written in iTXt, whereas TEXT should be LATIN-1
     if( !IsASCII(pszValue) && CPLIsUTF8(pszValue, -1) )
         sText.compression = PNG_ITXT_COMPRESSION_NONE;
 #endif
@@ -1421,8 +1421,8 @@ void PNGDataset::WriteMetadataAsText(png_structp hPNG, png_infop psPNGInfo,
 /************************************************************************/
 
 GDALDataset *
-PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
+PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+               int bStrict, char ** papszOptions,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
@@ -1432,21 +1432,21 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "PNG driver doesn't support %d bands.  Must be 1 (grey),\n"
-                  "2 (grey+alpha), 3 (rgb) or 4 (rgba) bands.\n", 
+                  "2 (grey+alpha), 3 (rgb) or 4 (rgba) bands.\n",
                   nBands );
 
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte
         && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16 )
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "PNG driver doesn't support data type %s. "
-                  "Only eight bit (Byte) and sixteen bit (UInt16) bands supported. %s\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit (Byte) and sixteen bit (UInt16) bands supported. %s\n",
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()),
                   (bStrict) ? "" : "Defaulting to Byte" );
 
@@ -1460,8 +1460,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create png file %s.\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to create png file %s.\n",
                   pszFilename );
         return NULL;
     }
@@ -1538,8 +1538,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize, 
-                  nBitDepth, nColorType, PNG_INTERLACE_NONE, 
+    png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize,
+                  nBitDepth, nColorType, PNG_INTERLACE_NONE,
                   PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
 
 /* -------------------------------------------------------------------- */
@@ -1702,13 +1702,13 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             double faColour[8];
             char** apapszTokenList[4];
 
-            apapszTokenList[0] = CSLTokenizeString2( pszWhitepoint, ",", 
+            apapszTokenList[0] = CSLTokenizeString2( pszWhitepoint, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
-            apapszTokenList[1] = CSLTokenizeString2( pszPrimariesRed, ",", 
+            apapszTokenList[1] = CSLTokenizeString2( pszPrimariesRed, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
-            apapszTokenList[2] = CSLTokenizeString2( pszPrimariesGreen, ",", 
+            apapszTokenList[2] = CSLTokenizeString2( pszPrimariesGreen, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
-            apapszTokenList[3] = CSLTokenizeString2( pszPrimariesBlue, ",", 
+            apapszTokenList[3] = CSLTokenizeString2( pszPrimariesBlue, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
 
             if ((CSLCount( apapszTokenList[0] ) == 3) &&
@@ -1742,10 +1742,10 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 if (bOk)
                 {
-                    png_set_cHRM(hPNG, psPNGInfo, 
-                        faColour[0], faColour[1], 
-                        faColour[2], faColour[3], 
-                        faColour[4], faColour[5], 
+                    png_set_cHRM(hPNG, psPNGInfo,
+                        faColour[0], faColour[1],
+                        faColour[2], faColour[3],
+                        faColour[4], faColour[5],
                         faColour[6], faColour[7]);
 
                 }
@@ -1793,7 +1793,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             pasPNGColors[iColor].blue = static_cast<png_byte>( sEntry.c3 );
         }
 
-        png_set_PLTE( hPNG, psPNGInfo, pasPNGColors, 
+        png_set_PLTE( hPNG, psPNGInfo, pasPNGColors,
                       nEntryCount );
 
         CPLFree( pasPNGColors );
@@ -1817,7 +1817,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     pabyAlpha[iColor] = 0;
             }
 
-            png_set_tRNS( hPNG, psPNGInfo, pabyAlpha, 
+            png_set_tRNS( hPNG, psPNGInfo, pabyAlpha,
                           nEntryCount, NULL );
 
             CPLFree( pabyAlpha );
@@ -1885,11 +1885,11 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         png_bytep       row = pabyScanline;
 
-        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                  pabyScanline, 
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+                                  pabyScanline,
                                   nXSize, 1, eType,
                                   nBands, NULL,
-                                  nBands * nWordSize, 
+                                  nBands * nWordSize,
                                   nBands * nXSize * nWordSize,
                                   nWordSize,
                                   NULL );
@@ -2014,7 +2014,7 @@ static void png_vsi_flush(png_structp png_ptr)
 
 static void png_gdal_error( png_structp png_ptr, const char *error_message )
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "libpng: %s", error_message );
 
     // We have to use longjmp instead of a C++ exception because
@@ -2178,7 +2178,7 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable* poCT)
         return CE_Failure;
 
     // rcg, added to support Create().
-    // We get called even for grayscale files, since some 
+    // We get called even for grayscale files, since some
     // formats need a palette even then. PNG doesn't, so
     // if a gray palette is given, just ignore it.
 
@@ -2195,7 +2195,7 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable* poCT)
             PNGDataset& ds = *reinterpret_cast<PNGDataset *>( poDS );
             ds.m_nColorType = PNG_COLOR_TYPE_PALETTE;
             break;
-            // band::IWriteBlock will emit color table as part of 
+            // band::IWriteBlock will emit color table as part of
             // header preceding first block write.
         }
     }
@@ -2212,16 +2212,16 @@ CPLErr PNGDataset::write_png_header()
 /* -------------------------------------------------------------------- */
 /*      Initialize PNG access to the file.                              */
 /* -------------------------------------------------------------------- */
-    m_hPNG = png_create_write_struct( 
-        PNG_LIBPNG_VER_STRING, NULL, 
+    m_hPNG = png_create_write_struct(
+        PNG_LIBPNG_VER_STRING, NULL,
         png_gdal_error, png_gdal_warning );
 
     m_psPNGInfo = png_create_info_struct( m_hPNG );
 
     png_set_write_fn( m_hPNG, m_fpImage, png_vsi_write_data, png_vsi_flush );
 
-    png_set_IHDR( m_hPNG, m_psPNGInfo, nRasterXSize, nRasterYSize, 
-                  m_nBitDepth, m_nColorType, PNG_INTERLACE_NONE, 
+    png_set_IHDR( m_hPNG, m_psPNGInfo, nRasterXSize, nRasterYSize,
+                  m_nBitDepth, m_nColorType, PNG_INTERLACE_NONE,
                   PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
     png_set_compression_level(m_hPNG, Z_BEST_COMPRESSION);
@@ -2326,7 +2326,7 @@ CPLErr PNGDataset::write_png_header()
             m_pasPNGColors[iColor].blue  = static_cast<png_byte>( sEntry.c3 );
         }
 
-        png_set_PLTE( m_hPNG, m_psPNGInfo, m_pasPNGColors, 
+        png_set_PLTE( m_hPNG, m_psPNGInfo, m_pasPNGColors,
                       poCT->GetColorEntryCount() );
 
 /* -------------------------------------------------------------------- */
@@ -2347,7 +2347,7 @@ CPLErr PNGDataset::write_png_header()
                     m_pabyAlpha[iColor] = 0;
             }
 
-            png_set_tRNS( m_hPNG, m_psPNGInfo, m_pabyAlpha, 
+            png_set_tRNS( m_hPNG, m_psPNGInfo, m_pabyAlpha,
                           poCT->GetColorEntryCount(), NULL );
         }
     }
@@ -2386,7 +2386,7 @@ GDALDataset *PNGDataset::Create
         CPLError( CE_Failure, CPLE_NotSupported,
                   "PNG driver doesn't support %d bands. "
                   "Must be 1 (gray/indexed color),\n"
-                  "2 (gray+alpha), 3 (rgb) or 4 (rgba) bands.\n", 
+                  "2 (gray+alpha), 3 (rgb) or 4 (rgba) bands.\n",
                   nBands );
 
         return NULL;
@@ -2458,8 +2458,8 @@ GDALDataset *PNGDataset::Create
     poDS->m_fpImage = VSIFOpenL( pszFilename, "wb" );
     if( poDS->m_fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create PNG file %s.\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to create PNG file %s.\n",
                   pszFilename );
         delete poDS;
         return NULL;

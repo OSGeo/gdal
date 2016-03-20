@@ -948,7 +948,7 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         (dvoid **) 0),
         hError );
 
-    CheckError( OCILobCreateTemporary( 
+    CheckError( OCILobCreateTemporary(
         poConnection->hSvcCtx,
         poConnection->hError,
         (OCILobLocator*) *pphLocator,

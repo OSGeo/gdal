@@ -45,7 +45,7 @@ public:
   void  SetInvalid(int k) const               { m_pBits[k >> 3] &= ~Bit(k); }
   int	Size() const			      { return (m_nCols * m_nRows - 1) / 8 + 1; }
 
-  // the max RLE compressed size is n + 2 + 2 * (n + 1) / 32767
+  // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
   // Returns encoded size
   int RLEcompress(Byte *aRLE) const;
   // current encoded size

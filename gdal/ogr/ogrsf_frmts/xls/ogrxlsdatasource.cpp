@@ -115,7 +115,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = CPLStrdup( pszFilename );
 #endif
 
-// -------------------------------------------------------------------- 
+// --------------------------------------------------------------------
 //      Does this appear to be a .xls file?
 // --------------------------------------------------------------------
 

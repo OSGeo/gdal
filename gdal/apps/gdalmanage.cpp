@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Command line utility for GDAL identify, delete, rename and copy 
- *           (by file) operations. 
+ * Purpose:  Command line utility for GDAL identify, delete, rename and copy
+ *           (by file) operations.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************
@@ -53,8 +53,8 @@ static void Usage()
 /*                       ProcessIdentifyTarget()                        */
 /************************************************************************/
 
-static void ProcessIdentifyTarget( const char *pszTarget, 
-                                   char **papszSiblingList, 
+static void ProcessIdentifyTarget( const char *pszTarget,
+                                   char **papszSiblingList,
                                    int bRecursive, int bReportFailures )
 
 {
@@ -72,21 +72,21 @@ static void ProcessIdentifyTarget( const char *pszTarget,
     if( !bRecursive || hDriver != NULL )
         return;
 
-    if( VSIStatL( pszTarget, &sStatBuf ) != 0 
+    if( VSIStatL( pszTarget, &sStatBuf ) != 0
         || !VSI_ISDIR( sStatBuf.st_mode ) )
         return;
 
     papszSiblingList = VSIReadDir( pszTarget );
     for( i = 0; papszSiblingList && papszSiblingList[i]; i++ )
     {
-        if( EQUAL(papszSiblingList[i],"..") 
+        if( EQUAL(papszSiblingList[i],"..")
             || EQUAL(papszSiblingList[i],".") )
             continue;
 
-        CPLString osSubTarget = 
+        CPLString osSubTarget =
             CPLFormFilename( pszTarget, papszSiblingList[i], NULL );
 
-        ProcessIdentifyTarget( osSubTarget, papszSiblingList, 
+        ProcessIdentifyTarget( osSubTarget, papszSiblingList,
                                bRecursive, bReportFailures );
     }
     CSLDestroy(papszSiblingList);
@@ -122,7 +122,7 @@ static void Identify( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     while( nArgc > 0 )
     {
-        ProcessIdentifyTarget( papszArgv[0], NULL, 
+        ProcessIdentifyTarget( papszArgv[0], NULL,
                                bRecursive, bReportFailures );
         nArgc--;
         papszArgv++;
@@ -244,4 +244,3 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
-

@@ -51,7 +51,7 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 layer to try and represent the width and precision information, if available
 using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
 FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
-<li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3. 
+<li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
@@ -85,6 +85,9 @@ This can for example be used to create a column of type <a href="http://www.post
 <li> <b>POSTGIS_VERSION</b>: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS 2.0 compatibility. Starting with GDAL 2.0,
 it is important to set it correctly when dealing with non-linear geometry types. Starting with GDAL 2.1, can be
 POSTGIS_VERSION=2.2 is specially dealt with to correctly export POINT EMPTY geometries<p>
+<li> <b>DESCRIPTION</b> (From GDAL 2.1) Description string to put in the pg_description system table. The description
+can also be written with SetMetadataItem("DESCRIPTION", description_string). Descriptions are preserved
+by default by ogr2ogr, unless the -nomd option is used.</p>
 </ul>
 
 <h3>Environment variables</h3>

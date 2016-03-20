@@ -713,6 +713,33 @@ def ogr_libkml_read_emptylayers():
 ###############################################################################
 # Test reading KML with empty layers
 
+###############################################################################
+# Test reading KML with empty layers without folder
+
+def ogr_libkml_read_emptylayers_without_folder():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/emptylayers_without_folder.kml')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    # --> One difference with the old KML driver
+    if ds.GetLayer(0).GetName() != 'Test':
+        gdaltest.post_reason('failed')
+        print("Layer name must be '" + ds.GetLayer(0).GetName() + "'.")
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with empty layers without_folder
+
 def ogr_libkml_read_schema():
 
     if not ogrtest.have_read_libkml:
@@ -1304,9 +1331,10 @@ def ogr_libkml_write_model():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    # This can only appear if HTTP resource is available
-    if data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
-       data.find('<sourceHref>cube.gif</sourceHref>') == -1:
+    # This can only appear if HTTP resource is available and GDAL is built with curl/http support 
+    if gdal.GetDriverByName('HTTP') is not None and \
+       (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
+       data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
             print(data)
@@ -2061,6 +2089,7 @@ gdaltest_list = [
     ogr_libkml_read_placemark,
     ogr_libkml_read_empty,
     ogr_libkml_read_emptylayers,
+    ogr_libkml_read_emptylayers_without_folder,    
     ogr_libkml_read_schema,
     ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_gxtrack,

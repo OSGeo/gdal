@@ -179,7 +179,7 @@ RasdamanDataset::~RasdamanDataset()
 CPLErr RasdamanDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -717,4 +717,3 @@ void GDALRegister_RASDAMAN()
 
   GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

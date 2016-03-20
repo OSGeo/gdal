@@ -346,8 +346,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
-        pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL, 
-                                  anEntityNum+nLinkCount, anMSLink+nLinkCount, 
+        pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
+                                  anEntityNum+nLinkCount, anMSLink+nLinkCount,
                                   NULL );
     }
 
@@ -514,7 +514,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
                 poLine->setNumPoints( psEMP->num_vertices );
                 for( int i = 0; i < psEMP->num_vertices; i++ )
                 {
-                    poLine->setPoint( i, 
+                    poLine->setPoint( i,
                                       psEMP->vertices[i].x,
                                       psEMP->vertices[i].y,
                                       psEMP->vertices[i].z );

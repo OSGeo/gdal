@@ -3693,7 +3693,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
-} 
+}
 
 
 SWIGINTERNINLINE PyObject *

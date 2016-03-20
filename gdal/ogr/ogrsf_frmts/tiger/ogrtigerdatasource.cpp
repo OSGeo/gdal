@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_tiger.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include <ctype.h>
+#include "ogr_tiger.h"
+
+#include <cctype>
 
 CPL_CVSID("$Id$");
 
@@ -47,15 +48,15 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 /*
 ** TIGER Versions
 **
-** 0000           TIGER/Line Precensus Files, 1990 
-** 0002           TIGER/Line Initial Voting District Codes Files, 1990 
-** 0003           TIGER/Line Files, 1990 
-** 0005           TIGER/Line Files, 1992 
-** 0021           TIGER/Line Files, 1994 
-** 0024           TIGER/Line Files, 1995 
-** 9706 to 9810   TIGER/Line Files, 1997 
-** 9812 to 9904   TIGER/Line Files, 1998 
-** 0006 to 0008   TIGER/Line Files, 1999 
+** 0000           TIGER/Line Precensus Files, 1990
+** 0002           TIGER/Line Initial Voting District Codes Files, 1990
+** 0003           TIGER/Line Files, 1990
+** 0005           TIGER/Line Files, 1992
+** 0021           TIGER/Line Files, 1994
+** 0024           TIGER/Line Files, 1995
+** 9706 to 9810   TIGER/Line Files, 1997
+** 9812 to 9904   TIGER/Line Files, 1998
+** 0006 to 0008   TIGER/Line Files, 1999
 ** 0010 to 0011   TIGER/Line Files, Redistricting Census 2000
 ** 0103 to 0108   TIGER/Line Files, Census 2000
 **
@@ -148,7 +149,7 @@ const char * TigerVersionString( TigerVersion nVersion )
 /*      based on this.                                                  */
 /************************************************************************/
 
-TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion, 
+TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
                                                     const char *pszFilename )
 
 {
@@ -162,7 +163,7 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
     if( fp == NULL )
         return nOldVersion;
 
-    char        szHeader[115];
+    char szHeader[115];
 
     if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
     {
@@ -181,8 +182,8 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
         CPLDebug( "TIGER", "Forcing version back to UA2000 since RTC records are short." );
         return TIGER_UA2000;
     }
-    else
-        return nOldVersion;
+
+    return nOldVersion;
 }
 
 /************************************************************************/
@@ -237,8 +238,8 @@ void OGRTigerDataSource::AddLayer( OGRTigerLayer * poNewLayer )
 
 {
     poNewLayer->SetDescription( poNewLayer->GetName() );
-    papoLayers = (OGRTigerLayer **)
-        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
+    papoLayers = static_cast<OGRTigerLayer **>(
+        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers ) );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -252,8 +253,8 @@ OGRLayer *OGRTigerDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -290,15 +291,15 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                               char ** papszLimitedFileList )
 
 {
-    VSIStatBufL     stat;
-    char            **papszFileList = NULL;
-
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStatExL( pszFilename, &stat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0
+    VSIStatBufL stat;
+
+    if( VSIStatExL( pszFilename, &stat,
+                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -312,6 +313,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are Tiger files.            */
 /* -------------------------------------------------------------------- */
+    char **papszFileList = NULL;
     if( VSI_ISREG(stat.st_mode) )
     {
         char       szModule[128];
@@ -334,24 +336,24 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     }
     else
     {
-        char      **candidateFileList = CPLReadDir( pszFilename );
+        char **candidateFileList = VSIReadDir( pszFilename );
 
         pszPath = CPLStrdup( pszFilename );
 
         for( int i = 0;
-             candidateFileList != NULL && candidateFileList[i] != NULL; 
-             i++ ) 
+             candidateFileList != NULL && candidateFileList[i] != NULL;
+             i++ )
         {
             size_t nCandidateLen = strlen(candidateFileList[i]);
 
-            if( papszLimitedFileList != NULL 
+            if( papszLimitedFileList != NULL
                 && CSLFindString(papszLimitedFileList,
                                  CPLGetBasename(candidateFileList[i])) == -1 )
             {
                 continue;
             }
 
-            if( nCandidateLen > 4 
+            if( nCandidateLen > 4
                 && candidateFileList[i][nCandidateLen-4] == '.'
                 && candidateFileList[i][nCandidateLen-1] == '1')
             {
@@ -418,13 +420,13 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             pszRecStart = szHeader;
             szHeader[sizeof(szHeader)-1] = '\0';
 
-            if( STARTS_WITH_CI(pszRecStart, "Copyright (C)") 
+            if( STARTS_WITH_CI(pszRecStart, "Copyright (C)")
                 && strstr(pszRecStart,"Geographic Data Tech") != NULL )
             {
                 bIsGDT = TRUE;
 
-                while( *pszRecStart != '\0' 
-                       && *pszRecStart != 10 
+                while( *pszRecStart != '\0'
+                       && *pszRecStart != 10
                        && *pszRecStart != 13 )
                     pszRecStart++;
 
@@ -443,14 +445,14 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             nVersion = TigerClassifyVersion( nVersionCode );
             nVersion = TigerCheckVersion( nVersion, papszFileList[i] );
 
-            CPLDebug( "OGR", "Tiger Version Code=%d, Classified as %s ", 
+            CPLDebug( "OGR", "Tiger Version Code=%d, Classified as %s ",
                       nVersionCode, TigerVersionString(nVersion) );
 
             if(    nVersionCode !=  0
                 && nVersionCode !=  2
                 && nVersionCode !=  3
                 && nVersionCode !=  5
-                && nVersionCode != 21 
+                && nVersionCode != 21
                 && nVersionCode != 24
                 && pszRecStart[3]  != '9'
                 && pszRecStart[3]  != '0'
@@ -490,7 +492,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "TIGER_VERSION", NULL ) != NULL )
     {
-        const char *pszRequestedVersion = 
+        const char *pszRequestedVersion =
             CPLGetConfigOption( "TIGER_VERSION", NULL );
 
         if( STARTS_WITH_CI(pszRequestedVersion, "TIGER_") )
@@ -509,13 +511,13 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
             if( iCode == TIGER_Unknown )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Failed to recognise TIGER_VERSION setting: %s", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Failed to recognise TIGER_VERSION setting: %s",
                           pszRequestedVersion );
                 return FALSE;
-            }                          
+            }
 
-            CPLDebug( "OGR", "OVERRIDE Tiger Version %s ", 
+            CPLDebug( "OGR", "OVERRIDE Tiger Version %s ",
                       TigerVersionString(nVersion) );
         }
         else
@@ -523,8 +525,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             nVersionCode = atoi(pszRequestedVersion);
             nVersion = TigerClassifyVersion( nVersionCode );
 
-            CPLDebug( "OGR", 
-                      "OVERRIDE Tiger Version Code=%d, Classified as %s ", 
+            CPLDebug( "OGR",
+                      "OVERRIDE Tiger Version Code=%d, Classified as %s ",
                       nVersionCode, TigerVersionString(nVersion) );
         }
     }
@@ -780,7 +782,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
 
     if( VSIStatL( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s is not a directory, nor can be directly created as one.",
                   pszNameIn );
         return FALSE;
@@ -830,8 +832,8 @@ OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
          || !EQUAL(poSpatRef->GetAttrValue("DATUM"),
                    "North_American_Datum_1983")) )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Requested coordinate system wrong for Tiger, " 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Requested coordinate system wrong for Tiger, "
                   "forcing to GEOGCS NAD83." );
     }
 
@@ -938,7 +940,7 @@ OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
 
     if( poLayer == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create layer %s, not a known TIGER/Line layer.",
                   pszLayerName );
     }
@@ -955,7 +957,7 @@ OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
 void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
 
 {
-    char        **papszDirFiles = CPLReadDir( GetDirPath() );
+    char        **papszDirFiles = VSIReadDir( GetDirPath() );
     int         i, nCount = CSLCount(papszDirFiles);
 
     for( i = 0; i < nCount; i++ )
@@ -964,8 +966,8 @@ void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
         {
             const char  *pszFilename;
 
-            pszFilename = CPLFormFilename( GetDirPath(), 
-                                           papszDirFiles[i], 
+            pszFilename = CPLFormFilename( GetDirPath(),
+                                           papszDirFiles[i],
                                            NULL );
             if( VSIUnlink( pszFilename ) != 0 )
             {

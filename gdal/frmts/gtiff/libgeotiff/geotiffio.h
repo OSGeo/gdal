@@ -1,6 +1,6 @@
-/* 
+/*
  * geotiffio.h
- * 
+ *
  * Standard include file for geotiff, including all
  * key and code definitions.
  *
@@ -18,4 +18,3 @@
 #include "geovalues.h" /* key code definitions */
 
 #endif /* LIBGEOTIFF_GEOTIFFIO_H_ */
-

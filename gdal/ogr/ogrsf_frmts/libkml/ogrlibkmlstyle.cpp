@@ -779,8 +779,8 @@ static void kml2styletable (
 ******************************************************************************/
 
 StyleSelectorPtr StyleFromStyleSelector(
-    const StyleSelectorPtr& poKmlStyleSelector, 
-    OGRStyleTable * poStyleTable) 
+    const StyleSelectorPtr& poKmlStyleSelector,
+    OGRStyleTable * poStyleTable)
 {
 
     /***** is it a style? *****/
@@ -847,7 +847,7 @@ static ContainerPtr MyGetContainerFromRoot (
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
     const string styleurl,
-    OGRStyleTable * poStyleTable) 
+    OGRStyleTable * poStyleTable)
 {
     // TODO:: Parse the styleURL
 
@@ -970,7 +970,7 @@ static StyleSelectorPtr StyleFromStyleURL(
 
 StyleSelectorPtr StyleFromStyleMap(
     const StyleMapPtr& poKmlStyleMap,
-    OGRStyleTable * poStyleTable) 
+    OGRStyleTable * poStyleTable)
 {
 
     /***** check the config option to see if the    *****/
@@ -1045,8 +1045,8 @@ void ParseStyles (
         kml2styletable ( *poStyleTable, AsStyle ( poKmlElement ) );
     }
 
-    /***** Now we have to loop back around and get the style maps. We    *****/ 
-    /***** have to do this a second time since the stylemap might matter *****/ 
+    /***** Now we have to loop back around and get the style maps. We    *****/
+    /***** have to do this a second time since the stylemap might matter *****/
     /***** and we are just looping reference styles that are farther     *****/
     /***** down in the file. Order through the XML as it is parsed.      *****/
 

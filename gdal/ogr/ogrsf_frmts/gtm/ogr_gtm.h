@@ -181,9 +181,9 @@ public:
 
     OGRLayer* GetLayer( int );
 
-    OGRLayer* ICreateLayer(const char *pszName, 
-                           OGRSpatialReference *poSpatialRef=NULL, 
-                           OGRwkbGeometryType eGType=wkbUnknown, 
+    OGRLayer* ICreateLayer(const char *pszName,
+                           OGRSpatialReference *poSpatialRef=NULL,
+                           OGRwkbGeometryType eGType=wkbUnknown,
                            char **papszOptions=NULL);
     int TestCapability( const char * );
 
@@ -215,11 +215,11 @@ public:
 
     void checkBounds(float newLat,
                      float newLon);
-    int getNumWaypoints() { return numWaypoints; } 
+    int getNumWaypoints() { return numWaypoints; }
     int getNumTrackpoints() { return numTrackpoints; }
     int getTracks() { return numTracks; };
 
-    int incNumWaypoints() { return ++numWaypoints; } 
+    int incNumWaypoints() { return ++numWaypoints; }
     int incNumTrackpoints() { return ++numTrackpoints; }
     int incNumTracks() { return ++numTracks; };
 private:

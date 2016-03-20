@@ -108,7 +108,7 @@ public:
 /*                           GFFRasterBand()                            */
 /************************************************************************/
 GFFRasterBand::GFFRasterBand( GFFDataset *poDSIn, int nBandIn,
-	GDALDataType eDataTypeIn ) 
+	GDALDataType eDataTypeIn )
 {
     this->poDS = poDSIn;
     this->nBand = nBandIn;
@@ -158,7 +158,7 @@ CPLErr GFFRasterBand::IReadBlock( int /* nBlockXOff */ ,
     {
         int nWordSize = GDALGetDataTypeSize(eDataType)/16;
         GDALSwapWords( pImage, nWordSize, nBlockXSize, 2*nWordSize );
-        GDALSwapWords( ((GByte *) pImage)+nWordSize, 
+        GDALSwapWords( ((GByte *) pImage)+nWordSize,
                         nWordSize, nBlockXSize, 2*nWordSize );
     }
 #endif
@@ -177,10 +177,10 @@ CPLErr GFFRasterBand::IReadBlock( int /* nBlockXOff */ ,
 /************************************************************************/
 int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
-    if(poOpenInfo->nHeaderBytes < 7) 
+    if(poOpenInfo->nHeaderBytes < 7)
         return 0;
 
-    if (STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GSATIMG")) 
+    if (STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GSATIMG"))
         return 1;
 
     return 0;
@@ -190,10 +190,10 @@ int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo ) 
+GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
-    if (!GFFDataset::Identify(poOpenInfo)) 
+    if (!GFFDataset::Identify(poOpenInfo))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -201,7 +201,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GFF driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -291,9 +291,9 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    /* Set raster width/height 
+    /* Set raster width/height
      * Note that the images that are complex are listed as having twice the
-     * number of X-direction values than there are actual pixels. This is 
+     * number of X-direction values than there are actual pixels. This is
      * because whoever came up with the format was crazy (actually, my
      * hunch is that they designed it very much for Matlab)
      * */

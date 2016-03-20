@@ -171,7 +171,7 @@ int OGRNTFFeatureClassLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
@@ -181,6 +181,6 @@ int OGRNTFFeatureClassLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return TRUE;
 
-    else 
+    else
         return FALSE;
 }

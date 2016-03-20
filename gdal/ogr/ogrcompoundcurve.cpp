@@ -52,10 +52,10 @@ OGRCompoundCurve::OGRCompoundCurve()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -319,7 +319,7 @@ void OGRCompoundCurve::Value( double dfDistance, OGRPoint *poPoint ) const
         double dfSegLength = oCC.papoCurves[iGeom]->get_Length();
         if (dfSegLength > 0)
         {
-            if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+            if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                              dfDistance) )
             {
                 oCC.papoCurves[iGeom]->Value(dfDistance - dfLength, poPoint);
@@ -753,7 +753,7 @@ OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
  *
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure)
- * 
+ *
  * @param poCC the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

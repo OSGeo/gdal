@@ -90,28 +90,28 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     this->nBand         = nBandIn != 0 ? nBandIn : poDSIn->nBands;
     eDataType     = eType;
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Get Header Info
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     memcpy(&hHeaderOne, &poDSIn->hHeaderOne, sizeof(hHeaderOne));
     memcpy(&hHeaderTwo, &poDSIn->hHeaderTwo, sizeof(hHeaderTwo));
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Get the image start from Words to Follow (WTF)
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     if( nBandOffset > INT_MAX - (2 + ( 2 * ( hHeaderOne.WordsToFollow + 1 ) )) )
     {
         pabyBlockBuf = NULL;
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid header values");
         return;
     }
-    
+
     nDataOffset = nBandOffset + 2 + ( 2 * ( hHeaderOne.WordsToFollow + 1 ) );
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Get Color Tabel from Color Table Type (CTV)
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
 
@@ -130,14 +130,14 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
                 return;
             break;
         default:
-            CPLDebug( "INGR", "Wrong Color table type (%d), number of colors (%d)", 
+            CPLDebug( "INGR", "Wrong Color table type (%d), number of colors (%d)",
                 hHeaderTwo.ColorTableType, nEntries );
         }
     }
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Set Dimension
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     nRasterXSize  = hHeaderOne.PixelsPerLine;
     nRasterYSize  = hHeaderOne.NumberOfLines;
@@ -145,9 +145,9 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     nBlockXSize   = nRasterXSize;
     nBlockYSize   = 1;
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Get tile directory
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     eFormat = (INGR_Format) hHeaderOne.DataTypeCode;
 
@@ -155,11 +155,11 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
 
     if( bTiled )
     {
-        nTiles = INGR_GetTileDirectory( poDSIn->fp, 
-                                        nDataOffset, 
-                                        nRasterXSize, 
+        nTiles = INGR_GetTileDirectory( poDSIn->fp,
+                                        nDataOffset,
+                                        nRasterXSize,
                                         nRasterYSize,
-                                        &hTileDir, 
+                                        &hTileDir,
                                         &pahTiles );
         if (nTiles == 0)
             return;
@@ -181,7 +181,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     }
 
     // --------------------------------------------------------------------
-    // Incomplete tiles have Block Offset greater than: 
+    // Incomplete tiles have Block Offset greater than:
     // --------------------------------------------------------------------
 
     nFullBlocksX  = ( nRasterXSize / nBlockXSize );
@@ -208,10 +208,10 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
         return;
     }
 
-    nBlockBufSize = nBlockXSize * nBlockYSize * 
+    nBlockBufSize = nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8);
 
-    if (eFormat == RunLengthEncoded)    
+    if (eFormat == RunLengthEncoded)
     {
         pabyBlockBuf = (GByte*) VSIMalloc3( nBlockXSize*4+2, nBlockYSize,
                                             GDALGetDataTypeSize( eDataType ) / 8);
@@ -232,20 +232,20 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // More Metadata Information
     // --------------------------------------------------------------------
 
-    SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16) eFormat ), 
+    SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16) eFormat ),
         "IMAGE_STRUCTURE" );
 
     if( bTiled )
     {
-        SetMetadataItem( "TILESSIZE", CPLSPrintf ("%d", hTileDir.TileSize), 
+        SetMetadataItem( "TILESSIZE", CPLSPrintf ("%d", hTileDir.TileSize),
             "IMAGE_STRUCTURE" );
     }
     else
     {
-        SetMetadataItem( "TILED", "NO", "IMAGE_STRUCTURE" ); 
+        SetMetadataItem( "TILED", "NO", "IMAGE_STRUCTURE" );
     }
 
-    SetMetadataItem( "ORIENTATION", 
+    SetMetadataItem( "ORIENTATION",
         INGR_GetOrientation( hHeaderOne.ScanlineOrientation ),
         "IMAGE_STRUCTURE" );
 
@@ -316,16 +316,16 @@ double IntergraphRasterBand::GetMaximum( int *pbSuccess )
 GDALColorInterp IntergraphRasterBand::GetColorInterpretation()
 {
     if( eFormat == AdaptiveRGB ||
-        eFormat == Uncompressed24bit || 
+        eFormat == Uncompressed24bit ||
         eFormat == ContinuousTone )
     {
         switch( nRGBIndex )
         {
-        case 1: 
+        case 1:
             return GCI_RedBand;
-        case 2: 
+        case 2:
             return GCI_GreenBand;
-        case 3: 
+        case 3:
             return GCI_BlueBand;
         }
         return GCI_GrayIndex;
@@ -377,9 +377,9 @@ CPLErr IntergraphRasterBand::SetColorTable( GDALColorTable *poColorTableIn )
 //                                         IntergraphRasterBand::SetStatistics()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphRasterBand::SetStatistics( double dfMin, 
-                                            double dfMax, 
-                                            double dfMean, 
+CPLErr IntergraphRasterBand::SetStatistics( double dfMin,
+                                            double dfMax,
+                                            double dfMean,
                                             double dfStdDev )
 {
     hHeaderOne.Minimum = INGR_SetMinMax( eDataType, dfMin );
@@ -392,7 +392,7 @@ CPLErr IntergraphRasterBand::SetStatistics( double dfMin,
 //                                            IntergraphRasterBand::IReadBlock()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff, 
+CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
@@ -406,10 +406,10 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+        memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
-        CPLError( CE_Failure, CPLE_FileIO, 
-            "Can't read (%s) tile with X offset %d and Y offset %d.\n", 
+        CPLError( CE_Failure, CPLE_FileIO,
+            "Can't read (%s) tile with X offset %d and Y offset %d.\n",
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff );
         return CE_Failure;
     }
@@ -418,7 +418,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
-    if( nBlockXOff == nFullBlocksX || 
+    if( nBlockXOff == nFullBlocksX ||
         nBlockYOff == nFullBlocksY )
     {
         if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf ) )
@@ -429,7 +429,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     // Copy block buffer to image
     // --------------------------------------------------------------------
 
-    memcpy( pImage, pabyBlockBuf, nBlockXSize * nBlockYSize * 
+    memcpy( pImage, pabyBlockBuf, nBlockXSize * nBlockYSize *
         (GDALGetDataTypeSize( eDataType ) / 8) );
 
 #ifdef CPL_MSB
@@ -448,11 +448,11 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
 //                                        IntergraphRasterBand::HandleUninstantiatedTile()
 //  ----------------------------------------------------------------------------
 
-int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff, 
+int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
                                                    int nBlockYOff,
                                                    void* pImage)
 {
-    if( bTiled && pahTiles[nBlockXOff + nBlockYOff * nBlocksPerRow].Start == 0 ) 
+    if( bTiled && pahTiles[nBlockXOff + nBlockYOff * nBlocksPerRow].Start == 0 )
     {
         // ------------------------------------------------------------
         // Uninstantieted tile, unique value
@@ -460,14 +460,14 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
         int nColor = pahTiles[nBlockXOff + nBlockYOff * nBlocksPerRow].Used;
         switch( GetColorInterpretation() )
         {
-            case GCI_RedBand: 
+            case GCI_RedBand:
                 nColor >>= 16; break;
-            case GCI_GreenBand: 
+            case GCI_GreenBand:
                 nColor >>= 8; break;
             default:
                 break;
         }
-        memset( pImage, nColor, nBlockXSize * nBlockYSize * 
+        memset( pImage, nColor, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
         return TRUE;
     }
@@ -480,7 +480,7 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
 //                                        IntergraphRGBBand::IntergraphRGBBand()
 //  ----------------------------------------------------------------------------
 
-IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn, 
+IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
                                      int nBandIn,
                                      int nBandOffset,
                                      int nRGorB )
@@ -491,9 +491,9 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
 
     nRGBIndex     = (uint8) nRGorB;
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Reallocate buffer for a block of RGB Data
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     nBlockBufSize *= 3;
     CPLFree( pabyBlockBuf );
@@ -508,12 +508,12 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
 //                                               IntergraphRGBBand::IReadBlock()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff, 
+CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
-    if( IntergraphRasterBand::IReadBlock( nBlockXOff, 
-                                          nBlockYOff, 
+    if( IntergraphRasterBand::IReadBlock( nBlockXOff,
+                                          nBlockYOff,
                                           pImage ) != CE_None )
     {
         return CE_Failure;
@@ -524,7 +524,7 @@ CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
     // --------------------------------------------------------------------
 
     for ( int i = 0, j = ( nRGBIndex - 1 );
-          i < ( nBlockXSize * nBlockYSize ); 
+          i < ( nBlockXSize * nBlockYSize );
           i++, j += 3 )
     {
         ( (GByte*) pImage )[i] = pabyBlockBuf[j];
@@ -537,7 +537,7 @@ CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
 //                                        IntergraphRLEBand::IntergraphRLEBand()
 //  ----------------------------------------------------------------------------
 
-IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn, 
+IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
                                      int nBandIn,
                                      int nBandOffset,
                                      int nRGorB )
@@ -563,7 +563,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
         if( eFormat == RunLengthEncodedC || eFormat == RunLengthEncoded )
         {
             nBlockYSize = 1;
-            panRLELineOffset = (uint32 *) 
+            panRLELineOffset = (uint32 *)
                 VSI_CALLOC_VERBOSE(sizeof(uint32),nRasterYSize);
             if( panRLELineOffset == NULL )
                 return;
@@ -575,7 +575,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
             nFullBlocksY = 1;
         }
 
-        nRLESize     = INGR_GetDataBlockSize( poDSIn->pszFilename, 
+        nRLESize     = INGR_GetDataBlockSize( poDSIn->pszFilename,
                           hHeaderTwo.CatenatedFilePointer,
                           nDataOffset);
 
@@ -660,7 +660,7 @@ IntergraphRLEBand::~IntergraphRLEBand()
 //                                               IntergraphRLEBand::IReadBlock()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff, 
+CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
@@ -692,11 +692,11 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+        memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
-        CPLError( CE_Failure, CPLE_FileIO, 
-            "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
-            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
+        CPLError( CE_Failure, CPLE_FileIO,
+            "Can't read (%s) tile with X offset %d and Y offset %d.\n%s",
+            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff,
             VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -706,7 +706,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // ----------------------------------------------------------------
 
     int nVirtualXSize = nBlockXSize;
-    int nVirtualYSize = nBlockYSize; 
+    int nVirtualYSize = nBlockYSize;
 
     if( nBlockXOff == nFullBlocksX )
     {
@@ -717,7 +717,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     {
         nVirtualYSize = nRasterYSize % nBlockYSize;
     }
-    
+
     int nExpectedOutputBytes = nVirtualXSize * nVirtualYSize;
     if( eFormat == AdaptiveRGB ||
         eFormat == ContinuousTone )
@@ -732,14 +732,14 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     int nOutputBytes;
     if( bTiled && eFormat == RunLengthEncoded )
     {
-        nOutputBytes = 
-            INGR_DecodeRunLengthBitonalTiled( pabyRLEBlock, pabyBlockBuf,  
+        nOutputBytes =
+            INGR_DecodeRunLengthBitonalTiled( pabyRLEBlock, pabyBlockBuf,
                                               nRLESize, nBlockBufSize, NULL );
     }
     else if( bTiled || panRLELineOffset == NULL )
     {
-        nOutputBytes = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,  
-                                  nRLESize, nBlockBufSize, 
+        nOutputBytes = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,
+                                  nRLESize, nBlockBufSize,
                                   NULL );
     }
     else
@@ -756,23 +756,23 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                 iLine--;
             for( ; iLine < nBlockYOff; iLine++ )
             {
-                // Pass NULL as destination so that no decompression 
+                // Pass NULL as destination so that no decompression
                 // actually takes place.
                 if( nRLESize < panRLELineOffset[iLine] ||
                     (uint32)INGR_Decode( eFormat,
-                             pabyRLEBlock + panRLELineOffset[iLine], 
+                             pabyRLEBlock + panRLELineOffset[iLine],
                              NULL,  nRLESize - panRLELineOffset[iLine], nBlockBufSize,
                              &nBytesConsumed ) < nBlockBufSize )
                 {
-                    memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    memset( pImage, 0, nBlockXSize * nBlockYSize *
                                 (GDALGetDataTypeSize( eDataType ) / 8) );
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                         "Can't decode line %d", iLine );
                     return CE_Failure;
                 }
 
                 if( iLine < nRasterYSize-1 )
-                    panRLELineOffset[iLine+1] = 
+                    panRLELineOffset[iLine+1] =
                         panRLELineOffset[iLine] + nBytesConsumed;
             }
         }
@@ -783,20 +783,20 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
         {
             // Read the requested line.
             nOutputBytes = INGR_Decode( eFormat,
-                         pabyRLEBlock + panRLELineOffset[nBlockYOff], 
+                         pabyRLEBlock + panRLELineOffset[nBlockYOff],
                          pabyBlockBuf,  nRLESize - panRLELineOffset[nBlockYOff], nBlockBufSize,
                          &nBytesConsumed );
             if( nOutputBytes == nExpectedOutputBytes && nBlockYOff < nRasterYSize-1 )
-                panRLELineOffset[nBlockYOff+1] = 
+                panRLELineOffset[nBlockYOff+1] =
                     panRLELineOffset[nBlockYOff] + nBytesConsumed;
         }
     }
 
     if( nOutputBytes < nExpectedOutputBytes )
     {
-        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+        memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "Can't decode block (%d, %d)", nBlockXOff, nBlockYOff );
         return CE_Failure;
     }
@@ -805,7 +805,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
-    if( nBlockXOff == nFullBlocksX || 
+    if( nBlockXOff == nFullBlocksX ||
         nBlockYOff == nFullBlocksY )
     {
         if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf ) )
@@ -902,7 +902,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
 		eFormat == JPEGRGB  ||
 		eFormat == JPEGCMYK )
 	{
-        nQuality = INGR_ReadJpegQuality( poDSIn->fp, 
+        nQuality = INGR_ReadJpegQuality( poDSIn->fp,
             hHeaderTwo.ApplicationPacketPointer,
             nDataOffset );
 	}
@@ -927,11 +927,11 @@ GDALColorInterp IntergraphBitmapBand::GetColorInterpretation()
     {
         switch( nRGBBand )
         {
-        case 1: 
+        case 1:
             return GCI_RedBand;
-        case 2: 
+        case 2:
             return GCI_GreenBand;
-        case 3: 
+        case 3:
             return GCI_BlueBand;
         }
         return GCI_GrayIndex;
@@ -949,7 +949,7 @@ GDALColorInterp IntergraphBitmapBand::GetColorInterpretation()
 //                                            IntergraphBitmapBand::IReadBlock()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff, 
+CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
@@ -965,11 +965,11 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+        memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
-        CPLError( CE_Failure, CPLE_FileIO, 
-            "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
-            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
+        CPLError( CE_Failure, CPLE_FileIO,
+            "Can't read (%s) tile with X offset %d and Y offset %d.\n%s",
+            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff,
             VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -979,7 +979,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     // ----------------------------------------------------------------
 
     int nVirtualXSize = nBlockXSize;
-    int nVirtualYSize = nBlockYSize; 
+    int nVirtualYSize = nBlockYSize;
 
     if( nBlockXOff == nFullBlocksX )
     {
@@ -995,21 +995,21 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 	// Create an in memory small tiff file (~400K)
     // ----------------------------------------------------------------
 
-    poGDS->hVirtual = INGR_CreateVirtualFile( poGDS->pszFilename, 
+    poGDS->hVirtual = INGR_CreateVirtualFile( poGDS->pszFilename,
                                               eFormat,
                                               nVirtualXSize,
                                               nVirtualYSize,
                                               hTileDir.TileSize,
                                               nQuality,
-                                              pabyBMPBlock, 
-                                              nBytesRead, 
+                                              pabyBMPBlock,
+                                              nBytesRead,
                                               nRGBBand );
 
     if( poGDS->hVirtual.poBand == NULL )
     {
-        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+        memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
 			"Unable to open virtual file.\n"
 			"Is the GTIFF and JPEG driver available?" );
         return CE_Failure;
@@ -1019,8 +1019,8 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 	// Read the unique block from the in memory file and release it
     // ----------------------------------------------------------------
 
-    if( poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0, 
-        nVirtualXSize, nVirtualYSize, pImage, 
+    if( poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0,
+        nVirtualXSize, nVirtualYSize, pImage,
         nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0, NULL) != CE_None )
     {
         INGR_ReleaseVirtual( &poGDS->hVirtual );
@@ -1032,7 +1032,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     // --------------------------------------------------------------------
 
     CPLErr eErr = CE_None;
-    if( nBlockXOff == nFullBlocksX || 
+    if( nBlockXOff == nFullBlocksX ||
         nBlockYOff == nFullBlocksY )
     {
         if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, (GByte*) pImage ) )
@@ -1048,7 +1048,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 //                                          IntergraphRasterBand::LoadBlockBuf()
 //  ----------------------------------------------------------------------------
 
-int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff, 
+int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
                                         int nBlockYOff,
                                         int nBlobkBytes,
                                         GByte *pabyBlock )
@@ -1064,7 +1064,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
     {
         uint32 nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
-        if( pahTiles[nBlockId].Start == 0 ) 
+        if( pahTiles[nBlockId].Start == 0 )
         {
             return 0;
         }
@@ -1073,10 +1073,10 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
         nReadSize     = pahTiles[nBlockId].Used;
 
         CPLAssert( nBlobkBytes >= 0 );
-        if( nReadSize > (uint32)nBlobkBytes ) 
+        if( nReadSize > (uint32)nBlobkBytes )
         {
-            CPLDebug( "INGR", 
-                      "LoadBlockBuf(%d,%d) - trimmed tile size from %u to %d.", 
+            CPLDebug( "INGR",
+                      "LoadBlockBuf(%d,%d) - trimmed tile size from %u to %d.",
                       nBlockXOff, nBlockYOff,
                       nReadSize, nBlobkBytes );
             nReadSize = nBlobkBytes;
@@ -1113,7 +1113,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
  *                ##000   000000    00000
  ***/
 
-bool IntergraphRasterBand::ReshapeBlock( int nBlockXOff, 
+bool IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          int nBlockBytes,
                                          GByte *pabyBlock )
@@ -1146,8 +1146,8 @@ bool IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
 
     for( int iRow = 0; iRow < nRowSize; iRow++ )
     {
-        memcpy( pabyBlock + ( iRow * nCellBytes * nBlockXSize ), 
-                pabyTile  + ( iRow * nCellBytes * nColSize ), 
+        memcpy( pabyBlock + ( iRow * nCellBytes * nBlockXSize ),
+                pabyTile  + ( iRow * nCellBytes * nColSize ),
                 nCellBytes * nColSize);
     }
 
@@ -1159,7 +1159,7 @@ bool IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
 //                                           IntergraphRasterBand::IWriteBlock()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff, 
+CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
                                           int nBlockYOff,
                                           void *pImage )
 {
@@ -1173,9 +1173,9 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
         FlushBandHeader();
     }
 
-    if( nRGBIndex > 0 ) 
+    if( nRGBIndex > 0 )
     {
-        if( nBand > 1 ) 
+        if( nBand > 1 )
         {
             VSIFSeekL( poGDS->fp, nDataOffset + ( nBlockBufSize * nBlockYOff ), SEEK_SET );
             VSIFReadL( pabyBlockBuf, 1, nBlockBufSize, poGDS->fp );
@@ -1255,8 +1255,8 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 
     if( ( uint32 ) VSIFWriteL( pabyBlockBuf, 1, nBlockSize, poGDS->fp ) < nBlockSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-            "Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
+        CPLError( CE_Failure, CPLE_FileIO,
+            "Can't write (%s) block with X offset %d and Y offset %d.\n%s",
             poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
         return CE_Failure;
     }

@@ -121,12 +121,12 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     int                 bLaunderColumnNames;
 
-    int                 bInDeferedInsert;
-    InsertState         eDeferedInsertState;
-    CPLString           osDeferedInsertSQL;
+    int                 bInDeferredInsert;
+    InsertState         eDeferredInsertState;
+    CPLString           osDeferredInsertSQL;
     GIntBig             nNextFID;
 
-    int                 bDeferedCreation;
+    int                 bDeferredCreation;
     int                 bCartoDBify;
     int                 nMaxChunkSize;
 
@@ -167,16 +167,16 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
-    void                SetDeferedCreation( OGRwkbGeometryType eGType,
+    void                SetDeferredCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
                                             int bGeomNullable,
                                             int bCartoDBify);
-    OGRErr              RunDeferedCreationIfNecessary();
-    int                 GetDeferedCreation() const { return bDeferedCreation; }
-    void                CancelDeferedCreation() { bDeferedCreation = FALSE; bCartoDBify = FALSE; }
+    OGRErr              RunDeferredCreationIfNecessary();
+    int                 GetDeferredCreation() const { return bDeferredCreation; }
+    void                CancelDeferredCreation() { bDeferredCreation = FALSE; bCartoDBify = FALSE; }
 
-    OGRErr              FlushDeferedInsert(bool bReset = true);
-    void                RunDeferedCartoDBfy();
+    OGRErr              FlushDeferredInsert(bool bReset = true);
+    void                RunDeferredCartoDBfy();
 };
 
 /************************************************************************/
@@ -270,7 +270,7 @@ class OGRCARTODBDataSource : public OGRDataSource
     OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
                                                     OGRGeometry *poSpatialFilter = NULL,
                                                     const char *pszDialect = NULL,
-                                                    int bRunDeferedActions = FALSE );
+                                                    int bRunDeferredActions = FALSE );
 
     int                         GetPostGISMajor() const { return nPostGISMajor; }
     int                         GetPostGISMinor() const { return nPostGISMinor; }

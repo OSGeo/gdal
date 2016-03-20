@@ -44,7 +44,7 @@ raster query tool
 \section gdallocationinfo_synopsis SYNOPSIS
 
 \htmlonly
-Usage: 
+Usage:
 \endhtmlonly
 
 \verbatim
@@ -97,20 +97,20 @@ pixel/line) must still be given with respect to the base band.</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source GDAL raster datasource name.</dd>
 
-<dt> <em>x</em>:</dt><dd> X location of target pixel.  By default the 
+<dt> <em>x</em>:</dt><dd> X location of target pixel.  By default the
 coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
-<dt> <em>y</em>:</dt><dd> Y location of target pixel.  By default the 
+<dt> <em>y</em>:</dt><dd> Y location of target pixel.  By default the
 coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
 </dl>
 
-This utility is intended to provide a variety of information about a 
+This utility is intended to provide a variety of information about a
 pixel.  Currently it reports three things:
 
 <ul>
 <li> The location of the pixel in pixel/line space.
-<li> The result of a LocationInfo metadata query against the datasource - 
+<li> The result of a LocationInfo metadata query against the datasource -
 currently this is only implemented for VRT files which will report the
 file(s) used to satisfy requests for that pixel.
 <li> The raster pixel value of that pixel for all or a subset of the bands.
@@ -123,15 +123,15 @@ coordinates from stdin. By default pixel/line coordinates are expected.
 However with use of the -geoloc, -wgs84, or -l_srs switches it is possible
 to specify the location in other coordinate systems.
 
-The default report is in a human readable text format.  It is possible to 
+The default report is in a human readable text format.  It is possible to
 instead request xml output with the -xml switch.
 
 For scripting purposes, the -valonly and -lifonly switches are provided to
-restrict output to the actual pixel values, or the LocationInfo files 
+restrict output to the actual pixel values, or the LocationInfo files
 identified for the pixel.
 
-It is anticipated that additional reporting capabilities will be added to 
-gdallocationinfo in the future. 
+It is anticipated that additional reporting capabilities will be added to
+gdallocationinfo in the future.
 
 <p>
 \section gdallocationinfo_example EXAMPLE
@@ -176,7 +176,7 @@ static void Usage()
     printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
             "                        [-b band]* [-overview overview_level]\n"
             "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
-            "                        [-oo NAME=VALUE]* srcfile x y\n" 
+            "                        [-oo NAME=VALUE]* srcfile x y\n"
             "\n" );
     exit( 1 );
 }
@@ -385,11 +385,11 @@ int main( int argc, char ** argv )
             }
 
             iPixel = (int) floor(
-                adfInvGeoTransform[0] 
+                adfInvGeoTransform[0]
                 + adfInvGeoTransform[1] * dfGeoX
                 + adfInvGeoTransform[2] * dfGeoY );
             iLine = (int) floor(
-                adfInvGeoTransform[3] 
+                adfInvGeoTransform[3]
                 + adfInvGeoTransform[4] * dfGeoX
                 + adfInvGeoTransform[5] * dfGeoY );
         }
@@ -406,7 +406,7 @@ int main( int argc, char ** argv )
 
         if( bAsXML )
         {
-            osLine.Printf( "<Report pixel=\"%d\" line=\"%d\">", 
+            osLine.Printf( "<Report pixel=\"%d\" line=\"%d\">",
                           iPixel, iLine );
             osXML += osLine;
         }
@@ -418,7 +418,7 @@ int main( int argc, char ** argv )
 
         bool bPixelReport = true;
 
-        if( iPixel < 0 || iLine < 0 
+        if( iPixel < 0 || iLine < 0
             || iPixel >= GDALGetRasterXSize( hSrcDS )
             || iLine  >= GDALGetRasterYSize( hSrcDS ) )
         {
@@ -499,7 +499,7 @@ int main( int argc, char ** argv )
 
                     CPLXMLNode *psRoot = CPLParseXMLString( pszLI );
 
-                    if( psRoot != NULL 
+                    if( psRoot != NULL
                         && psRoot->psChild != NULL
                         && psRoot->eType == CXT_Element
                         && EQUAL(psRoot->pszValue,"LocationInfo") )
@@ -509,7 +509,7 @@ int main( int argc, char ** argv )
                              psNode = psNode->psNext )
                         {
                             if( psNode->eType == CXT_Element
-                                && EQUAL(psNode->pszValue,"File") 
+                                && EQUAL(psNode->pszValue,"File")
                                 && psNode->psChild != NULL )
                             {
                                 char* pszUnescaped = CPLUnescapeString(
@@ -528,7 +528,7 @@ int main( int argc, char ** argv )
     /* -------------------------------------------------------------------- */
             double adfPixel[2];
 
-            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1, 
+            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
                               adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None )
             {
                 CPLString osValue;

@@ -283,7 +283,7 @@ int OGRAVCE00Layer::TestCapability( const char * pszCap )
 /*      them into the appropriate OGR geometry on the target feature.   */
 /************************************************************************/
 
-int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature, 
+int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
                                          AVCPal *psPAL )
 {
 /* -------------------------------------------------------------------- */

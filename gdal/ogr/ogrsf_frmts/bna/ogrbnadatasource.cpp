@@ -259,7 +259,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRBNADataSource::Create( const char *pszFilename, 
+int OGRBNADataSource::Create( const char *pszFilename,
                               char **papszOptions )
 {
     if( fpOutput != NULL)
@@ -287,8 +287,8 @@ int OGRBNADataSource::Create( const char *pszFilename,
     fpOutput = VSIFOpenL( pszFilename, "wb" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create BNA file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create BNA file %s.",
                   pszFilename );
         return FALSE;
     }
@@ -310,7 +310,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
         bUseCRLF = FALSE;
     else
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
@@ -338,14 +338,14 @@ int OGRBNADataSource::Create( const char *pszFilename,
         nbOutID = atoi(pszNbOutID);
         if (nbOutID <= 0)
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                   "NB_ID=%s not understood. Must be >=%d and <=%d or equal to NB_SOURCE_FIELDS",
                   pszNbOutID, NB_MIN_BNA_IDS, NB_MAX_BNA_IDS );
             nbOutID = NB_MIN_BNA_IDS;
         }
         if (nbOutID > NB_MAX_BNA_IDS)
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                   "NB_ID=%s not understood. Must be >=%d and <=%d or equal to NB_SOURCE_FIELDS",
                   pszNbOutID, NB_MIN_BNA_IDS, NB_MAX_BNA_IDS );
             nbOutID = NB_MAX_BNA_IDS;

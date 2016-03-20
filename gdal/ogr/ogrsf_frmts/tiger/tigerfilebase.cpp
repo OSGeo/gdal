@@ -284,8 +284,8 @@ void TigerFileBase::SetField( OGRFeature *poFeature, const char *pszField,
 /*      formatting, or leave blank if not found.                        */
 /************************************************************************/
 
-int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField, 
-                               char *pachRecord, int nStart, int nEnd, 
+int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
+                               char *pachRecord, int nStart, int nEnd,
                                char chFormat, char chType )
 
 {
@@ -309,11 +309,11 @@ int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
     }
     else if( chType == 'A' && chFormat == 'L' )
     {
-        strncpy( szValue, poFeature->GetFieldAsString( iField ), 
+        strncpy( szValue, poFeature->GetFieldAsString( iField ),
                  sizeof(szValue) - 1 );
         szValue[sizeof(szValue) - 1] = 0;
         if( (int) strlen(szValue) < nEnd - nStart + 1 )
-            memset( szValue + strlen(szValue), ' ', 
+            memset( szValue + strlen(szValue), ' ',
                     nEnd - nStart + 1 - strlen(szValue) );
     }
     else if( chType == 'A' && chFormat == 'R' )
@@ -336,7 +336,7 @@ int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
 /*                             WritePoint()                             */
 /************************************************************************/
 
-int TigerFileBase::WritePoint( char *pachRecord, int nStart, 
+int TigerFileBase::WritePoint( char *pachRecord, int nStart,
                                double dfX, double dfY )
 
 {
@@ -348,7 +348,7 @@ int TigerFileBase::WritePoint( char *pachRecord, int nStart,
     }
     else
     {
-        snprintf( szTemp, sizeof(szTemp), "%+10d%+9d", 
+        snprintf( szTemp, sizeof(szTemp), "%+10d%+9d",
                  (int) floor(dfX * 1000000 + 0.5),
                  (int) floor(dfY * 1000000 + 0.5) );
         strncpy( pachRecord + nStart - 1, szTemp, 19 );
@@ -361,7 +361,7 @@ int TigerFileBase::WritePoint( char *pachRecord, int nStart,
 /*                            WriteRecord()                             */
 /************************************************************************/
 
-int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen, 
+int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
                                 const char *pszType, VSILFILE * fp )
 
 {
@@ -406,7 +406,7 @@ int TigerFileBase::SetWriteModule( const char *pszExtension,
     const char *pszTargetModule = poFeature->GetFieldAsString( "MODULE" );
     char        szFullModule[30];
 
-    /* TODO/notdef: eventually more logic based on FILE and STATE/COUNTY can 
+    /* TODO/notdef: eventually more logic based on FILE and STATE/COUNTY can
        be inserted here. */
 
     if( pszTargetModule == NULL )
@@ -478,12 +478,12 @@ void TigerFileBase::AddFieldDefns(const TigerRecordInfo *psRTInfoIn,
         if (psRTInfoIn->pasFields[i].bDefine) {
             OGRFieldType eFT = (OGRFieldType)psRTInfoIn->pasFields[i].OGRtype;
 
-            if( bLFieldHack 
-                && psRTInfoIn->pasFields[i].cFmt == 'L' 
+            if( bLFieldHack
+                && psRTInfoIn->pasFields[i].cFmt == 'L'
                 && psRTInfoIn->pasFields[i].cType == 'N' )
                 eFT = OFTString;
 
-            oField.Set( psRTInfoIn->pasFields[i].pszFieldName, eFT, 
+            oField.Set( psRTInfoIn->pasFields[i].pszFieldName, eFT,
                         psRTInfoIn->pasFields[i].nLen );
             poFeatureDefnIn->AddFieldDefn( &oField );
         }
@@ -503,7 +503,7 @@ void TigerFileBase::SetFields(const TigerRecordInfo *psRTInfoIn,
     if (psRTInfoIn->pasFields[i].bSet) {
       SetField( poFeature,
                 psRTInfoIn->pasFields[i].pszFieldName,
-                achRecord, 
+                achRecord,
                 psRTInfoIn->pasFields[i].nBeg,
                 psRTInfoIn->pasFields[i].nEnd );
     }
@@ -522,7 +522,7 @@ void TigerFileBase::WriteFields(const TigerRecordInfo *psRTInfoIn,
     if (psRTInfoIn->pasFields[i].bWrite) {
       WriteField( poFeature,
                   psRTInfoIn->pasFields[i].pszFieldName,
-                  szRecord, 
+                  szRecord,
                   psRTInfoIn->pasFields[i].nBeg,
                   psRTInfoIn->pasFields[i].nEnd,
                   psRTInfoIn->pasFields[i].cFmt,

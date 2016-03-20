@@ -80,7 +80,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     LONG nRasterColumnId = 0;
 
-    nSDEErr = SE_rascolinfo_get_id( hRasterColumn, 
+    nSDEErr = SE_rascolinfo_get_id( hRasterColumn,
                                     &nRasterColumnId);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -88,9 +88,9 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }
 
-    nSDEErr = SE_raster_get_info_by_id( hConnection, 
-                                        nRasterColumnId, 
-                                        1, 
+    nSDEErr = SE_raster_get_info_by_id( hConnection,
+                                        nRasterColumnId,
+                                        1,
                                         raster);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -99,9 +99,9 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     }
 
     LONG nBandsRet;
-    nSDEErr = SE_raster_get_bands(  hConnection, 
-                                    raster, 
-                                    &paohSDERasterBands, 
+    nSDEErr = SE_raster_get_bands(  hConnection,
+                                    raster,
+                                    &paohSDERasterBands,
                                     &nBandsRet);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -143,22 +143,22 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     // x0 roughly corresponds to dfMinX
     // y0 roughly corresponds to dfMaxY
-    // They can be different than the extent parameters because 
-    // SDE uses offsets.  The following info is from Duarte Carreira 
+    // They can be different than the extent parameters because
+    // SDE uses offsets.  The following info is from Duarte Carreira
     // in relation to bug #2063 http://trac.osgeo.org/gdal/ticket/2063 :
 
-    // Depending on how the data was loaded, the pixel width 
+    // Depending on how the data was loaded, the pixel width
     // or pixel height may include a pixel offset from the nearest
-    // tile boundary. An offset will be indicated by aplus sign 
-    // "+" followed by a value. The value indicates the number 
+    // tile boundary. An offset will be indicated by aplus sign
+    // "+" followed by a value. The value indicates the number
     // of pixels the nearest tile boundary is to the left of
     // the image for the x dimension or the number of
-    // pixels the nearest tile boundary is above the image for 
-    // the y dimension. The offset information is only useful 
-    // for advanced application developers who need to know 
+    // pixels the nearest tile boundary is above the image for
+    // the y dimension. The offset information is only useful
+    // for advanced application developers who need to know
     // where the image begins in relation to the underlying tile structure
 
-    LFLOAT x0, y0; 
+    LFLOAT x0, y0;
     nSDEErr = SE_rasbandinfo_get_tile_origin(band, &x0, &y0);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -248,8 +248,8 @@ const char *SDEDataset::GetProjectionRef()
 
     if (!hRasterColumn){
         CPLError ( CE_Failure, CPLE_AppDefined,
-                   "Raster Column not defined");        
-        return ("");   
+                   "Raster Column not defined");
+        return ("");
     }
 
     nSDEErr = SE_rascolinfo_get_coordref(hRasterColumn, coordref);
@@ -261,7 +261,7 @@ const char *SDEDataset::GetProjectionRef()
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_coordref" );
-    }    
+    }
 
     char szWKT[SE_MAX_SPATIALREF_SRTEXT_LEN];
     nSDEErr = SE_coordref_get_description(coordref, szWKT);
@@ -367,22 +367,22 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse arguments on comma.  We expect (layer is optional):       */
 /*        SDE:server,instance,database,username,password,layer          */
 /* -------------------------------------------------------------------- */
-    char **papszTokens = CSLTokenizeStringComplex(  poOpenInfo->pszFilename+4, 
+    char **papszTokens = CSLTokenizeStringComplex(  poOpenInfo->pszFilename+4,
                                                     ",",
-                                                    TRUE, 
+                                                    TRUE,
                                                     TRUE );
-    CPLDebug(   "SDERASTER", "Open(\"%s\") revealed %d tokens.", 
+    CPLDebug(   "SDERASTER", "Open(\"%s\") revealed %d tokens.",
                 poOpenInfo->pszFilename,
                 CSLCount( papszTokens ) );
 
 
     if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 7 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
                   "The layer name value is optional.\n"
-                  "Got '%s'", 
+                  "Got '%s'",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -399,12 +399,12 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int         nSDEErr;
     SE_ERROR    hSDEErrorInfo;
-    nSDEErr = SE_connection_create( papszTokens[0], 
-                                    papszTokens[1], 
-                                    papszTokens[2], 
+    nSDEErr = SE_connection_create( papszTokens[0],
+                                    papszTokens[1],
+                                    papszTokens[2],
                                     papszTokens[3],
                                     papszTokens[4],
-                                    &(hSDEErrorInfo), 
+                                    &(hSDEErrorInfo),
                                     &(poDS->hConnection) );
 
     if( nSDEErr != SE_SUCCESS )
@@ -452,12 +452,12 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
         CPLDebug( "SDERASTER", "'%s' raster layer specified... "\
-                               "using it directly with '%s' as the raster column name.", 
+                               "using it directly with '%s' as the raster column name.",
                   poDS->pszLayerName,
                   poDS->pszColumnName);
-        nSDEErr = SE_rastercolumn_get_info_by_name( poDS->hConnection, 
-                                                    poDS->pszLayerName, 
-                                                    poDS->pszColumnName, 
+        nSDEErr = SE_rastercolumn_get_info_by_name( poDS->hConnection,
+                                                    poDS->pszLayerName,
+                                                    poDS->pszColumnName,
                                                     poDS->hRasterColumn);
         if( nSDEErr != SE_SUCCESS )
         {
@@ -470,8 +470,8 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
     } else {
 
-        nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection, 
-                                                &(poDS->paohSDERasterColumns), 
+        nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection,
+                                                &(poDS->paohSDERasterColumns),
                                                 &(poDS->nSubDataCount));
         if( nSDEErr != SE_SUCCESS )
         {
@@ -479,19 +479,19 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
+        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.",
                   poDS->nSubDataCount);
 
         for (int i = 0; i < poDS->nSubDataCount; i++) {
 
               char         szTableName[SE_QUALIFIED_TABLE_NAME+1];
               char         szColumnName[SE_MAX_COLUMN_LEN+1];
-            nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i], 
-                                                       szTableName, 
-                                                       szColumnName); 
-            CPLDebug(   "SDERASTER", 
-                        "Layer '%s' with column '%s' found.", 
-                        szTableName, 
+            nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i],
+                                                       szTableName,
+                                                       szColumnName);
+            CPLDebug(   "SDERASTER",
+                        "Layer '%s' with column '%s' found.",
+                        szTableName,
                         szColumnName);
 
             if( nSDEErr != SE_SUCCESS )

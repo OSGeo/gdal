@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -56,7 +56,7 @@ typedef struct _CPLSpinLock CPLSpinLock;
 struct _CPLLock
 {
     CPLLockType eType;
-    union 
+    union
     {
         CPLMutex        *hMutex;
         CPLSpinLock     *hSpinLock;
@@ -104,7 +104,7 @@ void CPLFinalizeTLS();
 /************************************************************************/
 
 CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
-                                const char *pszFileIn, 
+                                const char *pszFileIn,
                                 int nLineIn,
                                 int nOptions )
 
@@ -127,7 +127,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
      * fprintf() will do the job right.
      */
     fprintf( stderr,
-             "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n", 
+             "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n",
              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
@@ -140,7 +140,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
-                 "CPLMutexHolder: Acquired %p for pid %ld at %d/%s.\n", 
+                 "CPLMutexHolder: Acquired %p for pid %ld at %d/%s.\n",
                  *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
@@ -154,7 +154,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
 /************************************************************************/
 
 CPLMutexHolder::CPLMutexHolder( CPLMutex *hMutexIn, double dfWaitInSeconds,
-                                const char *pszFileIn, 
+                                const char *pszFileIn,
                                 int nLineIn )
 
 {
@@ -184,7 +184,7 @@ CPLMutexHolder::~CPLMutexHolder()
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
-                 "~CPLMutexHolder: Release %p for pid %ld at %d/%s.\n", 
+                 "~CPLMutexHolder: Release %p for pid %ld at %d/%s.\n",
                  hMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
         CPLReleaseMutex( hMutex );
@@ -217,7 +217,7 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds, int n
     /*
     ** ironically, creation of this initial mutex is not threadsafe
     ** even though we use it to ensure that creation of other mutexes
-    ** is threadsafe. 
+    ** is threadsafe.
     */
     if( hCOAMutex == NULL )
     {
@@ -266,7 +266,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     /*
     ** ironically, creation of this initial mutex is not threadsafe
     ** even though we use it to ensure that creation of other mutexes
-    ** is threadsafe. 
+    ** is threadsafe.
     */
     if( hCOAMutex == NULL )
     {
@@ -316,14 +316,14 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 /*                      CPLCleanupMasterMutex()                         */
 /************************************************************************/
 
-void CPLCleanupMasterMutex() 
+void CPLCleanupMasterMutex()
 {
-#ifndef CPL_MULTIPROC_PTHREAD 
-#ifndef MUTEX_NONE 
-    if( hCOAMutex != NULL ) 
+#ifndef CPL_MULTIPROC_PTHREAD
+#ifndef MUTEX_NONE
+    if( hCOAMutex != NULL )
     {
-        CPLDestroyMutex( hCOAMutex ); 
-        hCOAMutex = NULL; 
+        CPLDestroyMutex( hCOAMutex );
+        hCOAMutex = NULL;
     }
 #endif
 #endif
@@ -339,14 +339,14 @@ void CPLCleanupMasterMutex()
 static void CPLCleanupTLSList( void **papTLSList )
 
 {
-    int i;
-
-//    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+#ifdef DEBUG_VERBOSE
+    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+#endif
 
     if( papTLSList == NULL )
         return;
 
-    for( i = 0; i < CTLS_MAX; i++ )
+    for( int i = 0; i < CTLS_MAX; i++ )
     {
         if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
         {
@@ -409,7 +409,7 @@ CPLMutex *CPLCreateMutex()
     return (CPLMutex *) pabyMutex;
 #else
     return (CPLMutex *) 0xdeadbeef;
-#endif 
+#endif
 }
 
 CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
@@ -428,7 +428,7 @@ int CPLAcquireMutex( CPLMutex *hMutex,
 #ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
-    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
+    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
 
     pabyMutex[0] += 1;
@@ -449,11 +449,11 @@ void CPLReleaseMutex( CPLMutex *hMutex )
 #ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
-    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
+    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
 
     if( pabyMutex[0] < 1 )
-        CPLDebug( "CPLMultiProc", 
+        CPLDebug( "CPLMultiProc",
                   "CPLReleaseMutex() called on mutex with %d as ref count!",
                   pabyMutex[0] );
 
@@ -471,7 +471,7 @@ void CPLDestroyMutex( CPLMutex *hMutex )
 #ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
-    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
+    CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
 
     free( pabyMutex );
@@ -790,9 +790,8 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
 {
 #ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
-    DWORD  hr;
-
-    hr = WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
+    const DWORD hr =
+        WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
 
     return hr != WAIT_TIMEOUT;
 #else
@@ -930,7 +929,7 @@ void  CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
     /* Release the client mutex before waiting for the event being signaled */
     CPLReleaseMutex(hClientMutex);
 
-    // Ideally we would check that we do not get WAIT_FAILED but it is hard 
+    // Ideally we would check that we do not get WAIT_FAILED but it is hard
     // to report a failure.
     WaitForSingleObject(hEvent, INFINITE);
 
@@ -1018,9 +1017,9 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         CPLSleep( MIN(dfWaitInSeconds,0.125) );
         dfWaitInSeconds -= 0.125;
 
-        hLockFile = 
-            CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW, 
-                        FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, 
+        hLockFile =
+            CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
+                        FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE,
                         NULL );
     }
 
@@ -1096,8 +1095,6 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    HANDLE hThread;
-    DWORD  nThreadId;
     CPLStdCallThreadInfo *psInfo;
 
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
@@ -1105,8 +1102,9 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     psInfo->pfnMain = pfnMain;
     psInfo->hThread = NULL;
 
-    hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo, 
-                            0, &nThreadId );
+    DWORD nThreadId = 0;
+    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+                                   0, &nThreadId );
 
     if( hThread == NULL )
         return -1;
@@ -1123,16 +1121,15 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    HANDLE hThread;
-    DWORD  nThreadId;
     CPLStdCallThreadInfo *psInfo;
 
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
 
-    hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo, 
-                            0, &nThreadId );
+    DWORD nThreadId = 0;
+    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+                                   0, &nThreadId );
 
     if( hThread == NULL )
         return NULL;
@@ -1165,7 +1162,7 @@ void CPLSleep( double dfWaitInSeconds )
 }
 
 static bool          bTLSKeySetup = false;
-static DWORD         nTLSKey;
+static DWORD nTLSKey = 0;
 
 /************************************************************************/
 /*                           CPLGetTLSList()                            */
@@ -1419,7 +1416,7 @@ static void CPLInitMutex(MutexLinkedElt* psItem)
     pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
     psItem->sMutex = tmp_mutex;
 #else
-#error "Recursive mutexes apparently unsupported, configure --without-threads" 
+#error "Recursive mutexes apparently unsupported, configure --without-threads"
 #endif
 }
 
@@ -1467,11 +1464,10 @@ CPLMutex *CPLCreateMutexEx(int nOptions)
 
 int CPLAcquireMutex( CPLMutex *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
 {
-    int err;
 
     /* we need to add timeout support */
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
-    err =  pthread_mutex_lock( &(psItem->sMutex) );
+    const int err = pthread_mutex_lock( &(psItem->sMutex) );
 
     if( err != 0 )
     {
@@ -1734,7 +1730,7 @@ static void **CPLGetTLSList(int* pbMemoryErrorOccurred)
                 *pbMemoryErrorOccurred = TRUE;
                 return NULL;
             }
-            CPLEmergencyError( 
+            CPLEmergencyError(
                 "CPLGetTLSList(): pthread_setspecific() failed!" );
         }
     }
@@ -1765,7 +1761,7 @@ static void *CPLStdCallThreadJacket( void *pData )
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CPLGetTLSList(&bMemoryError);
     if( bMemoryError )
         goto error;
@@ -1830,7 +1826,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
-    if( pthread_create( &(psInfo->hThread), &hThreadAttr, 
+    if( pthread_create( &(psInfo->hThread), &hThreadAttr,
                         CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
     {
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
@@ -2273,12 +2269,13 @@ CPLLock *CPLCreateLock( CPLLockType eType )
 
 int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
-    int ret;
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
     if( (*ppsLock) && (*ppsLock)->bDebugPerf )
         nStartTime = CPLrdtsc();
 #endif
+    int ret = 0;
+
     switch( eType )
     {
         case LOCK_RECURSIVE_MUTEX:
@@ -2404,7 +2401,7 @@ void CPLLockSetDebugPerf(CPLLock* /* psLock */, int bEnableIn)
 
 CPLLockHolder::CPLLockHolder( CPLLock **phLock,
                               CPLLockType eType,
-                              const char *pszFileIn, 
+                              const char *pszFileIn,
                               int nLineIn )
 
 {
@@ -2419,7 +2416,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
      * fprintf() will do the job right.
      */
     fprintf( stderr,
-             "CPLLockHolder: Request %p for pid %ld at %d/%s.\n", 
+             "CPLLockHolder: Request %p for pid %ld at %d/%s.\n",
              *phLock, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
@@ -2432,7 +2429,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
-                 "CPLLockHolder: Acquired %p for pid %ld at %d/%s.\n", 
+                 "CPLLockHolder: Acquired %p for pid %ld at %d/%s.\n",
                  *phLock, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
@@ -2446,7 +2443,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
 /************************************************************************/
 
 CPLLockHolder::CPLLockHolder( CPLLock *hLockIn,
-                              const char *pszFileIn, 
+                              const char *pszFileIn,
                               int nLineIn )
 
 {
@@ -2478,7 +2475,7 @@ CPLLockHolder::~CPLLockHolder()
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
-                 "~CPLLockHolder: Release %p for pid %ld at %d/%s.\n", 
+                 "~CPLLockHolder: Release %p for pid %ld at %d/%s.\n",
                  hLock, (long) CPLGetPID(), nLine, pszFile );
 #endif
         CPLReleaseLock( hLock );

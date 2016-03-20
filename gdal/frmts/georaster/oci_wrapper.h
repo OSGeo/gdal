@@ -341,7 +341,7 @@ class OWStatement
 
 public:
 
-                        OWStatement( OWConnection* poConnect, 
+                        OWStatement( OWConnection* poConnect,
                             const char* pszStatement );
     virtual            ~OWStatement();
 

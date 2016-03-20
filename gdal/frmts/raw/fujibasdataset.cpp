@@ -146,7 +146,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The FUJIBAS driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -162,13 +162,13 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     FILE *fpRaw = VSIFOpen( pszRawFile, "rb" );
     if( fpRaw == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Trying to open Fuji BAS image with the header file:\n"
                   "  Header=%s\n"
                   "but expected raw image file doesn't appear to exist.  Trying to open:\n"
                   "  Raw File=%s\n"
                   "Perhaps the raw file needs to be renamed to match expected?",
-                  poOpenInfo->pszFilename, 
+                  poOpenInfo->pszFilename,
                   pszRawFile );
         CSLDestroy( papszHeader );
         return NULL;
@@ -197,8 +197,8 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     FALSE
 #endif
         ;
-    poDS->SetBand( 1, 
-                   new RawRasterBand( poDS, 1, poDS->fpImage, 
+    poDS->SetBand( 1,
+                   new RawRasterBand( poDS, 1, poDS->fpImage,
                                       0, 2, nXSize * 2, GDT_UInt16, bNativeOrder ));
 
 /* -------------------------------------------------------------------- */

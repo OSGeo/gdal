@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API Functions that don't correspond one-to-one with C++ 
+ * Purpose:  C API Functions that don't correspond one-to-one with C++
  *           methods, such as the "simplified" geometry access functions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -74,7 +74,7 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
  *
  * This method primary exists to preset the number of points in a linestring
  * geometry before setPoint() is used to assign them to avoid reallocating
- * the array larger with each call to addPoint(). 
+ * the array larger with each call to addPoint().
  *
  * @param hGeom handle to the geometry.
  * @param nNewPointCount the new number of points for geometry.
@@ -108,7 +108,7 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
  *
  * @param hGeom handle to the geometry from which to get the x coordinate.
  * @param i point to get the x coordinate.
- * @return the X coordinate of this point. 
+ * @return the X coordinate of this point.
  */
 
 double OGR_G_GetX( OGRGeometryH hGeom, int i )
@@ -155,7 +155,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
  *
  * @param hGeom handle to the geometry from which to get the y coordinate.
  * @param i point to get the Y coordinate.
- * @return the Y coordinate of this point. 
+ * @return the Y coordinate of this point.
  */
 
 double OGR_G_GetY( OGRGeometryH hGeom, int i )
@@ -202,7 +202,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
  *
  * @param hGeom handle to the geometry from which to get the Z coordinate.
  * @param i point to get the Z coordinate.
- * @return the Z coordinate of this point. 
+ * @return the Z coordinate of this point.
  */
 
 double OGR_G_GetZ( OGRGeometryH hGeom, int i )
@@ -249,7 +249,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
  *
  * @param hGeom handle to the geometry from which to get the M coordinate.
  * @param i point to get the M coordinate.
- * @return the M coordinate of this point. 
+ * @return the M coordinate of this point.
  */
 
 double OGR_G_GetM( OGRGeometryH hGeom, int i )
@@ -424,7 +424,7 @@ int OGR_G_GetPointsZM( OGRGeometryH hGeom,
  * @param pdfZ value of z coordinate.
  */
 
-void OGR_G_GetPoint( OGRGeometryH hGeom, int i, 
+void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
                      double *pdfX, double *pdfY, double *pdfZ )
 
 {
@@ -490,7 +490,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
  * @param pdfM value of m coordinate.
  */
 
-void OGR_G_GetPointZM( OGRGeometryH hGeom, int i, 
+void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
                        double *pdfX, double *pdfY, double *pdfZ, double *pdfM )
 
 {
@@ -600,7 +600,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
             ((nZStride == 0 && pabyZ == NULL) ||
              (nZStride == (int)sizeof(double) && pabyZ != NULL)) )
         {
-          poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
+          poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ );
         }
         else
         {
@@ -690,13 +690,13 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
               (nMStride == (int)sizeof(double) && pabyM != NULL)) )
         {
             if (!pabyZ && !pabyM)
-                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY ); 
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY );
             else if (pabyZ && !pabyM)
-                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ );
             else if (!pabyZ && pabyM)
                 poSC->setPointsM( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyM );
             else
-                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ, (double *)pabyM ); 
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ, (double *)pabyM );
         }
         else
         {
@@ -742,7 +742,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                   poSC->setPoint( i, x, y, z, m );
               }
           }
-          
+
         }
         break;
       }
@@ -770,7 +770,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
  * @param dfZ input Z coordinate to assign (defaults to zero).
  */
 
-void OGR_G_SetPoint( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
                      double dfX, double dfY, double dfZ )
 
 {
@@ -828,7 +828,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
  * @param dfY input Y coordinate to assign.
  */
 
-void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
                         double dfX, double dfY )
 
 {
@@ -886,7 +886,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
  * @param dfM input M coordinate to assign.
  */
 
-void OGR_G_SetPointM( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
                       double dfX, double dfY, double dfM )
 
 {
@@ -946,7 +946,7 @@ void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
  * @param dfM input M coordinate to assign.
  */
 
-void OGR_G_SetPointZM( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
                        double dfX, double dfY, double dfZ, double dfM )
 
 {
@@ -1003,7 +1003,7 @@ void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
  * @param dfZ z coordinate of point to add.
  */
 
-void OGR_G_AddPoint( OGRGeometryH hGeom, 
+void OGR_G_AddPoint( OGRGeometryH hGeom,
                      double dfX, double dfY, double dfZ )
 
 {
@@ -1044,7 +1044,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
  * @param dfY y coordinate of point to add.
  */
 
-void OGR_G_AddPoint_2D( OGRGeometryH hGeom, 
+void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
                         double dfX, double dfY )
 
 {
@@ -1085,7 +1085,7 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
  * @param dfM m coordinate of point to add.
  */
 
-void OGR_G_AddPointM( OGRGeometryH hGeom, 
+void OGR_G_AddPointM( OGRGeometryH hGeom,
                       double dfX, double dfY, double dfM )
 
 {
@@ -1128,7 +1128,7 @@ void OGR_G_AddPointM( OGRGeometryH hGeom,
  * @param dfM m coordinate of point to add.
  */
 
-void OGR_G_AddPointZM( OGRGeometryH hGeom, 
+void OGR_G_AddPointZM( OGRGeometryH hGeom,
                        double dfX, double dfY, double dfZ, double dfM )
 
 {
@@ -1213,13 +1213,13 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
  * This function relates to the SFCOM
  * IGeometryCollection::get_Geometry() method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::getGeometryRef().
  *
  * For a polygon, OGR_G_GetGeometryRef(iSubGeom) returns the exterior ring
  * if iSubGeom == 0, and the interior rings for iSubGeom > 0.
  *
- * @param hGeom handle to the geometry container from which to get a 
+ * @param hGeom handle to the geometry container from which to get a
  * geometry from.
  * @param iSubGeom the index of the geometry to fetch, between 0 and
  *          getNumGeometries() - 1.
@@ -1235,10 +1235,10 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         if( iSubGeom == 0 )
-            return (OGRGeometryH) 
+            return (OGRGeometryH)
                 ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve();
         else
-            return (OGRGeometryH) 
+            return (OGRGeometryH)
                 ((OGRCurvePolygon *)hGeom)->getInteriorRingCurve(iSubGeom-1);
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
@@ -1265,7 +1265,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
  *
  * There is no SFCOM analog to this method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::addGeometry.
  *
  * For a polygon, hNewSubGeom must be a linearring. If the polygon is empty,
@@ -1300,7 +1300,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry( 
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry(
                                                 (OGRGeometry *) hNewSubGeom );
     }
 
@@ -1318,7 +1318,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  * geometry is taken by the container rather than cloning as addGeometry()
  * does.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::addGeometryDirectly.
  *
  * There is no SFCOM analog to this method.
@@ -1334,7 +1334,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  * the geometry type is illegal for the type of geometry container.
  */
 
-OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom, 
+OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
                                   OGRGeometryH hNewSubGeom )
 
 {
@@ -1356,7 +1356,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly( 
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly(
                                                 (OGRGeometry *) hNewSubGeom );
     }
 
@@ -1378,7 +1378,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  *
  * There is no SFCOM analog to this method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::removeGeometry().
  *
  * @param hGeom the existing geometry to delete from.
@@ -1387,7 +1387,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  *
  * @param bDelete if TRUE the geometry will be destroyed, otherwise it will
  * not.  The default is TRUE as the existing geometry is considered to own the
- * geometries in it. 
+ * geometries in it.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
@@ -1401,7 +1401,7 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                 "OGR_G_RemoveGeometry() not supported on polygons yet." );
         return OGRERR_UNSUPPORTED_OPERATION;
     }
@@ -1468,12 +1468,12 @@ double OGR_G_Length( OGRGeometryH hGeom )
  * \brief Compute geometry area.
  *
  * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
- * Undefined for all other geometry types (returns zero). 
+ * Undefined for all other geometry types (returns zero).
  *
  * This function utilizes the C++ get_Area() methods such as
- * OGRPolygon::get_Area(). 
+ * OGRPolygon::get_Area().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @return the area or 0.0 for unsupported geometry types.
  *
  * @since OGR 1.8.0
@@ -1592,12 +1592,12 @@ int OGR_G_HasCurveGeometry( OGRGeometryH hGeom, int bLookForNonLinear )
  *
  * The reverse function is OGR_G_GetCurveGeometry().
  *
- * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() and 
+ * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() and
  * CurvePolygon::CurvePolyToPoly() methods.
  *
  * This function is the same as C++ method OGRGeometry::getLinearGeometry().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
  * arc, zero to use the default setting.
  * @param papszOptions options as a null-terminated list of strings or NULL.
@@ -1636,7 +1636,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
  *
  * This function is the same as C++ method OGRGeometry::getCurveGeometry().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @param papszOptions options as a null-terminated list of strings.
  *                     Unused for now. Must be set to NULL.
  *
