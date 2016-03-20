@@ -577,13 +577,13 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  * @return NULL on failure, or the file handle.
  */
 
-VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, bool bSetError )
+VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, int bSetError )
 
 {
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
-    VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess, bSetError );
+    VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError));
 
     VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, fp );
 
