@@ -1877,7 +1877,8 @@ public:
     VSIDummyCryptFilesystemHandler() {}
 
     virtual VSIVirtualHandle *Open( CPL_UNUSED const char *pszFilename,
-                                    CPL_UNUSED const char *pszAccess)
+                                    CPL_UNUSED const char *pszAccess,
+                                    bool)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
