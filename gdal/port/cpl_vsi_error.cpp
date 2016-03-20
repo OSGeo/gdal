@@ -253,9 +253,9 @@ const char* CPL_STDCALL VSIGetLastErrorMsg()
 /**
  * Translate the VSI error into a CPLError call
  *
- * Fetches the last error message posted with VSIError(), that hasn't
- * been cleared by VSIErrorReset().  The returned pointer is to an internal
- * string that should not be altered or freed.
+ * If there is a VSIError that is set, translate it to a CPLError call
+ * with the given CPLErr error class, and either an appropriate CPLErrorNum
+ * given the VSIErrorNum, or the given defualt CPLErrorNum.
  *
  * @return 1 if a CPLError was issued, or 0 if not.
  */
