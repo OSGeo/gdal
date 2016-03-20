@@ -1796,9 +1796,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 #ifdef PAM_ENABLED
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
-#ifdef OGR_ENABLED
         osBuildInfo += "OGR_ENABLED=YES\n";
-#endif
 
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );

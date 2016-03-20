@@ -207,9 +207,7 @@ int main( int argc, char ** argv )
 
     GDALDestroyDriverManager();
 
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
 
     return nRetCode;
 }

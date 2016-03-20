@@ -741,7 +741,6 @@ MYSQL_INC
 HAVE_MYSQL
 MYSQL_CONFIG
 GNM_ENABLED
-OGR_ENABLED
 OPT_GDAL_FORMATS
 ORACLE_OCI_LDFLAGS
 ORACLE_OCI_CFLAGS
@@ -981,7 +980,6 @@ with_oci
 with_oci_include
 with_oci_lib
 with_grib
-with_ogr
 with_gnm
 with_mysql
 with_ingres
@@ -1741,7 +1739,6 @@ Optional Packages:
                           use Oracle OCI API headers from given path
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --without-grib          Disable GRIB driver
-  --without-ogr         Don't build OGR into shared library
   --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
@@ -24776,22 +24773,7 @@ OPT_GDAL_FORMATS=$OPT_GDAL_FORMATS
 
 
 
-
-# Check whether --with-ogr was given.
-if test "${with_ogr+set}" = set; then :
-  withval=$with_ogr;
-fi
-
-
-if test "$with_ogr" = yes -o x"$with_ogr" = x ; then
-  echo checking for OGR ... enabled
-  OGR_ENABLED=yes
-else
-  echo checking for OGR ... disabled by user
-  OGR_ENABLED=no
-fi
-OGR_ENABLED=$OGR_ENABLED
-
+OGR_ENABLED=yes
 
 
 GNM_ENABLED=no
@@ -34468,9 +34450,6 @@ echo ""
 
 
 echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
-
-
-echo "  enable OGR building:       ${OGR_ENABLED}"
 
 
 echo "  enable GNM building:       ${GNM_ENABLED}"

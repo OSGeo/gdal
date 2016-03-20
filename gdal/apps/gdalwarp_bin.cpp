@@ -272,9 +272,7 @@ static int GDALExit( int nCode )
 
   GDALDestroyDriverManager();
 
-#ifdef OGR_ENABLED
   OGRCleanupAll();
-#endif
 
   exit( nCode );
 }
@@ -525,9 +523,7 @@ int main( int argc, char ** argv )
 
     GDALDestroyDriverManager();
 
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
 
     return nRetCode;
 }

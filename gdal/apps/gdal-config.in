@@ -46,7 +46,7 @@ case $1 in
     ;;
 
   --ogr-enabled)
-    echo $CONFIG_OGR_ENABLED
+    echo yes
     ;;
 
   --gnm-enabled)

@@ -940,7 +940,6 @@ PREDEFINED             = HAVE_DLFCN_H \
                          __cplusplus \
                          DOXYGEN_SKIP \
                          HAVE_CURL \
-                         OGR_ENABLED \
                          CPL_UNUSED= \
                          UNUSED_IF_NO_GEOS=
 

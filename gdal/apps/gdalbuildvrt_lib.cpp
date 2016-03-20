@@ -35,9 +35,7 @@
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
-#ifdef OGR_ENABLED
 #include "ogr_api.h"
-#endif
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
@@ -1189,11 +1187,6 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
 
     if (EQUAL(CPLGetExtension(filename), "SHP"))
     {
-#ifndef OGR_ENABLED
-        CPLError(CE_Failure, CPLE_AppDefined, "OGR support needed to read tileindex");
-        *pnInputFiles = 0;
-        *pppszInputFilenames = NULL;
-#else
         OGRRegisterAll();
 
         /* Handle gdaltindex Shapefile as a special case */
@@ -1254,7 +1247,6 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         ppszInputFilenames[nInputFiles] = NULL;
 
         OGR_DS_Destroy( hDS );
-#endif
     }
     else
     {

@@ -32,12 +32,10 @@
 #include "gdal_pam.h"
 #include "northwood.h"
 
-#ifdef OGR_ENABLED
 #ifdef MSVC
 #include "..\..\ogr\ogrsf_frmts\mitab\mitab.h"
 #else
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
-#endif
 #endif
 
 /************************************************************************/
@@ -317,7 +315,6 @@ CPLErr NWT_GRDDataset::GetGeoTransform( double *padfTransform )
 
 const char *NWT_GRDDataset::GetProjectionRef()
 {
-#ifdef OGR_ENABLED
     if (pszProjection == NULL)
     {
         OGRSpatialReference *poSpatialRef;
@@ -328,7 +325,6 @@ const char *NWT_GRDDataset::GetProjectionRef()
             poSpatialRef->Release();
         }
     }
-#endif
     return reinterpret_cast<const char *>( pszProjection );
 }
 

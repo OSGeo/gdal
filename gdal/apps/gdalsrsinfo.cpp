@@ -109,9 +109,6 @@ int main( int argc, char ** argv )
 /*      Register standard GDAL and OGR drivers.                         */
 /* -------------------------------------------------------------------- */
     GDALAllRegister();
-#ifdef OGR_ENABLED
-    OGRRegisterAll();
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Register standard GDAL drivers, and process generic GDAL        */
@@ -247,9 +244,7 @@ int main( int argc, char ** argv )
 
     /* cleanup anything left */
     GDALDestroyDriverManager();
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
     CSLDestroy( argv );
 
     return 0;
