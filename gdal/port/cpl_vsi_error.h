@@ -55,13 +55,12 @@ typedef int VSIErrorNum;
 #define VSIE_AWSSignatureDoesNotMatch   10
 
 void CPL_DLL VSIError(VSIErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (2, 3);
-void CPL_DLL VSIErrorV(VSIErrorNum, const char *, va_list );
 
 void CPL_DLL CPL_STDCALL VSIErrorReset( void );
 VSIErrorNum CPL_DLL CPL_STDCALL VSIGetLastErrorNo( void );
 const char CPL_DLL * CPL_STDCALL VSIGetLastErrorMsg( void );
 
-bool CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo);
+int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo);
 
 CPL_C_END
 
