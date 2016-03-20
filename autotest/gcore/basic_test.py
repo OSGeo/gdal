@@ -40,11 +40,13 @@ from osgeo import gdal
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
 
+non_existing_error_msg = 'No such file or directory'
+
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == non_existing_error_msg:
         return 'success'
     else:
         return 'fail'
@@ -53,7 +55,7 @@ def basic_test_2():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == non_existing_error_msg:
         return 'success'
     else:
         return 'fail'
@@ -62,7 +64,7 @@ def basic_test_3():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == non_existing_error_msg:
         return 'success'
     else:
         return 'fail'
@@ -71,7 +73,7 @@ def basic_test_4():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == non_existing_error_msg:
         return 'success'
     else:
         return 'fail'
@@ -106,7 +108,7 @@ def basic_test_7_internal():
     except:
         # Special case: we should still be able to get the error message
         # until we call a new GDAL function
-        if gdal.GetLastErrorMsg() != '`non_existing_ds\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
+        if gdal.GetLastErrorMsg() != non_existing_error_msg:
             gdaltest.post_reason('did not get expected error message')
             return 'fail'
 
