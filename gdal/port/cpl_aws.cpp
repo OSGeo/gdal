@@ -582,7 +582,9 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
          */
         const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL);
 
-        if( EQUAL(pszCode, "AccessDenied") ) {
+        if( pszMessage == NULL ) {
+            VSIError(VSIE_AWSError, "%s", pszErrorMsg);
+        } else if( EQUAL(pszCode, "AccessDenied") ) {
             VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);
         } else if( EQUAL(pszCode, "NoSuchBucket") ) {
             VSIError(VSIE_AWSBucketNotFound, "%s", pszMessage);
