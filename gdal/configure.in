@@ -3300,14 +3300,18 @@ else
 
     elif test -f "$with_spatialite/include/spatialite.h" -a \
         "$SPATIALITE_INIT_FOUND" = "yes"; then
-        AC_CHECK_HEADERS(sqlite3.h)
-        if test "$ac_cv_header_sqlite3_h" = "yes"; then
-            AC_MSG_RESULT(enabled)
+
+        SQLITE3_REQ_VERSION="3.0.0"
+        AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
+
+        if test "$HAVE_SQLITE3" = "yes"; then
             SPATIALITE_INC="-I$with_spatialite/include"
             HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite -lsqlite3"
-            LIBS="$LIBS $SPATIALITE_LIBS"
-            HAVE_SQLITE3=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            AC_MSG_RESULT(spatialite enabled)
+        else
+            AC_MSG_RESULT(spatialite disabled)
         fi
     else
         AC_MSG_RESULT(disabled)
