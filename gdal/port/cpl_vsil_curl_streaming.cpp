@@ -1310,7 +1310,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             nErrorBufferSize += Read( pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead );
         pabyErrorBuffer[nErrorBufferSize] = 0;
         StopDownload();
-        if( CanRestartOnError((const char*)pabyErrorBuffer) )
+        if( CanRestartOnError((const char*)pabyErrorBuffer, true) )
         {
             curOffset = 0;
             nRingBufferFileOffset = 0;
