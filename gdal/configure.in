@@ -2804,16 +2804,8 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ogr,[  --without-ogr         Don't build OGR into shared library],,)
-
-if test "$with_ogr" = yes -o x"$with_ogr" = x ; then
-  echo checking for OGR ... enabled
-  OGR_ENABLED=yes
-else
-  echo checking for OGR ... disabled by user
-  OGR_ENABLED=no
-fi
-AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
+dnl Always build with OGR support.
+OGR_ENABLED=yes
 
 dnl ---------------------------------------------------------------------------
 
