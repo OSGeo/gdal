@@ -297,6 +297,9 @@ CPLErr CPLGetLastErrorType();
 #endif
 const char *CPLGetLastErrorMsg();
 
+int VSIGetLastErrorNo();
+const char *VSIGetLastErrorMsg();
+
 void CPLPushFinderLocation( const char * utf8_path );
 
 void CPLPopFinderLocation();
@@ -489,6 +492,17 @@ VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
     return VSIFOpenL( utf8_path, pszMode );
 }
 %}
+
+%rename (VSIFOpenExL) wrapper_VSIFOpenExL;
+%inline %{
+VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int bSetError )
+{
+    if (!pszMode) /* would lead to segfault */
+        pszMode = "r";
+    return VSIFOpenExL( utf8_path, pszMode, bSetError );
+}
+%}
+
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
 #if defined(SWIGPYTHON)
