@@ -61,7 +61,7 @@ typedef struct {
     /* Do not add anything here. szLastErrMsg must be the last field. See CPLRealloc() below */
 } VSIErrorContext;
 
-static void CPL_DLL VSIErrorV(VSIErrorNum, const char *, va_list );
+static void VSIErrorV(VSIErrorNum, const char *, va_list );
 
 /************************************************************************/
 /*                         CPLGetErrorContext()                         */
@@ -257,14 +257,14 @@ const char* CPL_STDCALL VSIGetLastErrorMsg()
  * with the given CPLErr error class, and either an appropriate CPLErrorNum
  * given the VSIErrorNum, or the given defualt CPLErrorNum.
  *
- * @return 1 if a CPLError was issued, or 0 if not.
+ * @return TRUE if a CPLError was issued, or FALSE if not.
  */
 
 int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo) {
     int err = VSIGetLastErrorNo();
     switch(err) {
         case VSIE_None:
-            return 0;
+            return FALSE;
         case VSIE_FileError:
             CPLError(eErrClass, eDefaultErrorNo, "%s", VSIGetLastErrorMsg());
             break;
@@ -291,5 +291,5 @@ int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErro
             break;
     }
 
-    return 1;
+    return TRUE;
 }
