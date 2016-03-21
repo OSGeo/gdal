@@ -73,10 +73,7 @@ public:
     virtual ~VSIFilesystemHandler() {}
 
     VSIVirtualHandle *Open( const char *pszFilename,
-                            const char *pszAccess )
-    {
-        return Open(pszFilename, pszAccess, false);
-    }
+                            const char *pszAccess );
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
