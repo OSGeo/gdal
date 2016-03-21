@@ -47,6 +47,7 @@
 
 #include <cerrno>
 #include <clocale>
+#include <cstring>
 
 /* Uncomment to get list of options that have been fetched and set */
 //#define DEBUG_CONFIG_OPTIONS
@@ -844,7 +845,10 @@ char *CPLScanString( const char *pszString, int nMaxLength,
 
 long CPLScanLong( const char *pszString, int nMaxLength )
 {
-    const std::string osValue( pszString, nMaxLength );
+    CPLAssert( nMaxLength >= 0 );
+    const size_t nLength = pszString == NULL ? 0 :
+        strnlen(pszString, nMaxLength);
+    const std::string osValue( pszString, nLength );
     return atol( osValue.c_str() );
 }
 
@@ -869,7 +873,10 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 
 unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 {
-    const std::string osValue( pszString, nMaxLength );
+    CPLAssert( nMaxLength >= 0 );
+    const size_t nLength = pszString == NULL ? 0 :
+        strnlen(pszString, nMaxLength);
+    const std::string osValue( pszString, nLength );
     return strtoul( osValue.c_str(), NULL, 10 );
 }
 
@@ -895,34 +902,21 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 
 GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 {
-    char        szValue[32];
-    char        *pszValue;
-
-    if( nMaxLength + 1 < (int)sizeof(szValue) )
-        pszValue = szValue;
-    else
-        pszValue = (char *)CPLMalloc( nMaxLength + 1);
-
-/* -------------------------------------------------------------------- */
-/*      Compute string into local buffer, and terminate it.             */
-/* -------------------------------------------------------------------- */
-    strncpy( pszValue, pszString, nMaxLength );
-    pszValue[nMaxLength] = '\0';
+    CPLAssert( nMaxLength >= 0 );
+    const size_t nLength = pszString == NULL ? 0 :
+        strnlen(pszString, nMaxLength);
+    const std::string osValue( pszString, nLength );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    const GUIntBig iValue = static_cast<GUIntBig>( _atoi64( pszValue ) );
+    return static_cast<GUIntBig>( _atoi64( osValue.c_str() ) );
 # elif HAVE_ATOLL
-    const GUIntBig iValue = atoll( pszValue );
+    return atoll( osValue.c_str() );
 #else
-    const GUIntBig iValue = atol( pszValue );
+    return = atol( osValue.c_str() );
 #endif
-
-    if( pszValue != szValue )
-        CPLFree( pszValue );
-    return iValue;
 }
 
 /************************************************************************/
