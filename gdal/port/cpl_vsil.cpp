@@ -549,6 +549,16 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 }
 
 /************************************************************************/
+/*                               Open()                                 */
+/************************************************************************/
+
+VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
+                                          const char *pszAccess )
+{
+    return Open(pszFilename, pszAccess, false);
+}
+
+/************************************************************************/
 /*                             VSIFOpenExL()                              */
 /************************************************************************/
 
@@ -559,7 +569,7 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  * than 2GB) should be supported.  Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
- * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is
+ * Note that the "VSILFILE *" returned by this function is
  * *NOT* a standard C library FILE *, and cannot be used with any functions
  * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
  *
@@ -577,6 +587,8 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  * @param bSetError flag determining whether or not this open call should set VSIErrors on failure.
  *
  * @return NULL on failure, or the file handle.
+ *
+ * @since GDAL 2.1
  */
 
 VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, int bSetError )
