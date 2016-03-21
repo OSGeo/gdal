@@ -197,10 +197,13 @@ public:
     VSIGZipFilesystemHandler();
     ~VSIGZipFilesystemHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename,
-                                     const char *pszAccess);
+                                     const char *pszAccess );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
@@ -1347,7 +1350,8 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
 /************************************************************************/
 
 VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
-                                                  const char *pszAccess)
+                                                  const char *pszAccess,
+                                                  bool /* bSetError */ )
 {
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename + strlen("/vsigzip/"));
@@ -1778,8 +1782,11 @@ public:
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
 
     virtual VSIVirtualHandle *OpenForWrite( const char *pszFilename,
                                             const char *pszAccess );
@@ -1903,7 +1910,8 @@ VSIArchiveReader* VSIZipFilesystemHandler::CreateReader(const char* pszZipFileNa
 /************************************************************************/
 
 VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
-                                                 const char *pszAccess)
+                                                 const char *pszAccess,
+                                                 bool /* bSetError */ )
 {
     CPLString osZipInFileName;
 

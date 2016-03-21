@@ -36,6 +36,12 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+def open_for_read(uri):
+    """
+    Opens a test file for reading.
+    """
+    return gdal.VSIFOpenExL(uri, 'rb', 1)
+
 ###############################################################################
 def vsis3_init():
 
@@ -59,21 +65,23 @@ def vsis3_1():
     if drv is None:
         return 'skip'
 
+        # RETODO: Bind to swig, change test
+
     # Missing AWS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3/foo/bar', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('AWS_SECRET_ACCESS_KEY') < 0:
+        f = open_for_read('/vsis3/foo/bar')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('AWS_SECRET_ACCESS_KEY') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/foo/bar', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('AWS_SECRET_ACCESS_KEY') < 0:
+        f = open_for_read('/vsis3_streaming/foo/bar')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('AWS_SECRET_ACCESS_KEY') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY')
@@ -81,10 +89,10 @@ def vsis3_1():
     # Missing AWS_ACCESS_KEY_ID
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3/foo/bar', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('AWS_ACCESS_KEY_ID') < 0:
+        f = open_for_read('/vsis3/foo/bar')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('AWS_ACCESS_KEY_ID') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID')
@@ -92,22 +100,22 @@ def vsis3_1():
     # ERROR 1: The AWS Access Key Id you provided does not exist in our records.
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3/foo/bar.baz', 'rb')
-    if f is not None or gdal.GetLastErrorMsg() == '':
+        f = open_for_read('/vsis3/foo/bar.baz')
+    if f is not None or gdal.VSIGetLastErrorMsg() == '':
         if f is not None:
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/foo/bar.baz', 'rb')
-    if f is not None or gdal.GetLastErrorMsg() == '':
+        f = open_for_read('/vsis3_streaming/foo/bar.baz')
+    if f is not None or gdal.VSIGetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -147,7 +155,7 @@ def vsis3_2():
     gdal.SetConfigOption('AWS_VIRTUAL_HOSTING', 'NO')
     gdal.SetConfigOption('AWS_S3_ENDPOINT', '127.0.0.1:%d' % gdaltest.webserver_port)
 
-    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket/resource', 'rb')
+    f = open_for_read('/vsis3/s3_fake_bucket/resource')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -159,7 +167,7 @@ def vsis3_2():
         print(data)
         return 'fail'
 
-    f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/resource', 'rb')
+    f = open_for_read('/vsis3_streaming/s3_fake_bucket/resource')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -173,7 +181,7 @@ def vsis3_2():
 
     # Test with temporary credentials
     gdal.SetConfigOption('AWS_SESSION_TOKEN', 'AWS_SESSION_TOKEN')
-    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket_with_session_token/resource', 'rb')
+    f = open_for_read('/vsis3/s3_fake_bucket_with_session_token/resource')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -203,7 +211,7 @@ def vsis3_2():
         return 'fail'
 
     # Test region and endpoint 'redirects'
-    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket/redirect', 'rb')
+    f = open_for_read('/vsis3/s3_fake_bucket/redirect')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -216,7 +224,7 @@ def vsis3_2():
         return 'fail'
 
     # Test region and endpoint 'redirects'
-    f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/redirect', 'rb')
+    f = open_for_read('/vsis3_streaming/s3_fake_bucket/redirect')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -230,50 +238,50 @@ def vsis3_2():
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/non_xml_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('bla') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/non_xml_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('bla') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/invalid_xml_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('<oops>') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/invalid_xml_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('<oops>') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_code_in_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('<Error/>') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/no_code_in_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error/>') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_message_in_error', 'rb')
-    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        f = open_for_read('/vsis3_streaming/s3_fake_bucket/no_message_in_error')
+    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -285,7 +293,7 @@ def vsis3_3():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
-    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin', 'rb')
+    f = open_for_read('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -562,7 +570,7 @@ def vsis3_extra_1():
         print('Missing S3_RESOURCE for running gdaltest_list_extra')
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsis3/' + gdal.GetConfigOption('S3_RESOURCE'), 'rb')
+    f = open_for_read('/vsis3/' + gdal.GetConfigOption('S3_RESOURCE'))
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -575,7 +583,7 @@ def vsis3_extra_1():
         return 'fail'
 
     # Same with /vsis3_streaming/
-    f = gdal.VSIFOpenL('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE'), 'rb')
+    f = open_for_read('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE'))
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -589,7 +597,7 @@ def vsis3_extra_1():
 
     # Invalid bucket : "The specified bucket does not exist"
     gdal.ErrorReset()
-    f = gdal.VSIFOpenL('/vsis3/not_existing_bucket/foo', 'rb')
+    f = open_for_read('/vsis3/not_existing_bucket/foo')
     with gdaltest.error_handler():
         gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
@@ -600,7 +608,7 @@ def vsis3_extra_1():
 
     # Invalid resource
     gdal.ErrorReset()
-    f = gdal.VSIFOpenL('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE') + '/invalid_resource.baz', 'rb')
+    f = open_for_read('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE') + '/invalid_resource.baz')
     if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())

@@ -132,8 +132,11 @@ public:
                      VSIMemFilesystemHandler();
     virtual          ~VSIMemFilesystemHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -446,7 +449,8 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
 VSIVirtualHandle *
 VSIMemFilesystemHandler::Open( const char *pszFilename,
-                               const char *pszAccess )
+                               const char *pszAccess,
+                               bool bSetError )
 
 {
     CPLMutexHolder oHolder( &hMutex );
@@ -467,6 +471,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         && strstr(pszAccess, "a") == NULL
         && poFile == NULL )
     {
+        if(bSetError) { VSIError(VSIE_FileError, "No such file or directory"); }
         errno = ENOENT;
         return NULL;
     }

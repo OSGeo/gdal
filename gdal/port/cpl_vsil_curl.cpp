@@ -264,8 +264,12 @@ public:
     VSICurlFilesystemHandler();
     ~VSICurlFilesystemHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
+
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
@@ -328,9 +332,10 @@ class VSICurlHandle : public VSIVirtualHandle
 
   protected:
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
-    virtual bool CanRestartOnError(const char*) { return false; }
+    bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
+    virtual bool CanRestartOnError(const char*, bool) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
-  virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
+    virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
 
   public:
@@ -349,8 +354,9 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual int          Close();
 
     bool                 IsKnownFileSize() const { return bHasComputedFileSize; }
-    vsi_l_offset         GetFileSize();
-    bool                 Exists();
+    vsi_l_offset         GetFileSize() { return GetFileSize(false); }
+    vsi_l_offset         GetFileSize(bool bSetError);
+    bool                 Exists(bool bSetError);
     bool                 IsDirectory() const { return bIsDirectory; }
     time_t               GetMTime() const { return mTime; }
 
@@ -613,7 +619,7 @@ static size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, v
 /*                           GetFileSize()                              */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::GetFileSize()
+vsi_l_offset VSICurlHandle::GetFileSize(bool bSetError)
 {
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
@@ -777,6 +783,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+
         if( UseLimitRangeGetInsteadOfHead() && response_code == 206 )
         {
             eExists = EXIST_NO;
@@ -796,12 +803,26 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         else if( response_code != 200 )
         {
             if( UseLimitRangeGetInsteadOfHead() && sWriteFuncData.pBuffer != NULL &&
-                CanRestartOnError((const char*)sWriteFuncData.pBuffer) )
+                CanRestartOnError((const char*)sWriteFuncData.pBuffer, bSetError) )
             {
                 bHasComputedFileSize = false;
                 CPLFree(sWriteFuncData.pBuffer);
                 CPLFree(sWriteFuncHeaderData.pBuffer);
-                return GetFileSize();
+                return GetFileSize(bSetError);
+            }
+
+            // If there was no VSI error thrown in the process,
+            // fail by reporting the HTTP response code.
+            if(bSetError && VSIGetLastErrorNo() == 0) {
+                if(strlen(szCurlErrBuf) > 0) {
+                    if(response_code == 0) {
+                        VSIError(VSIE_HttpError, "CURL error: %s", szCurlErrBuf);
+                    } else {
+                        VSIError(VSIE_HttpError, "HTTP response code: %d - %s", (int)response_code, szCurlErrBuf);
+                    }
+                } else {
+                    VSIError(VSIE_HttpError, "HTTP response code: %d", (int)response_code);
+                }
             }
 
             eExists = EXIST_NO;
@@ -845,10 +866,11 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 /*                                 Exists()                             */
 /************************************************************************/
 
-bool VSICurlHandle::Exists()
+bool VSICurlHandle::Exists(bool bSetError)
 {
-    if (eExists == EXIST_UNKNOWN)
-        GetFileSize();
+  if (eExists == EXIST_UNKNOWN) {
+        GetFileSize(bSetError);
+  }
     return eExists == EXIST_YES;
 }
 
@@ -1887,7 +1909,8 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(const char* pszURL)
 /************************************************************************/
 
 VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
-                                                  const char *pszAccess)
+                                                  const char *pszAccess,
+                                                  bool bSetError )
 {
     if (strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL)
@@ -1916,13 +1939,13 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         }
     }
 
-    VSICurlHandle* poHandle = CreateFileHandle( osFilename + strlen(GetFSPrefix()));
+    VSICurlHandle* poHandle = CreateFileHandle(osFilename + strlen(GetFSPrefix()));
     if( poHandle == NULL )
         return NULL;
     if (!bGotFileList)
     {
         /* If we didn't get a filelist, check that the file really exists */
-        if (!poHandle->Exists())
+        if (!poHandle->Exists(bSetError))
         {
             delete poHandle;
             return NULL;
@@ -2832,7 +2855,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
            CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))) )
         pStatBuf->st_size = poHandle->GetFileSize();
 
-    int nRet = (poHandle->Exists()) ? 0 : -1;
+    int nRet = poHandle->Exists((nFlags & VSI_STAT_SET_ERROR_FLAG) > 0) ? 0 : -1;
     pStatBuf->st_mtime = poHandle->GetMTime();
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
     delete poHandle;
@@ -3048,7 +3071,8 @@ public:
         VSIS3FSHandler() {}
 
         virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                        const char *pszAccess);
+                                        const char *pszAccess,
+                                        bool bSetError );
         virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
         virtual int      Unlink( const char *pszFilename );
 
@@ -3066,7 +3090,7 @@ class VSIS3Handle CPL_FINAL : public VSICurlHandle
 
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
-        virtual bool CanRestartOnError(const char*);
+        virtual bool CanRestartOnError(const char*, bool);
         virtual bool UseLimitRangeGetInsteadOfHead() { return true; }
         virtual void ProcessGetFileSizeResult(const char* pszContent);
 
@@ -3658,7 +3682,8 @@ int VSIS3WriteHandle::Close()
 /************************************************************************/
 
 VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
-                                        const char *pszAccess)
+                                        const char *pszAccess,
+                                        bool bSetError)
 {
     if (strchr(pszAccess, 'w') != NULL )
     {
@@ -3684,7 +3709,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
     }
     else
     {
-        return VSICurlFilesystemHandler::Open(pszFilename, pszAccess);
+        return VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
     }
 }
 
@@ -3997,9 +4022,9 @@ struct curl_slist* VSIS3Handle::GetCurlHeaders(const CPLString& osVerb)
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
+bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
     {
         ((VSIS3FSHandler*) poFS)->UpdateMapFromHandle(m_poS3HandleHelper);
 

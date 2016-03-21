@@ -101,7 +101,8 @@ class VSIS3HandleHelper
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0);
-        bool CanRestartOnError(const char*);
+        bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
+        bool CanRestartOnError(const char*, bool bSetError);
 
         const CPLString& GetURL() const { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
