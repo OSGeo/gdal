@@ -255,7 +255,7 @@ const char* CPL_STDCALL VSIGetLastErrorMsg()
  *
  * If there is a VSIError that is set, translate it to a CPLError call
  * with the given CPLErr error class, and either an appropriate CPLErrorNum
- * given the VSIErrorNum, or the given defualt CPLErrorNum.
+ * given the VSIErrorNum, or the given default CPLErrorNum.
  *
  * @return TRUE if a CPLError was issued, or FALSE if not.
  */

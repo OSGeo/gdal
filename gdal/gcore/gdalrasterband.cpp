@@ -1461,7 +1461,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  *
  * Depending on drivers, changing the no data value may or may not have an
  * effect on the pixel values of a raster that has just been created. It is
- * thus advised to explictly called Fill() if the intent is to initialize
+ * thus advised to explicitly called Fill() if the intent is to initialize
  * the raster to the nodata value.
  * In ay case, changing an existing no data value, when one already exists and
  * the dataset exists or has been initialized, has no effect on the pixel whose
@@ -1497,7 +1497,7 @@ CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
  *
  * Depending on drivers, changing the no data value may or may not have an
  * effect on the pixel values of a raster that has just been created. It is
- * thus advised to explictly called Fill() if the intent is to initialize
+ * thus advised to explicitly called Fill() if the intent is to initialize
  * the raster to the nodata value.
  * In ay case, changing an existing no data value, when one already exists and
  * the dataset exists or has been initialized, has no effect on the pixel whose

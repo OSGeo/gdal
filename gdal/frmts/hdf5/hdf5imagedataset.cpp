@@ -955,7 +955,7 @@ void HDF5ImageDataset::IdentifyProductType()
     if(pszMissionId != NULL && strstr(GetDescription(), "QLK") == NULL)
     {
         //Check if the mission type is CSK or KMPS
-        //KMPS: Komsat-5 is Korean mission with a SAR intrument.
+        //KMPS: Komsat-5 is Korean mission with a SAR instrument.
         if(EQUAL(pszMissionId,"CSK") || EQUAL(pszMissionId,"KMPS"))
         {
             iSubdatasetType = CSK_PRODUCT;
