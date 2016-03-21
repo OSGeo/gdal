@@ -232,7 +232,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        CPLXMLNode *const psBandTree = poBand->SerializeToXML( pszUnused );
+        CPLXMLNode * const psBandTree = poBand->SerializeToXML( pszUnused );
 
         if( psBandTree != NULL )
             CPLAddXMLChild( psDSTree, psBandTree );
@@ -1042,11 +1042,13 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
 /*      new overview file.                                              */
 /* -------------------------------------------------------------------- */
     if( oOvManager.IsInitialized() && psPam->osPhysicalFilename.length() != 0 )
+    {
         return oOvManager.BuildOverviewsSubDataset(
             psPam->osPhysicalFilename, pszResampling,
             nOverviews, panOverviewList,
             nListBands, panBandList,
             pfnProgress, pProgressData );
+    }
 
     return GDALDataset::IBuildOverviews( pszResampling,
                                          nOverviews, panOverviewList,
