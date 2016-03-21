@@ -64,7 +64,7 @@ CPL_C_END
 
 typedef enum
 {
-    RW_MUTEX_STATE_UNKNOW,
+    RW_MUTEX_STATE_UNKNOWN,
     RW_MUTEX_STATE_ALLOWED,
     RW_MUTEX_STATE_DISABLED
 } GDALAllowReadWriteMutexState;
@@ -217,7 +217,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_UNKNOW;
+    psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_UNKNOWN;
 }
 
 /************************************************************************/
@@ -6069,7 +6069,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
     if( psPrivate != NULL && eAccess == GA_Update )
     {
-        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOW )
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
         {
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other

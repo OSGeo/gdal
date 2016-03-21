@@ -592,7 +592,7 @@ class _MyHelper(object):
             import sys
 
             # Restore original module before calling help() otherwise
-            # we don't get methods or classes mentionned
+            # we don't get methods or classes mentioned
             sys.modules[self.module.__name__] = self.module._original_module
 
             ret = self.original_help(self.module._original_module, **kwds)
