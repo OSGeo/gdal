@@ -102,7 +102,7 @@ void GDALPamProxyDB::LoadDB()
 /* -------------------------------------------------------------------- */
 /*      Read header, verify and extract update counter.                 */
 /* -------------------------------------------------------------------- */
-    const int nHeaderSize = 100;
+    const size_t nHeaderSize = 100;
     GByte abyHeader[nHeaderSize] = { '\0' };
 
     if( VSIFReadL( abyHeader, 1, nHeaderSize, fpDB ) != nHeaderSize
@@ -213,7 +213,7 @@ void GDALPamProxyDB::SaveDB()
 /* -------------------------------------------------------------------- */
 /*      Write header.                                                   */
 /* -------------------------------------------------------------------- */
-    const int nHeaderSize = 100;
+    const size_t nHeaderSize = 100;
     GByte abyHeader[nHeaderSize] = { '\0' };
 
     memset( abyHeader, ' ', sizeof(abyHeader) );
