@@ -364,10 +364,10 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * block oriented data without an extra copy into an application buffer.
  *
  * @param nXBlockOff the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
+ * the leftmost block, 1 the next block and so forth.
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
+ * the topmost block, 1 the next block and so forth.
  *
  * @param pImage the buffer into which the data will be read.  The buffer
  * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
