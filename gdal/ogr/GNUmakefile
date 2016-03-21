@@ -11,9 +11,7 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
-ifeq ($(OGR_ENABLED),yes)
 CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
-endif
 
 ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
@@ -45,18 +43,8 @@ $(OBJ): ogr_feature.h ogr_geometry.h swq.h
 
 obj:	$(OBJ)
 
-ifeq ($(OGR_ENABLED),yes)
-
 sublibs:
 	(cd ogrsf_frmts; $(MAKE))
-
-else
-
-sublibs:
-	(cd ogrsf_frmts/mitab; $(MAKE))
-	(cd ogrsf_frmts/generic; $(MAKE))
-
-endif
 
 docs:
 	echo "This target does not exist anymore. Use top-level"

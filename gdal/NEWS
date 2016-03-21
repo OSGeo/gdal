@@ -38,6 +38,7 @@
  * General sanitization pass to clean-up code, fix a lot of compiler warnings,
    as well as issues pointed by Coverity Scan (credits to Kurt Schwehr for tackling
    a large part of them) or CLang Static Analyzer.
+ * Removed --without-ogr configure flag (#6117).  Always build with OGR.
 
 == New installed files ==
  * gdal_pansharpen.py

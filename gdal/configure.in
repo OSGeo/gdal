@@ -2804,16 +2804,8 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ogr,[  --without-ogr         Don't build OGR into shared library],,)
-
-if test "$with_ogr" = yes -o x"$with_ogr" = x ; then
-  echo checking for OGR ... enabled
-  OGR_ENABLED=yes
-else
-  echo checking for OGR ... disabled by user
-  OGR_ENABLED=no
-fi
-AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
+dnl Always build with OGR support.
+OGR_ENABLED=yes
 
 dnl ---------------------------------------------------------------------------
 
@@ -5130,7 +5122,6 @@ fi
 LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
-LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG([  enable GNM building:       ${GNM_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG([  enable POSIX iconv support:${am_cv_func_iconv}])

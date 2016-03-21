@@ -50,7 +50,7 @@ PY_HAVE_SETUPTOOLS=@PY_HAVE_SETUPTOOLS@
 BINDINGS	=	@BINDINGS@
 
 HAVE_OGDI = @HAVE_OGDI@
-OGR_ENABLED = @OGR_ENABLED@
+OGR_ENABLED = yes
 GNM_ENABLED = @GNM_ENABLED@
 
 OSX_FRAMEWORK_PREFIX = /Library/Frameworks/GDAL.framework
@@ -518,12 +518,9 @@ PROJ_INCLUDE	=	@PROJ_INCLUDE@
 
 PAM_SETTING     =       @PAM_SETTING@
 
-ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS	:= $(GDAL_LIB) $(OCI_LIB) $(GDAL_LIBS)
+# TODO: Remove -DOGR_ENABLED.
 CPPFLAGS	:= -DOGR_ENABLED $(CPPFLAGS)
-else
-GDAL_LIBS	=	$(GDAL_LIB)
-endif
 
 ifeq ($(GNM_ENABLED),yes)
 CPPFLAGS	:= -DGNM_ENABLED $(CPPFLAGS)
@@ -581,10 +578,8 @@ endif
 
 endif
 
-ifeq ($(OGR_ENABLED),yes)
 ifeq ($(HAVE_SQLITE),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) rasterlite mbtiles
-endif
 endif
 
 ifeq ($(HAVE_POSTGISRASTER),yes)
@@ -595,9 +590,7 @@ ifeq ($(HAVE_CHARLS),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) jpegls
 endif
 
-ifeq ($(OGR_ENABLED),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) arg
-endif
 
 #
 # CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS

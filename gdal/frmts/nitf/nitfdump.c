@@ -33,9 +33,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
-#ifdef OGR_ENABLED
 #include "ogr_api.h"
-#endif
 
 CPL_CVSID("$Id$");
 
@@ -709,7 +707,6 @@ int main( int nArgc, char ** papszArgv )
 
                 if (NITFDESExtractShapefile(psDES, szRadix))
                 {
-#ifdef OGR_ENABLED
                     OGRDataSourceH hDS;
                     OGRRegisterAll();
                     snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
@@ -738,7 +735,6 @@ int main( int nArgc, char ** papszArgv )
                         }
                         OGR_DS_Destroy(hDS);
                     }
-#endif
                 }
 
                 if (bExtractSHPInMem)
@@ -762,9 +758,7 @@ int main( int nArgc, char ** papszArgv )
     CPLFinderClean();
     CPLCleanupTLS();
     VSICleanupFileManager();
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
 
     exit( 0 );
 }

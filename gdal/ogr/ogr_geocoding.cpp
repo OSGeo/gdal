@@ -119,7 +119,6 @@ static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 #define FIELD_URL                "url"
 #define FIELD_BLOB               "blob"
 
-#ifdef OGR_ENABLED
 
 /************************************************************************/
 /*                       OGRGeocodeGetParameter()                       */
@@ -178,7 +177,6 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
     return bValidFormat;
 }
 
-#endif /* #ifdef OGR_ENABLED */
 
 /************************************************************************/
 /*                       OGRGeocodeCreateSession()                      */
@@ -235,7 +233,6 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
 
 OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
 {
-#ifdef OGR_ENABLED
     OGRGeocodingSessionH hSession =
         (OGRGeocodingSessionH)CPLCalloc(1, sizeof(_OGRGeocodingSessionHS));
 
@@ -357,10 +354,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
         (pszReverseQueryTemplate) ? CPLStrdup(pszReverseQueryTemplate) : NULL;
 
     return hSession;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported, "Requires OGR support");
-    return NULL;
-#endif
 }
 
 /************************************************************************/
@@ -376,7 +369,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
  */
 void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
 {
-#ifdef OGR_ENABLED
     if( hSession == NULL )
         return;
     CPLFree(hSession->pszCacheFilename);
@@ -391,10 +383,8 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
     if( hSession->poDS )
         OGRReleaseDataSource((OGRDataSourceH) hSession->poDS);
     CPLFree(hSession);
-#endif
 }
 
-#ifdef OGR_ENABLED
 
 /************************************************************************/
 /*                        OGRGeocodeGetCacheLayer()                     */
@@ -1336,7 +1326,6 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
     return hLayer;
 }
 
-#endif /* #ifdef OGR_ENABLED */
 
 /************************************************************************/
 /*                              OGRGeocode()                            */
@@ -1392,7 +1381,6 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
                      char** papszStructuredQuery,
                      char** papszOptions)
 {
-#ifdef OGR_ENABLED
     VALIDATE_POINTER1( hSession, "OGRGeocode", NULL );
     if( (pszQuery == NULL && papszStructuredQuery == NULL) ||
         (pszQuery != NULL && papszStructuredQuery != NULL) )
@@ -1444,12 +1432,8 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
 
     /* coverity[tainted_data] */
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
-#else
-    return NULL;
-#endif
 }
 
-#ifdef OGR_ENABLED
 
 /************************************************************************/
 /*                      OGRGeocodeReverseSubstitute()                   */
@@ -1479,7 +1463,6 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
     return osURL;
 }
 
-#endif /* #ifdef OGR_ENABLED */
 
 /************************************************************************/
 /*                         OGRGeocodeReverse()                          */
@@ -1528,7 +1511,6 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
                             double dfLon, double dfLat,
                             char** papszOptions)
 {
-#ifdef OGR_ENABLED
     VALIDATE_POINTER1( hSession, "OGRGeocodeReverse", NULL );
 
     if( hSession->pszReverseQueryTemplate == NULL )
@@ -1552,9 +1534,6 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
 
     /* coverity[tainted_data] */
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
-#else
-    return NULL;
-#endif
 }
 
 /************************************************************************/
@@ -1571,7 +1550,5 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
  */
 void OGRGeocodeFreeResult(OGRLayerH hLayer)
 {
-#ifdef OGR_ENABLED
     delete (OGRLayer*) hLayer;
-#endif
 }
