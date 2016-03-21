@@ -5,7 +5,7 @@ typedef int (*gma_simple_callback)(void*, int, int);
 #define gma_print(type) int gma_print_##type(void* block, int w, int h) { \
         for (int y = 0; y < h; y++) {                                   \
             for (int x = 0; x < w; x++) {                               \
-                printf("%02i ", gma_typecast(type, block)[x+y*h]);      \
+                printf("%02i ", gma_typecast(type, block)[x+y*w]);      \
             }                                                           \
             printf("\n");                                               \
         }                                                               \
@@ -18,7 +18,7 @@ gma_print(int32_t)
 int gma_print_double(void* block, int w, int h) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            printf("%04.1f ", gma_typecast(double, block)[x+y*h]);
+            printf("%04.1f ", gma_typecast(double, block)[x+y*w]);
         }
         printf("\n");
     }
@@ -28,7 +28,7 @@ int gma_print_double(void* block, int w, int h) {
 #define gma_rand(type) int gma_rand_##type(void* block, int w, int h) { \
         for (int y = 0; y < h; y++) {                                   \
             for (int x = 0; x < w; x++) {                               \
-                gma_typecast(type, block)[x+y*h] = rand() % 20;         \
+                gma_typecast(type, block)[x+y*w] = rand() % 20;         \
             }                                                           \
         }                                                               \
         return 2;                                                       \
@@ -40,7 +40,7 @@ gma_rand(int32_t)
 int gma_rand_double(void* block, int w, int h) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            gma_typecast(double, block)[x+y*h] = rand() % 20;
+            gma_typecast(double, block)[x+y*w] = rand() % 20;
         }
     }
     return 2;

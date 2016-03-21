@@ -4,7 +4,7 @@ typedef int (*gma_with_arg_callback)(void*, int, int, void*);
         type a = *((type*)to_add);                                      \
         for (int y = 0; y < h; y++) {                                   \
             for (int x = 0; x < w; x++) {                               \
-                gma_typecast(type, block)[x+y*h] += a;                  \
+                gma_typecast(type, block)[x+y*w] += a;                  \
             }                                                           \
         }                                                               \
         return 2;                                                       \
