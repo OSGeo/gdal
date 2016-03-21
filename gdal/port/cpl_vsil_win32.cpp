@@ -52,8 +52,12 @@ CPL_CVSID("$Id$");
 class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
+
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
@@ -468,7 +472,8 @@ static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
 /************************************************************************/
 
 VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
-                                                   const char *pszAccess )
+                                                   const char *pszAccess,
+                                                   bool /* bSetError */ )
 
 {
     DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;

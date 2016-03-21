@@ -67,6 +67,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     nHeaderBytes(0),
     pabyHeader(NULL)
 {
+
 /* -------------------------------------------------------------------- */
 /*      Ensure that C: is treated as C:\ so we can stat it on           */
 /*      Windows.  Similar to what is done in CPLStat().                 */
@@ -123,22 +124,25 @@ retry:  // TODO(schwehr): Stop using goto.
 
     if( bPotentialDirectory )
     {
+        int nStatFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG;
+        if(nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR)
+            nStatFlags |= VSI_STAT_SET_ERROR_FLAG;
+
         // For those special files, opening them with VSIFOpenL() might result
         // in content, even if they should be considered as directories, so
         // use stat.
         VSIStatBufL sStat;
 
-        if( VSIStatExL( pszFilename, &sStat,
-                        VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
-        {
+        if(VSIStatExL( pszFilename, &sStat, nStatFlags) == 0) {
             bStatOK = TRUE;
             if( VSI_ISDIR( sStat.st_mode ) )
                 bIsDirectory = TRUE;
         }
     }
 
-    if( !bIsDirectory )
-        fpL = VSIFOpenL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb" );
+    if( !bIsDirectory ) {
+        fpL = VSIFOpenExL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb", (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR) > 0);
+    }
     if( fpL != NULL )
     {
         bStatOK = TRUE;
@@ -166,7 +170,7 @@ retry:  // TODO(schwehr): Stop using goto.
     else if( !bStatOK )
     {
         VSIStatBufL sStat;
-        if( VSIStatExL( pszFilename, &sStat,
+        if( !bPotentialDirectory && VSIStatExL( pszFilename, &sStat,
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
         {
             bStatOK = TRUE;

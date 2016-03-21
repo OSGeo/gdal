@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_aws.h"
+#include "cpl_vsi_error.h"
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_minixml.h"
@@ -405,14 +406,14 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     CPLString osSecretAccessKey = CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
     if( osSecretAccessKey.size() == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        VSIError(VSIE_AWSInvalidCredentials,
                  "AWS_SECRET_ACCESS_KEY configuration option not defined");
         return NULL;
     }
     CPLString osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
     if( osAccessKeyId.size() == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        VSIError(VSIE_AWSInvalidCredentials,
                  "AWS_ACCESS_KEY_ID configuration option not defined");
         return NULL;
     }
@@ -509,7 +510,7 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
+bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
@@ -517,14 +518,14 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+        if(bSetError) { VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg); }
         return false;
     }
 
     CPLXMLNode* psTree = CPLParseXMLString(pszErrorMsg);
     if( psTree == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
         return false;
     }
 
@@ -532,7 +533,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
     if( pszCode == NULL )
     {
         CPLDestroyXMLNode(psTree);
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
         return false;
     }
 
@@ -542,7 +543,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         if( pszRegion == NULL )
         {
             CPLDestroyXMLNode(psTree);
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
             return false;
         }
         SetAWSRegion(pszRegion);
@@ -559,7 +560,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
                                     pszEndpoint[m_osBucket.size()] != '.')) )
         {
             CPLDestroyXMLNode(psTree);
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
             return false;
         }
         if( !m_bUseVirtualHosting &&
@@ -575,13 +576,25 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         return true;
     }
 
-    if( !EQUAL(pszCode, "NoSuchKey") )
-    {
+    if(bSetError) {
+        /*
+         * Translate AWS errors into VSI errors
+         */
         const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL);
-        if( pszMessage )
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszMessage);
-        else
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
+
+        if( pszMessage == NULL ) {
+            VSIError(VSIE_AWSError, "%s", pszErrorMsg);
+        } else if( EQUAL(pszCode, "AccessDenied") ) {
+            VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);
+        } else if( EQUAL(pszCode, "NoSuchBucket") ) {
+            VSIError(VSIE_AWSBucketNotFound, "%s", pszMessage);
+        } else if( EQUAL(pszCode, "NoSuchKey") ) {
+            VSIError(VSIE_AWSObjectNotFound, "%s", pszMessage);
+        } else if( EQUAL(pszCode, "SignatureDoesNotMatch") ) {
+            VSIError(VSIE_AWSSignatureDoesNotMatch, "%s", pszMessage);
+        } else {
+            VSIError(VSIE_AWSError, "%s", pszMessage);
+        }
     }
 
     CPLDestroyXMLNode(psTree);

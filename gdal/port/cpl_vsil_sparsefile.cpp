@@ -97,8 +97,11 @@ public:
                                     vsi_l_offset &nSparseFileOffset,
                                     vsi_l_offset &nSparseFileSize );
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -179,9 +182,9 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*      Find what region we are in, searching linearly from the         */
 /*      start.                                                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iRegion = 0;  // Used after for.
+    unsigned int iRegion;
 
-    for( ; iRegion < aoRegions.size(); iRegion++ )
+    for( iRegion = 0; iRegion < aoRegions.size(); iRegion++ )
     {
         if( nCurOffset >= aoRegions[iRegion].nDstOffset
             && nCurOffset < aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength )
@@ -333,7 +336,8 @@ VSISparseFileFilesystemHandler::~VSISparseFileFilesystemHandler()
 
 VSIVirtualHandle *
 VSISparseFileFilesystemHandler::Open( const char *pszFilename,
-                                      const char *pszAccess )
+                                      const char *pszAccess,
+                                      bool /* bSetError */)
 
 {
     CPLAssert( STARTS_WITH_CI(pszFilename, "/vsisparse/") );

@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi_error.h"
 #include "gdal_priv.h"
 #include "ogr_attrind.h"
 #include "ogr_featurestyle.h"
@@ -2663,6 +2664,21 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     if( (nOpenFlags & GDAL_OF_KIND_MASK) == 0 )
         nOpenFlags |= GDAL_OF_KIND_MASK;
 
+    int         iDriver;
+    GDALDriverManager *poDM = GetGDALDriverManager();
+    //CPLLocaleC  oLocaleForcer;
+
+    CPLErrorReset();
+    VSIErrorReset();
+    CPLAssert( NULL != poDM );
+
+    /* Build GDALOpenInfo just now to avoid useless file stat'ing if a */
+    /* shared dataset was asked before */
+    GDALOpenInfo oOpenInfo(pszFilename,
+                           nOpenFlags,
+                           (char**) papszSiblingFiles);
+
+    // Prevent infinite recursion
     {
         int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
         if( pnRecCount == NULL )
@@ -2679,19 +2695,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         }
         (*pnRecCount) ++;
     }
-
-    int         iDriver;
-    GDALDriverManager *poDM = GetGDALDriverManager();
-    //CPLLocaleC  oLocaleForcer;
-
-    CPLErrorReset();
-    CPLAssert( NULL != poDM );
-
-    /* Build GDALOpenInfo just now to avoid useless file stat'ing if a */
-    /* shared dataset was asked before */
-    GDALOpenInfo oOpenInfo(pszFilename,
-                           nOpenFlags,
-                           (char**) papszSiblingFiles);
 
     // Remove leading @ if present
     char** papszOpenOptionsCleaned = CSLDuplicate((char**)papszOpenOptions);
@@ -2852,6 +2855,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                     poDS = poOvrDS;
                 }
             }
+            VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
             return (GDALDatasetH) poDS;
@@ -2872,15 +2876,22 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 
     if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
     {
-        if( oOpenInfo.bStatOK )
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                    "`%s' not recognized as a supported file format.\n",
-                    pszFilename );
-        else
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                    "`%s' does not exist in the file system,\n"
-                    "and is not recognized as a supported dataset name.\n",
-                    pszFilename );
+        // Check to see if there was a filesystem error, and report it if so.
+        // If not, return a more generic error.
+        if(!VSIToCPLError(CE_Failure, CPLE_OpenFailed)) {
+            if( oOpenInfo.bStatOK )
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "`%s' not recognized as a supported file format.\n",
+                          pszFilename );
+            else {
+                // If Stat failed and no VSI error was set,
+                // assume it is because the file did not exist on the filesystem.
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "`%s' does not exist in the file system,\n"
+                          "and is not recognized as a supported dataset name.\n",
+                          pszFilename );
+            }
+        }
     }
 
     int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );

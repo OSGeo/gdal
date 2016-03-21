@@ -188,8 +188,11 @@ public:
     VSICurlStreamingFSHandler();
     ~VSICurlStreamingFSHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 
     void                AcquireMutex();
@@ -259,7 +262,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   protected:
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
-    virtual bool CanRestartOnError(const char*) { return false; }
+    bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
+    virtual bool CanRestartOnError(const char*, bool) { return false; }
     virtual bool InterpretRedirect() { return true; }
     void SetURL(const char* pszURL);
 
@@ -1306,7 +1310,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             nErrorBufferSize += Read( pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead );
         pabyErrorBuffer[nErrorBufferSize] = 0;
         StopDownload();
-        if( CanRestartOnError((const char*)pabyErrorBuffer) )
+        if( CanRestartOnError((const char*)pabyErrorBuffer, true) )
         {
             curOffset = 0;
             nRingBufferFileOffset = 0;
@@ -1488,7 +1492,8 @@ VSICurlStreamingHandle* VSICurlStreamingFSHandler::CreateFileHandle(const char* 
 /************************************************************************/
 
 VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
-                                                   const char *pszAccess )
+                                                   const char *pszAccess,
+                                                   bool /* bSetError */ )
 {
     if (strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL)
@@ -1642,7 +1647,7 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
         virtual bool StopReceivingBytesOnError() { return false; }
-        virtual bool CanRestartOnError(const char*);
+        virtual bool CanRestartOnError(const char*, bool);
         virtual bool InterpretRedirect() { return false; }
 
     public:
@@ -1700,9 +1705,9 @@ struct curl_slist* VSIS3StreamingHandle::GetCurlHeaders(const CPLString& osVerb)
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg)
+bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
     {
         ((VSIS3StreamingFSHandler*) m_poFS)->UpdateMapFromHandle(m_poS3HandleHelper);
 

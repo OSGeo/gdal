@@ -83,6 +83,10 @@ install:
   - make generate
   - make
   - cd ../..
+  - cd swig/python
+  - make generate
+  - make
+  - cd ../..
   - sudo rm -f /usr/lib/libgdal.so*
   - sudo make install
   - sudo ldconfig
@@ -149,4 +153,3 @@ notifications:
     channels:
       - "irc.freenode.org#gdal"
     use_notice: true
-

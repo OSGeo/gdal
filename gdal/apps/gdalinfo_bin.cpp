@@ -127,8 +127,9 @@ int main( int argc, char ** argv )
     while (__AFL_LOOP(1000)) {
         iIter ++;
 #endif
+
     GDALDatasetH hDataset
-        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
+        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                       (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
 
     if( hDataset == NULL )
