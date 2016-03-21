@@ -82,7 +82,7 @@ typedef enum
   CPLE_AWSObjectNotFound,
   CPLE_AWSAccessDenied,
   CPLE_AWSInvalidCredentials,
-  CPLE_AWSSignaturDoesNotMatch,
+  CPLE_AWSSignatureDoesNotMatch,
 } CPLErrorNum;
 
 #else
@@ -109,7 +109,7 @@ typedef int CPLErrorNum;
 #define CPLE_AWSObjectNotFound          13
 #define CPLE_AWSAccessDenied            14
 #define CPLE_AWSInvalidCredentials      15
-#define CPLE_AWSSignaturDoesNotMatch    16
+#define CPLE_AWSSignatureDoesNotMatch    16
 
 /* 100 - 299 reserved for GDAL */
 
