@@ -352,8 +352,11 @@ public:
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszTarFileName);
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
 };
 
 
@@ -408,7 +411,8 @@ VSIArchiveReader* VSITarFilesystemHandler::CreateReader(const char* pszTarFileNa
 /************************************************************************/
 
 VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
-                                                 const char *pszAccess)
+                                                 const char *pszAccess,
+                                                 bool /* bSetError */ )
 {
 
     if (strchr(pszAccess, 'w') != NULL ||

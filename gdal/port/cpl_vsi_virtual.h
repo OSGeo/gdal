@@ -35,6 +35,7 @@
 #define CPL_VSI_VIRTUAL_H_INCLUDED
 
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
@@ -71,8 +72,15 @@ public:
 
     virtual ~VSIFilesystemHandler() {}
 
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess )
+    {
+        return Open(pszFilename, pszAccess, false);
+    }
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess) = 0;
+                                    const char *pszAccess,
+                                    bool bSetError ) = 0;
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }

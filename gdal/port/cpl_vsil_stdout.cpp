@@ -70,8 +70,11 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 };
 
@@ -191,7 +194,8 @@ int VSIStdoutHandle::Close()
 
 VSIVirtualHandle *
 VSIStdoutFilesystemHandler::Open( CPL_UNUSED const char *pszFilename,
-                                  const char *pszAccess )
+                                  const char *pszAccess,
+                                  bool /* bSetError */ )
 {
     if ( strchr(pszAccess, 'r') != NULL ||
          strchr(pszAccess, '+') != NULL )
@@ -234,8 +238,11 @@ int VSIStdoutFilesystemHandler::Stat( CPL_UNUSED const char * pszFilename,
 class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 };
 
@@ -364,7 +371,8 @@ int VSIStdoutRedirectHandle::Close()
 
 VSIVirtualHandle *
 VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
-                                          const char *pszAccess )
+                                          const char *pszAccess,
+                                          bool /* bSetError */ )
 
 {
     if ( strchr(pszAccess, 'r') != NULL ||

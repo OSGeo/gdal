@@ -51,7 +51,6 @@
  * that the default implementation is very simple.
  */
 
-
 /* -------------------------------------------------------------------- */
 /*      We need access to ``struct stat''.                              */
 /* -------------------------------------------------------------------- */
@@ -137,6 +136,7 @@ typedef FILE VSILFILE;
 #endif
 
 VSILFILE CPL_DLL *  VSIFOpenL( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
+VSILFILE CPL_DLL *  VSIFOpenExL( const char *, const char *, int ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFCloseL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFSeekL( VSILFILE *, vsi_l_offset, int ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 vsi_l_offset CPL_DLL VSIFTellL( VSILFILE * ) CPL_WARN_UNUSED_RESULT;
@@ -164,9 +164,10 @@ typedef struct VSI_STAT64_T VSIStatBufL;
 
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * ) CPL_WARN_UNUSED_RESULT;
 
-#define VSI_STAT_EXISTS_FLAG    0x1
-#define VSI_STAT_NATURE_FLAG    0x2
-#define VSI_STAT_SIZE_FLAG      0x4
+#define VSI_STAT_EXISTS_FLAG         0x1
+#define VSI_STAT_NATURE_FLAG         0x2
+#define VSI_STAT_SIZE_FLAG           0x4
+#define VSI_STAT_SET_ERROR_FLAG      0x8
 
 int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags ) CPL_WARN_UNUSED_RESULT;
 

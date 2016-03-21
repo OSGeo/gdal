@@ -361,7 +361,7 @@ def test_gdal_translate_13():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata() 
+    md = ds.GetMetadata()
     if 'TIFFTAG_DOCUMENTNAME' not in md:
         gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
         return 'fail'
@@ -383,7 +383,7 @@ def test_gdal_translate_14():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE') 
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
         gdaltest.post_reason('Did not get COMPRESSION')
         return 'fail'
@@ -517,7 +517,7 @@ def test_gdal_translate_19():
         return 'skip'
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
-    ct = gdal.ColorTable() 
+    ct = gdal.ColorTable()
     ct.SetColorEntry( 127, (1,2,3,255) )
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
     ds.GetRasterBand( 1 ).Fill(127)
@@ -977,7 +977,7 @@ def test_gdal_translate_35():
         return 'fail'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
-    if err.find('does not exist in the file system') < 0:
+    if err.find('does not exist in the file system') < 0 and err.find('No such file or directory') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'

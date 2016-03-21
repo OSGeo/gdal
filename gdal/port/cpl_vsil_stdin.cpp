@@ -44,9 +44,9 @@ CPL_CVSID("$Id$");
 /* is allowed, after only forward seeking will work */
 #define BUFFER_SIZE (1024 * 1024)
 
-static GByte* pabyBuffer = NULL;
-static GUInt32 nBufferLen = 0;
-static GUIntBig nRealPos = 0;
+static GByte* pabyBuffer;
+static GUInt32 nBufferLen;
+static GUIntBig nRealPos;
 
 /************************************************************************/
 /*                           VSIStdinInit()                             */
@@ -75,8 +75,11 @@ public:
                               VSIStdinFilesystemHandler();
     virtual                  ~VSIStdinFilesystemHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int               Stat( const char *pszFilename,
                                     VSIStatBufL *pStatBuf, int nFlags );
 };
@@ -331,7 +334,8 @@ VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 
 VSIVirtualHandle *
 VSIStdinFilesystemHandler::Open( const char *pszFilename,
-                                 const char *pszAccess )
+                                 const char *pszAccess,
+                                 bool /* bSetError */ )
 
 {
     if (strcmp(pszFilename, "/vsistdin/") != 0)

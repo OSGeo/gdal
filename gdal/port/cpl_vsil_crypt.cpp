@@ -1306,8 +1306,11 @@ public:
     VSICryptFilesystemHandler();
     ~VSICryptFilesystemHandler();
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
@@ -1401,7 +1404,8 @@ static CPLString GetKey(const char* pszFilename)
 /************************************************************************/
 
 VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
-                                                   const char *pszAccess)
+                                                   const char *pszAccess,
+                                                   bool /* bSetError */ )
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Open(%s, %s)", pszFilename, pszAccess);
@@ -1873,7 +1877,8 @@ public:
     VSIDummyCryptFilesystemHandler() {}
 
     virtual VSIVirtualHandle *Open( CPL_UNUSED const char *pszFilename,
-                                    CPL_UNUSED const char *pszAccess)
+                                    CPL_UNUSED const char *pszAccess,
+                                    bool)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
