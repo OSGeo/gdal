@@ -284,7 +284,7 @@ int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErro
             CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSSignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_AWSSignaturDoesNotMatch, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s", VSIGetLastErrorMsg());
             break;
         default:
             CPLError(eErrClass, CPLE_HttpResponse, "A filesystem error with code %d occurred", err);
