@@ -846,8 +846,9 @@ char *CPLScanString( const char *pszString, int nMaxLength,
 long CPLScanLong( const char *pszString, int nMaxLength )
 {
     CPLAssert( nMaxLength >= 0 );
-    const size_t nLength = pszString == NULL ? 0 :
-        CPLStrnlen(pszString, nMaxLength);
+    if( pszString == NULL )
+        return 0;
+    const size_t nLength = CPLStrnlen(pszString, nMaxLength);
     const std::string osValue( pszString, nLength );
     return atol( osValue.c_str() );
 }
@@ -874,8 +875,9 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 {
     CPLAssert( nMaxLength >= 0 );
-    const size_t nLength = pszString == NULL ? 0 :
-        CPLStrnlen(pszString, nMaxLength);
+    if( pszString == NULL )
+        return 0;
+    const size_t nLength = CPLStrnlen(pszString, nMaxLength);
     const std::string osValue( pszString, nLength );
     return strtoul( osValue.c_str(), NULL, 10 );
 }
@@ -903,8 +905,9 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 {
     CPLAssert( nMaxLength >= 0 );
-    const size_t nLength = pszString == NULL ? 0 :
-        CPLStrnlen(pszString, nMaxLength);
+    if( pszString == NULL )
+        return 0;
+    const size_t nLength = CPLStrnlen(pszString, nMaxLength);
     const std::string osValue( pszString, nLength );
 
 /* -------------------------------------------------------------------- */
