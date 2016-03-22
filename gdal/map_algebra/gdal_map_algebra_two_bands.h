@@ -76,7 +76,7 @@ CPLErr gma_block_read(gma_block *block, gma_band band) {
     block->block = CPLMalloc(band.w_block * band.h_block * band.size_of_data_type);
     CPLErr e = band.band->ReadBlock(block->index.x, block->index.y, block->block);
     block->w = ( (block->index.x+1) * band.w_block > band.w ) ? band.w - block->index.x * band.w_block : band.w_block;
-    block->h = ( (block->index.y+1) * band.h_block > band.h ) ? band.h - block->index.x * band.h_block : band.h_block;
+    block->h = ( (block->index.y+1) * band.h_block > band.h ) ? band.h - block->index.y * band.h_block : band.h_block;
 }
 
 typedef struct {
@@ -139,18 +139,18 @@ void gma_blocks_in_band2(gma_band band1, gma_band band2,
                          gma_block b1, int d, gma_block_index *i20, gma_block_index *i21) {
 
     // index of top left cell to be covered
-    int x10 = b1.index.x * band1.w_block - d, y10 = b1.index.y * band1.h_block + d;
+    int x10 = b1.index.x * band1.w_block - d, y10 = b1.index.y * band1.h_block - d;
 
     // index of bottom right cell to be covered
     int x11 = x10 + b1.w-1 + d, y11 = y10 + b1.h-1 + d;
 
     // which block covers x10, y10 in band2?
-    i20->x = x10 / band2.w_block;
-    i20->y = y10 / band2.h_block;
+    i20->x = MAX(x10 / band2.w_block, 0);
+    i20->y = MAX(y10 / band2.h_block, 0);
 
     // which block covers x11, y11 in band2?
-    i21->x = x11 / band2.w_block;
-    i21->y = y11 / band2.h_block;
+    i21->x = MIN(x11 / band2.w_block, band2.w_blocks-1);
+    i21->y = MIN(y11 / band2.h_block, band2.h_blocks-1);
 }
 
 CPLErr gma_update_block_cache(gma_block_cache *cache,
@@ -230,6 +230,8 @@ int gma_D8(gma_block_cache cache, gma_band band1, gma_band band2, gma_block bloc
 
                     gma_block block2;
                     gma_cell_index i2 = gma_index12index2(cache, band1, band2, block1, &block2, i1n);
+                    if (i2.x < 0 || i2.y < 0 || i2.x >= band2.w || i2.y >= band2.h)
+                        continue;
                     data2_t tmp = gma_typecast(data2_t, block2.block)[i2.x+i2.y*block2.w];
                     if (first || tmp < lowest) {
                         first = 0;
