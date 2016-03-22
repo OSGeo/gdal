@@ -1,278 +1,280 @@
-typedef int (*gma_two_bands_callback)(void*, void*, int, int);
+typedef struct {
+    int x;
+    int y;
+} gma_block_index; // block coordinates
 
-#define gma_add_band(type) int gma_add_band_##type(void* block1, void* block2, int w, int h) { \
-        for (int y = 0; y < h; y++) {                                   \
-            for (int x = 0; x < w; x++) {                               \
-                gma_typecast(type, block1)[x+y*w] +=                    \
-                    gma_typecast(type, block2)[x+y*w];                  \
+typedef struct {
+    int x;
+    int y;
+} gma_cell_index; // cell coordinates in block
+
+typedef struct {
+    GDALRasterBand *band;
+    int w;
+    int h;
+    int w_block;
+    int h_block;
+    int w_blocks;
+    int h_blocks;
+    int size_of_data_type;
+} gma_band;
+
+gma_band gma_band_initialize(GDALRasterBand *b) {
+    gma_band band;
+    band.band = b;
+    band.w = b->GetXSize();
+    band.h = b->GetYSize();
+    b->GetBlockSize(&band.w_block, &band.h_block);
+    band.w_blocks = (band.w + band.w_block - 1) / band.w_block;
+    band.h_blocks = (band.h + band.h_block - 1) / band.h_block;
+    switch (b->GetRasterDataType()) {
+    case GDT_Byte:
+        band.size_of_data_type = sizeof(char);
+        break;
+    case GDT_UInt16:
+        band.size_of_data_type = sizeof(char)*2;
+        break;
+    case GDT_Int16:
+        band.size_of_data_type = sizeof(char)*2;
+        break;
+    case GDT_UInt32:
+        band.size_of_data_type = sizeof(char)*4;
+        break;
+    case GDT_Int32:
+        band.size_of_data_type = sizeof(char)*4;
+        break;
+    case GDT_Float32:
+        band.size_of_data_type = sizeof(char)*4;
+        break;
+    case GDT_Float64:
+        band.size_of_data_type = sizeof(char)*8;
+        break;
+    case GDT_CInt16:
+        band.size_of_data_type = sizeof(char)*2*2;
+        break;
+    case GDT_CInt32:
+        band.size_of_data_type = sizeof(char)*4*2;
+        break;
+    case GDT_CFloat32:
+        band.size_of_data_type = sizeof(char)*4*2;
+        break;
+    case GDT_CFloat64:
+        band.size_of_data_type = sizeof(char)*8*2;
+        break;
+    }
+    return band;
+}
+
+typedef struct {
+    gma_block_index index;
+    int w; // width of data in block
+    int h; // height of data in block
+    void *block;
+} gma_block;
+
+CPLErr gma_block_read(gma_block *block, gma_band band) {
+    block->block = CPLMalloc(band.w_block * band.h_block * band.size_of_data_type);
+    CPLErr e = band.band->ReadBlock(block->index.x, block->index.y, block->block);
+    block->w = ( (block->index.x+1) * band.w_block > band.w ) ? band.w - block->index.x * band.w_block : band.w_block;
+    block->h = ( (block->index.y+1) * band.h_block > band.h ) ? band.h - block->index.x * band.h_block : band.h_block;
+}
+
+typedef struct {
+    size_t n;
+    gma_block *blocks;
+} gma_block_cache;
+
+gma_block_cache gma_cache_initialize() {
+    gma_block_cache cache;
+    cache.n = 0;
+    cache.blocks = NULL;
+    return cache;
+}
+
+void gma_empty_cache(gma_block_cache *cache) {
+    if (cache->n == 0)
+        return;
+    for (int i = 0; i < cache->n; i++)
+        CPLFree(cache->blocks[i].block);
+    CPLFree(cache->blocks);
+    cache->n = 0;
+    cache->blocks = NULL;
+}
+
+void gma_remove_from_cache(gma_block_cache *cache, int i) {
+    gma_block *blocks = (gma_block *)CPLMalloc((cache->n-1) * sizeof(gma_block));
+    int d = 0;
+    for (int j = 0; j < cache->n; j++) {
+        if (j == i) {
+            CPLFree(cache->blocks[j].block);
+            d = 1;
+            continue;
+        }
+        blocks[j-d] = cache->blocks[j];
+    }
+    CPLFree(cache->blocks);
+    cache->n = cache->n-1;
+    cache->blocks = blocks;
+}
+
+int gma_cache_contains(gma_block_cache cache, gma_block_index index) {
+    for (int i = 0; i < cache.n; i++)
+        if (cache.blocks[i].index.x == index.x && cache.blocks[i].index.y == index.y)
+            return 1;
+    return 0;
+}
+
+CPLErr gma_add_to_cache(gma_block_cache *cache, gma_block block) {
+    cache->n++;
+    if (cache->n == 1)
+        cache->blocks = (gma_block*)CPLMalloc(sizeof(gma_block));
+    else
+        cache->blocks = (gma_block*)CPLRealloc(cache->blocks, cache->n * sizeof(gma_block));
+    cache->blocks[cache->n-1] = block;
+}
+
+// which blocks in band 2 are needed to cover a block extended with focal distance d in band 1?
+// assuming the raster size if the same
+void gma_blocks_in_band2(gma_band band1, gma_band band2,
+                         gma_block b1, int d, gma_block_index *i20, gma_block_index *i21) {
+
+    // index of top left cell to be covered
+    int x10 = b1.index.x * band1.w_block - d, y10 = b1.index.y * band1.h_block + d;
+
+    // index of bottom right cell to be covered
+    int x11 = x10 + b1.w-1 + d, y11 = y10 + b1.h-1 + d;
+
+    // which block covers x10, y10 in band2?
+    i20->x = x10 / band2.w_block;
+    i20->y = y10 / band2.h_block;
+
+    // which block covers x11, y11 in band2?
+    i21->x = x11 / band2.w_block;
+    i21->y = y11 / band2.h_block;
+}
+
+CPLErr gma_update_block_cache(gma_block_cache *cache,
+                              gma_band band1, gma_band band2,
+                              GDALRasterBand *b2, gma_block b1, int d) {
+    gma_block block2;
+    gma_block_index i20, i21;
+    gma_blocks_in_band2(band1, band2, b1, d, &i20, &i21);
+    for (block2.index.y = i20.y; block2.index.y <= i21.y; block2.index.y++) {
+        for (block2.index.x = i20.x; block2.index.x <= i21.x; block2.index.x++) {
+            if (!gma_cache_contains(*cache, block2.index)) {
+                gma_block_read(&block2, band2);
+                gma_add_to_cache(cache, block2);
+            }
+        }
+    }
+    // remove unneeded blocks
+    int i = 0;
+    while (i < cache->n) {
+        if (cache->blocks[i].index.x < i20.x || cache->blocks[i].index.x > i21.x ||
+            cache->blocks[i].index.y < i20.y || cache->blocks[i].index.y > i21.y)
+            gma_remove_from_cache(cache, i);
+        else
+            i++;
+    }
+
+}
+
+// get the block, which has the cell, that is pointed to by i1 in block1
+// return the index within the block
+gma_cell_index gma_index12index2(gma_block_cache cache, gma_band band1, gma_band band2,
+                                 gma_block b1, gma_block *b2,
+                                 gma_cell_index i1) {
+    int x = b1.index.x * band1.w_block + i1.x;
+    int y = b1.index.y * band1.h_block + i1.y;
+    gma_cell_index i2 = { .x = x / band2.w_block, .y = y / band2.h_block };
+    for (int i = 0; i < cache.n; i++)
+        if (cache.blocks[i].index.x == i2.x && cache.blocks[i].index.y == i2.y)
+            *b2 = cache.blocks[i];
+    i2.x = x % band2.w_block;
+    i2.y = y % band2.h_block;
+    return i2;
+}
+
+typedef int (*gma_two_bands_callback)(gma_block_cache, gma_band, gma_band, gma_block);
+
+#define gma_add_band(type1,type2) int gma_add_band_##type1##type2(gma_block_cache cache, gma_band band1, gma_band band2, gma_block block1) { \
+        gma_cell_index i1;                                              \
+        for (i1.y = 0; i1.y < block1.h; i1.y++) {                       \
+            for (i1.x = 0; i1.x < block1.w; i1.x++) {                   \
+                gma_block block2;                                       \
+                gma_cell_index i2 = gma_index12index2(cache, band1, band2, block1, &block2, i1); \
+                gma_typecast(type1, block1.block)[i1.x+i1.y*block1.w] += \
+                    gma_typecast(type2, block2.block)[i2.x+i2.y*block2.w]; \
             }                                                           \
         }                                                               \
         return 2;                                                       \
     }
 
-gma_add_band(int16_t)
-gma_add_band(int32_t)
-gma_add_band(double)
-
-template<typename data_t>
-void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRasterBand *b2) {
-    int w_band = b1->GetXSize(), h_band = b1->GetYSize();
-    int w_block, h_block;
-    b1->GetBlockSize(&w_block, &h_block);
-    int w_blocks = (w_band + w_block - 1) / w_block;
-    int h_blocks = (h_band + h_block - 1) / h_block;
-    for (int y_block = 0; y_block < h_blocks; y_block++) {
-        for (int x_block = 0; x_block < w_blocks; x_block++) {
-            int w, h;
-            if( (x_block+1) * w_block > w_band )
-                w = w_band - x_block * w_block;
-            else
-                w = w_block;
-            if( (y_block+1) * h_block > h_band )
-                h = h_band - y_block * h_block;
-            else
-                h = h_block;
-            data_t block1[w_block*h_block];
-            data_t block2[w_block*h_block];
-            CPLErr e = b1->ReadBlock(x_block, y_block, block1);
-            e = b2->ReadBlock(x_block, y_block, block2);
-            int ret = cb(block1, block2, w, h);
-            switch (ret) {
-            case 0: return;
-            case 1: break;
-            case 2: {
-                e = b1->WriteBlock(x_block, y_block, block1);
-            }
-            }
-        }
-    }
-}
-
-// these need up to 9 blocks from band 2
-// 0 1 2
-// 3 4 5
-// 6 7 8
-// first int is the size of one block
-// second and third are pointers to the sizes of the 3 x 3 matrix blocks
-// last int is validity of blocks in blocks2 denoted by bits
-// 0 = 0x1, 1 = 0x2, 2 = 0x4, 3 = 0x8, 4 = 0x10, 5 = 0x20, 6 = 0x40, 7 = 0x80, 8 = 0x100
-typedef int (*gma_two_bands_callback2)(void*, void*, int, int*, int*, int);
-
-template<typename data_t>
-data_t gma_neighbor(data_t *data, int n, int x, int y, int *w, int *h, int v, int *ok) {
-    *ok = 0;
-    if (y < 0) {
-        if (x < 0) {
-            if (v & 0x1) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[0*n + (w[0]-1)+(h[0]-1)*w[0]];
-            }
-        } else if (x >= w[4]) {
-            if (v & 0x4) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[2*n + 0+(h[2]-1)*w[2]];
-            }
-        } else if (v & 0x2) {
-            *ok = 1;
-            return gma_typecast(data_t, data)[1*n + x+(h[1]-1)*w[1]];
-        }
-    } else if (y >= h[4]) {
-        if (x < 0) {
-            if (v & 0x40) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[6*n + (w[6]-1)+(h[6]-1)*w[6]];
-            }
-        } else if (x >= w[4]) {
-            if (v & 0x100) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[8*n + 0+(h[8]-1)*w[8]];
-            }
-        } else if (v & 0x80) {
-            *ok = 1;
-            return gma_typecast(data_t, data)[7*n + x+(h[7]-1)*w[7]];
-        }
-    } else {
-        if (x < 0) {
-            if (v & 0x8) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[3*n + (w[3]-1)+(h[3]-1)*w[3]];
-            }
-        } else if (x >= w[4]) {
-            if (v & 0x20) {
-                *ok = 1;
-                return gma_typecast(data_t, data)[5*n + 0+(h[5]-1)*w[5]];
-            }
-        } else {
-            *ok = 1;
-            return gma_typecast(data_t, data)[4*n + x+y*w[4]];
-        }
-    }
-}
-
-template<typename data1_t,typename data2_t>
-void gma_8neighbors(data2_t *data, int n, int x, int y, int *w, int *h, int v, 
-                    data2_t *val, int *ok, 
-                    data1_t *border) 
-{
-    int d = 0;
-    for (int yn = y-1; yn < y+2; yn++) {
-        for (int xn = x-1; xn < x+2; xn++) {
-            val[d] = gma_neighbor((data2_t*)data, n, xn, yn, w, h, v, &ok[d]);
-            d++;
-        }
-    }
-    *border = 0;
-    if (y == 0 && (!(v & 0x2)))
-        *border = 1;
-    else if (x == w[4]-1 && (!(v & 0x20)))
-        *border = 5;
-    else if (y == h[4]-1 && (!(v & 0x80)))
-        *border = 7;
-    else if (x == 0 && (!(v & 0x8)))
-        *border = 3;
-}
+gma_add_band(int16_t,int16_t)
+gma_add_band(int32_t,int32_t)
+gma_add_band(double,double)
 
 template<typename data1_t, typename data2_t>
-int gma_D8(void* block1, void* blocks2, int n, int *w, int *h, int v) {
-    for (int y = 0; y < h[4]; y++) {
-        for (int x = 0; x < w[4]; x++) {
+int gma_D8(gma_block_cache cache, gma_band band1, gma_band band2, gma_block block1) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1.h; i1.y++) {
+        for (i1.x = 0; i1.x < block1.w; i1.x++) {
 
-            // elevation at this cell
-            data2_t h4 = gma_typecast(data2_t, blocks2)[4*n + x+y*w[4]]; 
-
-            // elevations of neighboring cells
-            data2_t neighbors[9];
-            int ok[9];
-            data1_t border;
-            gma_8neighbors<data1_t,data2_t>((data2_t*)blocks2, n, x, y, w, h, v, neighbors, ok, &border);
-
-            // the lowest neighboring cell
+            int d = 0;
+            gma_cell_index i1n;
             int first = 1;
-            data1_t dir;
             data2_t lowest;
-            for (int d = 0; d < 10; d++) {
-                if (ok[d] && ((first || neighbors[d] < lowest))) {
-                    first = 0;
-                    dir = d+1; // 1 to 9
-                    lowest = neighbors[d];
+            int dir;
+            for (i1n.y = i1.y-1; i1n.y < i1.y+2; i1n.y++) {
+                for (i1n.x = i1.x-1; i1n.x < i1.x+2; i1n.x++) {
+
+                    gma_block block2;
+                    gma_cell_index i2 = gma_index12index2(cache, band1, band2, block1, &block2, i1n);
+                    data2_t tmp = gma_typecast(data2_t, block2.block)[i2.x+i2.y*block2.w];
+                    if (first || tmp < lowest) {
+                        first = 0;
+                        lowest = tmp;
+                        dir = d;
+                    }
+
+                    d++;
                 }
             }
 
-            // the direction to lowest neighbor or 0 for flat or 10 for pit
-            if (lowest >= h4 && border)
-                dir = border;
-            else if (lowest == h4)
-                dir = 0;
-            else if (lowest > h4)
-                dir = 10;
-            gma_typecast(data1_t, block1)[x+y*w[4]] = dir;
+            gma_typecast(data1_t, block1.block)[i1.x+i1.y*block1.w] = dir;
+
         }
     }
     return 2;
 }
 
-int block_data_size(int x_block, int w_block, int w_band) {
-    if( (x_block+1) * w_block > w_band )
-        return w_band - x_block * w_block;
-    else
-        return w_block;
-}
-
 template<typename data1_t, typename data2_t>
-void gma_two_bands_proc_focal(GDALRasterBand *b1, gma_two_bands_callback2 cb, GDALRasterBand *b2) {
-    int w_band = b1->GetXSize(), h_band = b1->GetYSize();
-    int w_block1, h_block1;
-    b1->GetBlockSize(&w_block, &h_block);
-    int w_blocks = (w_band + w_block - 1) / w_block;
-    int h_blocks = (h_band + h_block - 1) / h_block;
-    int n_block = w_block*h_block;
-    data2_t blocks2[n_block*9];
-    int w[9], h[9];
-    for (int y_block = 0; y_block < h_blocks; y_block++) {
-        for (int x_block = 0; x_block < w_blocks; x_block++) {
-            w[4] = block_data_size(x_block, w_block, w_band);
-            h[4] = block_data_size(y_block, h_block, h_band);
+void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRasterBand *b2, int focal_distance) {
 
-            data1_t block1[n_block];
-            CPLErr e = b1->ReadBlock(x_block, y_block, block1);
+    gma_block_cache cache = gma_cache_initialize();
+    gma_band band1 = gma_band_initialize(b1), band2 = gma_band_initialize(b2);
+    gma_block block1;
 
-            // update the 3 x 3 block thing, 0 is up left, 2 is up right
-            // usually copy 1 -> 0, 2 -> 1, 4 -> 3, 5 -> 4, 7 -> 6, 8 -> 7
-            // usually read 2, 5, 8
+    for (block1.index.y = 0; block1.index.y < band1.h_blocks; block1.index.y++) {
+        for (block1.index.x = 0; block1.index.x < band1.w_blocks; block1.index.x++) {
 
-            // validity of blocks in blocks2:
-            int v = 0;
+            gma_block_read(&block1, band1);
 
-            if (x_block == 0) {
-                if (y_block > 0) {
-                    w[1] = block_data_size(x_block, w_block, w_band);
-                    h[1] = block_data_size(y_block-1, h_block, h_band);
-                    e = b2->ReadBlock(x_block, y_block-1, &(blocks2[n_block*1]));
-                    v |= 0x2 | 0x10; // 1 4
-                } else
-                    v |= 0x10; // 4
-                e = b2->ReadBlock(x_block, y_block, &(blocks2[n_block*4]));
-                if (y_block < h_blocks-1) {
-                    w[7] = block_data_size(x_block, w_block, w_band);
-                    h[7] = block_data_size(y_block+1, h_block, h_band);
-                    e = b2->ReadBlock(x_block, y_block+1, &(blocks2[n_block*7]));
-                    v |= 0x80; // 7
-                }   
-            } else {
-                w[3] = block_data_size(x_block-1, w_block, w_band);
-                h[3] = block_data_size(y_block, h_block, h_band);
-                if (y_block > 0) {
-                    w[0] = block_data_size(x_block-1, w_block, w_band);
-                    h[0] = block_data_size(y_block-1, h_block, h_band);
-                    v |= 0x1 | 0x8; // 0 3
-                } else
-                    v |= 0x8; // 3
-                if (y_block < h_blocks-1) {
-                    w[6] = block_data_size(x_block-1, w_block, w_band);
-                    h[6] = block_data_size(y_block+1, h_block, h_band);
-                    v |= 0x40; // 6
-                }
-                if (x_block < w_blocks-1) {
-                    w[5] = block_data_size(x_block+1, w_block, w_band);
-                    h[5] = block_data_size(y_block, h_block, h_band);
-                    if (y_block > 0) {
-                        w[2] = block_data_size(x_block+1, w_block, w_band);
-                        h[2] = block_data_size(y_block-1, h_block, h_band);
-                        v |= 0x4 | 0x20; // 2 5
-                    } else
-                        v |= 0x20; // 5
-                    if (y_block < h_blocks-1) {
-                        w[8] = block_data_size(x_block+1, w_block, w_band);
-                        h[8] = block_data_size(y_block+1, h_block, h_band);
-                        v |= 0x100; // 8
-                    }
-                }
-                memcpy(&(blocks2[n_block*0]), &(blocks2[n_block*1]), n_block*sizeof(data2_t));
-                memcpy(&(blocks2[n_block*3]), &(blocks2[n_block*4]), n_block*sizeof(data2_t));
-                memcpy(&(blocks2[n_block*6]), &(blocks2[n_block*7]), n_block*sizeof(data2_t));
-                memcpy(&(blocks2[n_block*1]), &(blocks2[n_block*2]), n_block*sizeof(data2_t));
-                memcpy(&(blocks2[n_block*4]), &(blocks2[n_block*5]), n_block*sizeof(data2_t));
-                memcpy(&(blocks2[n_block*7]), &(blocks2[n_block*8]), n_block*sizeof(data2_t));
-            }
-            if (x_block < w_blocks-1) {
-                if (y_block > 0)
-                    e = b2->ReadBlock(x_block+1, y_block-1, &(blocks2[n_block*2]));
-                e = b2->ReadBlock(x_block+1, y_block, &(blocks2[n_block*5]));
-                if (y_block < h_blocks-1)
-                    e = b2->ReadBlock(x_block+1, y_block+1, &(blocks2[n_block*8]));
-            }
+            CPLErr e = gma_update_block_cache(&cache, band1, band2, b2, block1, focal_distance);
 
-            int ret = cb(block1, blocks2, n_block, w, h, v);
+            int ret = cb(cache, band1, band2, block1);
             switch (ret) {
             case 0: return;
             case 1: break;
             case 2: {
-                e = b1->WriteBlock(x_block, y_block, block1);
+                e = b1->WriteBlock(block1.index.x, block1.index.y, block1.block);
             }
             }
+            CPLFree(block1.block);
         }
     }
 }
+
 
 void gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2) {
     // b1 is changed, b2 is not
@@ -288,15 +290,15 @@ void gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaster
         // assuming b1 and b2 have same data type
         switch (b1->GetRasterDataType()) {
         case GDT_Int16: {
-            gma_two_bands_proc<int16_t>(b1, gma_add_band_int16_t, b2);
+            gma_two_bands_proc<int16_t,int16_t>(b1, gma_add_band_int16_tint16_t, b2, 0);
             break;
         }
         case GDT_Int32: {
-            gma_two_bands_proc<int32_t>(b1, gma_add_band_int32_t, b2);
+            gma_two_bands_proc<int32_t,int32_t>(b1, gma_add_band_int32_tint32_t, b2, 0);
             break;
         }
         case GDT_Float64: {
-            gma_two_bands_proc<double>(b1, gma_add_band_double, b2);
+            gma_two_bands_proc<double,double>(b1, gma_add_band_doubledouble, b2, 0);
             break;
         }
         }
@@ -308,10 +310,10 @@ void gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaster
         case GDT_Byte: {
             switch (b2->GetRasterDataType()) {
             case GDT_UInt16:
-                gma_two_bands_proc_focal<unsigned char,uint16_t>(b1, gma_D8<unsigned char,uint16_t>, b2);
+                gma_two_bands_proc<unsigned char,uint16_t>(b1, gma_D8<unsigned char,uint16_t>, b2, 1);
                 break;
             case GDT_Float64:
-                gma_two_bands_proc_focal<char,double>(b1, gma_D8<char,double>, b2);
+                gma_two_bands_proc<char,double>(b1, gma_D8<char,double>, b2, 1);
                 break;
             }
             break;
