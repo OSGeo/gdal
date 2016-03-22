@@ -1279,9 +1279,6 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfPrimaryRadius, dfSecondaryRadius;
     double dfRotation;
 
-    if( dfStartAngle > dfEndAngle )
-        dfEndAngle += 360.0;
-
     dfPrimaryRadius = sqrt( dfAxisX * dfAxisX
                             + dfAxisY * dfAxisY
                             + dfAxisZ * dfAxisZ );
@@ -1293,6 +1290,29 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
+    if( oStyleProperties.count("210_N.dX") != 0
+        && oStyleProperties.count("220_N.dY") != 0
+        && oStyleProperties.count("230_N.dZ") != 0 )
+    {
+	    double adfN[3];
+
+	    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
+	    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
+	    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+
+            if( adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == -1.0 )
+            {
+                // reverse angles
+		double temp = dfEndAngle;
+
+		dfEndAngle = 360.0 - dfStartAngle;
+		dfStartAngle = 360.0 - temp;
+            }
+    }
+
+    if( dfStartAngle > dfEndAngle )
+        dfEndAngle += 360.0;
+
     OGRGeometry *poEllipse =
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfPrimaryRadius,
@@ -1304,7 +1324,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( !bHaveZ )
         poEllipse->flattenTo2D();
 
-    ApplyOCSTransformer( poEllipse );
+    // disabled for ellipse entity
+    //ApplyOCSTransformer( poEllipse );
     poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
