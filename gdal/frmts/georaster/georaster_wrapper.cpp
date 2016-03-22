@@ -2008,8 +2008,13 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
             return true;
         }
 
+        //  ----------------------------------------------------------------
+        //  GeoRaster BLOB is always Big endian
+        //  ----------------------------------------------------------------
+
 #ifndef CPL_MSB
-        if( nCellSizeBits > 8 )
+        if( nCellSizeBits > 8 && 
+            EQUAL( sCompressionType.c_str(), "DEFLATE") == false )
         {
             int nWordSize  = nCellSizeBits / 8;
             int nWordCount = nColumnBlockSize * nRowBlockSize * nBandBlockSize;
@@ -2028,6 +2033,14 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         else if ( EQUAL( sCompressionType.c_str(), "DEFLATE" ) )
         {
             UncompressDeflate( nBytesRead );
+#ifndef CPL_MSB
+            if( nCellSizeBits > 8 )
+            {
+                int nWordSize  = nCellSizeBits / 8;
+                int nWordCount = nColumnBlockSize * nRowBlockSize * nBandBlockSize;
+                GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
+            }
+#endif
         }
 
         //  ----------------------------------------------------------------
