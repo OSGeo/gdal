@@ -54,10 +54,17 @@ BEGIN { use_ok('Geo::GDAL') };
 
 my $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 4, Height => 6);
 my $band = $dataset->Band;
+my @list;
 
-$band->CategoryNames('a','b');
-my @list = $band->CategoryNames;
-ok(($list[0] eq 'a' and $list[1] eq 'b'), "CategoryNames");
+SKIP: {
+    eval {
+        $band->SetCategoryNames('a','b');
+    };
+    skip "Setting category names in geotiffs not supported." unless $@ eq '';
+    $band->CategoryNames('a','b',1);
+    @list = $band->CategoryNames;
+    ok(($list[0] eq 'a' and $list[1] eq 'b'), "CategoryNames");
+}
 
 @list = $band->GetBlockSize;
 ok(($list[0] == 4 and $list[1] == 6), "GetBlockSize");
