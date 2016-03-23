@@ -41,11 +41,11 @@ In addition to the standard parameters of the
 <p>Starting with GDAL 1.11 if the user defines the environment variable
 <i>MSSQLSPATIAL_LIST_ALL_TABLES=YES</i> (and does not specify Tables= in the connection string),
 all regular user tables will be treated as layers. This option is useful if you want tables with 
-with no spatial data<p>
+with no spatial data</p>
 
 <p>By default the MSSQL driver will only look for layers that are registered in the <i>geometry_columns</i> metadata table.
 Starting with GDAL 1.10 if the user defines the environment variable
-<i>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO</i> then the driver will look for all user spatial tables found in the system catalog<p>
+<i>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO</i> then the driver will look for all user spatial tables found in the system catalog</p>
 
 <h2>SQL statements</h2>
 
@@ -64,7 +64,7 @@ calls in the normal SQL sense.</p>
 <h2>Creation Issues</h2>
 
 <p>This driver doesn't support creating new databases, you might want to use the <i>Microsoft SQL Server Client Tools</i> for this purpose, but it does allow creation of new layers within an
-existing database.</P>
+existing database.</p>
 
 <h3>Layer Creation Options</h3>
 
@@ -100,6 +100,8 @@ The corresponding entry should already be added to the spatial_ref_sys metadata 
 <li> <b>SPATIAL_INDEX</b>: (From GDAL 2.0.0) Boolean flag (YES/NO) to enable/disable the automatic creation of a spatial index on the newly created layers (enabled by default).</li>
 <li> <b>UPLOAD_GEOM_FORMAT</b>: (From GDAL 2.0.0) Specify the geometry format (wkb or wkt) when creating or modifying features. The default is wkb.</li>
 <li> <b>FID</b>: (From GDAL 2.0.0) Name of the FID column to create. Defaults to ogr_fid.</li>
+<li> <b>FID64</b>: (From GDAL 2.0.0) Specifies whether to create the FID column with bigint type to handle 64bit wide ids. Default = NO</li>
+<li> <b>GEOMETRY_NULLABLE</b>: (From GDAL 2.0.0) Specifies whether the values of the geometry column can be NULL. Default = YES</li>
 </ul>
 
 <h3>Spatial Index Creation</h3>
@@ -112,6 +114,25 @@ The corresponding entry should already be added to the spatial_ref_sys metadata 
 <p>The spatial index can also be dropped by using the following syntax:</p>
 
 <blockquote><pre>drop spatial index on schema.table</pre></blockquote>
+
+<h2>Configuration options</h2>
+
+<p>There are a variety of 
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">Configuration 
+Options</a> which help control the behavior of this driver.</p>
+
+<ul>
+<li><b>MSSQLSPATIAL_USE_BCP</b>: (From GDAL 2.1.0) Enable bulk insert when adding features. This option requires to 
+    to compile GDAL against a bulk copy enabled ODBC driver like SQL Server Native 
+    Client 11.0. To specify a BCP supported driver in the connection string, use the 
+    driver parameter, like DRIVER={SQL Server Native Client 11.0}. If GDAL is 
+    compiled against SQL Server Native Client 10.0 or 11.0 the driver is selected 
+    automatically not requiring to specify that in the connection string.</li>
+<li><b>MSSQLSPATIAL_BCP_SIZE</b>: (From GDAL 2.1.0) Specifies the bulk insert batch size. The larger value makes the insert faster, but consumes more memory. Default = 1000.</li>
+<li><b>MSSQLSPATIAL_OGR_FID</b>: Override FID column name. Default = ogr_fid.</li>
+<li><b>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS</b>: Use/create geometry_columns metadata table in the database. Default = "YES".</li>
+<li><b>MSSQLSPATIAL_LIST_ALL_TABLES</b>: Use mssql catalog to list available layers. Default = "NO".</li>
+</ul>
 
 <h2>Transaction support (GDAL &gt;= 2.0)</h2>
 

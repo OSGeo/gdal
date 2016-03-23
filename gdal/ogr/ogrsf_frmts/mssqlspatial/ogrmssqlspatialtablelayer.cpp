@@ -30,6 +30,9 @@
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
+#ifdef SQLNCLI_VERSION
+#include <sqlncli.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -101,7 +104,17 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     eGeomType = wkbNone;
 
     bNeedSpatialIndex = FALSE;
+#ifdef SQL_SS_UDT
+    nUploadGeometryFormat = MSSQLGEOMETRY_NATIVE;
+#else
     nUploadGeometryFormat = MSSQLGEOMETRY_WKB;
+#endif
+
+    bUseCopy = FALSE;
+    nBCPSize = 1000;
+    papstBindBuffer = NULL;
+    hEnvBCP = NULL;
+    hDBCBCP = NULL;
 }
 
 /************************************************************************/
@@ -111,6 +124,10 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
 OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 
 {
+#ifdef MSSQL_BCP_SUPPORTED
+    CloseBCP();
+#endif
+    
     if ( bNeedSpatialIndex && nLayerStatus == MSSQLLAYERSTATUS_CREATED )
     {
         /* recreate spatial index */
@@ -799,7 +816,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTString )
     {
-        if( oField.GetWidth() == 0 || !bPreservePrecision )
+        if( oField.GetWidth() == 0 || oField.GetWidth() > 4000 || !bPreservePrecision )
             strcpy( szFieldType, "nvarchar(MAX)" );
         else
             snprintf( szFieldType, sizeof(szFieldType), "nvarchar(%d)", oField.GetWidth() );
@@ -945,7 +962,37 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     {
         oStmt.Appendf( "[%s] = ", pszGeomColumn );
 
-        if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
+        if (nUploadGeometryFormat == MSSQLGEOMETRY_NATIVE)
+        {
+            OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
+            int nDataLen = poWriter.GetDataLen();
+            GByte *pabyData = (GByte *) CPLMalloc(nDataLen + 1);
+            if (poWriter.WriteSqlGeometry(pabyData, nDataLen) == OGRERR_NONE)
+            {
+                char* pszBytes = GByteArrayToHexString( pabyData, nDataLen);
+                SQLLEN nts = SQL_NTS;
+                int nRetCode = SQLBindParameter(oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
+                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR,
+                    nDataLen, 0, (SQLPOINTER)pszBytes, 0, &nts);
+                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                {
+                    oStmt.Append( "?" );   
+                    bind_buffer[bind_num] = pszBytes;
+                    ++bind_num;
+                }
+                else
+                {
+                    oStmt.Append( "null" );
+                    CPLFree(pszBytes);
+                }       
+            }
+            else
+            {
+                oStmt.Append( "null" );
+            }
+            CPLFree(pabyData);
+        }
+        else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
             int nWKBLen = poGeom->WkbSize();
             GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
@@ -1126,6 +1173,675 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 }
 
 /************************************************************************/
+/*                           Failed()                                   */
+/************************************************************************/
+
+int OGRMSSQLSpatialTableLayer::Failed( int nRetCode )
+
+{
+    if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+        return FALSE;
+
+    char SQLState[6] = "";
+    char Msg[256] = "";
+    SQLINTEGER iNativeError = 0;
+    SQLSMALLINT iMsgLen = 0;
+
+    int iRc = SQLGetDiagRec(SQL_HANDLE_ENV, hEnvBCP, 1,
+    (SQLCHAR*)SQLState, &iNativeError, (SQLCHAR*)Msg, 256, &iMsgLen);
+    if (iRc != SQL_NO_DATA) {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
+        iNativeError, Msg );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           Failed2()                                  */
+/************************************************************************/
+
+#ifdef MSSQL_BCP_SUPPORTED
+int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
+
+{
+    if (nRetCode == SUCCEED)
+        return FALSE;
+
+    char SQLState[6] = "";
+    char Msg[256] = "";
+    SQLINTEGER iNativeError = 0;
+    SQLSMALLINT iMsgLen = 0;
+
+    int iRc = SQLGetDiagRec(SQL_HANDLE_DBC, hDBCBCP, 1,
+    (SQLCHAR*)SQLState, &iNativeError, (SQLCHAR*)Msg, 256, &iMsgLen);
+    if (iRc != SQL_NO_DATA) {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
+        iNativeError, Msg );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            InitBCP()                                 */
+/************************************************************************/
+
+int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
+
+{
+    /* Create a different connection fro BCP upload */
+    if( Failed( SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnvBCP ) ) )
+    return FALSE;
+
+    /* Notify ODBC that this is an ODBC 3.0 app. */
+    if( Failed( SQLSetEnvAttr( hEnvBCP, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER ) ) )
+    {
+        CloseBCP();
+        return FALSE;
+    }
+
+    if( Failed( SQLAllocHandle( SQL_HANDLE_DBC, hEnvBCP, &hDBCBCP ) ) )
+    {
+        CloseBCP();
+        return FALSE;
+    }
+
+    /* set bulk copy mode */
+    if( Failed( SQLSetConnectAttr(hDBCBCP, SQL_COPT_SS_BCP, (void *)SQL_BCP_ON, SQL_IS_INTEGER) ) )
+    {
+        CloseBCP();
+        return FALSE;
+    }
+
+    SQLUINTEGER timeout = 30;
+    Failed(SQLSetConnectAttr(hDBCBCP, SQL_ATTR_LOGIN_TIMEOUT, (void*)timeout, SQL_IS_INTEGER));
+
+    SQLCHAR szOutConnString[1024];
+    SQLSMALLINT nOutConnStringLen = 0;
+
+    if ( Failed(
+        SQLDriverConnect( hDBCBCP, NULL, 
+                            (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN), 
+                            szOutConnString, sizeof(szOutConnString), 
+                            &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ))
+    {
+        CloseBCP();
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            CloseBCP()                                */
+/************************************************************************/
+
+void OGRMSSQLSpatialTableLayer::CloseBCP()
+
+{
+    if (papstBindBuffer)
+    {
+        int iCol;
+
+        int nRecNum = bcp_done( hDBCBCP );
+        if (nRecNum == -1)
+            Failed2(nRecNum);
+
+        for( iCol = 0; iCol < nRawColumns; iCol++ )
+            CPLFree(papstBindBuffer[iCol]);
+        CPLFree(papstBindBuffer);
+    }
+
+    if( hDBCBCP!=NULL ) 
+    {
+        CPLDebug( "ODBC", "SQLDisconnect()" );
+        SQLDisconnect( hDBCBCP );
+        SQLFreeHandle( SQL_HANDLE_DBC, hDBCBCP );
+        hDBCBCP = NULL;
+    }
+    
+    if( hEnvBCP!=NULL )
+    {
+        SQLFreeHandle( SQL_HANDLE_ENV, hEnvBCP );
+        hEnvBCP = NULL;
+    }
+}
+
+
+
+/************************************************************************/
+/*                            CreateFeatureBCP()                        */
+/************************************************************************/
+
+
+OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
+
+{
+    int iCol;
+    int iField = 0;
+    
+    if ( hDBCBCP == NULL )
+    {
+        nBCPCount = 0;
+
+        CPLODBCSession* poSession = poDS->GetSession();
+        
+        if (poSession->IsInTransaction())
+            poSession->CommitTransaction(); /* commit creating the table */
+
+        /* Get the column definitions for this table. */
+        if( poFeatureDefn )
+        {
+            /* need to re-create layer defn */
+            poFeatureDefn->Release();
+            poFeatureDefn = NULL;
+        }
+        GetLayerDefn();
+        if (!poFeatureDefn)
+            return OGRERR_FAILURE;
+        
+        
+        if ( !InitBCP( poDS->GetConnectionString() ) )
+            return OGRERR_FAILURE;
+
+        /* Initialize the bulk copy */
+        if (Failed2( bcp_init(hDBCBCP, pszTableName, NULL, NULL, DB_IN) ))
+        {
+            CloseBCP();
+            return OGRERR_FAILURE;
+        }
+
+        if (papstBindBuffer)
+        {
+            for( iCol = 0; iCol < nRawColumns; iCol++ )
+                CPLFree(papstBindBuffer[iCol]);
+            CPLFree(papstBindBuffer);
+        }
+        papstBindBuffer = (BCPData**)CPLMalloc(sizeof(BCPData*) * (nRawColumns));
+
+        for( iCol = 0; iCol < nRawColumns; iCol++ )
+        {
+            papstBindBuffer[iCol] = NULL;
+            
+            if (iCol == nGeomColumnIndex)
+            {
+                papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */, 
+                    0, 0/*or any value < 8000*/, NULL, 0, SQLUDT, iCol + 1) ))
+                    return OGRERR_FAILURE;
+            }
+            else if (iCol == nFIDColumnIndex)
+            {
+                /* TODO */
+                //if (Failed2( bcp_bind(hDBCBCP, NULL, 0, SQL_NULL_DATA, 
+                //     NULL, 0, 0, iCol + 1) ))
+                continue;
+            }
+            else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+            {
+                OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+
+                if ( poFDefn->IsIgnored() )
+                {
+                    /* set null */
+                    ++iField;
+                    continue;
+                }
+
+                int iSrcField = poFeature->GetFieldIndex(poFDefn->GetNameRef());
+                if (iSrcField < 0)
+                {
+                    ++iField;
+                    continue; /* no such field at the source */
+                }
+
+                if( poFDefn->GetType() == OFTInteger )
+                {
+                    /* int */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->Integer.iIndicator = sizeof(papstBindBuffer[iCol]->Integer.Value);
+                
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol], 
+                        sizeof(papstBindBuffer[iCol]->Integer.iIndicator), sizeof(papstBindBuffer[iCol]->Integer.Value), 
+                            NULL, 0, SQLINT4, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTInteger64 )
+                {
+                    /* bigint */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->Integer64.iIndicator = sizeof(papstBindBuffer[iCol]->Integer64.Value);
+
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol], 
+                        sizeof(papstBindBuffer[iCol]->Integer64.iIndicator), sizeof(papstBindBuffer[iCol]->Integer64.Value), 
+                            NULL, 0, SQLINT8, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTReal )
+                {
+                    /* float */
+                    /* TODO convert to DBNUMERIC */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 
+                        0, SQL_VARLEN_DATA, 
+                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTString )
+                {
+                    /* nvarchar */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->VarChar.nSize = poFDefn->GetWidth();
+                    if (poFDefn->GetWidth() == 0)
+                    {
+                        if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */, 
+                            0, 0/*or any value < 8000*/, NULL, 0, 0, iCol + 1) ))
+                            return OGRERR_FAILURE;
+                    }
+                    else
+                    {
+                        if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol], 
+                            sizeof(papstBindBuffer[iCol]->VarChar.nSize), poFDefn->GetWidth(), 
+                                NULL, 0, SQLNVARCHAR, iCol + 1) ))
+                            return OGRERR_FAILURE;
+                    }
+                }
+                else if( poFDefn->GetType() == OFTDate )
+                {
+                    /* date */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 
+                        0, SQL_VARLEN_DATA, 
+                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTTime )
+                {
+                    /* time(7) */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 
+                        0, SQL_VARLEN_DATA, 
+                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTDateTime )
+                {
+                    /* datetime */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 
+                        0, SQL_VARLEN_DATA, 
+                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else if( poFDefn->GetType() == OFTBinary )
+                {
+                    /* image */
+                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */, 
+                        0, 0/*or any value < 8000*/, NULL, 0, 0, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_NotSupported,
+                              "Filed %s with type %s is not supported for bulk insert.",
+                              poFDefn->GetNameRef(),
+                              OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()) );
+
+                    return OGRERR_FAILURE;
+                }
+
+                ++iField;
+            }
+        }
+    }
+
+    /* do bulk insert here */
+
+    /* prepare data to variables */
+    iField = 0;
+    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    {
+        if (iCol == nGeomColumnIndex)
+        {
+            if (poFeature->GetGeometryRef())
+            {
+                /* prepare geometry */
+                OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
+                OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
+
+                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
+                papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
+                papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
+                if (poWriter.WriteSqlGeometry(papstBindBuffer[iCol]->RawData.pData, papstBindBuffer[iCol]->RawData.nSize) != OGRERR_NONE)
+                    return OGRERR_FAILURE;
+
+                /* set data length */
+                if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                    return OGRERR_FAILURE;
+            }
+            else
+            {
+                /* set NULL */
+                papstBindBuffer[iCol]->RawData.nSize = SQL_NULL_DATA;
+                if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    return OGRERR_FAILURE;
+            }
+        }
+        else if (iCol == nFIDColumnIndex)
+        {
+            /* TODO */
+            continue;
+        }
+        else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+        {
+            OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+
+            if (papstBindBuffer[iCol] == NULL)
+            {
+                ++iField;
+                continue; /* column requires no data */
+            }
+
+            if( poFDefn->GetType() == OFTInteger )
+            {
+                /* int */
+                if (!poFeature->IsFieldSet( iField ))
+                    papstBindBuffer[iCol]->Integer.iIndicator = SQL_NULL_DATA;
+                else
+                {
+                    papstBindBuffer[iCol]->Integer.iIndicator = sizeof(papstBindBuffer[iCol]->Integer.Value);
+                    papstBindBuffer[iCol]->Integer.Value = poFeature->GetFieldAsInteger(iField);
+                }
+            }
+            else if( poFDefn->GetType() == OFTInteger64 )
+            {
+                /* bigint */
+                if (!poFeature->IsFieldSet( iField ))
+                    papstBindBuffer[iCol]->Integer64.iIndicator = SQL_NULL_DATA;
+                else
+                {
+                    papstBindBuffer[iCol]->Integer64.iIndicator = sizeof(papstBindBuffer[iCol]->Integer64.Value);
+                    papstBindBuffer[iCol]->Integer64.Value = poFeature->GetFieldAsInteger64(iField);
+                }
+            }
+            else if( poFDefn->GetType() == OFTReal )
+            {
+                /* float */
+                if (!poFeature->IsFieldSet( iField ))
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%g", poFeature->GetFieldAsDouble(iField));
+                }
+            }
+            else if( poFDefn->GetType() == OFTString )
+            {
+                /* nvarchar */
+                if (poFDefn->GetWidth() != 0)
+                {
+                    if (!poFeature->IsFieldSet( iField ))
+                    {
+                        papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                        if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                            return OGRERR_FAILURE;
+                    }
+                    else
+                    {
+                    
+                        papstBindBuffer[iCol]->VarChar.nSize = CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
+                        wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
+                        memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + 2);
+                        CPLFree(buffer);
+                    }
+                }
+            }
+            else if( poFDefn->GetType() == OFTDate )
+            {
+                /* date */
+                if (!poFeature->IsFieldSet( iField ))
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    int	pnYear;
+                    int pnMonth;
+                    int pnDay;
+                    int pnHour;
+                    int pnMinute;
+                    float pfSecond;
+                    int pnTZFlag;
+
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay, 
+                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%4d-%02d-%02d", pnYear, pnMonth, pnDay);
+                }
+            }
+            else if( poFDefn->GetType() == OFTTime )
+            {
+                /* time(7) */
+                if (!poFeature->IsFieldSet( iField ))
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    int	pnYear;
+                    int pnMonth;
+                    int pnDay;
+                    int pnHour;
+                    int pnMinute;
+                    float pfSecond;
+                    int pnTZFlag;
+
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay, 
+                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%02d:%02d:%02d", pnHour, pnMinute, pfSecond);
+                }              
+            }
+            else if( poFDefn->GetType() == OFTDateTime )
+            {
+                /* datetime */
+                if (!poFeature->IsFieldSet( iField ))
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    int	pnYear;
+                    int pnMonth;
+                    int pnDay;
+                    int pnHour;
+                    int pnMinute;
+                    float pfSecond;
+                    int pnTZFlag;
+
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay, 
+                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%4d-%02d-%02d %02d:%02d:%02d", 
+                        pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
+                }              
+            }
+            else if( poFDefn->GetType() == OFTBinary )
+            {
+                if (!poFeature->IsFieldSet( iField ))
+                {
+                    papstBindBuffer[iCol]->RawData.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+                else
+                {
+                    /* image */
+                    papstBindBuffer[iCol]->RawData.pData = poFeature->GetFieldAsBinary(iField, &papstBindBuffer[iCol]->RawData.nSize);
+                
+                    /* set data length */
+                    if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                            "Filed %s with type %s is not supported for bulk insert.",
+                            poFDefn->GetNameRef(),
+                            OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()) );
+
+                return OGRERR_FAILURE;
+            }
+
+            ++iField;
+        }
+    }
+
+    /* send row */
+    if (Failed2( bcp_sendrow( hDBCBCP ) ))
+        return OGRERR_FAILURE;
+
+    /* send dynamic data */
+    iField = 0;
+    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    {
+        if (iCol == nGeomColumnIndex)
+        {
+            if (papstBindBuffer[iCol]->RawData.nSize != SQL_NULL_DATA)
+            {
+                if (Failed2( bcp_moretext( hDBCBCP, 
+                    papstBindBuffer[iCol]->RawData.nSize,  
+                    papstBindBuffer[iCol]->RawData.pData ) ))
+                {
+                
+                }
+                CPLFree(papstBindBuffer[iCol]->RawData.pData);
+                if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                {
+                
+                }
+            }
+            else
+            {
+                if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                {
+                
+                }
+            }
+        }
+        else if (iCol == nFIDColumnIndex)
+        {
+            /* TODO */
+            continue;
+        }
+        else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+        {
+            OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+
+            if( poFDefn->GetType() == OFTString )
+            {
+                if (poFDefn->GetWidth() == 0)
+                {
+                    if (poFeature->IsFieldSet( iField ))
+                    {
+                        papstBindBuffer[iCol]->VarChar.nSize = CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
+                        wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);                       
+                        if (Failed2( bcp_moretext( hDBCBCP, 
+                            papstBindBuffer[iCol]->VarChar.nSize,  
+                            (LPCBYTE)buffer ) ))
+                        {
+                
+                        }
+
+                        CPLFree(buffer);
+
+                        if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                        {
+                
+                        }
+                    }
+                    else
+                    {
+                        if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                        {
+                
+                        }
+                    }
+                }
+            }
+            else if ( poFDefn->GetType() == OFTBinary )
+            {
+                if (papstBindBuffer[iCol]->RawData.nSize != SQL_NULL_DATA)
+                {
+                    if (Failed2( bcp_moretext( hDBCBCP, 
+                        papstBindBuffer[iCol]->RawData.nSize,  
+                        papstBindBuffer[iCol]->RawData.pData ) ))
+                    {
+                
+                    }
+                    if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                    {
+                
+                    }
+                }
+                else
+                {
+                    if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                    {
+                
+                    }
+                }
+            }
+            ++iField;
+        }
+    }
+
+    if (++nBCPCount >= nBCPSize)
+    {
+        /* commit */
+        int nRecNum = bcp_batch( hDBCBCP );
+        if (nRecNum == -1)
+            Failed2(nRecNum);
+        
+        nBCPCount = 0;
+    }
+
+    return OGRERR_NONE;
+}
+#endif /* MSSQL_BCP_SUPPORTED */
+
+/************************************************************************/
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
@@ -1141,11 +1857,20 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+#if (ODBCVER >= 0x0300) && defined(MSSQL_BCP_SUPPORTED)
+    if (bUseCopy)
+    {
+        return CreateFeatureBCP( poFeature );
+    }
+#endif
+    
     ClearStatement();
 
-    CPLODBCStatement oStatement( poDS->GetSession() );
+    CPLODBCSession* poSession = poDS->GetSession();
 
     /* the fid values are retrieved from the source layer */
+    CPLODBCStatement oStatement( poSession );
+
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
         oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] ON;",
                             pszSchemaName, pszTableName );
@@ -1201,7 +1926,10 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * (nFieldCount + 1));
-
+#ifdef SQL_SS_UDT
+    int* bind_datalen = (int*)CPLMalloc(sizeof(int) * (nFieldCount + 1));
+#endif
+    
     int i;
     for( i = 0; i < nFieldCount; i++ )
     {
@@ -1231,7 +1959,45 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         bNeedComma = FALSE;
         if(poGeom != NULL && pszGeomColumn != NULL)
         {
-            if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
+            if (nUploadGeometryFormat == MSSQLGEOMETRY_NATIVE)
+            {
+#ifdef SQL_SS_UDT
+                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
+                bind_datalen[bind_num] = poWriter.GetDataLen();
+                GByte *pabyData = (GByte *) CPLMalloc(bind_datalen[bind_num] + 1);
+                if (poWriter.WriteSqlGeometry(pabyData, bind_datalen[bind_num]) == OGRERR_NONE)
+                {
+                    SQLHANDLE ipd;
+                    if ((!poSession->Failed( SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
+                        SQL_PARAM_INPUT, SQL_C_BINARY, SQL_SS_UDT,
+                        SQL_SS_LENGTH_UNLIMITED, 0, (SQLPOINTER)pabyData, bind_datalen[bind_num], (SQLLEN*)&bind_datalen[bind_num])))
+                        && (!poSession->Failed(SQLGetStmtAttr(oStatement.GetStatement(), SQL_ATTR_IMP_PARAM_DESC, &ipd, 0, 0)))
+                        && (!poSession->Failed(SQLSetDescField(ipd, 1, SQL_CA_SS_UDT_TYPE_NAME, 
+                            (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY? "geography" : "geometry"), SQL_NTS))))
+                    {
+                        oStatement.Append( "?" );   
+                        bind_buffer[bind_num] = pabyData;
+                        ++bind_num;
+                    }
+                    else
+                    {
+                        oStatement.Append( "null" );
+                        CPLFree(pabyData);
+                    }       
+                }
+                else
+                {
+                    oStatement.Append( "null" );
+                    CPLFree(pabyData);
+                }
+#else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                  "Native geometry upload is not supported" );
+                return OGRERR_FAILURE;
+#endif
+                //CPLFree(pabyData);
+            }
+            else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
             {
                 int nWKBLen = poGeom->WkbSize();
                 GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);

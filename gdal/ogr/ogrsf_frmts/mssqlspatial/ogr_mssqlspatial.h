@@ -54,6 +54,25 @@ class OGRMSSQLSpatialDataSource;
 #define MSSQLCOLTYPE_BINARY 2
 #define MSSQLCOLTYPE_TEXT 3
 
+/* sqlgeometry constants */
+
+#define SP_NONE 0
+#define SP_HASZVALUES 1
+#define SP_HASMVALUES 2
+#define SP_ISVALID 4
+#define SP_ISSINGLEPOINT 8
+#define SP_ISSINGLELINESEGMENT 0x10
+#define SP_ISWHOLEGLOBE 0x20
+
+#define ST_UNKNOWN 0
+#define ST_POINT 1
+#define ST_LINESTRING 2
+#define ST_POLYGON 3
+#define ST_MULTIPOINT 4
+#define ST_MULTILINESTRING 5
+#define ST_MULTIPOLYGON 6
+#define ST_GEOMETRYCOLLECTION 7
+
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
 /************************************************************************/
@@ -131,6 +150,52 @@ public:
 
 
 /************************************************************************/
+/*                           OGRMSSQLGeometryWriter                     */
+/************************************************************************/
+
+class OGRMSSQLGeometryWriter
+{
+protected:
+    OGRGeometry *poGeom;
+    unsigned char* pszData;
+    int nLen;
+    /* serialization propeties */
+    char chProps;
+    /* point array */
+    int nPointSize;
+    int nPointPos;
+    int nNumPoints;
+    int iPoint;
+    /* figure array */
+    int nFigurePos;
+    int nNumFigures;
+    int iFigure;
+    /* shape array */
+    int nShapePos;
+    int nNumShapes;
+    int iShape;
+    int nSRSId;
+    /* geometry or geography */
+    int nColType;
+
+protected:
+    void             WritePoint(OGRPoint* poGeom);
+    void             WritePoint(double x, double y);
+    void             WritePoint(double x, double y, double z);
+    void             WriteLineString(OGRLineString* poGeom);
+    void             WritePolygon(OGRPolygon* poGeom);
+    void             WriteGeometryCollection(OGRGeometryCollection* poGeom, int iParent);
+    void             WriteGeometry(OGRGeometry* poGeom, int iParent);
+    void             TrackGeometry(OGRGeometry* poGeom);
+
+public:
+                     OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeomColumnType, int nSRS);
+    OGRErr           WriteSqlGeometry(unsigned char* pszBuffer, int nBufLen);
+    int              GetDataLen() { return nLen; }
+};
+
+
+/************************************************************************/
 /*                             OGRMSSQLSpatialLayer                     */
 /************************************************************************/
 
@@ -138,6 +203,7 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 {
     protected:
     OGRFeatureDefn     *poFeatureDefn;
+    int                 nRawColumns;
 
     CPLODBCStatement   *poStmt;
 
@@ -151,7 +217,9 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 
     int                nGeomColumnType;
     char               *pszGeomColumn;
+    int                nGeomColumnIndex;
     char               *pszFIDColumn;
+    int                nFIDColumnIndex;
 
     int                bIsIdentityFid;
 
@@ -196,16 +264,51 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 /*                       OGRMSSQLSpatialTableLayer                      */
 /************************************************************************/
 
+typedef union {
+    struct {
+        int     iIndicator;
+        int     Value;
+    } Integer;
+
+    struct {
+        int     iIndicator;
+        GIntBig     Value;
+    } Integer64;
+    
+    struct {
+        int     iIndicator;
+        double  Value;
+    } Float;
+
+    struct {
+        int     nSize;
+        char* pData[8000];
+    } VarChar;
+
+    struct {
+        int     nSize;
+        GByte*  pData;
+    } RawData;
+
+} BCPData;
+
 class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
 {
     int                 bUpdateAccess;
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
     int                 bNeedSpatialIndex;
+    int                 bUseCopy;
+    int                 nBCPSize;
 
     int                 nUploadGeometryFormat;
     
     char                *pszQuery;
+
+    SQLHANDLE           hEnvBCP;
+    SQLHANDLE           hDBCBCP;
+    int                 nBCPCount;
+    BCPData             **papstBindBuffer;
 
     void		ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
@@ -219,6 +322,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     char               *pszSchemaName;
 
     OGRwkbGeometryType eGeomType;
+
 
   public:
                         OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
@@ -271,6 +375,15 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
                                        OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer);
 
     int                 FetchSRSId();
+
+    void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
+    int                 Failed( int nRetCode );
+#ifdef MSSQL_BCP_SUPPORTED
+    OGRErr              CreateFeatureBCP( OGRFeature *poFeature );
+    int                 Failed2( int nRetCode );
+    int                 InitBCP( const char* pszDSN );
+    void                CloseBCP();
+#endif
 };
 
 /************************************************************************/
@@ -325,11 +438,16 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     int                 bListAllTables;
 
+    int                 nBCPSize;
+    int                 bUseCopy;
+
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
+
+    char                *pszConnection;
     
   public:
                         OGRMSSQLSpatialDataSource();
@@ -379,7 +497,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
-
+    const char         *GetConnectionString() { return pszConnection; }
 };
 
 /************************************************************************/
