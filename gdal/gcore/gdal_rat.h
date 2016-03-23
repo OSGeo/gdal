@@ -32,8 +32,8 @@
 
 #include "cpl_minixml.h"
 
-// Clone and Serialize are allowed to fail if GetRowCount()*GetColCount() greater
-// than this number
+// Clone and Serialize are allowed to fail if GetRowCount()*GetColCount()
+// greater than this number
 #define RAT_MAX_ELEM_FOR_CLONE  1000000
 
 /************************************************************************/
@@ -190,7 +190,8 @@ public:
      * @param iField column to fetch (zero based).
      * @param pszValue the value to assign.
      */
-    virtual void          SetValue( int iRow, int iField, const char *pszValue ) = 0;
+    virtual void          SetValue( int iRow, int iField,
+                                    const char *pszValue ) = 0;
 
     /**
      * \brief Set field value from integer.
@@ -223,29 +224,39 @@ public:
     virtual void          SetValue( int iRow, int iField, double dfValue) = 0;
 
     /**
-     * \brief Determine whether changes made to this RAT are reflected directly in the dataset
+     * \brief Determine whether changes made to this RAT are reflected directly
+     * in the dataset
      *
-     * If this returns FALSE then GDALRasterBand.SetDefaultRAT() should be called. Otherwise
-     * this is unnecessary since changes to this object are reflected in the dataset.
+     * If this returns FALSE then GDALRasterBand.SetDefaultRAT() should be
+     * called. Otherwise this is unnecessary since changes to this object are
+     * reflected in the dataset.
      *
-     * This method is the same as the C function GDALRATChangesAreWrittenToFile().
+     * This method is the same as the C function
+     * GDALRATChangesAreWrittenToFile().
      *
      */
     virtual int           ChangesAreWrittenToFile() = 0;
 
-    virtual CPLErr        ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, double *pdfData);
-    virtual CPLErr        ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData);
-    virtual CPLErr        ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, char **papszStrList);
+    virtual CPLErr        ValuesIO( GDALRWFlag eRWFlag, int iField,
+                                    int iStartRow, int iLength,
+                                    double *pdfData);
+    virtual CPLErr        ValuesIO( GDALRWFlag eRWFlag, int iField,
+                                    int iStartRow, int iLength, int *pnData);
+    virtual CPLErr        ValuesIO( GDALRWFlag eRWFlag, int iField,
+                                    int iStartRow, int iLength,
+                                    char **papszStrList);
 
     virtual void          SetRowCount( int iCount );
     virtual int           GetRowOfValue( double dfValue ) const;
     virtual int           GetRowOfValue( int nValue ) const;
 
     virtual CPLErr        CreateColumn( const char *pszFieldName,
-                                GDALRATFieldType eFieldType,
-                                GDALRATFieldUsage eFieldUsage );
-    virtual CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
-    virtual int           GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const;
+                                        GDALRATFieldType eFieldType,
+                                        GDALRATFieldUsage eFieldUsage );
+    virtual CPLErr        SetLinearBinning( double dfRow0Min,
+                                            double dfBinSize );
+    virtual int           GetLinearBinning( double *pdfRow0Min,
+                                            double *pdfBinSize ) const;
 
     /**
      * \brief Serialize
@@ -271,7 +282,7 @@ public:
 
 class GDALRasterAttributeField
 {
-public:
+ public:
     CPLString         sName;
 
     GDALRATFieldType  eType;
@@ -291,15 +302,15 @@ public:
 
 class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 {
-private:
+ private:
     std::vector<GDALRasterAttributeField> aoFields;
 
-    int bLinearBinning;
+    int bLinearBinning;  // TODO(schwehr): Can this be a bool?
     double dfRow0Min;
     double dfBinSize;
 
     void  AnalyseColumns();
-    int   bColumnsAnalysed;
+    int   bColumnsAnalysed;  // TODO(schwehr): Can this be a bool?
     int   nMinCol;
     int   nMaxCol;
 
@@ -307,9 +318,9 @@ private:
 
     CPLString osWorkingResult;
 
-public:
+ public:
     GDALDefaultRasterAttributeTable();
-    GDALDefaultRasterAttributeTable(const GDALDefaultRasterAttributeTable&);
+    GDALDefaultRasterAttributeTable( const GDALDefaultRasterAttributeTable& );
     ~GDALDefaultRasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const;
@@ -328,7 +339,8 @@ public:
     virtual int           GetValueAsInt( int iRow, int iField ) const;
     virtual double        GetValueAsDouble( int iRow, int iField ) const;
 
-    virtual void          SetValue( int iRow, int iField, const char *pszValue );
+    virtual void          SetValue( int iRow, int iField,
+                                    const char *pszValue );
     virtual void          SetValue( int iRow, int iField, double dfValue);
     virtual void          SetValue( int iRow, int iField, int nValue );
 
@@ -339,11 +351,12 @@ public:
     virtual int           GetRowOfValue( int nValue ) const;
 
     virtual CPLErr        CreateColumn( const char *pszFieldName,
-                                GDALRATFieldType eFieldType,
-                                GDALRATFieldUsage eFieldUsage );
-    virtual CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
-    virtual int           GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const;
-
+                                        GDALRATFieldType eFieldType,
+                                        GDALRATFieldUsage eFieldUsage );
+    virtual CPLErr        SetLinearBinning( double dfRow0Min,
+                                            double dfBinSize );
+    virtual int           GetLinearBinning( double *pdfRow0Min,
+                                            double *pdfBinSize ) const;
 };
 
 #endif /* ndef GDAL_RAT_H_INCLUDED */
