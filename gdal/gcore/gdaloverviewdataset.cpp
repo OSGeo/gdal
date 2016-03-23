@@ -244,7 +244,7 @@ int GDALOverviewDataset::CloseDependentDatasets()
     {
         for(int i=0;i<nBands;i++)
         {
-            reinterpret_cast<GDALOverviewBand*>(papoBands[i])->
+            dynamic_cast<GDALOverviewBand*>(papoBands[i])->
                 poUnderlyingBand = NULL;
         }
         GDALClose( poMainDS );
@@ -285,7 +285,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
-    void             *pProgressDataGlobal = psExtraArg->pProgressData;
+    void *pProgressDataGlobal = psExtraArg->pProgressData;
     CPLErr eErr = CE_None;
 
     for( int iBandIndex = 0;
@@ -293,7 +293,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
          iBandIndex++ )
     {
         GDALOverviewBand *poBand =
-            reinterpret_cast<GDALOverviewBand *>(
+            dynamic_cast<GDALOverviewBand *>(
                 GetRasterBand(panBandMap[iBandIndex]) );
 
         if (poBand == NULL)
@@ -303,7 +303,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
 
         GByte *pabyBandData =
-            reinterpret_cast<GByte *>(pData) + iBandIndex * nBandSpace;
+            static_cast<GByte *>(pData) + iBandIndex * nBandSpace;
 
         psExtraArg->pfnProgress = GDALScaledProgress;
         psExtraArg->pProgressData =
@@ -313,7 +313,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
                                       pProgressDataGlobal );
 
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                  reinterpret_cast<void *>(pabyBandData),
+                                  pabyBandData,
                                   nBufXSize, nBufYSize,
                                   eBufType, nPixelSpace,
                                   nLineSpace, psExtraArg );
@@ -567,7 +567,7 @@ GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
 int GDALOverviewBand::GetOverviewCount()
 {
     GDALOverviewDataset * const poOvrDS =
-        reinterpret_cast<GDALOverviewDataset *>(poDS);
+        dynamic_cast<GDALOverviewDataset *>(poDS);
     if( poOvrDS->bThisLevelOnly )
         return 0;
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
@@ -584,7 +584,7 @@ GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
     if( iOvr < 0 || iOvr >= GetOverviewCount() )
         return NULL;
     GDALOverviewDataset * const poOvrDS =
-        reinterpret_cast<GDALOverviewDataset *>(poDS);
+        dynamic_cast<GDALOverviewDataset *>(poDS);
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
     return poMainDS->GetRasterBand(nBand)->
         GetOverview(iOvr + poOvrDS->nOvrLevel + 1);
