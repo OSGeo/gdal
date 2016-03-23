@@ -773,7 +773,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 "Unable to initialize connection to the server for %s,\n"
                 "%s\n"
                 "Try specifying the driver in the connection string from the list of available drivers:\n"
-                "%s", pszNewName, oSession.GetLastError(), osDriverList );
+                "%s", pszNewName, oSession.GetLastError(), osDriverList.c_str() );
         }
         else
         {
