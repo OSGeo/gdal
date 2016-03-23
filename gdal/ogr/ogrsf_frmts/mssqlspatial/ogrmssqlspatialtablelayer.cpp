@@ -115,6 +115,7 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     papstBindBuffer = NULL;
     hEnvBCP = NULL;
     hDBCBCP = NULL;
+    nBCPCount = 0;
 }
 
 /************************************************************************/
