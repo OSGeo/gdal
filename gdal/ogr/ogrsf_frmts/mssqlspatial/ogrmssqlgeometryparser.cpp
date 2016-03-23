@@ -68,7 +68,7 @@ FigureAttribute (1 byte)
   0x02 = Exterior Ring
 
 Shape
-  [ParentFigureOffset][FigureOffset][ShapeType]
+  [ParentOffset][FigureOffset][ShapeType]
 
 ShapeType (1 byte)
   0x00 = Unknown
@@ -85,23 +85,6 @@ ShapeType (1 byte)
 /************************************************************************/
 /*                         Geometry parser macros                       */
 /************************************************************************/
-
-#define SP_NONE 0
-#define SP_HASZVALUES 1
-#define SP_HASMVALUES 2
-#define SP_ISVALID 4
-#define SP_ISSINGLEPOINT 8
-#define SP_ISSINGLELINESEGMENT 0x10
-#define SP_ISWHOLEGLOBE 0x20
-
-#define ST_UNKNOWN 0
-#define ST_POINT 1
-#define ST_LINESTRING 2
-#define ST_POLYGON 3
-#define ST_MULTIPOINT 4
-#define ST_MULTILINESTRING 5
-#define ST_MULTIPOLYGON 6
-#define ST_GEOMETRYCOLLECTION 7
 
 #define ReadInt32(nPos) (*((unsigned int*)(pszData + (nPos))))
 

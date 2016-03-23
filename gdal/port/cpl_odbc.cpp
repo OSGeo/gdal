@@ -1829,6 +1829,7 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_BINARY:
         case SQL_VARBINARY:
         case SQL_LONGVARBINARY:
+        case -151: /*SQL_SS_UDT*/
             return SQL_C_BINARY;
 
         default:

@@ -1,11 +1,11 @@
 
-OBJ	=	ogrmssqlspatialdriver.obj ogrmssqlspatialdatasource.obj ogrmssqlspatiallayer.obj ogrmssqlspatialtablelayer.obj ogrmssqlspatialselectlayer.obj ogrmssqlgeometryparser.obj ogrmssqlgeometryvalidator.obj
+OBJ	=	ogrmssqlspatialdriver.obj ogrmssqlspatialdatasource.obj ogrmssqlspatiallayer.obj ogrmssqlspatialtablelayer.obj ogrmssqlspatialselectlayer.obj ogrmssqlgeometryparser.obj ogrmssqlgeometryvalidator.obj ogrmssqlgeometrywriter.obj
 
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\..
+EXTRAFLAGS = -I.. -I..\.. $(SQLNCLI_INCLUDE)
 
 default:	$(OBJ)
 

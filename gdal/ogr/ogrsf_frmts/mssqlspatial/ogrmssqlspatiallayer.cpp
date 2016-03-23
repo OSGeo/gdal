@@ -53,6 +53,10 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
     poSRS = NULL;
     nSRSId = -1; // we haven't even queried the database for it yet. 
     nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
+
+    nGeomColumnIndex = -1;
+    nFIDColumnIndex = -1;
+    nRawColumns = 0;
 }
 
 /************************************************************************/
@@ -101,7 +105,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
-    int    nRawColumns = poStmtIn->GetColCount();
+    nRawColumns = poStmtIn->GetColCount();
 
     poFeatureDefn->Reference();
 
@@ -119,6 +123,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 pszGeomColumn = CPLStrdup( poStmtIn->GetColName(iCol) );
                 if (poFeatureDefn->GetGeomFieldCount() == 1)
                     poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmtIn->GetColNullable(iCol) );
+                nGeomColumnIndex = iCol;
                 continue;
             }
             else if ( EQUAL(poStmtIn->GetColTypeName( iCol ), "geography") )
@@ -127,6 +132,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 pszGeomColumn = CPLStrdup( poStmtIn->GetColName(iCol) );
                 if (poFeatureDefn->GetGeomFieldCount() == 1)
                     poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmtIn->GetColNullable(iCol) );
+                nGeomColumnIndex = iCol;
                 continue;
             }
         }
@@ -136,6 +142,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 if (poFeatureDefn->GetGeomFieldCount() == 1)
                     poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmtIn->GetColNullable(iCol) );
+                nGeomColumnIndex = iCol;
                 continue;
             }
         }
@@ -185,6 +192,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 pszFIDColumn = CPLStrdup( poStmtIn->GetColName(iCol) );
                 bIsIdentityFid = TRUE;
+                nFIDColumnIndex = iCol;
                 continue;
             }
             else if (EQUAL(poStmtIn->GetColTypeName( iCol ), "bigint identity"))
@@ -192,6 +200,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 pszFIDColumn = CPLStrdup( poStmtIn->GetColName(iCol) );
                 bIsIdentityFid = TRUE;
                 SetMetadataItem(OLMD_FID64, "YES");
+                nFIDColumnIndex = iCol;
                 continue;
             }
         }

@@ -49,9 +49,18 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     papoSRS = NULL;
 
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
+    pszConnection = NULL;
 
     bUseGeometryColumns = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
     bListAllTables = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
+
+    const char* nBCPSizeParam = CPLGetConfigOption("MSSQLSPATIAL_BCP_SIZE", NULL);
+    if( nBCPSizeParam != NULL )
+        nBCPSize = atoi(nBCPSizeParam);
+    else
+        nBCPSize = 1000;
+
+    bUseCopy = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "FALSE"));
 }
 
 /************************************************************************/
@@ -76,6 +85,7 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
+    CPLFree( pszConnection );
 }
 
 /************************************************************************/
@@ -446,8 +456,14 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
+    if( bUseCopy )
+        poLayer->SetUseCopy(nBCPSize);
+
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
+    if (pszGeomColumn == NULL)
+        bCreateSpatialIndex = FALSE;
+
     poLayer->SetSpatialIndexFlag( bCreateSpatialIndex );
 
     const char *pszUploadGeometryFormat = CSLFetchNameValue( papszOptions, "UPLOAD_GEOM_FORMAT" );
@@ -512,6 +528,9 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char 
         delete poLayer;
         return FALSE;
     }
+
+    if (bUseCopy)
+        poLayer->SetUseCopy(nBCPSize);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -716,28 +735,55 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLFree(pszTableSpec);
 
-    /* Initialize the SQL Server connection. */
-    int nResult;
-    if ( pszDriver != NULL )
+    if ( pszDriver == NULL )
     {
-        /* driver has been specified */
-        CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
-        nResult = oSession.EstablishSession( pszConnectionName, "", "" );
-    }
-    else
-    {
-        /* No driver has been specified, defaults to SQL Server. */
-        CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
-        nResult = oSession.EstablishSession( CPLSPrintf("DRIVER=SQL Server;%s", pszConnectionName), "", "" );
+#if SQLNCLI_VERSION == 11
+        pszDriver = CPLStrdup("{SQL Server Native Client 11.0}");
+#elif SQLNCLI_VERSION == 10
+        pszDriver = CPLStrdup("{SQL Server Native Client 10.0}");
+#else
+        pszDriver = CPLStrdup("{SQL Server}");
+#endif
+        pszConnectionName = CPLStrdup(CPLSPrintf("DRIVER=%s;%s", pszDriver, pszConnectionName));
     }
 
     CPLFree(pszDriver);
 
-    if( !nResult )
+    /* Initialize the SQL Server connection. */
+    if( !oSession.EstablishSession( pszConnectionName, "", "" ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to initialize connection to the server for %s,\n"
-                  "%s", pszNewName, oSession.GetLastError() );
+        /* Get a list of the available drivers */
+        HENV hEnv;
+        if ( SQL_SUCCEEDED(SQLAllocEnv( &hEnv ) ) )
+        {
+            CPLString osDriverList;
+            SQLUSMALLINT direction = SQL_FETCH_FIRST;
+            SQLSMALLINT driver_ret;
+            SQLSMALLINT attr_ret;
+            SQLCHAR attr[256];
+            SQLCHAR driver[256];
+            while(SQL_SUCCEEDED(SQLDrivers(hEnv, direction, 
+                driver, sizeof(driver), &driver_ret, attr, sizeof(attr), &attr_ret))) 
+            {
+	            direction = SQL_FETCH_NEXT;
+                osDriverList += CPLSPrintf("%s\n", driver);
+	        }
+
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Unable to initialize connection to the server for %s,\n"
+                "%s\n"
+                "Try specifying the driver in the connection string from the list of available drivers:\n"
+                "%s", pszNewName, oSession.GetLastError(), osDriverList );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Unable to initialize connection to the server for %s,\n"
+                "%s\n", pszNewName, oSession.GetLastError() );
+        }
+
+        if( hEnv != NULL )
+            SQLFreeEnv( hEnv );
 
         CSLDestroy( papszTableNames );
         CSLDestroy( papszSchemaNames );
@@ -910,7 +956,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     CSLDestroy( papszTypes );
 
     CPLFree(pszGeometryFormat);
-    CPLFree(pszConnectionName);
+
+    CPLFree(pszConnection);
+    pszConnection = pszConnectionName;
 
     bDSUpdate = bUpdate;
 
