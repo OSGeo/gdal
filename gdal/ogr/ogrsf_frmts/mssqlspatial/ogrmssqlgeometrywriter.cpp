@@ -112,12 +112,12 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeo
 {
     nColType = nGeomColumnType;
     nSRSId = nSRS;
-    poGeom = poGeometry;
+    poGeom2 = poGeometry;
 
     chProps = 0;
 
     /* calculate required buffer length and the attributes */
-    if (poGeom->getCoordinateDimension() == 3)
+    if (poGeom2->getCoordinateDimension() == 3)
     {
         chProps |= SP_HASZVALUES;
         nPointSize = 24;
@@ -135,10 +135,10 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeo
     nNumShapes = 0;
 
     /* calculate points figures and shapes*/
-    TrackGeometry(poGeom);
+    TrackGeometry(poGeom2);
     ++nNumShapes;
 
-    OGRwkbGeometryType geomType = poGeom->getGeometryType();
+    OGRwkbGeometryType geomType = poGeom2->getGeometryType();
 
     if (nNumPoints == 1 && (geomType == wkbPoint || geomType == wkbPoint25D))
     {
@@ -360,6 +360,9 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
         WriteByte(ShapeType(iShape++), ST_GEOMETRYCOLLECTION);
         WriteGeometryCollection((OGRGeometryCollection*)poGeom, iParent);
         break;
+
+    default:
+        break;
     }
 }
 
@@ -411,6 +414,9 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
             }
         }
         break;
+
+    default:
+        break;
     }
 }
 
@@ -425,12 +431,12 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     if (nBufLen < nLen)
         return OGRERR_FAILURE;
     
-    OGRwkbGeometryType geomType = poGeom->getGeometryType();
+    OGRwkbGeometryType geomType = poGeom2->getGeometryType();
 
     if (nNumPoints == 1 && (geomType == wkbPoint || geomType == wkbPoint25D))
     {
         /* writing a single point */
-        OGRPoint* g = (OGRPoint*)poGeom;
+        OGRPoint* g = (OGRPoint*)poGeom2;
         WriteInt32(0, nSRSId);
         WriteByte(4, 0x01);
         WriteByte(5, chProps);
@@ -452,7 +458,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     else if (nNumPoints == 2 && (geomType == wkbLineString || geomType == wkbLineString25D))
     {
         /* writing a single line */
-        OGRLineString* g = (OGRLineString*)poGeom;
+        OGRLineString* g = (OGRLineString*)poGeom2;
         WriteInt32(0, nSRSId);
         WriteByte(4, 0x01);
         WriteByte(5, chProps);
@@ -484,7 +490,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     else
     {
         /* complex geometry */
-        if (poGeom->IsValid())
+        if (poGeom2->IsValid())
             chProps |= SP_ISVALID;
 
         WriteInt32(0, nSRSId);
@@ -494,7 +500,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
         WriteInt32(nFigurePos - 4 , nNumFigures);
         WriteInt32(nShapePos - 4 , nNumShapes);
 
-        WriteGeometry(poGeom, 0xFFFFFFFF);
+        WriteGeometry(poGeom2, 0xFFFFFFFF);
     }
     return OGRERR_NONE;
 }
