@@ -156,7 +156,7 @@ public:
 class OGRMSSQLGeometryWriter
 {
 protected:
-    OGRGeometry *poGeom;
+    OGRGeometry *poGeom2;
     unsigned char* pszData;
     int nLen;
     /* serialization propeties */
