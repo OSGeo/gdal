@@ -85,6 +85,8 @@
  ****************************************************************************/
 
 #include "cpl_vsi.h"
+#include <algorithm>
+#include <float.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -803,15 +805,116 @@ typedef struct
     int nA;
 } ColorAssociation;
 
-static int GDALColorReliefSortColors(const void* pA, const void* pB)
+static int GDALColorReliefSortColors(const ColorAssociation &pA,
+                                     const ColorAssociation &pB)
 {
-    ColorAssociation* pC1 = (ColorAssociation*)pA;
-    ColorAssociation* pC2 = (ColorAssociation*)pB;
     /* Sort NaN in first position */
-    if( CPLIsNan(pC1->dfVal) )
-        return -1;
-    return (pC1->dfVal < pC2->dfVal) ? -1 :
-           (pC1->dfVal == pC2->dfVal) ? 0 : 1;
+    return (CPLIsNan(pA.dfVal) && !CPLIsNan(pB.dfVal)) || pA.dfVal < pB.dfVal;
+}
+
+static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation,
+                                         int *pnColorAssociation, int bSrcHasNoData,
+                                         double dfSrcNoDataValue)
+{
+    ColorAssociation *pasColorAssociation = *ppasColorAssociation;
+    int nColorAssociation = *pnColorAssociation;
+
+    std::stable_sort(pasColorAssociation, pasColorAssociation + nColorAssociation,
+                     GDALColorReliefSortColors);
+
+    ColorAssociation *pPrevious =
+            (nColorAssociation > 0) ? &pasColorAssociation[0] : NULL;
+    int nAdded = 0;
+    int nRepeatedEntryIndex = 0;
+    for (int i = 1; i < nColorAssociation; ++i)
+    {
+        ColorAssociation *pCurrent = &pasColorAssociation[i];
+
+        // NaN comparison is always false, so it handles itself
+        if (bSrcHasNoData && pCurrent->dfVal == dfSrcNoDataValue)
+        {
+            // check if there is enough distance between the nodata value and its
+            // predecessor
+            double dfNewValue =
+                    pCurrent->dfVal - ABS(pCurrent->dfVal) * DBL_EPSILON;
+            if (dfNewValue > pPrevious->dfVal)
+            {
+                // add one just below the nodata value
+                ++nAdded;
+                pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
+                        (nColorAssociation + nAdded) * sizeof(ColorAssociation));
+                pasColorAssociation[nColorAssociation + nAdded - 1] = *pPrevious;
+                pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
+            }
+        }
+        else if (bSrcHasNoData && pPrevious->dfVal == dfSrcNoDataValue)
+        {
+            // check if there is enough distance between the nodata value and its
+            // successor
+            double dfNewValue = pPrevious->dfVal + ABS(pPrevious->dfVal) * DBL_EPSILON;
+            if (dfNewValue < pCurrent->dfVal)
+            {
+                // add one just above the nodata value
+                ++nAdded;
+                pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
+                        (nColorAssociation + nAdded) * sizeof(ColorAssociation));
+                pasColorAssociation[nColorAssociation + nAdded - 1] = *pCurrent;
+                pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
+            }
+        }
+        else if (nRepeatedEntryIndex == 0 && pCurrent->dfVal == pPrevious->dfVal)
+        {
+            // second of a series of equivalent entries
+            nRepeatedEntryIndex = i;
+        }
+        else if (nRepeatedEntryIndex != 0 && pCurrent->dfVal != pPrevious->dfVal)
+        {
+            // get the distance between the predecessor and successor of the equivalent
+            // entries
+            double dfTotalDist, dfLeftDist;
+            if (nRepeatedEntryIndex >= 2)
+            {
+                ColorAssociation *pLower = &pasColorAssociation[nRepeatedEntryIndex - 2];
+                dfTotalDist = pCurrent->dfVal - pLower->dfVal;
+                dfLeftDist = pPrevious->dfVal - pLower->dfVal;
+            }
+            else
+            {
+                dfTotalDist = pCurrent->dfVal - pPrevious->dfVal;
+                dfLeftDist = 0;
+            }
+
+            // check if this distance is enough
+            int nEquivalentCount = i - nRepeatedEntryIndex + 1;
+            if (dfTotalDist > ABS(pPrevious->dfVal) * nEquivalentCount * DBL_EPSILON)
+            {
+                // balance the alterations
+                double dfMultiplier = 0.5 - nEquivalentCount * dfLeftDist / dfTotalDist;
+                for (int j = nRepeatedEntryIndex - 1; j < i; ++j)
+                {
+                    pasColorAssociation[j].dfVal +=
+                            (ABS(pPrevious->dfVal) * dfMultiplier) * DBL_EPSILON;
+                    dfMultiplier += 1.0;
+                }
+            }
+            else
+            {
+                // fallback to the old behaviour: keep equivalent entries as they are
+            }
+
+            nRepeatedEntryIndex = 0;
+        }
+        pPrevious = pCurrent;
+    }
+
+    if (nAdded)
+    {
+        std::stable_sort(pasColorAssociation,
+                         pasColorAssociation + nColorAssociation + nAdded,
+                         GDALColorReliefSortColors);
+        *ppasColorAssociation = pasColorAssociation;
+        *pnColorAssociation = nColorAssociation + nAdded;
+    }
 }
 
 static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
@@ -850,9 +953,9 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
         mid = (lower + upper) / 2;
         if (upper - lower <= 1)
         {
-            if (dfVal < pasColorAssociation[lower].dfVal)
+            if (dfVal <= pasColorAssociation[lower].dfVal)
                 i = lower;
-            else if (dfVal < pasColorAssociation[upper].dfVal)
+            else if (dfVal <= pasColorAssociation[upper].dfVal)
                 i = upper;
             else
                 i = upper + 1;
@@ -934,6 +1037,15 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
             *pnG = pasColorAssociation[index].nG;
             *pnB = pasColorAssociation[index].nB;
             *pnA = pasColorAssociation[index].nA;
+            return TRUE;
+        }
+
+        if (pasColorAssociation[i-1].dfVal == dfVal)
+        {
+            *pnR = pasColorAssociation[i-1].nR;
+            *pnG = pasColorAssociation[i-1].nG;
+            *pnB = pasColorAssociation[i-1].nB;
+            *pnA = pasColorAssociation[i-1].nA;
             return TRUE;
         }
 
@@ -1174,8 +1286,8 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
         return NULL;
     }
 
-    qsort(pasColorAssociation, nColorAssociation,
-          sizeof(ColorAssociation), GDALColorReliefSortColors);
+    GDALColorReliefProcessColors(&pasColorAssociation, &nColorAssociation,
+                                 bSrcHasNoData, dfSrcNoDataValue);
 
     *pnColors = nColorAssociation;
     return pasColorAssociation;
@@ -1699,18 +1811,18 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                bOK &= VSIFPrintfL(fp, "%.12g:0,", dfVal - EPSILON) > 0;
+                bOK &= VSIFPrintfL(fp, "%.18g:0,", dfVal - fabs(dfVal) * DBL_EPSILON) > 0;
             }
             else if (iColor > 0 &&
                      eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
             {
                 double dfMidVal = (dfVal + pasColorAssociation[iColor-1].dfVal) / 2;
-                bOK &= VSIFPrintfL(fp, "%.12g:%d", dfMidVal - EPSILON,
+                bOK &= VSIFPrintfL(fp, "%.18g:%d", dfMidVal - fabs(dfMidVal) * DBL_EPSILON,
                         (iBand == 0) ? pasColorAssociation[iColor-1].nR :
                         (iBand == 1) ? pasColorAssociation[iColor-1].nG :
                         (iBand == 2) ? pasColorAssociation[iColor-1].nB :
                                        pasColorAssociation[iColor-1].nA) > 0;
-                bOK &= VSIFPrintfL(fp, ",%.12g:%d", dfMidVal ,
+                bOK &= VSIFPrintfL(fp, ",%.18g:%d", dfMidVal ,
                         (iBand == 0) ? pasColorAssociation[iColor].nR :
                         (iBand == 1) ? pasColorAssociation[iColor].nG :
                         (iBand == 2) ? pasColorAssociation[iColor].nB :
@@ -1721,7 +1833,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
             if (eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY)
             {
                 if (dfVal != (double)(int)dfVal)
-                    bOK &= VSIFPrintfL(fp, "%.12g", dfVal) > 0;
+                    bOK &= VSIFPrintfL(fp, "%.18g", dfVal) > 0;
                 else
                     bOK &= VSIFPrintfL(fp, "%d", (int)dfVal) > 0;
                 bOK &= VSIFPrintfL(fp, ":%d",
@@ -1733,7 +1845,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                bOK &= VSIFPrintfL(fp, ",%.12g:0", dfVal + EPSILON) > 0;
+                bOK &= VSIFPrintfL(fp, ",%.18g:0", dfVal + fabs(dfVal) * DBL_EPSILON) > 0;
             }
 
         }
