@@ -841,9 +841,12 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             {
                 // add one just below the nodata value
                 ++nAdded;
+                ColorAssociation sPrevious = *pPrevious;
                 pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
                         (nColorAssociation + nAdded) * sizeof(ColorAssociation));
-                pasColorAssociation[nColorAssociation + nAdded - 1] = *pPrevious;
+                pCurrent = &pasColorAssociation[i];
+                pPrevious = NULL;
+                pasColorAssociation[nColorAssociation + nAdded - 1] = sPrevious;
                 pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
             }
         }
@@ -856,9 +859,12 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             {
                 // add one just above the nodata value
                 ++nAdded;
+                ColorAssociation sCurrent = *pCurrent;
                 pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
                         (nColorAssociation + nAdded) * sizeof(ColorAssociation));
-                pasColorAssociation[nColorAssociation + nAdded - 1] = *pCurrent;
+                pCurrent = &pasColorAssociation[i];
+                pPrevious = NULL;
+                pasColorAssociation[nColorAssociation + nAdded - 1] = sCurrent;
                 pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
             }
         }
