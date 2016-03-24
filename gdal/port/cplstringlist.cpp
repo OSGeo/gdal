@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  CPLStringList implementation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -96,7 +96,7 @@ CPLStringList &CPLStringList::operator=(const CPLStringList& oOther)
         MakeOurOwnCopy();
         bIsSorted = oOther.bIsSorted;
     }
-    
+
     return *this;
 }
 
@@ -129,7 +129,7 @@ CPLStringList::~CPLStringList()
 /************************************************************************/
 
 /**
- * Clear the string list. 
+ * Clear the string list.
  */
 CPLStringList &CPLStringList::Clear()
 
@@ -143,7 +143,7 @@ CPLStringList &CPLStringList::Clear()
         nAllocation = 0;
         nCount = 0;
     }
-    
+
     return *this;
 }
 
@@ -152,9 +152,9 @@ CPLStringList &CPLStringList::Clear()
 /************************************************************************/
 
 /**
- * Assign a list of strings. 
+ * Assign a list of strings.
  *
- * 
+ *
  * @param papszListIn the NULL terminated list of strings to consume.
  * @param bTakeOwnership TRUE if the CPLStringList should take ownership
  * of the list of strings which implies responsibility to free them.
@@ -175,7 +175,7 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
     else
         nCount = -1;      // unknown
 
-    nAllocation = 0;  
+    nAllocation = 0;
     bIsSorted = FALSE;
 
     return *this;
@@ -204,7 +204,7 @@ int CPLStringList::Count() const
             nAllocation = MAX(nCount+1,nAllocation);
         }
     }
-    
+
     return nCount;
 }
 
@@ -268,7 +268,7 @@ void CPLStringList::EnsureAllocation( int nMaxList )
  * This method is similar to AddString(), but ownership of the
  * pszNewString is transferred to the CPLStringList class.
  *
- * @param pszNewString the string to add to the list. 
+ * @param pszNewString the string to add to the list.
  */
 
 CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
@@ -296,7 +296,7 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
  *
  * A copy of the passed in string is made and inserted in the list.
  *
- * @param pszNewString the string to add to the list. 
+ * @param pszNewString the string to add to the list.
  */
 
 CPLStringList &CPLStringList::AddString( const char *pszNewString )
@@ -319,7 +319,7 @@ CPLStringList &CPLStringList::AddString( const char *pszNewString )
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::AddNameValue( const char  *pszKey, 
+CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
                                             const char *pszValue )
 
 {
@@ -359,17 +359,17 @@ CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
 /************************************************************************/
 
 /**
- * Set name=value entry in the list. 
+ * Set name=value entry in the list.
  *
  * Similar to AddNameValue(), except if there is already a value for
  * the key in the list it is replaced instead of adding a new entry to
  * the list.  If pszValue is NULL any existing key entry is removed.
- * 
+ *
  * @param pszKey the key name to add.
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::SetNameValue( const char *pszKey, 
+CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
                                             const char *pszValue )
 
 {
@@ -386,10 +386,10 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     {
 
         // shift everything down by one.
-        do 
+        do
         {
             papszList[iKey] = papszList[iKey+1];
-        } 
+        }
         while( papszList[iKey++] != NULL );
 
         nCount--;
@@ -419,14 +419,14 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
  * returned.
  *
  * @param i the index of the list item to return.
- * @return selected entry in the list.  
+ * @return selected entry in the list.
  */
 char *CPLStringList::operator[]( int i )
 
 {
     if( nCount == -1 )
         Count();
-    
+
     if( i < 0 || i >= nCount )
         return NULL;
     else
@@ -438,7 +438,7 @@ const char *CPLStringList::operator[]( int i ) const
 {
     if( nCount == -1 )
         Count();
-    
+
     if( i < 0 || i >= nCount )
         return NULL;
     else
@@ -522,7 +522,7 @@ static int llCompareStr(const void *a, const void *b)
  * Sort the entries in the list and mark list sorted.
  *
  * Note that once put into "sorted" mode, the CPLStringList will attempt to
- * keep things in sorted order through calls to AddString(), 
+ * keep things in sorted order through calls to AddString(),
  * AddStringDirectly(), AddNameValue(), SetNameValue(). Complete list
  * assignments (via Assign() and operator= will clear the sorting state.
  * When in sorted order FindName(), FetchNameValue() and FetchNameValueDef()
@@ -539,7 +539,7 @@ CPLStringList &CPLStringList::Sort()
     if( nCount )
         qsort( papszList, nCount, sizeof(char*), llCompareStr );
     bIsSorted = TRUE;
-    
+
     return *this;
 }
 
@@ -549,12 +549,12 @@ CPLStringList &CPLStringList::Sort()
 
 /**
  * Get index of given name/value keyword.
- * 
- * Note that this search is for a line in the form name=value or name:value. 
- * Use FindString() or PartialFindString() for searches not based on name=value
- * pairs. 
  *
- * @param pszKey the name to search for.  
+ * Note that this search is for a line in the form name=value or name:value.
+ * Use FindString() or PartialFindString() for searches not based on name=value
+ * pairs.
+ *
+ * @param pszKey the name to search for.
  *
  * @return the string list index of this name, or -1 on failure.
  */
@@ -565,7 +565,7 @@ int CPLStringList::FindName( const char *pszKey ) const
     if( !IsSorted() )
         return CSLFindName( papszList, pszKey );
 
-    // If we are sorted, we can do an optimized binary search. 
+    // If we are sorted, we can do an optimized binary search.
     int iStart=0, iEnd=nCount-1;
     size_t nKeyLen = strlen(pszKey);
 
@@ -596,15 +596,15 @@ int CPLStringList::FindName( const char *pszKey ) const
  *
  * In a CPLStringList of "Name=Value" pairs, look to see if there is a key
  * with the given name, and if it can be interpreted as being TRUE.  If
- * the key appears without any "=Value" portion it will be considered true. 
+ * the key appears without any "=Value" portion it will be considered true.
  * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
  * if the key appears in the list it will be considered TRUE.  If the key
- * doesn't appear at all, the indicated default value will be returned. 
- * 
+ * doesn't appear at all, the indicated default value will be returned.
+ *
  * @param pszKey the key value to look for (case insensitive).
- * @param bDefault the value to return if the key isn't found at all. 
- * 
- * @return TRUE or FALSE 
+ * @param bDefault the value to return if the key isn't found at all.
+ *
+ * @return TRUE or FALSE
  */
 
 int CPLStringList::FetchBoolean( const char *pszKey, int bDefault ) const
@@ -626,13 +626,13 @@ int CPLStringList::FetchBoolean( const char *pszKey, int bDefault ) const
  * Fetch value associated with this key name.
  *
  * If this list sorted, a fast binary search is done, otherwise a linear
- * scan is done.  Name lookup is case insensitive. 
- * 
+ * scan is done.  Name lookup is case insensitive.
+ *
  * @param pszName the key name to search for.
- * 
- * @return the corresponding value or NULL if not found.  The returned string 
- * should not be modified and points into internal object state that may 
- * change on future calls. 
+ *
+ * @return the corresponding value or NULL if not found.  The returned string
+ * should not be modified and points into internal object state that may
+ * change on future calls.
  */
 
 const char *CPLStringList::FetchNameValue( const char *pszName ) const
@@ -657,12 +657,12 @@ const char *CPLStringList::FetchNameValue( const char *pszName ) const
  * Fetch value associated with this key name.
  *
  * If this list sorted, a fast binary search is done, otherwise a linear
- * scan is done.  Name lookup is case insensitive. 
- * 
+ * scan is done.  Name lookup is case insensitive.
+ *
  * @param pszName the key name to search for.
  * @param pszDefault the default value returned if the named entry isn't found.
- * 
- * @return the corresponding value or the passed default if not found. 
+ *
+ * @return the corresponding value or the passed default if not found.
  */
 
 const char *CPLStringList::FetchNameValueDef( const char *pszName,
@@ -712,7 +712,7 @@ const char *CPLStringList::FetchNameValueDef( const char *pszName,
  * heap.
  */
 
-CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo, 
+CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo,
                                                     char *pszNewLine )
 
 {
@@ -750,7 +750,7 @@ int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
 
 {
     CPLAssert( IsSorted() );
-    
+
     int iStart=0, iEnd=nCount-1;
 
     while( iStart <= iEnd )
@@ -766,10 +766,10 @@ int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
 
     iEnd++;
     CPLAssert( iEnd >= 0 && iEnd <= nCount );
-    CPLAssert( iEnd == 0 
+    CPLAssert( iEnd == 0
                || CPLCompareKeyValueString(pszLine,papszList[iEnd-1]) >= 0 );
     CPLAssert( iEnd == nCount
                || CPLCompareKeyValueString(pszLine,papszList[iEnd]) <= 0 );
-    
+
     return iEnd;
 }
