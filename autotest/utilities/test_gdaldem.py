@@ -672,6 +672,66 @@ NODATA_value nan
     return 'success'
 
 ###############################################################################
+# Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
+
+def test_gdaldem_color_relief_repeated_entry():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_gdaldem_color_relief_repeated_entry.asc', 'wt')
+    f.write("""ncols        2
+nrows        3
+xllcorner    440720
+yllcorner    3750120
+cellsize     60
+NODATA_value 5
+ 1 4.9
+ 5 5.1
+ 6 7 """)
+    f.close()
+
+    f = open('tmp/test_gdaldem_color_relief_repeated_entry.txt', 'wt')
+    f.write('1 1 1 1\n')
+    f.write('6 10 10 10\n')
+    f.write('6 20 20 20\n')
+    f.write('8 30 30 30\n')
+    f.write('nv 5 5 5\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
+
+    ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
+    val = ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    import struct
+    val = struct.unpack('B' * 6, val)
+    if val != (1,1,5,10,10,25):
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT')
+
+    ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
+    val = ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    import struct
+    val = struct.unpack('B' * 6, val)
+    if val != (1,1,5,10,10,25):
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+
+    os.unlink('tmp/test_gdaldem_color_relief_repeated_entry.asc')
+    os.unlink('tmp/test_gdaldem_color_relief_repeated_entry.txt')
+    os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
+    os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdaldem_cleanup():
@@ -770,6 +830,7 @@ gdaltest_list = [
     test_gdaldem_color_relief_nearest_color_entry,
     test_gdaldem_color_relief_nearest_color_entry_vrt,
     test_gdaldem_color_relief_nodata_nan,
+    test_gdaldem_color_relief_repeated_entry,
     test_gdaldem_cleanup
     ]
 

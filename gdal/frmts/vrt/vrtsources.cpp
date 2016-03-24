@@ -1843,10 +1843,23 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if ( m_nLUTItemCount )
     {
-        CPLString osLUT = CPLString().Printf("%g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
+        // Make sure we print with sufficient precision to address really close
+        // entries (#6422)
+        CPLString osLUT;
+        if( m_nLUTItemCount > 0 &&
+            CPLString().Printf("%g", m_padfLUTInputs[0]) == CPLString().Printf("%g", m_padfLUTInputs[1]) )
+            osLUT = CPLString().Printf("%.18g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
+        else
+            osLUT = CPLString().Printf("%g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
         int i;
         for ( i = 1; i < m_nLUTItemCount; i++ )
-            osLUT += CPLString().Printf(",%g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
+        {
+            if( CPLString().Printf("%g", m_padfLUTInputs[i]) == CPLString().Printf("%g", m_padfLUTInputs[i-1]) ||
+                (i + 1 < m_nLUTItemCount && CPLString().Printf("%g", m_padfLUTInputs[i]) == CPLString().Printf("%g", m_padfLUTInputs[i+1])) )
+                osLUT += CPLString().Printf(",%.18g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
+            else
+                osLUT += CPLString().Printf(",%g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
+        }
         CPLSetXMLValue( psSrc, "LUT", osLUT );
     }
 
