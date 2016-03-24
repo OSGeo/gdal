@@ -247,14 +247,14 @@ void CPLStringList::EnsureAllocation( int nMaxList )
     if( nAllocation <= nMaxList )
     {
         nAllocation = MAX(nAllocation*2 + 20,nMaxList+1);
-		if( papszList == NULL )
-		{
-			papszList = (char **) CPLCalloc(nAllocation,sizeof(char*));
-			bOwnList = TRUE;
-			nCount = 0;
-		}
-		else
-			papszList = (char **) CPLRealloc(papszList, nAllocation*sizeof(char*));
+                if( papszList == NULL )
+                {
+                        papszList = (char **) CPLCalloc(nAllocation,sizeof(char*));
+                        bOwnList = TRUE;
+                        nCount = 0;
+                }
+                else
+                        papszList = (char **) CPLRealloc(papszList, nAllocation*sizeof(char*));
     }
 }
 
@@ -511,7 +511,7 @@ static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
 /************************************************************************/
 static int llCompareStr(const void *a, const void *b)
 {
-	return CPLCompareKeyValueString((*(const char **)a),(*(const char **)b));
+        return CPLCompareKeyValueString((*(const char **)a),(*(const char **)b));
 }
 
 /************************************************************************/
