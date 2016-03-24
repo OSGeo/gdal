@@ -1193,7 +1193,7 @@ int OGRMSSQLSpatialTableLayer::Failed( int nRetCode )
     if (iRc != SQL_NO_DATA) {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
-        iNativeError, Msg );
+                  static_cast<int>(iNativeError), Msg );
     }
 
     return TRUE;
@@ -1220,7 +1220,7 @@ int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
     if (iRc != SQL_NO_DATA) {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
-        iNativeError, Msg );
+                  static_cast<int>(iNativeError), Msg );
     }
 
     return TRUE;
