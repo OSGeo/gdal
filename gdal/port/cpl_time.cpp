@@ -74,7 +74,7 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
 {
     GIntBig days = unixTime / SECSPERDAY;
     GIntBig rem = unixTime % SECSPERDAY;
-    
+
     if( unixTime < -(GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR ||
         unixTime > (GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR )
     {
