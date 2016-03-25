@@ -131,7 +131,7 @@ char **CSLAddStringMayFail(char **papszStrList, const char *pszNewString)
  *
  * @return the number of entries.
  */
-int CSLCount(char const * const *papszStrList)
+int CSLCount(const char * const *papszStrList)
 {
     if (!papszStrList)
         return 0;
@@ -1536,9 +1536,43 @@ int CPLTestBoolean( const char *pszValue )
 
 
 /**********************************************************************
- *                       CSLFetchBoolean()
+ *                       CPLFetchBool()
  *
  * Check for boolean key value.
+ *
+ * In a StringList of "Name=Value" pairs, look to see if there is a key
+ * with the given name, and if it can be interpreted as being TRUE.  If
+ * the key appears without any "=Value" portion it will be considered true.
+ * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
+ * if the key appears in the list it will be considered TRUE.  If the key
+ * doesn't appear at all, the indicated default value will be returned.
+ *
+ * @param papszStrList the string list to search.
+ * @param pszKey the key value to look for (case insensitive).
+ * @param bDefault the value to return if the key isn't found at all.
+ *
+ * @return true or false
+ **********************************************************************/
+
+bool CPLFetchBool( const char **papszStrList, const char *pszKey,
+                   bool bDefault )
+
+{
+    if( CSLFindString( const_cast<char **>(papszStrList), pszKey ) != -1 )
+        return true;
+
+    const char * const pszValue =
+        CSLFetchNameValue( const_cast<char **>(papszStrList), pszKey );
+    if( pszValue == NULL )
+        return bDefault;
+
+    return CPLTestBool( pszValue );
+}
+
+/**********************************************************************
+ *                       CSLFetchBoolean()
+ *
+ * DEPRECATED.  Check for boolean key value.
  *
  * In a StringList of "Name=Value" pairs, look to see if there is a key
  * with the given name, and if it can be interpreted as being TRUE.  If
@@ -1557,14 +1591,8 @@ int CPLTestBoolean( const char *pszValue )
 int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
 
 {
-    if( CSLFindString( papszStrList, pszKey ) != -1 )
-        return TRUE;
-
-    const char *pszValue = CSLFetchNameValue( papszStrList, pszKey );
-    if( pszValue == NULL )
-        return bDefault;
-
-    return CSLTestBoolean( pszValue );
+    return CPLFetchBool( const_cast<const char **>(papszStrList),
+                         pszKey, CPL_TO_BOOL(bDefault) );
 }
 
 /************************************************************************/
