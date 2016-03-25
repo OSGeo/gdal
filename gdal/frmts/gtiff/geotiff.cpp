@@ -668,10 +668,7 @@ GTiffJPEGOverviewBand::GTiffJPEGOverviewBand(GTiffJPEGOverviewDS* poDSIn, int nB
     poDSIn->poParentDS->GetRasterBand(nBandIn)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nScaleFactor = 1 << poDSIn->nOverviewLevel;
     nBlockXSize = (nBlockXSize + nScaleFactor - 1) / nScaleFactor;
-    if( nBlockYSize == 1 )
-        nBlockYSize = 1;
-    else
-        nBlockYSize = (nBlockYSize + nScaleFactor - 1) / nScaleFactor;
+    nBlockYSize = (nBlockYSize + nScaleFactor - 1) / nScaleFactor;
 }
 
 /************************************************************************/
