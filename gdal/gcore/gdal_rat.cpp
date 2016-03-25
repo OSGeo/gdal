@@ -920,7 +920,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 
     for( int iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
-      GDALColorEntry sColor = { 0, 0, 0, 0 };
+        GDALColorEntry sColor = { 0, 0, 0, 0 };
         const int iRow = GetRowOfValue( iEntry );
 
         if( iRow != -1 )
@@ -1051,7 +1051,6 @@ GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable() :
 GDALRasterAttributeTableH CPL_STDCALL GDALCreateRasterAttributeTable()
 
 {
-    // Trying leaving out: reinterpret_cast<GDALRasterAttributeTableH>
     return new GDALDefaultRasterAttributeTable();
 }
 
