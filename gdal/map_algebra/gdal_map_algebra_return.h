@@ -57,7 +57,7 @@ void *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method) {
     case gma_method_histogram: {
         switch (b->GetRasterDataType()) {
         case GDT_Byte:
-            gma_proc_compute_value<int32_t>(b, gma_histogram<char>, &ret_val);
+            gma_proc_compute_value<uint8_t>(b, gma_histogram<uint8_t>, &ret_val);
             break;
         case GDT_Int32:
             gma_proc_compute_value<int32_t>(b, gma_histogram<int32_t>, &ret_val);

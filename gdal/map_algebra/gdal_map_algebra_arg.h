@@ -1,20 +1,17 @@
 typedef int (*gma_with_arg_callback)(void*, int, int, void*);
 
-#define gma_add(type) int gma_add_##type(void* block, int w, int h, void *to_add) { \
-        type a = *((type*)to_add);                                      \
-        for (int y = 0; y < h; y++) {                                   \
-            for (int x = 0; x < w; x++) {                               \
-                gma_typecast(type, block)[x+y*w] += a;                  \
-            }                                                           \
-        }                                                               \
-        return 2;                                                       \
+template<typename type>
+int gma_add(void* block, int w, int h, void *to_add) {
+    type a = *((type*)to_add);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            gma_typecast(type, block)[x+y*w] += a;
+        }
     }
+    return 2;
+}
 
-gma_add(int16_t)
-gma_add(int32_t)
-gma_add(double)
-
-template<typename CellType>
+template<typename type>
 void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback cb, void *arg) {
     int w_band = b->GetXSize(), h_band = b->GetYSize();
     int w_block, h_block;
@@ -32,7 +29,7 @@ void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback cb, void *arg) {
                 h = h_band - y_block * h_block;
             else
                 h = h_block;
-            CellType block[w_block*h_block];
+            type block[w_block*h_block];
             CPLErr e = b->ReadBlock(x_block, y_block, block);
             int ret = cb(block, w, h, arg);
             switch (ret) {
@@ -46,25 +43,25 @@ void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback cb, void *arg) {
     }
 }
 
-template<typename ArgType>
-void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, ArgType arg) {
+template<typename type>
+void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, type arg) {
     // need conversion method arg type -> cell type
     switch (method) {
     case gma_method_add: {
         switch (b->GetRasterDataType()) {
         case GDT_Int16: {
             int16_t a = arg;
-            gma_with_arg_proc<int16_t>(b, gma_add_int16_t, &a);
+            gma_with_arg_proc<int16_t>(b, gma_add<int16_t>, &a);
             break;
         }
         case GDT_Int32: {
             int32_t a = arg;
-            gma_with_arg_proc<int32_t>(b, gma_add_int32_t, &a);
+            gma_with_arg_proc<int32_t>(b, gma_add<int32_t>, &a);
             break;
         }
         case GDT_Float64: {
             double a = arg;
-            gma_with_arg_proc<double>(b, gma_add_double, &a);
+            gma_with_arg_proc<double>(b, gma_add<double>, &a);
             break;
         }
         }

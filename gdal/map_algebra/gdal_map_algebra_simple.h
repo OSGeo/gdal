@@ -2,6 +2,7 @@ typedef int (*gma_simple_callback)(void*, int, int);
 
 #define gma_typecast(type, var) ((type*)(var))
 
+// can use templates if use streams
 #define gma_print(type) int gma_print_##type(void* block, int w, int h) { \
         for (int y = 0; y < h; y++) {                                   \
             for (int x = 0; x < w; x++) {                               \
@@ -25,22 +26,11 @@ int gma_print_double(void* block, int w, int h) {
     return 1;
 }
 
-#define gma_rand(type) int gma_rand_##type(void* block, int w, int h) { \
-        for (int y = 0; y < h; y++) {                                   \
-            for (int x = 0; x < w; x++) {                               \
-                gma_typecast(type, block)[x+y*w] = rand() % 20;         \
-            }                                                           \
-        }                                                               \
-        return 2;                                                       \
-    }
-
-gma_rand(int16_t)
-gma_rand(int32_t)
-
-int gma_rand_double(void* block, int w, int h) {
+template<typename data_t>
+int gma_rand(void* block, int w, int h) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            gma_typecast(double, block)[x+y*w] = rand() % 20;
+            gma_typecast(data_t, block)[x+y*w] = rand() % 20;
         }
     }
     return 2;
@@ -83,10 +73,10 @@ void gma_simple(GDALRasterBand *b, gma_method_t method) {
     case gma_method_rand: {
         switch (b->GetRasterDataType()) {
         case GDT_Int32:
-            gma_proc_simple<int32_t>(b, gma_rand_int32_t);
+            gma_proc_simple<int32_t>(b, gma_rand<int32_t>);
             break;
         case GDT_Float64:
-            gma_proc_simple<double>(b, gma_rand_double);
+            gma_proc_simple<double>(b, gma_rand<double>);
             break;
         }
         break;

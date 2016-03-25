@@ -29,7 +29,7 @@ int main() {
         ds1->FlushCache();
     }
 
-    if (1) {
+    if (0) {
         int *hm = (int *)gma_compute_value(b2, gma_method_histogram);
         for (int i = 0; i < 11; i++)
             printf("%i => %i\n", i, hm[i]);
@@ -45,6 +45,12 @@ int main() {
         GDALDataset *ds1 = d->Create("flatless_fd.tiff", w, h, 1, b2->GetRasterDataType(), NULL);
         GDALRasterBand *b1 = ds1->GetRasterBand(1);
         gma_two_bands(b1, gma_method_route_flats, b2);
+    }
+
+    if (1) {
+        GDALDataset *ds1 = d->Create("ua.tiff", w, h, 1, GDT_UInt32, NULL);
+        GDALRasterBand *b1 = ds1->GetRasterBand(1);
+        gma_two_bands(b1, gma_method_upstream_area, b2);
     }
 
 }
