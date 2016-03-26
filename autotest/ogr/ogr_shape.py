@@ -213,7 +213,7 @@ def ogr_shape_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_shape_7():
 
@@ -298,7 +298,7 @@ def ogr_shape_9():
         return 'fail'
 
 ###############################################################################
-# Do a fair size query that should pull in a few shapes. 
+# Do a fair size query that should pull in a few shapes.
 
 def ogr_shape_10():
 
@@ -404,7 +404,7 @@ def ogr_shape_13():
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
 
     ######################################################################
-    # Update FID 9 (EAS_ID=170), making the polygon larger. 
+    # Update FID 9 (EAS_ID=170), making the polygon larger.
 
     feat = gdaltest.shape_lyr.GetFeature( 9 )
     feat.SetField( 'AREA', '6000.00' )
@@ -563,7 +563,7 @@ def ogr_shape_16_1():
         return 'fail'
 
     ######################################################################
-    # Check at least one feature. 
+    # Check at least one feature.
 
     feat = gdaltest.shape_lyr.GetFeature(8)
     if feat.EAS_ID != 165:
@@ -667,7 +667,7 @@ def ogr_shape_19():
 
     wkt = 'MULTIPOLYGON (((3115478.809630727861077 13939288.008583962917328,3134266.47213465673849 13971973.394036004319787,3176989.101938112173229 13957303.575368551537395,3198607.7820796193555 13921787.172278933227062,3169010.779504936654121 13891675.439224690198898,3120368.749186545144767 13897852.204979406669736,3115478.809630727861077 13939288.008583962917328),(3130405.993537959177047 13935427.529987264424562,3135038.567853996530175 13902742.144535223022103,3167209.22282647760585 13902227.414055664092302,3184452.693891727831215 13922559.267998272553086,3172871.258101634215564 13947781.061496697366238,3144561.081725850701332 13957818.305848112329841,3130405.993537959177047 13935427.529987264424562)),((3143016.890287171583623 13932596.512349685654044,3152282.038919246289879 13947266.331017138436437,3166179.761867358349264 13940060.104303302243352,3172099.162382294889539 13928221.303273428231478,3169268.144744716584682 13916897.23272311501205,3158201.439434182830155 13911235.197447959333658,3144818.446965630631894 13911749.927927518263459,3139928.507409813348204 13916382.502243556082249,3143016.890287171583623 13932596.512349685654044),(3149193.65604188805446 13926677.11183474957943,3150737.84748056717217 13918698.789401574060321,3158458.804673962760717 13919728.250360693782568,3164892.935668459162116 13923331.36371761187911,3163863.474709339439869 13928736.033752989023924,3157171.978475063573569 13935427.529987264424562,3149193.65604188805446 13926677.11183474957943)))'
 
-    if ogrtest.check_feature_geometry(feat, wkt, 
+    if ogrtest.check_feature_geometry(feat, wkt,
                                       max_error = 0.00000001 ) != 0:
         return 'fail'
 
@@ -1070,7 +1070,7 @@ def ogr_shape_24():
     return 'success'
 
 ###############################################################################
-# Test reading a multipolygon with one part inside the bounding box of the other 
+# Test reading a multipolygon with one part inside the bounding box of the other
 # part, but not inside it, and sharing the same first point... (#2589)
 
 def ogr_shape_25():
@@ -1878,7 +1878,7 @@ def ogr_shape_45():
         return 'fail'
 
     wkt = 'POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))'
-    if ogrtest.check_feature_geometry(feat, wkt, 
+    if ogrtest.check_feature_geometry(feat, wkt,
                                       max_error = 0.00000001 ) != 0:
         return 'fail'
 
@@ -4176,7 +4176,7 @@ def ogr_shape_89():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_shape_89.shp', 'rb+')
     gdal.VSIFSeekL(f, 100 + 8 + 10 * 1024 * 1024 - 1, 0)
     gdal.VSIFWriteL(struct.pack('B', 0), 1, 1, f)
@@ -4208,7 +4208,7 @@ def ogr_shape_90():
     f.SetGeometry(g)
     lyr.CreateFeature(f)
     ds = None
-    
+
     gdal.Unlink('/vsimem/ogr_shape_90.dbf')
 
     # The declare file size doesn't match the real one
@@ -4364,7 +4364,7 @@ def ogr_shape_94():
 # Test demoting of ZM to Z when the M values are nodata
 
 def ogr_shape_95():
-    
+
     ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPoint25D:
@@ -4376,7 +4376,7 @@ def ogr_shape_95():
         gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
-    
+
     ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp', open_options = ['ADJUST_GEOM_TYPE=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPointZM:
@@ -4388,7 +4388,7 @@ def ogr_shape_95():
         gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
-    
+
     # The shape with a non nodata M is the second one
     ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options = ['ADJUST_GEOM_TYPE=FIRST_SHAPE'])
     lyr = ds.GetLayer(0)
@@ -4396,28 +4396,28 @@ def ogr_shape_95():
         gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
-        
+
     ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options = ['ADJUST_GEOM_TYPE=ALL_SHAPES'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPointZM:
         gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
 # Test updating a XYM shapefile (#6331)
 
 def ogr_shape_96():
-    
+
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_96.shp')
     lyr = ds.CreateLayer('ogr_shape_96')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT M (1 2 3)'))
     lyr.CreateFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_shape_96.shp', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -4428,7 +4428,7 @@ def ogr_shape_96():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT M (1 2 4)'))
     lyr.SetFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_shape_96.shp')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -4437,23 +4437,23 @@ def ogr_shape_96():
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     ds = None
-    
+
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_96.shp')
-    
+
     return 'success'
 
 ###############################################################################
 # Test updating a XYZM shapefile
 
 def ogr_shape_97():
-    
+
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_97.shp')
     lyr = ds.CreateLayer('ogr_shape_97')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
     lyr.CreateFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_shape_97.shp', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -4464,7 +4464,7 @@ def ogr_shape_97():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 5 6)'))
     lyr.SetFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_shape_97.shp')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -4473,9 +4473,9 @@ def ogr_shape_97():
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     ds = None
-    
+
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_97.shp')
-    
+
     return 'success'
 
 ###############################################################################

@@ -99,7 +99,7 @@ def ogr_wasp_elevation_from_linestring_z():
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
-            if float(h) != j: 
+            if float(h) != j:
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -164,7 +164,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
                     gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                     return 'fail'
 
-            if float(h) != j: 
+            if float(h) != j:
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -185,7 +185,7 @@ def ogr_wasp_elevation_from_linestring_field():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
-    layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
+    layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=elevation'],
                                           geom_type=ogr.wkbLineString )
 
@@ -221,7 +221,7 @@ def ogr_wasp_elevation_from_linestring_field():
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
-            if float(h) != j: 
+            if float(h) != j:
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -237,7 +237,7 @@ def ogr_wasp_roughness_from_linestring_fields():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
-    layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
+    layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=z_left,z_right'],
                                           geom_type=ogr.wkbLineString )
 
@@ -277,7 +277,7 @@ def ogr_wasp_roughness_from_linestring_fields():
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
-            if float(r) != j or float(l) != j-1: 
+            if float(r) != j or float(l) != j-1:
                 gdaltest.post_reason( 'roughness should be %d and %d and is %s and %s' %(j-1,j,l,r) )
                 return 'fail'
 
@@ -298,7 +298,7 @@ def ogr_wasp_roughness_from_polygon_z():
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
     if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
-    layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
+    layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           geom_type=ogr.wkbPolygon25D )
     if not ogrtest.have_geos() : gdal.PopErrorHandler()
 
@@ -344,7 +344,7 @@ def ogr_wasp_roughness_from_polygon_z():
             j+=1
         i+=1
 
-    if j != 6: 
+    if j != 6:
         gdaltest.post_reason( 'there should be 6 boundaries and there are %d' %j )
         return 'fail'
 
@@ -355,14 +355,14 @@ def ogr_wasp_roughness_from_polygon_z():
     return 'success'
 
 ###############################################################################
-# Create .map from polygons field 
+# Create .map from polygons field
 
 def ogr_wasp_roughness_from_polygon_field():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
     if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
-    layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
+    layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=roughness'],
                                           geom_type=ogr.wkbPolygon )
     if not ogrtest.have_geos() : gdal.PopErrorHandler()
@@ -411,7 +411,7 @@ def ogr_wasp_roughness_from_polygon_field():
             j+=1
         i+=1
 
-    if j != 6: 
+    if j != 6:
         gdaltest.post_reason( 'there should be 6 boundaries and there are %d' %j )
         return 'fail'
 
@@ -431,7 +431,7 @@ def ogr_wasp_merge():
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
     if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
-    layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
+    layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           geom_type=ogr.wkbPolygon25D )
     if not ogrtest.have_geos() : gdal.PopErrorHandler()
 
@@ -466,7 +466,7 @@ def ogr_wasp_merge():
     for i in range(4): f.readline()
     i = 0
     j = 0
-    res = [] 
+    res = []
     for line in f:
         if not i%2:
             [l,r,n] = [v for v in line.split()]
@@ -478,7 +478,7 @@ def ogr_wasp_merge():
             j+=1
         i+=1
 
-    if j != 6: 
+    if j != 6:
         gdaltest.post_reason( 'there should be 6 boundaries and there are %d' %j )
         return 'fail'
 
@@ -520,7 +520,7 @@ def ogr_wasp_cleanup():
     wasp_drv.DeleteDataSource( 'tmp.map' )
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_wasp_create_ds,
     ogr_wasp_elevation_from_linestring_z,
     ogr_wasp_elevation_from_linestring_z_toler,
@@ -535,7 +535,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogrtest.have_geos() 
+    ogrtest.have_geos()
     gdal.PopErrorHandler()
 
     gdaltest.setup_run( 'ogr_wasp' )

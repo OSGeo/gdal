@@ -78,7 +78,7 @@ def vrtrawlink_2():
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
 
-    # Force it to be written to disk. 
+    # Force it to be written to disk.
     ds = None
 
     return 'success'
@@ -105,14 +105,14 @@ def vrtrawlink_3():
     return 'success'
 
 ###############################################################################
-# Add a new band, and we will test if we can write to it. 
+# Add a new band, and we will test if we can write to it.
 
 def vrtrawlink_4():
 
     # force creation of the file.
     open( 'tmp/rawlink.dat', 'w' ).write( chr(0) )
 
-    # Add a new band pointing to this bogus file. 
+    # Add a new band pointing to this bogus file.
     options = [
         'subClass=VRTRawRasterBand',
         'SourceFilename=tmp/rawlink.dat',

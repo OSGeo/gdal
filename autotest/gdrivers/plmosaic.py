@@ -695,7 +695,7 @@ def plmosaic_17():
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH=tmp,TRUST_CACHE=YES', gdal.OF_RASTER)
-    gdal.SetConfigOption('PL_URL', None)    
+    gdal.SetConfigOption('PL_URL', None)
 
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
     val = struct.unpack('B', val)[0]
@@ -708,13 +708,13 @@ def plmosaic_17():
     # Read again from file cache, with JSon quad definition this time
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
-    gdal.SetConfigOption('PL_URL', None)    
+    gdal.SetConfigOption('PL_URL', None)
 
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic/quads/my_15_0000_2047', """{
     "id": "my_15_0000_2047",
     "properties": {
-        "file_size": %d, 
+        "file_size": %d,
     }
 }""" % filesize)
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
@@ -743,7 +743,7 @@ def plmosaic_17():
                             [ 0, -200 ] ] ]
     },
     "properties": {
-        "file_size": %d, 
+        "file_size": %d,
     }
 }""" % filesize)
     val = ds.ReadRaster(0,0,1,1)
@@ -767,7 +767,7 @@ def plmosaic_18():
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
-    gdal.SetConfigOption('PL_URL', None)    
+    gdal.SetConfigOption('PL_URL', None)
 
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != """<LocationInfo>
@@ -1019,7 +1019,7 @@ def plmosaic_cleanup():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     plmosaic_1,
     plmosaic_2,
     plmosaic_3,

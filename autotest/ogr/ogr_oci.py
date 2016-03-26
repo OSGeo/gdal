@@ -121,7 +121,7 @@ def ogr_oci_2():
     return 'success'
 
 ###############################################################################
-# Helper method to reverse ring winding.  This is needed because the 
+# Helper method to reverse ring winding.  This is needed because the
 # winding direction in shapefiles, and in Oracle is opposite for polygons.
 
 def reverse_rings( poly ):
@@ -134,7 +134,7 @@ def reverse_rings( poly ):
             p1 = (ring.GetX(i_vert),ring.GetY(i_vert),ring.GetZ(i_vert))
             ring.SetPoint(i_vert,ring.GetX(i_other),ring.GetY(i_other),ring.GetZ(i_other))
             ring.SetPoint(i_other,p1[0],p1[1],p1[2])
-	
+
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -272,7 +272,7 @@ def ogr_oci_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_oci_7():
 
@@ -315,7 +315,7 @@ def ogr_oci_8():
     #######################################################
     # Prepare an SRS with an ORACLE authority code.
     srs = osr.SpatialReference()
-    srs.SetGeogCS( "gcs_dummy", "datum_dummy", "ellipse_dummy", 
+    srs.SetGeogCS( "gcs_dummy", "datum_dummy", "ellipse_dummy",
                 osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING )
     srs.SetAuthority( 'GEOGCS', 'Oracle', 8241 )
 
@@ -345,7 +345,7 @@ def ogr_oci_8():
 
 ###############################################################################
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
-# the coordinate system gets properly remapped to the Oracle WGS84. 
+# the coordinate system gets properly remapped to the Oracle WGS84.
 
 def ogr_oci_9():
 
@@ -677,7 +677,7 @@ def ogr_oci_16():
     return 'success'
 
 ###############################################################################
-# Test that synctodisk actually sets the layer bounds metadata. 
+# Test that synctodisk actually sets the layer bounds metadata.
 
 def ogr_oci_17():
 
@@ -814,7 +814,7 @@ def ogr_oci_18():
     lyr = oci_ds2.GetLayerByName('test_NONE')
     if lyr.GetGeomType() != ogr.wkbNone:
         gdaltest.post_reason('fail')
-        return 'fail'    
+        return 'fail'
 
     return 'success'
 
@@ -1075,7 +1075,7 @@ def ogr_oci_cleanup():
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_LINESTRING' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_LINESTRING3' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POLYGON' )
-    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POLYGON3') 
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POLYGON3')
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTIPOINT' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTILINESTRING' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTIPOLYGON' )

@@ -245,7 +245,7 @@ def ogr_mysql_5():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    # E. Rouault : unlike PostgreSQL driver : None is sorted in last position 
+    # E. Rouault : unlike PostgreSQL driver : None is sorted in last position
     expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
@@ -303,7 +303,7 @@ def ogr_mysql_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_mysql_7():
 
@@ -480,7 +480,7 @@ def ogr_mysql_15():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000)) 
+        query = query + (' or eas_id = %d' % (id+1000))
 
     gdaltest.mysql_lyr.SetAttributeFilter( query )
     tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr,
@@ -966,7 +966,7 @@ def ogr_mysql_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_mysql_1,
 #    ogr_mysql_cleanup,
     ogr_mysql_2,

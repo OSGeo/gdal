@@ -713,20 +713,20 @@ def kea_12():
     rat.GetUsageOfCol(rat.GetColumnCount())
 
     rat.GetValueAsDouble( -1, 0 )
-    rat.GetValueAsInt( -1, 0 ) 
+    rat.GetValueAsInt( -1, 0 )
     rat.GetValueAsString( -1, 0 )
 
     rat.GetValueAsDouble( rat.GetColumnCount(), 0 )
-    rat.GetValueAsInt( rat.GetColumnCount(), 0 ) 
-    rat.GetValueAsString( rat.GetColumnCount(), 0 ) 
+    rat.GetValueAsInt( rat.GetColumnCount(), 0 )
+    rat.GetValueAsString( rat.GetColumnCount(), 0 )
 
     rat.GetValueAsDouble( 0, -1 )
-    rat.GetValueAsInt( 0, -1 ) 
-    rat.GetValueAsString( 0, -1 ) 
+    rat.GetValueAsInt( 0, -1 )
+    rat.GetValueAsString( 0, -1 )
 
     rat.GetValueAsDouble( 0, rat.GetRowCount() )
-    rat.GetValueAsInt( 0, rat.GetRowCount() ) 
-    rat.GetValueAsString( 0, rat.GetRowCount() ) 
+    rat.GetValueAsInt( 0, rat.GetRowCount() )
+    rat.GetValueAsString( 0, rat.GetRowCount() )
 
     gdal.PopErrorHandler()
 

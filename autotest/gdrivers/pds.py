@@ -142,7 +142,7 @@ def pds_5():
 
 ###############################################################################
 # Read an image via the PDS label.  This is a distinct mode of the PDS
-# driver mostly intended to support jpeg2000 files with PDS labels. 
+# driver mostly intended to support jpeg2000 files with PDS labels.
 
 def pds_6():
 

@@ -173,7 +173,7 @@ def jpeg_3():
     return 'success'
 
 ###############################################################################
-# Verify masked jpeg. 
+# Verify masked jpeg.
 
 def jpeg_4():
 

@@ -45,7 +45,7 @@ def isce_1():
     return tst.testOpen( )
 
 ###############################################################################
-# Test reading of metadata from the ISCE metadata domain 
+# Test reading of metadata from the ISCE metadata domain
 
 def isce_2():
 

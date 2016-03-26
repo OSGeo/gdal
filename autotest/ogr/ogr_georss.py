@@ -642,7 +642,7 @@ def ogr_georss_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_georss_init,
     ogr_georss_1,
     ogr_georss_1_atom_ns,

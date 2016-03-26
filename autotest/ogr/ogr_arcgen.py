@@ -236,7 +236,7 @@ def ogr_arcgen_polygons25d():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_arcgen_points,
     ogr_arcgen_points25d,
     ogr_arcgen_lines,

@@ -154,7 +154,7 @@ def ograpispy_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ograpispy_1,
     ograpispy_2,
     ograpispy_cleanup

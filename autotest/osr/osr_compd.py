@@ -145,7 +145,7 @@ def osr_compd_3():
         AXIS["Up",UP],
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
         return 'fail'
@@ -187,7 +187,7 @@ def osr_compd_4():
         AXIS["Up",UP],
         AUTHORITY["EPSG","5720"]],
     AUTHORITY["EPSG","7400"]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
@@ -243,7 +243,7 @@ def osr_compd_5():
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
@@ -299,7 +299,7 @@ def osr_compd_6():
         UNIT["Foot_US",0.3048006096012192],
         AXIS["Up",UP]]]"""
 
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason('fail')
@@ -358,7 +358,7 @@ def osr_compd_7():
         AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
 
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
@@ -388,7 +388,7 @@ def osr_compd_8():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_compd_1,
     osr_compd_2,
     osr_compd_3,

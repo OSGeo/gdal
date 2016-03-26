@@ -85,13 +85,13 @@ def ilwis_3():
     return tst.testCreate( new_filename = 'tmp/float.mpr', out_bands = 1 )
 
 ###############################################################################
-# Try multi band dataset. 
+# Try multi band dataset.
 
 def ilwis_4():
 
     tst = gdaltest.GDALTest( 'ilwis', 'rgbsmall.tif', 2, 21053 )
 
-    return tst.testCreate( new_filename = 'tmp/rgb.mpl', check_minmax = 0, 
+    return tst.testCreate( new_filename = 'tmp/rgb.mpl', check_minmax = 0,
                            out_bands = 3 )
 
 ###############################################################################
@@ -102,7 +102,7 @@ def ilwis_5():
     tst = gdaltest.GDALTest( 'ilwis', 'byte.tif', 1, 4672 )
 
     return tst.testCreateCopy( check_srs=1, check_gt=1,
-                               vsimem = 1, 
+                               vsimem = 1,
                                new_filename = '/vsimem/ilwis/byte.mpr' )
 
 ###############################################################################

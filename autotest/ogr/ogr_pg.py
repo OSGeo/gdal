@@ -390,7 +390,7 @@ def ogr_pg_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_pg_7():
 
@@ -769,7 +769,7 @@ def ogr_pg_15():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000)) 
+        query = query + (' or eas_id = %d' % (id+1000))
 
     gdaltest.pg_lyr.SetAttributeFilter( query )
     tr = ogrtest.check_features_against_list( gdaltest.pg_lyr,
@@ -1050,7 +1050,7 @@ def ogr_pg_22():
         return 'skip'
 
     ######################################################
-    # Create Schema 
+    # Create Schema
 
     schema_name = 'AutoTest-schema'
     layer_name = schema_name + '.tpoly'
@@ -1756,14 +1756,14 @@ def ogr_pg_34():
     # We only test that on Linux since setting os.environ['XXX']
     # is not guaranteed to have effects on system not supporting putenv
     if sys.platform.startswith('linux'):
-        os.environ['PGCLIENTENCODING'] = 'LATIN1' 
+        os.environ['PGCLIENTENCODING'] = 'LATIN1'
         ogr_pg_1()
         del os.environ['PGCLIENTENCODING']
 
         # For some unknown reasons, some servers don't like forcing LATIN1
         # but prefer LATIN9 instead...
         if gdaltest.pg_ds is None:
-            os.environ['PGCLIENTENCODING'] = 'LATIN9' 
+            os.environ['PGCLIENTENCODING'] = 'LATIN9'
             ogr_pg_1()
             del os.environ['PGCLIENTENCODING']
     else:
@@ -2518,7 +2518,7 @@ def ogr_pg_47():
     feat.Destroy()
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    # Check ST_AsText  
+    # Check ST_AsText
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT ST_AsText(my_geog) FROM test_geog')
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -2528,7 +2528,7 @@ def ogr_pg_47():
     feat.Destroy()
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    # Check ST_AsBinary  
+    # Check ST_AsBinary
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT ST_AsBinary(my_geog) FROM test_geog')
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -3260,7 +3260,7 @@ def ogr_pg_63():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test OGR_TRUNCATE config. option (#5091)
@@ -3302,7 +3302,7 @@ def ogr_pg_64():
         print(lyr.GetFeatureCount())
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test RFC 41
@@ -3318,11 +3318,11 @@ def ogr_pg_65():
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
         gdaltest.post_reason('fail')
-        return 'fail' 
+        return 'fail'
     lyr = ds.CreateLayer('ogr_pg_65', geom_type = ogr.wkbNone)
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
         gdaltest.post_reason('fail')
-        return 'fail' 
+        return 'fail'
 
     gfld_defn = ogr.GeomFieldDefn('geom1', ogr.wkbPoint)
     srs = osr.SpatialReference()
@@ -3463,7 +3463,7 @@ def ogr_pg_65():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
@@ -4889,7 +4889,7 @@ def ogr_pg_78():
             if lyr.GetGeomType() != ogr.wkbPoint25D:
                 # FIXME: why does it fail suddenly on Travis ? Change of PostGIS version ?
                 # But apparently not :
-                # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881 
+                # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881
                 # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
                 val = gdal.GetConfigOption('TRAVIS', None)
                 if val is not None:
@@ -5126,7 +5126,7 @@ def ogr_pg_83():
             gdaltest.post_reason('fail')
             print(geom_type, options, wkt, expected_wkt, got_wkt)
             return 'fail'
-        lyr.ResetReading() # flushes implicit transaction       
+        lyr.ResetReading() # flushes implicit transaction
 
         if 'GEOM_TYPE=geography' in options:
             continue
@@ -5392,7 +5392,7 @@ def ogr_pg_cleanup():
 
 # NOTE: The ogr_pg_19 intentionally executed after ogr_pg_2
 
-gdaltest_list_internal = [ 
+gdaltest_list_internal = [
     ogr_pg_table_cleanup,
     ogr_pg_2,
     ogr_pg_19,

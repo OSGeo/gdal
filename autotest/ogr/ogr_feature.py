@@ -53,7 +53,7 @@ def mk_dst_feature( src_feature, field_type ):
     return ogr.Feature( dst_feat_defn )
 
 ###############################################################################
-# Create a source feature 
+# Create a source feature
 
 def mk_src_feature():
 
@@ -1106,7 +1106,7 @@ def ogr_feature_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_feature_cp_integer,
     ogr_feature_cp_integer64,
     ogr_feature_cp_real,

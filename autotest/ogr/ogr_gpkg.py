@@ -83,7 +83,7 @@ def ogr_gpkg_1():
 
 def ogr_gpkg_2():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
 
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
@@ -194,7 +194,7 @@ def ogr_gpkg_5():
 
 
 ###############################################################################
-# Add fields 
+# Add fields
 
 def ogr_gpkg_6():
 
@@ -1947,7 +1947,7 @@ def ogr_gpkg_29():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
     lyr.CreateFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg', update = 1)
     lyr = ds.GetLayerByName('pointm')
     if lyr.GetGeomType() != ogr.wkbPointM:
@@ -1958,10 +1958,10 @@ def ogr_gpkg_29():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    
+
     # Generate a XYM envelope
     ds.ExecuteSQL("UPDATE pointm SET geom = x'4750000700000000000000000000F03F000000000000F03F000000000000004000000000000000400000000000000840000000000000084001D1070000000000000000F03F00000000000000400000000000000840'")
-    
+
     lyr = ds.GetLayerByName('pointzm')
     if lyr.GetGeomType() != ogr.wkbPointZM:
         gdaltest.post_reason('fail')
@@ -1971,10 +1971,10 @@ def ogr_gpkg_29():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    
+
     # Generate a XYZM envelope
     ds.ExecuteSQL("UPDATE pointzm SET geom = x'4750000900000000000000000000F03F000000000000F03F00000000000000400000000000000040000000000000084000000000000008400000000000001040000000000000104001B90B0000000000000000F03F000000000000004000000000000008400000000000001040'")
-    
+
     ds = None
 
     # Check again
@@ -1998,7 +1998,7 @@ def ogr_gpkg_29():
         f.DumpReadable()
         return 'fail'
     ds = None
-    
+
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_29.gpkg')
 
     return 'success'
@@ -2060,7 +2060,7 @@ def ogr_gpkg_31():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_gpkg_31.gpkg')
     lyr = ds.GetLayerByName('curve')
     if lyr.GetGeomType() != ogr.wkbCurve:
@@ -2134,7 +2134,7 @@ def ogr_gpkg_cleanup():
 ###############################################################################
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gpkg_1,
     ogr_gpkg_2,
     ogr_gpkg_3,

@@ -894,7 +894,7 @@ def ogr_rfc28_37():
     return 'success'
 
 ###############################################################################
-# Test invalid SUBSTR 
+# Test invalid SUBSTR
 
 def ogr_rfc28_38():
 

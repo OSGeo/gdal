@@ -53,7 +53,7 @@ gdaltest_list.append( (ut.testSetGeoTransform, item[0]) )
 gdaltest_list.append( (ut.testSetProjection, item[0]) )
 gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 
-# Others we do for each pixel type. 
+# Others we do for each pixel type.
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:

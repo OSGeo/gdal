@@ -398,7 +398,7 @@ def hfa_write_invalid_wkt():
     return 'success'
 
 ###############################################################################
-# Get the driver, and verify a few things about it. 
+# Get the driver, and verify a few things about it.
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),

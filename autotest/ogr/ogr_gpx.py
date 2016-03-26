@@ -259,7 +259,7 @@ def ogr_gpx_5():
     return 'success'
 
 ###############################################################################
-# Copy our small gpx file to a new gpx file. 
+# Copy our small gpx file to a new gpx file.
 
 def ogr_gpx_6():
     if not gdaltest.have_gpx:
@@ -345,7 +345,7 @@ def ogr_gpx_6():
     return 'success'
 
 ###############################################################################
-# Output extra fields as <extensions>. 
+# Output extra fields as <extensions>.
 
 def ogr_gpx_7():
     if not gdaltest.have_gpx:
@@ -418,7 +418,7 @@ def ogr_gpx_7():
     return 'success'
 
 ###############################################################################
-# Output extra fields as <extensions>. 
+# Output extra fields as <extensions>.
 
 def ogr_gpx_8():
     if not gdaltest.have_gpx:
@@ -540,7 +540,7 @@ def ogr_gpx_cleanup():
         pass
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gpx_init,
     ogr_gpx_1,
     ogr_gpx_2,

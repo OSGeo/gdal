@@ -69,7 +69,7 @@ def ogr_sua_1():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_sua_1 ]
 
 

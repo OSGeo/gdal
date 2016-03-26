@@ -505,7 +505,7 @@ def ogr_ods_9():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_ods_1,
     ogr_ods_kspread_1,
     ogr_ods_2,

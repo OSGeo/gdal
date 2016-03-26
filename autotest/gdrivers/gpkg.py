@@ -133,7 +133,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
         zoom_level_str = str(zoom_level)
     sql_lyr = out_ds.ExecuteSQL('SELECT GDAL_GetMimeType(tile_data), ' +
                                 'GDAL_GetBandCount(tile_data), ' +
-                                'GDAL_HasColorTable(tile_data) FROM tmp ' + 
+                                'GDAL_HasColorTable(tile_data) FROM tmp ' +
                                 'WHERE zoom_level = %s AND tile_column = %d AND tile_row = %d' % (zoom_level_str, col, row))
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
@@ -179,9 +179,9 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
 def gpkg_1():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -277,9 +277,9 @@ def gpkg_1():
 
 def gpkg_2():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.jpeg_dr is None: 
+    if gdaltest.jpeg_dr is None:
         return 'skip'
 
     try:
@@ -381,9 +381,9 @@ def gpkg_2():
 
 def gpkg_3():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.webp_dr is None: 
+    if gdaltest.webp_dr is None:
         return 'skip'
 
     try:
@@ -502,7 +502,7 @@ def gpkg_3():
 
 def gpkg_4(tile_drv_name = 'PNG'):
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
     if tile_drv_name == 'PNG':
         tile_drv = gdaltest.png_dr
@@ -516,7 +516,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
             working_bands = 4
         else:
             working_bands = 3
-    if tile_drv is None: 
+    if tile_drv is None:
         return 'skip'
 
     try:
@@ -609,7 +609,7 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaqu
 
 def gpkg_7(tile_drv_name = 'PNG'):
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
     if tile_drv_name == 'PNG':
         tile_drv = gdaltest.png_dr
@@ -623,7 +623,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
             working_bands = 4
         else:
             working_bands = 3
-    if tile_drv is None: 
+    if tile_drv is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -725,9 +725,9 @@ def get_georeferenced_ds_with_pct32():
 
 def gpkg_10():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -848,7 +848,7 @@ def gpkg_10():
 
 def gpkg_11(tile_drv_name = 'JPEG'):
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
     if tile_drv_name == 'JPEG':
         tile_drv = gdaltest.jpeg_dr
@@ -859,7 +859,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
             working_bands = 4
         else:
             working_bands = 3
-    if tile_drv is None: 
+    if tile_drv is None:
         return 'skip'
 
     try:
@@ -912,9 +912,9 @@ def gpkg_12():
 
 def gpkg_13():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -985,9 +985,9 @@ def gpkg_13():
 
 def gpkg_14():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -1366,7 +1366,7 @@ def gpkg_14():
 
 def gpkg_15():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
 
     try:
@@ -1533,9 +1533,9 @@ def gpkg_15():
 
 def gpkg_16():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.jpeg_dr is None: 
+    if gdaltest.jpeg_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -1580,9 +1580,9 @@ def gpkg_16():
 
 def gpkg_17():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -1744,9 +1744,9 @@ def gpkg_17():
 
 def gpkg_18():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -1791,7 +1791,7 @@ def gpkg_18():
 
     # Test gpkg_zoom_other extension
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
-    # We expect a warning 
+    # We expect a warning
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [3])
     gdal.PopErrorHandler()
@@ -1898,9 +1898,9 @@ def gpkg_18():
 
 def gpkg_19():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -1952,9 +1952,9 @@ def gpkg_19():
 
 def gpkg_20():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -2057,9 +2057,9 @@ def gpkg_20():
 
 def gpkg_21():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
     try:
         os.remove('tmp/tmp.gpkg')
@@ -2363,7 +2363,7 @@ def get_georeferenced_greyalpha_ds():
 
 def gpkg_22(tile_drv_name = 'PNG'):
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
     if tile_drv_name is None:
         tile_drv = gdaltest.png_dr
@@ -2387,7 +2387,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
         else:
             expected_cs = [ 13112, 32706 ]
             clamped_expected_cs = [ 13380, 13380, 13380, 32744 ]
-    if tile_drv is None: 
+    if tile_drv is None:
         return 'skip'
 
     try:
@@ -2399,7 +2399,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
     if tile_drv_name:
         options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=16']
     else:
-        options = ['BLOCKSIZE=16'] 
+        options = ['BLOCKSIZE=16']
     out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = options)
     tmp_ds_filename = tmp_ds.GetDescription()
     ds = None
@@ -2461,9 +2461,9 @@ def gpkg_25():
 
 def gpkg_26():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2494,7 +2494,7 @@ def gpkg_26():
         ds = gdal.Open('tmp/tmp.gpkg')
         got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
         # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
-        # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691] 
+        # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691]
         if max([ abs(got_cs[i] - expected_cs[i]) for i in range(4)]) > 2:
             gdaltest.post_reason('fail')
             print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
@@ -2595,9 +2595,9 @@ def gpkg_26():
 
 def gpkg_27():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2626,9 +2626,9 @@ def gpkg_27():
 
 def gpkg_28():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2671,9 +2671,9 @@ def gpkg_28():
 
 def gpkg_29(x = 0):
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2725,9 +2725,9 @@ def gpkg_30():
 
 def gpkg_31():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2758,9 +2758,9 @@ def gpkg_31():
 
 def gpkg_32():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2799,9 +2799,9 @@ def gpkg_32():
 
 def gpkg_33():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2832,9 +2832,9 @@ def gpkg_33():
 
 def gpkg_34():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2863,9 +2863,9 @@ def gpkg_34():
 
 def gpkg_35():
 
-    if gdaltest.gpkg_dr is None: 
+    if gdaltest.gpkg_dr is None:
         return 'skip'
-    if gdaltest.png_dr is None: 
+    if gdaltest.png_dr is None:
         return 'skip'
 
     try:
@@ -2930,7 +2930,7 @@ def gpkg_cleanup():
 ###############################################################################
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     gpkg_init,
     gpkg_1,
     gpkg_2,

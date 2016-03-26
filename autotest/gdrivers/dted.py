@@ -91,7 +91,7 @@ def dted_3():
     return tst.testCreateCopy( check_gt = 1, check_srs = prj )
 
 ###############################################################################
-# Read subwindow.  Tests the tail recursion problem. 
+# Read subwindow.  Tests the tail recursion problem.
 
 def dted_4():
 
@@ -176,7 +176,7 @@ def dted_8():
     ds = gdal.Open( 'data/n43_bad_crc.dt0' )
     band = ds.GetRasterBand(1)
 
-    # numerous errors would be reported 
+    # numerous errors would be reported
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     chksum = band.Checksum()
     gdal.PopErrorHandler()

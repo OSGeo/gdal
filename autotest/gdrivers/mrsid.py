@@ -52,7 +52,7 @@ def mrsid_1():
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
     #
     # Old, internally generated.
-    # 
+    #
     prj = """PROJCS["MER         E000|",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
@@ -72,7 +72,7 @@ def mrsid_1():
         AUTHORITY["EPSG","9001"]]]"""
     #
     # MrSID SDK getWKT() method.
-    # 
+    #
     prj = """PROJCS["MER         E000|",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
@@ -263,7 +263,7 @@ def mrsid_5():
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
     return 'success'
-	
+
 ###############################################################################
 # Open byte.jp2
 

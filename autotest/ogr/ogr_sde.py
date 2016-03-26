@@ -333,12 +333,12 @@ def ogr_sde_cleanup():
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
     ds.DeleteLayer('%s.%s'%(sde_user.upper(),'TPOLY'))
-    ds.Destroy()    
+    ds.Destroy()
 
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_sde_1,
     ogr_sde_2,
     ogr_sde_3,
@@ -348,7 +348,7 @@ gdaltest_list = [
     ogr_sde_7,
     ogr_sde_8,
 
-    ogr_sde_cleanup 
+    ogr_sde_cleanup
 ]
 
 if __name__ == '__main__':

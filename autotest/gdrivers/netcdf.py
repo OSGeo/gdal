@@ -401,7 +401,7 @@ def netcdf_6():
     lat_origin = sr.GetProjParm( 'latitude_of_origin' )
 
     if lat_origin != 25:
-        gdaltest.post_reason( 'Latitude of origin does not match expected:\n%f' 
+        gdaltest.post_reason( 'Latitude of origin does not match expected:\n%f'
                               % lat_origin )
         return 'fail'
 
@@ -426,7 +426,7 @@ def netcdf_7():
     std_p2 = sr.GetProjParm( 'standard_parallel_2' )
 
     if std_p1 != 33.0 or std_p2 != 45.0:
-        gdaltest.post_reason( 'Standard Parallels do not match expected:\n%f,%f' 
+        gdaltest.post_reason( 'Standard Parallels do not match expected:\n%f,%f'
                               % ( std_p1, std_p2 ) )
         return 'fail'
 
@@ -484,7 +484,7 @@ def netcdf_9():
     spheroid = sr.GetAttrValue( 'SPHEROID' )
 
     if spheroid != 'WGS 84':
-        gdaltest.post_reason( 'Incorrect spheroid read from file\n%s' 
+        gdaltest.post_reason( 'Incorrect spheroid read from file\n%s'
                               % ( spheroid ) )
         return 'fail'
 
@@ -506,11 +506,11 @@ def netcdf_10():
 
     gt = ds.GetGeoTransform( )
 
-    gt1 = ( -1897186.0290038721, 5079.3608398440065, 
-            0.0,2674684.0244560046, 
+    gt1 = ( -1897186.0290038721, 5079.3608398440065,
+            0.0,2674684.0244560046,
             0.0,-5079.4721679684635 )
     gt2 = ( -1897.186029003872, 5.079360839844003,
-             0.0, 2674.6840244560044, 
+             0.0, 2674.6840244560044,
              0.0,-5.079472167968456 )
 
     if gt != gt1:
@@ -948,7 +948,7 @@ def netcdf_25():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    result = netcdf_test_copy( 'data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc' ) 
+    result = netcdf_test_copy( 'data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc' )
     if result != 'success':
         return result
 
@@ -975,7 +975,7 @@ def netcdf_25_nc4():
     if not gdaltest.netcdf_drv_has_nc4:
         return 'skip'
 
-    result = netcdf_test_copy( 'data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', [ 'FORMAT=NC4' ] ) 
+    result = netcdf_test_copy( 'data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', [ 'FORMAT=NC4' ] )
     if result != 'success':
         return result
 
@@ -1005,7 +1005,7 @@ def netcdf_25_nc4():
 
 ###############################################################################
 # check support for WRITE_BOTTOMUP file creation option
-# use a dummy file with no lon/lat info to force a different checksum 
+# use a dummy file with no lon/lat info to force a different checksum
 # depending on y-axis order
 def netcdf_26():
 
@@ -1023,7 +1023,7 @@ def netcdf_26():
         return result
 
     #test WRITE_BOTTOMUP=NO
-    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4855, 
+    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4855,
                               options=['WRITE_BOTTOMUP=NO'] )
     result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax = 0)
 
@@ -1140,8 +1140,8 @@ def netcdf_28():
 # Check support for writing multi-dimensional files using gdalwarp.
 # Requires metadata copy support in gdalwarp (see bug #3898).
 # First create a vrt file using gdalwarp, then copy file to netcdf.
-# The workaround is (currently ??) necessary because dimension rolling code is 
-# in netCDFDataset::CreateCopy() and necessary dimension metadata 
+# The workaround is (currently ??) necessary because dimension rolling code is
+# in netCDFDataset::CreateCopy() and necessary dimension metadata
 # is not saved to netcdf when using gdalwarp (as the driver does not write
 # metadata to netcdf file with SetMetadata() and SetMetadataItem()).
 def netcdf_29():
@@ -1309,7 +1309,7 @@ def netcdf_34():
     if proc.is_alive():
         proc.terminate()
         print('testOpen() for file %s has reached timeout limit of %d seconds' % (filename, timeout) )
-        return 'fail' 
+        return 'fail'
 
     return 'success'
 
@@ -2831,7 +2831,7 @@ gdaltest_list = [
     netcdf_7,
     netcdf_8,
     netcdf_9,
-    netcdf_10, 
+    netcdf_10,
     netcdf_11,
     netcdf_12,
     netcdf_13,
@@ -2916,10 +2916,10 @@ ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2], options=item[4] )
 gdaltest_list.append( (ut.testSetGeoTransform, item[0]) )
 gdaltest_list.append( (ut.testSetProjection, item[0]) )
 
-#SetMetadata() not supported 
+#SetMetadata() not supported
 #gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 
-# Others we do for each pixel type. 
+# Others we do for each pixel type.
 for item in init_list:
     ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2], options=item[4] )
     if ut is None:

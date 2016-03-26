@@ -953,7 +953,7 @@ def ogr_mongodb_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_mongodb_init,
     ogr_mongodb_1,
     ogr_mongodb_2,

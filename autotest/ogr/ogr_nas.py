@@ -349,7 +349,7 @@ def ogr_nas_5():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_nas_1,
     ogr_nas_2,
     ogr_nas_3,

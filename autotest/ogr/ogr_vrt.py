@@ -139,7 +139,7 @@ def ogr_vrt_3():
 
 
 ###############################################################################
-# Test a spatial query. 
+# Test a spatial query.
 
 def ogr_vrt_4():
     if gdaltest.vrt_ds is None:
@@ -169,7 +169,7 @@ def ogr_vrt_4():
 
 
 ###############################################################################
-# Test an attribute query. 
+# Test an attribute query.
 
 def ogr_vrt_5():
 
@@ -253,7 +253,7 @@ def ogr_vrt_7():
 
 ###############################################################################
 # Similar test, but now we put the whole VRT contents directly into the
-# "filename". 
+# "filename".
 #
 
 def ogr_vrt_8():
@@ -1378,7 +1378,7 @@ def ogr_vrt_25():
         ds = ogr.Open('data/vrt_test.vrt')
 
     # test3 layer just declares fid, and implicit fields (so all source
-    # fields are taken as VRT fields), we can report the fid column 
+    # fields are taken as VRT fields), we can report the fid column
     lyr = ds.GetLayerByName('test3')
     if lyr.GetFIDColumn() != 'fid':
         return 'fail'

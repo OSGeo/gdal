@@ -104,7 +104,7 @@ def ida_4():
     PARAMETER["latitude_of_center",17.5],
     PARAMETER["longitude_of_center",-87.5],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""    
+    PARAMETER["false_northing",0]]"""
 
     return gdaltest.ida_tst.testSetProjection( prj = prj )
 

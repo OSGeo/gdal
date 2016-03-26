@@ -192,7 +192,7 @@ def arg_blocksize():
     xsize = ds.RasterXSize
     ysize = ds.RasterYSize
 
-    # create a blocked tiff, where blocks don't line up evenly 
+    # create a blocked tiff, where blocks don't line up evenly
     # with the image boundary
     ds2 = tifDriver.CreateCopy('data/utm-uneven-blocks.tif', ds, False, ['BLOCKXSIZE=25', 'BLOCKYSIZE=25', 'TILED=NO'])
 

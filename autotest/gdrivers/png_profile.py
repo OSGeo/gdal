@@ -24,7 +24,7 @@
 ###############################################################################
 
 ###############################################################################
-# This unit test uses a free ICC profile by Marti Maria (littleCMS) 
+# This unit test uses a free ICC profile by Marti Maria (littleCMS)
 # <http://www.littlecms.com>
 # sRGB.icc uses the zlib license.
 # Part of a free package of ICC profile found at:
@@ -185,7 +185,7 @@ def png_copy_options_colorimetric_data():
     driver_tiff = gdal.GetDriverByName('GTiff')
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
 
-    # Check with dataset from CreateCopy()	
+    # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test.png', ds, options = options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -198,7 +198,7 @@ def png_copy_options_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -213,7 +213,7 @@ def png_copy_options_colorimetric_data():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check again with dataset from Open()	
+    # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -226,7 +226,7 @@ def png_copy_options_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -267,7 +267,7 @@ def png_copy_colorimetric_data():
     ds = None
     ds = gdal.Open('tmp/icc_test.tiff')
 
-    # Check with dataset from CreateCopy()	
+    # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test.png', ds, options = options2)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -280,7 +280,7 @@ def png_copy_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -295,7 +295,7 @@ def png_copy_colorimetric_data():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check again with dataset from Open()	
+    # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -308,7 +308,7 @@ def png_copy_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]

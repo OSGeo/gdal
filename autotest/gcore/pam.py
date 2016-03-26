@@ -75,10 +75,10 @@ def pam_1():
         print(xml_md)
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
-# Verify that we can write XML to a new file. 
+# Verify that we can write XML to a new file.
 
 def pam_2():
 
@@ -98,7 +98,7 @@ def pam_2():
 
     ds = None
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
@@ -149,7 +149,7 @@ def pam_3():
         gdaltest.post_reason('got nodata value whereas none was expected')
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Check that PAM binary encoded nodata values work properly.

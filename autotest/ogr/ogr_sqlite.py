@@ -337,7 +337,7 @@ def ogr_sqlite_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_sqlite_7():
 
@@ -374,7 +374,7 @@ def ogr_sqlite_7():
         return 'fail'
 
 ###############################################################################
-# Test transactions with rollback.  
+# Test transactions with rollback.
 
 def ogr_sqlite_8():
 
@@ -439,7 +439,7 @@ def ogr_sqlite_9():
         return 'skip'
 
     ######################################################################
-    # Read feature with EAS_ID 158. 
+    # Read feature with EAS_ID 158.
 
     gdaltest.sl_lyr.SetAttributeFilter( "eas_id = 158" )
     feat_read = gdaltest.sl_lyr.GetNextFeature()
@@ -450,7 +450,7 @@ def ogr_sqlite_9():
         return 'fail'
 
     ######################################################################
-    # Modify the PRFEDEA value, and reset it. 
+    # Modify the PRFEDEA value, and reset it.
 
     feat_read.SetField( 'PRFEDEA', 'SetWorked' )
     err = gdaltest.sl_lyr.SetFeature( feat_read )
@@ -499,7 +499,7 @@ def ogr_sqlite_10():
         return 'skip'
 
     ######################################################################
-    # Read feature with EAS_ID 158. 
+    # Read feature with EAS_ID 158.
 
     gdaltest.sl_lyr.SetAttributeFilter( "eas_id = 158" )
     feat_read = gdaltest.sl_lyr.GetNextFeature()
@@ -3513,7 +3513,7 @@ def ogr_sqlite_without_spatialite():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_sqlite_1,
     ogr_sqlite_2,
     ogr_sqlite_3,
@@ -3572,7 +3572,7 @@ gdaltest_list = [
     ogr_sqlite_without_spatialite,
 ]
 
-disabled_gdaltest_list = [ 
+disabled_gdaltest_list = [
     ogr_sqlite_1,
     ogr_sqlite_41,
     ogr_sqlite_cleanup,

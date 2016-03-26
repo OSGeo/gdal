@@ -35,14 +35,14 @@ import gdaltest
 from osgeo import ogr
 
 ###############################################################################
-# Create a point in DB2 format, and verify the byte order flag. 
+# Create a point in DB2 format, and verify the byte order flag.
 
 def ogr_db2_hack_1():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER( 1 ) != 0:
         return 'skip'
 
-    # XDR Case. 
+    # XDR Case.
     geom = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
     wkb = geom.ExportToWkb( byte_order = ogr.wkbXDR ).decode('latin1')
     geom.Destroy()
@@ -51,7 +51,7 @@ def ogr_db2_hack_1():
         gdaltest.post_reason('WKB wkbXDR point geometry has wrong byte order')
         return 'fail'
 
-    # NDR Case. 
+    # NDR Case.
     geom = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
     wkb = geom.ExportToWkb( byte_order = ogr.wkbNDR ).decode('latin1')
     geom.Destroy()
@@ -71,7 +71,7 @@ def ogr_db2_hack_2():
         gdaltest.post_reason( 'SetGenerate to turn off hack failed!' )
         return 'fail'
 
-    # XDR Case. 
+    # XDR Case.
     geom = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
     wkb = geom.ExportToWkb( byte_order = ogr.wkbXDR ).decode('latin1')
     geom.Destroy()
@@ -80,7 +80,7 @@ def ogr_db2_hack_2():
         gdaltest.post_reason('WKB wkbXDR point geometry has wrong byte order')
         return 'fail'
 
-    # NDR Case. 
+    # NDR Case.
     geom = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
     wkb = geom.ExportToWkb( byte_order = ogr.wkbNDR ).decode('latin1')
     geom.Destroy()

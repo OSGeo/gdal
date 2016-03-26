@@ -236,7 +236,7 @@ def ogr_dods_cleanup():
 
 gdaltest_list = []
 
-manual_gdaltest_list = [ 
+manual_gdaltest_list = [
     ogr_dods_1,
     ogr_dods_2,
     ogr_dods_3,

@@ -61,7 +61,7 @@ def ogr_s57_1():
 
 ###############################################################################
 # Verify we have the set of expected layers and that some rough information
-# matches our expectations. 
+# matches our expectations.
 
 def ogr_s57_2():
     if gdaltest.s57_ds is None:
@@ -107,7 +107,7 @@ def ogr_s57_2():
     return 'success'
 
 ###############################################################################
-# Check the COALNE feature. 
+# Check the COALNE feature.
 
 def ogr_s57_3():
     if gdaltest.s57_ds is None:
@@ -296,7 +296,7 @@ def ogr_s57_9():
 # Test opening a fake very small S57 file
 
 def ogr_s57_10():
-    
+
     ds = ogr.Open('data/fake_s57.000')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -309,7 +309,7 @@ def ogr_s57_10():
 # using variant (C.1.5.1) logic.
 
 def ogr_s57_11():
-    
+
     ds = ogr.Open('data/fake_s57_variant_C151.000')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -463,7 +463,7 @@ def ogr_s57_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_s57_1,
     ogr_s57_2,
     ogr_s57_3,

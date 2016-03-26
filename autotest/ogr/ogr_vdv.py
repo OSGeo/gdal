@@ -540,7 +540,7 @@ def ogr_vdv_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_idf_1,
     ogr_idf_2,
     ogr_vdv_1,

@@ -441,7 +441,7 @@ def ogr_geojson_9():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
-    gdaltest.tests = [ 
+    gdaltest.tests = [
         ['gjpoint', [ 1 ], [ 'Point 1' ] ],
         ['gjline',  [ 1 ], [ 'Line 1' ] ],
         ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
@@ -473,7 +473,7 @@ def ogr_geojson_10():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
-    gdaltest.tests = [ 
+    gdaltest.tests = [
         ['gjpoint', [ 1 ], [ 'Point 1' ] ],
         ['gjline',  [ 1 ], [ 'Line 1' ] ],
         ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
@@ -843,18 +843,18 @@ def ogr_geojson_19():
 
     return 'success'
 
-############################################################################### 
+###############################################################################
 # Test reading files with no extension (#4314)
 
-def ogr_geojson_20(): 
+def ogr_geojson_20():
 
-    if gdaltest.geojson_drv is None: 
-        return 'skip' 
+    if gdaltest.geojson_drv is None:
+        return 'skip'
 
-    from glob import glob 
+    from glob import glob
 
-    geojson_files = glob('data/*.json') 
-    geojson_files.extend(glob('data/*.geojson')) 
+    geojson_files = glob('data/*.json')
+    geojson_files.extend(glob('data/*.geojson'))
 
     for gj in geojson_files:
         # create tmp file with no file extension
@@ -867,16 +867,16 @@ def ogr_geojson_20():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ds = ogr.Open('/vsimem/testgj')
         gdal.PopErrorHandler()
-        if ds is None: 
+        if ds is None:
             print(gj)
             print(data.decode('LATIN1'))
-            gdaltest.post_reason('Failed to open datasource') 
-            return 'fail' 
+            gdaltest.post_reason('Failed to open datasource')
+            return 'fail'
         ds = None
 
         gdal.Unlink('/vsimem/testgj')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test reading output of geocouch spatiallist
@@ -1891,12 +1891,12 @@ def ogr_geojson_40():
       "geometry": {
         "type": "Point",
         "coordinates": [ 2, 49 ]
-      }, 
+      },
       "properties": {
-        "a_property": 1, 
+        "a_property": 1,
         "some_object": {
-          "a_property": 1, 
-          "another_property": 2 
+          "a_property": 1,
+          "another_property": 2
         }
       }
     },
@@ -1905,12 +1905,12 @@ def ogr_geojson_40():
       "geometry": {
         "type": "Point",
         "coordinates": [ 2, 49 ]
-      }, 
+      },
       "properties": {
-        "a_property": "foo", 
+        "a_property": "foo",
         "some_object": {
-          "a_property": 1, 
-          "another_property": 2.34 
+          "a_property": 1,
+          "another_property": 2.34
         }
       }
     }
@@ -1970,7 +1970,7 @@ def ogr_geojson_42():
 { "type":"FeatureCollection",
   "properties" : {
     "exceededTransferLimit" : true
-  }, 
+  },
   "features" :
   [
     {
@@ -1978,10 +1978,10 @@ def ogr_geojson_42():
       "geometry": {
         "type": "Point",
         "coordinates": [ 2, 49 ]
-      }, 
+      },
       "properties": {
         "id": 1,
-        "a_property": 1, 
+        "a_property": 1,
       }
     } ] }"""
 
@@ -2043,12 +2043,12 @@ def ogr_geojson_42():
       "geometry": {
         "type": "Point",
         "coordinates": [ 2, 49 ]
-      }, 
+      },
       "properties": {
         "id": 2,
-        "a_property": 1, 
+        "a_property": 1,
       }
-    } ] }""" 
+    } ] }"""
     gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=1', resultOffset1)
     f = lyr.GetNextFeature()
     if f is None or f.GetFID() != 2:
@@ -2179,7 +2179,7 @@ def ogr_geojson_45():
             'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
             'NATIVE_MEDIA_TYPE=application/vnd.geo+json'] )
     f = ogr.Feature(lyr.GetLayerDefn())
-    json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [ 
+    json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [
                         { "type": "Point", "foo_point": "bar_point", "coordinates": [0,1,2, 3] },
                         { "type": "LineString", "foo_linestring": "bar_linestring", "coordinates": [[0,1,2, 4]] },
                         { "type": "MultiPoint", "foo_multipoint": "bar_multipoint", "coordinates": [[0,1,2, 5]] },
@@ -2618,7 +2618,7 @@ def ogr_geojson_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
     ogr_geojson_3,

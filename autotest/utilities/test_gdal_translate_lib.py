@@ -336,7 +336,7 @@ def test_gdal_translate_lib_13():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata() 
+    md = ds.GetMetadata()
     if 'TIFFTAG_DOCUMENTNAME' not in md:
         gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
         return 'fail'
@@ -355,7 +355,7 @@ def test_gdal_translate_lib_14():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE') 
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
         gdaltest.post_reason('Did not get COMPRESSION')
         return 'fail'

@@ -119,7 +119,7 @@ def aaigrid_3():
     return tst.testCreateCopy( check_gt = 1, check_srs = prj )
 
 ###############################################################################
-# Read subwindow.  Tests the tail recursion problem. 
+# Read subwindow.  Tests the tail recursion problem.
 
 def aaigrid_4():
 
@@ -163,7 +163,7 @@ def aaigrid_5():
     return tst.testOpen(check_prj = prj)
 
 ###############################################################################
-# Verify data type determination from type of nodata 
+# Verify data type determination from type of nodata
 
 def aaigrid_6():
 
@@ -181,7 +181,7 @@ def aaigrid_6():
     return 'success'
 
 ###############################################################################
-# Verify data type determination from type of nodata 
+# Verify data type determination from type of nodata
 
 def aaigrid_6bis():
 

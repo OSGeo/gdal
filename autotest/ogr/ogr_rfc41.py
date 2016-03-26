@@ -404,7 +404,7 @@ def ogr_rfc41_3():
         return 'fail'
 
     # Test that in SetFrom() where target has a single geometry field,
-    # we get the first geometry of the source even if we cannot find a 
+    # we get the first geometry of the source even if we cannot find a
     # source geometry field with the right name.
     feature_defn_default = ogr.FeatureDefn()
     feature_default = ogr.Feature(feature_defn_default)

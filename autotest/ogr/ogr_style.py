@@ -139,7 +139,7 @@ def ogr_style_styletable():
 ###############################################################################
 # Build tests runner
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_style_styletable ]
 
 if __name__ == '__main__':

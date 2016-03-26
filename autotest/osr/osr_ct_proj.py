@@ -155,26 +155,26 @@ class ProjTest:
 # - dst_error: acceptable error threshold for comparing to dst_x/y.
 # - unit_name: the display name for this unit test.
 # - options: eventually we will allow a list of special options here (like one
-#   way transformation).  For now just put None. 
+#   way transformation).  For now just put None.
 # - requirements: string with minimum proj version required, GRID:<gridname>
 #                 or None depend on requirements for the test.
 
 transform_list = [ \
 
     # Simple straight forward reprojection.
-    ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02, 
+    ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02,
      'WGS84', (-118.0, 24.0, 0.0), 0.00001,
      'UTM_WGS84', None, None ),
 
     # Ensure that prime meridian *and* axis orientation changes are applied.
     # Note that this test will fail with PROJ.4 4.7 or earlier, it requires
-    # axis support in PROJ 4.8.0. 
-#    ('EPSG:27391', (40000, 20000, 0.0), 0.02, 
+    # axis support in PROJ 4.8.0.
+#    ('EPSG:27391', (40000, 20000, 0.0), 0.02,
 #     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
 #     'NGO_Oslo_zone1_NGO', None, '4.8.0' ),
 
-    # Verify that 26592 "pcs.override" is working well. 
-    ('EPSG:26591', (1550000, 10000, 0.0), 0.02, 
+    # Verify that 26592 "pcs.override" is working well.
+    ('EPSG:26591', (1550000, 10000, 0.0), 0.02,
      'EPSG:4265', (9.449316,0.090469,0.00), 0.00001,
      'MMRome1_MMGreenwich', None, None ),
 
@@ -231,8 +231,8 @@ transform_list = [ \
 gdaltest_list = []
 
 for item in transform_list:
-    ut = ProjTest( item[0], item[1], item[2], 
-                   item[3], item[4], item[5], 
+    ut = ProjTest( item[0], item[1], item[2],
+                   item[3], item[4], item[5],
                    item[7], item[8] )
     gdaltest_list.append( (ut.testProj, item[6]) )
 

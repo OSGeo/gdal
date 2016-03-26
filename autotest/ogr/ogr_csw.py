@@ -328,7 +328,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -401,7 +401,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -427,7 +427,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -487,7 +487,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -509,7 +509,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -531,7 +531,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -547,7 +547,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
         return 'fail'
 
     lyr.SetAttributeFilter("identifier = 'an_identifier' AND " +
-                           "references = 'http://foo/' AND " + 
+                           "references = 'http://foo/' AND " +
                            "anytext LIKE '%%foo%%' AND " +
                            "other_identifiers = '' AND " +
                            "other_subjects = '' AND " +
@@ -595,7 +595,7 @@ def ogr_csw_vsimem_csw_output_schema_csw():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -638,7 +638,7 @@ def ogr_csw_vsimem_csw_output_schema_gmd():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -683,7 +683,7 @@ def ogr_csw_vsimem_csw_output_schema_fgdc():
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:ows="http://www.opengis.net/ows" 
+    xmlns:ows="http://www.opengis.net/ows"
     xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="2.0.2"
@@ -729,11 +729,11 @@ def ogr_csw_vsimem_cleanup():
 
     return 'success'
 
-gdaltest_live_list = [ 
+gdaltest_live_list = [
     ogr_csw_pycsw
     ]
 
-gdaltest_vsimem_list = [ 
+gdaltest_vsimem_list = [
     ogr_csw_vsimem_fail_because_not_enabled,
     ogr_csw_vsimem_fail_because_no_get_capabilities,
     ogr_csw_vsimem_fail_because_empty_response,

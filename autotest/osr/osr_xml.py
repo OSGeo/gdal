@@ -209,7 +209,7 @@ def osr_xml_2():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_xml_1,
     osr_xml_2 ]
 

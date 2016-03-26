@@ -52,7 +52,7 @@ def jp2kak_1():
     return tst.testOpen()
 
 ###############################################################################
-# Read test of simple 16bit reference data. 
+# Read test of simple 16bit reference data.
 
 def jp2kak_2():
 
@@ -328,7 +328,7 @@ def jp2kak_16():
 
 ###############################################################################
 # Test reading a file with axis orientation set properly for an alternate
-# axis order coordinate system (urn:...:EPSG::4326). 
+# axis order coordinate system (urn:...:EPSG::4326).
 # In addition, the source .jp2 file's embedded GML has the alternate order
 # between the offsetVector tags, and the "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER"
 # option is turned on to match that situation.

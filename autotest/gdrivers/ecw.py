@@ -101,12 +101,12 @@ def ecw_1():
             gdaltest.ecw_drv.major_version = 3
             gdaltest.ecw_drv.minor_version = 3
 
-    # we set ECW to not resolve projection and datum strings to get 3.x behavior.     
+    # we set ECW to not resolve projection and datum strings to get 3.x behavior.
     gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
     return 'success'
 
 ###############################################################################
-# Verify various information about our test image. 
+# Verify various information about our test image.
 
 def ecw_2():
 
@@ -115,7 +115,7 @@ def ecw_2():
 
     ds = gdal.Open( 'data/jrc.ecw' )
 
-    if gdaltest.ecw_drv.major_version == 3:    
+    if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.172, 67.3636)
     else:
         if gdaltest.ecw_drv.major_version == 5:
@@ -166,10 +166,10 @@ def ecw_3():
 
     gdaltest.b_ecw_has_write_support = True
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
-# Verify various information about our generated image. 
+# Verify various information about our generated image.
 
 def ecw_4():
 
@@ -187,12 +187,12 @@ def ecw_4():
         gdaltest.post_reason('bad VERSION')
         return 'fail'
 
-    if gdaltest.ecw_drv.major_version == 3:    
+    if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (140.290, 66.6303)
     else:
         if gdaltest.ecw_drv.major_version == 5:
             (exp_mean, exp_stddev) = (141.517,67.1285)
-        else: 
+        else:
             (exp_mean, exp_stddev) = (138.971, 67.716)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
@@ -233,10 +233,10 @@ def ecw_5():
         return 'fail'
     ds = None
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
-# Verify various information about our generated image. 
+# Verify various information about our generated image.
 
 def ecw_6():
 
@@ -303,10 +303,10 @@ def ecw_7():
     drv.CreateCopy( 'tmp/ecw_7.ntf', ds, options = ['IC=C8', 'TARGET=75'], strict = 0 )
     ds = None
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
-# Verify various information about our generated image. 
+# Verify various information about our generated image.
 
 def ecw_8():
 
@@ -408,7 +408,7 @@ def ecw_10():
 
     # should check the projection, but I'm too lazy just now.
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test direct creation of an NITF/JPEG2000 file.
@@ -478,7 +478,7 @@ def ecw_12():
 # This is intended to verify that the ECWDataset::RasterIO() special case
 # works properly.  It is used to copy subwindow into a memory dataset
 # which we then checksum.  To stress the RasterIO(), we also change data
-# type and select an altered band list. 
+# type and select an altered band list.
 
 def ecw_13():
     if gdaltest.jp2ecw_drv is None:
@@ -518,9 +518,9 @@ def ecw_14():
     gdaltest.jp2ecw_drv.CreateCopy( 'tmp/rgb_gcp.jp2', ds )
     ds = None
 
-    return 'success' 
+    return 'success'
 ###############################################################################
-# Verify various information about our generated image. 
+# Verify various information about our generated image.
 
 def ecw_15():
 
@@ -578,7 +578,7 @@ def ecw_16():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","26711"]]
-"""  
+"""
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest( 'JP2ECW', 'byte.jp2', 1, 50054 )
@@ -637,7 +637,7 @@ def ecw_18():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","26711"]]
-"""  
+"""
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest( 'JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
@@ -692,9 +692,9 @@ def ecw_20():
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.644, 67.2186)
     else:
-        if gdaltest.ecw_drv.major_version == 5: 
+        if gdaltest.ecw_drv.major_version == 5:
             (exp_mean, exp_stddev) = (142.189, 62.4223)
-        else: 
+        else:
             (exp_mean, exp_stddev) = (140.889, 62.742)
     (mean, stddev) = band.GetOverview(0).ComputeBandStats()
 
@@ -708,7 +708,7 @@ def ecw_20():
 
 ###############################################################################
 # This test is intended to go through an optimized data path (likely
-# one big interleaved read) in the CreateCopy() instead of the line by 
+# one big interleaved read) in the CreateCopy() instead of the line by
 # line access typical of ComputeBandStats.  Make sure we get the same as
 # line by line.
 
@@ -721,7 +721,7 @@ def ecw_21():
     mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy',ds,options=['INTERLEAVE=PIXEL'])
     ds = None
 
-    if gdaltest.ecw_drv.major_version == 3:    
+    if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.172, 67.3636)
     else:
         if gdaltest.ecw_drv.major_version == 5:
@@ -1307,13 +1307,13 @@ def ecw_33_bis():
     # not consistent. (which seems to be no longer the case with more recent
     # SDK such as 5.0)
     for i in range(50*50):
-        if data1[i*4] != data_ref[i]: 
+        if data1[i*4] != data_ref[i]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if data2[i*4] != data_ref[50*50+i]: 
+        if data2[i*4] != data_ref[50*50+i]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if data3[i*4] != data_ref[2*50*50+i]: 
+        if data3[i*4] != data_ref[2*50*50+i]:
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -1375,13 +1375,13 @@ def ecw_35():
     return 'success'
 
 ###############################################################################
-# Make sure that band descriptions are preserved for version 3 ECW files. 
+# Make sure that band descriptions are preserved for version 3 ECW files.
 def ecw_36():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:
-        return 'skip'    
+        return 'skip'
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
     <VRTRasterBand dataType="Byte" band="1">
@@ -1409,13 +1409,13 @@ def ecw_36():
 
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc312.ecw', vrt_ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
 
-    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand : 
+    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
         print ('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
-    if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand: 
+    if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
         print ('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
-    if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand: 
+    if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
         print ('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
@@ -1423,21 +1423,21 @@ def ecw_36():
 
     dsr = gdal.Open( 'tmp/jrc312.ecw' )
 
-    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand : 
+    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
         print ('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
-    if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand: 
+    if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
         print ('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
-    if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand: 
+    if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
         print ('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
-    dsr = None 
+    dsr = None
 
     return 'success'
 ###############################################################################
-# Make sure that band descriptions are preserved for version 2 ECW files when 
+# Make sure that band descriptions are preserved for version 2 ECW files when
 # color space set implicitly to sRGB.
 
 def ecw_37():
@@ -1445,19 +1445,19 @@ def ecw_37():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:
-        return 'skip'    
+        return 'skip'
 
-    ds = gdal.Open("data/jrc.ecw")    
+    ds = gdal.Open("data/jrc.ecw")
 
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc123.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
 
-    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand : 
+    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
         print ('Band 1 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
-    if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand: 
+    if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
         print ('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
-    if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand: 
+    if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
         print ('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
@@ -1465,13 +1465,13 @@ def ecw_37():
 
     dsr = gdal.Open( 'tmp/jrc123.ecw' )
 
-    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand : 
+    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
         print ('Band 1 color interpretation should be Red  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
-    if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand: 
+    if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
         print ('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
-    if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand: 
+    if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
         print ('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
@@ -1517,14 +1517,14 @@ def ecw_38():
 
 
 ###############################################################################
-# Check writing histograms. 
+# Check writing histograms.
 
 def ecw_39():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:
-        return 'skip'    
+        return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
 
@@ -1539,7 +1539,7 @@ def ecw_39():
 
     result = (hist == ds.GetRasterBand(1).GetDefaultHistogram(force=0))
 
-    ds = None    
+    ds = None
     if not result:
         gdaltest.post_reason('Default histogram written incorrectly')
         return 'fail'
@@ -2167,15 +2167,15 @@ def ecw_online_5():
 
     ds = gdal.Open('tmp/cache/red_flower.ecw')
 
-    if gdaltest.ecw_drv.major_version == 3:    
+    if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (112.801,52.0431)
         # on Tamas slavebots, (mean,stddev)  = (113.301,52.0434)
         mean_tolerance = 1
     else:
         mean_tolerance = 0.5
-        if gdaltest.ecw_drv.major_version == 5: 
-            (exp_mean, exp_stddev) = (113.345,52.1259)			
-        else: 
+        if gdaltest.ecw_drv.major_version == 5:
+            (exp_mean, exp_stddev) = (113.345,52.1259)
+        else:
             (exp_mean, exp_stddev) = (114.337,52.1751)
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
@@ -2218,7 +2218,7 @@ def ecw_online_6():
     if ds is None:
         # The ECW driver doesn't manage to open in /vsimem, thus fallbacks
         # to writing to /tmp, which doesn't work on Windows
-        if sys.platform == 'win32':    
+        if sys.platform == 'win32':
             return 'skip'
         return 'fail'
     ds = None
@@ -2390,7 +2390,7 @@ gdaltest_list = [
     ecw_46,
     ecw_online_1,
     ecw_online_2,
-    #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 
+    #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3,
     ecw_online_4,
     ecw_online_5,
     ecw_online_6,

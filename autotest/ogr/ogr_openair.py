@@ -80,7 +80,7 @@ def ogr_openair_1():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_openair_1 ]
 
 

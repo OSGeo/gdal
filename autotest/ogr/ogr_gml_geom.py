@@ -59,7 +59,7 @@ class gml_geom_unit:
             return 'fail'
 
         ######################################################################
-        # Create geometry from GML. 
+        # Create geometry from GML.
 
         geom_gml = ogr.CreateGeometryFromGML( gml )
 
@@ -517,7 +517,7 @@ def gml_MultiSurface():
                         <gml:LinearRing>
                             <gml:posList>2 3 4 5 6 7 2 3</gml:posList>
                         </gml:LinearRing>
-                    </gml:interior>   
+                    </gml:interior>
                     <gml:interior>
                         <gml:LinearRing>
                             <gml:posList>3 4 5 6 7 8 3 4</gml:posList>
@@ -600,7 +600,7 @@ def gml_MultiSurface_surfaceMembers():
                       <gml:LinearRing>
                           <gml:posList>2 3 4 5 6 7 2 3</gml:posList>
                       </gml:LinearRing>
-                    </gml:interior> 
+                    </gml:interior>
                 </gml:PolygonPatch>
               </gml:patches>
             </gml:Surface>
@@ -1413,8 +1413,8 @@ def gml_Coordinates_ts_cs_decimal():
         ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">  1,2  </gml:coordinates></gml:Point>', 'POINT (1 2)'), # we accept that...
         ('<gml:Point><gml:coordinates>1 2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # this is completely out of specification ! but we accept that too !
         ('<gml:Point><gml:coordinates cs=";">1;2</gml:coordinates></gml:Point>', 'POINT (1 2)'),
-        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4</gml:coordinates></gml:Point>', 'POINT (1.2 3.4)'), 
-        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4;5,6</gml:coordinates></gml:Point>', 'POINT (1.2 3.4 5.6)'), 
+        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4</gml:coordinates></gml:Point>', 'POINT (1.2 3.4)'),
+        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4;5,6</gml:coordinates></gml:Point>', 'POINT (1.2 3.4 5.6)'),
         ('<gml:LineString><gml:coordinates>1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
         ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
         ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2,2.5 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'), # default values
@@ -1796,7 +1796,7 @@ def gml_OGRCompoundCurve():
         print(geom.ExportToWkt())
         return 'fail'
 
-    # Curve with LineStringSegment and Arc segments 
+    # Curve with LineStringSegment and Arc segments
     gml = """<gml:Curve><gml:segments>
             <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
             <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
@@ -1828,7 +1828,7 @@ def gml_OGRCompoundCurve():
 
 def gml_OGRCurvePolygon():
 
-    # Test one CircularString 
+    # Test one CircularString
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML( gml )
     if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))':
@@ -1842,7 +1842,7 @@ def gml_OGRCurvePolygon():
         print(gml2)
         return 'fail'
 
-    # Test two CircularString 
+    # Test two CircularString
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML( gml )
     if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))':

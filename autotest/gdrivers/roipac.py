@@ -59,7 +59,7 @@ def roipac_1():
                                      -59.9916667, 0.0, -0.0083333333) )
 
 ###############################################################################
-# Test reading of metadata from the ROI_PAC metadata domain 
+# Test reading of metadata from the ROI_PAC metadata domain
 
 def roipac_2():
 

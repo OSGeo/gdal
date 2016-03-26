@@ -250,7 +250,7 @@ def ogr_gmt_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gmt_1,
     ogr_gmt_2,
     ogr_gmt_3,

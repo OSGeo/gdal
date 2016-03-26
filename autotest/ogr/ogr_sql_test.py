@@ -59,7 +59,7 @@ def ogr_sql_1():
     return 'success'
 
 ###############################################################################
-# Test DISTINCT handling 
+# Test DISTINCT handling
 
 def ogr_sql_2():
 
@@ -77,7 +77,7 @@ def ogr_sql_2():
         return 'fail'
 
 ###############################################################################
-# Test ORDER BY handling 
+# Test ORDER BY handling
 
 def ogr_sql_3():
 
@@ -95,7 +95,7 @@ def ogr_sql_3():
         return 'fail'
 
 ###############################################################################
-# Test ORDER BY DESC handling 
+# Test ORDER BY DESC handling
 
 def ogr_sql_3_desc():
 
@@ -234,7 +234,7 @@ def ogr_sql_9():
         return 'fail'
 
 ###############################################################################
-# Test the ILIKE operator. 
+# Test the ILIKE operator.
 
 def ogr_sql_10():
 
@@ -288,7 +288,7 @@ def ogr_sql_12():
         return 'fail'
 
 ###############################################################################
-# Verify selection of, and on ogr_geometry. 
+# Verify selection of, and on ogr_geometry.
 
 def ogr_sql_13():
 
@@ -1520,7 +1520,7 @@ def ogr_sql_cleanup():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_sql_1,
     ogr_sql_2,
     ogr_sql_3,

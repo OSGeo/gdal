@@ -3553,7 +3553,7 @@ def ogr_geom_curve_surface():
 def ogr_geom_cleanup():
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_geom_area,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,

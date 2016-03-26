@@ -517,7 +517,7 @@ def ogr_dxf_13():
     # Other possible tests:
     # Polylines with no explicit Z coordinates (e.g., no attribute 38 for
     # LWPOLYLINE and no attribute 30 for POLYLINE) should always return
-    # geometry type ogr.wkbPolygon. Otherwise, ogr.wkbPolygon25D should be 
+    # geometry type ogr.wkbPolygon. Otherwise, ogr.wkbPolygon25D should be
     # returned even if the Z coordinate values are zero.
     # If the arc_stepsize global is used, one could test that returned adjacent
     # points do not slope-diverge greater than that value.
@@ -533,7 +533,7 @@ def ogr_dxf_13():
 def ogr_dxf_14():
 
     # This test is identical to the previous one except the
-    # newer lwpolyline entity is used. See the comments in the 
+    # newer lwpolyline entity is used. See the comments in the
     # previous test regarding caveats, etc.
 
     ds = ogr.Open( 'data/lwpolyline_smooth.dxf' )
@@ -723,7 +723,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'did not get expected layer name.' )
         return 'fail'
 
-    # First MTEXT 
+    # First MTEXT
     feat = dxf_layer.GetNextFeature()
     if feat.GetField( 'Text' ) != gdaltest.sample_text:
         gdaltest.post_reason( 'Did not get expected first mtext.' )
@@ -737,7 +737,7 @@ def ogr_dxf_16():
     if ogrtest.check_feature_geometry( feat, 'POINT (-1.495452348993292 0.813702013422821 0)' ):
         return 'fail'
 
-    # Second MTEXT 
+    # Second MTEXT
     feat = dxf_layer.GetNextFeature()
     if feat.GetField( 'Text' ) != 'Second':
         gdaltest.post_reason( 'Did not get expected second mtext.' )
@@ -1252,7 +1252,7 @@ def ogr_dxf_cleanup():
 ###############################################################################
 #
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_dxf_1,
     ogr_dxf_2,
     ogr_dxf_3,
