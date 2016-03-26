@@ -94,7 +94,7 @@ class HDF4Dataset : public GDALPamDataset
 
   public:
                 HDF4Dataset();
-		~HDF4Dataset();
+    virtual ~HDF4Dataset();
 
     virtual char      **GetMetadataDomainList();
     virtual char        **GetMetadata( const char * pszDomain = "" );

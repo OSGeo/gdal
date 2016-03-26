@@ -152,7 +152,7 @@ class CPL_DLL VRTDataset : public GDALDataset
 
   public:
                  VRTDataset(int nXSize, int nYSize);
-                ~VRTDataset();
+    virtual ~VRTDataset();
 
     void          SetNeedsFlush() { m_bNeedsFlush = TRUE; }
     virtual void  FlushCache();
@@ -240,7 +240,7 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
 
 public:
                       VRTWarpedDataset( int nXSize, int nYSize );
-                     ~VRTWarpedDataset();
+    virtual ~VRTWarpedDataset();
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 

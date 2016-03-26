@@ -93,7 +93,7 @@ class RRasterBand : public GDALPamRasterBand
   public:
 
                 RRasterBand( RDataset *, int, const double * );
-                ~RRasterBand();
+    virtual ~RRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
 };

@@ -77,7 +77,7 @@ class RPFTOCDataset : public GDALPamDataset
         papszFileList(NULL)
     {}
 
-    ~RPFTOCDataset()
+    virtual ~RPFTOCDataset()
     {
         CSLDestroy( papszSubDatasets );
         CPLFree( pszProjection );
@@ -171,7 +171,7 @@ class RPFTOCSubDataset : public VRTDataset
             GDALGetDriverByName( "RPFTOC" ) );
     }
 
-    ~RPFTOCSubDataset()
+    virtual ~RPFTOCSubDataset()
     {
         CSLDestroy(papszFileList);
         CPLFree(cachedTileData);
@@ -296,6 +296,7 @@ class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
             this->nBand = nBandIn;
             blockByteSize = nBlockXSize * nBlockYSize;
         }
+        virtual ~RPFTOCProxyRasterBandRGBA() {}
 
         virtual GDALColorInterp GetColorInterpretation()
         {

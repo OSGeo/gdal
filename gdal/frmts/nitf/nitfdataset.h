@@ -125,7 +125,7 @@ class NITFDataset : public GDALPamDataset
 
   public:
                  NITFDataset();
-                 ~NITFDataset();
+    virtual ~NITFDataset();
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
@@ -195,7 +195,7 @@ class NITFRasterBand : public GDALPamRasterBand
 
   public:
                    NITFRasterBand( NITFDataset *, int );
-                  ~NITFRasterBand();
+    virtual ~NITFRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -237,7 +237,7 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
                                 GDALRasterIOExtraArg* psExtraArg);
 
     public:
-                         ~NITFProxyPamRasterBand();
+        virtual ~NITFProxyPamRasterBand();
 
         virtual char      **GetMetadata( const char * pszDomain = ""  );
         /*virtual CPLErr      SetMetadata( char ** papszMetadata,
@@ -340,7 +340,7 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
                    NITFWrapperRasterBand( NITFDataset * poDS,
                                           GDALRasterBand* poBaseBand,
                                           int nBand);
-                  ~NITFWrapperRasterBand();
+    virtual ~NITFWrapperRasterBand();
 
     /* Methods from GDALRasterBand we want to override */
     virtual GDALColorInterp GetColorInterpretation();
