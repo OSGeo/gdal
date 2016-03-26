@@ -2003,7 +2003,7 @@ public:
   OGRGeomFieldDefnShadow* GetGeomFieldDefn(const char* name) {
       int iField = OGR_FD_GetGeomFieldIndex(self, name);
       if (iField == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);    
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, iField);
       return NULL;
