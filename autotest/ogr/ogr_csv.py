@@ -1607,7 +1607,7 @@ def ogr_csv_35():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_35.csv',
 """FIELD_1  "FIELD 2" FIELD_3
-VAL1   "VAL 2"   "VAL 3"  
+VAL1   "VAL 2"   "VAL 3"
 """)
 
     ds = gdal.OpenEx('/vsimem/ogr_csv_35.csv', gdal.OF_VECTOR, \
@@ -2060,9 +2060,9 @@ def ogr_csv_43():
         f.DumpReadable()
         return 'fail'
     f = None
-    
+
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
@@ -2130,7 +2130,7 @@ def ogr_csv_43():
         return 'fail'
     f = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
@@ -2160,7 +2160,7 @@ def ogr_csv_43():
     if lyr.GetFeatureCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     with gdaltest.error_handler():
         lyr.SetSpatialFilter(-1, None)
     with gdaltest.error_handler():
@@ -2181,7 +2181,7 @@ def ogr_csv_43():
     with gdaltest.error_handler():
         lyr.GetExtent(geom_field = -1)
     lyr.SetAttributeFilter(None)
-        
+
     if lyr.TestCapability(ogr.OLCCurveGeometries) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2191,14 +2191,14 @@ def ogr_csv_43():
     lyr.StartTransaction()
     lyr.RollbackTransaction()
     lyr.CommitTransaction()
-    
+
     if lyr.GetGeometryColumn() != '':
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetFIDColumn() != '':
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     if lyr.TestCapability(ogr.OLCReorderFields) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2221,7 +2221,7 @@ def ogr_csv_43():
         if lyr.AlterFieldDefn(-1, fld_defn, 0) == 0:
             gdaltest.post_reason('fail')
             return 'fail'
-    
+
     f = lyr.GetFeature(2)
     f.SetGeomField(0, ogr.CreateGeometryFromWkt('POINT (1 2)'))
     if lyr.SetFeature(f) != 0:
@@ -2239,10 +2239,10 @@ def ogr_csv_43():
     if lyr.SetFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     f = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
@@ -2304,7 +2304,7 @@ def ogr_csv_44():
     return 'success'
 
 ###############################################################################
-# Test QGIS use case that consists in reopening a file just after calling 
+# Test QGIS use case that consists in reopening a file just after calling
 # CreateField() on the main dataset and assuming that file is already serialized.
 
 def ogr_csv_45():

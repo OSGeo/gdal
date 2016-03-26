@@ -103,7 +103,7 @@ def osr_proj4_1():
 
 ###############################################################################
 # Verify that we can import strings with parameter values that are exponents
-# and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla. 
+# and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla.
 #
 
 def osr_proj4_2():
@@ -977,7 +977,7 @@ def osr_proj4_27():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_proj4_1,
     osr_proj4_2,
     osr_proj4_3,

@@ -58,7 +58,7 @@ from cdms2.auxcoord import FileAuxAxis1D
 # The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
 import ctypes
 udunits=ctypes.CDLL("libudunits2.so")
- 
+
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
 
@@ -74,7 +74,7 @@ def normalize_whitespace(text):
 
 
 class CFVersion(object):
-    """A CF version number, stored as a tuple, that can be instantiated with 
+    """A CF version number, stored as a tuple, that can be instantiated with
     a tuple or a string, written out as a string, and compared with another version"""
 
     def __init__(self, value=()):
@@ -189,7 +189,7 @@ class ConstructDict(ContentHandler):
         elif name == 'entry_id':
             self.inEntryIdContent = 0
             self.entry_id = normalize_whitespace(self.entry_id)
-            try: 
+            try:
                 self.dict[self.this_id] = self.dict[self.entry_id]
             except KeyError:
                 print("")
@@ -208,7 +208,7 @@ class ConstructDict(ContentHandler):
             self.last_modified = normalize_whitespace(self.last_modified)
 
 class ConstructList(ContentHandler):
-    """Parse the xml area_type table, reading all area_types 
+    """Parse the xml area_type table, reading all area_types
        into a list.
     """
     def __init__(self):
@@ -292,7 +292,7 @@ def chkDerivedName(name):
 # Checking class
 #======================
 class CFChecker:
-    
+
   def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat=None, version=newest_version):
       self.uploader = uploader
       self.useFileName = useFileName
@@ -337,15 +337,15 @@ class CFChecker:
     ut_write_to_stderr = uemh(("ut_write_to_stderr",udunits))
     ut_ignore = uemh(("ut_ignore",udunits))
 
-    #old_handler = 
+    #old_handler =
     ut_set_error_message_handler(ut_ignore)
-                                       
+
     # if self.udunits=None this will load the UDUNITS2 xml file from the default place
     self.unitSystem=udunits.ut_read_xml(self.udunits)
     if not self.unitSystem:
         exit("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
 
-    #old_handler = 
+    #old_handler =
     ut_set_error_message_handler(ut_write_to_stderr)
 
     # Read in netCDF file
@@ -386,7 +386,7 @@ class CFChecker:
         self.area_type_lh = ConstructList()
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
-    
+
     print("Using CF Checker Version 2.0.9-gdal")
 
     if not self.version:
@@ -399,7 +399,7 @@ class CFChecker:
     if self.version >= vn1_4:
         print("Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")")
     print("")
-    
+
     # Read in netCDF file
     try:
         self.f=cdms.open(file,"r")
@@ -416,7 +416,7 @@ class CFChecker:
         return self._checker()
     finally:
         self.f.close()
-  
+
   def _checker(self):
     """
     Main implementation of checker assuming self.f exists.
@@ -528,7 +528,7 @@ class CFChecker:
     #print self.cf_roleCount,"variable(s) have the cf_role attribute set"
     if self.version >= vn1_6:
         print(" ")
-   
+
         if self.raggedArrayFlag != 0 and not self.f.attributes.has_key('featureType'):
             print("ERROR (9.4): The global attribute 'featureType' must be present (A ragged array representation has been used)")
             self.err = self.err + 1
@@ -540,7 +540,7 @@ class CFChecker:
             if self.cf_roleCount == 0 and featureType != "point":
                 print("WARNING (9.5): A variable with the attribute cf_role should be included in a Discrete Geometry CF File")
                 self.warn = self.warn + 1
-                    
+
             if re.match('^(timeSeries|trajectory|profile)$',featureType,re.I) and self.cf_roleCount != 1:
                 # Should only be a single occurrence of a cf_role attribute
                 print("WARNING (9.5): CF Files containing",featureType,"featureType should only include a single occurrence of a cf_role attribute")
@@ -550,7 +550,7 @@ class CFChecker:
                 # May contain up to 2 occurrences of cf_roles attribute
                 print("ERROR (9.5): CF Files containing",featureType,"featureType may contain 2 occurrences of a cf_role attribute")
                 self.err = self.err + 1
-        
+
 
     print("")
     print("ERRORS detected:",self.err)
@@ -620,7 +620,7 @@ class CFChecker:
           self.AttrList['featureType']=['S','G']
           self.AttrList['instance_dimension']=['S','D']
           self.AttrList['sample_dimension']=['S','D']
-      
+
       return
 
 
@@ -635,7 +635,7 @@ class CFChecker:
           if x in seen:
               return 0
           else:
-              seen.append(x)        
+              seen.append(x)
       return 1
 
 
@@ -644,7 +644,7 @@ class CFChecker:
   #-------------------------
       """Determine if variable is of Numeric data type."""
       types=['i','f','d']
-      rc=1 
+      rc=1
       if self.getTypeCode(self.f[var]) not in types:
           rc=0
       return rc
@@ -682,7 +682,7 @@ class CFChecker:
           # Standard Name is blank
           return ("","")
       else:
-          # At least 2 elements so return the first 2.  
+          # At least 2 elements so return the first 2.
           # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
           return (bits[0],bits[1])
 
@@ -812,7 +812,7 @@ class CFChecker:
 
                                 # 31.05.13 The other exception is a ragged array (chapter 9 - Discrete sampling geometries
                                 # Todo - implement exception
-                                # A ragged array is identified by the presence of either the attribute sample_dimension 
+                                # A ragged array is identified by the presence of either the attribute sample_dimension
                                 # or instance_dimension. Need to check that the sample dimension is the dimension of
                                 # the variable to which the aux coord var is attached.
 
@@ -828,7 +828,7 @@ class CFChecker:
                                         else:
                                             print("ERROR (5): Dimensions of",dataVar,"must be a subset of dimensions of",var)
                                             self.err = self.err+1
-                                    
+
                                         break
 
                     elif dataVar not in allVariables:
@@ -876,7 +876,7 @@ class CFChecker:
                 else:
                     print("ERROR (7.1): bounds attribute referencing non-existent variable:",bounds)
                     self.err = self.err+1
-                    
+
             # Check that points specified by a coordinate or auxiliary coordinate
             # variable should lie within, or on the boundary, of the cells specified by
             # the associated boundary variable.
@@ -895,7 +895,7 @@ class CFChecker:
                     if length == 0:
                         print("WARNING: Problem with variable: '" + var + "' - Skipping check that data lies within cell boundaries.")
                         self.warn = self.warn+1
-                  
+
                     elif length == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
@@ -977,7 +977,7 @@ class CFChecker:
                         'lambert_conformal_conic','polar_stereographic','rotated_latitude_longitude',
                         'stereographic','transverse_mercator']
           validNames += [ 'geostationary' ] # GDAL addition
-          
+
           if self.version >= vn1_2:
               # Extra grid_mapping_names at vn1.2
               validNames[len(validNames):] = ['latitude_longitude','vertical_perspective']
@@ -1061,14 +1061,14 @@ class CFChecker:
   #-------------------------------------------
   def commaOrBlankSeparatedList(self, list):
   #-------------------------------------------
-      """Check list is a blank or comma separated list of words containing alphanumeric 
+      """Check list is a blank or comma separated list of words containing alphanumeric
       characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
       if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$",list):
           return 1
       else:
           return 0
-         
-  
+
+
   #------------------------------
   def chkGlobalAttributes(self):
   #------------------------------
@@ -1076,7 +1076,7 @@ class CFChecker:
     rc=1
     if self.f.attributes.has_key('Conventions'):
         conventions = self.f.attributes['Conventions']
-        
+
         # Conventions attribute can be a blank separated (or comma separated) list of conforming conventions
         if not self.commaOrBlankSeparatedList(conventions):
             print("ERROR(2.6.1): Conventions attribute must be a blank (or comma) separated list of convention names")
@@ -1089,13 +1089,13 @@ class CFChecker:
                 conventionList = string.split(conventions,",")
             else:
                 conventionList = string.split(conventions)
-            
+
             found = 0
             for convention in conventionList:
                 if convention.strip() in map(str, cfVersions):
                     found = 1
                     break
-        
+
             if found != 1:
                 print("ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data.")
                 self.err = self.err+1
@@ -1130,12 +1130,12 @@ class CFChecker:
   #------------------------------
   def getFileCFVersion(self):
   #------------------------------
-    """Return CF version of file, used for auto version option. If Conventions is COARDS return CF-1.0, 
+    """Return CF version of file, used for auto version option. If Conventions is COARDS return CF-1.0,
     else a valid version based on Conventions else an empty version (for auto version)"""
     rc = CFVersion()
     if self.f.attributes.has_key('Conventions'):
         conventions = self.f.attributes['Conventions']
-        
+
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
         if re.match("^.*,.*$",conventions):
@@ -1156,7 +1156,7 @@ class CFChecker:
         if not found and coards:
             print("WARNING: The conventions attribute specifies COARDS, assuming CF-1.0")
             rc = CFVersion((1, 0))
-                
+
     return rc
 
   #--------------------------
@@ -1192,7 +1192,7 @@ class CFChecker:
         i=-1
         lastPos=-1
         #trailing=0   # Flag to indicate trailing dimension
-        
+
         # Flags to hold positions of first space/time dimension and
         # last Non-space/time dimension in variable declaration.
         firstST=-1
@@ -1244,7 +1244,7 @@ class CFChecker:
                     print("WARNING (2.4): space/time dimensions appear in incorrect order")
                     self.warn = self.warn+1
 
-        # As per CRM #022 
+        # As per CRM #022
         # This check should only be applied for COARDS conformance.
         if self.coards:
             validTrailing=self.boundsVars[:]
@@ -1277,20 +1277,20 @@ class CFChecker:
   def getTypeCode(self, obj):
   #-------------------------------------------------------
       """
-      Get the type, as a 1-character code, of an object that may be a 
+      Get the type, as a 1-character code, of an object that may be a
       CDMS FileAxis, a CDMS FileVariable, or a numpy.ndarray
       """
       # A previous comment in the code claimed:
-      # 
+      #
       # # 26.02.10 - CDAT-5.2 - An inconsistency means that determining the type of
       # # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
       # # make this more uniform (Raised on the cdat mailing list) CF Trac #
       #
       # in fact it seems that both cdms.axis.FileAxis and cdms.fvariable.FileVariable
       # support obj.typecode() (although the FileVariable also supports obj.dtype.char,
-      # so obj.typecode() will work for both of these.  However, numpy.ndarray only 
+      # so obj.typecode() will work for both of these.  However, numpy.ndarray only
       # supports obj.dtype.char
-      
+
       if isinstance(obj, numpy.ndarray):
           return obj.dtype.char
       return obj.typecode()
@@ -1500,12 +1500,12 @@ class CFChecker:
       # Validate count/index variable
       #rc=1
       var=self.f[varName]
-  
+
       if var.attributes.has_key('sample_dimension'):
 
           #print varName," is a count variable (Discrete Geometries)"
           self.raggedArrayFlag = 1
-          
+
           if self.getTypeCode(var) != 'i':
               print("ERROR (9.3): count variable '"+varName+"' must be of type integer")
               self.err = self.err + 1
@@ -1654,7 +1654,7 @@ class CFChecker:
                                 rc=0
                             else:
                                 varDimensions[d]=1
-                                
+
                             if self.version >= vn1_4:
                                 # If dim is a coordinate variable and cell_method is not 'point' check
                                 # if the coordinate variable has either bounds or climatology attributes
@@ -1719,7 +1719,7 @@ class CFChecker:
                         rc=0
 
                     else:
-                        # Valid variable name in cell_measures so carry on with tests.    
+                        # Valid variable name in cell_measures so carry on with tests.
                         if len(self.f[variable].getAxisIds()) > len(var.getAxisIds()):
                             print("ERROR (7.2): Dimensions of",variable,"must be same or a subset of",var.getAxisIds())
                             self.err = self.err+1
@@ -1805,7 +1805,7 @@ class CFChecker:
                     if x not in self.f._file_.variables.keys():
                         print("ERROR (4.3.2):",x,"is not declared as a variable")
                         self.err = self.err+1
-                        rc=0       
+                        rc=0
                 else:
                     # Term - Should be present in formula
                     x=re.sub(':','',x)
@@ -1943,7 +1943,7 @@ class CFChecker:
                   # Variable is not a flag variable or a scalar or a label
 
                   print("INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness.")
-                  self.info = self.info+1 
+                  self.info = self.info+1
 
       return rc
 
@@ -2041,7 +2041,7 @@ class CFChecker:
                         # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
                         if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
                             print("WARNING (2.5.1): missing_value and _FillValue set to differing values")
-                            
+
                             self.warn = self.warn+1
 
 ## 08.12.10 missing_value is no longer deprecated by the NUG
@@ -2082,9 +2082,9 @@ class CFChecker:
             print("INFO: Could not complete tests on missing_value attribute")
             raise
             rc=0
-                
+
     return rc
-        
+
 
   #------------------------------------
   def chkAxisAttribute(self, varName):
@@ -2107,7 +2107,7 @@ class CFChecker:
           # Check that axis attribute is consistent with the coordinate type
           # deduced from units and positive.
           if hasattr(var,'units'):
-              if hasattr(var,'positive'): 
+              if hasattr(var,'positive'):
                   interp=self.getInterpretation(var.units,var.positive)
               else:
                   interp=self.getInterpretation(var.units)
@@ -2155,7 +2155,7 @@ class CFChecker:
                 print("ERROR (4.4.1): Non-standard calendar, so month_lengths attribute must be present")
                 self.err = self.err+1
                 rc=0
-        else:   
+        else:
             if var.attributes.has_key('month_lengths') or \
                var.attributes.has_key('leap_year') or \
                var.attributes.has_key('leap_month'):
@@ -2376,7 +2376,7 @@ class CFChecker:
 
 #              print "Ros: after split:",values
 #              print "Ros: after split:",type(values)
-                  
+
               retcode = self.equalNumOfValues(values,meanings)
               if retcode == -1:
                   print("ERROR (3.5): Problem in subroutine equalNumOfValues")
@@ -2573,7 +2573,7 @@ def getargs(arglist):
     badc=None
     coards=None
     version=newest_version
-    
+
     # set to environment variables
     if environ.has_key(udunitskey):
         udunits=environ[udunitskey]

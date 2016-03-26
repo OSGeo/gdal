@@ -37,7 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Get the GIF driver, and verify a few things about it. 
+# Get the GIF driver, and verify a few things about it.
 
 def gif_1():
 
@@ -77,7 +77,7 @@ def gif_3():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Verify the colormap, and nodata setting for test file. 
+# Verify the colormap, and nodata setting for test file.
 
 def gif_4():
 

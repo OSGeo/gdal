@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Polygonize() algorithm.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -46,7 +46,7 @@ def polygonize_1(is_int_polygonize = True):
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    # Create a memory OGR datasource to put results in. 
+    # Create a memory OGR datasource to put results in.
     mem_drv = ogr.GetDriverByName( 'Memory' )
     mem_ds = mem_drv.CreateDataSource( 'out' )
 
@@ -100,7 +100,7 @@ def polygonize_2():
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    # Create a memory OGR datasource to put results in. 
+    # Create a memory OGR datasource to put results in.
     mem_drv = ogr.GetDriverByName( 'Memory' )
     mem_ds = mem_drv.CreateDataSource( 'out' )
 
@@ -140,7 +140,7 @@ def polygonize_3():
     src_ds = gdal.Open('data/polygonize_in_2.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    # Create a memory OGR datasource to put results in. 
+    # Create a memory OGR datasource to put results in.
     mem_drv = ogr.GetDriverByName( 'Memory' )
     mem_ds = mem_drv.CreateDataSource( 'out' )
 
@@ -185,7 +185,7 @@ def polygonize_4():
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    # Create a memory OGR datasource to put results in. 
+    # Create a memory OGR datasource to put results in.
     mem_drv = ogr.GetDriverByName( 'Memory' )
     mem_ds = mem_drv.CreateDataSource( 'out' )
 
@@ -207,7 +207,7 @@ def polygonize_4():
         gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
         return 'fail'
 
-    expect = [ 107, 123, 132, 115, 132, 115, 140, 148, 
+    expect = [ 107, 123, 132, 115, 132, 115, 140, 148,
                123, 140, 132, 156, 100, 101, 102, 103 ]
 
     tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )

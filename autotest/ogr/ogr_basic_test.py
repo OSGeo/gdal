@@ -350,7 +350,7 @@ def ogr_basic_7():
     for num_field in [6, 7, 8]:
         for i in range(7):
             feat_almost_clone = feat.Clone()
-            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1), 
+            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1),
                                        8+(i==2), 22+(i==3), 48+(i==4),
                                        15+(i==5), 4+(i==6))
             if feat.Equal(feat_almost_clone):

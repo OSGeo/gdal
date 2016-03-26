@@ -50,7 +50,7 @@ def ogr_sdts_1():
                ( 'AHDR' , 1,   ogr.wkbNone, [ ('BANNER', 'USGS-NMD  DLG DATA - CHARACTER FORMAT - 09-29-87 VERSION                ') ] ),
                ( 'NP01' , 4,   ogr.wkbPoint, [ ('RCID', '1') ] ),
                ( 'NA01' , 34,  ogr.wkbPoint, [ ('RCID', '2') ] ),
-               ( 'NO01' , 88,  ogr.wkbPoint, [ ('RCID', '1') ] ), 
+               ( 'NO01' , 88,  ogr.wkbPoint, [ ('RCID', '1') ] ),
                ( 'LE01' , 27,  ogr.wkbLineString, [ ('RCID', '1') ]  ),
                ( 'PC01' , 35,  ogr.wkbPolygon, [ ('RCID', '1') ] )
              ]
@@ -81,7 +81,7 @@ def ogr_sdts_1():
 ###############################################################################
 #
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_sdts_1 ]
 
 if __name__ == '__main__':

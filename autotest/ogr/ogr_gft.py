@@ -322,7 +322,7 @@ def ogr_gft_ogr2ogr_spatial():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gft_init,
     ogr_gft_read,
     ogr_gft_write,

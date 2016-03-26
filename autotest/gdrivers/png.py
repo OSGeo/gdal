@@ -55,7 +55,7 @@ def png_2():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Verify the geotransform, colormap, and nodata setting for test file. 
+# Verify the geotransform, colormap, and nodata setting for test file.
 
 def png_3():
 
@@ -259,7 +259,7 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
+        return 'fail'
 
     # Pixel interleaved with padding
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 5, buf_band_space = 1)
@@ -268,7 +268,7 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
+        return 'fail'
 
     return 'success'
 

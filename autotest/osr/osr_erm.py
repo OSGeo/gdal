@@ -72,7 +72,7 @@ def osr_erm_2():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_erm_1,
     osr_erm_2,
     None ]

@@ -24,7 +24,7 @@
 ###############################################################################
 
 ###############################################################################
-# This unit test uses a free ICC profile by Marti Maria (littleCMS) 
+# This unit test uses a free ICC profile by Marti Maria (littleCMS)
 # <http://www.littlecms.com>
 # sRGB.icc uses the zlib license.
 # Part of a free package of ICC profile found at:

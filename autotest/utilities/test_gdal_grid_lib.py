@@ -119,13 +119,13 @@ def test_gdal_grid_lib_2():
         gdal.SetConfigOption('GDAL_USE_AVX', None)
         gdal.SetConfigOption('GDAL_USE_SSE', None)
 
-        cs = ds1.GetRasterBand(1).Checksum() 
+        cs = ds1.GetRasterBand(1).Checksum()
         if cs != 2:
             gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
-        cs = ds2.GetRasterBand(1).Checksum() 
+        cs = ds2.GetRasterBand(1).Checksum()
         if cs != 1064:
             gdaltest.post_reason('fail')
             print(cs)

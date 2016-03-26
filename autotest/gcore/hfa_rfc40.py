@@ -40,13 +40,13 @@ import gdaltest
 
 INT_DATA = numpy.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
 DOUBLE_DATA = numpy.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
-STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw", 
+STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
                             "gbfgbf", "wwqw3", "e", ""])
-STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78", 
+STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78",
                             "23", "90", "12", "45"])
-STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92", 
+STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
                             "82.5", "0.0", "1.0", "99.0"])
-LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd", 
+LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
                             "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
                             "dedwedew", "wdedefrfrfrf"])
 
@@ -411,7 +411,7 @@ def hfa_rfc40_6():
 def hfa_rfc40_7():
     return CheckExtension("tmp/test.img")
 
-# write some longer strings - string column will 
+# write some longer strings - string column will
 # have to be re-written
 def hfa_rfc40_8():
     return WriteLongStrings("tmp/test.img")

@@ -202,7 +202,7 @@ def ogr_cloudant_SetSpatialFilter():
 if gdaltest.skip_on_travis():
     gdaltest_list = []
 else:
-    gdaltest_list = [ 
+    gdaltest_list = [
     ogr_cloudant_init,
     ogr_cloudant_GetFeatureCount,
     ogr_cloudant_GetNextFeature,

@@ -221,7 +221,7 @@ def ogr_ukooa_lines():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_segp1_points,
     ogr_segp1_lines,
     ogr_ukooa_points,

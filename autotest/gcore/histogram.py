@@ -116,7 +116,7 @@ def histogram_4():
     except:
         pass
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test GetDefaultHistogram() on the file.

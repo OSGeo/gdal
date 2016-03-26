@@ -103,9 +103,9 @@ def run_tests( test_list ):
         try:
             (func, name) = test_item
             if func.__name__[:4] == 'test':
-                outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' 
+                outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... '
             else:
-                outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... ' 
+                outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... '
         except:
             func = test_item
             name = func.__name__
@@ -257,7 +257,7 @@ def run_all( dirlist, run_as_external = False ):
                     #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if 'ASAN_OPTIONS' in os.environ:
-                            backup_asan_options = os.environ['ASAN_OPTIONS'] 
+                            backup_asan_options = os.environ['ASAN_OPTIONS']
                         else:
                             backup_asan_options = None
                         os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
@@ -604,7 +604,7 @@ class GDALTest:
 
         # Do we need to check the geotransform?
         if check_gt:
-            if gt_epsilon is None: 
+            if gt_epsilon is None:
                 eps = 0.00000001
             else:
                 eps = gt_epsilon
@@ -696,7 +696,7 @@ class GDALTest:
             if computed_minmax != minmax and check_minmax:
                 post_reason( 'Did not get expected min/max values on still-open file.' )
                 print('expect: ', minmax)
-                print('got: ', computed_minmax) 
+                print('got: ', computed_minmax)
                 return 'fail'
 
         new_ds = None

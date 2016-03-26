@@ -1818,7 +1818,7 @@ def test_ogr2ogr_48():
         if feat.GetFieldAsString(i) != str(i + 1):
             print('Expected the value ', str(i + 1),',but got',feat.GetFieldAsString(i))
             error_occurred = True
-    feat = lyr.GetNextFeature()    
+    feat = lyr.GetNextFeature()
     for i in range( layer_defn.GetFieldCount() ):
         if feat.GetFieldAsString(i) != str(layer_defn.GetFieldCount() - i):
             print('Expected the value ', str(layer_defn.GetFieldCount() - i),',but got',feat.GetFieldAsString(i))

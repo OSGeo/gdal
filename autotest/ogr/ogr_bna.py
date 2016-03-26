@@ -247,7 +247,7 @@ def ogr_bna_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_bna_1,
     ogr_bna_2,
     ogr_bna_3,

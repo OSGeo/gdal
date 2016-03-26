@@ -52,7 +52,7 @@ def nitf_1():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Write/Read test of simple 16bit reference data. 
+# Write/Read test of simple 16bit reference data.
 
 def nitf_2():
 
@@ -257,7 +257,7 @@ def nitf_9():
 
 ###############################################################################
 # For esoteric reasons, createcopy from jpeg compressed nitf files can be
-# tricky.  Verify this is working. 
+# tricky.  Verify this is working.
 
 def nitf_10():
 
@@ -486,7 +486,7 @@ def nitf_21():
 
 
 ###############################################################################
-# Write/Read test of simple int32 reference data. 
+# Write/Read test of simple int32 reference data.
 
 def nitf_22():
 
@@ -494,7 +494,7 @@ def nitf_22():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Write/Read test of simple float32 reference data. 
+# Write/Read test of simple float32 reference data.
 
 def nitf_23():
 
@@ -502,7 +502,7 @@ def nitf_23():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Write/Read test of simple float64 reference data. 
+# Write/Read test of simple float64 reference data.
 
 def nitf_24():
 
@@ -510,7 +510,7 @@ def nitf_24():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Write/Read test of simple uint16 reference data. 
+# Write/Read test of simple uint16 reference data.
 
 def nitf_25():
 
@@ -518,7 +518,7 @@ def nitf_25():
     return tst.testCreateCopy()
 
 ###############################################################################
-# Write/Read test of simple uint32 reference data. 
+# Write/Read test of simple uint32 reference data.
 
 def nitf_26():
 
@@ -876,7 +876,7 @@ def nitf_37():
             return 'skip'
     except:
     # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
-        pass 
+        pass
 
     ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf37.ntf', 1, 1, 69999)
     ds = None
@@ -2642,7 +2642,7 @@ def nitf_online_17_openjpeg():
     return nitf_online_17('JP2OpenJPEG')
 
 ###############################################################################
-# Test polar stereographic CADRG tile.  
+# Test polar stereographic CADRG tile.
 def nitf_online_18():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/bug3337.ntf', 'bug3337.ntf'):
         return 'skip'
@@ -2726,7 +2726,7 @@ def nitf_online_20():
     return 'success'
 
 ###############################################################################
-# Check that we can read NITF header located in STREAMING_FILE_HEADER DE 
+# Check that we can read NITF header located in STREAMING_FILE_HEADER DE
 # segment when header at beginning of file is incomplete
 
 def nitf_online_21():

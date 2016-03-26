@@ -62,7 +62,7 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
             ]
 
-        
+
 ogrtest.openfilegdb_datalist_m = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
                  [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
                  [ "multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))" ],
@@ -400,7 +400,7 @@ def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = Tru
                 expected_geom_type = ogr.wkbMultiPolygonM
             elif expected_geom_type == ogr.wkbPolygonZM:
                 expected_geom_type = ogr.wkbMultiPolygonZM
-                
+
             if lyr.GetGeomType() != expected_geom_type:
                 gdaltest.post_reason('fail')
                 print(data)

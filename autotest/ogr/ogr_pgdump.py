@@ -964,7 +964,7 @@ def ogr_pgdump_cleanup():
         pass
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_pgdump_1,
     ogr_pgdump_2,
     ogr_pgdump_3,

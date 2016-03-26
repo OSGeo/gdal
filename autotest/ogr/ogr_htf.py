@@ -126,7 +126,7 @@ def ogr_htf_2():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_htf_1,
     ogr_htf_2 ]
 

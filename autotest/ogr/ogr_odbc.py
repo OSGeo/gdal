@@ -178,9 +178,9 @@ def ogr_odbc_cleanup():
     return 'success'
 
 gdaltest_list = [
-    ogr_odbc_1, 
-    ogr_odbc_2, 
-    ogr_odbc_cleanup 
+    ogr_odbc_1,
+    ogr_odbc_2,
+    ogr_odbc_cleanup
 ]
 
 if __name__ == '__main__':

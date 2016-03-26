@@ -40,7 +40,7 @@ from osgeo import osr
 
 
 ###############################################################################
-# Create a UTM WGS84 coordinate system and check various items. 
+# Create a UTM WGS84 coordinate system and check various items.
 
 def osr_basic_1():
 
@@ -199,7 +199,7 @@ def osr_basic_4():
 
     srs = osr.SpatialReference()
     srs.SetGS( cm = -117.0, fe = 100000.0, fn = 100000 )
-    srs.SetGeogCS( 'Test GCS', 'Test Datum', 'WGS84', 
+    srs.SetGeogCS( 'Test GCS', 'Test Datum', 'WGS84',
                    osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING )
 
     srs.SetTOWGS84( 1, 2, 3 )

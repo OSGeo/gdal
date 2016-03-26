@@ -980,7 +980,7 @@ def tiff_read_rpc_txt():
     return 'success'
 
 ###############################################################################
-# Test reading a TIFF with the RPC tag per 
+# Test reading a TIFF with the RPC tag per
 #  http://geotiff.maptools.org/rpc_prop.html
 
 def tiff_read_rpc_tif():
@@ -1027,7 +1027,7 @@ def tiff_small():
     return 'success'
 
 ###############################################################################
-# Test that we can workaround a DoS with 
+# Test that we can workaround a DoS with
 
 def tiff_dos_strip_chop():
 

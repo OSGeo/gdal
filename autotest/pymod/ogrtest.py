@@ -113,7 +113,7 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
             y_dist = abs(f_geom.GetY(i) - geom.GetY(i))
             z_dist = abs(f_geom.GetZ(i) - geom.GetZ(i))
             m_dist = abs(f_geom.GetM(i) - geom.GetM(i))
-            
+
             # Hack to deal with shapefile not-a-number M values that equal to -1.79769313486232e+308
             if m_dist > max_error and f_geom.GetM(i) < -1.7e308 and geom.GetM(i) < -1.7e308:
                 m_dist = 0

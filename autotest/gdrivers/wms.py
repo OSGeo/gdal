@@ -798,7 +798,7 @@ def wms_17():
     return 'success'
 
 ###############################################################################
-# Test a ArcGIS Server 
+# Test a ArcGIS Server
 
 def wms_18():
 

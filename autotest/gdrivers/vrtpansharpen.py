@@ -868,7 +868,7 @@ def vrtpansharpen_1():
 
     # Unsupported
     gdal.PushErrorHandler()
-    ret = vrt_ds.AddBand(gdal.GDT_Byte) 
+    ret = vrt_ds.AddBand(gdal.GDT_Byte)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')

@@ -146,7 +146,7 @@ def ogr_gpsbabel_3():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gpsbabel_init,
     ogr_gpsbabel_1,
     ogr_gpsbabel_2,

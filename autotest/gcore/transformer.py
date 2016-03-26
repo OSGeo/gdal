@@ -66,7 +66,7 @@ def transformer_1():
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test GCP based transformer with polynomials.
@@ -96,7 +96,7 @@ def transformer_2():
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test GCP based transformer with thin plate splines.
@@ -126,7 +126,7 @@ def transformer_3():
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test geolocation based transformer.
@@ -156,7 +156,7 @@ def transformer_4():
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test RPC based transformer.
@@ -353,7 +353,7 @@ def transformer_5():
 
     gdal.Unlink('/vsimem/dem.tif')
 
-    return 'success' 
+    return 'success'
 
 
 ###############################################################################
@@ -394,7 +394,7 @@ def transformer_7():
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test handling of nodata in RPC DEM (#5680)
@@ -433,7 +433,7 @@ def transformer_8():
 
     gdal.Unlink('/vsimem/dem.tif')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test RPC DEM line optimization

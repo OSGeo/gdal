@@ -120,7 +120,7 @@ def osr_micoordsys_3():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_micoordsys_1,
     osr_micoordsys_2,
     osr_micoordsys_3 ]

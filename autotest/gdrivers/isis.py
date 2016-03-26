@@ -73,7 +73,7 @@ def isis_2():
     PARAMETER["standard_parallel_1",-38.88],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]
-"""  
+"""
     gt = (653.132641495800044, 0.38, 0,
           -2298409.710162799805403, 0, -0.38)
 

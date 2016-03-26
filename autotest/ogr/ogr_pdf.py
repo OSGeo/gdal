@@ -291,7 +291,7 @@ def ogr_pdf_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_pdf_1,
     ogr_pdf_2,
     ogr_pdf_3,

@@ -863,7 +863,7 @@ def ogr_plscenes_v1_nominal():
     if gdaltest.plscenes_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', 
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs',
 """{"_links": {}, "catalogs": [
     {"count": 2,
      "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"},
@@ -1774,7 +1774,7 @@ def ogr_plscenes_v1_errors():
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "asset_categories": { "my_asset": {} }, "id": "my_catalog"}]}')
 
     # Test various errors in spec
-    for spec in [ '{}', # no path 
+    for spec in [ '{}', # no path
                   '{ "paths": [] }', # bad type
                   '{ "paths": {} }', # no path for /vsimem/v1/catalogs/my_catalog/items/
                   '{ "paths": { "/catalogs/my_catalog/items/" : false } }', # wrong type
@@ -2120,7 +2120,7 @@ def ogr_plscenes_v1_errors():
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
 
-    # Invalid index 
+    # Invalid index
     ds.GetLayer(-1)
     ds.GetLayer(1)
 
@@ -2245,7 +2245,7 @@ def ogr_plscenes_v1_live():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_plscenes_1,
     ogr_plscenes_2,
     ogr_plscenes_3,

@@ -105,9 +105,9 @@ def georaster_byte():
     ds_src = gdal.Open('data/byte.tif')
 
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
-        ',GDAL_TEST,RASTER', ds_src, 1, 
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
-        "INSERT=(1001, sdo_geor.init('GDAL_TEST_RDT',1001))" ] ) 
+        ',GDAL_TEST,RASTER', ds_src, 1,
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1001, sdo_geor.init('GDAL_TEST_RDT',1001))" ] )
 
     ds_name = ds.GetDescription()
 
@@ -133,9 +133,9 @@ def georaster_int16():
     ds_src = gdal.Open('data/int16.tif')
 
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
-        ',GDAL_TEST,RASTER', ds_src, 1, 
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
-        "INSERT=(1002, sdo_geor.init('GDAL_TEST_RDT',1002))" ] ) 
+        ',GDAL_TEST,RASTER', ds_src, 1,
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1002, sdo_geor.init('GDAL_TEST_RDT',1002))" ] )
 
     ds_name = ds.GetDescription()
 
@@ -376,10 +376,10 @@ def georaster_1bit():
     ds_src = gdal.Open('data/byte.tif')
 
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
-        ',GDAL_TEST,RASTER', ds_src, 1, 
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
-        "INSERT=(1011, sdo_geor.init('GDAL_TEST_RDT',1011))" , 
-        "NBITS=1"] ) 
+        ',GDAL_TEST,RASTER', ds_src, 1,
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1011, sdo_geor.init('GDAL_TEST_RDT',1011))" ,
+        "NBITS=1"] )
 
     ds_name = ds.GetDescription()
 
@@ -403,10 +403,10 @@ def georaster_2bit():
     ds_src = gdal.Open('data/byte.tif')
 
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
-        ',GDAL_TEST,RASTER', ds_src, 1, 
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
-        "INSERT=(1012, sdo_geor.init('GDAL_TEST_RDT',1012))" , 
-        "NBITS=2"] ) 
+        ',GDAL_TEST,RASTER', ds_src, 1,
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1012, sdo_geor.init('GDAL_TEST_RDT',1012))" ,
+        "NBITS=2"] )
 
     ds_name = ds.GetDescription()
 
@@ -430,10 +430,10 @@ def georaster_4bit():
     ds_src = gdal.Open('data/byte.tif')
 
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
-        ',GDAL_TEST,RASTER', ds_src, 1, 
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
-        "INSERT=(1013, sdo_geor.init('GDAL_TEST_RDT',1013))" , 
-        "NBITS=4"] ) 
+        ',GDAL_TEST,RASTER', ds_src, 1,
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1013, sdo_geor.init('GDAL_TEST_RDT',1013))" ,
+        "NBITS=4"] )
 
     ds_name = ds.GetDescription()
 

@@ -291,7 +291,7 @@ def osr_validate_6():
 
 ###############################################################################
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_validate_1,
     osr_validate_2,
     osr_validate_3,

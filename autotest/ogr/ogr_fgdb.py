@@ -75,10 +75,10 @@ def ogr_fgdb_is_sdk_1_4_or_later():
 
     if ogrtest.fgdb_drv is None:
         return False
-    
+
     if hasattr(ogrtest, 'fgdb_is_sdk_1_4'):
         return ogrtest.fgdb_is_sdk_1_4
-    
+
     ogrtest.fgdb_is_sdk_1_4 = False
 
     try:
@@ -2365,14 +2365,14 @@ def ogr_fgdb_21():
     if not ogr_fgdb_is_sdk_1_4_or_later():
         print('SDK 1.4 required')
         return 'skip'
-    
+
     try:
         shutil.rmtree("tmp/test.gdb")
     except:
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
-    
+
 
     datalist = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
                  [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
@@ -2414,7 +2414,7 @@ def ogr_fgdb_21():
             expected_geom_type = ogr.wkbMultiPolygonM
         elif expected_geom_type == ogr.wkbPolygonZM:
             expected_geom_type = ogr.wkbMultiPolygonZM
-            
+
         if lyr.GetGeomType() != expected_geom_type:
             gdaltest.post_reason('fail')
             print(data)

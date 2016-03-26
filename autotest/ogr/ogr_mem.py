@@ -218,7 +218,7 @@ def ogr_mem_6():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_mem_7():
 
@@ -345,7 +345,7 @@ def ogr_mem_9():
 ###############################################################################
 # Test GetDriver() / name bug (#1674)
 #
-# Mostly we are verifying that this doesn't still cause a crash. 
+# Mostly we are verifying that this doesn't still cause a crash.
 
 def ogr_mem_10():
 
@@ -723,7 +723,7 @@ def ogr_mem_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_mem_1,
     ogr_mem_2,
     ogr_mem_3,

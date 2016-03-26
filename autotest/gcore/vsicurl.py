@@ -143,7 +143,7 @@ def vsicurl_5():
     return 'success'
 
 ###############################################################################
-# Test with FTP server that doesn't support EPSV command 
+# Test with FTP server that doesn't support EPSV command
 
 def vsicurl_6():
     if not gdaltest.run_slow_tests():

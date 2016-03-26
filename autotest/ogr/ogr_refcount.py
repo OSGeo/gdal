@@ -128,7 +128,7 @@ def ogr_refcount_cleanup():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_refcount_1,
     ogr_refcount_2,
     ogr_refcount_3,

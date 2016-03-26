@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_calc.py testing
 # Author:   Etienne Tourigny <etourigny dot dev @ gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault @ mines-paris dot org>
 # Copyright (c) 2014, Etienne Tourigny <etourigny dot dev @ gmail dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -182,7 +182,7 @@ def test_gdal_calc_py_4():
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif -B tmp/test_gdal_calc_py_4_1.tif --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile tmp/test_gdal_calc_py_4_2.tif')
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_4_2.tif')
-    
+
     if ds1 is None:
         gdaltest.post_reason('ds1 not found')
         return 'fail'
@@ -202,7 +202,7 @@ def test_gdal_calc_py_4():
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif -B tmp/test_gdal_calc_py.tif --B_band 1 --allBands A --calc=A*B --NoDataValue=999 --overwrite --outfile tmp/test_gdal_calc_py_4_3.tif')
 
     ds2 = gdal.Open('tmp/test_gdal_calc_py_4_3.tif')
-    
+
     if ds2 is None:
         gdaltest.post_reason('ds2 not found')
         return 'fail'

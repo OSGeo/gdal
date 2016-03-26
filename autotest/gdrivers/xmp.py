@@ -59,7 +59,7 @@ class TestXMPRead:
             if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
                 return 'skip'
 
-        # we set ECW to not resolve projection and datum strings to get 3.x behavior.     
+        # we set ECW to not resolve projection and datum strings to get 3.x behavior.
         gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
         if self.filename.find('.jp2') >= 0:

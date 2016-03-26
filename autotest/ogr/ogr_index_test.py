@@ -36,7 +36,7 @@ from osgeo import ogr
 import ogrtest
 
 ###############################################################################
-# Create a MIF file to be our primary table. 
+# Create a MIF file to be our primary table.
 
 def ogr_index_1():
 

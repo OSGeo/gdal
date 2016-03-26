@@ -76,7 +76,7 @@ def aigrid_2():
     return 'success'
 
 ###############################################################################
-# Verify the colormap, and nodata setting for test file. 
+# Verify the colormap, and nodata setting for test file.
 
 def aigrid_3():
 
@@ -121,7 +121,7 @@ def aigrid_5():
         gdaltest.post_reason( 'Wrong nodata value.' )
         return 'fail'
 
-    return 'success'    
+    return 'success'
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem

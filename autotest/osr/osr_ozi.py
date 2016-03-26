@@ -100,7 +100,7 @@ def osr_ozi_3():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_ozi_1,
     osr_ozi_2,
     osr_ozi_3,

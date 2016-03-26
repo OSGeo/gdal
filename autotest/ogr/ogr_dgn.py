@@ -38,7 +38,7 @@ from osgeo import ogr
 
 def ogr_dgn_1():
 
-    gdaltest.dgn_ds = ogr.Open( 'data/smalltest.dgn' )    
+    gdaltest.dgn_ds = ogr.Open( 'data/smalltest.dgn' )
     if gdaltest.dgn_ds is None:
         gdaltest.post_reason( 'failed to open test file.' )
         return 'fail'
@@ -59,7 +59,7 @@ def ogr_dgn_2():
         gdaltest.post_reason( 'feature 1: expected attributes' )
         return 'fail'
 
-    if feat.GetField( 'Text' ) != 'Demo Text': 
+    if feat.GetField( 'Text' ) != 'Demo Text':
         gdaltest.post_reason( 'feature 1: expected text' )
         return 'fail'
 
@@ -171,7 +171,7 @@ def ogr_dgn_6():
         return 'fail'
 
 ###############################################################################
-# Copy our small dgn file to a new dgn file. 
+# Copy our small dgn file to a new dgn file.
 
 def ogr_dgn_7():
 
@@ -226,7 +226,7 @@ def ogr_dgn_8():
         gdaltest.post_reason( 'feature 1: expected attributes' )
         return 'fail'
 
-    if feat.GetField( 'Text' ) != 'Demo Text': 
+    if feat.GetField( 'Text' ) != 'Demo Text':
         gdaltest.post_reason( 'feature 1: expected text' )
         return 'fail'
 

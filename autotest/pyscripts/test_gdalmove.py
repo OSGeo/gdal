@@ -39,7 +39,7 @@ import gdaltest
 import test_py_scripts
 
 ###############################################################################
-# 
+#
 
 def test_gdalmove_1():
 

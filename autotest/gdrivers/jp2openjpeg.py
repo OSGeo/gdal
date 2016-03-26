@@ -55,7 +55,7 @@ def jp2openjpeg_1():
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
     return 'success'
-	
+
 ###############################################################################
 # Open byte.jp2
 
@@ -1084,7 +1084,7 @@ def jp2openjpeg_26():
     # Nominal case: tiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options = ['INSPIRE_TG=YES'])
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
-    # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128. 
+    # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128.
     # So for full raster the smallest overview is 2*128
     if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 2*128 or \
        out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 2*128:
@@ -1867,7 +1867,7 @@ def jp2openjpeg_39():
     # This GML has srsName only on RectifiedGrid (taken from D.2.2.2 from DGIWG_Profile_of_JPEG2000_for_Georeferenced_Imagery.pdf)
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
 <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml"
-                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                        xmlns:gmd="http://www.isotc211.org/2005/gmd"
                        xmlns:gco="http://www.isotc211.org/2005/gco"
                        xsi:schemaLocation="http://www.opengis.net/gml file:///D:/dgiwg/jp2/GML-3.1.1/profiles/DGIWGgmlJP2Profile/1.1.0/DGIWGgmlJP2Profile.xsd">
@@ -1941,10 +1941,10 @@ def jp2openjpeg_40():
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
 <?xml version="1.0" encoding="UTF-8"?>
 <gmljp2:GMLJP2CoverageCollection gml:id="JPEG2000_0"
-    xmlns:gml="http://www.opengis.net/gml/3.2" 
-    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" 
-    xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+    xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd">
     <gml:gridDomain/>
     <gml:rangeSet>
@@ -1958,7 +1958,7 @@ def jp2openjpeg_40():
     <gmljp2:featureMember>
         <gmljp2:GMLJP2RectifiedGridCoverage gml:id="CodeStream">
             <gml:domainSet>
-                <gml:RectifiedGrid gml:id="rg0001" dimension="2" 
+                <gml:RectifiedGrid gml:id="rg0001" dimension="2"
                             srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
                     <gml:limits>
                         <gml:GridEnvelope>
@@ -3057,7 +3057,7 @@ def jp2openjpeg_46():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>1 str true 
+    if gmljp2.find("""<gmljp2:metadata>1 str true
         <B>my_value</B>
 yeah: """) < 0:
         gdaltest.post_reason('fail')

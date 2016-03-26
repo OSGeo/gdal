@@ -114,7 +114,7 @@ def ogr_segy_1():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_segy_1,
 ]
 

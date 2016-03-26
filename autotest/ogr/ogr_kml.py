@@ -821,7 +821,7 @@ def ogr_kml_cleanup():
 ###############################################################################
 # Build tests runner
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_kml_datastore,
     ogr_kml_attributes_1,
     ogr_kml_attributes_2,

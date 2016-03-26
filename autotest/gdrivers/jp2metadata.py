@@ -110,7 +110,7 @@ def jp2metadata_2():
 ###############################################################################
 # Test reading GMLJP2 file with srsName only on the Envelope, and lots of other
 # metadata junk.  This file is also handled currently with axis reordering
-# disabled. 
+# disabled.
 
 def jp2metadata_3():
 
@@ -148,7 +148,7 @@ def jp2metadata_3():
 
 ###############################################################################
 # Test reading a file with axis orientation set properly for an alternate
-# axis order coordinate system (urn:...:EPSG::4326). 
+# axis order coordinate system (urn:...:EPSG::4326).
 
 def jp2metadata_4():
 

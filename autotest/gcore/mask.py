@@ -438,7 +438,7 @@ def mask_11():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
-    return 'success' 
+    return 'success'
 
 
 ###############################################################################
@@ -497,7 +497,7 @@ def mask_12():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test creation of external TIFF mask band
@@ -563,7 +563,7 @@ def mask_13():
     except:
         pass
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test creation of internal TIFF mask band
@@ -646,7 +646,7 @@ def mask_14():
 
     drv.Delete( 'tmp/byte_with_mask.tif' )
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test creation of internal TIFF overview, mask band and mask band of overview
@@ -741,7 +741,7 @@ def mask_and_ovr(order, method):
 
     drv.Delete( 'tmp/byte_with_ovr_and_mask.tif' )
 
-    return 'success' 
+    return 'success'
 
 
 def mask_15():
@@ -920,7 +920,7 @@ def mask_22():
     except:
         pass
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test CreateCopy() of a dataset with a mask into a JPEG-compressed TIFF with
@@ -949,13 +949,13 @@ def mask_23():
     src_ds = None
 
     drv.Delete( 'tmp/mask_23_src.tif' )
-    drv.Delete( 'tmp/mask_23_dst.tif' )    
+    drv.Delete( 'tmp/mask_23_dst.tif' )
 
     # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
     if error_msg != '':
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test on a GDT_UInt16 RGBA (#5692)

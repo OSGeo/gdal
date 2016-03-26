@@ -49,7 +49,7 @@ def osr_url_test(url, expected_wkt):
     """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
     srs = osr.SpatialReference()
     from osgeo import gdal
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     try:
         srs.ImportFromUrl( url )
     except AttributeError: # old-gen bindings don't have this method yet
@@ -82,7 +82,7 @@ def osr_url_2():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/ogcwkt/', expected_wkt)
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_url_1,
     osr_url_2,
     None ]

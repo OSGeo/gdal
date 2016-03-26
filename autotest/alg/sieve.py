@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SieveFilter() algorithm.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -66,7 +66,7 @@ def sieve_1():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Try eight connected.
@@ -97,7 +97,7 @@ def sieve_2():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Do a sieve resulting in unmergable polygons.
@@ -290,14 +290,14 @@ NODATA_value 0
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Test propagation in our search of biggest neighbour
 
 def sieve_8():
 
-    gdal.FileFromMemBuffer('/vsimem/sieve_8.asc', 
+    gdal.FileFromMemBuffer('/vsimem/sieve_8.asc',
 """ncols        7
 nrows        7
 xllcorner    440720.000000000000
@@ -340,7 +340,7 @@ cellsize     60.000000000000
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 
 gdaltest_list = [

@@ -123,7 +123,7 @@ def mem_1():
     return 'success'
 
 ###############################################################################
-# Open an in-memory array. 
+# Open an in-memory array.
 
 def mem_2():
 

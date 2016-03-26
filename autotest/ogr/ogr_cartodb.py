@@ -181,7 +181,7 @@ Error""")
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": { "type" : "string" } } } """)
@@ -189,7 +189,7 @@ Error""")
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[ {"field1": "foo", "field2": "bar"} ],"fields":{"field1":{"type":"string"}, "field2":{"type":"string"}}}""")
@@ -197,7 +197,7 @@ Error""")
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[],"fields":{"current_schema":{"type":"string"}}}""")
@@ -207,7 +207,7 @@ Error""")
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[{"current_schema":"public"}],"fields":{"current_schema":{"type":"unknown(19)"}}}""")
@@ -217,7 +217,7 @@ Error""")
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0',
 """{"rows":[{"cdb_usertables":"table1"}],"fields":{"cdb_usertables":{"type":"string"}}}""")
@@ -225,7 +225,7 @@ Error""")
     if ds is None or ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
-        return 'fail' 
+        return 'fail'
 
     gdal.PushErrorHandler()
     lyr_defn = ds.GetLayer(0).GetLayerDefn()
@@ -233,7 +233,7 @@ Error""")
 
     if lyr_defn.GetFieldCount() != 0:
         gdaltest.post_reason('fail')
-        return 'fail' 
+        return 'fail'
 
     # Empty layer
     gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
@@ -695,7 +695,7 @@ Error""")
     if lyr.CreateField(fld_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-   
+
     fld_defn = ogr.FieldDefn('boolfield', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
 
@@ -1212,7 +1212,7 @@ def ogr_cartodb_rw_1():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_cartodb_init,
     ogr_cartodb_vsimem,
     ogr_cartodb_vsimem_cleanup,

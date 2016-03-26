@@ -128,18 +128,18 @@ def postgisraster_compare_small_world():
     if diff == 0:
         return 'success'
     else:
-        return 'fail'        
+        return 'fail'
 
 ###############################################################################
 #
-def postgisraster_test_utm_open():    
+def postgisraster_test_utm_open():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'    
+        return 'skip'
 
     # First open tif file
     src_ds = gdal.Open( 'data/utm.tif' )
-    prj = src_ds.GetProjectionRef()   
-    gt = src_ds.GetGeoTransform() 
+    prj = src_ds.GetProjectionRef()
+    gt = src_ds.GetGeoTransform()
 
     # Get band data
     rb = src_ds.GetRasterBand(1)
@@ -154,14 +154,14 @@ def postgisraster_test_utm_open():
 
 ###############################################################################
 #
-def postgisraster_test_small_world_open_b1():    
+def postgisraster_test_small_world_open_b1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/small_world.tif' )    
-    prj = src_ds.GetProjectionRef()   
-    gt = src_ds.GetGeoTransform() 
+    src_ds = gdal.Open( 'data/small_world.tif' )
+    prj = src_ds.GetProjectionRef()
+    gt = src_ds.GetGeoTransform()
 
     # Get band data
     rb = src_ds.GetRasterBand(1)
@@ -171,19 +171,19 @@ def postgisraster_test_small_world_open_b1():
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Try to open PostGISRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)    
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)    
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
 
 ###############################################################################
 #
-def postgisraster_test_small_world_open_b2():    
+def postgisraster_test_small_world_open_b2():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'    
+        return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/small_world.tif' )    
-    prj = src_ds.GetProjectionRef()   
-    gt = src_ds.GetGeoTransform() 
+    src_ds = gdal.Open( 'data/small_world.tif' )
+    prj = src_ds.GetProjectionRef()
+    gt = src_ds.GetGeoTransform()
 
     # Get band data
     rb = src_ds.GetRasterBand(2)
@@ -194,19 +194,19 @@ def postgisraster_test_small_world_open_b2():
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Try to open PostGISRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)    
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)
     return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
 
 ###############################################################################
 #
-def postgisraster_test_small_world_open_b3():    
+def postgisraster_test_small_world_open_b3():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
     # First open tif file
     src_ds = gdal.Open( 'data/small_world.tif' )
-    prj = src_ds.GetProjectionRef()   
-    gt = src_ds.GetGeoTransform() 
+    prj = src_ds.GetProjectionRef()
+    gt = src_ds.GetGeoTransform()
 
     # Get band data
     rb = src_ds.GetRasterBand(3)
@@ -355,7 +355,7 @@ def postgisraster_test_create_copy_and_delete_phases():
         gdaltest.post_reason( 'Could not open reduced dataset (2).' )
         return 'fail'
     elif len(src_md) != 50:
-        # The length of the metadata contains two pcs of 
+        # The length of the metadata contains two pcs of
         # information per raster, so 25 rasters remaining = 50 keys
         gdaltest.post_reason( 'Expected 50 keys of metadata for 25 subdataset rasters.' )
         print(len(src_md))

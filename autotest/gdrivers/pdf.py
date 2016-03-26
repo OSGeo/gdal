@@ -911,7 +911,7 @@ def pdf_update_gcps(dpi = 300):
 
     # Set GCPs()
     ds = gdal.Open(out_filename, gdal.GA_Update)
-    ds.SetGCPs(gcps, src_wkt)           
+    ds.SetGCPs(gcps, src_wkt)
     ds = None
 
     # Check
@@ -1894,7 +1894,7 @@ def pdf_password():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    import test_cli_utilities  
+    import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 

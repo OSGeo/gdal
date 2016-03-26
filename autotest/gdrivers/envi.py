@@ -74,7 +74,7 @@ def envi_2():
     return tst.testCreateCopy( check_gt = 1 )
 
 ###############################################################################
-# Try the Create interface with an RGB image. 
+# Try the Create interface with an RGB image.
 
 def envi_3():
 

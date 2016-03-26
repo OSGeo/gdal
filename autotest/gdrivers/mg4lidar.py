@@ -100,7 +100,7 @@ def mg4lidar_1():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     mg4lidar_1 ]
 
 if __name__ == '__main__':

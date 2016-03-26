@@ -95,7 +95,7 @@ def jpipkak_2():
     return 'success'
 
 ###############################################################################
-# Test an 11bit image. 
+# Test an 11bit image.
 
 def jpipkak_3():
 

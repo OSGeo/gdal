@@ -49,7 +49,7 @@ def test_gdalinfo_lib_1():
         print(ret)
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test Json format

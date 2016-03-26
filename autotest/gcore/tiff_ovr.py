@@ -77,7 +77,7 @@ def tiff_ovr_check(src_ds):
 
 ###############################################################################
 # Create a 3 band floating point GeoTIFF file so we can build overviews on it
-# later.  Build overviews on it. 
+# later.  Build overviews on it.
 
 def tiff_ovr_1():
 
@@ -113,7 +113,7 @@ def tiff_ovr_1():
 
 
 ###############################################################################
-# Open file and verify some characteristics of the overviews. 
+# Open file and verify some characteristics of the overviews.
 
 def tiff_ovr_2():
 
@@ -161,7 +161,7 @@ def tiff_ovr_3bis():
     return tiff_ovr_2()
 
 ###############################################################################
-# Test generation 
+# Test generation
 
 def tiff_ovr_4():
 
@@ -1085,7 +1085,7 @@ def tiff_ovr_28():
 
 def tiff_ovr_29():
 
-    src_ds = gdal.Open('data/byte.tif') 
+    src_ds = gdal.Open('data/byte.tif')
     png_ds = gdal.GetDriverByName('PNG').CreateCopy( 'tmp/ovr29.png', src_ds )
     src_ds = None
 

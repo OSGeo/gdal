@@ -97,7 +97,7 @@ def ogr_gml_2():
     # copy gml file (but not .gfs file)
     open('tmp/ionic_wfs.gml','w').write(open('data/ionic_wfs.gml').read())
 
-    gml_ds = ogr.Open( 'tmp/ionic_wfs.gml' )    
+    gml_ds = ogr.Open( 'tmp/ionic_wfs.gml' )
 
     if gml_ds.GetLayerCount() != 1:
         gdaltest.post_reason( 'wrong number of layers' )
@@ -166,7 +166,7 @@ def ogr_gml_4():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    gml_ds = ogr.Open( 'data/bom.gml' )    
+    gml_ds = ogr.Open( 'data/bom.gml' )
 
     if gml_ds.GetLayerCount() != 1:
         gdaltest.post_reason( 'wrong number of layers' )
@@ -231,27 +231,27 @@ def ogr_gml_5():
 # Test of various FIDs (various prefixes and lengths) (Ticket#1017)
 def ogr_gml_6():
 
-    if not gdaltest.have_gml_reader: 
-        return 'skip' 
+    if not gdaltest.have_gml_reader:
+        return 'skip'
 
-    files = ['test_point1', 'test_point2', 'test_point3', 'test_point4'] 
+    files = ['test_point1', 'test_point2', 'test_point3', 'test_point4']
     fids = []
 
-    for filename in files: 
-        fids[:] = [] 
-        gml_ds = ogr.Open( 'data' + os.sep + filename + '.gml' ) 
-        lyr = gml_ds.GetLayer() 
-        feat = lyr.GetNextFeature() 
-        while feat is not None: 
-            if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ): 
+    for filename in files:
+        fids[:] = []
+        gml_ds = ogr.Open( 'data' + os.sep + filename + '.gml' )
+        lyr = gml_ds.GetLayer()
+        feat = lyr.GetNextFeature()
+        while feat is not None:
+            if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ):
                 gml_ds = None
-                os.remove( 'data' + os.sep + filename + '.gfs' ) 
-                gdaltest.post_reason( 'Wrong FID value' ) 
-                return 'fail' 
-            fids.append(feat.GetFID()) 
-            feat = lyr.GetNextFeature() 
+                os.remove( 'data' + os.sep + filename + '.gfs' )
+                gdaltest.post_reason( 'Wrong FID value' )
+                return 'fail'
+            fids.append(feat.GetFID())
+            feat = lyr.GetNextFeature()
         gml_ds = None
-        os.remove( 'data' + os.sep + filename + '.gfs' ) 
+        os.remove( 'data' + os.sep + filename + '.gfs' )
 
     return 'success'
 
@@ -1693,7 +1693,7 @@ def ogr_gml_43():
         if gdaltest.gdalurlopen('http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=app:Springs&NAMESPACE=xmlns(app=http://www.deegree.org/app)') is None:
             can_download_schema = False
         else:
-            can_download_schema = gdal.GetDriverByName('HTTP') is not None 
+            can_download_schema = gdal.GetDriverByName('HTTP') is not None
 
         if can_download_schema:
             gdaltest.post_reason('.gfs found, but schema could be downloaded')
@@ -2945,7 +2945,7 @@ def ogr_gml_63():
 
     # check number of layers
     nlayers = ds.GetLayerCount()
-    if nlayers != 14: 
+    if nlayers != 14:
         return 'fail'
 
     # check name of first layer
@@ -2964,7 +2964,7 @@ def ogr_gml_63():
 
     # check number of layers
     nlayers = ds.GetLayerCount()
-    if nlayers != 11: 
+    if nlayers != 11:
         return 'fail'
 
     # check number of features
@@ -4060,7 +4060,7 @@ def ogr_gml_clean_files():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gml_clean_files,
     ogr_gml_1,
     ogr_gml_2,
@@ -4142,7 +4142,7 @@ gdaltest_list = [
     ogr_gml_76,
     ogr_gml_cleanup ]
 
-disabled_gdaltest_list = [ 
+disabled_gdaltest_list = [
     ogr_gml_clean_files,
     ogr_gml_1,
     ogr_gml_71,

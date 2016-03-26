@@ -53,7 +53,7 @@ def run_func(func):
         print(result)
 
         import traceback
-        traceback.print_exc()    
+        traceback.print_exc()
         return result
 
 def urlescape(url):

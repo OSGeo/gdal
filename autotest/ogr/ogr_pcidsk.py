@@ -338,7 +338,7 @@ def ogr_pcidsk_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_pcidsk_1,
     ogr_pcidsk_2,
     ogr_pcidsk_3,

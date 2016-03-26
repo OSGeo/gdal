@@ -49,7 +49,7 @@ def jpeg2000_1():
     gdaltest.deregister_all_jpeg2000_drivers_but('JPEG2000')
 
     return 'success'
-	
+
 ###############################################################################
 # Open byte.jp2
 

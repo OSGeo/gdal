@@ -184,7 +184,7 @@ def ogr_xls_4():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_xls_1,
     ogr_xls_2,
     ogr_xls_3,

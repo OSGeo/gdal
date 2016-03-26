@@ -590,7 +590,7 @@ def ogr_factory_8():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_factory_1,
     ogr_factory_2,
     ogr_factory_3,

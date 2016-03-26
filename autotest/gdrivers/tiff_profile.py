@@ -24,7 +24,7 @@
 ###############################################################################
 
 ###############################################################################
-# This unit test uses a free ICC profile by Marti Maria (littleCMS) 
+# This unit test uses a free ICC profile by Marti Maria (littleCMS)
 # <http://www.littlecms.com>
 # sRGB.icc uses the zlib license.
 # Part of a free package of ICC profile found at:
@@ -224,7 +224,7 @@ def tiff_copy_options_colorimetric_data():
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
 
-    # Check with dataset from CreateCopy()	
+    # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test2.tiff', ds, options = options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -236,7 +236,7 @@ def tiff_copy_options_colorimetric_data():
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -256,7 +256,7 @@ def tiff_copy_options_colorimetric_data():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check again with dataset from Open()	
+    # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -269,7 +269,7 @@ def tiff_copy_options_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -309,7 +309,7 @@ def tiff_copy_colorimetric_data():
         'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
         'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
         'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
-        'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2]) 
+        'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
         ]
 
     driver = gdal.GetDriverByName('GTiff')
@@ -317,7 +317,7 @@ def tiff_copy_colorimetric_data():
     ds = None
     ds = gdal.Open('tmp/icc_test.tiff')
 
-    # Check with dataset from CreateCopy()	
+    # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test2.tiff', ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -330,7 +330,7 @@ def tiff_copy_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -350,7 +350,7 @@ def tiff_copy_colorimetric_data():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check again with dataset from Open()	
+    # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
@@ -363,7 +363,7 @@ def tiff_copy_colorimetric_data():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -460,7 +460,7 @@ def tiff_update_colorimetric():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
@@ -492,7 +492,7 @@ def tiff_update_colorimetric():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    source_primaries2 = [ 
+    source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]

@@ -122,7 +122,7 @@ def minixml_2():
         gdaltest.post_reason( 'serialize xml tree failed.' )
         print(doc_got)
         return 'fail'
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Read XML document with complex DOCTYPE element.

@@ -645,7 +645,7 @@ def ogr_jml_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_jml_init,
     ogr_jml_1,
     ogr_jml_2,

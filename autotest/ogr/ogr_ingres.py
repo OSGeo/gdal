@@ -197,7 +197,7 @@ def ogr_ingres_5():
         return 'fail'
 
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_ingres_6():
 
@@ -319,7 +319,7 @@ def ogr_ingres_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_ingres_1,
     ogr_ingres_2,
     ogr_ingres_3,
