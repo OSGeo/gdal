@@ -852,8 +852,8 @@ class netCDFDataset : public GDALPamDataset
 
   public:
 
-    netCDFDataset( );
-    ~netCDFDataset( );
+    netCDFDataset();
+    virtual ~netCDFDataset();
 
     /* Projection/GT */
     CPLErr 	GetGeoTransform( double * );
@@ -974,7 +974,7 @@ class netCDFLayer: public OGRLayer
                             const char* pszName,
                             OGRwkbGeometryType eGeomType,
                             OGRSpatialReference* poSRS);
-               ~netCDFLayer();
+        virtual ~netCDFLayer();
 
         bool            Create(char** papszOptions, const netCDFWriterConfigLayer* poLayerConfig);
         void            SetRecordDimID(int nRecordDimID);

@@ -105,7 +105,7 @@ class HDF5ImageDataset : public HDF5Dataset
 
 public:
     HDF5ImageDataset();
-    ~HDF5ImageDataset();
+    virtual ~HDF5ImageDataset();
 
     CPLErr CreateProjections( );
     static GDALDataset  *Open( GDALOpenInfo * );

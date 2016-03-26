@@ -44,7 +44,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
 
   public:
         GDALGeorefPamDataset();
-        ~GDALGeorefPamDataset();
+        virtual ~GDALGeorefPamDataset();
 
     virtual CPLErr          GetGeoTransform( double * );
     virtual const char     *GetProjectionRef();

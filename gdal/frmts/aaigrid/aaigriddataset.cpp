@@ -89,7 +89,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 
   public:
                 AAIGDataset();
-                ~AAIGDataset();
+       virtual ~AAIGDataset();
 
     virtual char **GetFileList(void);
 
@@ -122,6 +122,7 @@ class GRASSASCIIDataset : public AAIGDataset
 
   public:
                 GRASSASCIIDataset() : AAIGDataset() {}
+       virtual ~GRASSASCIIDataset() {}
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

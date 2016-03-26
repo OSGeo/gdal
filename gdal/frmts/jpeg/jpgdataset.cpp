@@ -230,7 +230,7 @@ protected:
 
   public:
                  JPGDatasetCommon();
-                 ~JPGDatasetCommon();
+    virtual ~JPGDatasetCommon();
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
@@ -288,7 +288,7 @@ class JPGDataset : public JPGDatasetCommon
 
   public:
                  JPGDataset();
-                 ~JPGDataset();
+    virtual ~JPGDataset();
 
     static GDALDataset *Open( JPGDatasetOpenArgs* psArgs );
     static GDALDataset* CreateCopy( const char * pszFilename,

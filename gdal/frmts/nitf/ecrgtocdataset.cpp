@@ -75,7 +75,7 @@ class ECRGTOCDataset : public GDALPamDataset
         papszFileList = NULL;
     }
 
-    ~ECRGTOCDataset()
+    virtual ~ECRGTOCDataset()
     {
         CSLDestroy( papszSubDatasets );
         CSLDestroy(papszFileList);

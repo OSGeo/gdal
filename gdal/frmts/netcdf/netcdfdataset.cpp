@@ -145,7 +145,7 @@ class netCDFRasterBand : public GDALPamRasterBand
                       const int *panBandZLev=NULL,
                       const int *panBandZPos=NULL,
                       const int *paDimIds=NULL );
-    ~netCDFRasterBand( );
+    virtual ~netCDFRasterBand();
 
     virtual double GetNoDataValue( int * );
     virtual CPLErr SetNoDataValue( double );

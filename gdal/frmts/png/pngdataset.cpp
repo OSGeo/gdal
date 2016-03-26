@@ -85,7 +85,6 @@ static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 class PNGRasterBand;
 
 
-
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) /* 'PNGDataset' : structure was padded due to __declspec(align()) at line where we use jmp_buf */
@@ -134,7 +133,7 @@ class PNGDataset : public GDALPamDataset
 
   public:
                  PNGDataset();
-                 ~PNGDataset();
+    virtual ~PNGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -205,6 +204,7 @@ class PNGRasterBand : public GDALPamRasterBand
   public:
 
                    PNGRasterBand( PNGDataset *, int );
+    virtual ~PNGRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * );
 

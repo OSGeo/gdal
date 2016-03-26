@@ -121,7 +121,7 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
 
   public:
                 JP2KAKDataset();
-		~JP2KAKDataset();
+    virtual ~JP2KAKDataset();
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );

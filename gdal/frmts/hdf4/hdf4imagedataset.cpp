@@ -146,7 +146,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
   public:
                 HDF4ImageDataset();
-                ~HDF4ImageDataset();
+    virtual ~HDF4ImageDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
@@ -185,6 +185,7 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
   public:
 
                 HDF4ImageRasterBand( HDF4ImageDataset *, int, GDALDataType );
+    virtual ~HDF4ImageRasterBand() {}
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );
