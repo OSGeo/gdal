@@ -128,6 +128,8 @@ bool CPL_DLL CPLTestBool( const char *pszValue );
 }
 #endif
 #endif
+bool CPL_DLL CPLFetchBool( const char **papszStrList, const char *pszKey,
+                           bool bDefault );
 #endif  /* __cplusplus */
 
 const char CPL_DLL *
