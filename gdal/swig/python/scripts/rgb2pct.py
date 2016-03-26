@@ -83,7 +83,7 @@ while i < len(argv):
 
 if dst_filename is None:
     Usage()
-    
+
 # Open source file
 
 src_ds = gdal.Open( src_filename )

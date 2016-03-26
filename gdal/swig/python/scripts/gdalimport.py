@@ -58,7 +58,7 @@ if geotiff is None:
     print('GeoTIFF driver not registered.')
     sys.exit(1)
 
-if len(argv) < 3: 
+if len(argv) < 3:
     newbase, ext = os.path.splitext(os.path.basename(filename))
     newfile = newbase + ".tif"
     i = 0

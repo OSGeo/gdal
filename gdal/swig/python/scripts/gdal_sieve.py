@@ -72,31 +72,31 @@ while i < len(argv):
 
     elif arg == '-4':
         connectedness = 4
-        
+
     elif arg == '-8':
         connectedness = 8
-        
+
     elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
-        
+
     elif arg == '-st':
         i = i + 1
         threshold = int(argv[i])
-        
+
     elif arg == '-nomask':
         mask = 'none'
-        
+
     elif arg == '-mask':
         i = i + 1
         mask = argv[i]
-        
+
     elif arg == '-mask':
         i = i + 1
         mask = argv[i]
-        
+
     elif arg[:2] == '-h':
         Usage()
-        
+
     elif src_filename is None:
         src_filename = argv[i]
 
@@ -110,7 +110,7 @@ while i < len(argv):
 
 if src_filename is None:
     Usage()
-    
+
 # =============================================================================
 # 	Verify we have next gen bindings with the sievefilter method.
 # =============================================================================
@@ -131,7 +131,7 @@ if dst_filename is None:
     src_ds = gdal.Open( src_filename, gdal.GA_Update )
 else:
     src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
-    
+
 if src_ds is None:
     print('Unable to open %s ' % src_filename)
     sys.exit(1)
@@ -159,7 +159,7 @@ if dst_filename is not None:
     if wkt != '':
         dst_ds.SetProjection( wkt )
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
-    
+
     dstband = dst_ds.GetRasterBand(1)
 else:
     dstband = srcband
@@ -172,11 +172,11 @@ if quiet_flag:
     prog_func = None
 else:
     prog_func = gdal.TermProgress
-    
+
 result = gdal.SieveFilter( srcband, maskband, dstband,
-                           threshold, connectedness, 
+                           threshold, connectedness,
                            callback = prog_func )
-    
+
 src_ds = None
 dst_ds = None
 mask_ds = None

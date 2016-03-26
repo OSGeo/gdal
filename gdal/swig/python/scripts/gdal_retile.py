@@ -258,16 +258,16 @@ class mosaic_info:
             assert tw_yoff >= 0
             assert sw_xoff >= 0
             assert sw_yoff >= 0
-            
+
             for bandNr in range(1, self.bands + 1):
                 s_band = sourceDS.GetRasterBand( bandNr )
                 t_band = resultDS.GetRasterBand( bandNr )
                 if self.ct is not None:
                     t_band.SetRasterColorTable(self.ct)
                 t_band.SetRasterColorInterpretation(self.ci[bandNr-1])
-                
+
                 data = s_band.ReadRaster( sw_xoff, sw_yoff, sw_xsize, sw_ysize, tw_xsize, tw_ysize, self.band_type )
-                if data is None:                    
+                if data is None:
                     print(gdal.GetLastErrorMsg())
 
                 t_band.WriteRaster(tw_xoff, tw_yoff, tw_xsize, tw_ysize, data )
