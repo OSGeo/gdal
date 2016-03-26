@@ -170,7 +170,7 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
     Clear();
 
     papszList = papszListIn;
-    bOwnList = bTakeOwnership;
+    bOwnList = CPL_TO_BOOL(bTakeOwnership);
 
     if( papszList == NULL || *papszList == NULL )
         nCount = 0;
