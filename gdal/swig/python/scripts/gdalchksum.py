@@ -74,7 +74,7 @@ while i < len(argv):
 
 if filename is None:
     Usage()
-    
+
 # Open source file
 
 ds = gdal.Open( filename )

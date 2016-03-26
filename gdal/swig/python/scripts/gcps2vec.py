@@ -80,7 +80,7 @@ if out_file is None:
     Usage()
 
 # ----------------------------------------------------------------------------
-# Open input file, and fetch GCPs. 
+# Open input file, and fetch GCPs.
 # ----------------------------------------------------------------------------
 ds = gdal.Open( in_file )
 if ds is None:
@@ -143,7 +143,7 @@ fd = ogr.FieldDefn( 'Info', ogr.OFTString )
 layer.CreateField( fd )
 
 # ----------------------------------------------------------------------------
-# Write GCPs. 
+# Write GCPs.
 # ----------------------------------------------------------------------------
 
 for gcp in gcps:
@@ -161,7 +161,7 @@ for gcp in gcps:
         feat.SetField( 'Y',  gcp.GCPY )
         feat.SetField( 'Z',  gcp.GCPZ )
         geom.SetPoint( 0, gcp.GCPPixel, gcp.GCPLine )
-        
+
     feat.SetField( 'Id',    gcp.Id )
     feat.SetField( 'Info',  gcp.Info )
 

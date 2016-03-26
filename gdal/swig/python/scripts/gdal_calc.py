@@ -179,7 +179,7 @@ def doit(opts, args):
         print("output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,myOutType))
 
     ################################################################
-    # find block size to chop grids into bite-sized chunks 
+    # find block size to chop grids into bite-sized chunks
     ################################################################
 
     # use the block size of the first layer to read efficiently
@@ -199,7 +199,7 @@ def doit(opts, args):
     ProgressCt=-1
     ProgressMk=-1
     ProgressEnd=nXBlocks*nYBlocks*allBandsCount
-    
+
     ################################################################
     # start looping through each band in allBandsCount
     ################################################################

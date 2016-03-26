@@ -481,7 +481,7 @@ def main( argv=None ):
         if separate != 0:
             bands=0
             for fi in file_infos:
-                bands=bands + fi.bands            
+                bands=bands + fi.bands
             if t_fh.RasterCount < bands :
                 print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
                 sys.exit( 1 )

@@ -112,15 +112,15 @@ class GlobalMercator(object):
 
     What coordinate conversions do we need for TMS Global Mercator tiles::
 
-         LatLon      <->       Meters      <->     Pixels    <->       Tile     
+         LatLon      <->       Meters      <->     Pixels    <->       Tile
 
      WGS84 coordinates   Spherical Mercator  Pixels in pyramid  Tiles in pyramid
-         lat/lon            XY in meters     XY pixels Z zoom      XYZ from TMS 
-        EPSG:4326           EPSG:387                                         
-         .----.              ---------               --                TMS      
-        /      \     <->     |       |     <->     /----/    <->      Google    
-        \      /             |       |           /--------/          QuadTree   
-         -----               ---------         /------------/                   
+         lat/lon            XY in meters     XY pixels Z zoom      XYZ from TMS
+        EPSG:4326           EPSG:387
+         .----.              ---------               --                TMS
+        /      \     <->     |       |     <->     /----/    <->      Google
+        \      /             |       |           /--------/          QuadTree
+         -----               ---------         /------------/
        KML, public         WebMapService         Web Clients      TileMapService
 
     What is the coordinate extent of Earth in EPSG:3857?
@@ -335,15 +335,15 @@ class GlobalGeodetic(object):
       TMS has coordinate origin (for pixels and tiles) in bottom-left corner.
       Rasters are in EPSG:4326 and therefore are compatible with Google Earth.
 
-         LatLon      <->      Pixels      <->     Tiles     
+         LatLon      <->      Pixels      <->     Tiles
 
      WGS84 coordinates   Pixels in pyramid  Tiles in pyramid
-         lat/lon         XY pixels Z zoom      XYZ from TMS 
-        EPSG:4326                                           
-         .----.                ----                         
-        /      \     <->    /--------/    <->      TMS      
-        \      /         /--------------/                   
-         -----        /--------------------/                
+         lat/lon         XY pixels Z zoom      XYZ from TMS
+        EPSG:4326
+         .----.                ----
+        /      \     <->    /--------/    <->      TMS
+        \      /         /--------------/
+         -----        /--------------------/
        WMS, KML    Web Clients, Google Earth  TileMapService
     """
 
@@ -643,7 +643,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
             if max:
                 self.tmaxz = int(max)
             else:
-                self.tmaxz = int(min) 
+                self.tmaxz = int(min)
 
         # KML generation
         self.kml = self.options.kml
@@ -685,7 +685,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
                           action="store_true", dest="quiet",
                           help="Disable messages and status to stdout")
 
-        # KML options 
+        # KML options
         g = OptionGroup(p, "KML (Google Earth) options", "Options for generated Google Earth SuperOverlay metadata")
         g.add_option("-k", "--force-kml", dest='kml', action="store_true",
                           help="Generate KML for Google Earth - default for 'geodetic' profile and 'raster' in EPSG:4326. For a dataset with different projection use with caution!")
@@ -818,9 +818,9 @@ gdal2tiles temp.vrt""" % self.input )
         # Are the reference systems the same? Reproject if necessary.
 
         self.out_ds = None
-        
+
         if self.options.profile in ('mercator', 'geodetic'):
-                        
+
             if (self.in_ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)) and (self.in_ds.GetGCPCount() == 0):
                 self.error("There is no georeference - neither affine transformation (worldfile) nor GCPs. You can generate only 'raster' profile tiles.",
                 "Either gdal2tiles with parameter -p 'raster' or use another GIS software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs")
@@ -907,7 +907,7 @@ gdal2tiles temp.vrt""" % self.input )
 
             if self.out_ds and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount))
-        
+
         if not self.out_ds:
             self.out_ds = self.in_ds
 
@@ -933,7 +933,7 @@ gdal2tiles temp.vrt""" % self.input )
             if self.options.verbose:
                 print("KML autotest OK!")
 
-        # Read the georeference 
+        # Read the georeference
 
         self.out_gt = self.out_ds.GetGeoTransform()
 
@@ -989,7 +989,7 @@ gdal2tiles temp.vrt""" % self.input )
 
             # TODO: Maps crossing 180E (Alaska?)
 
-            # Get the minimal zoom level (map covers area equivalent to one tile) 
+            # Get the minimal zoom level (map covers area equivalent to one tile)
             if self.tminz == None:
                 self.tminz = self.mercator.ZoomForPixelSize( self.out_gt[1] * max( self.out_ds.RasterXSize, self.out_ds.RasterYSize) / float(self.tilesize) )
 
@@ -1162,7 +1162,7 @@ gdal2tiles temp.vrt""" % self.input )
             xmin, ymin, xmax, ymax = self.tminmax[self.tminz]
             for x in range(xmin, xmax+1):
                 for y in range(ymin, ymax+1):
-                    children.append( [ x, y, self.tminz ] ) 
+                    children.append( [ x, y, self.tminz ] )
             # Generate Root KML
             if self.kml:
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'doc.kml')):
@@ -1500,7 +1500,7 @@ gdal2tiles temp.vrt""" % self.input )
             im1 = im.resize((tilesize,tilesize), Image.ANTIALIAS)
             if os.path.exists(tilefilename):
                 im0 = Image.open(tilefilename)
-                im1 = Image.composite(im1, im0, im1) 
+                im1 = Image.composite(im1, im0, im1)
             im1.save(tilefilename,self.tiledriver)
 
         else:
@@ -1587,9 +1587,9 @@ gdal2tiles temp.vrt""" % self.input )
             args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
             args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
 
-        if tx == 0: 
-            args['drawOrder'] = 2 * tz + 1 
-        elif tx != None: 
+        if tx == 0:
+            args['drawOrder'] = 2 * tz + 1
+        elif tx != None:
             args['drawOrder'] = 2 * tz
         else:
             args['drawOrder'] = 0
@@ -1688,7 +1688,7 @@ gdal2tiles temp.vrt""" % self.input )
         args['copyright'] = self.options.copyright
 
         s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-            <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
+            <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
               <head>
                 <title>%(title)s</title>
                 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
@@ -1723,7 +1723,7 @@ gdal2tiles temp.vrt""" % self.input )
                  * http://www.maptiler.org/google-maps-overlay-opacity-control/
                  */
 
-                var CTransparencyLENGTH = 58; 
+                var CTransparencyLENGTH = 58;
                 // maximum width that the knob can move (slide width minus knob width)
 
                 function CTransparencyControl( overlay ) {
@@ -1777,11 +1777,11 @@ gdal2tiles temp.vrt""" % self.input )
                     // Handle transparent PNG files in MSIE
                     if (this.ie) {
                       var loader = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='http://www.maptiler.org/img/opacity-slider.png', sizingMethod='crop');";
-                      this.knob = document.createElement("div"); 
+                      this.knob = document.createElement("div");
                       this.knob.style.height="21px";
                       this.knob.style.width="13px";
                   this.knob.style.overflow="hidden";
-                      this.knob_img = document.createElement("div"); 
+                      this.knob_img = document.createElement("div");
                       this.knob_img.style.height="21px";
                       this.knob_img.style.width="83px";
                       this.knob_img.style.filter=loader;
@@ -1789,7 +1789,7 @@ gdal2tiles temp.vrt""" % self.input )
                   this.knob_img.style.left="-70px";
                       this.knob.appendChild(this.knob_img);
                     } else {
-                      this.knob = document.createElement("div"); 
+                      this.knob = document.createElement("div");
                       this.knob.style.height="21px";
                       this.knob.style.width="13px";
                       this.knob.style.backgroundImage="url(http://www.maptiler.org/img/opacity-slider.png)";
@@ -1840,9 +1840,9 @@ gdal2tiles temp.vrt""" % self.input )
                 }
 
                 function resize() {
-                    var map = document.getElementById("map");  
-                    var header = document.getElementById("header");  
-                    var subheader = document.getElementById("subheader");  
+                    var map = document.getElementById("map");
+                    var header = document.getElementById("header");
+                    var subheader = document.getElementById("subheader");
                     map.style.height = (getWindowHeight()-80) + "px";
                     map.style.width = (getWindowWidth()-20) + "px";
                     header.style.width = (getWindowWidth()-20) + "px";
@@ -1939,7 +1939,7 @@ gdal2tiles temp.vrt""" % self.input )
                        else { link.setHref(url) };
                        var networkLink = ge.createNetworkLink("");
                        networkLink.setName("TMS Map Overlay");
-                       networkLink.setFlyToView(true);  
+                       networkLink.setFlyToView(true);
                        networkLink.setLink(link);
                        ge.getFeatures().appendChild(networkLink);
                    } else {
@@ -1988,7 +1988,7 @@ gdal2tiles temp.vrt""" % self.input )
         args['tileformat'] = self.tileext
         args['publishurl'] = self.options.url  # not used
         args['copyright'] = self.options.copyright.replace('"', '\\"')
-        
+
         s = """<!DOCTYPE html>
         <html lang="en">
           <head>
@@ -2004,7 +2004,7 @@ gdal2tiles temp.vrt""" % self.input )
                 body { margin:0; padding:0; }
                 body, table, tr, td, th, div, h1, h2, input { font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif; font-size: 11pt; }
                 #map { position:absolute; top:0; bottom:0; width:100%%; } /* full size */
-                .ctl { 
+                .ctl {
                     padding: 2px 10px 2px 10px;
                     background: white;
                     background: rgba(255,255,255,0.9);
@@ -2140,7 +2140,7 @@ gdal2tiles temp.vrt""" % self.input )
             #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
             #map { height: 95%%; border: 1px solid #888; }
             .olImageLoadError { display: none; }
-            .olControlLayerSwitcher .layersDiv { border-radius: 10px 0 0 10px; } 
+            .olControlLayerSwitcher .layersDiv { border-radius: 10px 0 0 10px; }
         </style>""" % args
 
         if self.options.profile == 'mercator':
@@ -2288,7 +2288,7 @@ gdal2tiles temp.vrt""" % self.input )
                       numZoomLevels: %(rasterzoomlevels)d
                   };
                   map = new OpenLayers.Map(options);
-      
+
                   var layer = new OpenLayers.Layer.TMS("TMS Layer", "",
                   {
                       serviceVersion: '.',
@@ -2323,7 +2323,7 @@ gdal2tiles temp.vrt""" % self.input )
                   if (this.map.baseLayer.CLASS_NAME === 'OpenLayers.Layer.Bing') {
                       z+=1;
                   }
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
                   if (OpenLayers.Util.isArray(url)) {
                       url = this.selectUrl(path, url);
@@ -2333,7 +2333,7 @@ gdal2tiles temp.vrt""" % self.input )
                   } else {
                       return emptyTileURL;
                   }
-              } 
+              }
           """ % args
 
         elif self.options.profile == 'geodetic':
@@ -2344,7 +2344,7 @@ gdal2tiles temp.vrt""" % self.input )
                   var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
                   var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom()%(tmsoffset)s;
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
                   if (OpenLayers.Util.isArray(url)) {
                       url = this.selectUrl(path, url);
@@ -2365,7 +2365,7 @@ gdal2tiles temp.vrt""" % self.input )
                   var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
                   var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom();
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
                   if (OpenLayers.Util.isArray(url)) {
                       url = this.selectUrl(path, url);
@@ -2395,10 +2395,10 @@ gdal2tiles temp.vrt""" % self.input )
                         return 0;
                 }
 
-                function resize() {  
-                    var map = document.getElementById("map");  
-                    var header = document.getElementById("header");  
-                    var subheader = document.getElementById("subheader");  
+                function resize() {
+                    var map = document.getElementById("map");
+                    var header = document.getElementById("header");
+                    var subheader = document.getElementById("subheader");
                     map.style.height = (getWindowHeight()-80) + "px";
                     map.style.width = (getWindowWidth()-20) + "px";
                     header.style.width = (getWindowWidth()-20) + "px";

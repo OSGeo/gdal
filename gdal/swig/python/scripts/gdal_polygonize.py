@@ -80,14 +80,14 @@ while i < len(argv):
 
     elif arg == '-8':
         options.append('8CONNECTED=8')
-        
+
     elif arg == '-nomask':
         mask = 'none'
-        
+
     elif arg == '-mask':
         i = i + 1
         mask = argv[i]
-        
+
     elif arg == '-b':
         i = i + 1
         src_band_n = int(argv[i])
@@ -114,7 +114,7 @@ if src_filename is None or dst_filename is None:
 
 if dst_layername is None:
     dst_layername = 'out'
-    
+
 # =============================================================================
 # 	Verify we have next gen bindings with the polygonize method.
 # =============================================================================
@@ -132,7 +132,7 @@ except:
 # =============================================================================
 
 src_ds = gdal.Open( src_filename )
-    
+
 if src_ds is None:
     print('Unable to open %s' % src_filename)
     sys.exit(1)
@@ -181,12 +181,12 @@ if dst_layer is None:
     if src_ds.GetProjectionRef() != '':
         srs = osr.SpatialReference()
         srs.ImportFromWkt( src_ds.GetProjectionRef() )
-        
+
     dst_layer = dst_ds.CreateLayer(dst_layername, srs = srs )
 
     if dst_fieldname is None:
         dst_fieldname = 'DN'
-        
+
     fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
     dst_layer.CreateField( fd )
     dst_field = 0
@@ -204,10 +204,10 @@ if quiet_flag:
     prog_func = None
 else:
     prog_func = gdal.TermProgress
-    
+
 result = gdal.Polygonize( srcband, maskband, dst_layer, dst_field, options,
                           callback = prog_func )
-    
+
 srcband = None
 src_ds = None
 dst_ds = None

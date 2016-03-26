@@ -128,13 +128,13 @@ while i < len(argv):
 
 if src_filename is None or dst_filename is None:
     Usage()
-    
+
 # =============================================================================
 #    Open source file
 # =============================================================================
 
 src_ds = gdal.Open( src_filename )
-    
+
 if src_ds is None:
     print('Unable to open %s' % src_filename)
     sys.exit(1)
@@ -166,7 +166,7 @@ if dst_ds is None:
 
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
     dst_ds.SetProjection( src_ds.GetProjectionRef() )
-    
+
     dstband = dst_ds.GetRasterBand(1)
 
 # =============================================================================
@@ -177,10 +177,10 @@ if quiet_flag:
     prog_func = None
 else:
     prog_func = gdal.TermProgress
-    
+
 gdal.ComputeProximity( srcband, dstband, options,
                        callback = prog_func )
-    
+
 srcband = None
 dstband = None
 src_ds = None

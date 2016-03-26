@@ -116,7 +116,7 @@ def compare_band(golden_band, new_band, id, options=[]):
     for i in range(golden_band.GetOverviewCount()):
       found_diff += compare_band(golden_band.GetOverview(i),
                    new_band.GetOverview(i),
-                   id + ' overview ' + str(i), 
+                   id + ' overview ' + str(i),
                    options)
 
   # Metadata
@@ -181,14 +181,14 @@ def compare_db(golden_db, new_db, options=[]):
     print('Band count mismatch (golden=%d, new=%d)' \
         % (golden_db.RasterCount, new_db.RasterCount))
     found_diff += 1
-  
+
   # Dimensions
   for i in range(golden_db.RasterCount):
       gSzX = golden_db.GetRasterBand(i+1).XSize
       nSzX = new_db.GetRasterBand(i+1).XSize
       gSzY = golden_db.GetRasterBand(i+1).YSize
       nSzY = new_db.GetRasterBand(i+1).YSize
-      
+
       if gSzX != nSzX or gSzY != nSzY:
           print('Band size mismatch (band=%d golden=[%d,%d], new=[%d,%d])' %
                 (i, gSzX, gSzY, nSzX, nSzY))
@@ -207,7 +207,7 @@ def compare_db(golden_db, new_db, options=[]):
 #######################################################
 def compare_sds(golden_db, new_db, options=[]):
   found_diff = 0
-  
+
   golden_sds = golden_db.GetMetadata('SUBDATASETS')
   new_sds = new_db.GetMetadata('SUBDATASETS')
 
@@ -225,7 +225,7 @@ def compare_sds(golden_db, new_db, options=[]):
             % (sds_diff, golden_sds[key],new_sds[key]))
 
   return found_diff
-  
+
 #######################################################
 def Usage():
   print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
@@ -277,7 +277,7 @@ if __name__ == '__main__':
   # compare raw binary files.
   try:
     os.stat(golden_file)
-    
+
     if not filecmp.cmp(golden_file,new_file):
       print('Files differ at the binary level.')
       found_diff += 1
@@ -291,7 +291,7 @@ if __name__ == '__main__':
 
   if check_sds:
     found_diff += compare_sds(golden_db, new_db)
-    
+
   print('Differences Found: ' + str(found_diff))
 
   sys.exit(found_diff)

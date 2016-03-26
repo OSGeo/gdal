@@ -124,9 +124,9 @@ else:
     print('')
     print('Enter authorization token:')
     auth_token = sys.stdin.readline()
-    
+
     refresh_token = gdal.GOA2GetRefreshToken(auth_token, scope)
-    
+
     print('Refresh Token:'+refresh_token)
     print('')
     print('Consider setting a configuration option like:')

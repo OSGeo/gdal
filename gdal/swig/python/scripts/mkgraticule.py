@@ -105,14 +105,14 @@ while i < len(sys.argv):
         Usage()
 
     i = i + 1
-    
+
 if outfile is None:
     outfile = "graticule.shp"
 
 
 if substepsize > stepsize:
     substepsize = stepsize
-    
+
 #############################################################################-
 # Do we have an alternate SRS?
 
@@ -185,7 +185,7 @@ if not connected:
                 feat.SetGeometry( geom )
                 layer.CreateFeature( feat )
 
-                
+
 #########################################################################
 # Connected case - produce one polyline for each complete line of latitude
 # or longitude.
@@ -199,14 +199,14 @@ if connected:
     for lat in float_range(ymin,ymax+stepsize/2,stepsize):
 
         geom = ogr.Geometry( type = ogr.wkbLineString )
-        
+
         for long_ in float_range(xmin,xmax+substepsize/2,substepsize):
             geom.AddPoint( long_, lat )
 
         err = 0
         if ct is not None:
             err = geom.Transform( ct )
-              
+
         if err is 0:
             feat.SetGeometry( geom )
             layer.CreateFeature( feat )
@@ -215,9 +215,9 @@ if connected:
     # Generate lines of longitude
 
     for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
-        
+
         geom = ogr.Geometry( type = ogr.wkbLineString )
-        
+
         for lat in float_range(ymin,ymax+substepsize/2,substepsize):
             geom.AddPoint( long_, lat )
 
@@ -228,7 +228,7 @@ if connected:
         if err is 0:
             feat.SetGeometry( geom )
             layer.CreateFeature( feat )
-                
+
 #############################################################################
 # Cleanup
 

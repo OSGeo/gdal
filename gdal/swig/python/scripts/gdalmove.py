@@ -75,16 +75,16 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
             (orig_gt[0] + item[0] * orig_gt[1] + item[1] * orig_gt[2],
              orig_gt[3] + item[0] * orig_gt[4] + item[1] * orig_gt[5],
              item[2]) )
-        
+
     # -------------------------------------------------------------------------
-    # Prepare a transformation from source to destination srs. 
+    # Prepare a transformation from source to destination srs.
     # -------------------------------------------------------------------------
     if s_srs is None:
         s_srs = ds.GetProjectionRef()
 
     s_srs_obj = osr.SpatialReference()
     s_srs_obj.SetFromUserInput( s_srs )
-    
+
     t_srs_obj = osr.SpatialReference()
     t_srs_obj.SetFromUserInput( t_srs )
 
@@ -93,9 +93,9 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
     # -------------------------------------------------------------------------
     # Transform the corners
     # -------------------------------------------------------------------------
-    
+
     corners_t_geo = tr.TransformPoints( corners_s_geo )
-    
+
     # -------------------------------------------------------------------------
     #  Compute a new geotransform for the image in the target SRS.  For now
     #  we just use the top left, top right, and bottom left to produce the
@@ -103,12 +103,12 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
     #  definition, but if the underlying transformation is not affine it will
     #  be wrong at the center and bottom right.  It would be better if we
     #  used all five points for a least squares fit but that is a bit beyond
-    #  me for now. 
+    #  me for now.
     # -------------------------------------------------------------------------
     ul = corners_t_geo[0]
     ur = corners_t_geo[2]
     ll = corners_t_geo[1]
-    
+
     new_gt = (ul[0],
               (ur[0] - ul[0]) / ds.RasterXSize,
               (ll[0] - ul[0]) / ds.RasterYSize,
@@ -117,7 +117,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
               (ll[1] - ul[1]) / ds.RasterYSize)
 
     inv_new_gt = gdal.InvGeoTransform( new_gt )
-    
+
     # -------------------------------------------------------------------------
     #  Report results for the five locations.
     # -------------------------------------------------------------------------
@@ -126,13 +126,13 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
     error_geo = []
     error_pixel_line = []
     corners_pixel_line_new = []
-    
+
     print('___Corner___ ________Original________  _______Adjusted_________   ______ Err (geo) ______ _Err (pix)_')
 
     for i in range(len(corners_s_geo)):
 
         item = corners_pixel_line[i]
-        corners_t_new_geo.append( 
+        corners_t_new_geo.append(
             (new_gt[0] + item[0] * new_gt[1] + item[1] * new_gt[2],
              new_gt[3] + item[0] * new_gt[4] + item[1] * new_gt[5],
              item[2]) )
@@ -195,7 +195,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
     else:
         print("""Maximum check point error is %.5f pixels which exceeds the
 error threshold so the file has not been updated.""" % max_error)
-    
+
     ds = None
 
 ###############################################################################
@@ -205,20 +205,20 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
             [-et <max_pixel_err>] target_file
 """)
     sys.exit(1)
-    
+
 #############################################################################
 # Main
 
 def main():
     # Default GDAL argument parsing.
-    
+
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
         sys.exit( 0 )
 
     if len(argv) == 1:
         Usage()
-        
+
     # Script argument defaults
     s_srs = None
     t_srs = None
