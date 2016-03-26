@@ -163,7 +163,7 @@ class Network(MajorObject):
 
     def CreateLayer(self, *args, **kwargs):
         """
-        CreateLayer(Network self, char const * name, OSRSpatialReferenceShadow * srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+        CreateLayer(Network self, char const * name, OSRSpatialReferenceShadow * srs=None, OGRwkbGeometryType geom_type=wkbUnknown,
             char ** options=None) -> OGRLayerShadow *
         """
         return _gnm.Network_CreateLayer(self, *args, **kwargs)
@@ -221,7 +221,7 @@ class GenericNetwork(Network):
     __del__ = lambda self : None;
     def ConnectFeatures(self, *args):
         """
-        ConnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost, 
+        ConnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost,
             GNMDirection eDir) -> CPLErr
         """
         return _gnm.GenericNetwork_ConnectFeatures(self, *args)
@@ -236,7 +236,7 @@ class GenericNetwork(Network):
 
     def ReconnectFeatures(self, *args):
         """
-        ReconnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost, 
+        ReconnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost,
             GNMDirection eDir) -> CPLErr
         """
         return _gnm.GenericNetwork_ReconnectFeatures(self, *args)

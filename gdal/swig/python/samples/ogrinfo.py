@@ -213,7 +213,7 @@ def main(argv = None):
             print( "layer names ignored in combination with -sql." )
 
         if pszGeomField is None:
-            poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+            poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter,
                                             pszDialect )
         else:
             poResultSet = poDS.ExecuteSQL( pszSQLStatement, None, pszDialect )

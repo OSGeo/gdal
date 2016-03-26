@@ -282,7 +282,7 @@ class StyleTable(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, StyleTable, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(OGRStyleTableShadow self) -> StyleTable"""
         this = _ogr.new_StyleTable(*args)
         try: self.this.append(this)
@@ -430,7 +430,7 @@ class Driver(MajorObject):
 
         NULL on error or if the pass name is not supported by this driver,
         otherwise an handle to a GDALDataset. This GDALDataset should be
-        closed by deleting the object when it is no longer needed. 
+        closed by deleting the object when it is no longer needed.
         """
         return _ogr.Driver_Open(self, *args, **kwargs)
 
@@ -461,7 +461,7 @@ class Driver(MajorObject):
         pszDataSource:  the name of the datasource to delete.
 
         OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this is
-        not supported by this driver. 
+        not supported by this driver.
         """
         return _ogr.Driver_DeleteDataSource(self, *args)
 
@@ -497,7 +497,7 @@ class Driver(MajorObject):
 
         pszCap:  the capability to test.
 
-        TRUE if capability available otherwise FALSE. 
+        TRUE if capability available otherwise FALSE.
         """
         return _ogr.Driver_TestCapability(self, *args)
 
@@ -521,7 +521,7 @@ class Driver(MajorObject):
         hDriver:  handle to the driver to get the name from.
 
         driver name. This is an internal string and should not be modified or
-        freed. 
+        freed.
         """
         return _ogr.Driver_GetName(self, *args)
 
@@ -555,7 +555,7 @@ class DataSource(MajorObject):
         GetRefCount(DataSource self) -> int
 
         int
-        OGR_DS_GetRefCount(OGRDataSourceH hDataSource) 
+        OGR_DS_GetRefCount(OGRDataSourceH hDataSource)
         """
         return _ogr.DataSource_GetRefCount(self, *args)
 
@@ -564,7 +564,7 @@ class DataSource(MajorObject):
         GetSummaryRefCount(DataSource self) -> int
 
         int
-        OGR_DS_GetSummaryRefCount(OGRDataSourceH hDataSource) 
+        OGR_DS_GetSummaryRefCount(OGRDataSourceH hDataSource)
         """
         return _ogr.DataSource_GetSummaryRefCount(self, *args)
 
@@ -585,7 +585,7 @@ class DataSource(MajorObject):
         hDS:  handle to the data source from which to get the number of
         layers.
 
-        layer count. 
+        layer count.
         """
         return _ogr.DataSource_GetLayerCount(self, *args)
 
@@ -610,7 +610,7 @@ class DataSource(MajorObject):
         hDS:  handle to the datasource
 
         NULL if driver info is not available, or pointer to a driver owned by
-        the OGRSFDriverManager. 
+        the OGRSFDriverManager.
         """
         return _ogr.DataSource_GetDriver(self, *args)
 
@@ -636,7 +636,7 @@ class DataSource(MajorObject):
         hDS:  handle to the data source to get the name from.
 
         pointer to an internal name string which should not be modified or
-        freed by the caller. 
+        freed by the caller.
         """
         return _ogr.DataSource_GetName(self, *args)
 
@@ -662,7 +662,7 @@ class DataSource(MajorObject):
         iLayer:  the index of the layer to delete.
 
         OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
-        layers is not supported for this datasource. 
+        layers is not supported for this datasource.
         """
         return _ogr.DataSource_DeleteLayer(self, *args)
 
@@ -671,7 +671,7 @@ class DataSource(MajorObject):
         SyncToDisk(DataSource self) -> OGRErr
 
         OGRErr
-        OGR_DS_SyncToDisk(OGRDataSourceH hDS) 
+        OGR_DS_SyncToDisk(OGRDataSourceH hDS)
         """
         return _ogr.DataSource_SyncToDisk(self, *args)
 
@@ -681,7 +681,7 @@ class DataSource(MajorObject):
 
     def CreateLayer(self, *args, **kwargs):
         """
-        CreateLayer(DataSource self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+        CreateLayer(DataSource self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown,
             char ** options=None) -> Layer
 
         OGRLayerH
@@ -717,7 +717,7 @@ class DataSource(MajorObject):
         url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRLayer handle on success.
-        Example: 
+        Example:
         """
         return _ogr.DataSource_CreateLayer(self, *args, **kwargs)
 
@@ -752,7 +752,7 @@ class DataSource(MajorObject):
         papszOptions:  a StringList of name=value options. Options are driver
         specific.
 
-        an handle to the layer, or NULL if an error occurs. 
+        an handle to the layer, or NULL if an error occurs.
         """
         return _ogr.DataSource_CopyLayer(self, *args, **kwargs)
 
@@ -782,7 +782,7 @@ class DataSource(MajorObject):
         pszLayerName:  Layer the layer name of the layer to fetch.
 
         an handle to the layer, or NULL if the layer is not found or an error
-        occurs. 
+        occurs.
         """
         return _ogr.DataSource_GetLayerByName(self, *args)
 
@@ -822,7 +822,7 @@ class DataSource(MajorObject):
 
         pszCapability:  the capability to test.
 
-        TRUE if capability available otherwise FALSE. 
+        TRUE if capability available otherwise FALSE.
         """
         return _ogr.DataSource_TestCapability(self, *args)
 
@@ -868,7 +868,7 @@ class DataSource(MajorObject):
         used.
 
         an handle to a OGRLayer containing the results of the query.
-        Deallocate with OGR_DS_ReleaseResultSet(). 
+        Deallocate with OGR_DS_ReleaseResultSet().
         """
         return _ogr.DataSource_ExecuteSQL(self, *args, **kwargs)
 
@@ -903,7 +903,7 @@ class DataSource(MajorObject):
         GetStyleTable(DataSource self) -> StyleTable
 
         OGRStyleTableH
-        OGR_DS_GetStyleTable(OGRDataSourceH hDS) 
+        OGR_DS_GetStyleTable(OGRDataSourceH hDS)
         """
         return _ogr.DataSource_GetStyleTable(self, *args)
 
@@ -1013,7 +1013,7 @@ class Layer(MajorObject):
         GetRefCount(Layer self) -> int
 
         int OGR_L_GetRefCount(OGRLayerH
-        hLayer) 
+        hLayer)
         """
         return _ogr.Layer_GetRefCount(self, *args)
 
@@ -1056,7 +1056,7 @@ class Layer(MajorObject):
 
         hGeom:  handle to the geometry to use as a filtering region. NULL may
         be passed indicating that the current spatial filter should be
-        cleared, but no new one instituted. 
+        cleared, but no new one instituted.
         """
         return _ogr.Layer_SetSpatialFilter(self, *args)
 
@@ -1098,7 +1098,7 @@ class Layer(MajorObject):
 
         dfMaxX:  the maximum X coordinate for the rectangular region.
 
-        dfMaxY:  the maximum Y coordinate for the rectangular region. 
+        dfMaxY:  the maximum Y coordinate for the rectangular region.
         """
         return _ogr.Layer_SetSpatialFilterRect(self, *args)
 
@@ -1122,7 +1122,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer to get the spatial filter from.
 
-        an handle to the spatial filter geometry. 
+        an handle to the spatial filter geometry.
         """
         return _ogr.Layer_GetSpatialFilter(self, *args)
 
@@ -1163,7 +1163,7 @@ class Layer(MajorObject):
         current query.
 
         OGRERR_NONE if successfully installed, or an error code if the query
-        expression is in error, or some other failure occurs. 
+        expression is in error, or some other failure occurs.
         """
         return _ogr.Layer_SetAttributeFilter(self, *args)
 
@@ -1183,7 +1183,7 @@ class Layer(MajorObject):
         Parameters:
         -----------
 
-        hLayer:  handle to the layer on which features are read. 
+        hLayer:  handle to the layer on which features are read.
         """
         return _ogr.Layer_ResetReading(self, *args)
 
@@ -1210,7 +1210,7 @@ class Layer(MajorObject):
 
         the layer name (must not been freed)
 
-        OGR 1.8.0 
+        OGR 1.8.0
         """
         return _ogr.Layer_GetName(self, *args)
 
@@ -1243,7 +1243,7 @@ class Layer(MajorObject):
 
         the geometry type
 
-        OGR 1.8.0 
+        OGR 1.8.0
         """
         return _ogr.Layer_GetGeomType(self, *args)
 
@@ -1270,7 +1270,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer
 
-        geometry column name. 
+        geometry column name.
         """
         return _ogr.Layer_GetGeometryColumn(self, *args)
 
@@ -1291,7 +1291,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer
 
-        fid column name. 
+        fid column name.
         """
         return _ogr.Layer_GetFIDColumn(self, *args)
 
@@ -1333,7 +1333,7 @@ class Layer(MajorObject):
 
         nFeatureId:  the feature id of the feature to read.
 
-        an handle to a feature now owned by the caller, or NULL on failure. 
+        an handle to a feature now owned by the caller, or NULL on failure.
         """
         return _ogr.Layer_GetFeature(self, *args)
 
@@ -1376,7 +1376,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer from which feature are read.
 
-        an handle to a feature, or NULL if no more features are available. 
+        an handle to a feature, or NULL if no more features are available.
         """
         return _ogr.Layer_GetNextFeature(self, *args)
 
@@ -1413,7 +1413,7 @@ class Layer(MajorObject):
         nIndex:  the index indicating how many steps into the result set to
         seek.
 
-        OGRERR_NONE on success or an error code. 
+        OGRERR_NONE on success or an error code.
         """
         return _ogr.Layer_SetNextByIndex(self, *args)
 
@@ -1472,7 +1472,7 @@ class Layer(MajorObject):
 
         hFeat:  the handle of the feature to write to disk.
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE on success.
         """
         return _ogr.Layer_CreateFeature(self, *args)
 
@@ -1535,7 +1535,7 @@ class Layer(MajorObject):
         hLayer:  handle to the layer
 
         OGRERR_NONE if no error occurs (even if nothing is done) or an error
-        code. 
+        code.
         """
         return _ogr.Layer_SyncToDisk(self, *args)
 
@@ -1559,7 +1559,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer to get the schema information.
 
-        an handle to the feature definition. 
+        an handle to the feature definition.
         """
         return _ogr.Layer_GetLayerDefn(self, *args)
 
@@ -1596,7 +1596,7 @@ class Layer(MajorObject):
         bForce:  Flag indicating whether the count should be computed even if
         it is expensive.
 
-        feature count, -1 if count not known. 
+        feature count, -1 if count not known.
         """
         return _ogr.Layer_GetFeatureCount(self, *args, **kwargs)
 
@@ -1637,7 +1637,7 @@ class Layer(MajorObject):
         bForce:  Flag indicating whether the extent should be computed even if
         it is expensive.
 
-        OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+        OGRERR_NONE on success, OGRERR_FAILURE if extent not known.
         """
         return _ogr.Layer_GetExtent(self, *args, **kwargs)
 
@@ -1734,7 +1734,7 @@ class Layer(MajorObject):
         pszCap:  the name of the capability to test.
 
         TRUE if the layer has the requested capability, or FALSE otherwise.
-        OGRLayers will return FALSE for any unrecognized capabilities. 
+        OGRLayers will return FALSE for any unrecognized capabilities.
         """
         return _ogr.Layer_TestCapability(self, *args)
 
@@ -1779,7 +1779,7 @@ class Layer(MajorObject):
         bApproxOK:  If TRUE, the field may be created in a slightly different
         form depending on the limitations of the format driver.
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE on success.
         """
         return _ogr.Layer_CreateField(self, *args, **kwargs)
 
@@ -1818,7 +1818,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Layer_DeleteField(self, *args)
 
@@ -1873,7 +1873,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Layer_ReorderField(self, *args)
 
@@ -1921,7 +1921,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Layer_ReorderFields(self, *args)
 
@@ -1971,7 +1971,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Layer_AlterFieldDefn(self, *args)
 
@@ -2018,7 +2018,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.11 
+        OGR 1.11
         """
         return _ogr.Layer_CreateGeomField(self, *args, **kwargs)
 
@@ -2050,7 +2050,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE on success.
         """
         return _ogr.Layer_StartTransaction(self, *args)
 
@@ -2076,7 +2076,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE on success.
         """
         return _ogr.Layer_CommitTransaction(self, *args)
 
@@ -2103,7 +2103,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE on success.
         """
         return _ogr.Layer_RollbackTransaction(self, *args)
 
@@ -2127,7 +2127,7 @@ class Layer(MajorObject):
 
         This method is the same as the C++ method OGRLayer::FindFieldIndex().
 
-        field index, or -1 if the field doesn't exist 
+        field index, or -1 if the field doesn't exist
         """
         return _ogr.Layer_FindFieldIndex(self, *args)
 
@@ -2150,7 +2150,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer to get the spatial reference from.
 
-        spatial reference, or NULL if there isn't one. 
+        spatial reference, or NULL if there isn't one.
         """
         return _ogr.Layer_GetSpatialRef(self, *args)
 
@@ -2159,7 +2159,7 @@ class Layer(MajorObject):
         GetFeaturesRead(Layer self) -> GIntBig
 
         GIntBig
-        OGR_L_GetFeaturesRead(OGRLayerH hLayer) 
+        OGR_L_GetFeaturesRead(OGRLayerH hLayer)
         """
         return _ogr.Layer_GetFeaturesRead(self, *args)
 
@@ -2193,13 +2193,13 @@ class Layer(MajorObject):
         is passed, the ignored list is cleared.
 
         OGRERR_NONE if all field names have been resolved (even if the driver
-        does not support this method) 
+        does not support this method)
         """
         return _ogr.Layer_SetIgnoredFields(self, *args)
 
     def Intersection(self, *args, **kwargs):
         """
-        Intersection(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Intersection(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr
@@ -2272,13 +2272,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Intersection(self, *args, **kwargs)
 
     def Union(self, *args, **kwargs):
         """
-        Union(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Union(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr OGR_L_Union(OGRLayerH
@@ -2347,13 +2347,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Union(self, *args, **kwargs)
 
     def SymDifference(self, *args, **kwargs):
         """
-        SymDifference(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        SymDifference(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr
@@ -2419,13 +2419,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_SymDifference(self, *args, **kwargs)
 
     def Identity(self, *args, **kwargs):
         """
-        Identity(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Identity(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr OGR_L_Identity(OGRLayerH
@@ -2492,13 +2492,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Identity(self, *args, **kwargs)
 
     def Update(self, *args, **kwargs):
         """
-        Update(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Update(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr OGR_L_Update(OGRLayerH
@@ -2563,13 +2563,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Update(self, *args, **kwargs)
 
     def Clip(self, *args, **kwargs):
         """
-        Clip(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Clip(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr OGR_L_Clip(OGRLayerH pLayerInput,
@@ -2627,13 +2627,13 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Clip(self, *args, **kwargs)
 
     def Erase(self, *args, **kwargs):
         """
-        Erase(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
+        Erase(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> OGRErr
 
         OGRErr OGR_L_Erase(OGRLayerH
@@ -2690,7 +2690,7 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Layer_Erase(self, *args, **kwargs)
 
@@ -2699,7 +2699,7 @@ class Layer(MajorObject):
         GetStyleTable(Layer self) -> StyleTable
 
         OGRStyleTableH
-        OGR_L_GetStyleTable(OGRLayerH hLayer) 
+        OGR_L_GetStyleTable(OGRLayerH hLayer)
         """
         return _ogr.Layer_GetStyleTable(self, *args)
 
@@ -2708,7 +2708,7 @@ class Layer(MajorObject):
         SetStyleTable(Layer self, StyleTable table)
 
         void
-        OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) 
+        OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
         """
         return _ogr.Layer_SetStyleTable(self, *args)
 
@@ -2796,7 +2796,7 @@ class Feature(_object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_Feature
     __del__ = lambda self : None;
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(OGRFeatureShadow self, FeatureDefn feature_def) -> Feature"""
         this = _ogr.new_Feature(*args, **kwargs)
         try: self.this.append(this)
@@ -2846,7 +2846,7 @@ class Feature(_object):
 
         OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
         geometry type is illegal for the OGRFeatureDefn (checking not yet
-        implemented). 
+        implemented).
         """
         return _ogr.Feature_SetGeometry(self, *args)
 
@@ -2875,7 +2875,7 @@ class Feature(_object):
 
         OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
         geometry type is illegal for the OGRFeatureDefn (checking not yet
-        implemented). 
+        implemented).
         """
         return _ogr.Feature_SetGeometryDirectly(self, *args)
 
@@ -2897,7 +2897,7 @@ class Feature(_object):
         hFeat:  handle to the feature to get geometry from.
 
         an handle to internal feature geometry. This object should not be
-        modified. 
+        modified.
         """
         return _ogr.Feature_GetGeometryRef(self, *args)
 
@@ -2928,7 +2928,7 @@ class Feature(_object):
 
         OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
         geometry type is illegal for the OGRFeatureDefn (checking not yet
-        implemented). 
+        implemented).
         """
         return _ogr.Feature_SetGeomField(self, *args)
 
@@ -2963,7 +2963,7 @@ class Feature(_object):
         or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for
         the OGRFeatureDefn (checking not yet implemented).
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.Feature_SetGeomFieldDirectly(self, *args)
 
@@ -2990,7 +2990,7 @@ class Feature(_object):
         an handle to internal feature geometry. This object should not be
         modified.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.Feature_GetGeomFieldRef(self, *args)
 
@@ -3013,7 +3013,7 @@ class Feature(_object):
 
         hFeat:  handle to the feature to clone.
 
-        an handle to the new feature, exactly matching this feature. 
+        an handle to the new feature, exactly matching this feature.
         """
         return _ogr.Feature_Clone(self, *args)
 
@@ -3039,7 +3039,7 @@ class Feature(_object):
 
         hOtherFeat:  handle to the other feature to test this one against.
 
-        TRUE if they are equal, otherwise FALSE. 
+        TRUE if they are equal, otherwise FALSE.
         """
         return _ogr.Feature_Equal(self, *args)
 
@@ -3061,7 +3061,7 @@ class Feature(_object):
 
         hFeat:  handle to the feature to get the fields count from.
 
-        count of fields. 
+        count of fields.
         """
         return _ogr.Feature_GetFieldCount(self, *args)
 
@@ -3086,7 +3086,7 @@ class Feature(_object):
         i:  the field to fetch, from 0 to GetFieldCount()-1.
 
         an handle to the field definition (from the OGRFeatureDefn). This is
-        an internal reference, and should not be deleted or modified. 
+        an internal reference, and should not be deleted or modified.
         """
         return _ogr.Feature_GetFieldDefnRef(self, *args)
 
@@ -3110,7 +3110,7 @@ class Feature(_object):
 
         count of geometry fields.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.Feature_GetGeomFieldCount(self, *args)
 
@@ -3137,7 +3137,7 @@ class Feature(_object):
         an handle to the field definition (from the OGRFeatureDefn). This is
         an internal reference, and should not be deleted or modified.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.Feature_GetGeomFieldDefnRef(self, *args)
 
@@ -3166,7 +3166,7 @@ class Feature(_object):
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
         the field value. This string is internal, and should not be modified,
-        or freed. Its lifetime may be very brief. 
+        or freed. Its lifetime may be very brief.
         """
         return _ogr.Feature_GetFieldAsString(self, *args)
 
@@ -3194,7 +3194,7 @@ class Feature(_object):
 
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
-        the field value. 
+        the field value.
         """
         return _ogr.Feature_GetFieldAsInteger(self, *args)
 
@@ -3225,7 +3225,7 @@ class Feature(_object):
 
         the field value.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_GetFieldAsInteger64(self, *args)
 
@@ -3253,7 +3253,7 @@ class Feature(_object):
 
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
-        the field value. 
+        the field value.
         """
         return _ogr.Feature_GetFieldAsDouble(self, *args)
 
@@ -3300,7 +3300,7 @@ class Feature(_object):
         TRUE on success or FALSE on failure.
 
         See:  Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond
-        accuracy. 
+        accuracy.
         """
         return _ogr.Feature_GetFieldAsDateTime(self, *args)
 
@@ -3331,7 +3331,7 @@ class Feature(_object):
 
         the field value. This list is internal, and should not be modified, or
         freed. Its lifetime may be very brief. If *pnCount is zero on return
-        the returned pointer may be NULL or non-NULL. 
+        the returned pointer may be NULL or non-NULL.
         """
         return _ogr.Feature_GetFieldAsIntegerList(self, *args)
 
@@ -3363,7 +3363,7 @@ class Feature(_object):
         freed. Its lifetime may be very brief. If *pnCount is zero on return
         the returned pointer may be NULL or non-NULL.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_GetFieldAsInteger64List(self, *args)
 
@@ -3394,7 +3394,7 @@ class Feature(_object):
 
         the field value. This list is internal, and should not be modified, or
         freed. Its lifetime may be very brief. If *pnCount is zero on return
-        the returned pointer may be NULL or non-NULL. 
+        the returned pointer may be NULL or non-NULL.
         """
         return _ogr.Feature_GetFieldAsDoubleList(self, *args)
 
@@ -3423,7 +3423,7 @@ class Feature(_object):
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
         the field value. This list is internal, and should not be modified, or
-        freed. Its lifetime may be very brief. 
+        freed. Its lifetime may be very brief.
         """
         return _ogr.Feature_GetFieldAsStringList(self, *args)
 
@@ -3452,7 +3452,7 @@ class Feature(_object):
         pnBytes:  location to place count of bytes returned.
 
         the field value. This list is internal, and should not be modified, or
-        freed. Its lifetime may be very brief. 
+        freed. Its lifetime may be very brief.
         """
         return _ogr.Feature_GetFieldAsBinary(self, *args)
 
@@ -3475,7 +3475,7 @@ class Feature(_object):
 
         iField:  the field to test.
 
-        TRUE if the field has been set, otherwise false. 
+        TRUE if the field has been set, otherwise false.
         """
         return _ogr.Feature_IsFieldSet(self, *args)
 
@@ -3500,7 +3500,7 @@ class Feature(_object):
 
         pszName:  the name of the field to search for.
 
-        the field index, or -1 if no matching field is found. 
+        the field index, or -1 if no matching field is found.
         """
         return _ogr.Feature_GetFieldIndex(self, *args)
 
@@ -3528,7 +3528,7 @@ class Feature(_object):
         the geometry field index, or -1 if no matching geometry field is
         found.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.Feature_GetGeomFieldIndex(self, *args)
 
@@ -3551,7 +3551,7 @@ class Feature(_object):
         hFeat:  handle to the feature from which to get the feature
         identifier.
 
-        feature id or OGRNullFID if none has been assigned. 
+        feature id or OGRNullFID if none has been assigned.
         """
         return _ogr.Feature_GetFID(self, *args)
 
@@ -3578,7 +3578,7 @@ class Feature(_object):
 
         nFID:  the new feature identifier value to assign.
 
-        On success OGRERR_NONE, or on failure some other value. 
+        On success OGRERR_NONE, or on failure some other value.
         """
         return _ogr.Feature_SetFID(self, *args)
 
@@ -3603,7 +3603,7 @@ class Feature(_object):
 
         hFeat:  handle to the feature to dump.
 
-        fpOut:  the stream to write to, such as strout. 
+        fpOut:  the stream to write to, such as strout.
         """
         return _ogr.Feature_DumpReadable(self, *args)
 
@@ -3624,7 +3624,7 @@ class Feature(_object):
 
         hFeat:  handle to the feature on which the field is.
 
-        iField:  the field to unset. 
+        iField:  the field to unset.
         """
         return _ogr.Feature_UnsetField(self, *args)
 
@@ -3653,7 +3653,7 @@ class Feature(_object):
 
         nValue:  the value to assign.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_SetFieldInteger64(self, *args)
 
@@ -3664,7 +3664,7 @@ class Feature(_object):
         SetField(Feature self, int id, double value)
         SetField(Feature self, char const * name, double value)
         SetField(Feature self, int id, int year, int month, int day, int hour, int minute, float second, int tzflag)
-        SetField(Feature self, char const * name, int year, int month, int day, int hour, int minute, float second, 
+        SetField(Feature self, char const * name, int year, int month, int day, int hour, int minute, float second,
             int tzflag)
         """
         return _ogr.Feature_SetField(self, *args)
@@ -3693,7 +3693,7 @@ class Feature(_object):
 
         nCount:  the number of values in the list being assigned.
 
-        panValues:  the values to assign. 
+        panValues:  the values to assign.
         """
         return _ogr.Feature_SetFieldIntegerList(self, *args)
 
@@ -3723,7 +3723,7 @@ class Feature(_object):
 
         panValues:  the values to assign.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_SetFieldInteger64List(self, *args)
 
@@ -3751,7 +3751,7 @@ class Feature(_object):
 
         nCount:  the number of values in the list being assigned.
 
-        padfValues:  the values to assign. 
+        padfValues:  the values to assign.
         """
         return _ogr.Feature_SetFieldDoubleList(self, *args)
 
@@ -3776,7 +3776,7 @@ class Feature(_object):
 
         iField:  the field to set, from 0 to GetFieldCount()-1.
 
-        papszValues:  the values to assign. 
+        papszValues:  the values to assign.
         """
         return _ogr.Feature_SetFieldStringList(self, *args)
 
@@ -3816,7 +3816,7 @@ class Feature(_object):
         output fields matching some of the source fields.
 
         OGRERR_NONE if the operation succeeds, even if some values are not
-        transferred, otherwise an error code. 
+        transferred, otherwise an error code.
         """
         return _ogr.Feature_SetFrom(self, *args, **kwargs)
 
@@ -3859,7 +3859,7 @@ class Feature(_object):
         output fields matching some of the source fields.
 
         OGRERR_NONE if the operation succeeds, even if some values are not
-        transferred, otherwise an error code. 
+        transferred, otherwise an error code.
         """
         return _ogr.Feature_SetFromWithMap(self, *args)
 
@@ -3885,7 +3885,7 @@ class Feature(_object):
         hFeat:  handle to the feature to get the style from.
 
         a reference to a representation in string format, or NULL if there
-        isn't one. 
+        isn't one.
         """
         return _ogr.Feature_GetStyleString(self, *args)
 
@@ -3954,7 +3954,7 @@ class Feature(_object):
 
         TRUE if all enabled validation tests pass.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_Validate(self, *args)
 
@@ -3981,7 +3981,7 @@ class Feature(_object):
 
         papszOptions:  unused currently. Must be set to NULL.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Feature_FillUnsetWithDefault(self, *args)
 
@@ -4151,7 +4151,7 @@ class Feature(_object):
 
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
-        pszValue:  the value to assign. 
+        pszValue:  the value to assign.
         """
         return _ogr.Feature_SetFieldString(self, *args)
 
@@ -4408,7 +4408,7 @@ class FeatureDefn(_object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_FeatureDefn
     __del__ = lambda self : None;
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(OGRFeatureDefnShadow self, char const * name_null_ok=None) -> FeatureDefn"""
         this = _ogr.new_FeatureDefn(*args, **kwargs)
         try: self.this.append(this)
@@ -4450,7 +4450,7 @@ class FeatureDefn(_object):
 
         hDefn:  handle to the feature definition to get the fields count from.
 
-        count of fields. 
+        count of fields.
         """
         return _ogr.FeatureDefn_GetFieldCount(self, *args)
 
@@ -4505,7 +4505,7 @@ class FeatureDefn(_object):
 
         pszFieldName:  the field name to search for.
 
-        the field index, or -1 if no match found. 
+        the field index, or -1 if no match found.
         """
         return _ogr.FeatureDefn_GetFieldIndex(self, *args)
 
@@ -4534,7 +4534,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition to add the field definition
         to.
 
-        hNewField:  handle to the new field definition. 
+        hNewField:  handle to the new field definition.
         """
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 
@@ -4557,7 +4557,7 @@ class FeatureDefn(_object):
 
         count of geometry fields.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.FeatureDefn_GetGeomFieldCount(self, *args)
 
@@ -4585,7 +4585,7 @@ class FeatureDefn(_object):
         an handle to an internal field definition object or NULL if invalid
         index. This object should not be modified or freed by the application.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.FeatureDefn_GetGeomFieldDefn(self, *args)
 
@@ -4612,7 +4612,7 @@ class FeatureDefn(_object):
 
         pszGeomFieldName:  the geometry field name to search for.
 
-        the geometry field index, or -1 if no match found. 
+        the geometry field index, or -1 if no match found.
         """
         return _ogr.FeatureDefn_GetGeomFieldIndex(self, *args)
 
@@ -4645,7 +4645,7 @@ class FeatureDefn(_object):
 
         hNewGeomField:  handle to the new field definition.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.FeatureDefn_AddGeomFieldDefn(self, *args)
 
@@ -4677,7 +4677,7 @@ class FeatureDefn(_object):
 
         OGRERR_NONE in case of success.
 
-        GDAL 1.11 
+        GDAL 1.11
         """
         return _ogr.FeatureDefn_DeleteGeomFieldDefn(self, *args)
 
@@ -4702,7 +4702,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition to get the geometry type
         from.
 
-        the base type for all geometry related to this definition. 
+        the base type for all geometry related to this definition.
         """
         return _ogr.FeatureDefn_GetGeomType(self, *args)
 
@@ -4733,7 +4733,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the layer or feature definition to set the geometry
         type to.
 
-        eType:  the new type to assign. 
+        eType:  the new type to assign.
         """
         return _ogr.FeatureDefn_SetGeomType(self, *args)
 
@@ -4755,7 +4755,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        the current reference count. 
+        the current reference count.
         """
         return _ogr.FeatureDefn_GetReferenceCount(self, *args)
 
@@ -4780,7 +4780,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        ignore state 
+        ignore state
         """
         return _ogr.FeatureDefn_IsGeometryIgnored(self, *args)
 
@@ -4805,7 +4805,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state 
+        bIgnore:  ignore state
         """
         return _ogr.FeatureDefn_SetGeometryIgnored(self, *args)
 
@@ -4827,7 +4827,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on which OGRFeature are based
         on.
 
-        ignore state 
+        ignore state
         """
         return _ogr.FeatureDefn_IsStyleIgnored(self, *args)
 
@@ -4849,7 +4849,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state 
+        bIgnore:  ignore state
         """
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
 
@@ -4872,7 +4872,7 @@ class FeatureDefn(_object):
 
         TRUE if the feature definition is identical to the other one.
 
-        OGR 1.11 
+        OGR 1.11
         """
         return _ogr.FeatureDefn_IsSame(self, *args)
 
@@ -4894,7 +4894,7 @@ class FieldDefn(_object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_FieldDefn
     __del__ = lambda self : None;
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(OGRFieldDefnShadow self, char const * name_null_ok="unnamed", OGRFieldType field_type=OFTString) -> FieldDefn"""
         this = _ogr.new_FieldDefn(*args, **kwargs)
         try: self.this.append(this)
@@ -4920,7 +4920,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition.
 
-        the name of the field definition. 
+        the name of the field definition.
         """
         return _ogr.FieldDefn_GetNameRef(self, *args)
 
@@ -4940,7 +4940,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to apply the new name to.
 
-        pszName:  the new name to apply. 
+        pszName:  the new name to apply.
         """
         return _ogr.FieldDefn_SetName(self, *args)
 
@@ -4960,7 +4960,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to get type from.
 
-        field type. 
+        field type.
         """
         return _ogr.FieldDefn_GetType(self, *args)
 
@@ -4983,7 +4983,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to set type to.
 
-        eType:  the new field type. 
+        eType:  the new field type.
         """
         return _ogr.FieldDefn_SetType(self, *args)
 
@@ -5006,7 +5006,7 @@ class FieldDefn(_object):
 
         field subtype.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_GetSubType(self, *args)
 
@@ -5032,7 +5032,7 @@ class FieldDefn(_object):
 
         eSubType:  the new field subtype.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_SetSubType(self, *args)
 
@@ -5055,7 +5055,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to get justification from.
 
-        the justification. 
+        the justification.
         """
         return _ogr.FieldDefn_GetJustify(self, *args)
 
@@ -5078,7 +5078,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to set justification to.
 
-        eJustify:  the new justification. 
+        eJustify:  the new justification.
         """
         return _ogr.FieldDefn_SetJustify(self, *args)
 
@@ -5098,7 +5098,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to get width from.
 
-        the width, zero means no specified width. 
+        the width, zero means no specified width.
         """
         return _ogr.FieldDefn_GetWidth(self, *args)
 
@@ -5118,7 +5118,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to set width to.
 
-        nNewWidth:  the new width. 
+        nNewWidth:  the new width.
         """
         return _ogr.FieldDefn_SetWidth(self, *args)
 
@@ -5141,7 +5141,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to get precision from.
 
-        the precision. 
+        the precision.
         """
         return _ogr.FieldDefn_GetPrecision(self, *args)
 
@@ -5164,7 +5164,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition to set precision to.
 
-        nPrecision:  the new precision. 
+        nPrecision:  the new precision.
         """
         return _ogr.FieldDefn_SetPrecision(self, *args)
 
@@ -5192,7 +5192,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition
 
-        ignore state 
+        ignore state
         """
         return _ogr.FieldDefn_IsIgnored(self, *args)
 
@@ -5212,7 +5212,7 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition
 
-        ignore:  ignore state 
+        ignore:  ignore state
         """
         return _ogr.FieldDefn_SetIgnored(self, *args)
 
@@ -5241,7 +5241,7 @@ class FieldDefn(_object):
 
         TRUE if the field is authorized to be null.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_IsNullable(self, *args)
 
@@ -5269,7 +5269,7 @@ class FieldDefn(_object):
 
         bNullableIn:  FALSE if the field must have a not-null constraint.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_SetNullable(self, *args)
 
@@ -5292,7 +5292,7 @@ class FieldDefn(_object):
 
         default field value or NULL.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_GetDefault(self, *args)
 
@@ -5333,7 +5333,7 @@ class FieldDefn(_object):
 
         pszDefault:  new default field value or NULL pointer.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_SetDefault(self, *args)
 
@@ -5361,7 +5361,7 @@ class FieldDefn(_object):
 
         TRUE if the default value is driver specific.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.FieldDefn_IsDefaultDriverSpecific(self, *args)
 
@@ -5388,7 +5388,7 @@ class GeomFieldDefn(_object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_GeomFieldDefn
     __del__ = lambda self : None;
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(OGRGeomFieldDefnShadow self, char const * name_null_ok="", OGRwkbGeometryType field_type=wkbUnknown) -> GeomFieldDefn"""
         this = _ogr.new_GeomFieldDefn(*args, **kwargs)
         try: self.this.append(this)
@@ -5467,7 +5467,7 @@ def BuildPolygonFromEdges(*args, **kwargs):
 
 def ApproximateArcAngles(*args, **kwargs):
   """
-    ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis, 
+    ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis,
         double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) -> Geometry
     """
   return _ogr.ApproximateArcAngles(*args, **kwargs)
@@ -5504,7 +5504,7 @@ class Geometry(_object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_Geometry
     __del__ = lambda self : None;
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(OGRGeometryShadow self, OGRwkbGeometryType type=wkbUnknown, char * wkt=None, int wkb=0, char * gml=None) -> Geometry"""
         this = _ogr.new_Geometry(*args, **kwargs)
         try: self.this.append(this)
@@ -5537,7 +5537,7 @@ class Geometry(_object):
         to the passed pointer. After use, *ppszDstText should be freed with
         OGRFree().
 
-        Currently OGRERR_NONE is always returned. 
+        Currently OGRERR_NONE is always returned.
         """
         return _ogr.Geometry_ExportToWkt(self, *args)
 
@@ -5569,7 +5569,7 @@ class Geometry(_object):
 
         Currently OGRERR_NONE is always returned.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Geometry_ExportToIsoWkt(self, *args)
 
@@ -5606,7 +5606,7 @@ class Geometry(_object):
         pabyDstBuffer:  a buffer into which the binary representation is
         written. This buffer must be at least OGR_G_WkbSize() byte in size.
 
-        Currently OGRERR_NONE is always returned. 
+        Currently OGRERR_NONE is always returned.
         """
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
 
@@ -5643,7 +5643,7 @@ class Geometry(_object):
 
         Currently OGRERR_NONE is always returned.
 
-        GDAL 2.0 
+        GDAL 2.0
         """
         return _ogr.Geometry_ExportToIsoWkb(self, *args, **kwargs)
 
@@ -5702,7 +5702,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to clone from.
 
         an handle on the copy of the geometry with the spatial reference
-        system as the original. 
+        system as the original.
         """
         return _ogr.Geometry_Clone(self, *args)
 
@@ -5727,7 +5727,7 @@ class Geometry(_object):
 
         hGeom:  handle on the geometry to get type from.
 
-        the geometry type code. 
+        the geometry type code.
         """
         return _ogr.Geometry_GetGeometryType(self, *args)
 
@@ -5750,7 +5750,7 @@ class Geometry(_object):
 
         hGeom:  handle on the geometry to get name from.
 
-        name used for this geometry type in well known text format. 
+        name used for this geometry type in well known text format.
         """
         return _ogr.Geometry_GetGeometryName(self, *args)
 
@@ -5851,7 +5851,7 @@ class Geometry(_object):
 
         the simplified geometry or NULL if an error occurs.
 
-        OGR 1.8.0 
+        OGR 1.8.0
         """
         return _ogr.Geometry_Simplify(self, *args)
 
@@ -5881,7 +5881,7 @@ class Geometry(_object):
 
         the simplified geometry or NULL if an error occurs.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
 
@@ -5916,7 +5916,7 @@ class Geometry(_object):
         the geometry resulting from the Delaunay triangulation or NULL if an
         error occurs.
 
-        OGR 2.1 
+        OGR 2.1
         """
         return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
@@ -5947,7 +5947,7 @@ class Geometry(_object):
         a handle to a newly allocated geometry now owned by the caller, or
         NULL on failure.
 
-        OGR 1.8.0 
+        OGR 1.8.0
         """
         return _ogr.Geometry_Boundary(self, *args)
 
@@ -5960,7 +5960,7 @@ class Geometry(_object):
 
         Compute boundary (deprecated).
 
-        Deprecated See:   OGR_G_Boundary() 
+        Deprecated See:   OGR_G_Boundary()
         """
         return _ogr.Geometry_GetBoundary(self, *args)
 
@@ -5989,7 +5989,7 @@ class Geometry(_object):
         hTarget:  The Geometry to calculate the convex hull of.
 
         a handle to a newly allocated geometry now owned by the caller, or
-        NULL on failure. 
+        NULL on failure.
         """
         return _ogr.Geometry_ConvexHull(self, *args)
 
@@ -6031,7 +6031,7 @@ class Geometry(_object):
         nQuadSegs:  the number of segments used to approximate a 90 degree
         (quadrant) of curvature.
 
-        the newly created geometry, or NULL if an error occurs. 
+        the newly created geometry, or NULL if an error occurs.
         """
         return _ogr.Geometry_Buffer(self, *args, **kwargs)
 
@@ -6064,7 +6064,7 @@ class Geometry(_object):
         hOther:  the other geometry.
 
         a new geometry representing the intersection or NULL if there is no
-        intersection or an error occurs. 
+        intersection or an error occurs.
         """
         return _ogr.Geometry_Intersection(self, *args)
 
@@ -6094,7 +6094,7 @@ class Geometry(_object):
 
         hOther:  the other geometry.
 
-        a new geometry representing the union or NULL if an error occurs. 
+        a new geometry representing the union or NULL if an error occurs.
         """
         return _ogr.Geometry_Union(self, *args)
 
@@ -6120,7 +6120,7 @@ class Geometry(_object):
 
         hThis:  the geometry.
 
-        a new geometry representing the union or NULL if an error occurs. 
+        a new geometry representing the union or NULL if an error occurs.
         """
         return _ogr.Geometry_UnionCascaded(self, *args)
 
@@ -6151,7 +6151,7 @@ class Geometry(_object):
         hOther:  the other geometry.
 
         a new geometry representing the difference or NULL if the difference
-        is empty or an error occurs. 
+        is empty or an error occurs.
         """
         return _ogr.Geometry_Difference(self, *args)
 
@@ -6185,7 +6185,7 @@ class Geometry(_object):
         a new geometry representing the symmetric difference or NULL if the
         difference is empty or an error occurs.
 
-        OGR 1.8.0 
+        OGR 1.8.0
         """
         return _ogr.Geometry_SymDifference(self, *args)
 
@@ -6198,7 +6198,7 @@ class Geometry(_object):
 
         Compute symmetric difference (deprecated).
 
-        Deprecated See:   OGR_G_SymmetricDifference() 
+        Deprecated See:   OGR_G_SymmetricDifference()
         """
         return _ogr.Geometry_SymmetricDifference(self, *args)
 
@@ -6228,7 +6228,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare against.
 
-        the distance between the geometries or -1 if an error occurs. 
+        the distance between the geometries or -1 if an error occurs.
         """
         return _ogr.Geometry_Distance(self, *args)
 
@@ -6250,7 +6250,7 @@ class Geometry(_object):
         Parameters:
         -----------
 
-        hGeom:  handle on the geometry to empty. 
+        hGeom:  handle on the geometry to empty.
         """
         return _ogr.Geometry_Empty(self, *args)
 
@@ -6269,7 +6269,7 @@ class Geometry(_object):
 
         hGeom:  The Geometry to test.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
+        TRUE if the geometry has no points, otherwise FALSE.
         """
         return _ogr.Geometry_IsEmpty(self, *args)
 
@@ -6292,7 +6292,7 @@ class Geometry(_object):
 
         hGeom:  The Geometry to test.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
+        TRUE if the geometry has no points, otherwise FALSE.
         """
         return _ogr.Geometry_IsValid(self, *args)
 
@@ -6321,7 +6321,7 @@ class Geometry(_object):
 
         hGeom:  The Geometry to test.
 
-        TRUE if object is simple, otherwise FALSE. 
+        TRUE if object is simple, otherwise FALSE.
         """
         return _ogr.Geometry_IsSimple(self, *args)
 
@@ -6344,7 +6344,7 @@ class Geometry(_object):
 
         hGeom:  The Geometry to test.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
+        TRUE if the geometry has no points, otherwise FALSE.
         """
         return _ogr.Geometry_IsRing(self, *args)
 
@@ -6370,7 +6370,7 @@ class Geometry(_object):
 
         hOtherGeom:  handle on the other geometry to test against.
 
-        TRUE if the geometries intersect, otherwise FALSE. 
+        TRUE if the geometries intersect, otherwise FALSE.
         """
         return _ogr.Geometry_Intersects(self, *args)
 
@@ -6379,7 +6379,7 @@ class Geometry(_object):
         Intersect(Geometry self, Geometry other) -> bool
 
         int OGR_G_Intersect(OGRGeometryH
-        hGeom, OGRGeometryH hOtherGeom) 
+        hGeom, OGRGeometryH hOtherGeom)
         """
         return _ogr.Geometry_Intersect(self, *args)
 
@@ -6402,7 +6402,7 @@ class Geometry(_object):
 
         hOther:  handle on the other geometry to test against.
 
-        TRUE if equivalent or FALSE otherwise. 
+        TRUE if equivalent or FALSE otherwise.
         """
         return _ogr.Geometry_Equals(self, *args)
 
@@ -6411,7 +6411,7 @@ class Geometry(_object):
         Equal(Geometry self, Geometry other) -> bool
 
         int OGR_G_Equal(OGRGeometryH hGeom,
-        OGRGeometryH hOther) 
+        OGRGeometryH hOther)
         """
         return _ogr.Geometry_Equal(self, *args)
 
@@ -6440,7 +6440,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if they are disjoint, otherwise FALSE. 
+        TRUE if they are disjoint, otherwise FALSE.
         """
         return _ogr.Geometry_Disjoint(self, *args)
 
@@ -6469,7 +6469,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if they are touching, otherwise FALSE. 
+        TRUE if they are touching, otherwise FALSE.
         """
         return _ogr.Geometry_Touches(self, *args)
 
@@ -6498,7 +6498,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if they are crossing, otherwise FALSE. 
+        TRUE if they are crossing, otherwise FALSE.
         """
         return _ogr.Geometry_Crosses(self, *args)
 
@@ -6527,7 +6527,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if hThis is within hOther, otherwise FALSE. 
+        TRUE if hThis is within hOther, otherwise FALSE.
         """
         return _ogr.Geometry_Within(self, *args)
 
@@ -6556,7 +6556,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if hThis contains hOther geometry, otherwise FALSE. 
+        TRUE if hThis contains hOther geometry, otherwise FALSE.
         """
         return _ogr.Geometry_Contains(self, *args)
 
@@ -6586,7 +6586,7 @@ class Geometry(_object):
 
         hOther:  the other geometry to compare.
 
-        TRUE if they are overlapping, otherwise FALSE. 
+        TRUE if they are overlapping, otherwise FALSE.
         """
         return _ogr.Geometry_Overlaps(self, *args)
 
@@ -6624,7 +6624,7 @@ class Geometry(_object):
 
         hSRS:  handle on the spatial reference system to apply.
 
-        OGRERR_NONE on success, or an error code. 
+        OGRERR_NONE on success, or an error code.
         """
         return _ogr.Geometry_TransformTo(self, *args)
 
@@ -6659,7 +6659,7 @@ class Geometry(_object):
 
         hTransform:  handle on the transformation to apply.
 
-        OGRERR_NONE on success or an error code. 
+        OGRERR_NONE on success or an error code.
         """
         return _ogr.Geometry_Transform(self, *args)
 
@@ -6683,7 +6683,7 @@ class Geometry(_object):
 
         hGeom:  handle on the geometry to get spatial reference from.
 
-        a reference to the spatial reference geometry. 
+        a reference to the spatial reference geometry.
         """
         return _ogr.Geometry_GetSpatialReference(self, *args)
 
@@ -6714,7 +6714,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to apply the new spatial reference
         system.
 
-        hSRS:  handle on the new spatial reference system to apply. 
+        hSRS:  handle on the new spatial reference system to apply.
         """
         return _ogr.Geometry_AssignSpatialReference(self, *args)
 
@@ -6734,7 +6734,7 @@ class Geometry(_object):
         Parameters:
         -----------
 
-        hGeom:  handle to the geometry. 
+        hGeom:  handle to the geometry.
         """
         return _ogr.Geometry_CloseRings(self, *args)
 
@@ -6755,7 +6755,7 @@ class Geometry(_object):
         Parameters:
         -----------
 
-        hGeom:  handle on the geometry to convert. 
+        hGeom:  handle on the geometry to convert.
         """
         return _ogr.Geometry_FlattenTo2D(self, *args)
 
@@ -6780,7 +6780,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to segmentize
 
         dfMaxLength:  the maximum distance between 2 points after
-        segmentization 
+        segmentization
         """
         return _ogr.Geometry_Segmentize(self, *args)
 
@@ -6802,7 +6802,7 @@ class Geometry(_object):
 
         hGeom:  handle of the geometry to get envelope from.
 
-        psEnvelope:  the structure in which to place the results. 
+        psEnvelope:  the structure in which to place the results.
         """
         return _ogr.Geometry_GetEnvelope(self, *args)
 
@@ -6826,7 +6826,7 @@ class Geometry(_object):
 
         psEnvelope:  the structure in which to place the results.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Geometry_GetEnvelope3D(self, *args)
 
@@ -6856,7 +6856,7 @@ class Geometry(_object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
-        OGRERR_NONE on success or OGRERR_FAILURE on error. 
+        OGRERR_NONE on success or OGRERR_FAILURE on error.
         """
         return _ogr.Geometry_Centroid(self, *args)
 
@@ -6885,7 +6885,7 @@ class Geometry(_object):
 
         a point guaranteed to lie on the surface or NULL if an error occurred.
 
-        OGR 1.10 
+        OGR 1.10
         """
         return _ogr.Geometry_PointOnSurface(self, *args)
 
@@ -6910,7 +6910,7 @@ class Geometry(_object):
 
         hGeom:  handle on the geometry to get the binary size from.
 
-        size of binary representation in bytes. 
+        size of binary representation in bytes.
         """
         return _ogr.Geometry_WkbSize(self, *args)
 
@@ -6935,7 +6935,7 @@ class Geometry(_object):
         Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
         OGR_G_IsMeasured().
 
-        this will return 2 or 3. 
+        this will return 2 or 3.
         """
         return _ogr.Geometry_GetCoordinateDimension(self, *args)
 
@@ -6957,7 +6957,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to get the dimension of the coordinates
         from.
 
-        this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data. 
+        this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
         """
         return _ogr.Geometry_CoordinateDimension(self, *args)
 
@@ -6978,7 +6978,7 @@ class Geometry(_object):
 
         TRUE if the geometry has Z coordinates.
 
-        GDAL 2.1 
+        GDAL 2.1
         """
         return _ogr.Geometry_Is3D(self, *args)
 
@@ -7000,7 +7000,7 @@ class Geometry(_object):
 
         TRUE if the geometry has M coordinates.
 
-        GDAL 2.1 
+        GDAL 2.1
         """
         return _ogr.Geometry_IsMeasured(self, *args)
 
@@ -7027,7 +7027,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to set the dimension of the
         coordinates.
 
-        nNewDimension:  New coordinate dimension value, either 2 or 3. 
+        nNewDimension:  New coordinate dimension value, either 2 or 3.
         """
         return _ogr.Geometry_SetCoordinateDimension(self, *args)
 
@@ -7052,7 +7052,7 @@ class Geometry(_object):
 
         bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.
 
-        GDAL 2.1 
+        GDAL 2.1
         """
         return _ogr.Geometry_Set3D(self, *args)
 
@@ -7079,7 +7079,7 @@ class Geometry(_object):
         bIsMeasured:  Should the geometry have a M dimension, either TRUE or
         FALSE.
 
-        GDAL 2.1 
+        GDAL 2.1
         """
         return _ogr.Geometry_SetMeasured(self, *args)
 
@@ -7105,7 +7105,7 @@ class Geometry(_object):
 
         hGeom:  handle on the geometry to get the dimension from.
 
-        0 for points, 1 for lines and 2 for surfaces. 
+        0 for points, 1 for lines and 2 for surfaces.
         """
         return _ogr.Geometry_GetDimension(self, *args)
 

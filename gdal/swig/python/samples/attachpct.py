@@ -53,7 +53,7 @@ ct = ct.Clone()
 ds = None
 
 # =============================================================================
-# Create a MEM clone of the source file. 
+# Create a MEM clone of the source file.
 # =============================================================================
 
 src_ds = gdal.Open( sys.argv[2] )

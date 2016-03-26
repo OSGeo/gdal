@@ -178,7 +178,7 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
 """
 
     control_filled = control_template % ( out_grid_fn,
-                                          src_crs_id, 
+                                          src_crs_id,
                                           dst_crs_id,
                                           src_crs_date,
                                           dst_crs_date,
@@ -213,27 +213,27 @@ Format dates like 2002.0 (for the start of 2002)
 
 CRS Ids
 -------
-  1...NAD_83(2011) (North America tectonic plate fixed) 
-  29...NAD_83(CORS96)  (NAD_83(2011) will be used) 
-  30...NAD_83(2007)    (NAD_83(2011) will be used) 
-  2...NAD_83(PA11) (Pacific tectonic plate fixed) 
-  31...NAD_83(PACP00)  (NAD 83(PA11) will be used) 
-  3...NAD_83(MA11) (Mariana tectonic plate fixed) 
-  32...NAD_83(MARP00)  (NAD_83(MA11) will be used) 
+  1...NAD_83(2011) (North America tectonic plate fixed)
+  29...NAD_83(CORS96)  (NAD_83(2011) will be used)
+  30...NAD_83(2007)    (NAD_83(2011) will be used)
+  2...NAD_83(PA11) (Pacific tectonic plate fixed)
+  31...NAD_83(PACP00)  (NAD 83(PA11) will be used)
+  3...NAD_83(MA11) (Mariana tectonic plate fixed)
+  32...NAD_83(MARP00)  (NAD_83(MA11) will be used)
 
-  4...WGS_72                             16...ITRF92 
-  5...WGS_84(transit) = NAD_83(2011)     17...ITRF93 
-  6...WGS_84(G730) = ITRF92              18...ITRF94 = ITRF96 
-  7...WGS_84(G873) = ITRF96              19...ITRF96 
-  8...WGS_84(G1150) = ITRF2000           20...ITRF97 
-  9...PNEOS_90 = ITRF90                  21...IGS97 = ITRF97 
- 10...NEOS_90 = ITRF90                   22...ITRF2000 
- 11...SIO/MIT_92 = ITRF91                23...IGS00 = ITRF2000 
- 12...ITRF88                             24...IGb00 = ITRF2000 
- 13...ITRF89                             25...ITRF2005 
- 14...ITRF90                             26...IGS05 = ITRF2005 
- 15...ITRF91                             27...ITRF2008 
-                                         28...IGS08 = ITRF2008 
+  4...WGS_72                             16...ITRF92
+  5...WGS_84(transit) = NAD_83(2011)     17...ITRF93
+  6...WGS_84(G730) = ITRF92              18...ITRF94 = ITRF96
+  7...WGS_84(G873) = ITRF96              19...ITRF96
+  8...WGS_84(G1150) = ITRF2000           20...ITRF97
+  9...PNEOS_90 = ITRF90                  21...IGS97 = ITRF97
+ 10...NEOS_90 = ITRF90                   22...ITRF2000
+ 11...SIO/MIT_92 = ITRF91                23...IGS00 = ITRF2000
+ 12...ITRF88                             24...IGb00 = ITRF2000
+ 13...ITRF89                             25...ITRF2005
+ 14...ITRF90                             26...IGS05 = ITRF2005
+ 15...ITRF91                             27...ITRF2008
+                                         28...IGS08 = ITRF2008
 """)
 
     sys.exit(1)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     dst_crs_id = None
     dst_crs_date = None
 
-    # Decent representation of continental US 
+    # Decent representation of continental US
     griddef = (-127.0, 50.0, -66.0, 25.0, 611, 251 )
 
     htdp_path = 'htdp'

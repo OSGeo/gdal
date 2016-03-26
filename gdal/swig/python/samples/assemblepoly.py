@@ -74,7 +74,7 @@ print('Got %d lines.' % len(lines_hash))
 
 
 #############################################################################
-# Read all polygon features. 
+# Read all polygon features.
 
 feat = poly_layer.GetNextFeature()
 link_field = feat.GetFieldIndex( 'GEOM_ID_OF_LINK' )
@@ -105,7 +105,7 @@ while feat is not None:
         print(poly.ExportToWkt())
         feat.SetGeometryDirectly( poly )
     except:
-        print('BuildPolygonFromEdges failed.') 
+        print('BuildPolygonFromEdges failed.')
 
 # For now we don't actually write back the assembled polygons.
 #    poly_layer.SetFeature( feat )

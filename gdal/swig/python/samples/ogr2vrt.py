@@ -208,14 +208,14 @@ for name in layer_list:
            % (relative,not schema,Esc(infile))
 
     if len(openoptions) > 0:
-        vrt += '    <OpenOptions>\n' 
+        vrt += '    <OpenOptions>\n'
         for option in openoptions:
             (key, value) = option.split('=')
             vrt += '        <OOI key="%s">%s</OOI>\n'  % (Esc(key), Esc(value))
-        vrt += '    </OpenOptions>\n' 
+        vrt += '    </OpenOptions>\n'
 
     if schema:
-        vrt += '    <SrcLayer>@dummy@</SrcLayer>\n' 
+        vrt += '    <SrcLayer>@dummy@</SrcLayer>\n'
     else:
         vrt += '    <SrcLayer>%s</SrcLayer>\n' % Esc(name)
 
@@ -308,7 +308,7 @@ for name in layer_list:
 
     vrt += '  </OGRVRTLayer>\n'
 
-vrt += '</OGRVRTDataSource>\n' 
+vrt += '</OGRVRTDataSource>\n'
 
 #############################################################################
 # Write vrt

@@ -581,20 +581,20 @@ def main_loop():
         elif instr == INSTR_Create:
             filename = read_str()
             cwd = read_str()
-            read_int() # xsize = 
-            read_int() # ysize = 
-            read_int() # bands = 
-            read_int() # datatype = 
-            read_strlist() #options = 
+            read_int() # xsize =
+            read_int() # ysize =
+            read_int() # bands =
+            read_int() # datatype =
+            read_strlist() #options =
             write_marker()
             # FIXME
             write_int(0)
         elif instr == INSTR_CreateCopy:
             filename = read_str()
-            read_str() # src_description = 
+            read_str() # src_description =
             cwd = read_str()
-            read_int() # strict = 
-            read_strlist() # options = 
+            read_int() # strict =
+            read_strlist() # options =
             # FIXME
             write_int(0)
         elif instr == INSTR_QuietDelete:
@@ -647,7 +647,7 @@ def main_loop():
             nBufType = read_int()
             nBandCount = read_int()
             panBandMap = []
-            read_int() # size = 
+            read_int() # size =
             for i in range(nBandCount):
                 panBandMap.append(read_int())
             nPixelSpace = read_bigint()

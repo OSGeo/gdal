@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  OGR Python samples
-# Purpose:  Filter an input file, producing an output file. 
+# Purpose:  Filter an input file, producing an output file.
 # Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 ###############################################################################
@@ -160,7 +160,7 @@ for iBand in range(vrt_ds.RasterCount):
     band.SetMetadata( { 'source_0' : src_xml }, 'vrt_sources' )
 
 # =============================================================================
-#	copy the results to a new file. 
+#	copy the results to a new file.
 # =============================================================================
 
 if out_format == 'VRT':

@@ -5,7 +5,7 @@
 # Project:  OGR Python samples
 # Purpose:  Extract SOUNDGings from an S-57 dataset, and write them to
 #           Shapefile format, creating one feature for each sounding, and
-#           adding the elevation as an attribute for easier use. 
+#           adding the elevation as an attribute for easier use.
 # Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 ###############################################################################
@@ -56,7 +56,7 @@ ds = ogr.Open( s57filename )
 src_soundg = ds.GetLayerByName( 'SOUNDG' )
 
 #############################################################################-
-# Create the output shapefile. 
+# Create the output shapefile.
 
 shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
 shp_driver.DeleteDataSource( shpfilename )

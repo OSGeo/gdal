@@ -173,7 +173,7 @@ if ogr_ds.GetDriver().GetName() != 'ESRI Shapefile':
   CONNECTIONTYPE OGR
   CONNECTION "%s,%s"
   PROJECTION
-    "+init=epsg:%s" 
+    "+init=epsg:%s"
   END
 END""" % (layername, ogr_ds_name, lyr.GetName(), authority_code))
     print("")
@@ -190,9 +190,9 @@ print("""LAYER
   TILEITEM "%s"
   TILESRS "%s"
   PROJECTION
-    "+init=epsg:%s" 
+    "+init=epsg:%s"
   END
-  METADATA   
+  METADATA
    "wcs_label"       "%s"
    "wcs_rangeset_name"   "Range 1"  ### required to support DescribeCoverage request
    "wcs_rangeset_label"  "My Label" ### required to support DescribeCoverage request

@@ -140,7 +140,7 @@ print('Got %d lines in %d modules.' % (line_count,len(modules_hash)))
 
 #############################################################################
 # Read all polygon/chain links and build a hash keyed by POLY_ID listing
-# the chains (by TLID) attached to it. 
+# the chains (by TLID) attached to it.
 
 link_layer = ds.GetLayerByName( 'PolyChainLink' )
 
@@ -235,7 +235,7 @@ while feat is not None:
 
     feat = poly_layer.GetNextFeature()
 
-if degenerate_count: 
+if degenerate_count:
     print('Discarded %d degenerate polygons.' % degenerate_count)
 
 print('Built %d polygons.' % poly_count)

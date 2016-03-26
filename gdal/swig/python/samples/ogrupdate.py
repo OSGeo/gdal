@@ -287,7 +287,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
         dst_idx = dst_layer_defn.GetFieldIndex(matchfieldname)
         if dst_idx < 0:
             print('Cannot find field to match in destination layer')
-            return 1 
+            return 1
         dst_type = dst_layer_defn.GetFieldDefn(dst_idx).GetType()
 
     if papszSelFields is not None:
