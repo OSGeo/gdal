@@ -212,7 +212,7 @@ if dst_ds is None:
 dst_band = dst_ds.GetRasterBand(dst_band_n)
 
 # ----------------------------------------------------------------------------
-# Do the processing one scanline at a time. 
+# Do the processing one scanline at a time.
 
 gdal.TermProgress( 0.0 )
 for iY in range(src_ds.RasterYSize):

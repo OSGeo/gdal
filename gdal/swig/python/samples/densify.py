@@ -21,7 +21,7 @@ class Translator(object):
         g.add_option("-o", "--output", dest='output',
                           help="OGR output data source", metavar="OUTPUT")
         g.add_option("-n", "--nooverwrite",
-                          action="store_false", dest="overwrite", 
+                          action="store_false", dest="overwrite",
                           help="Do not overwrite the existing output file")
 
         g.add_option("-f", "--driver", dest='driver',
@@ -33,10 +33,10 @@ class Translator(object):
                           help="""Spatial query extents -- minx miny maxx maxy""",
                           type=float, nargs=4)
         g.add_option('-l', "--layer", dest="layer",
-                          help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)                          
+                          help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)
 
         g.add_option('-k', "--select", dest="fields",
-                          help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)                          
+                          help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)
         g.add_option('-t', '--target-srs', dest="t_srs",
                           help="""Target SRS -- the spatial reference system to project the data to""")
         g.add_option('-a', '--assign-srs', dest="a_srs",
@@ -127,7 +127,7 @@ class Translator(object):
         else:
             self.out_srs = None
         self.output = self.out_ds.CreateLayer(  self.options.output,
-                                                geom_type = self.input.GetLayerDefn().GetGeomType(), 
+                                                geom_type = self.input.GetLayerDefn().GetGeomType(),
                                                 srs= self.out_srs)
 
 
@@ -279,7 +279,7 @@ class Densify(Translator):
 
                 elif self.options.remainder.upper() == "BEGIN":
 
-                    # I think this might put an extra point in at the end of the 
+                    # I think this might put an extra point in at the end of the
                     # first segment
                     segcount = int(math.floor(d/threshold))
                     xa = None
@@ -353,17 +353,17 @@ def main():
 
     options = []
     o = optparse.make_option("-r", "--remainder", dest="remainder",
-                         type="choice",default='end', 
-                          help="""what to do with the remainder -- place it at the beginning, 
+                         type="choice",default='end',
+                          help="""what to do with the remainder -- place it at the beginning,
 place it at the end, or evenly distribute it across the segment""",
                           choices=['end','begin','uniform'])
     options.append(o)
     o = optparse.make_option("-d", "--distance", dest='distance', type="float",
-                          help="""Threshold distance for point placement.  If the 
-'uniform' remainder is used, points will be evenly placed 
-along the segment in a fashion that makes sure they are 
-no further apart than the threshold.  If 'beg' or 'end' 
-is chosen, the threshold distance will be used as an absolute value.""", 
+                          help="""Threshold distance for point placement.  If the
+'uniform' remainder is used, points will be evenly placed
+along the segment in a fashion that makes sure they are
+no further apart than the threshold.  If 'beg' or 'end'
+is chosen, the threshold distance will be used as an absolute value.""",
                           metavar="DISTANCE")
     options.append(o)
     d = Densify(sys.argv[1:], options=options)

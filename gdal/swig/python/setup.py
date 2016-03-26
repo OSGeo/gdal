@@ -165,10 +165,10 @@ class gdal_ext(build_ext):
         try:
             return fetch_config(option, gdal_config = self.gdal_config)
         except gdal_config_error:
-            # If an error is thrown, it is possibly because 
-            # the gdal-config location given in setup.cfg is 
+            # If an error is thrown, it is possibly because
+            # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
-            # We'll try one time to use the gdal-config that might be 
+            # We'll try one time to use the gdal-config that might be
             # on the path. If that fails, we're done, however.
             if not self.already_raised_no_config_error:
                 self.already_raised_no_config_error = True
@@ -256,7 +256,7 @@ if GNM_ENABLED:
     ext_modules.append(gnm_module)
     py_modules.append('gnm')
 
-    
+
 if HAVE_NUMPY:
     ext_modules.append(array_module)
     py_modules.append('gdalnumeric')

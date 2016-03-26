@@ -76,14 +76,14 @@ class file_info:
         self.lry = self.uly + self.geotransform[5] * self.ysize
 
         self.band_types = [None]
-        self.block_sizes = [None] 
+        self.block_sizes = [None]
         self.nodata = [None]
         self.cts = [None]
         self.color_interps = [None]
         for i in range(1, fh.RasterCount+1):
             band = fh.GetRasterBand(i)
             self.band_types.append(band.DataType)
-            self.block_sizes.append(band.GetBlockSize()) 
+            self.block_sizes.append(band.GetBlockSize())
             if band.GetNoDataValue() != None:
                 self.nodata.append(band.GetNoDataValue())
             self.color_interps.append(band.GetRasterColorInterpretation())
@@ -142,11 +142,11 @@ class file_info:
             return 1
 
         t_fh.write('\t\t<SimpleSource>\n')
-        t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' + 
+        t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' +
             '</SourceFilename>\n') % self.filename)
         t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
-        data_type_name = gdal.GetDataTypeName(self.band_types[s_band]) 
-        block_size_x, block_size_y = self.block_sizes[s_band] 
+        data_type_name = gdal.GetDataTypeName(self.band_types[s_band])
+        block_size_x, block_size_y = self.block_sizes[s_band]
         t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"' \
                     ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
                     % (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
@@ -190,10 +190,10 @@ if __name__ == '__main__':
             i = i + 1
             out_file = argv[i]
 
-        elif arg == '-i': 
-            i = i + 1 
-            in_file_list = open(argv[i]) 
-            names.extend(in_file_list.read().split()) 
+        elif arg == '-i':
+            i = i + 1
+            in_file_list = open(argv[i])
+            names.extend(in_file_list.read().split())
 
         elif arg == '-separate':
             separate = True

@@ -92,7 +92,7 @@ if __name__ == '__main__':
         if hist is None:
             print('No default histogram.')
         else:
-            print('Default Histogram:') 
+            print('Default Histogram:')
             print('Min: ', hist[0])
             print('Max: ', hist[1])
             print('Buckets: ', hist[2])

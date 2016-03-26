@@ -1311,7 +1311,7 @@ class StatBuf(_object):
     if _newclass:size = _swig_property(_gdal.StatBuf_size_get)
     __swig_getmethods__["mtime"] = _gdal.StatBuf_mtime_get
     if _newclass:mtime = _swig_property(_gdal.StatBuf_mtime_get)
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(StatBuf self, StatBuf psStatBuf) -> StatBuf"""
         this = _gdal.new_StatBuf(*args)
         try: self.this.append(this)
@@ -1430,14 +1430,14 @@ class Driver(MajorObject):
     if _newclass:HelpTopic = _swig_property(_gdal.Driver_HelpTopic_get)
     def Create(self, *args, **kwargs):
         """
-        Create(Driver self, char const * utf8_path, int xsize, int ysize, int bands=1, GDALDataType eType=GDT_Byte, 
+        Create(Driver self, char const * utf8_path, int xsize, int ysize, int bands=1, GDALDataType eType=GDT_Byte,
             char ** options=None) -> Dataset
         """
         return _gdal.Driver_Create(self, *args, **kwargs)
 
     def CreateCopy(self, *args, **kwargs):
         """
-        CreateCopy(Driver self, char const * utf8_path, Dataset src, int strict=1, char ** options=None, GDALProgressFunc callback=0, 
+        CreateCopy(Driver self, char const * utf8_path, Dataset src, int strict=1, char ** options=None, GDALProgressFunc callback=0,
             void * callback_data=None) -> Dataset
         """
         return _gdal.Driver_CreateCopy(self, *args, **kwargs)
@@ -1518,9 +1518,9 @@ class GCP(_object):
     __swig_setmethods__["Id"] = _gdal.GCP_Id_set
     __swig_getmethods__["Id"] = _gdal.GCP_Id_get
     if _newclass:Id = _swig_property(_gdal.GCP_Id_get, _gdal.GCP_Id_set)
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
-        __init__(GDAL_GCP self, double x=0.0, double y=0.0, double z=0.0, double pixel=0.0, double line=0.0, char const * info="", 
+        __init__(GDAL_GCP self, double x=0.0, double y=0.0, double z=0.0, double pixel=0.0, double line=0.0, char const * info="",
             char const * id="") -> GCP
         """
         this = _gdal.new_GCP(*args)
@@ -1711,7 +1711,7 @@ class Dataset(MajorObject):
 
     def BuildOverviews(self, *args, **kwargs):
         """
-        BuildOverviews(Dataset self, char const * resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=0, 
+        BuildOverviews(Dataset self, char const * resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=0,
             void * callback_data=None) -> int
         """
         return _gdal.Dataset_BuildOverviews(self, *args, **kwargs)
@@ -1750,16 +1750,16 @@ class Dataset(MajorObject):
 
     def WriteRaster(self, *args, **kwargs):
         """
-        WriteRaster(Dataset self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, 
-            int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, 
+        WriteRaster(Dataset self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None,
+            int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None,
             GIntBig * buf_line_space=None, GIntBig * buf_band_space=None) -> CPLErr
         """
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
 
     def BeginAsyncReader(self, *args, **kwargs):
         """
-        BeginAsyncReader(Dataset self, int xOff, int yOff, int xSize, int ySize, int buf_len, int buf_xsize, int buf_ysize, 
-            GDALDataType bufType=(GDALDataType) 0, int band_list=0, int nPixelSpace=0, 
+        BeginAsyncReader(Dataset self, int xOff, int yOff, int xSize, int ySize, int buf_len, int buf_xsize, int buf_ysize,
+            GDALDataType bufType=(GDALDataType) 0, int band_list=0, int nPixelSpace=0,
             int nLineSpace=0, int nBandSpace=0, char ** options=None) -> AsyncReader
         """
         return _gdal.Dataset_BeginAsyncReader(self, *args, **kwargs)
@@ -1770,23 +1770,23 @@ class Dataset(MajorObject):
 
     def GetVirtualMem(self, *args, **kwargs):
         """
-        GetVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize, 
-            int nBufYSize, GDALDataType eBufType, int band_list, int bIsBandSequential, 
+        GetVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize,
+            int nBufYSize, GDALDataType eBufType, int band_list, int bIsBandSequential,
             size_t nCacheSize, size_t nPageSizeHint, char ** options=None) -> VirtualMem
         """
         return _gdal.Dataset_GetVirtualMem(self, *args, **kwargs)
 
     def GetTiledVirtualMem(self, *args, **kwargs):
         """
-        GetTiledVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize, 
-            int nTileYSize, GDALDataType eBufType, int band_list, GDALTileOrganization eTileOrganization, 
+        GetTiledVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize,
+            int nTileYSize, GDALDataType eBufType, int band_list, GDALTileOrganization eTileOrganization,
             size_t nCacheSize, char ** options=None) -> VirtualMem
         """
         return _gdal.Dataset_GetTiledVirtualMem(self, *args, **kwargs)
 
     def CreateLayer(self, *args, **kwargs):
         """
-        CreateLayer(Dataset self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+        CreateLayer(Dataset self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown,
             char ** options=None) -> Layer
         """
         return _gdal.Dataset_CreateLayer(self, *args, **kwargs)
@@ -1845,10 +1845,10 @@ class Dataset(MajorObject):
 
     def ReadRaster1(self, *args, **kwargs):
         """
-        ReadRaster1(Dataset self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, 
-            GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, 
-            GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, 
-            GDALProgressFunc callback=0, 
+        ReadRaster1(Dataset self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None,
+            GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None,
+            GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,
+            GDALProgressFunc callback=0,
             void * callback_data=None) -> CPLErr
         """
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
@@ -2178,8 +2178,8 @@ class Band(MajorObject):
 
     def WriteRaster(self, *args, **kwargs):
         """
-        WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, 
-            int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, 
+        WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None,
+            int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None,
             GIntBig * buf_line_space=None) -> CPLErr
         """
         return _gdal.Band_WriteRaster(self, *args, **kwargs)
@@ -2226,14 +2226,14 @@ class Band(MajorObject):
 
     def GetHistogram(self, *args, **kwargs):
         """
-        GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1, 
+        GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1,
             GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr
         """
         return _gdal.Band_GetHistogram(self, *args, **kwargs)
 
     def GetDefaultHistogram(self, *args, **kwargs):
         """
-        GetDefaultHistogram(Band self, double * min_ret=None, double * max_ret=None, int * buckets_ret=None, GUIntBig ** ppanHistogram=None, 
+        GetDefaultHistogram(Band self, double * min_ret=None, double * max_ret=None, int * buckets_ret=None, GUIntBig ** ppanHistogram=None,
             int force=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr
         """
         return _gdal.Band_GetDefaultHistogram(self, *args, **kwargs)
@@ -2256,8 +2256,8 @@ class Band(MajorObject):
 
     def GetVirtualMem(self, *args, **kwargs):
         """
-        GetVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize, 
-            int nBufYSize, GDALDataType eBufType, size_t nCacheSize, size_t nPageSizeHint, 
+        GetVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize,
+            int nBufYSize, GDALDataType eBufType, size_t nCacheSize, size_t nPageSizeHint,
             char ** options=None) -> VirtualMem
         """
         return _gdal.Band_GetVirtualMem(self, *args, **kwargs)
@@ -2268,16 +2268,16 @@ class Band(MajorObject):
 
     def GetTiledVirtualMem(self, *args, **kwargs):
         """
-        GetTiledVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize, 
+        GetTiledVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize,
             int nTileYSize, GDALDataType eBufType, size_t nCacheSize, char ** options=None) -> VirtualMem
         """
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
 
     def ReadRaster1(self, *args, **kwargs):
         """
-        ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, 
-            int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, 
-            GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, 
+        ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None,
+            int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None,
+            GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,
             GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr
         """
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)
@@ -2408,7 +2408,7 @@ class ColorTable(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, ColorTable, name)
     __repr__ = _swig_repr
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         """__init__(GDALColorTableShadow self, GDALPaletteInterp palette=GPI_RGB) -> ColorTable"""
         this = _gdal.new_ColorTable(*args, **kwargs)
         try: self.this.append(this)
@@ -2453,7 +2453,7 @@ class RasterAttributeTable(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, RasterAttributeTable, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALRasterAttributeTableShadow self) -> RasterAttributeTable"""
         this = _gdal.new_RasterAttributeTable(*args)
         try: self.this.append(this)
@@ -2561,7 +2561,7 @@ TermProgress = _gdal.TermProgress
 
 def ComputeMedianCutPCT(*args, **kwargs):
   """
-    ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, GDALProgressFunc callback=0, 
+    ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.ComputeMedianCutPCT(*args, **kwargs)
@@ -2569,7 +2569,7 @@ ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
 
 def DitherRGB2PCT(*args, **kwargs):
   """
-    DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, GDALProgressFunc callback=0, 
+    DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.DitherRGB2PCT(*args, **kwargs)
@@ -2577,9 +2577,9 @@ DitherRGB2PCT = _gdal.DitherRGB2PCT
 
 def ReprojectImage(*args, **kwargs):
   """
-    ReprojectImage(Dataset src_ds, Dataset dst_ds, char const * src_wkt=None, char const * dst_wkt=None, 
-        GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, double WarpMemoryLimit=0.0, 
-        double maxerror=0.0, GDALProgressFunc callback=0, void * callback_data=None, 
+    ReprojectImage(Dataset src_ds, Dataset dst_ds, char const * src_wkt=None, char const * dst_wkt=None,
+        GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, double WarpMemoryLimit=0.0,
+        double maxerror=0.0, GDALProgressFunc callback=0, void * callback_data=None,
         char ** options=None) -> CPLErr
     """
   return _gdal.ReprojectImage(*args, **kwargs)
@@ -2587,7 +2587,7 @@ ReprojectImage = _gdal.ReprojectImage
 
 def ComputeProximity(*args, **kwargs):
   """
-    ComputeProximity(Band srcBand, Band proximityBand, char ** options=None, GDALProgressFunc callback=0, 
+    ComputeProximity(Band srcBand, Band proximityBand, char ** options=None, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.ComputeProximity(*args, **kwargs)
@@ -2595,8 +2595,8 @@ ComputeProximity = _gdal.ComputeProximity
 
 def RasterizeLayer(*args, **kwargs):
   """
-    RasterizeLayer(Dataset dataset, int bands, Layer layer, void * pfnTransformer=None, void * pTransformArg=None, 
-        int burn_values=0, char ** options=None, GDALProgressFunc callback=0, 
+    RasterizeLayer(Dataset dataset, int bands, Layer layer, void * pfnTransformer=None, void * pTransformArg=None,
+        int burn_values=0, char ** options=None, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.RasterizeLayer(*args, **kwargs)
@@ -2604,7 +2604,7 @@ RasterizeLayer = _gdal.RasterizeLayer
 
 def Polygonize(*args, **kwargs):
   """
-    Polygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, 
+    Polygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None,
         GDALProgressFunc callback=0, void * callback_data=None) -> int
     """
   return _gdal.Polygonize(*args, **kwargs)
@@ -2612,7 +2612,7 @@ Polygonize = _gdal.Polygonize
 
 def FPolygonize(*args, **kwargs):
   """
-    FPolygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, 
+    FPolygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None,
         GDALProgressFunc callback=0, void * callback_data=None) -> int
     """
   return _gdal.FPolygonize(*args, **kwargs)
@@ -2620,7 +2620,7 @@ FPolygonize = _gdal.FPolygonize
 
 def FillNodata(*args, **kwargs):
   """
-    FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, char ** options=None, 
+    FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, char ** options=None,
         GDALProgressFunc callback=0, void * callback_data=None) -> int
     """
   return _gdal.FillNodata(*args, **kwargs)
@@ -2628,7 +2628,7 @@ FillNodata = _gdal.FillNodata
 
 def SieveFilter(*args, **kwargs):
   """
-    SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness=4, char ** options=None, 
+    SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness=4, char ** options=None,
         GDALProgressFunc callback=0, void * callback_data=None) -> int
     """
   return _gdal.SieveFilter(*args, **kwargs)
@@ -2636,7 +2636,7 @@ SieveFilter = _gdal.SieveFilter
 
 def RegenerateOverviews(*args, **kwargs):
   """
-    RegenerateOverviews(Band srcBand, int overviewBandCount, char const * resampling="average", GDALProgressFunc callback=0, 
+    RegenerateOverviews(Band srcBand, int overviewBandCount, char const * resampling="average", GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.RegenerateOverviews(*args, **kwargs)
@@ -2644,7 +2644,7 @@ RegenerateOverviews = _gdal.RegenerateOverviews
 
 def RegenerateOverview(*args, **kwargs):
   """
-    RegenerateOverview(Band srcBand, Band overviewBand, char const * resampling="average", GDALProgressFunc callback=0, 
+    RegenerateOverview(Band srcBand, Band overviewBand, char const * resampling="average", GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.RegenerateOverview(*args, **kwargs)
@@ -2652,8 +2652,8 @@ RegenerateOverview = _gdal.RegenerateOverview
 
 def ContourGenerate(*args, **kwargs):
   """
-    ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData, 
-        double noDataValue, Layer dstLayer, int idField, int elevField, 
+    ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData,
+        double noDataValue, Layer dstLayer, int idField, int elevField,
         GDALProgressFunc callback=0, void * callback_data=None) -> int
     """
   return _gdal.ContourGenerate(*args, **kwargs)
@@ -2661,7 +2661,7 @@ ContourGenerate = _gdal.ContourGenerate
 
 def AutoCreateWarpedVRT(*args):
   """
-    AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, 
+    AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour,
         double maxerror=0.0) -> Dataset
     """
   return _gdal.AutoCreateWarpedVRT(*args)
@@ -2678,7 +2678,7 @@ class Transformer(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Transformer, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALTransformerInfoShadow self, Dataset src, Dataset dst, char ** options) -> Transformer"""
         this = _gdal.new_Transformer(*args)
         try: self.this.append(this)
@@ -2698,7 +2698,7 @@ class Transformer(_object):
 
     def TransformGeolocations(self, *args, **kwargs):
         """
-        TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, 
+        TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None,
             char ** options=None) -> int
         """
         return _gdal.Transformer_TransformGeolocations(self, *args, **kwargs)
@@ -2834,7 +2834,7 @@ Open = _gdal.Open
 
 def OpenEx(*args, **kwargs):
   """
-    OpenEx(char const * utf8_path, unsigned int nOpenFlags=0, char ** allowed_drivers=None, 
+    OpenEx(char const * utf8_path, unsigned int nOpenFlags=0, char ** allowed_drivers=None,
         char ** open_options=None, char ** sibling_files=None) -> Dataset
     """
   return _gdal.OpenEx(*args, **kwargs)
@@ -2863,7 +2863,7 @@ class GDALInfoOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALInfoOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALInfoOptions self, char ** options) -> GDALInfoOptions"""
         this = _gdal.new_GDALInfoOptions(*args)
         try: self.this.append(this)
@@ -2885,7 +2885,7 @@ class GDALTranslateOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALTranslateOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALTranslateOptions self, char ** options) -> GDALTranslateOptions"""
         this = _gdal.new_GDALTranslateOptions(*args)
         try: self.this.append(this)
@@ -2898,7 +2898,7 @@ GDALTranslateOptions_swigregister(GDALTranslateOptions)
 
 def TranslateInternal(*args):
   """
-    TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0, 
+    TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.TranslateInternal(*args)
@@ -2910,7 +2910,7 @@ class GDALWarpAppOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALWarpAppOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALWarpAppOptions self, char ** options) -> GDALWarpAppOptions"""
         this = _gdal.new_GDALWarpAppOptions(*args)
         try: self.this.append(this)
@@ -2923,7 +2923,7 @@ GDALWarpAppOptions_swigregister(GDALWarpAppOptions)
 
 def wrapper_GDALWarpDestDS(*args):
   """
-    wrapper_GDALWarpDestDS(Dataset dstDS, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+    wrapper_GDALWarpDestDS(Dataset dstDS, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.wrapper_GDALWarpDestDS(*args)
@@ -2931,7 +2931,7 @@ wrapper_GDALWarpDestDS = _gdal.wrapper_GDALWarpDestDS
 
 def wrapper_GDALWarpDestName(*args):
   """
-    wrapper_GDALWarpDestName(char const * dest, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+    wrapper_GDALWarpDestName(char const * dest, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.wrapper_GDALWarpDestName(*args)
@@ -2943,7 +2943,7 @@ class GDALVectorTranslateOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALVectorTranslateOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALVectorTranslateOptions self, char ** options) -> GDALVectorTranslateOptions"""
         this = _gdal.new_GDALVectorTranslateOptions(*args)
         try: self.this.append(this)
@@ -2956,7 +2956,7 @@ GDALVectorTranslateOptions_swigregister(GDALVectorTranslateOptions)
 
 def wrapper_GDALVectorTranslateDestDS(*args):
   """
-    wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.wrapper_GDALVectorTranslateDestDS(*args)
@@ -2964,7 +2964,7 @@ wrapper_GDALVectorTranslateDestDS = _gdal.wrapper_GDALVectorTranslateDestDS
 
 def wrapper_GDALVectorTranslateDestName(*args):
   """
-    wrapper_GDALVectorTranslateDestName(char const * dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALVectorTranslateDestName(char const * dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.wrapper_GDALVectorTranslateDestName(*args)
@@ -2976,7 +2976,7 @@ class GDALDEMProcessingOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALDEMProcessingOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALDEMProcessingOptions self, char ** options) -> GDALDEMProcessingOptions"""
         this = _gdal.new_GDALDEMProcessingOptions(*args)
         try: self.this.append(this)
@@ -2989,8 +2989,8 @@ GDALDEMProcessingOptions_swigregister(GDALDEMProcessingOptions)
 
 def DEMProcessingInternal(*args):
   """
-    DEMProcessingInternal(char const * dest, Dataset dataset, char const * pszProcessing, char const * pszColorFilename, 
-        GDALDEMProcessingOptions options, GDALProgressFunc callback=0, 
+    DEMProcessingInternal(char const * dest, Dataset dataset, char const * pszProcessing, char const * pszColorFilename,
+        GDALDEMProcessingOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.DEMProcessingInternal(*args)
@@ -3002,7 +3002,7 @@ class GDALNearblackOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALNearblackOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALNearblackOptions self, char ** options) -> GDALNearblackOptions"""
         this = _gdal.new_GDALNearblackOptions(*args)
         try: self.this.append(this)
@@ -3015,7 +3015,7 @@ GDALNearblackOptions_swigregister(GDALNearblackOptions)
 
 def wrapper_GDALNearblackDestDS(*args):
   """
-    wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.wrapper_GDALNearblackDestDS(*args)
@@ -3023,7 +3023,7 @@ wrapper_GDALNearblackDestDS = _gdal.wrapper_GDALNearblackDestDS
 
 def wrapper_GDALNearblackDestName(*args):
   """
-    wrapper_GDALNearblackDestName(char const * dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALNearblackDestName(char const * dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.wrapper_GDALNearblackDestName(*args)
@@ -3035,7 +3035,7 @@ class GDALGridOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALGridOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALGridOptions self, char ** options) -> GDALGridOptions"""
         this = _gdal.new_GDALGridOptions(*args)
         try: self.this.append(this)
@@ -3048,7 +3048,7 @@ GDALGridOptions_swigregister(GDALGridOptions)
 
 def GridInternal(*args):
   """
-    GridInternal(char const * dest, Dataset dataset, GDALGridOptions options, GDALProgressFunc callback=0, 
+    GridInternal(char const * dest, Dataset dataset, GDALGridOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.GridInternal(*args)
@@ -3060,7 +3060,7 @@ class GDALRasterizeOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALRasterizeOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALRasterizeOptions self, char ** options) -> GDALRasterizeOptions"""
         this = _gdal.new_GDALRasterizeOptions(*args)
         try: self.this.append(this)
@@ -3073,7 +3073,7 @@ GDALRasterizeOptions_swigregister(GDALRasterizeOptions)
 
 def wrapper_GDALRasterizeDestDS(*args):
   """
-    wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> int
     """
   return _gdal.wrapper_GDALRasterizeDestDS(*args)
@@ -3081,7 +3081,7 @@ wrapper_GDALRasterizeDestDS = _gdal.wrapper_GDALRasterizeDestDS
 
 def wrapper_GDALRasterizeDestName(*args):
   """
-    wrapper_GDALRasterizeDestName(char const * dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, 
+    wrapper_GDALRasterizeDestName(char const * dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.wrapper_GDALRasterizeDestName(*args)
@@ -3093,7 +3093,7 @@ class GDALBuildVRTOptions(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, GDALBuildVRTOptions, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """__init__(GDALBuildVRTOptions self, char ** options) -> GDALBuildVRTOptions"""
         this = _gdal.new_GDALBuildVRTOptions(*args)
         try: self.this.append(this)
@@ -3106,7 +3106,7 @@ GDALBuildVRTOptions_swigregister(GDALBuildVRTOptions)
 
 def BuildVRTInternalObjects(*args):
   """
-    BuildVRTInternalObjects(char const * dest, int object_list_count, GDALBuildVRTOptions options, GDALProgressFunc callback=0, 
+    BuildVRTInternalObjects(char const * dest, int object_list_count, GDALBuildVRTOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.BuildVRTInternalObjects(*args)
@@ -3114,7 +3114,7 @@ BuildVRTInternalObjects = _gdal.BuildVRTInternalObjects
 
 def BuildVRTInternalNames(*args):
   """
-    BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, 
+    BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0,
         void * callback_data=None) -> Dataset
     """
   return _gdal.BuildVRTInternalNames(*args)
