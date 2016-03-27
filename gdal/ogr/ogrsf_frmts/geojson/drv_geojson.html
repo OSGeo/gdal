@@ -9,7 +9,7 @@
 
 <p>This driver implements read/write support for access to features encoded in
 <a href="http://geojson.org/">GeoJSON</a> format. GeoJSON is a dialect based on the
-<a href="http://json.org/">JavaScript Object Notation (JSON)</a>. JSON is a lightweight 
+<a href="http://json.org/">JavaScript Object Notation (JSON)</a>. JSON is a lightweight
 plain text format for data interchange and GeoJSON is nothing other than its specialization for geographic content.</p>
 
 <p>GeoJSON is supported as an output format of a number of services:
@@ -18,7 +18,7 @@ plain text format for data interchange and GeoJSON is nothing other than its spe
 <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>, etc.</p>
 
 <p>The OGR GeoJSON driver translates GeoJSON encoded data to objects of the <a href="ogr_arch.html">OGR Simple Features model</a>:
-Datasource, Layer, Feature, Geometry. 
+Datasource, Layer, Feature, Geometry.
 The implementation is based on <a href="http://geojson.org/geojson-spec.html">GeoJSON Specification, v1.0</a>.</p>
 
 <p>Starting with OGR 1.8.0, the GeoJSON driver can read the JSON output of Feature Service requests following the
@@ -72,20 +72,20 @@ layer object (and "application/vnd.geo+json" in the NATIVE_MEDIA_TYPE of the NAT
 <p>The OGR GeoJSON driver maps each object of following types to new <em>OGRFeature</em> object:
 Point, LineString, Polygon, GeometryCollection, Feature.</p>
 
-<p>According to the <em>GeoJSON Specification</em>, only the <em>Feature</em> object must have a member with 
-name <em>properties</em>. Each and every member of <em>properties</em> is translated to OGR object of type of 
+<p>According to the <em>GeoJSON Specification</em>, only the <em>Feature</em> object must have a member with
+name <em>properties</em>. Each and every member of <em>properties</em> is translated to OGR object of type of
 OGRField and added to corresponding OGRFeature object.</p>
 
 <p>The <em>GeoJSON Specification</em> does not require all <em>Feature</em> objects in a collection to
-have the same schema of properties. If <em>Feature</em> objects in a set defined by <em>FeatureCollection</em> 
-object have different schema of properties, then resulting schema of fields in OGRFeatureDefn is generated as 
+have the same schema of properties. If <em>Feature</em> objects in a set defined by <em>FeatureCollection</em>
+object have different schema of properties, then resulting schema of fields in OGRFeatureDefn is generated as
 <a href="http://en.wikipedia.org/wiki/Union_(set_theory)">union</a> of all <em>Feature</em> properties.</p>
 
 <p>Schema detection will recognized fields of type String, Integer, Real, StringList, IntegerList and RealList.
 Starting with GDAL 2.0, Integer(Boolean), Date, Time and DateTime fields are also recognized.</p>
 
-<p>It is possible to tell the driver to not to process attributes by setting environment variable 
-<strong>ATTRIBUTES_SKIP=YES</strong>. Default behavior is to preserve all attributes (as an union, see previous paragraph), 
+<p>It is possible to tell the driver to not to process attributes by setting environment variable
+<strong>ATTRIBUTES_SKIP=YES</strong>. Default behavior is to preserve all attributes (as an union, see previous paragraph),
 what is equal to setting <strong>ATTRIBUTES_SKIP=NO</strong>.</p>
 
 <p>If the NATIVE_DATA open option is set to YES, the Feature JSon object will be
@@ -99,12 +99,12 @@ the OGRFeature. See <a href="https://trac.osgeo.org/gdal/wiki/rfc60_improved_rou
 
 <h2>Geometry</h2>
 
-<p>Similarly to the issue with mixed-properties features, the <em>GeoJSON Specification</em> draft does not require 
-all <em>Feature</em> objects in a collection must have geometry of the same type. Fortunately, OGR objects model does 
-allow to have geometries of different types in single layer - a heterogeneous layer. By default, the GeoJSON driver 
+<p>Similarly to the issue with mixed-properties features, the <em>GeoJSON Specification</em> draft does not require
+all <em>Feature</em> objects in a collection must have geometry of the same type. Fortunately, OGR objects model does
+allow to have geometries of different types in single layer - a heterogeneous layer. By default, the GeoJSON driver
 preserves type of geometries.</p>
 
-<p>However, sometimes there is a need to generate a homogeneous layer from a set of heterogeneous features. 
+<p>However, sometimes there is a need to generate a homogeneous layer from a set of heterogeneous features.
 For this purpose, it's possible to tell the driver to wrap all geometries with OGRGeometryCollection type as a common denominator.
 This behavior may be controlled by setting <strong>GEOMETRY_AS_COLLECTION=YES</strong> in the environment (default is <strong>NO</strong>).</p>
 

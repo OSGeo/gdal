@@ -10,12 +10,12 @@
 IHO S-57 Electronic Navication Charts (ENC) datasets are supported for
 read access.<p>
 
-The S-57 driver module produces features for all S-57 features in 
+The S-57 driver module produces features for all S-57 features in
 S-57 file, and associated updates.  S-57 (ENC) files normally have
 the extension ".000".<p>
 
 S-57 feature objects are translated into features.  S-57 geometry
-objects are automatically collected and formed into geometries on the 
+objects are automatically collected and formed into geometries on the
 features.<P>
 
 The S-57 reader depends on having two supporting files, s57objectclasses.csv,
@@ -24,11 +24,11 @@ in an object class specific manner.  These should be in the directory pointed
 to by the environment variable S57_CSV, or in the current working directory.
 <p>
 
-S-57 update files contain information on how to update a distributed S-57 
+S-57 update files contain information on how to update a distributed S-57
 base data file.  The base files normally have the extension .000 while the
-update files have extensions like .001, .002 and so on.  The S-57 reader 
+update files have extensions like .001, .002 and so on.  The S-57 reader
 will normally read and apply all updates files to the in memory version of
-the base file on the fly.  The feature data provided to the application 
+the base file on the fly.  The feature data provided to the application
 therefore includes all the updates. <p>
 
 <h3>Feature Translation</h3>
@@ -46,11 +46,11 @@ NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, ,RECDAT, RECIND, SORDAT,
 and SORIND attributes.  These short names can be related to longer, more
 meaningful names using an S-57 object/attribute catalog such as the
 S-57 standard document itself, or the catalog files (s57attributes.csv,
-and s57objectclasses.csv).  
+and s57objectclasses.csv).
 Such a catalog can also be used to establish all the available object classes,
 and their attributes.<p>
 
-The following are some common attributes, including generic attributes 
+The following are some common attributes, including generic attributes
 which appear on all feature, regardless of object class.
 is turned on. <p>
 
@@ -61,14 +61,14 @@ is turned on. <p>
   GRUP            Group number.			         All features
 
   OBJL            Object label code.  This number	 All features
-	          indicates the object class of the 
-                  feature. 
+	          indicates the object class of the
+                  feature.
 
   RVER            Record version.
 
   AGEN            Numeric agency code, such as 50 for    All features
                   the Canadian Hydrographic Service.
-		  A potentially outdated list is 
+		  A potentially outdated list is
 		  available in agencode.txt.
 
   FIDN            Feature identification number.         All features
@@ -83,31 +83,31 @@ is turned on. <p>
   INFORM          Informational text.                    Some features
 
   NINFOM	  Informational text in national         Some features
-                  language. 
+                  language.
 
   OBJNAM          Object name				 Some features
 
   NOBJNM          Object name in national		 Some features
                   language.
-                         
+
   SCAMAX          Maximum scale for display              Some features
- 
+
   SCAMIN          Minimum scale for display              Some features
-  
+
   SORDAT          Source date                            Some features
 </pre>
 
 The following are present if LNAM_REFS is enabled:
 <pre>
   LNAM            Long name.  An encoding of AGEN,       All features
-                  FIDN and FIDS used to uniquely 
+                  FIDN and FIDS used to uniquely
                   identify this features within an
-                  S-57 file.  
+                  S-57 file.
 
   LNAM_REFS       List of long names of related features All Features
 
   FFPT_RIND       Relationship indicators for each of    All Features
-                  the LNAM_REFS relationships. 
+                  the LNAM_REFS relationships.
 
 </pre>
 
@@ -123,8 +123,8 @@ feature record will have the same AGEN, FIDN, FIDS and LNAM value.<p>
 <h3>S57 Control Options</h3>
 
 There are several control options which can be used to alter the behavior of
-the S-57 reader.  Users can set these by appending them in the 
-OGR_S57_OPTIONS environment variable. 
+the S-57 reader.  Users can set these by appending them in the
+OGR_S57_OPTIONS environment variable.
 <p>
 Starting with GDAL 2.0, they can also be specified independently as open options
 to the driver.
@@ -142,25 +142,25 @@ features with many points into many single point features.  Default is OFF. <p>
 
 <li> <b>ADD_SOUNDG_DEPTH</b>=ON/OFF: Should a DEPTH attribute be added on
 SOUNDG features and assign the depth of the sounding.  This should only be
-enabled with SPLIT_MULTIPOINT is also enabled.  
+enabled with SPLIT_MULTIPOINT is also enabled.
 Default is OFF. <p>
 
-<li> <b>RETURN_PRIMITIVES</b>=ON/OFF: Should all the low level geometry 
+<li> <b>RETURN_PRIMITIVES</b>=ON/OFF: Should all the low level geometry
 primitives be returned as special IsolatedNode, ConnectedNode, Edge and
 Face layers.  Default is OFF. <p>
 
 <li> <b>PRESERVE_EMPTY_NUMBERS</b>=ON/OFF: If enabled, numeric attributes
 assigned an empty string as a value will be preserved as a special numeric
-value.  This option should not generally be needed, but may be useful 
+value.  This option should not generally be needed, but may be useful
 when translated S-57 to S-57 losslessly.  Default is OFF. <p>
 
-<li> <b>LNAM_REFS</b>=ON/OFF: Should LNAM and LNAM_REFS fields be 
+<li> <b>LNAM_REFS</b>=ON/OFF: Should LNAM and LNAM_REFS fields be
 attached to features capturing the feature to feature relationships in the
 FFPT group of the S-57 file.  Default is ON.<p>
 
-<li> <b>RETURN_LINKAGES</b>=ON/OFF: Should additional attributes 
+<li> <b>RETURN_LINKAGES</b>=ON/OFF: Should additional attributes
 relating features to their underlying geometric primitives be attached.  These
-are the values of the FSPT group, and are primarily needed when doing 
+are the values of the FSPT group, and are primarily needed when doing
 S-57 to S-57 translations.  Default is OFF.<p>
 
 <li> <b>RECODE_BY_DSSI</b>=ON/OFF: (OGR &gt;= 1.10) Should attribute values be recoded to UTF-8
@@ -178,7 +178,7 @@ set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
 
 Preliminary S-57 export capability has been added in GDAL/OGR 1.2.0 but
 is intended only for specialized use, and is not properly documented at
-this time.  Setting the following options is a minimum required to 
+this time.  Setting the following options is a minimum required to
 support S-57 to S-57 conversion via OGR.<p>
 
 <pre>

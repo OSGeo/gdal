@@ -9,7 +9,7 @@
 
 <h1>HDF5 --- Hierarchical Data Format Release 5 (HDF5)</h1>
 
-This driver intended for HDF5 file formats importing.   This 
+This driver intended for HDF5 file formats importing.   This
 modification is
 suited for use with remote sensing data and fully compatible with
 underlying HDF5.  This driver can import HDF5-EOS files.  Currently EOS use
@@ -20,16 +20,16 @@ telemetry from `Aura' satellite.<p>
 <h2>Multiple Image Handling (Subdatasets)</h2>
 
 Hierarchical Data Format is a container for several different datasets.
-For data storing. HDF contains multidimensional arrays filled by data.  
-One HDF file may contain several arrays.  They may differ in size, 
+For data storing. HDF contains multidimensional arrays filled by data.
+One HDF file may contain several arrays.  They may differ in size,
 number of dimensions.<p>
 
-The first step is to get a report of the components images (arrays) in the 
+The first step is to get a report of the components images (arrays) in the
 file using <b>gdalinfo</b>, and
 then to import the desired images using gdal_translate.
 
-The <b>gdalinfo</b> utility lists all multidimensional subdatasets from the 
-input HDF file. The name of individual images (subdatasets) are assigned to 
+The <b>gdalinfo</b> utility lists all multidimensional subdatasets from the
+input HDF file. The name of individual images (subdatasets) are assigned to
 the <b>SUBDATASET_n_NAME</b> metadata item.  The description for each image is
 found in the <b>SUBDATASET_n_DESC</b> metadata item.  For HDF5 images the
 subdataset names will be formatted like this:<p>
@@ -37,7 +37,7 @@ subdataset names will be formatted like this:<p>
 <i>HDF5:file_name:subdataset</i><p>
 
 where:<br> <i>file_name</i> is the name of the input file, and<br>
-<i>subdataset</i> is the dataset name of the array to use (for internal use in 
+<i>subdataset</i> is the dataset name of the array to use (for internal use in
 GDAL).<p>
 
 On the second step you should provide this name for <b>gdalinfo</b> or
@@ -124,7 +124,7 @@ Center      (  256.0,  256.0)
 Now select one of the subdatasets, described as
 <tt>[1645x60] CloudFraction (32-bit floating-point)</tt>:<p>
 <pre>
-$ gdalinfo HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":CloudFraction 
+$ gdalinfo HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":CloudFraction
 Driver: HDF5Image/HDF5 Dataset
 Size is 60, 1645
 Coordinate System is:
@@ -171,12 +171,12 @@ Open GDAL Datasets:
 You may use <b>gdal_translate</b> for reading image bands from this
 dataset.<p>
 
-Note that you should provide exactly the contents of the line marked 
+Note that you should provide exactly the contents of the line marked
 <b>SUBDATASET_n_NAME</b> to GDAL, including the <b>HDF5:</b> prefix.<p>
 
-This driver is intended only for importing remote sensing and geospatial 
-datasets in form of raster images(2D or 3D arrays). If you want explore all 
-data contained in HDF file you should use another tools (you can find 
+This driver is intended only for importing remote sensing and geospatial
+datasets in form of raster images(2D or 3D arrays). If you want explore all
+data contained in HDF file you should use another tools (you can find
 information about different HDF tools using links at end of this page).
 
 <h2>Georeference</h2>
@@ -196,10 +196,10 @@ No Metadata are read at this time from the HDF5 files.
 
 <h2>Driver building</h2>
 
-This driver built on top of NCSA HDF5 library, so you need to download 
-prebuild HDF5 libraries: HDF5-1.6.4 library or higher.  You also need zlib 1.2 
-and szlib 2.0.  For windows user be sure to set the attributes writable 
-(especially if you are using Cygwin) and that the DLLs can be located 
+This driver built on top of NCSA HDF5 library, so you need to download
+prebuild HDF5 libraries: HDF5-1.6.4 library or higher.  You also need zlib 1.2
+and szlib 2.0.  For windows user be sure to set the attributes writable
+(especially if you are using Cygwin) and that the DLLs can be located
 somewhere by your PATH environment variable.
 
 You may also download source code NCSA HDF Home Page (see links below).<p>

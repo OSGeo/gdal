@@ -15,8 +15,8 @@
 
 <p>
 Supported for read and write access, including reading of an affine
-georeferencing transform and some projections.  
-This format is the ASCII interchange format for Arc/Info Grid, 
+georeferencing transform and some projections.
+This format is the ASCII interchange format for Arc/Info Grid,
 and takes the form of an ASCII file, plus sometimes an associated .prj file.
 It is normally produced with the Arc/Info ASCIIGRID command.</p>
 
@@ -39,7 +39,7 @@ supported currently)</p>
 georeferenced units differ) then DX and DY parameters will be output instead
 of CELLSIZE.  Such files can be used in Golden Surfer, but not most other
 ascii grid reading programs.  For force the X pixel size to be used as CELLSIZE
-use the FORCE_CELLSIZE=YES creation option or resample the input to have 
+use the FORCE_CELLSIZE=YES creation option or resample the input to have
 square pixels.</p>
 
 <p>When writing floating-point values, the driver uses the "%.20g" format
@@ -90,19 +90,19 @@ GDAL will report the images it is composed of as subdatasets. If the THF referen
 
 <h2><a name="AIG">AIG -- Arc/Info Binary Grid</a></h2>
 
-<p>Supported by GDAL for read access.  
-This format is the internal binary format for Arc/Info Grid, 
-and takes the form of a coverage level directory in an Arc/Info database. 
+<p>Supported by GDAL for read access.
+This format is the internal binary format for Arc/Info Grid,
+and takes the form of a coverage level directory in an Arc/Info database.
 To open the coverage select the coverage directory, or an .adf file (such as
 hdr.adf) from within it.  If the directory does not contain file(s) with names
 like w001001.adf then it is not a grid coverage.</p>
 
-<p>Support includes reading of an affine 
+<p>Support includes reading of an affine
 georeferencing transform, some projections, and a color
 table (.clr) if available.</p>
 
 <p>This driver is implemented based on a reverse engineering of the format.  See
-the <a href="http://home.gdal.org/projects/aigrid/index.html">format 
+the <a href="http://home.gdal.org/projects/aigrid/index.html">format
 description</a> for more details.</p>
 
 <p>The projections support (read if a prj.adf file is available) is quite
@@ -115,9 +115,9 @@ limited.  Additional sample prj.adf files may be sent to the maintainer,
 
 <h2><a name="ARG">ARG -- Azavea Raster Grid</a></h2>
 
-<p>Driver implementation for a raw format that is used in 
-<a href="http://geotrellis.io/">GeoTrellis</a> and called ARG. 
-<a href="http://geotrellis.io/documentation/0.9.0/geotrellis/io/arg/">ARG format 
+<p>Driver implementation for a raw format that is used in
+<a href="http://geotrellis.io/">GeoTrellis</a> and called ARG.
+<a href="http://geotrellis.io/documentation/0.9.0/geotrellis/io/arg/">ARG format
 specification</a>. Format is essentially a raw format, with a companion .JSON file.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/arg/argdataset.cpp</tt>.</p>
@@ -126,8 +126,8 @@ specification</a>. Format is essentially a raw format, with a companion .JSON fi
 
 <h2><a name="BSB">BSB -- Maptech/NOAA BSB Nautical Chart Format</a></h2>
 
-<p>BSB Nautical Chart format is supported for read access, including reading 
-the colour table and the reference points (as GCPs).  Note that the .BSB 
+<p>BSB Nautical Chart format is supported for read access, including reading
+the colour table and the reference points (as GCPs).  Note that the .BSB
 files cannot be selected directly.  Instead select the .KAP files.  Versions
 1.1, 2.0 and 3.0 have been tested successfully.</p>
 
@@ -182,7 +182,7 @@ not capture any metadata, or georeferencing.</p>
 will have problems with many other data sources.  In particular, it will
 only work with eight bit unsigned data.</p>
 
-<p>See the separate <a href="#SAR_CEOS">SAR_CEOS</a> driver for access to 
+<p>See the separate <a href="#SAR_CEOS">SAR_CEOS</a> driver for access to
 SAR CEOS data products.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/ceos/ceosdataset.cpp</tt>.</p>
@@ -236,7 +236,7 @@ Land Use and Land Cover Digital Data (Data Users Guide 4)</a> - HTML version con
 Supported for writing and creation.  The DirectDraw Surface file format (uses
 the filename extension DDS), from Microsoft, is a standard for storing data
 compressed with the lossy S3 Texture Compression (S3TC) algorithm. The DDS
-format and compression are provided by the crunch library. 
+format and compression are provided by the crunch library.
 </p>
 
 <p>
@@ -259,11 +259,11 @@ creation option QUALITY.
 <h2><a name="DIMAP">DIMAP -- Spot DIMAP</a></h2>
 
 <p>This is a read-only read for Spot DIMAP described images.  To use, select
-the METADATA.DIM file in a product directory, or the product directory 
+the METADATA.DIM file in a product directory, or the product directory
 itself.</p>
 
-<p>The imagery is in a distinct imagery file, often a TIFF file, but the 
-DIMAP dataset handles accessing that file, and attaches geolocation and 
+<p>The imagery is in a distinct imagery file, often a TIFF file, but the
+DIMAP dataset handles accessing that file, and attaches geolocation and
 other metadata to the dataset from the metadata xml file.</p>
 
 <p>From GDAL 1.6.0, the content of the &lt;Spectral_Band_Info&gt; node is reported as metadata
@@ -288,7 +288,7 @@ for more detailed information.</p>
 
 <h2><a name="DOQ1">DOQ1 -- First Generation USGS DOQ</a></h2>
 
-<p>Support for read access, including reading of an affine georeferencing 
+<p>Support for read access, including reading of an affine georeferencing
 transform, and capture of the projection string.   This format is the old,
 unlabelled DOQ (Digital Ortho Quad) format from the USGS.</p>
 
@@ -298,7 +298,7 @@ unlabelled DOQ (Digital Ortho Quad) format from the USGS.</p>
 
 <h2><a name="DOQ2">DOQ2 -- New Labelled USGS DOQ</a></h2>
 
-<p>Support for read access, including reading of an affine georeferencing 
+<p>Support for read access, including reading of an affine georeferencing
 transform, capture of the projection string and reading of other auxiliary
 fields as metadata.   This format is the new,
 labelled DOQ (Digital Ortho Quad) format from the USGS.</p>
@@ -337,7 +337,7 @@ open a dataset select the file with the image file (often with the extension
 image.rep file will be read to extract the projection system of SpatioCarte Defense 1.0 raster products.</p>
 
 <p>This driver does not always do well differentiating between floating point and
-integer data.  The GDAL extension to the .hdr format to differentiate is to add 
+integer data.  The GDAL extension to the .hdr format to differentiate is to add
 a field named PIXELTYPE with values of either FLOAT, SIGNEDINT or UNSIGNEDINT.
 In combination with the NBITS field it is possible to described all variations
 of pixel types.</p>
@@ -419,16 +419,16 @@ contains the actual raw data may have the extension .bl.</p>
 
 <p>GDAL supports some variations of raw raster files with associated ENVI
 style .hdr files describing the format.  To select an existing ENVI raster
-file select the binary file containing the data (as opposed to the .hdr 
+file select the binary file containing the data (as opposed to the .hdr
 file), and GDAL will find the .hdr file by replacing the dataset extension
 with .hdr.</p>
 
 <p>GDAL should support reading bil, bip and bsq interleaved formats, and
-most pixel types are supported, including 8bit unsigned, 16 and 32bit 
-signed and unsigned integers, 32bit and 64 bit floating point, and 
-32bit and 64bit complex floating point.  There is limited support for 
-recognising map_info keywords with the 
-coordinate system and georeferencing.  In particular, UTM and State Plane 
+most pixel types are supported, including 8bit unsigned, 16 and 32bit
+signed and unsigned integers, 32bit and 64 bit floating point, and
+32bit and 64bit complex floating point.  There is limited support for
+recognising map_info keywords with the
+coordinate system and georeferencing.  In particular, UTM and State Plane
 should work.</p>
 
 <p>Starting with GDAL 1.10, all ENVI header fields will be stored in the
@@ -442,7 +442,7 @@ ENVI metadata domain, and all of these can then be written out to the header fil
 	type of interleaving. <b>BSQ</b> --- band sequential (default),
 	<b>BIP</b> --- data interleaved by pixel,
 	<b>BIL</b> --- data interleaved by line.</li>
-	
+
 	<li> <b>SUFFIX=REPLACE/ADD</b>: Force adding ".hdr" suffix to supplied
 	filename, e.g. if user selects "file.bin" name for output dataset,
 	"file.bin.hdr" header file will be created. By default header file
@@ -527,7 +527,7 @@ COLS:    9340
 </pre>
 
 <p>
-Pixel data types of U8, U16, S16, F32, F64, and U1 (bit) are supported.  
+Pixel data types of U8, U16, S16, F32, F64, and U1 (bit) are supported.
 Georeferencing and coordinate system information should be supported
 when provided. </p>
 
@@ -591,7 +591,7 @@ binary grid format), it is more complicated and flexible.</p>
 <h2><a name="GXF">GXF -- Grid eXchange File</a></h2>
 
 <p>This is a raster exchange format propagated by Geosoft, and made a standard
-in the gravity/magnetics field.  GDAL supports reading (but not writing) 
+in the gravity/magnetics field.  GDAL supports reading (but not writing)
 GXF-3 files, including support for georeferencing information, and projections.
 </p>
 
@@ -608,18 +608,18 @@ configuration option (Float64 supported currently)</p>
 
 <h2><a name="IDA">IDA -- Image Display and Analysis</a></h2>
 
-<p>GDAL supports reading and writing IDA images with some limitations.  IDA 
+<p>GDAL supports reading and writing IDA images with some limitations.  IDA
 images are the image format of WinDisp 4.  The files are always one band only
 of 8bit data.  IDA files often have the extension .img though that is not
 required.</p>
 
 <p>Projection and georeferencing information is read though some projections
 (i.e. Meteosat, and Hammer-Aitoff) are not supported.  When writing IDA files
-the projection must have a false easting and false northing of zero. The 
+the projection must have a false easting and false northing of zero. The
 support coordinate systems in IDA are Geographic, Lambert Conformal Conic,
 Lambert Azimuth Equal Area, Albers Equal-Area Conic and Goodes Homolosine.</p>
 
-<p>IDA files typically contain values scaled to 8bit via a slope and offset.  
+<p>IDA files typically contain values scaled to 8bit via a slope and offset.
 These are returned as the slope and offset values of the bands and they must
 be used if the data is to be rescaled to original raw values for analysis. </p>
 
@@ -671,12 +671,12 @@ Most of the metadata is read.
 
 <h2><a name="ISCE">ISCE</a></h2>
 
-<p>Driver for the image formats used in the JPL's Interferometric synthetic 
+<p>Driver for the image formats used in the JPL's Interferometric synthetic
 aperture radar Scientific Computing Environment (ISCE). Only images with
 data types mappable to GDAL data types are supported.</p>
 
 <p>Image properties are stored under the ISCE metadata domain, but there is
-currently no support to access underlying components elements and their 
+currently no support to access underlying components elements and their
 properties. Likewise, ISCE domain metadata will be saved as properties
 in the image XML file.</p>
 
@@ -694,7 +694,7 @@ determine the interleaving (default is BIP).</p>
 <h2><a name="JDEM">JDEM -- Japanese DEM (.mem)</a></h2>
 
 <p>GDAL includes read support for Japanese DEM files, normally having the
-extension .mem.  These files are a product of the Japanese Geographic Survey 
+extension .mem.  These files are a product of the Japanese Geographic Survey
 Institute.</p>
 
 <p>These files are represented as having one 32bit floating band with elevation
@@ -705,7 +705,7 @@ system (always lat/long on the Tokyo datum). </p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/jdem/jdemdataset.cpp</tt>.</p>
 
-<p>See Also: <a href="http://www.gsi.go.jp/ENGLISH/">Geographic Survey 
+<p>See Also: <a href="http://www.gsi.go.jp/ENGLISH/">Geographic Survey
 Institute (GSI) Web Site.</a></p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -729,11 +729,11 @@ except the limitation of the file system.</p>
 <h2><a name="LAN">LAN -- Erdas 7.x .LAN and .GIS</a></h2>
 
 <p>GDAL supports reading and writing
-Erdas 7.x .LAN and .GIS raster files.  Currently 
+Erdas 7.x .LAN and .GIS raster files.  Currently
 4bit, 8bit and 16bit pixel data types are supported for reading
 and 8bit and 16bit for writing.  </p>
 
-<p>GDAL does read the map extents (geotransform) from LAN/GIS files, and 
+<p>GDAL does read the map extents (geotransform) from LAN/GIS files, and
 attempts to read the coordinate system information.  However, this format
 of file does not include complete coordinate system information, so for
 state plane and UTM coordinate systems a LOCAL_CS definition is returned
@@ -781,7 +781,7 @@ be manually added to the .hdr file if required.</p>
 <h2><a name="NDF">NDF -- NLAPS Data Format</a></h2>
 
 <p>GDAL has limited support for reading NLAPS Data Format files.  This is a
-format primarily used by the Eros Data Center for distribution of Landsat 
+format primarily used by the Eros Data Center for distribution of Landsat
 data.  NDF datasets consist of a header file (often with the extension .H1)
 and one or more associated raw data files (often .I1, .I2, ...).  To open
 a dataset select the header file, often with the extension .H1, .H2 or
@@ -800,11 +800,11 @@ Data Format Specification</a>.</p>
 
 <h2><a name="GMT">GMT -- GMT Compatible netCDF</a></h2>
 
-<p>GDAL has limited support for reading and writing netCDF <i>grid</i> files. 
+<p>GDAL has limited support for reading and writing netCDF <i>grid</i> files.
 NetCDF files that are not recognised as grids (they lack variables called
 dimension, and z) will be silently ignored by this driver.  This driver is
-primarily intended to provide a mechanism for grid interchange with the 
-<a href="http://gmt.soest.hawaii.edu/">GMT</a> package.  The 
+primarily intended to provide a mechanism for grid interchange with the
+<a href="http://gmt.soest.hawaii.edu/">GMT</a> package.  The
 netCDF driver should be used for more general netCDF datasets.</p>
 
 <p>The units information in the file will be ignored, but x_range, and
@@ -812,9 +812,9 @@ y_range information will be read to get georeferenced extents of the raster.
 All netCDF data types should be supported for reading.</p>
 
 <p>Newly created files (with a type of <tt>GMT</tt>) will always have
-units of "meters" for x, y and z but the x_range, y_range and z_range should 
-be correct.  Note that netCDF does not have an unsigned byte data type, so 
-8bit rasters will generally need to be converted to Int16 for export to 
+units of "meters" for x, y and z but the x_range, y_range and z_range should
+be correct.  Note that netCDF does not have an unsigned byte data type, so
+8bit rasters will generally need to be converted to Int16 for export to
 GMT.</p>
 
 <p>NetCDF support in GDAL is optional, and not compiled in by default.  </p>
@@ -827,13 +827,13 @@ GMT.</p>
 
 <h2><a name="PAux">PAux -- PCI .aux Labelled Raw Format</a></h2>
 
-<p>GDAL includes a partial implementation of the PCI .aux labelled raw raster 
+<p>GDAL includes a partial implementation of the PCI .aux labelled raw raster
 file for read, write and creation.  To open a PCI labelled file, select the
 raw data file itself.  The .aux file (which must have a common base name) will
 be checked for automatically. </p>
 
 <p>The format type for creating new files is <tt>PAux</tt>.  All PCI data types
-(8U, 16U, 16S, and 32R) are supported.  Currently georeferencing, projections, 
+(8U, 16U, 16S, and 32R) are supported.  Currently georeferencing, projections,
 and other metadata is ignored.</p>
 
 <p>Creation Options:</p>
@@ -955,8 +955,8 @@ Description</a></p>
 
 <h2><a name="PNG">PNG -- Portable Network Graphics</a></h2>
 
-<p>GDAL includes support for reading, and creating .png files.  Greyscale, 
-pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well as 
+<p>GDAL includes support for reading, and creating .png files.  Greyscale,
+pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well as
 precisions of eight and sixteen bits per sample.</p>
 
 <p>PNG files are linearly compressed, so random reading of large PNG files can
@@ -969,9 +969,9 @@ will be read.  Single transparency values in greyscale files will be
 recognised as a nodata value in GDAL.  Transparent index in paletted images
 are preserved when the color table is read. </p>
 
-<p>PNG files can be created with a type of PNG, using the CreateCopy() method, 
+<p>PNG files can be created with a type of PNG, using the CreateCopy() method,
 requiring a prototype to read from.  Writing includes support for the
-various image types, and will preserve transparency/nodata values.  
+various image types, and will preserve transparency/nodata values.
 Georeferencing .wld files are written if option WORLDFILE is set.  All
 pixel types other than 16bit unsigned will be written as eight bit.</p>
 
@@ -1016,9 +1016,9 @@ of 9 is slow but does the best compression.</li>
 
 </ul>
 
-<p>NOTE: Implemented as <tt>gdal/frmts/png/pngdataset.cpp</tt>.</p> 
+<p>NOTE: Implemented as <tt>gdal/frmts/png/pngdataset.cpp</tt>.</p>
 
-<p>PNG support is implemented based on the libpng reference library.  
+<p>PNG support is implemented based on the libpng reference library.
 More information is available at <a href="http://www.libpng.org/pub/png">
 http://www.libpng.org/pub/png</a>.</p>
 
@@ -1047,13 +1047,13 @@ software which is not liberal to this value.</li>
 
 <h2><a name="ROI_PAC">ROI_PAC</a></h2>
 
-<p>Driver for the image formats used in the JPL's ROI_PAC 
+<p>Driver for the image formats used in the JPL's ROI_PAC
 project (<a href="https://aws.roipac.org/">https://aws.roipac.org/</a>).
 All image type are supported excepted .raw images.</p>
 
 <p>Metadata are stored in the ROI_PAC domain.</p>
 
-<p>Georeferencing is supported, but expect problems when using the UTM 
+<p>Georeferencing is supported, but expect problems when using the UTM
 projection, as ROI_PAC format do not store any hemisphere field.</p>
 
 <p>When creating files, you have to be able to specify the right data type
@@ -1132,33 +1132,33 @@ CEOS superstructure information.  It also captures various pieces of metadata
 from various header files, including:</p>
 
 <pre>
-  CEOS_LOGICAL_VOLUME_ID=EERS-1-SAR-MLD  
-  CEOS_PROCESSING_FACILITY=APP         
-  CEOS_PROCESSING_AGENCY=CCRS    
-  CEOS_PROCESSING_COUNTRY=CANADA      
-  CEOS_SOFTWARE_ID=APP 1.62    
-  CEOS_ACQUISITION_TIME=19911029162818919               
+  CEOS_LOGICAL_VOLUME_ID=EERS-1-SAR-MLD
+  CEOS_PROCESSING_FACILITY=APP
+  CEOS_PROCESSING_AGENCY=CCRS
+  CEOS_PROCESSING_COUNTRY=CANADA
+  CEOS_SOFTWARE_ID=APP 1.62
+  CEOS_ACQUISITION_TIME=19911029162818919
   CEOS_SENSOR_CLOCK_ANGLE=  90.000
-  CEOS_ELLIPSOID=IUGG_75         
+  CEOS_ELLIPSOID=IUGG_75
   CEOS_SEMI_MAJOR=    6378.1400000
   CEOS_SEMI_MINOR=    6356.7550000
 </pre>
 
-<p>The SAR_CEOS driver also includes some support for SIR-C and PALSAR 
+<p>The SAR_CEOS driver also includes some support for SIR-C and PALSAR
 polarimetric data.  The SIR-C format contains an image in compressed
-scattering matrix form, described 
-<a href="http://southport.jpl.nasa.gov/software/dcomp/dcomp.html">here</a>.  
+scattering matrix form, described
+<a href="http://southport.jpl.nasa.gov/software/dcomp/dcomp.html">here</a>.
 GDAL decompresses the data as it is read in.  The PALSAR format
 contains bands that correspond almost exactly to elements of the 3x3
 Hermitian covariance matrix-
 see the <a href="http://www.ersdac.or.jp/palsar/palsar_E.html">
-ERSDAC-VX-CEOS-004A.pdf</a> document for a complete description (pixel 
+ERSDAC-VX-CEOS-004A.pdf</a> document for a complete description (pixel
 storage is described on page 193). GDAL converts these to complex floating
 point covariance matrix bands as they are read in.  The convention used
 to represent the covariance matrix in terms of the scattering matrix
-elements HH, HV (=VH), and VV is indicated below. Note that the 
+elements HH, HV (=VH), and VV is indicated below. Note that the
 non-diagonal elements of the matrix are complex values, while the diagonal
-values are real (though represented as complex bands).</p> 
+values are real (though represented as complex bands).</p>
 
 <ul>
 <li> Band 1: Covariance_11 (Float32) = HH*conj(HH)</li>
@@ -1180,23 +1180,23 @@ values are real (though represented as complex bands).</p>
 
 <p>(starting with GDAL 1.7.0)</p>
 
-<p>The driver supports both reading and writing (including create, delete, 
-and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of 
-an ASCII header (.SGRD) and a binary data (.SDAT) file with a common 
+<p>The driver supports both reading and writing (including create, delete,
+and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
+an ASCII header (.SGRD) and a binary data (.SDAT) file with a common
 basename.  The .SDAT file should be selected to access the dataset.</p>
 
-<p>The driver supports reading the following SAGA datatypes 
+<p>The driver supports reading the following SAGA datatypes
 (in brackets the corresponding GDAL types): BIT (GDT_Byte),
-BYTE_UNSIGNED (GDT_Byte), BYTE (GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), 
-SHORTINT (GDT_Int16), INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), 
+BYTE_UNSIGNED (GDT_Byte), BYTE (GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16),
+SHORTINT (GDT_Int16), INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32),
 FLOAT (GDT_Float32) and DOUBLE (GDT_Float64).</p>
 
-<p>The driver supports writing the following SAGA datatypes: BYTE_UNSIGNED 
-(GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16), 
-INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), FLOAT (GDT_Float32) 
+<p>The driver supports writing the following SAGA datatypes: BYTE_UNSIGNED
+(GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16),
+INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), FLOAT (GDT_Float32)
 and DOUBLE (GDT_Float64).</p>
 
-<p>Currently the driver does not support zFactors other than 1 and reading 
+<p>Currently the driver does not support zFactors other than 1 and reading
 SAGA grids which are written TOPTOBOTTOM.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/saga/sagadataset.cpp</tt>.</p>
@@ -1214,7 +1214,7 @@ Projection and georeferencing information is also returned.</p>
 with a name like XXXCATD.DDF.  This should be selected to open
 the dataset.</p>
 
-<p>The elevation units of DEMs may be feet or meters.  The GetType() method on a 
+<p>The elevation units of DEMs may be feet or meters.  The GetType() method on a
 band will attempt to return if the units are Feet ("ft") or Meters ("m").</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.</p>
@@ -1225,9 +1225,9 @@ band will attempt to return if the units are Feet ("ft") or Meters ("m").</p>
 
 <p>The SGI driver currently supports the reading and writing of SGI Image files.</p>
 
-<p>The driver currently supports 1, 2, 3, and 4 band images. The driver 
-currently supports "8 bit per channel value" images. The driver supports 
-both uncompressed and run-length encoded (RLE) images for reading, but 
+<p>The driver currently supports 1, 2, 3, and 4 band images. The driver
+currently supports "8 bit per channel value" images. The driver supports
+both uncompressed and run-length encoded (RLE) images for reading, but
 created files are always RLE compressed..</p>
 
 <p>The GDAL SGI Driver was based on Paul Bourke's SGI image read code.</p>
@@ -1264,7 +1264,7 @@ to GDAL is the .Hdr file.</p>
 
 <p>The ASRP and USRP raster products (as defined by DGIWG) are variations on a
 common standard product format and are supported for reading by GDAL.  ASRP and
-USRP datasets are made of several files - typically a .GEN, .IMG, .SOU and .QAL 
+USRP datasets are made of several files - typically a .GEN, .IMG, .SOU and .QAL
 file with a common basename.  The .IMG file should be selected to access the dataset.</p>
 
 <p>ASRP (in a geographic coordinate system) and USRP (in a UTM/UPS coordinate
@@ -1332,8 +1332,8 @@ or other suffixes depending on the image file it comes with.</p>
 
 <h2><a name="XPM">XPM - X11 Pixmap</a></h2>
 
-<p>GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
-image files.  These are colormapped one band images primarily used for 
+<p>GDAL includes support for reading and writing XPM (X11 Pixmap Format)
+image files.  These are colormapped one band images primarily used for
 simple graphics purposes in X11 applications.  It has been incorporated in
 GDAL primarily to ease translation of GDAL images into a form usable with
 the GTK toolkit.</p>

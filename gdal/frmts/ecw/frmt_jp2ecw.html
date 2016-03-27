@@ -7,19 +7,19 @@
 
 <h1>JP2ECW -- ERDAS JPEG2000 (.jp2)</h1>
 
-GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2 SDK developed by 
-Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and 
+GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2 SDK developed by
+Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and
 requires linking in the libraries available from the ECW/JP2 SDK Download page.<p>
 
-Coordinate system and georeferencing transformations are read, and 
-some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000), 
+Coordinate system and georeferencing transformations are read, and
+some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000),
 ERDAS GML-in-JPEG2000, and the new GML-in-JPEG2000 specification developed
 at OGC. <p>
 
 <h3>Licensing</h3>
 
 The ERDAS ECW/JP2 SDK v5.x is available under multiple license types. For Desktop usage, decoding
-any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode 
+any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode
 unlimited sized files on Mobile platforms a license must be purchased from Hexagon Geospatial.<p>
 
 
@@ -47,24 +47,24 @@ Changing other options can <i>substantially</i> impact decoding speed and compat
 
 <ul>
 
-<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and 
+<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and
 replaced by ECW_ENCODE_KEY & ECW_ENCODE_COMPANY.<p>
 
 <li> <b>ECW_ENCODE_KEY=key</b>: <i>(v4.x SDK or higher)</i> Provide the OEM encoding key to unlock encoding capability
 up to the licensed gigapixel limit.  The key is approximately 129 hex digits long. The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided globally as a configuration option.<p>
 
 <li> <b>ECW_ENCODE_COMPANY=name</b>: <i>(v4.x SDK or higher)</i> Provide the name of the company in the issued
-OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided 
+OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided
 globally as a configuration option.<p>
 
-<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
-the original.  If not provided defaults to 75 for an 75% reduction.  TARGET=0 
+<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of
+the original.  If not provided defaults to 75 for an 75% reduction.  TARGET=0
 uses lossless compression.<p>
 
-<li> <b>PROJ=name</b>: Name of the ECW projection string to use. 
+<li> <b>PROJ=name</b>: Name of the ECW projection string to use.
 Common examples are NUTM11, or GEODETIC.<p>
 
-<li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
+<li> <b>DATUM=name</b>: Name of the ECW datum string to use.
 Common examples are WGS84 or NAD83.<p>
 
 <li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box
@@ -84,8 +84,8 @@ If filename is just set to YES, a minimal instance will be built.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
 
-<li> <b>PROFILE=profile</b>: One of BASELINE_0, BASELINE_1, BASELINE_2, 
-NPJE or EPJE.  Review the ECW SDK documentation for details on profile 
+<li> <b>PROFILE=profile</b>: One of BASELINE_0, BASELINE_1, BASELINE_2,
+NPJE or EPJE.  Review the ECW SDK documentation for details on profile
 meanings.<p>
 
 <li> <b>PROGRESSION=LRCP/RLCP/RPCL</b>: Set the progression order with
@@ -96,7 +96,7 @@ imagery code stream will be written.  If NO a JP2 package
 will be written around the code stream including a variety of meta
 information. (Default, NO)<p>
 
-    
+
 <li> <b>LEVELS=n</b>: Resolution levels in pyramid (by default so many that the size of the smallest thumbnail image is 64x64 pixels at maximum)<p>
 <li> <b>LAYERS=n</b>: Quality layers (default, 1)<p>
 <li> <b>PRECINCT_WIDTH=n</b>: Precinct Width (default, 64)<p>
@@ -138,36 +138,36 @@ be written. Defaults to NO.
 
 </ul>
 
-"JPEG2000 format does not support creation of GDAL overviews since the format 
-is already considered to be optimized for "arbitrary overviews". 
-JP2ECW driver also arranges JP2 codestream to allow optimal access to power of two overviews. 
-This is controlled with the creation option LEVELS." 
+"JPEG2000 format does not support creation of GDAL overviews since the format
+is already considered to be optimized for "arbitrary overviews".
+JP2ECW driver also arranges JP2 codestream to allow optimal access to power of two overviews.
+This is controlled with the creation option LEVELS."
 <P>
 
 <h2> Configuration Options </h2>
 
-The ERDAS ECW/JP2 SDK supports a variety of 
-<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration 
-options</a> to control various features.  Most of these are exposed as GDAL 
+The ERDAS ECW/JP2 SDK supports a variety of
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration
+options</a> to control various features.  Most of these are exposed as GDAL
 configuration options.  See the ECW/JP2 SDK documentation for full details on the
-meaning of these options. 
+meaning of these options.
 
 <ul>
-<li> <b>ECW_CACHE_MAXMEM=bytes</b>: maximum bytes of RAM used for in-memory 
-caching.  If not set, up to one quarter of physical RAM will be used by the 
+<li> <b>ECW_CACHE_MAXMEM=bytes</b>: maximum bytes of RAM used for in-memory
+caching.  If not set, up to one quarter of physical RAM will be used by the
 SDK for in-memory caching.<p>
 
 <li> <b>ECW_TEXTURE_DITHER=TRUE/FALSE</b>: This may be set to FALSE to disable
 dithering when decompressing ECW files.  Defaults to TRUE.<p>
 
-<li> <b>ECW_FORCE_FILE_REOPEN=TRUE/FALSE</b>: This may be set to TRUE to 
-force open a file handle for each file for each connection made.  Defaults to 
+<li> <b>ECW_FORCE_FILE_REOPEN=TRUE/FALSE</b>: This may be set to TRUE to
+force open a file handle for each file for each connection made.  Defaults to
 FALSE.<p>
 
-<li> <b>ECW_CACHE_MAXOPEN=number</b>: The maximum number of files to keep 
+<li> <b>ECW_CACHE_MAXOPEN=number</b>: The maximum number of files to keep
 open for ECW file handle caching.  Defaults to unlimited.<p>
 
-<li> <b>ECW_AUTOGEN_J2I=TRUE/FALSE</b>: Controls whether .j2i index files 
+<li> <b>ECW_AUTOGEN_J2I=TRUE/FALSE</b>: Controls whether .j2i index files
 should be created when opening jpeg2000 files.  Defaults to TRUE.<p>
 
 <li> <b>ECW_RESILIENT_DECODING=TRUE/FALSE</b>: Controls whether the reader

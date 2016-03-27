@@ -14,10 +14,10 @@ Oracle client libraries are available. <p>
 
 When opening a database, it's name should be specified in the form
 "OCI:userid/password@database_instance:table,table".  The list of tables
-is optional.  The database_instance portion may be omitted 
+is optional.  The database_instance portion may be omitted
 when accessing the default local database instance.<p>
 
-If the list of tables is not provided, then all tables appearing in 
+If the list of tables is not provided, then all tables appearing in
 ALL_SDO_GEOM_METADATA will be treated by OGR as layers with the table
 names as the layer names.  Non-spatial tables or spatial tables not listed
 in the ALL_SDO_GEOM_METADATA table are not accessible unless explicitly
@@ -27,7 +27,7 @@ the tables to be used as this can substantially reduce initialization time
 in databases with many tables.<p>
 
 If the table has an integer column called OGR_FID it will be used as the
-feature id by OGR (and it will not appear as a regular attribute).  When 
+feature id by OGR (and it will not appear as a regular attribute).  When
 loading data into Oracle Spatial OGR will always create the OGR_FID field.
 <p>
 
@@ -39,9 +39,9 @@ OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
 expressions are also passed through to Oracle.</p>
 
 <p>As well two special commands are supported via the ExecuteSQL() interface.
-These are "<b>DELLAYER:&lt;table_name&gt;</b>" to delete a layer, 
-and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the 
-SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these 
+These are "<b>DELLAYER:&lt;table_name&gt;</b>" to delete a layer,
+and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the
+SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these
 pseudo-commands are translated into more complex SQL commands for Oracle.</p>
 
 <p>It's also possible to request the driver to handle SQL commands with <a href="ogr_sql.html">OGR SQL</a> engine,
@@ -61,7 +61,7 @@ ignored by OGR.</li>
 <li> Currently the OGR transaction semantics are not properly mapped onto
 transaction semantics in Oracle.</li>
 
-<li> If an attribute called OGR_FID exists in the schema for tables being 
+<li> If an attribute called OGR_FID exists in the schema for tables being
 read, it will be used as the FID.  Random (FID based) reads on tables without
 an identified (and indexed) FID field can be very slow.  To force use of a
 particular field name the OCI_FID configuration variable (i.e. environment
@@ -103,8 +103,8 @@ in USER_SDO_GEOM_METADATA and rebuilding the spatial index.<p>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.<p>
 
-<li> <b>TRUNCATE</b>: This may be "YES" to force the existing table to 
-be reused, but to first truncate all records in the table, preserving 
+<li> <b>TRUNCATE</b>: This may be "YES" to force the existing table to
+be reused, but to first truncate all records in the table, preserving
 indexes or dependencies.<p>
 
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
@@ -121,13 +121,13 @@ NUMBER, INTEGER and VARCHAR2 will be used instead.  The default is "YES".<p>
 created layer.  If not set 3 is used by default.<p>
 
 <li> <b>SPATIAL_INDEX</b>: This may be set to FALSE to disable creation of a spatial
-index when a layer load is complete.  By default an index is created if 
+index when a layer load is complete.  By default an index is created if
 any of the layer features have valid geometries. The default is "YES".
 Note: option was called INDEX in releases before GDAL 2<p>
 
 <li> <b>INDEX_PARAMETERS</b>: This may be set to pass creation parameters
-when the spatial index is created.  For instance setting INDEX_PARAMETERS to 
-SDO_LEVEL=5 would cause a 5 level tile index to be used.  By default no 
+when the spatial index is created.  For instance setting INDEX_PARAMETERS to
+SDO_LEVEL=5 would cause a 5 level tile index to be used.  By default no
 parameters are passed causing a default R-Tree spatial index to be created.<p>
 
 <li> <b>ADD_LAYER_GTYPE</b>=YES/NO: (starting with GDAL 2.0) This may be
@@ -156,21 +156,21 @@ row will be added to this table.  The SRID creation option allows the user
 to force use of an existing Oracle SRID item even it if does not exactly
 match the WKT the driver expects.<p>
 
-<li> <b>MULTI_LOAD</b>: If enabled new features will be created in 
+<li> <b>MULTI_LOAD</b>: If enabled new features will be created in
 groups of 100 per SQL INSERT command, instead of each feature being a separate
 INSERT command.  Having this enabled is the fastest way to load data quickly.
-Multi-load mode is enabled by default, and may be forced off for existing 
+Multi-load mode is enabled by default, and may be forced off for existing
 layers or for new layers by setting to NO.<p>
 
 <li> <b>LOADER_FILE</b>: If this option is set, all feature information will
 be written to a file suitable for use with SQL*Loader instead of inserted
 directly in the database.  The layer itself is still created in the database
-immediately.  The SQL*Loader support is experimental, and generally 
-MULTI_LOAD enabled mode should be used instead when trying for optimal 
+immediately.  The SQL*Loader support is experimental, and generally
+MULTI_LOAD enabled mode should be used instead when trying for optimal
 load performance.<p>
 
-<li> <b>GEOMETRY_NAME</b>: By default OGR creates new tables with the 
-geometry column named ORA_GEOMETRY.  If you wish to use a different name, 
+<li> <b>GEOMETRY_NAME</b>: By default OGR creates new tables with the
+geometry column named ORA_GEOMETRY.  If you wish to use a different name,
 it can be supplied with the GEOMETRY_NAME layer creation option.<p>
 
 </ul>
@@ -195,7 +195,7 @@ of the desired name exists it is overwritten.<p>
         -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
 </pre>
 
-This example shows using ogrinfo to evaluate an SQL query statement 
+This example shows using ogrinfo to evaluate an SQL query statement
 within Oracle.  More sophisticated Oracle Spatial specific queries may also be
 used via the -sql commandline switch to ogrinfo.<p>
 

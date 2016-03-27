@@ -58,7 +58,7 @@ based on all the different things you are able to do with text fields within Ela
 <pre>
 ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
 </pre>
-<p> 
+<p>
 
 The ElasticSearch writer supports the following Configuration Options. Starting
 with GDAL 2.1, layer creation options are also available and should be preferred:
@@ -273,7 +273,7 @@ ogr2ogr -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
 The mapping file allows you to modify the mapping according to the
 <a href="http://www.elasticsearch.org/guide/reference/mapping/core-types.html">ElasticSearch field-specific types</a>.
 There are many options to choose from, however, most of the functionality is based
-on all the different things you are able to do with text fields. 
+on all the different things you are able to do with text fields.
 </br>
 <pre>
 ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
@@ -294,7 +294,7 @@ ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "ElasticSearch" http://l
 </pre>
 
 <b>Bulk Uploading (for larger datasets):</b> </br>
-Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collection before being inserted. 
+Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collection before being inserted.
 </br>
 <pre>
 ogr2ogr -progress --config ES_BULK 10000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
@@ -305,7 +305,7 @@ ogr2ogr -progress -lco BULK_SIZE=10000 -f "ElasticSearch" http://localhost:9200 
 </pre>
 
 <b>Overwrite the current Index:</b> </br>
-If specified, this will overwrite the current index. Otherwise, the data will be appended. 
+If specified, this will overwrite the current index. Otherwise, the data will be appended.
 </br>
 <pre>
 ogr2ogr -progress --config ES_OVERWRITE 1 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable

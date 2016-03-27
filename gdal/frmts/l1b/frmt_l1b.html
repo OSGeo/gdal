@@ -9,7 +9,7 @@
 
 GDAL supports NOAA Polar Orbiter Level 1b Data Set format for reading. Now it can
 read NOAA-9(F) --- NOAA-17(M) datasets. NOTE: only AVHRR instrument supported
-now, if you want read data from other instruments, write to me (Andrey Kiselev, 
+now, if you want read data from other instruments, write to me (Andrey Kiselev,
 <a href=mailto:dron@ak4719.spb.edu>dron@ak4719.spb.edu</a>). AVHRR
 LAC/HRPT (1 km resolution) and GAC (4 km resolution) should be processed
 correctly.
@@ -129,7 +129,7 @@ dataset. The values of each pixel are 0 = unknown; 1 = clear; 2 = cloudy; 3 = pa
 NOAA &gt;=15 datasets that report in their header to have missing scan lines
 will expose a per-dataset mask band (following
 <a href="https://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band Masks</a>)
-to indicate such scan lines. 
+to indicate such scan lines.
 
 <h2>See Also:</h2>
 
@@ -153,7 +153,7 @@ Advanced Very High Resolution Radiometer (AVHRR)'' by Arthur P. Cracknell,
 Taylor and Francis Ltd., 1997, ISBN 0-7484-0209-8.
 </a><p>
 
-<li> NOAA data can be downloaded from the 
+<li> NOAA data can be downloaded from the
 <a href="http://www.class.noaa.gov/">Comprehensive Large Array-data Stewardship System (CLASS)</a>
 (former SAA). Actually it is only source of Level 1b datasets for me, so my implementation
 tested with that files only. <p>

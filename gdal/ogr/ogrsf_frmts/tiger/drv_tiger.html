@@ -11,14 +11,14 @@ TIGER/Line file sets are support for read access.  <p>
 
 TIGER/Line files are a digital database of geographic features, such as roads,
 railroads, rivers, lakes, political boundaries, census statistical boundaries,
-etc. covering the entire United States. The data base contains information 
-about these features such as their location in latitude and longitude, the 
-name, the type of feature, address ranges for most streets, the geographic 
-relationship to other features, and other related information. They are the 
-public product created from the Census Bureau's TIGER (Topologically 
-Integrated Geographic Encoding and Referencing) data base of geographic 
-information. TIGER was developed at the Census Bureau to support the mapping 
-and related geographic activities required by the decennial census and sample 
+etc. covering the entire United States. The data base contains information
+about these features such as their location in latitude and longitude, the
+name, the type of feature, address ranges for most streets, the geographic
+relationship to other features, and other related information. They are the
+public product created from the Census Bureau's TIGER (Topologically
+Integrated Geographic Encoding and Referencing) data base of geographic
+information. TIGER was developed at the Census Bureau to support the mapping
+and related geographic activities required by the decennial census and sample
 survey programs. <p>
 
 Note that the TIGER/Line product does not include census demographic
@@ -52,7 +52,7 @@ TGR26001.RTS
 TGR26001.RTZ
 </pre>
 
-The TIGER/Line coordinate system is hardcoded to NAD83 lat/long degrees. 
+The TIGER/Line coordinate system is hardcoded to NAD83 lat/long degrees.
 This should be appropriate for all recent years of TIGER/Line production.<P>
 
 There is no update or creation support in the TIGER/Line driver.<p>
@@ -60,8 +60,8 @@ There is no update or creation support in the TIGER/Line driver.<p>
 The reader was implemented for TIGER/Line 1998 files, but some effort has
 gone into ensuring compatibility with 1992, 1995, 1997, 1999, 2000, 2002, 2003
 and 2004 TIGER/Line products as well.  The 2005 products have also been
-reported to work fine.  It is believe that any TIGER/Line 
-product from the 1990's should work with the reader, with the possible loss of 
+reported to work fine.  It is believe that any TIGER/Line
+product from the 1990's should work with the reader, with the possible loss of
 some version specific information.<p>
 
 
@@ -79,16 +79,16 @@ module from which the feature originated.  For some keys (such as LAND,
 POLYID, and CENID) this MODULE attribute is needed to make the key unique
 when the dataset (directory) consists of more than one county of data. <p>
 
-Following is a list of feature types, and their relationship to the 
+Following is a list of feature types, and their relationship to the
 TIGER/Line product.<p>
 
 <h4>CompleteChain</h4>
 
-A CompleteChain is a polyline with an associated TLID (TIGER/Line ID). 
+A CompleteChain is a polyline with an associated TLID (TIGER/Line ID).
 The CompleteChain features are established from a type 1 record
-(Complete Chain Basic Data Record), and if available it's associated 
+(Complete Chain Basic Data Record), and if available it's associated
 type 3 record (Complete Chain Geographic Entity Codes).   As well, any
-type 2 records (Complete Chain Shape Coordinates) available are used to 
+type 2 records (Complete Chain Shape Coordinates) available are used to
 fill in intermediate shape points on the arc.  The TLID is the primary
 key, and is unique within the entire national TIGER/Line coverage.<p>
 
@@ -105,7 +105,7 @@ ALT_FETYPE{}.  The ALT_FENAME{} is a list of feature names associated with
 the TLID on the AltName feature. <p>
 
 Note that zero, one or more AltName records may exist for a given TLID, and
-each AltName record can contain between one and four alternate names. 
+each AltName record can contain between one and four alternate names.
 Because it is still very difficult to utilize AltName features to relate
 altername names to CompleteChains, it is anticipated that the standard
 reader pipeline for TIGER/Line files will be upgraded in the future, resulting
@@ -116,16 +116,16 @@ These features have no associated geometry.<p>
 <h4>FeatureIds</h4>
 
 These features are derived from type 5 (Complete Chain Feature Identifiers)
-records.  Each feature contains a feature name (FENAME), and it's associated 
+records.  Each feature contains a feature name (FENAME), and it's associated
 feature id code (FEAT).  The FEAT attribute is the primary key, and is
-unique within the county module.  FeatureIds have a one to many relationship 
+unique within the county module.  FeatureIds have a one to many relationship
 with AltName features, and KeyFeatures features.<p>
 
 These features have no associated geometry.<p>
 
 <h4>ZipCodes</h4>
 
-These features are derived from type 6 (Additional Address Range and 
+These features are derived from type 6 (Additional Address Range and
 ZIP Code Data) records.  These features are intended to augment the
 ZIP Code information kept directly on CompleteChain features, and there
 is a many to one relationship between ZipCodes features and CompleteChain
@@ -147,15 +147,15 @@ to be collected (via the AreaLandmark feature) from a Polygon feature.<p>
 <h4>AreaLandmarks</h4>
 
 These features are derived from type 8 (Polygons Linked to Area Landmarks)
-records.  Each associates a Landmark feature (attribute LAND) with a 
-Polygon feature (attribute POLYID).  This feature has a many to many 
+records.  Each associates a Landmark feature (attribute LAND) with a
+Polygon feature (attribute POLYID).  This feature has a many to many
 relationship with Polygon features.<p>
 
 These features have no associated geometry.<p>
 
 <h4>KeyFeatures</h4>
 
-These features are derived from type 9 (Polygon Geographic Entity Codes) 
+These features are derived from type 9 (Polygon Geographic Entity Codes)
 records.  They may be associated with a FeatureIds feature (via the FEAT
 attribute), and a Polygon feature (via the POLYID attribute).  <p>
 
@@ -172,7 +172,7 @@ These features do not have any geometry associated with them as read by
 the OGR TIGER driver.  It needs to be externally related using the
 PolyChainLink.  The gdal/pymod/samples/tigerpoly.py script may be used
 to read a TIGER dataset and extract the polygon layer <b>with geometry</b>
-as a shapefile. 
+as a shapefile.
 
 <h4>EntityNames</h4>
 
@@ -201,7 +201,7 @@ These features have no associated geometry.<p>
 
 <h4>PIP</h4>
 
-These features are derived from type P (Polygon Internal Point) records. 
+These features are derived from type P (Polygon Internal Point) records.
 They relate to a Polygon feature via the POLYID attribute, and can be used
 to establish an internal point for Polygon features.<p>
 
@@ -209,7 +209,7 @@ These features have a point geometry.<p>
 
 <h4>ZipPlus4</h4>
 
-These features are derived from type Z (ZIP+4 Codes) records.  ZipPlus4 
+These features are derived from type Z (ZIP+4 Codes) records.  ZipPlus4
 features have a many to one relationship with CompleteChain features.
 <p>
 
@@ -220,7 +220,7 @@ These features have no associated geometry.
 
 <ul>
 
-<li> <a href="http://www.census.gov/geo/www/tiger/">http://www.census.gov/geo/www/tiger/</a>: More information on the TIGER/Line file format, and data 
+<li> <a href="http://www.census.gov/geo/www/tiger/">http://www.census.gov/geo/www/tiger/</a>: More information on the TIGER/Line file format, and data
 product can be found on this U.S. Census web page.<p.
 
 </ul>

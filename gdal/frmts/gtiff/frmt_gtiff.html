@@ -16,9 +16,9 @@ somewhat less varieties can be written.</p>
 reading and writing BigTIFF files (evolution of the TIFF format to support files
 larger than 4 GB).</p>
 
-<p>Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+<p>Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64,
 CInt16, CInt32, CFloat32 and CFloat64 are supported for
-reading and writing.  
+reading and writing.
 Paletted images will return palette information associated with
 the band.  The compression formats listed below should be supported for
 reading as well. </p>
@@ -30,7 +30,7 @@ such as YCbCr color model files, are automatically translated into RGBA
 <h2>Georeferencing</h2>
 
 <p>Most GeoTIFF projections should be supported, with the caveat that in order
-to translate uncommon Projected, and Geographic coordinate systems into 
+to translate uncommon Projected, and Geographic coordinate systems into
 OGC WKT it is necessary to have the EPSG .csv files available.  They must
 be found at the location pointed to by the GEOTIFF_CSV environment variable.
 </p>
@@ -171,12 +171,12 @@ ignored for JPEG.  Default is compression in the main thread.</p></li>
 <h2>Creation Issues</h2>
 
 <p>GeoTIFF files can be created with any GDAL defined band type, including
-the complex types.  Created files may have any number of bands.  Files 
+the complex types.  Created files may have any number of bands.  Files
 with exactly 3 bands will be
 given a photometric interpretation of RGB, files with exactly four bands
-will have a photometric interpretation of RGBA, while all other combinations 
+will have a photometric interpretation of RGBA, while all other combinations
 will have a photometric interpretation of MIN_IS_WHITE.  Files with
-pseudo-color tables, or GCPs can currently only be created when creating from 
+pseudo-color tables, or GCPs can currently only be created when creating from
 an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).</p>
 
 <p>Note that the GeoTIFF format does not support parametric description of datums,
@@ -201,7 +201,7 @@ if RPC information is available.</p></li>
 
 <li><p><b>INTERLEAVE=[BAND,PIXEL]</b>: By default TIFF files with pixel
 interleaving (PLANARCONFIG_CONTIG in TIFF terminology) are created.  These
-are slightly less efficient than BAND interleaving for some purposes, but 
+are slightly less efficient than BAND interleaving for some purposes, but
 some applications only support pixel interleaved TIFF files.</p></li>
 
 <li><p><b>TILED=YES</b>: By default stripped TIFF files are created.  This
@@ -214,7 +214,7 @@ option can be used to force creation of tiled TIFF files.</p></li>
 
 <li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>: 
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
@@ -252,7 +252,7 @@ This is generally the optimal choice for smallest file size, and consequently is
 
 <li><p><b>ZLEVEL=[1-9]</b>:  Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 6.</p></li>
 
-<li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>: 
+<li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
 Set the photometric interpretation tag. Default is MINISBLACK, but if the
 input image has 3 or 4 bands of Byte type, then RGB will be selected. You can
 override default photometric using this option.</p></li>
@@ -292,7 +292,7 @@ if the final file is anticipated to be too big for classical TIFF format.
 If BigTIFF creation is not explicitly asked or guessed and the resulting file is too big for classical TIFF,
 libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".</p></li>
 
-<li><p><b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
+<li><p><b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a
 new Byte file can be forced to be written as signed byte.</p></li>
 
 <!-- Commented for the moment. Not sure we want to advertize that
@@ -410,9 +410,9 @@ RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
 <!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
 <li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
-<li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that 
+<li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that
 have false easting/northing improperly set in meters when it ought to be in
-coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>). 
+coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>).
 <li>TAB_APPROX_GEOTRANSFORM=YES/NO: (GDAL &gt;= 2.0) To decide if an approximate geotransform is acceptable when reading a .tab file. Default value: NO
 <li>GTIFF_DIRECT_IO=YES/NO: (GDAL &gt;= 2.0) Can be set to YES to use specialized
 RasterIO() implementations when reading un-compressed TIFF files (un-tiled only

@@ -8,7 +8,7 @@
 <h1>Comma Separated Value (.csv)</h1>
 
 <p>OGR supports reading and writing primarily non-spatial tabular data stored in
-text CSV files.  CSV files are a common interchange format between 
+text CSV files.  CSV files are a common interchange format between
 software packages supporting tabular data and are also easily produced
 manually with a text editor or with end-user written scripts or programs.</p>
 
@@ -23,8 +23,8 @@ One layer (table) is produced from each .csv file accessed.</p>
 .CSV extension, the 'CSV:' prefix can be added before the filename to force
 loading by the CSV driver.</p>
 
-<p>The OGR CSV driver supports reading and writing. Because the CSV format 
-has variable length text lines, reading is done sequentially. Reading 
+<p>The OGR CSV driver supports reading and writing. Because the CSV format
+has variable length text lines, reading is done sequentially. Reading
 features in random order will generally be very slow. OGR CSV layer might
 have a coordinate system stored in a .prj file (see GeoCSV specification).  When reading a field named "WKT" is assumed
 to contain WKT geometry, but also is treated as a regular field.
@@ -32,7 +32,7 @@ The OGR CSV driver returns all attribute columns as string data types
 if no field type information file (with .csvt extension) is
 available.</p>
 
-<p>Limited type recognition can be done for Integer, Real, String, Date 
+<p>Limited type recognition can be done for Integer, Real, String, Date
 (YYYY-MM-DD), Time (HH:MM:SS+nn), DateTime (YYYY-MM-DD HH:MM:SS+nn) columns
 through a descriptive file with the same name as the CSV file, but a .csvt extension.
 In a single line the types for each column have to be listed with double quotes and
@@ -50,7 +50,7 @@ specifying the open options described in the below "Open options" section.</p>
 
 <h2>Format</h2>
 
-<p>CSV files have one line for each feature (record) in the layer (table).  
+<p>CSV files have one line for each feature (record) in the layer (table).
 The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same number
@@ -59,22 +59,22 @@ of fields. The driver will also accept a semicolon, a tabulation or a space
 if there's no other potential separator on the first line of the CSV file.
 Otherwise it will default to comma as separator.</p>
 
-<p>Complex attribute values (such as those containing commas, quotes or newlines) 
-may be placed in double quotes. Any occurrences of double quotes within 
+<p>Complex attribute values (such as those containing commas, quotes or newlines)
+may be placed in double quotes. Any occurrences of double quotes within
 the quoted string should be doubled up to "escape" them.</p>
 
-<p>By default, the driver attempts to treat the first line of the file as a list of field 
-names for all the fields. However, if one or more of the names is all 
+<p>By default, the driver attempts to treat the first line of the file as a list of field
+names for all the fields. However, if one or more of the names is all
 numeric it is assumed that the first line is actually data values and
 dummy field names are generated internally (field_1 through field_n) and
-the first record is treated as a feature. Starting with GDAL 1.9.0 
+the first record is treated as a feature. Starting with GDAL 1.9.0
 numeric values are treated as field names if they are enclosed in double quotes.
 Starting with GDAL 2.1, this behaviour can be modified via the HEADERS open option.
 </p>
 
 <p>All CSV files are treated as UTF-8 encoded. Starting with GDAL 1.9.0, a Byte
 Order Mark (BOM) at the beginning of the file will be parsed correctly. From 1.9.2,
-The option WRITE_BOM can be used to create a file with a Byte Order Mark, which can 
+The option WRITE_BOM can be used to create a file with a Byte Order Mark, which can
 improve compatibility with some software (particularly Excel).
 </p>
 
@@ -85,7 +85,7 @@ ID,Salary,Name,Comments
 133,11000.0,Jane Lake,Cleaning Staff
 </pre>
 
-<p>Note that the Comments value for the first data record is placed in 
+<p>Note that the Comments value for the first data record is placed in
 double quotes because the value contains quotes, and those quotes have
 to be doubled up so we know we haven't reached the end of the quoted string
 yet.</p>
@@ -93,8 +93,8 @@ yet.</p>
 <p>Many variations of textual input are sometimes called Comma Separated
 Value files, including files without commas, but fixed column widths,
 those using tabs as separators or those with other auxiliary data defining
-field types or structure. This driver does not attempt to support all 
-such files, but instead to support simple .csv files that can be 
+field types or structure. This driver does not attempt to support all
+such files, but instead to support simple .csv files that can be
 auto-recognised. Scripts or other mechanisms can generally be used to convert
 other variations into a form that is compatible with the OGR CSV driver.</p>
 
@@ -180,7 +180,7 @@ way_id,pt_id,x,y
 1,1,2,49
 1,2,3,50
 2,1,-2,49
-2,2,-3,50 
+2,2,-3,50
 </pre>
 </p>
 
@@ -274,7 +274,7 @@ temporarily before flushing to disk.</p>
 
 <ul>
 <li><b>LINEFORMAT</b>: By default when creating new .csv files they are created with the line
-termination conventions of the local platform (CR/LF on win32 or 
+termination conventions of the local platform (CR/LF on win32 or
 LF on all other systems).  This may be overridden through use of the
 LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format).</li><p>
@@ -324,8 +324,8 @@ The CSV driver can also read files whose structure is close to CSV files :
 <p>
 <ul>
 <li><a href="http://giswiki.hsr.ch/GeoCSV">GeoCSV specification</a> (supported by GDAL &gt;= 2.1)</li>
-<li>Initial development of the OGR CSV driver was supported by 
-<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
+<li>Initial development of the OGR CSV driver was supported by
+<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and
 <a href="http://www.gomoos.org/">GoMOOS</a>.
 <li><a href="https://cartodb.com/">CartoDB</a> funded field type auto-detection and open options related to geometry columns.</li>
 </ul>

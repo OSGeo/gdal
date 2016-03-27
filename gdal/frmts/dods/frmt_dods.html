@@ -16,7 +16,7 @@ The full dataset name specification consists of the OPeNDAP dataset
 url, the full path to the desired array or grid variable, and an indicator
 of the array indices to be accessed.<p>
 
-For instance, if the url http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF.dds 
+For instance, if the url http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF.dds
 returns a DDS definition like this:<p>
 
 <pre>
@@ -31,14 +31,14 @@ Dataset {
 </pre>
 <p>
 
-then the precipitate grid can be accessed using the following GDAL 
+then the precipitate grid can be accessed using the following GDAL
 dataset name:<p>
 
 http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF?DATA_GRANULE.PlanetaryGrid.precipitate[0][x][y]
 <p>
 
 The full path to the grid or array to be accessed needs to be specified (not
-counting the outer Dataset name).  GDAL needs to know which indices of 
+counting the outer Dataset name).  GDAL needs to know which indices of
 the array to treat as x (longitude or easting) and y (latitude or northing).
 Any other dimensions need to be restricted to a single value.<p>
 
@@ -60,14 +60,14 @@ for details of how the AIS mechanism works. <p>
 <pre>
 Attributes {
 
-    GLOBAL { 
+    GLOBAL {
         Float64 Northernmost_Northing 71.1722;
 	Float64 Southernmost_Northing  4.8278;
 	Float64	Easternmost_Easting  -27.8897;
 	Float64	Westernmost_Easting -112.11;
         Float64 GeoTransform "71.1722 0.001 0.0 -112.11 0.0 -0.001";
 	String spatial_ref "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]";
-        Metadata { 
+        Metadata {
           String TIFFTAG_XRESOLUTION "400";
           String TIFFTAG_YRESOLUTION "400";
           String TIFFTAG_RESOLUTIONUNIT "2 (pixels/inch)";
@@ -76,7 +76,7 @@ Attributes {
 
     band_1 {
         String Description "...";
-        String 
+        String
     }
 }
 </pre>
@@ -97,7 +97,7 @@ It will have the following subitems:<p>
 
 <li> <b>GeoTransform</b>: The six parameters defining the affine transformation
 between pixel/line space and georeferenced space if applicable.  Stored
-as a single string with values separated by spaces.  Note this 
+as a single string with values separated by spaces.  Note this
 allows for rotated or sheared images. (optional) <p>
 
 <li> <b>SpatialRef</b>: The OpenGIS WKT description of the coordinate system.
@@ -140,7 +140,7 @@ one of "Undefined", "GrayIndex", "PaletteIndex", "Red", "Green",
 <li> <b>units</b>: name of units (one of "ft" or "m" for elevation data).
 (optional)<p>
 
-<li> <b>add_offset</b>: Offset to be applied to pixel values (after 
+<li> <b>add_offset</b>: Offset to be applied to pixel values (after
 scale_factor) to compute a "real" pixel value.  Defaults to 0.0. (optional)<p>
 
 <li> <b>scale_factor</b>: Scale to be applied to pixel values (before
@@ -153,15 +153,15 @@ add_offset) to compute "real" pixel value.  Defaults to 1.0. (optional)<p>
 <li> <b>Colormap</b>: A container with a subcontainer for each color in
 the color table, looking like the following.  The alpha component is
 optional and assumed to be 255 (opaque) if not provided.<p>
-<pre>									
-    Colormap { 
-      Color_0 { 
+<pre>
+    Colormap {
+      Color_0 {
         Byte red 0;
         Byte green 0;
         Byte blue 0;
         Byte alpha 255;
       }
-      Color_1 { 
+      Color_1 {
         Byte red 255;
         Byte green 255;
         Byte blue 255;

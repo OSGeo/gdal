@@ -23,8 +23,8 @@ telemetry from `Aura' satellite.<p>
 
 Hierarchical Data Format is a container for several different datasets.
 For data storing Scientific Datasets (SDS) used most often. SDS is a
-multidimensional array filled by data.  One HDF file may contain several 
-different SDS arrays.  They may differ in size, number of dimensions and may 
+multidimensional array filled by data.  One HDF file may contain several
+different SDS arrays.  They may differ in size, number of dimensions and may
 represent data for different regions.<p>
 
 If the file contains only one SDS that appears to be an image, it may be
@@ -33,17 +33,17 @@ import the file via a two step process.  The first step is to get a report
 of the components images (SDS arrays) in the file using <b>gdalinfo</b>, and
 then to import the desired images using gdal_translate.
 
-The <b>gdalinfo</b> utility lists all multidimensional subdatasets from the 
-input HDF file. The name of individual images (subdatasets) are assigned to 
+The <b>gdalinfo</b> utility lists all multidimensional subdatasets from the
+input HDF file. The name of individual images (subdatasets) are assigned to
 the <b>SUBDATASET_n_NAME</b> metadata item.  The description for each image is
 found in the <b>SUBDATASET_n_DESC</b> metadata item.  For HDF4 images the
 subdataset names will be formatted like this:<p>
 
 <i>HDF4_SDS:subdataset_type:file_name:subdataset_index</i><p>
 
-where <i>subdataset_type</i> shows predefined names for some of the well 
+where <i>subdataset_type</i> shows predefined names for some of the well
 known HDF datasets, <i>file_name</i> is the name of the input file, and
-<i>subdataset_index</i> is the index of the image to use (for internal use in 
+<i>subdataset_index</i> is the index of the image to use (for internal use in
 GDAL).<p>
 
 On the second step you should provide this name for <b>gdalinfo</b> or
@@ -142,12 +142,12 @@ Band 12 Block=1354x2040 Type=UInt16, ColorInterp=Undefined
 Or you may use <b>gdal_translate</b> for reading image bands from this
 dataset.<p>
 
-Note that you should provide exactly the contents of the line marked 
+Note that you should provide exactly the contents of the line marked
 <b>SUBDATASET_n_NAME</b> to GDAL, including the <b>HDF4_SDS:</b> prefix.<p>
 
-This driver is intended only for importing remote sensing and geospatial 
-datasets in form of raster images. If you want explore all data contained in 
-HDF file you should use another tools (you can find information about 
+This driver is intended only for importing remote sensing and geospatial
+datasets in form of raster images. If you want explore all data contained in
+HDF file you should use another tools (you can find information about
 different HDF tools using links at end of this page).
 
 <h2>Georeference</h2>
@@ -159,13 +159,13 @@ shown in parenthesis):<p>
 
 <ul>
 	<li> HDF4 files created by GDAL (<B>GDAL_HDF4</B>)
-	
+
 	<li> ASTER Level 1A (<B>ASTER_L1A</B>)
-	
+
 	<li> ASTER Level 1B (<B>ASTER_L1B</B>)
-	
+
 	<li> ASTER Level 2 (<B>ASTER_L2</B>)
-	
+
 	<li> ASTER DEM (<B>AST14DEM</B>)
 
 	<li> MODIS Level 1B Earth View products (<B>MODIS_L1B</B>)
@@ -188,7 +188,7 @@ This driver supports creation of the HDF4 Scientific Datasets. You may create
 set of 2D datasets (one per each input band) or single 3D dataset where the third
 dimension represents band numbers. All metadata and band descriptions from
 the input dataset are stored as HDF4 attributes. Projection information (if it
-exists) and affine transformation coefficients also stored in form of 
+exists) and affine transformation coefficients also stored in form of
 attributes.
 Files, created by GDAL have the special attribute:<p>
 
@@ -208,13 +208,13 @@ Creation Options:<p>
 	to use. <b>RLE</b> is Run-length encoding, <b>HUFFMAN</b> is adaptive
 	Huffman, <b>DEFLATE</b> is GZIP "deflation" (Lempel/Ziv-77 dictionary
 	coder). <b>NONE</b> is the default.<p-->
-	
+
 </ul>
 
 <h2>Metadata</h2>
 
-All HDF4 attributes are transparently translated as GDAL metadata. In the HDF 
-file attributes may be assigned assigned to the whole file as well as to 
+All HDF4 attributes are transparently translated as GDAL metadata. In the HDF
+file attributes may be assigned assigned to the whole file as well as to
 particular subdatasets.
 
 <h2>Driver building</h2>

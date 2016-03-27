@@ -194,11 +194,11 @@ resolve all the xlinks.<p>
 
 Starting since OGR 1.9.0 an alternative resolution method is available.
 This alternative method will be activated using the configuration option
-<b>GML_SKIP_RESOLVE_ELEMS HUGE</b>. In this case any gml:xlink will be 
+<b>GML_SKIP_RESOLVE_ELEMS HUGE</b>. In this case any gml:xlink will be
 resolved using a temporary SQLite DB so to identify any corresponding
 gml:id relation. At the end of this SQL-based process, a resolved file
-will be generated exactly as in the <b>NONE</b> case but without their limits. 
-The main advantages in using an external (temporary) DBMS so to resolve 
+will be generated exactly as in the <b>NONE</b> case but without their limits.
+The main advantages in using an external (temporary) DBMS so to resolve
 gml:xlink and gml:id relations are the followings:<ul>
 	<li>no memory size constraints. The <b>NONE</b> method stores the whole
 	   GML node-tree in-memory; and this practically means that no GML
@@ -206,18 +206,18 @@ gml:xlink and gml:id relations are the followings:<ul>
 	   platform, due to memory allocation limits. Using a file-system
 	   based DBMS avoids at all this issue.</li>
 	<li>by far better efficiency, most notably when huge GML files containing
-	   many thousands (or even millions) of xlink:href / gml:id relational 
+	   many thousands (or even millions) of xlink:href / gml:id relational
 	   pairs.</li>
-	<li>using the <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method realistically allows 
-	   to successfully resolve some really huge GML file (3GB+) containing many 
+	<li>using the <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method realistically allows
+	   to successfully resolve some really huge GML file (3GB+) containing many
 	   millions xlink:href / gml:id in a reasonable time (about an hour or so on).</li>
 	<li>The <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method supports the following further
 	   configuration option:<ul>
 		<li>you can use <b>GML_GFS_TEMPLATE</b> <b><i>path_to_template.gfs</i></b>
 		   in order to unconditionally use a predefined GFS file. This option is really useful
-		   when you are planning to import many distinct GML files in subsequent steps [<b>-append</b>] 
+		   when you are planning to import many distinct GML files in subsequent steps [<b>-append</b>]
 		   and you absolutely want to preserve a fully consistent data layout for the whole GML set.
-		   Please, pay attention not to use the <b>-lco LAUNDER=yes</b> setting when using <b>GML_GFS_TEMPLATE</b>; 
+		   Please, pay attention not to use the <b>-lco LAUNDER=yes</b> setting when using <b>GML_GFS_TEMPLATE</b>;
 		   this should break the correct recognition of attribute names between subsequent GML import runs.
 </li>
 	</ul></li>
@@ -234,7 +234,7 @@ rules for TopoSurface when a polygon contains any internal hole:
 		<li><i>positive</i> Faces [i.e. declaring <b>orientation="+"</b>] are assumed to
 		    represent the Exterior Ring of some Polygon.</li>
 		<li><i>negative</i> Faces [i.e. declaring <b>orientation="-"</b>] are assumed to
-		    represent an Interior Ring (aka <i>hole</i>) belonging to the latest declared 
+		    represent an Interior Ring (aka <i>hole</i>) belonging to the latest declared
 			Exterior Ring.</li>
 		<li>ordering any Edge used to represent each Ring is important: each Edge is expected
 			to be exactly adjacent to the next one.</li>
@@ -242,12 +242,12 @@ rules for TopoSurface when a polygon contains any internal hole:
 	<li>the new interpretation rule now assumes that:<ul>
 		<li>each TopoSurface may be represented as a collection of many Faces</li>
 		<li>the declared <b>orientation</b> for any Face has nothing to deal with Exterior/Interior Rings</li>
-		<li>each Face is now intended to represent a complete Polygon, eventually including any possible Interior 
+		<li>each Face is now intended to represent a complete Polygon, eventually including any possible Interior
 			Ring (<i>holes</i>)</li>
-		<li>the relative ordering of any Edge composing the same Face is completely not relevant</li> 
+		<li>the relative ordering of any Edge composing the same Face is completely not relevant</li>
 	</li></ul>
 </ul>
-		
+
 The newest interpretation seems to fully match GML 3 standard recommendations; so this latest
 is now assumed to be the default interpretation supported by OGR.</p>
 
@@ -390,7 +390,7 @@ Filename of the registry with application schemas. Defaults to {GDAL_DATA}/gml_r
 
 On export all layers are written to a single GML file all in a single
 feature collection.  Each layer's name is used as the element name for
-objects from that layer.  Geometries are always written as the 
+objects from that layer.  Geometries are always written as the
 ogr:geometryProperty element on the feature.<p>
 
 The GML writer supports the following dataset creation options:
@@ -398,7 +398,7 @@ The GML writer supports the following dataset creation options:
 <ul>
 <li> <B>XSISCHEMAURI</B>: If provided, this URI will be inserted as the
 schema location.  Note that the schema file isn't actually accessed by OGR, so
-it is up to the user to ensure it will match the schema of the OGR produced 
+it is up to the user to ensure it will match the schema of the OGR produced
 GML data file.<p>
 
 <li> <B>XSISCHEMA</B>: This can be EXTERNAL, INTERNAL or OFF and defaults to
@@ -892,7 +892,7 @@ Such datasets typically look like:
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="2" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"&gt;
   &lt;wfs:member&gt;
     &lt;wfs:Tuple&gt;

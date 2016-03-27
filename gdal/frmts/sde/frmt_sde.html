@@ -9,12 +9,12 @@
 
 <h1>ESRI ArcSDE Raster</h1>
 <p>
-    ESRI ArcSDE provides an abstraction layer over numerous databases that 
-    allows the storage of raster data.  ArcSDE supports n-band imagery at many bit depths, 
-    and the current implementation of the GDAL driver should support 
-    as many bands as you can throw at it.  ArcSDE supports the storage of 
-    LZW, JP2K, and uncompressed data and transparently presents this through its 
-    C API SDK.  
+    ESRI ArcSDE provides an abstraction layer over numerous databases that
+    allows the storage of raster data.  ArcSDE supports n-band imagery at many bit depths,
+    and the current implementation of the GDAL driver should support
+    as many bands as you can throw at it.  ArcSDE supports the storage of
+    LZW, JP2K, and uncompressed data and transparently presents this through its
+    C API SDK.
 </p>
 <h2>GDAL ArcSDE Raster driver features</h2>
 <p>
@@ -43,27 +43,27 @@
 
 <h2>Performance considerations</h2>
 <p>
-    The ArcSDE raster driver currently only supports block read methods.  
-    Each call to this method results in a request for a 
-    block of raster data for <b>each</b> band of data in the raster, and single-pass requests 
-    for all of the bands for a block or given area is not currently done.  
-    This approach consequently results in extra network overhead.  It is hoped 
-    that the driver will be improved to support single-pass reads in the 
-    near future.  
+    The ArcSDE raster driver currently only supports block read methods.
+    Each call to this method results in a request for a
+    block of raster data for <b>each</b> band of data in the raster, and single-pass requests
+    for all of the bands for a block or given area is not currently done.
+    This approach consequently results in extra network overhead.  It is hoped
+    that the driver will be improved to support single-pass reads in the
+    near future.
 </p>
 <p>
-    The ArcSDE raster driver should only consume a single ArcSDE connection 
-    throughout the lifespan of the dataset.  Each connection to the database has 
-    an overhead of approximately 2 seconds, with additional overhead that is 
-    taken for calculating dataset information.  Therefore, usage of the 
-    driver in situations where there is a lot of opening and closing of 
+    The ArcSDE raster driver should only consume a single ArcSDE connection
+    throughout the lifespan of the dataset.  Each connection to the database has
+    an overhead of approximately 2 seconds, with additional overhead that is
+    taken for calculating dataset information.  Therefore, usage of the
+    driver in situations where there is a lot of opening and closing of
     datasets is not expected to be very performant.
 </p>
 <p>
-    Although the ArcSDE C SDK does support threading and locking, the 
-    GDAL ArcSDE raster driver does not utilize this capability.  Therefore, 
-    the ArcSDE raster driver should be considered <b>not threadsafe</b>, and 
-    sharing datasets between threads will have undefined (and often disastrous) 
+    Although the ArcSDE C SDK does support threading and locking, the
+    GDAL ArcSDE raster driver does not utilize this capability.  Therefore,
+    the ArcSDE raster driver should be considered <b>not threadsafe</b>, and
+    sharing datasets between threads will have undefined (and often disastrous)
     results.
 </p>
 

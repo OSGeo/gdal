@@ -207,7 +207,7 @@ Numbers can also be negative. In this case, they are counted from the end of the
 	<dd>Date of the time step relative to the starting date of the simulation (see <a href="#DCO">Datasource creation options</a>). This is a single floating-point value giving the number of seconds since the starting date.</dd>
 </dl>
 
-<p>An example of datasource creation option is: <tt>-lco DATE=24000</tt>. 
+<p>An example of datasource creation option is: <tt>-lco DATE=24000</tt>.
 
 <h2>Notes about the creation and the update of a Selafin datasource</h2>
 <p>The driver supports creating and writing to Selafin datasources, but there are some caveats when doing so.</p>
@@ -250,7 +250,7 @@ Numbers can also be negative. In this case, they are counted from the end of the
 
 <h2>VSI Virtual File System API support</h2>
 
-<p>The driver supports reading and writing to files managed by VSI Virtual File System API, which include "regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only) domains.</p> 
+<p>The driver supports reading and writing to files managed by VSI Virtual File System API, which include "regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only) domains.</p>
 
 <h2>Other notes</h2>
 <p>There is no SRS specification in the Selafin standard. The implementation of SRS is an addition of the driver and stores the SRS in an unused data field in the file. Future software using the Selafin standard may use this field and break the SRS specification. In this case, Selafin files will still be readable by the driver, but their writing will overwrite a value which may have another purpose.</p>

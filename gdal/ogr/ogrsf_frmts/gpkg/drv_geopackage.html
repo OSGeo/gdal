@@ -7,7 +7,7 @@
 
 <h1>GeoPackage vector</h1>
 
-<p>This driver implements support for access to spatial tables in the 
+<p>This driver implements support for access to spatial tables in the
 <a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a>.
 The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
 </p>
@@ -96,7 +96,7 @@ The driver implements transactions at the database level, per
 <h2>Creation Issues</h2>
 
 <p>When creating a new GeoPackage file, the driver will attempt to
-  force the database into a UTF-8 mode for text handling, satisfying 
+  force the database into a UTF-8 mode for text handling, satisfying
   the OGR strict UTF-8 capability. For pre-existing files, the driver
   will work with whatever it's given.</p>
 
@@ -153,7 +153,7 @@ the gpkg_contents table.</p>
 <ul>
 <li>
 Simple translation of a single shapefile into GeoPackage.  The table 'abc' will
-be created with the features from abc.shp and attributes from abc.dbf. 
+be created with the features from abc.shp and attributes from abc.dbf.
 The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
 <pre>
 % ogr2ogr -f GPKG filename.gpkg abc.shp

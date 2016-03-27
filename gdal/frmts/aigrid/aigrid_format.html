@@ -12,20 +12,20 @@
 (<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>)<p>
 
 The Arc/Info Binary Grid format is the internal working format of the
-Arc/Info Grid product.  It is also usable and creatable within the 
+Arc/Info Grid product.  It is also usable and creatable within the
 spatial analyst component of ArcView.  It is a tiled (blocked) format with run
 length compression capable of holding raster data of up to 4 byte integers
 or 4 byte floating data. <p>
 
-This format should not be confused with the Arc/Info ASCII Grid format 
+This format should not be confused with the Arc/Info ASCII Grid format
 which is the interchange format for grids.  Files can be converted between
 binary and ASCII format with the GRIDASCII and ASCIIGRID commands in
 Arc/Info.  This format is also different than the flat binary raster
 output of the GRIDFLOAT command.  The Arc/Info binary float, and ASCII
 formats are also accessible from within ArcView.<p>
 
-This format should also not be confused with what I know as ESRI BIL format.  
-This is really a standard ESRI way of creating a header file (.HDR) 
+This format should also not be confused with what I know as ESRI BIL format.
+This is really a standard ESRI way of creating a header file (.HDR)
 describing the data layout a binary raster file containing raster data.<p>
 
 <!--------------------------------------------------------------------------->
@@ -44,10 +44,10 @@ versions.<p>
 <h2>File Set</h2>
 
 A grid coverage actually consists of a number of files.  A grid normally
-lives in it's own directory named after the grid.  For instance, the 
-grid <b>nwgrd1</b> lives in the directory <b>nwgrd1</b>, and has the following 
+lives in it's own directory named after the grid.  For instance, the
+grid <b>nwgrd1</b> lives in the directory <b>nwgrd1</b>, and has the following
 component files:<p>
- 
+
 <pre>
 -rwxr--r--   1 warmerda users          32 Jan 22 16:07 nwgrd1/dblbnd.adf
 -rwxr--r--   1 warmerda users         308 Jan 22 16:07 nwgrd1/hdr.adf
@@ -58,19 +58,19 @@ component files:<p>
 </pre>
 
 Sometimes datasets will also include a prj.adf files containing the projection
-definition in the usual ESRI format. Grids also normally have associated 
-tables in the info directory.  This is beyond the scope of my discussion 
+definition in the usual ESRI format. Grids also normally have associated
+tables in the info directory.  This is beyond the scope of my discussion
 for now.<p>
 
 The files have the following roles:
 
 <ul>
 
-<li> <a href="#dblbnd">dblbnd.adf</a>: Contains the bounds 
+<li> <a href="#dblbnd">dblbnd.adf</a>: Contains the bounds
 (LLX, LLY, URX, URY) of the portion of utilized portion of the grid.<p>
 
-<li> <a href="#hdr.adf">hdr.adf</a>: This is the header, and contains 
-information on the tile sizes, and number of tiles in the dataset.  It also 
+<li> <a href="#hdr.adf">hdr.adf</a>: This is the header, and contains
+information on the tile sizes, and number of tiles in the dataset.  It also
 contains assorted other information I have yet to identify.<p>
 
 <li> <a href="#sta">sta.adf</a>: This contains raster statistics.  In
@@ -81,15 +81,15 @@ the table corresponding integer raster values with a set of attributes.  I
 presume it is really just a pointer into info in a manner similar to the
 pat.adf file in a vector coverage, but I haven't investigated yet. <p>
 
-<li> <a href="#w001001">w001001.adf</a>: 
+<li> <a href="#w001001">w001001.adf</a>:
 This is the file containing the actual raster data.
 <p>
 
-<li> <a href="#w001001x">w001001x.adf</a>: 
-This is an index file containing pointers to 
+<li> <a href="#w001001x">w001001x.adf</a>:
+This is an index file containing pointers to
 each of the tiles in the w001001.adf raster file.<p>
 
-</ul> 
+</ul>
 
 <!--------------------------------------------------------------------------->
 
@@ -111,9 +111,9 @@ Fields:<p>
   </td><td> 8
   </td><td> MSB double
   </td><td> D_LLX
-  </td><td> Lower left X (easting) of the grid.  Generally -0.5 for an 
+  </td><td> Lower left X (easting) of the grid.  Generally -0.5 for an
 ungeoreferenced grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -121,9 +121,9 @@ ungeoreferenced grid.
   </td><td> 8
   </td><td> MSB double
   </td><td> D_LLY
-  </td><td> Lower left Y (northing) of the grid. Generally -0.5 for an 
+  </td><td> Lower left Y (northing) of the grid. Generally -0.5 for an
 ungeoreferenced grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -131,9 +131,9 @@ ungeoreferenced grid.
   </td><td> 8
   </td><td> MSB double
   </td><td> D_URX
-  </td><td> Upper right X (easting) of the grid. Generally #Pixels-0.5 for an 
+  </td><td> Upper right X (easting) of the grid. Generally #Pixels-0.5 for an
 ungeoreferenced grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -141,9 +141,9 @@ ungeoreferenced grid.
   </td><td> 8
   </td><td> MSB double
   </td><td> D_URY
-  </td><td> Upper right Y (northing) of the grid. Generally #Lines-0.5 for an 
+  </td><td> Upper right Y (northing) of the grid. Generally #Lines-0.5 for an
 ungeoreferenced grid.
-  </td> 
+  </td>
 </tr>
 
 </table>
@@ -194,7 +194,7 @@ Fields:<p>
 <tr>
   <td> 0
   </td><td> 8
-  </td><td> 
+  </td><td>
   </td><td> Magic Number (always hex 00 00 27 0A FF FF ** **, usually ending in FC 14, FB F8 or FC 08).
   </td>
 </tr>
@@ -202,7 +202,7 @@ Fields:<p>
 <tr>
   <td> 8
   </td><td> 16
-  </td><td> 
+  </td><td>
   </td><td> zero fill
   </td>
 </tr>
@@ -211,7 +211,7 @@ Fields:<p>
   <td> 24
   </td><td> 4
   </td><td> MSB Int32
-  </td><td> Size of whole file in shorts (multiply by two 
+  </td><td> Size of whole file in shorts (multiply by two
             to get file size in bytes).
   </td>
 </tr>
@@ -219,7 +219,7 @@ Fields:<p>
 <tr>
   <td> 28
   </td><td> 72
-  </td><td> 
+  </td><td>
   </td><td> zero fill
   </td>
 </tr>
@@ -265,7 +265,7 @@ Fields:<p>
   </td><td> MSB double
   </td><td> SMin
   </td><td> Minimum value of a raster cell in this grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -274,7 +274,7 @@ Fields:<p>
   </td><td> MSB double
   </td><td> SMax
   </td><td> Maximum value of a raster cell in this grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -283,7 +283,7 @@ Fields:<p>
   </td><td> MSB double
   </td><td> SMean
   </td><td> Mean value of a raster cells in this grid.
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -292,7 +292,7 @@ Fields:<p>
   </td><td> MSB double
   </td><td> SStdDev
   </td><td> Standard deviation of raster cells in this grid.
-  </td> 
+  </td>
 </tr>
 
 </table>
@@ -343,7 +343,7 @@ Fields:<p>
 <tr>
   <td> 0
   </td><td> 8
-  </td><td> 
+  </td><td>
   </td><td> RMagic
   </td><td> Magic Number (always hex 00 00 27 0A FF FF ** **, usually ending in FC 14, FB F8 or FC 08).
   </td>
@@ -352,8 +352,8 @@ Fields:<p>
 <tr>
   <td> 8
   </td><td> 16
-  </td><td> 
-  </td><td> 
+  </td><td>
+  </td><td>
   </td><td> zero fill
   </td>
 </tr>
@@ -363,7 +363,7 @@ Fields:<p>
   </td><td> 4
   </td><td> MSB Int32
   </td><td> RFileSize
-  </td><td> Size of whole file in shorts (multiply by two 
+  </td><td> Size of whole file in shorts (multiply by two
             to get file size in bytes).
   </td>
 </tr>
@@ -371,8 +371,8 @@ Fields:<p>
 <tr>
   <td> 28
   </td><td> 72
-  </td><td> 
-  </td><td> 
+  </td><td>
+  </td><td>
   </td><td> zero fill
   </td>
 </tr>
@@ -395,7 +395,7 @@ is the value of this field.
   </td><td> byte
   </td><td> RTileType
   </td><td> Tile type code indicating the organization of the following
-data (integer coverages only).  
+data (integer coverages only).
   </td>
 </tr>
 <tr>
@@ -414,10 +414,10 @@ data (integer coverages only).
   </td><td> MSB Int (var size)
   </td><td> RMin
   </td><td> The minimum value pixels for this tile.  This number is added
-to the pixel values for each pixel in this tile (integer coverages only).  
+to the pixel values for each pixel in this tile (integer coverages only).
 I must stress that if RMinSize is less than 4 this is still a signed quantity.
 For instance, if RMinSize is 2, the value is 65536 - byte0*256 - byte1 if
-byte0 is &gt; 127. 
+byte0 is &gt; 127.
   </td>
 </tr>
 
@@ -446,23 +446,23 @@ bytes (zeros) for the RTileSize for that tile.<p>
 <h3>Raster Size</h3>
 
 The size of a the grid isn't as easy to deduce as one might expect.
-The hdr.adf file contains the HTilesPerRow, HTilesPerColumn, 
+The hdr.adf file contains the HTilesPerRow, HTilesPerColumn,
 HTileXSize, and HTileYSize fields which imply a particular raster
-space. However, it seems that this is created much larger than 
+space. However, it seems that this is created much larger than
 necessary to hold the users raster data.  I have created 3x1 rasters
 which resulted in the standard 8x512 tiles of 256x4 pixels each.<p>
 
 It seems that the user portion of the raster has to be computed
 based on the georeferenced bounds in the dblbnd.adf file (assumed
-to be anchored at the top left of the total raster space), and 
+to be anchored at the top left of the total raster space), and
 the HPixelSizeX, and HPixelSizeY fields from hdr.adf.<p>
 
 <b> #Pixels = (D_URX - D_LRX) / HPixelSizeX</b><p>
 <b> #Lines = (D_URY - D_LRY) / HPixelSizeY</b><p>
 
 Based on this number of pixels and lines, it is possible to establish
-what portion out of the top left of the raster is really <i>of 
-interest</i>.  All regions outside this appear to empty tiles, 
+what portion out of the top left of the raster is really <i>of
+interest</i>.  All regions outside this appear to empty tiles,
 or filled with no data markers.<p>
 
 <!------------------------------------------>
@@ -471,7 +471,7 @@ or filled with no data markers.<p>
 
 Each tile contains HBlockXSize * HBlockYSize pixels of data.  For floating
 point and uncompressed integer files the data is just the tile size (in two
-bytes) followed by the pixel data as 4 byte MSB order IEEE floating point 
+bytes) followed by the pixel data as 4 byte MSB order IEEE floating point
 words.  For compressed integer
 tiles it is necessary to interpret the RTileType to establish the details
 of the tile organization:
@@ -489,7 +489,7 @@ One full tile worth of data pixel values follows the RMin field, with
 
 <h4>RTileType = 0x04 (raw 4bit data)</h4>
 
-One full tiles worth of data pixel values follows the RMin field, with 
+One full tiles worth of data pixel values follows the RMin field, with
 4 bits per pixel.  The high order four bits of a byte comes before the low
 order four bits.<p>
 
@@ -500,12 +500,12 @@ RMin field.<p>
 
 <h4>RTileType = 0x10 (raw 16bit data)</h4>
 
-One full tiles worth of data pixel values follows the RMin field, with 
+One full tiles worth of data pixel values follows the RMin field, with
 16 bits per pixel (MSB).<p>
 
 <h4>RTileType = 0x20 (raw 32bit data)</h4>
 
-One full tiles worth of data pixel values follows the RMin field, with 
+One full tiles worth of data pixel values follows the RMin field, with
 32 bits per pixel (MSB).<p>
 
 <h4>RTileType = 0xCF (16 bit literal runs/nodata runs)</h4>
@@ -519,7 +519,7 @@ literal data with two MSB bytes per pixel. <p>
 
 <li> <b>Marker > 127</b>: The marker indicates that <b>256-Marker</b> pixels
 of <i>no data</i> pixels should be put into the output stream.  No data
-(other than the next marker) follows this marker. 
+(other than the next marker) follows this marker.
 
 </ul>
 
@@ -534,7 +534,7 @@ literal data with one byte per pixel. <p>
 
 <li> <b>Marker > 127</b>: The marker indicates that <b>256-Marker</b> pixels
 of <i>no data</i> pixels should be put into the output stream.  No data
-(other than the next marker) follows this marker. 
+(other than the next marker) follows this marker.
 
 </ul>
 
@@ -549,7 +549,7 @@ literal data with one byte per pixel. <p>
 
 <li> <b>Marker > 127</b>: The marker indicates that <b>256-Marker</b> pixels
 of <i>no data</i> pixels should be put into the output stream.  No data
-(other than the next marker) follows this marker. 
+(other than the next marker) follows this marker.
 
 </ul>
 
@@ -620,7 +620,7 @@ file.<p>
      256: 3FF00000 00000000 3FF00000 00000000 ?~~~~~~~?~~~~~~~
      272: C08FFC00 00000000 C0A1BF00 00000000 ~~~~~~~~~~~~~~~~
      288: 00000008 00000200 00000100 00000001 ~~~~~~~~~~~~~~~~
-     304: 00000004                            ~~~~              
+     304: 00000004                            ~~~~
 </pre>
 
 Fields:<p>
@@ -638,7 +638,7 @@ Fields:<p>
   </td><td> Char
   </td><td> HMagic
   </td><td> Magic Number - always "GRID1.2\0"
-  </td> 
+  </td>
 </tr>
 
 <tr>
@@ -646,7 +646,7 @@ Fields:<p>
   </td><td> 8
   </td><td> &nbsp;
   </td><td> &nbsp;
-  </td><td> assorted data, I don't know the purpose. 
+  </td><td> assorted data, I don't know the purpose.
   </td>
 </tr>
 
@@ -673,7 +673,7 @@ Fields:<p>
   </td><td> 232
   </td><td> &nbsp;
   </td><td> &nbsp;
-  </td><td> assorted data, I don't know the purpose. 
+  </td><td> assorted data, I don't know the purpose.
   </td>
 </tr>
 
@@ -720,8 +720,8 @@ for ungeoreferenced rasters.
   </td><td> 4
   </td><td> MSB Int32
   </td><td> HTilesPerRow
-  </td><td> The width of the file in tiles (often 8 for files of 
-less than 2K in width). 
+  </td><td> The width of the file in tiles (often 8 for files of
+less than 2K in width).
   </td>
 </tr>
 
@@ -747,8 +747,8 @@ less than 2K in width).
   <td> 300
   </td><td> 4
   </td><td> MSB Int32
-  </td><td> 
-  </td><td> Unknown, usually 1. 
+  </td><td>
+  </td><td> Unknown, usually 1.
 </tr>
 
 <tr>
@@ -767,23 +767,23 @@ less than 2K in width).
 
 <h2>Acknowledgements</h2>
 
-I would like to thank <a href="http://www.geosoft.com/">Geosoft Inc.</a> 
+I would like to thank <a href="http://www.geosoft.com/">Geosoft Inc.</a>
 for partial funding of my research into this
 format.  I would also like to thank:<p>
 
 <ul>
 <li> Kenneth R. McVay for providing the statistics file format.
-<li> Noureddine Farah of ThinkSpace who dug up lots of datasets that caused 
+<li> Noureddine Farah of ThinkSpace who dug up lots of datasets that caused
 problems.
-<li> Luciano Fonseca who worked out RTileType 0x01. 
+<li> Luciano Fonseca who worked out RTileType 0x01.
 <li> Martin Manningham of Global Geomatics for additional problem sample files.
 <li> Harry Anderson of EDX Engineering, for showing me that floating point
-tiles don't have RTileType. 
+tiles don't have RTileType.
 <li> Ian Turton for supplying a sample files demonstrating the need to be
 careful with the sign of "short" RMin values.
 <li> Duncan Chaundy at PCI for poking hard till I finally deduced 0xFF tiles.
-<li> Stephen Cheeseman of GeoSoft for yet more problem files. 
-<li> Geoffrey Williams for a files demonstrating tile type 0x20.  
+<li> Stephen Cheeseman of GeoSoft for yet more problem files.
+<li> Geoffrey Williams for a files demonstrating tile type 0x20.
 </ul>
 
 </body>
