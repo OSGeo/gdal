@@ -1414,11 +1414,11 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 {
                     /* bigint */
                     papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                    papstBindBuffer[iCol]->Integer64.iIndicator = sizeof(papstBindBuffer[iCol]->Integer64.Value);
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol], 
-                        sizeof(papstBindBuffer[iCol]->Integer64.iIndicator), sizeof(papstBindBuffer[iCol]->Integer64.Value), 
-                            NULL, 0, SQLINT8, iCol + 1) ))
+                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 
+                        0, SQL_VARLEN_DATA, 
+                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
                         return OGRERR_FAILURE;
                 }
                 else if( poFDefn->GetType() == OFTReal )
@@ -1570,11 +1570,19 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             {
                 /* bigint */
                 if (!poFeature->IsFieldSet( iField ))
-                    papstBindBuffer[iCol]->Integer64.iIndicator = SQL_NULL_DATA;
+                {
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
+                    /* set NULL */
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
+                }
                 else
                 {
-                    papstBindBuffer[iCol]->Integer64.iIndicator = sizeof(papstBindBuffer[iCol]->Integer64.Value);
-                    papstBindBuffer[iCol]->Integer64.Value = poFeature->GetFieldAsInteger64(iField);
+                    papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
+                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%s", poFeature->GetFieldAsString(iField));
+
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
                 }
             }
             else if( poFDefn->GetType() == OFTReal )
@@ -1590,7 +1598,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 else
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%g", poFeature->GetFieldAsDouble(iField));
+                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%s", poFeature->GetFieldAsString(iField));
+
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
                 }
             }
             else if( poFDefn->GetType() == OFTString )
@@ -1611,6 +1622,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                         wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
                         memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + 2);
                         CPLFree(buffer);
+
+                        if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->VarChar.nSize, iCol + 1) ))
+                            return OGRERR_FAILURE;
                     }
                 }
             }
@@ -1638,7 +1652,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                         &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
                 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%4d-%02d-%02d", pnYear, pnMonth, pnDay);
+                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%4d-%02d-%02d", pnYear, pnMonth, pnDay);
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
                 }
             }
             else if( poFDefn->GetType() == OFTTime )
@@ -1665,7 +1681,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                         &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
                 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%02d:%02d:%02d", pnHour, pnMinute, pfSecond);
+                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%02d:%02d:%02d", pnHour, pnMinute, pfSecond);
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
                 }              
             }
             else if( poFDefn->GetType() == OFTDateTime )
@@ -1692,8 +1710,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                         &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
                 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    sprintf((char*)papstBindBuffer[iCol]->VarChar.pData, "%4d-%02d-%02d %02d:%02d:%02d", 
-                        pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
+                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%4d-%02d-%02d %02d:%02d:%02d", pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
+
+                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                        return OGRERR_FAILURE;
                 }              
             }
             else if( poFDefn->GetType() == OFTBinary )
