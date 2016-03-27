@@ -122,23 +122,23 @@ geor:scott/tiger@orcl,landsat,raster \<br>
   <li><strong>COMPRESS</strong>: Compression options, JPEG-F,
 DEFLATE or NONE. The two JPEG options are lossy, meaning that the
 original pixel values are changed.</li>
-  <li><strong>GENPYRAMID</strong>: Generate pyramid after a GeoRaster object have been loaded to the database. 
-The content of that parameter must be the resampling method of 
-choice NN (nearest neighbor) , BILINEAR, BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not 
+  <li><strong>GENPYRAMID</strong>: Generate pyramid after a GeoRaster object have been loaded to the database.
+The content of that parameter must be the resampling method of
+choice NN (nearest neighbor) , BILINEAR, BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not
 informed the PL/SQL function sdo_geor.generatePyramid will calculate the number of levels to generate.</li>
   <li><strong>GENPYRLEVELS</strong>: Define the number of pyramid levels to be generated.
 If GENPYRAMID is not informed the resample method NN (nearest neighbor) will apply.</li>
-  <li><strong>QUALITY</strong>: Quality compression option for JPEG 
+  <li><strong>QUALITY</strong>: Quality compression option for JPEG
 ranging from 0 to 100. The default is 75.</li>
   <li><strong>NBITS</strong>: Sub byte data type, options: 1, 2 or 4.</li>
-  <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is 
-TRUE, that means that this option only need to be informed to force the Spatial Extent to 
-remain as NULL. If EXTENTSRID is not informed the Spatial Extent geometry will be generated with 
+  <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is
+TRUE, that means that this option only need to be informed to force the Spatial Extent to
+remain as NULL. If EXTENTSRID is not informed the Spatial Extent geometry will be generated with
 the same SRID as the GeoGeoraster object.</li>
-  <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry. 
-If the table/column has already a spatial extent, the value informed should be the same as the 
+  <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry.
+If the table/column has already a spatial extent, the value informed should be the same as the
 SRID on the Spatial Extent of the other existing GeoRaster.</li>
-  <li><strong>OBJECTTABLE</strong>: To create RDT as SDO_RASTER object inform TRUE otherwise, the default 
+  <li><strong>OBJECTTABLE</strong>: To create RDT as SDO_RASTER object inform TRUE otherwise, the default
   is FALSE and the RDT will be created as regular relational tables. That does not apply for Oracle version older than 11.</li>
 </ul>
 <strong></strong>

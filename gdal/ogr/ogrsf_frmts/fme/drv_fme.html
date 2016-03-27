@@ -8,7 +8,7 @@
 <h1>FMEObjects Gateway</h1>
 
 Feature sources supported by FMEObjects are supported for reading by OGR
-if the FMEObjects gateway is configured, and if a licensed copy of 
+if the FMEObjects gateway is configured, and if a licensed copy of
 FMEObjects is installed and accessible.<p>
 
 To using the FMEObjects based readers the data source name passed should
@@ -19,12 +19,12 @@ would indicate the NTF reader should be used to read the file
 There are a number of special cases:<p>
 
 <ul>
-<li> A data source ending in .fdd will be assumed to be an "FME Datasource 
-   Definition" file which will contain the reader name, the data source name, 
+<li> A data source ending in .fdd will be assumed to be an "FME Datasource
+   Definition" file which will contain the reader name, the data source name,
    and then a set of name/value pairs of lines for the macros suitable to pass
    to the createReader() call.  <p>
 
-<li> A datasource named PROMPT will result in prompting the user for 
+<li> A datasource named PROMPT will result in prompting the user for
    information using the regular FME dialogs.   This only works on Windows.<p>
 
 <li> A datasource named "PROMPT:filename" will result in prompting, and then
@@ -43,10 +43,10 @@ All FME geometry types should be properly supported.  FME graphical attributes
 
 In order to enable fast access to large datasets without having to
 retranslate them each time they are accessed, the FMEObjects gateway
-supports a mechanism to cache features read from FME readers in 
+supports a mechanism to cache features read from FME readers in
 "Fast Feature Stores", a native vector format for FME with a spatial
 index for fast spatial searches.  These cached files are kept in the
-directory indicated by the OGRFME_TMPDIR environment variable (or 
+directory indicated by the OGRFME_TMPDIR environment variable (or
 TMPDIR or /tmp or C:\ if that is not available). <p>
 
 The cached feature files will have the prefix FME_OLEDB_ and a master index
@@ -64,7 +64,7 @@ treated specially in a number of other ways as well.<p>
 
 <ol>
 
-<li> Establishing an FME session is quite an expensive operation, on a 
+<li> Establishing an FME session is quite an expensive operation, on a
 350Mhz Linux system this can be in excess of 10s.<p>
 
 <li> Old files in the feature cache are cleaned up, but only on subsequent
@@ -77,7 +77,7 @@ the FMEObjects gateway will leave old cached features around indefinitely.<p>
 
 To include the FMEObjects gateway in an OGR build it is necessary to have
 FME loaded on the system.  The <i>--with-fme=</i><b>$FME_HOME</b> configuration
-switch should be supplied to configure.  The FMEObjects gateway is not 
+switch should be supplied to configure.  The FMEObjects gateway is not
 explicitly linked against (it is loaded later when it may be needed) so it
 is practical to distribute an OGR binary build with FMEObjects support without
 distributing FMEObjects.  It will just "work" for people who have FMEObjects
@@ -88,7 +88,7 @@ The FMEObjects gateway has been tested on Linux and Windows.<p>
 <hr>
 
 More information on the FME product line, and how to purchase a license for
-the FME software (enabling FMEObjects support) can be found on the 
+the FME software (enabling FMEObjects support) can be found on the
 Safe Software web site at <a href="http://www.safe.com/">www.safe.com</a>.
 Development of this driver was financially supported by Safe Software.<p>
 

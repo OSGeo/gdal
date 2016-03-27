@@ -102,7 +102,7 @@ will be interpreted in the OGR SF model as :
   myns_complexcontent (String) = &lt;myns:subelement&gt;Subelement&lt;/myns:subelement&gt;
   POINT (2 49)
 </pre>
-<p> 
+<p>
 
 <h2>Creation Issues</h2>
 
@@ -141,7 +141,7 @@ will overload the following options.<p>
 <p>
 
 <p>
-When translating from a source dataset, it may be necessary to rename the field names from the source dataset to the expected RSS or ATOM attribute names, such as &lt;title&gt;, &lt;description&gt;, etc... 
+When translating from a source dataset, it may be necessary to rename the field names from the source dataset to the expected RSS or ATOM attribute names, such as &lt;title&gt;, &lt;description&gt;, etc...
 This can be done with a <a href="drv_vrt.html">OGR VRT</a> dataset, or by using the "-sql" option of the ogr2ogr utility (see <a href="http://trac.osgeo.org/gdal/wiki/rfc21_ogrsqlcast">RFC21: OGR SQL type cast and field name alias</a>)
 
 </li>
@@ -168,7 +168,7 @@ ogrinfo -ro -al input.xml
 <li>The ogr2ogr utility can be used to do GeoRSS to GeoRSS translation. For example, to translate a Atom document into a RSS document
 
 <pre>
-ogr2ogr -f GeoRSS output.xml input.xml "select link_href as link, title, content as description, author_name as author, id as guid from georss" 
+ogr2ogr -f GeoRSS output.xml input.xml "select link_href as link, title, content as description, author_name as author, id as guid from georss"
 </pre>
 <br>
 Note : in this example we map equivalent fields, from the source name to the expected name of the destination format.

@@ -18,13 +18,13 @@ including CIB and CADRG frames from RPF products, ECRG frames, HRE products.<p>
 Color tables for pseudocolored images are read.  In some cases nodata values
 may be identified.<p>
 
-Lat/Long extents are read from the IGEOLO information in 
-the image header if available.  If high precision lat/long georeferencing 
-information is available in RPF auxiliary data it will be used in preference 
-to the low precision IGEOLO information.  In case a BLOCKA instance is found, 
-the higher precision coordinates of BLOCKA are used if the block data covers 
-the complete image - that is the L_LINES field with the row count for that 
-block is equal to the row count of the image. Additionally, all BLOCKA 
+Lat/Long extents are read from the IGEOLO information in
+the image header if available.  If high precision lat/long georeferencing
+information is available in RPF auxiliary data it will be used in preference
+to the low precision IGEOLO information.  In case a BLOCKA instance is found,
+the higher precision coordinates of BLOCKA are used if the block data covers
+the complete image - that is the L_LINES field with the row count for that
+block is equal to the row count of the image. Additionally, all BLOCKA
 instances are returned as metadata. If GeoSDE TRE are available, they will be
 used to provide higher precision coordinates.
 <p>
@@ -36,8 +36,8 @@ metadata.<p>
 
 On export NITF files are always written as NITF 2.1 with one image
 and no other auxiliary layers. Images are uncompressed by default, but JPEG
-and JPEG2000 compression are also available. Georeferencing can only be written for 
-images using a geographic coordinate system or a UTM WGS84 projection.  Coordinates are implicitly 
+and JPEG2000 compression are also available. Georeferencing can only be written for
+images using a geographic coordinate system or a UTM WGS84 projection.  Coordinates are implicitly
 treated as WGS84 even if they are actually in a different geographic coordinate
 system.  Pseudo-color tables may be written for 8bit images.<P>
 
@@ -53,10 +53,10 @@ Creation Options:<p>
 
 <li> Most file header, imagery header metadata and security fields can
 be set with appropriate <b>creation options</b> (although they are reported as metadata
-item, but must not be set as metadata).  For instance setting 
+item, but must not be set as metadata).  For instance setting
 <tt>"FTITLE=Image of abandoned missile silo south west of Karsk"</tt> in the
 creation option list would result in setting of the FTITLE field in the NITF
-file header.  Use the official field names from the NITF specification 
+file header.  Use the official field names from the NITF specification
 document; do not put the "NITF_" prefix that is reported when asking the metadata
 list.<p>
 
@@ -69,7 +69,7 @@ creation options can be used. See the <a href="frmt_jpeg.html">JPEG driver
 documentation</a>. Starting with GDAL 1.7.0, multi-block images can be written.
 <li>M3 is a variation of C3. The only difference is that a block map is written,
 which allow for fast seeking to any block. (Starting with GDAL 1.7.0.)
-<li>C8 means JPEG2000 compression (one block) and is available for 
+<li>C8 means JPEG2000 compression (one block) and is available for
 CreateCopy() and/or Create() methods. JPEG2000 compression is only available
 if the JP2ECW, JP2KAK or Jasper driver is available :
 <ul>
@@ -98,7 +98,7 @@ If you Create() a new NITF file and have specified "N" or "S" for ICORDS,
 you need to call later the SetProjection method with a consistent
 UTM SRS to set the UTM zone number (otherwise it will default to zone 0).<p>
 
-<li> <b>FHDR</b>: File version can be selected though currently the only 
+<li> <b>FHDR</b>: File version can be selected though currently the only
 two variations supported are "NITF02.10" (the default), and "NSIF01.00". <p>
 
 <li> <b>IREP</b>: Set to "RGB/LUT" to reserve space for a color table for
@@ -122,14 +122,14 @@ file (.tfw).<p>
 
 <li> <b>BLOCKYSIZE=n</b>: Set the block height.<p>
 
-<li> <b>BLOCKA_*=</b>: If a complete set of BLOCKA options is provided with 
-exactly the same organization as the NITF_BLOCKA metadata reported when 
-reading an NITF file with BLOCKA TREs then a file will be created with BLOCKA 
+<li> <b>BLOCKA_*=</b>: If a complete set of BLOCKA options is provided with
+exactly the same organization as the NITF_BLOCKA metadata reported when
+reading an NITF file with BLOCKA TREs then a file will be created with BLOCKA
 TREs. <p>
 
-<li> <b>TRE=tre-name=tre-contents</b>: One or more TRE creation options may 
+<li> <b>TRE=tre-name=tre-contents</b>: One or more TRE creation options may
 be used provided to write arbitrary user defined TREs to the image header.  The
-tre-name should be at most six characters, and the tre-contents should be 
+tre-name should be at most six characters, and the tre-contents should be
 "backslash escaped" if it contains backslashes or zero bytes.  The argument
 is the same format as returned in the TRE metadata domain when reading.<p>
 

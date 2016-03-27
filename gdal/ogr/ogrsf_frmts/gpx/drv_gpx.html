@@ -98,7 +98,7 @@ will be interpreted in the OGR SF model as :
 <p><br>
 Note : the GPX driver will output content of the extensions element only if it is found in the first records of the GPX file.
 If extensions appear later, you can force an explicit parsing of the whole file with the <b>GPX_USE_EXTENSIONS</b> environment variable.
-<p> 
+<p>
 
 <h2>Creation Issues</h2>
 
@@ -157,7 +157,7 @@ Only used if GPX_USE_EXTENSIONS=YES and GPX_EXTENSIONS_NS is set.<br>
 The namespace URI. By default, "http://osgeo.org/gdal".</li><p>
 <li> <b>LINEFORMAT</b>: (GDAL/OGR >= 1.8.0)
 By default files are created with the line
-termination conventions of the local platform (CR/LF on win32 or 
+termination conventions of the local platform (CR/LF on win32 or
 LF on all other systems).  This may be overridden through use of the
 LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format).</li> <p>
@@ -167,7 +167,7 @@ LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 Waypoints, routes and tracks must be written into that order to be valid against the XML Schema.
 
 <p>
-When translating from a source dataset, it may be necessary to rename the field names from the source dataset to the expected GPX attribute names, such as &lt;name&gt;, &lt;desc&gt;, etc... 
+When translating from a source dataset, it may be necessary to rename the field names from the source dataset to the expected GPX attribute names, such as &lt;name&gt;, &lt;desc&gt;, etc...
 This can be done with a <a href="drv_vrt.html">OGR VRT</a> dataset, or by using the "-sql" option of the ogr2ogr utility.
 
 </li>

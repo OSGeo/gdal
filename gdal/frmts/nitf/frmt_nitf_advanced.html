@@ -7,7 +7,7 @@
 
 <h1>NITF -- Advanced Driver Information</h1>
 
-The NITF (National Imagery Transmission Format) driver in GDAL includes a 
+The NITF (National Imagery Transmission Format) driver in GDAL includes a
 number of advanced, and somewhat esoteric options not suitable for the
 <a href="frmt_nitf.html">general end user documentation</a> for the driver.
 This information is collected here, and is primarily aimed at developers and
@@ -16,7 +16,7 @@ advanced users.
 <h2>CGM Segments</h2>
 
 NITF files that have CGM data (that is segment type GR - graphics, or SY with
-an STYPE value of 'C') will make that information available as metadata in the 
+an STYPE value of 'C') will make that information available as metadata in the
 CGM domain.  The returned metadata will look something like:
 
 <pre>
@@ -30,12 +30,12 @@ CGM domain.  The returned metadata will look something like:
   SEGMENT_0_DATA=\0!\0...
 </pre>
 
-The SLOC_ROW and SLOC_COL values are the placement of the CGM object relative 
+The SLOC_ROW and SLOC_COL values are the placement of the CGM object relative
 to the base (SALVL) image.  The CCS_ROW/COL values are relative to the common
-coordinate system.  The _SDLVL is the display level.  
-The DATA is the raw CGM data with "backslash quotable" escaping 
-applied.  All occurrences of ASCII zero will be translated to '\0', and all 
-backslashes and double quotes will be backslashed escaped.  The 
+coordinate system.  The _SDLVL is the display level.
+The DATA is the raw CGM data with "backslash quotable" escaping
+applied.  All occurrences of ASCII zero will be translated to '\0', and all
+backslashes and double quotes will be backslashed escaped.  The
 CPLUnescapeString() function can be used to unescape the data into binary
 format using scheme CPLES_BackslashQuotable. <p>
 
@@ -48,13 +48,13 @@ Since GDAL 1.8.0, to add CGM data to a NITF image, you can pass creation options
   CGM=SEGMENT_0_SDLVL=2
   CGM=SEGMENT_0_SALVL=1
   CGM=SEGMENT_0_DATA=\0!\0...
-</pre> 
+</pre>
 
 Notice that passing CGM as creation options will overwrite existing CGM segment read in the CGM metadata domain.
 <p>
 
-While GDAL does not support parsing or rendering CGM data, at least one user 
-has found the <a href="http://sk1project.org/modules.php?name=Products&product=uniconvertor">UniConverter</a> 
+While GDAL does not support parsing or rendering CGM data, at least one user
+has found the <a href="http://sk1project.org/modules.php?name=Products&product=uniconvertor">UniConverter</a>
 library useful for this purpose.
 
 <h2>Multi-Image NITF Files</h2>
@@ -76,15 +76,15 @@ Subdatasets:
 
 In this case opening "multi_image_jpeg_2.0.ntf" directly will give
 access to "NITF_IM:0:multi_image_jpeg_2.0.ntf".  To open the others
-use the corresponding subdataset names.  The Subdataset mechanism is 
-generic GDAL concept discussed in the 
-<a href="http://www.gdal.org/gdal_datamodel.html">GDAL Data Model</a> 
+use the corresponding subdataset names.  The Subdataset mechanism is
+generic GDAL concept discussed in the
+<a href="http://www.gdal.org/gdal_datamodel.html">GDAL Data Model</a>
 document.<p>
 
 <h2>Text Segments</h2>
 
-NITF files that have text segments (that is segment type TX) will make that 
-information available as metadata in the TEXT domain. 
+NITF files that have text segments (that is segment type TX) will make that
+information available as metadata in the TEXT domain.
 The returned metadata will look something like:
 
 <pre>
@@ -110,7 +110,7 @@ kind applied. <p>
 
 Since GDAL 1.8.0, the TEXT segment header data is preserved in HEADER_n metadata item.
 
-The CreateCopy() method on the NITF driver also supports creating 
+The CreateCopy() method on the NITF driver also supports creating
 text segments on the output file as long as the input file has metadata
 in the TEXT domain as defined above.<p>
 
@@ -121,13 +121,13 @@ Since GDAL 1.8.0, to add TEXT data to a NITF image, you can also pass creation o
   TEXT=DATA_0=This is test text file 01.
   TEXT=HEADER_1=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
   TEXT=DATA_1=This is test text file 02.
-</pre> 
+</pre>
 
 Notice that passing TEXT as creation options will overwrite existing text segment read in the TEXT metadata domain.
 
 <h2>TREs</h2>
 
-NITF files with registered (or unregistered?) extensions on the file header, 
+NITF files with registered (or unregistered?) extensions on the file header,
 or the referenced image header will make them available in a raw form in
 metadata via the TRE domain.  The TRE domain will hold one metadata item per
 TRE which will have the name of the TRE as the name, and the data of the TRE
@@ -139,13 +139,13 @@ named "TRENAME_2", the third "TRENAME_3" where TRENAME is the TRE name.<p>
 
 <pre>
 Metadata (TRE):
-  GEOPSB=MAPM  World Geodetic System 1984                                       
-               WGE World Geodetic System 1984                                   
-                   WE Geodetic                                                  
-                      GEODMean Sea                                              
-                          MSL 000000000000000                                   
+  GEOPSB=MAPM  World Geodetic System 1984
+               WGE World Geodetic System 1984
+                   WE Geodetic
+                      GEODMean Sea
+                          MSL 000000000000000
                                                 0000
-  PRJPSB=Polar Stereographic                                                    
+  PRJPSB=Polar Stereographic
          PG2-00090.00000250000039.99999884000000000000000000000000000000
   MAPLOB=M  0598005958-000003067885.8-000002163353.8
 </pre>
@@ -211,8 +211,8 @@ Metadata (xml:TRE):
 
 In some cases application may need to recover very specific information
 from the image or file headers that isn't normally available as metadata.
-In this case it is possible to query the "NITF_METADATA" metadata domain.  
-The complete file and image headers will be returned as metadata in base64 
+In this case it is possible to query the "NITF_METADATA" metadata domain.
+The complete file and image headers will be returned as metadata in base64
 encoded format.  Something like:<p>
 
 <pre>

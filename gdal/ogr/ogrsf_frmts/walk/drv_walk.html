@@ -16,11 +16,11 @@
   <p>Walk .mdb are accessed by passing the file name of
   the .mdb file to be accessed as the data source name. On Windows,
   no ODBC DSN is required. On Linux, there are problems with DSN-less
-  connection due to incomplete or buggy implementation of this feature 
+  connection due to incomplete or buggy implementation of this feature
   in the <a href="http://mdbtools.sourceforge.net/" tppabs="http://mdbtools.sourceforge.net/">MDB Tools</a> package,
   So, it is required to configure Data Source Name (DSN) if the MDB
   Tools driver is used (check instructions below).</p>
-  
+
   <p>OGR treats all feature tables as layers. Most geometry types
   should be supported (arcs and circles are translated into line segments, while other curves are currently converted into straight lines). Coordinate system information should be properly
   associated with layers. Currently no effort is made to preserve  styles and annotations.</p>

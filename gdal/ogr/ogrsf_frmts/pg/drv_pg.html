@@ -7,9 +7,9 @@
 
 <h1>PostgreSQL / PostGIS</h1>
 
-This driver implements support for access to spatial tables in 
-PostgreSQL extended with the 
-<a href="http://postgis.net/">PostGIS</a> spatial data support. 
+This driver implements support for access to spatial tables in
+PostgreSQL extended with the
+<a href="http://postgis.net/">PostGIS</a> spatial data support.
 Some support exists in the driver for use with PostgreSQL without PostGIS
 but with less functionalities.<p>
 
@@ -50,12 +50,12 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <p>The PostgreSQL driver passes SQL statements directly to PostgreSQL by default,
 rather than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
-expressions are also passed directly through to PostgreSQL. 
-It's also possible to request the ogr Pg driver to handle SQL commands 
-with the <a href="ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong> 
+expressions are also passed directly through to PostgreSQL.
+It's also possible to request the ogr Pg driver to handle SQL commands
+with the <a href="ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong>
 string to the ExecuteSQL() method, as the name of the SQL dialect.</p>
 
-<p>The PostgreSQL driver in OGR supports the OGRDataSource::StartTransaction(), 
+<p>The PostgreSQL driver in OGR supports the OGRDataSource::StartTransaction(),
 OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
 calls in the normal SQL sense.<p>
 
@@ -75,10 +75,10 @@ they will use OID. <p>
 By default it is assumed that text being sent to Postgres is in the UTF-8
 encoding.  This is fine for plain ASCII, but can result in errors for
 extended characters (ASCII 155+, LATIN1, etc).  While OGR provides no direct
-control over this, you can set the PGCLIENTENCODING environment variable 
-to indicate the format being provided.  For instance, if your text is 
+control over this, you can set the PGCLIENTENCODING environment variable
+to indicate the format being provided.  For instance, if your text is
 LATIN1 you could set the environment variable to LATIN1 before using OGR
-and input would be assumed to be LATIN1 instead of UTF-8. 
+and input would be assumed to be LATIN1 instead of UTF-8.
 An alternate way of setting the client encoding is to issue the following SQL command
 with ExecuteSQL() : "SET client_encoding TO encoding_name" where encoding_name is LATIN1, etc.
 Errors can be caught by enclosing this command with a CPLPushErrorHandler()/CPLPopErrorHandler() pair.<p>
@@ -118,7 +118,7 @@ None<p>
 
 <ul>
 <li>
-<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to
 one of "geometry", "geography" (PostGIS >= 1.5), "BYTEA" or "OID" to force the type of geometry used for
 a table. For a PostGIS database, "geometry" is the default value.<p>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
@@ -126,7 +126,7 @@ desired name to be destroyed before creating the requested layer.<p>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
 PostgreSQL.  This converts to lower case and converts some special characters
-like "-" and "#" to "_".  If "NO" exact names are preserved.  
+like "-" and "#" to "_".  If "NO" exact names are preserved.
 The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
 <li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
 layer to try and represent the width and precision information, if available
@@ -135,7 +135,7 @@ FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
 <li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
-<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
+<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If
 omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 Using the same layer name in different schemas is supported, but not in the public schema and others. Note that
@@ -166,8 +166,8 @@ by default by ogr2ogr, unless the -nomd option is used.</p>
 
 <h3>Configuration Options</h3>
 
-There are a variety of 
-<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">Configuration 
+There are a variety of
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">Configuration
 Options</a> which help control the behavior of this driver.<p>
 
 <ul>
@@ -192,7 +192,7 @@ Typical use case: "ogr2ogr -append PG:dbname=foo abc.shp --config OGR_TRUNCATE Y
 <ul>
 <li>
 Simple translation of a shapefile into PostgreSQL.  The table 'abc' will
-be created with the features from abc.shp and attributes from abc.dbf. 
+be created with the features from abc.shp and attributes from abc.dbf.
 The database instance (warmerda) must already exist, and the table abc must
 not already exist. <p>
 
@@ -230,7 +230,7 @@ and no OVERWRITE=yes. <p>
 
 <li>
 <p>
-This example shows using ogrinfo to evaluate an SQL query statement 
+This example shows using ogrinfo to evaluate an SQL query statement
 within PostgreSQL.  More sophisticated PostGIS specific queries may also be
 used via the -sql commandline switch to ogrinfo.<p>
 
@@ -254,7 +254,7 @@ ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
 
 <ul>
 <li> <b>Why can't I see my tables? PostGIS is installed and I have data</b><br>
-You must have permissions on all tables you want to read <i>and</i> geometry_columns and spatial_ref_sys.<br> 
+You must have permissions on all tables you want to read <i>and</i> geometry_columns and spatial_ref_sys.<br>
 Misleading behavior may follow without an error message if you do not have permissions to these tables. Permission
 issues on geometry_columns and/or spatial_ref_sys tables can be generally confirmed if you can see the tables
 by setting the configuration option PG_LIST_ALL_TABLES to YES. (e.g. ogrinfo --config PG_LIST_ALL_TABLES YES PG:xxxxx)

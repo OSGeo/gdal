@@ -36,17 +36,17 @@ username and password which are used for OS level authorization.</p>
 Examples:
 <pre>
   @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,effuser=frank, dbpwd=123, tables=usa/canada
-  
+
   @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
 
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=server::mapping
-  
+
   @driver=ingres,dbname=mapping
 </pre>
 
@@ -72,7 +72,7 @@ method, as name of the SQL dialect.</p>
 The INGRES driver supports OGC SFSQL 1.1 compliant spatial types and functions,
 including types: POINT, LINESTRING, POLYGON, MULTI* versions, and GEOMETRYCOLLECTION.
 </p>
- 
+
 <h2>Caveats</h2>
 <ul>
 <li> No fast spatial index is used when reading, so spatial filters are

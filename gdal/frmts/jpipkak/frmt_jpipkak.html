@@ -10,7 +10,7 @@
   </p>
   <h2>JPIPKAK - JPIP Overview</h2>
   <p>
-  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 – JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.  
+  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 – JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.
   </p>
   <p>
   An earlier version of JPEG 2000 Part 9 is available here <a href="http://www.jpeg.org/public/fcd15444-9v2.pdf">http://www.jpeg.org/public/fcd15444-9v2.pdf</a>, noting the ISO copyright, diagrams are not replicated in this documentation.
@@ -24,8 +24,8 @@
 Server responds with a target identifier that can be used to identify the image on the server and a JPIP-cnew response header which includes the path to the JPIP server which will handle all future requests and a cid session identifier.  A session is required so that that the server can model the state of the client connection, only sending the data that is required.
 </li>
    <li>Client requests particular view windows on the target image with a maximum response length and includes the session identifier established in the previous communication.
-'fsiz' is used to identify the resolution associated with the requested view-window. The values 'fx' and 'fy' specify the dimensions of the desired image resolution. 
-'roff' is used to identify the upper left hand corner off the spatial region associated with the requested view-windw. 
+'fsiz' is used to identify the resolution associated with the requested view-window. The values 'fx' and 'fy' specify the dimensions of the desired image resolution.
+'roff' is used to identify the upper left hand corner off the spatial region associated with the requested view-windw.
 'rsiz' is used to identify the horizontal and vertical extents of the spatial region associated with the requested view-window.</li>
   </ol>
   <h2>JPIPKAK -approach</h2>
@@ -64,7 +64,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
     <li>
     GDALGetDatasetDriver
     <p>
-    Fetch the driver to which this dataset relates. 
+    Fetch the driver to which this dataset relates.
     </p>
     </li>
     <li>
@@ -103,7 +103,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
     <li>
     GetMetadata
     <p>
-    returns metadata for the "JPIP" domain, keys are "JPIP_NQUALITYLAYERS", "JPIP_NRESOLUTIONLEVELS", "JPIP_NCOMPS" and "JPIP_SPRECISION" 
+    returns metadata for the "JPIP" domain, keys are "JPIP_NQUALITYLAYERS", "JPIP_NRESOLUTIONLEVELS", "JPIP_NCOMPS" and "JPIP_SPRECISION"
     </p>
     </li>
     <li>

@@ -7,21 +7,21 @@
 <body>
 
 <h2>GDAL Driver for FARSITE v.4 LCP Format</h2>
-<p>FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by 
-wildland fire behavior and fire effect simulation models such as FARSITE, 
-FLAMMAP, and FBAT (<a href="http://www.fire.org">www.fire.org</a>). The bands of an LCP file store data describing 
+<p>FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
+wildland fire behavior and fire effect simulation models such as FARSITE,
+FLAMMAP, and FBAT (<a href="http://www.fire.org">www.fire.org</a>). The bands of an LCP file store data describing
 terrain, tree canopy, and surface fuel. The
 <a href="http://landfire.cr.usgs.gov/viewer">USGS National Map for LANDFIRE</a>
-distributes data in LCP format, and 
+distributes data in LCP format, and
 programs such as FARSITE and <a href="http://www.landfire.gov/datatool.php">LFDAT</a> can create LCP files from a set of input rasters.</p>
-<p>An LCP file (.lcp) is basically a raw format with a 7,316-byte header 
-described below. The data type for all bands is 16-bit signed integer. Bands are 
-interleaved by pixel. Five bands are required: elevation, slope, aspect, fuel 
-model, and tree canopy cover. Crown fuel bands (canopy height, canopy base 
-height, canopy bulk density), and surface fuel bands (duff, coarse woody debris) 
+<p>An LCP file (.lcp) is basically a raw format with a 7,316-byte header
+described below. The data type for all bands is 16-bit signed integer. Bands are
+interleaved by pixel. Five bands are required: elevation, slope, aspect, fuel
+model, and tree canopy cover. Crown fuel bands (canopy height, canopy base
+height, canopy bulk density), and surface fuel bands (duff, coarse woody debris)
 are optional.</p>
-<p>The LCP driver reads the linear unit, cell size, and extent, but the LCP file 
-does not specify the projection. UTM projections are typical, but other 
+<p>The LCP driver reads the linear unit, cell size, and extent, but the LCP file
+does not specify the projection. UTM projections are typical, but other
 projections are possible.</p>
 <p>The GDAL LCP driver reports dataset- and band-level metadata:</p>
 <h3>Dataset</h3>
@@ -33,16 +33,16 @@ projections are possible.</p>
 <h3>Band</h3>
 <blockquote>
   <p>&lt;band&gt;_UNIT or &lt;band&gt;_OPTION: units or options code for the band<br>
-  &lt;band&gt;_UNIT_NAME or &lt;band&gt;_OPTION_DESC: descriptive name of 
+  &lt;band&gt;_UNIT_NAME or &lt;band&gt;_OPTION_DESC: descriptive name of
   units/options<br>
   &lt;band&gt;_MIN: minimum value<br>
   &lt;band&gt;_MAX: maximum value<br>
   &lt;band&gt;_NUM_CLASSES: number of classes, -1 if &gt; 100<br>
-  &lt;band&gt;_VALUES: comma-delimited list of class values (fuel model band 
+  &lt;band&gt;_VALUES: comma-delimited list of class values (fuel model band
   only)<br>
   &lt;band&gt;_FILE: original input raster file name for the band </p>
 </blockquote>
-<p><b>Note:</b> The LCP driver derives from the RawDataset helper class declared 
+<p><b>Note:</b> The LCP driver derives from the RawDataset helper class declared
 in gdal/frmts/raw. It should be implemented as gdal/frmts/raw/lcpdataset.cpp.</p>
 <h3>Creation Options</h3>
 The LCP driver supports CreateCopy() and metadata values can be set via
@@ -98,7 +98,7 @@ units.</p>
     <td width="55">4 </td>
     <td width="51">long </td>
     <td width="114">crown fuels </td>
-    <td width="583">20 if no crown fuels, 21 if crown fuels exist (crown fuels = 
+    <td width="583">20 if no crown fuels, 21 if crown fuels exist (crown fuels =
     canopy height, canopy base height, canopy bulk density) </td>
   </tr>
   <tr>
@@ -106,7 +106,7 @@ units.</p>
     <td width="55">4 </td>
     <td width="51">long </td>
     <td width="114">ground fuels </td>
-    <td width="583">20 if no ground fuels, 21 if ground fuels exist (ground 
+    <td width="583">20 if no ground fuels, 21 if ground fuels exist (ground
     fuels = duff loading, coarse woody) </td>
   </tr>
   <tr>
@@ -506,7 +506,7 @@ units.</p>
     <td width="55">2 </td>
     <td width="51">short </td>
     <td width="114">AUnits </td>
-    <td width="583">aspect units: 0 = Grass categories, 1 = Grass degrees, 2 = 
+    <td width="583">aspect units: 0 = Grass categories, 1 = Grass degrees, 2 =
     azimuth degrees </td>
   </tr>
   <tr>
@@ -514,8 +514,8 @@ units.</p>
     <td width="55">2 </td>
     <td width="51">short </td>
     <td width="114">FOptions </td>
-    <td width="583">fuel model options: 0 = no custom models AND no conversion 
-    file, 1 = custom models BUT no conversion file, 2 = no custom models BUT 
+    <td width="583">fuel model options: 0 = no custom models AND no conversion
+    file, 1 = custom models BUT no conversion file, 2 = no custom models BUT
     conversion file, 3 = custom models AND conversion file needed </td>
   </tr>
   <tr>
@@ -530,7 +530,7 @@ units.</p>
     <td width="55">2 </td>
     <td width="51">short </td>
     <td width="114">HUnits </td>
-    <td width="583">canopy height units: 1 = meters, 2 = feet, 3 = m x 10, 4 = 
+    <td width="583">canopy height units: 1 = meters, 2 = feet, 3 = m x 10, 4 =
     ft x 10 </td>
   </tr>
   <tr>
@@ -538,7 +538,7 @@ units.</p>
     <td width="55">2 </td>
     <td width="51">short </td>
     <td width="114">BUnits </td>
-    <td width="583">canopy base height units: 1 = meters, 2 = feet, 3 = m x 10, 
+    <td width="583">canopy base height units: 1 = meters, 2 = feet, 3 = m x 10,
     4 = ft x 10 </td>
   </tr>
   <tr>
@@ -546,7 +546,7 @@ units.</p>
     <td width="55">2 </td>
     <td width="51">short </td>
     <td width="114">PUnits </td>
-    <td width="583">canopy bulk density units: 1 = kg/m^3, 2 = lb/ft^3, 3 = 
+    <td width="583">canopy bulk density units: 1 = kg/m^3, 2 = lb/ft^3, 3 =
     kg/m^3 x 100, 4 = lb/ft^3 x 1000 </td>
   </tr>
   <tr>

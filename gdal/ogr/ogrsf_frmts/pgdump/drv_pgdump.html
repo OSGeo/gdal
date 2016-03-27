@@ -11,7 +11,7 @@
 
 This write-only driver implements support for generating a SQL dump file that
 can later be injected into a live PostgreSQL instance. It supports
-PostgreSQL extended with the 
+PostgreSQL extended with the
 <a href="http://postgis.net/">PostGIS</a> geometries.<p>
 
 This driver is very similar to the PostGIS shp2pgsql utility.<p>
@@ -29,7 +29,7 @@ geometry columns (following
 <ul>
 <li> <b>LINEFORMAT</b>:
 By default files are created with the line
-termination conventions of the local platform (CR/LF on win32 or 
+termination conventions of the local platform (CR/LF on win32 or
 LF on all other systems).  This may be overridden through use of the
 LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format). <p>
@@ -39,13 +39,13 @@ LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 
 <ul>
 <li>
-<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to
 one of "geometry" or "geography" (PostGIS >= 1.5) to force the type of geometry used for
 a table. "geometry" is the default value.<p>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
 PostgreSQL.  This converts to lower case and converts some special characters
-like "-" and "#" to "_".  If "NO" exact names are preserved.  
+like "-" and "#" to "_".  If "NO" exact names are preserved.
 The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
 <li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
 layer to try and represent the width and precision information, if available
@@ -54,7 +54,7 @@ FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
 <li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
-<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
+<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If
 omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 Using the same layer name in different schemas is supported, but not in the public schema and others.<p>

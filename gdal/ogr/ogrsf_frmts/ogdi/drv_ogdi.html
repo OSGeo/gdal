@@ -8,7 +8,7 @@
 <h1>OGDI Vectors</h1>
 
 OGDI vector support is optional in OGR, and is normally only configured if
-OGDI is installed on the build system.  If available OGDI vectors are 
+OGDI is installed on the build system.  If available OGDI vectors are
 supported for read access for the following family types:
 <ul>
   <li> Point
@@ -32,7 +32,7 @@ From GDAL/OGR 1.8.0, setting the <i>OGR_OGDI_LAUNDER_LAYER_NAMES</i> configurati
 option (or environment variable) to YES causes the layer names to be simplified. For example :
 <i>watrcrsl_hydro</i> instead of 'watrcrsl@hydro(*)_line'<p>
 
-Alternatively to accessing all the layers in a datastore, it is possible to 
+Alternatively to accessing all the layers in a datastore, it is possible to
 open a particular layer using a customized filename consisting
 of the regular GLTP URL to
 which you append the layer name and family type (separated by colons).  This
@@ -46,7 +46,7 @@ OGDI 3.1 there was no regular way to discover available layers in OGDI.<p>
 Where &lt;layer_name&gt; is the OGDI Layer name, and &lt;family&gt; is one of:
 "line", "area", "point", or "text".<p>
 
-OGDI coordinate system information is supported for most coordinate systems. 
+OGDI coordinate system information is supported for most coordinate systems.
 A warning will be produced when a layer is opened if the coordinate
 system cannot be translated.<p>
 
@@ -58,7 +58,7 @@ using the GDAL OGDI Raster driver.<p>
 <H3>Examples</H3>
 
 Usage example 'ogrinfo':<BR>
- 
+
 <PRE>
    ogrinfo gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
 </PRE>
