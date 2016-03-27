@@ -61,59 +61,59 @@ GUInt32 HalfToFloat( GUInt16 iHalf )
 
     if (iExponent == 0)
     {
-	if (iMantissa == 0)
-	{
+        if (iMantissa == 0)
+        {
 /* -------------------------------------------------------------------- */
-/*	Plus or minus zero.			                        */
+/*      Plus or minus zero.                                             */
 /* -------------------------------------------------------------------- */
 
             return iSign << 31;
-	}
-	else
-	{
+        }
+        else
+        {
 /* -------------------------------------------------------------------- */
-/*	Denormalized number -- renormalize it.			        */
+/*      Denormalized number -- renormalize it.                          */
 /* -------------------------------------------------------------------- */
 
-	    while (!(iMantissa & 0x00000400))
-	    {
-		iMantissa <<= 1;
-		iExponent -=  1;
-	    }
+            while (!(iMantissa & 0x00000400))
+            {
+                iMantissa <<= 1;
+                iExponent -=  1;
+            }
 
-	    iExponent += 1;
-	    iMantissa &= ~0x00000400U;
-	}
+            iExponent += 1;
+            iMantissa &= ~0x00000400U;
+        }
     }
     else if (iExponent == 31)
     {
-	if (iMantissa == 0)
-	{
+        if (iMantissa == 0)
+        {
 /* -------------------------------------------------------------------- */
-/*	 Positive or negative infinity.			                */
-/* -------------------------------------------------------------------- */
-
-	    return (iSign << 31) | 0x7f800000;
-	}
-	else
-	{
-/* -------------------------------------------------------------------- */
-/*	 NaN -- preserve sign and significand bits.	                */
+/*       Positive or negative infinity.                                 */
 /* -------------------------------------------------------------------- */
 
-	    return (iSign << 31) | 0x7f800000 | (iMantissa << 13);
-	}
+            return (iSign << 31) | 0x7f800000;
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*       NaN -- preserve sign and significand bits.                     */
+/* -------------------------------------------------------------------- */
+
+            return (iSign << 31) | 0x7f800000 | (iMantissa << 13);
+        }
     }
 
 /* -------------------------------------------------------------------- */
-/*	 Normalized number.			                        */
+/*       Normalized number.                                             */
 /* -------------------------------------------------------------------- */
 
     iExponent = iExponent + (127 - 15);
     iMantissa = iMantissa << 13;
 
 /* -------------------------------------------------------------------- */
-/*	 Assemble sign, exponent and mantissa.			        */
+/*       Assemble sign, exponent and mantissa.                          */
 /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
@@ -135,59 +135,59 @@ GUInt32 TripleToFloat( GUInt32 iTriple )
 
     if (iExponent == 0)
     {
-	if (iMantissa == 0)
-	{
+        if (iMantissa == 0)
+        {
 /* -------------------------------------------------------------------- */
-/*	Plus or minus zero.			                        */
-/* -------------------------------------------------------------------- */
-
-	    return iSign << 31;
-	}
-	else
-	{
-/* -------------------------------------------------------------------- */
-/*	Denormalized number -- renormalize it.			        */
+/*      Plus or minus zero.                                             */
 /* -------------------------------------------------------------------- */
 
-	    while (!(iMantissa & 0x00002000))
-	    {
-		iMantissa <<= 1;
-		iExponent -=  1;
-	    }
+            return iSign << 31;
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*      Denormalized number -- renormalize it.                          */
+/* -------------------------------------------------------------------- */
 
-	    iExponent += 1;
-	    iMantissa &= ~0x00002000U;
-	}
+            while (!(iMantissa & 0x00002000))
+            {
+                iMantissa <<= 1;
+                iExponent -= 1;
+            }
+
+            iExponent += 1;
+            iMantissa &= ~0x00002000U;
+        }
     }
     else if (iExponent == 127)
     {
-	if (iMantissa == 0)
-	{
+        if (iMantissa == 0)
+        {
 /* -------------------------------------------------------------------- */
-/*	 Positive or negative infinity.			                */
-/* -------------------------------------------------------------------- */
-
-	    return (iSign << 31) | 0x7f800000;
-	}
-	else
-	{
-/* -------------------------------------------------------------------- */
-/*	 NaN -- preserve sign and significand bits.	                */
+/*       Positive or negative infinity.                                 */
 /* -------------------------------------------------------------------- */
 
-	    return (iSign << 31) | 0x7f800000 | (iMantissa << 7);
-	}
+            return (iSign << 31) | 0x7f800000;
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*       NaN -- preserve sign and significand bits.                     */
+/* -------------------------------------------------------------------- */
+
+            return (iSign << 31) | 0x7f800000 | (iMantissa << 7);
+        }
     }
 
 /* -------------------------------------------------------------------- */
-/*	 Normalized number.			                        */
+/*       Normalized number.                                             */
 /* -------------------------------------------------------------------- */
 
     iExponent = iExponent + (127 - 63);
     iMantissa = iMantissa << 7;
 
 /* -------------------------------------------------------------------- */
-/*	 Assemble sign, exponent and mantissa.			        */
+/*       Assemble sign, exponent and mantissa.                          */
 /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */

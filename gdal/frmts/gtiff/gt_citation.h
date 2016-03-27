@@ -62,11 +62,11 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
 void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
                            geokey_t geoKey,
-                          char	**ppszGeogName,
-                          char	**ppszDatumName,
-                          char	**ppszPMName,
-                          char	**ppszSpheroidName,
-                          char	**ppszAngularUnits);
+                          char **ppszGeogName,
+                          char **ppszDatumName,
+                          char **ppszPMName,
+                          char **ppszSpheroidName,
+                          char **ppszAngularUnits);
 void CheckUTM( GTIFDefn * psDefn, const char * pszCtString );
 
 
