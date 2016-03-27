@@ -423,7 +423,7 @@ void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitN
 /*      Parse and set Citation string to SRS                            */
 /************************************************************************/
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
-                            geokey_t geoKey,  OGRSpatialReference*	poSRS, OGRBoolean* linearUnitIsSet)
+                            geokey_t geoKey,  OGRSpatialReference *poSRS, OGRBoolean* linearUnitIsSet)
 {
     OGRBoolean ret = FALSE;
     char* lUnitName = NULL;
@@ -501,11 +501,11 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
 /************************************************************************/
 void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
                            geokey_t geoKey,
-                           char	**ppszGeogName,
-                           char	**ppszDatumName,
-                           char	**ppszPMName,
-                           char	**ppszSpheroidName,
-                           char	**ppszAngularUnits)
+                           char **ppszGeogName,
+                           char **ppszDatumName,
+                           char **ppszPMName,
+                           char **ppszSpheroidName,
+                           char **ppszAngularUnits)
 {
     *ppszGeogName = *ppszDatumName = *ppszPMName =
         *ppszSpheroidName = *ppszAngularUnits = NULL;
@@ -634,7 +634,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
     }
     if( !hasUnits )
     {
-        char	*pszUnitsName = NULL;
+        char *pszUnitsName = NULL;
         GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
         if( pszUnitsName )
         {
