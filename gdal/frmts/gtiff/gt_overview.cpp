@@ -30,8 +30,6 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
-#define CPL_SERV_H_INCLUDED
-
 #include "tifvsi.h"
 #include "xtiffio.h"
 #include "gt_overview.h"
