@@ -35,8 +35,8 @@
 
 #include "cpl_port.h"
 
-#include "geotiff.h"
 #include "geo_normalize.h"
+#include "geotiff.h"
 
 CPL_C_START
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );

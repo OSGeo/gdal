@@ -30,10 +30,10 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
-#include "tifvsi.h"
-#include "xtiffio.h"
 #include "gt_overview.h"
 #include "gtiff.h"
+#include "tifvsi.h"
+#include "xtiffio.h"
 
 CPL_CVSID("$Id$");
 

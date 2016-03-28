@@ -41,30 +41,29 @@
 #include <set>
 
 #include "cpl_csv.h"
+#include "cplkeywordparser.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
-#include "gdal_frmts.h"
-#include "gdal_pam.h"
-#include "xtiffio.h"
-#include "geovalues.h"
-#include "gt_overview.h"
-#include "ogr_spatialref.h"
-#include "tif_float.h"
-#include "gtiff.h"
 #include "gdal_csv.h"
+#include "gdal_frmts.h"
+#include "gdal_mdreader.h"
+#include "gdal_pam.h"
+#include "geovalues.h"
+#include "gt_jpeg_copy.h"
+#include "gt_overview.h"
 #include "gt_wkt_srs.h"
 #include "gt_wkt_srs_priv.h"
-#include "tifvsi.h"
-#include "cplkeywordparser.h"
-#include "gt_jpeg_copy.h"
-#include "gdal_mdreader.h"
-
+#include "gtiff.h"
+#include "ogr_spatialref.h"
+#include "tif_float.h"
 #ifdef INTERNAL_LIBTIFF
-#include "tiffiop.h"
+#  include "tiffiop.h"
 #endif
+#include "tifvsi.h"
+#include "xtiffio.h"
 
 CPL_CVSID("$Id$");
 
