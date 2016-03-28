@@ -47,7 +47,7 @@ static CPLMutex *hGRIBMutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GRIBDataset				*/
+/*                              GRIBDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -58,20 +58,21 @@ class GRIBDataset : public GDALPamDataset
     friend class GRIBRasterBand;
 
   public:
-		GRIBDataset();
-		~GRIBDataset();
+                GRIBDataset();
+                ~GRIBDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 
   private:
     void SetGribMetaData(grib_MetaData* meta);
-    VSILFILE	*fp;
+    VSILFILE    *fp;
     char  *pszProjection;
-    double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
+    // Calculate and store once as GetGeoTransform may be called multiple times.
+    double adfGeoTransform[6];
 
     GIntBig  nCachedBytes;
     GIntBig  nCachedBytesThreshold;
@@ -105,7 +106,8 @@ private:
 
     CPLErr       LoadData();
 
-    static void ReadGribData( DataSource &, sInt4, int, double**, grib_MetaData**);
+    static void ReadGribData( DataSource &, sInt4, int, double**,
+                              grib_MetaData**);
     sInt4 start;
     int subgNum;
     char *longFstLevel;
@@ -121,7 +123,7 @@ private:
 /*                         ConvertUnitInText()                          */
 /************************************************************************/
 
-static CPLString ConvertUnitInText(int bMetricUnits, const char* pszTxt)
+static CPLString ConvertUnitInText( bool bMetricUnits, const char* pszTxt )
 {
     if( !bMetricUnits )
         return pszTxt;
@@ -138,28 +140,33 @@ static CPLString ConvertUnitInText(int bMetricUnits, const char* pszTxt)
 /************************************************************************/
 
 GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
-                                inventoryType *psInv )
-  : m_Grib_Data(NULL), m_Grib_MetaData(NULL)
+                                inventoryType *psInv ) :
+    start(psInv->start),
+    subgNum(psInv->subgNum),
+    longFstLevel(CPLStrdup(psInv->longFstLevel)),
+    m_Grib_Data(NULL),
+    m_Grib_MetaData(NULL),
+    nGribDataXSize(poDSIn->nRasterXSize),
+    nGribDataYSize(poDSIn->nRasterYSize)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->start = psInv->start;
-    this->subgNum = psInv->subgNum;
-    this->longFstLevel = CPLStrdup(psInv->longFstLevel);
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    eDataType = GDT_Float64; // let user do -ot Float32 if needed for saving space, GRIB contains Float64 (though not fully utilized most of the time)
+    // Let user do -ot Float32 if needed for saving space, GRIB contains
+    // Float64 (though not fully utilized most of the time).
+    eDataType = GDT_Float64;
 
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    nGribDataXSize = poDSIn->nRasterXSize;
-    nGribDataYSize = poDSIn->nRasterYSize;
+    const char* pszGribNormalizeUnits =
+        CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+    bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
-    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
-    int bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
-
-    SetMetadataItem( "GRIB_UNIT", ConvertUnitInText(bMetricUnits, psInv->unitName) );
-    SetMetadataItem( "GRIB_COMMENT", ConvertUnitInText(bMetricUnits, psInv->comment) );
+    SetMetadataItem( "GRIB_UNIT",
+                     ConvertUnitInText(bMetricUnits, psInv->unitName) );
+    SetMetadataItem( "GRIB_COMMENT",
+                     ConvertUnitInText(bMetricUnits, psInv->comment) );
     SetMetadataItem( "GRIB_ELEMENT", psInv->element );
     SetMetadataItem( "GRIB_SHORT_NAME", psInv->shortFstLevel );
     SetMetadataItem( "GRIB_REF_TIME",
@@ -180,7 +187,7 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
 void GRIBRasterBand::FindPDSTemplate()
 
 {
-    GRIBDataset *poGDS = (GRIBDataset *) poDS;
+    GRIBDataset *poGDS = reinterpret_cast<GRIBDataset *>( poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Collect section 4 octet information ... we read the file        */
@@ -191,10 +198,10 @@ void GRIBRasterBand::FindPDSTemplate()
 
     VSIFSeekL( poGDS->fp, start+16, SEEK_SET );
 
-    GByte abyHead[5];
+    GByte abyHead[5] = { 0 };
     VSIFReadL( abyHead, 5, 1, poGDS->fp );
 
-    GUInt32 nSectSize;
+    GUInt32 nSectSize = 0;
     while( abyHead[4] != 4 )
     {
         memcpy( &nSectSize, abyHead, 4 );
@@ -210,15 +217,14 @@ void GRIBRasterBand::FindPDSTemplate()
         memcpy( &nSectSize, abyHead, 4 );
         CPL_MSBPTR32( &nSectSize );
 
-        GByte *pabyBody;
-        pabyBody = (GByte *) CPLMalloc(nSectSize-5);
+        GByte *pabyBody = static_cast<GByte *>( CPLMalloc(nSectSize - 5) );
         VSIFReadL( pabyBody, 1, nSectSize-5, poGDS->fp );
 
-        GUInt16 nCoordCount;
+        GUInt16 nCoordCount = 0;
         memcpy( &nCoordCount, pabyBody + 5 - 5, 2 );
         CPL_MSBPTR16( &nCoordCount );
 
-        GUInt16 nPDTN;
+        GUInt16 nPDTN = 0;
         memcpy( &nPDTN, pabyBody + 7 - 5, 2 );
         CPL_MSBPTR16( &nPDTN );
 
@@ -226,9 +232,9 @@ void GRIBRasterBand::FindPDSTemplate()
                          CPLString().Printf( "%d", nPDTN ) );
 
         CPLString osOctet;
-        for( int i = 9; i < (int) nSectSize; i++ )
+        for( int i = 9; i < static_cast<int>( nSectSize ); i++ )
         {
-            char szByte[10];
+            char szByte[10] = { '\0' };
 
             if( i == 9 )
                 snprintf( szByte, sizeof(szByte), "%d", pabyBody[i-5] );
@@ -266,28 +272,30 @@ CPLErr GRIBRasterBand::LoadData()
 {
     if( !m_Grib_Data )
     {
-        GRIBDataset *poGDS = (GRIBDataset *) poDS;
+        GRIBDataset *poGDS = reinterpret_cast<GRIBDataset *>( poDS );
 
         if (poGDS->bCacheOnlyOneBand)
         {
-            /* In "one-band-at-a-time" strategy, if the last recently used */
-            /* band is not that one, uncache it. We could use a smarter strategy */
-            /* based on a LRU, but that's a bit overkill for now. */
+            // In "one-band-at-a-time" strategy, if the last recently used
+            // band is not that one, uncache it. We could use a smarter strategy
+            // based on a LRU, but that's a bit overkill for now.
             poGDS->poLastUsedBand->UncacheData();
             poGDS->nCachedBytes = 0;
         }
         else
         {
-            /* Once we have cached more than nCachedBytesThreshold bytes, we will switch */
-            /* to "one-band-at-a-time" strategy, instead of caching all bands that have */
-            /* been accessed */
+            // Once we have cached more than nCachedBytesThreshold bytes, we
+            // will switch to "one-band-at-a-time" strategy, instead of caching
+            // all bands that have been accessed.
             if (poGDS->nCachedBytes > poGDS->nCachedBytesThreshold)
             {
-                CPLDebug("GRIB", "Maximum band cache size reached for this dataset. "
-                         "Caching only one band at a time from now");
+                CPLDebug( "GRIB",
+                          "Maximum band cache size reached for this dataset. "
+                          "Caching only one band at a time from now");
                 for(int i=0;i<poGDS->nBands;i++)
                 {
-                    ((GRIBRasterBand*) poGDS->GetRasterBand(i+1))->UncacheData();
+                    reinterpret_cast<GRIBRasterBand*>(
+                        poGDS->GetRasterBand(i+1))->UncacheData();
                 }
                 poGDS->nCachedBytes = 0;
                 poGDS->bCacheOnlyOneBand = TRUE;
@@ -335,7 +343,7 @@ CPLErr GRIBRasterBand::LoadData()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
                                    int nBlockYOff,
                                    void * pImage )
 
@@ -360,21 +368,19 @@ CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         return CE_None;
     }
-    else
-    {
-        memset( pImage, 0, sizeof(double)*nRasterXSize );
 
-        if( nBlockYOff >= nGribDataYSize ) // off image?
-            return CE_None;
+    memset( pImage, 0, sizeof(double) * nRasterXSize );
 
-        int nCopyWords = MIN(nRasterXSize,nGribDataXSize);
-
-        memcpy( pImage,
-                m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
-                nCopyWords * sizeof(double) );
-
+    if( nBlockYOff >= nGribDataYSize ) // off image?
         return CE_None;
-    }
+
+    const int nCopyWords = MIN(nRasterXSize,nGribDataXSize);
+
+    memcpy( pImage,
+            m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
+            nCopyWords * sizeof(double) );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -409,29 +415,36 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 /*                            ReadGribData()                            */
 /************************************************************************/
 
-void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, double** data, grib_MetaData** metaData)
+void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum,
+                                   double** data, grib_MetaData** metaData)
 {
     /* Initialization, for calling the ReadGrib2Record function */
-    sInt4 f_endMsg = 1;  /* 1 if we read the last grid in a GRIB message, or we haven't read any messages. */
-    // int subgNum = 0;     /* The subgrid in the message that we are interested in. */
+  sInt4 f_endMsg = 1;  // 1 if we read the last grid in a GRIB message, or we
+                       // haven't read any messages.
+    // int subgNum = 0; // The subgrid in the message that we are interested in.
     sChar f_unit = 2;        /* None = 0, English = 1, Metric = 2 */
-    double majEarth = 0;     /* -radEarth if < 6000 ignore, otherwise use this to
-                              * override the radEarth in the GRIB1 or GRIB2
-                              * message.  Needed because NCEP uses 6371.2 but GRIB1 could only state 6367.47. */
-    double minEarth = 0;     /* -minEarth if < 6000 ignore, otherwise use this to
-                              * override the minEarth in the GRIB1 or GRIB2 message. */
-    sChar f_SimpleVer = 4;   /* Which version of the simple NDFD Weather table to
-                              * use. (1 is 6/2003) (2 is 1/2004) (3 is 2/2004)
-                              * (4 is 11/2004) (default 4) */
+    double majEarth = 0;     /* -radEarth if < 6000 ignore, otherwise use this
+                              * to override the radEarth in the GRIB1 or GRIB2
+                              * message.  Needed because NCEP uses 6371.2 but
+                              * GRIB1 could only state 6367.47. */
+    double minEarth = 0;     /* -minEarth if < 6000 ignore, otherwise use this
+                              * to override the minEarth in the GRIB1 or GRIB2
+                              * message. */
+    sChar f_SimpleVer = 4;   /* Which version of the simple NDFD Weather table
+                              * to use. (1 is 6/2003) (2 is 1/2004) (3 is
+                              * 2/2004) (4 is 11/2004) (default 4) */
     LatLon lwlf;         /* lower left corner (cookie slicing) -lwlf */
     LatLon uprt;         /* upper right corner (cookie slicing) -uprt */
-    IS_dataType is;      /* Un-parsed meta data for this GRIB2 message. As well as some memory used by the unpacker. */
+    IS_dataType is;      /* Un-parsed meta data for this GRIB2 message. As well
+                          * as some memory used by the unpacker. */
 
-    lwlf.lat = -100; // lat == -100 instructs the GRIB decoder that we don't want a subgrid
+    lwlf.lat = -100; // lat == -100 instructs the GRIB decoder that we don't
+                     // want a subgrid
 
     IS_Init (&is);
 
-    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+    const char* pszGribNormalizeUnits =
+        CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     if ( !CPLTestBool(pszGribNormalizeUnits) )
         f_unit = 0; /* do not normalize units to metric */
 
@@ -443,7 +456,8 @@ void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, do
     ReadGrib2Record (fp, f_unit, data, &grib_DataLen, *metaData, &is, subgNum,
                      majEarth, minEarth, f_SimpleVer, &f_endMsg, &lwlf, &uprt);
 
-    char * errMsg = errSprintf(NULL); // no intention to show errors, just swallow it and free the memory
+    // no intention to show errors, just swallow it and free the memory.
+    char * errMsg = errSprintf(NULL);
     if( errMsg != NULL )
         CPLDebug( "GRIB", "%s", errMsg );
     free(errMsg);
@@ -479,15 +493,17 @@ GRIBRasterBand::~GRIBRasterBand()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GRIBDataset				*/
+/*                              GRIBDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 GRIBDataset::GRIBDataset() :
-    fp(NULL), nCachedBytes(0),
-    bCacheOnlyOneBand(FALSE), poLastUsedBand(NULL)
+    fp(NULL),
+    pszProjection(CPLStrdup("")),
+    nCachedBytes(0),
+    bCacheOnlyOneBand(FALSE),
+    poLastUsedBand(NULL)
 {
-  pszProjection = CPLStrdup("");
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
   adfGeoTransform[2] = 0.0;
@@ -497,7 +513,9 @@ GRIBDataset::GRIBDataset() :
 
   /* Switch caching strategy once 100 MB threshold is reached */
   /* Why 100 MB ? --> why not ! */
-  nCachedBytesThreshold = ((GIntBig)atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100"))) * 1024 * 1024;
+  nCachedBytesThreshold =
+      static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
+      * 1024 * 1024;
 }
 
 /************************************************************************/
@@ -572,9 +590,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char *buff = NULL;
     uInt4 buffLen = 0;
-    sInt4 sect0[SECT0LEN_WORD];
-    uInt4 gribLen;
-    int version;
+    sInt4 sect0[SECT0LEN_WORD] = { 0 };
+    uInt4 gribLen = 0;
+    int version = 0;
 // grib is not thread safe, make sure not to cause problems
 // for other thread safe formats
 
@@ -615,8 +633,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug( "GRIB", "%s", errMsg );
         free(errMsg);
 
-        CPLError( CE_Failure, CPLE_OpenFailed, "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
-        CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
+        // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
+        // hGRIBMutex.
+        CPLReleaseMutex(hGRIBMutex);
         delete poDS;
         CPLAcquireMutex(hGRIBMutex, 1000.0);
         return NULL;
@@ -637,13 +658,14 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
 
-    FileDataSource grib_fp (poDS->fp);
+    FileDataSource grib_fp(poDS->fp);
 
-    inventoryType *Inv = NULL;  /* Contains an GRIB2 message inventory of the file */
+    // Contains an GRIB2 message inventory of the file.
+    inventoryType *Inv = NULL;
     uInt4 LenInv = 0;        /* size of Inv (also # of GRIB2 messages) */
     int msgNum = 0;          /* The messageNumber during the inventory. */
 
-    if (GRIB2Inventory (grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
+    if( GRIB2Inventory (grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
     {
         char * errMsg = errSprintf(NULL);
         if( errMsg != NULL )
@@ -651,9 +673,12 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         free(errMsg);
 
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s is a grib file, but no raster dataset was successfully identified.",
+                  "%s is a grib file, "
+                  "but no raster dataset was successfully identified.",
                   poOpenInfo->pszFilename );
-        CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
+        // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
+        // hGRIBMutex.
+        CPLReleaseMutex(hGRIBMutex);
         delete poDS;
         CPLAcquireMutex(hGRIBMutex, 1000.0);
         return NULL;
@@ -662,22 +687,28 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
 /* -------------------------------------------------------------------- */
-    GRIBRasterBand *gribBand;
     for (uInt4 i = 0; i < LenInv; ++i)
     {
+        GRIBRasterBand *gribBand = NULL;
         uInt4 bandNr = i+1;
         if (bandNr == 1)
         {
-            // important: set DataSet extents before creating first RasterBand in it
+            // Important: set DataSet extents before creating first RasterBand
+            // in it.
             double *data = NULL;
             grib_MetaData *metaData = NULL;
-            GRIBRasterBand::ReadGribData(grib_fp, 0, Inv[i].subgNum, &data, &metaData);
-            if (data == NULL || metaData == NULL || metaData->gds.Nx < 1 || metaData->gds.Ny < 1)
+            GRIBRasterBand::ReadGribData( grib_fp, 0, Inv[i].subgNum,
+                                          &data, &metaData );
+            if( data == NULL || metaData == NULL || metaData->gds.Nx < 1 ||
+                 metaData->gds.Ny < 1 )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
-                          "%s is a grib file, but no raster dataset was successfully identified.",
+                          "%s is a grib file, "
+                          "but no raster dataset was successfully identified.",
                           poOpenInfo->pszFilename );
-                CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
+                // Release hGRIBMutex otherwise we'll deadlock with GDALDataset
+                // own hGRIBMutex.
+                CPLReleaseMutex(hGRIBMutex);
                 delete poDS;
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
                 if (metaData != NULL)
@@ -691,7 +722,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
 
-            poDS->SetGribMetaData(metaData); // set the DataSet's x,y size, georeference and projection from the first GRIB band
+             // Set the DataSet's x,y size, georeference and projection from
+             // the first GRIB band.
+            poDS->SetGribMetaData(metaData);
             gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i);
 
             if( Inv->GribVersion == 2 )
@@ -703,7 +736,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i );
-            if( CPLTestBool( CPLGetConfigOption( "GRIB_PDS_ALL_BANDS", "ON" ) ) )
+            if( CPLTestBool(
+                   CPLGetConfigOption( "GRIB_PDS_ALL_BANDS", "ON" ) ) )
             {
                 if( Inv->GribVersion == 2 )
                     gribBand->FindPDSTemplate();
@@ -719,13 +753,16 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
 
-    CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
+    // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
+    // hGRIBMutex.
+    CPLReleaseMutex(hGRIBMutex);
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
     return( poDS );
@@ -768,10 +805,14 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
 
       case GS3_ORTHOGRAPHIC:
 
-        //oSRS.SetOrthographic(0.0, meta->gds.orientLon,
-        //											meta->gds.lon2, meta->gds.lat2);
-        //oSRS.SetGEOS(meta->gds.orientLon, meta->gds.stretchFactor, meta->gds.lon2, meta->gds.lat2);
-        oSRS.SetGEOS(  0, 35785831, 0, 0 ); // hardcoded for now, I don't know yet how to parse the meta->gds section
+        // oSRS.SetOrthographic( 0.0, meta->gds.orientLon,
+        //                       meta->gds.lon2, meta->gds.lat2);
+
+        // oSRS.SetGEOS( meta->gds.orientLon, meta->gds.stretchFactor,
+        //               meta->gds.lon2, meta->gds.lat2);
+
+        // TODO: Hardcoded for now. How to parse the meta->gds section?
+        oSRS.SetGEOS(  0, 35785831, 0, 0 );
         break;
       case GS3_EQUATOR_EQUIDIST:
         break;
@@ -799,7 +840,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     }
     else
     {
-        double fInv = a/(a-b);
+        const double fInv = a / (a - b);
         oSRS.SetGeogCS( "Coordinate System imported from GRIB file",
                         NULL,
                         "Spheroid imported from GRIB file",
@@ -809,15 +850,18 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     OGRSpatialReference oLL; // construct the "geographic" part of oSRS
     oLL.CopyGeogCSFrom( &oSRS );
 
-    double rMinX;
-    double rMaxY;
-    double rPixelSizeX;
-    double rPixelSizeY;
+    double rMinX = 0.0;
+    double rMaxY = 0.0;
+    double rPixelSizeX = 0.0;
+    double rPixelSizeY = 0.0;
     if (meta->gds.projType == GS3_ORTHOGRAPHIC)
     {
-        //rMinX = -meta->gds.Dx * (meta->gds.Nx / 2); // This is what should work, but it doesn't .. Dx seems to have an inverse relation with pixel size
-        //rMaxY = meta->gds.Dy * (meta->gds.Ny / 2);
-        const double geosExtentInMeters = 11137496.552; // hardcoded for now, assumption: GEOS projection, full disc (like MSG)
+        // This is what should work, but it doesn't .. Dx seems to have an
+        // inverse relation with pixel size.
+        // rMinX = -meta->gds.Dx * (meta->gds.Nx / 2);
+        // rMaxY = meta->gds.Dy * (meta->gds.Ny / 2);
+        // Hardcoded for now, assumption: GEOS projection, full disc (like MSG).
+        const double geosExtentInMeters = 11137496.552;
         rMinX = -(geosExtentInMeters / 2);
         rMaxY = geosExtentInMeters / 2;
         rPixelSizeX = geosExtentInMeters / meta->gds.Nx;
@@ -825,13 +869,23 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     }
     else if( oSRS.IsProjected() )
     {
-        rMinX = meta->gds.lon1; // longitude in degrees, to be transformed to meters (or degrees in case of latlon)
-        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters
-        OGRCoordinateTransformation *poTransformLLtoSRS = OGRCreateCoordinateTransformation( &(oLL), &(oSRS) );
-        if ((poTransformLLtoSRS != NULL) && poTransformLLtoSRS->Transform( 1, &rMinX, &rMaxY )) // transform it to meters
+        // Longitude in degrees, to be transformed to meters (or degrees in
+        // case of latlon).
+        rMinX = meta->gds.lon1;
+        // Latitude in degrees, to be transformed to meters.
+        rMaxY = meta->gds.lat1;
+        OGRCoordinateTransformation *poTransformLLtoSRS =
+            OGRCreateCoordinateTransformation( &(oLL), &(oSRS) );
+        // Transform it to meters.
+        if( (poTransformLLtoSRS != NULL) &&
+            poTransformLLtoSRS->Transform( 1, &rMinX, &rMaxY ))
         {
             if (meta->gds.scan == GRIB2BIT_2) // Y is minY, GDAL wants maxY
-                rMaxY += (meta->gds.Ny - 1) * meta->gds.Dy; // -1 because we GDAL needs the coordinates of the centre of the pixel
+            {
+                // -1 because we GDAL needs the coordinates of the centre of
+                // the pixel.
+                rMaxY += (meta->gds.Ny - 1) * meta->gds.Dy;
+            }
             rPixelSizeX = meta->gds.Dx;
             rPixelSizeY = meta->gds.Dy;
         }
@@ -846,16 +900,20 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
             oSRS.Clear();
 
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unable to perform coordinate transformations, so the correct\n"
-                      "projected geotransform could not be deduced from the lat/long\n"
-                      "control points.  Defaulting to ungeoreferenced." );
+                      "Unable to perform coordinate transformations, so the "
+                      "correct projected geotransform could not be deduced "
+                      "from the lat/long control points.  "
+                      "Defaulting to ungeoreferenced." );
         }
         delete poTransformLLtoSRS;
     }
     else
     {
-        rMinX = meta->gds.lon1; // longitude in degrees, to be transformed to meters (or degrees in case of latlon)
-        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters
+        // Longitude in degrees, to be transformed to meters (or degrees in
+        // case of latlon).
+        rMinX = meta->gds.lon1;
+        // Latitude in degrees, to be transformed to meters.
+        rMaxY = meta->gds.lat1;
 
         double rMinY = meta->gds.lat2;
         if (meta->gds.lat2 > rMaxY)
@@ -867,7 +925,8 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         if( meta->gds.Nx == 1 )
           rPixelSizeX = meta->gds.Dx;
         else if (meta->gds.lon1 > meta->gds.lon2)
-          rPixelSizeX = (360.0 - (meta->gds.lon1 - meta->gds.lon2)) / (meta->gds.Nx - 1);
+          rPixelSizeX =
+              (360.0 - (meta->gds.lon1 - meta->gds.lon2)) / (meta->gds.Nx - 1);
         else
           rPixelSizeX = (meta->gds.lon2 - meta->gds.lon1) / (meta->gds.Nx - 1);
 
