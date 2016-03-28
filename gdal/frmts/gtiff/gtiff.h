@@ -33,8 +33,8 @@
 
 #include "cpl_port.h"
 
-#include "tiffio.h"
 #include "gdal.h"
+#include "tiffio.h"
 
 CPL_C_START
 int    GTiffOneTimeInit();

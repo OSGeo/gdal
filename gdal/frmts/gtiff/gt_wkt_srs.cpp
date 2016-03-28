@@ -35,7 +35,6 @@
 #include "cpl_multiproc.h"
 #include "gdal.h"
 #include "gdal_csv.h"
-
 #include "geovalues.h"
 #include "gt_citation.h"
 #include "gt_wkt_srs.h"

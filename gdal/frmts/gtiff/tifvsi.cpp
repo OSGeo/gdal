@@ -37,7 +37,7 @@
 #include "cpl_conv.h"
 #include "tifvsi.h"
 
-#include <errno.h>
+#include <cerrno>
 
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.

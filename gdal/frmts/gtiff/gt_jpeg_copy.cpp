@@ -29,6 +29,9 @@
 
 #include "cpl_vsi.h"
 #include "gt_jpeg_copy.h"
+#if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
+#  include "vrt/vrtdataset.h"
+#endif
 
 #ifndef BIGTIFF_SUPPORT
 #define tmsize_t tsize_t
@@ -40,8 +43,6 @@
 CPL_CVSID("$Id$");
 
 #if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
-
-#include "vrt/vrtdataset.h"
 
 /************************************************************************/
 /*                      GetUnderlyingDataset()                          */
