@@ -48,9 +48,6 @@
 #include "cpl_worker_thread_pool.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
-
-#define CPL_SERV_H_INCLUDED
-
 #include "xtiffio.h"
 #include "geovalues.h"
 #include "gt_overview.h"
