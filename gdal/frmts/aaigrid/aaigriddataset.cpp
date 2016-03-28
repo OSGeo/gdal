@@ -155,7 +155,7 @@ class AAIGRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDSIn, int nDataStart ) :
-    panLineOffset(0)
+    panLineOffset(NULL)
 {
     poDS = poDSIn;
 
