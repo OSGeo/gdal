@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrmssqlspatialtablelayer.cpp 33781 2016-03-24 09:37:12Z rouault $
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLSpatialTableLayer class, access to an existing table.
@@ -34,7 +34,7 @@
 #include <sqlncli.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrmssqlspatialtablelayer.cpp 33781 2016-03-24 09:37:12Z rouault $");
 
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
