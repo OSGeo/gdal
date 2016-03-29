@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: cpl_odbc.cpp 33775 2016-03-23 20:25:05Z tamas $
  *
  * Project:  OGR ODBC Driver
  * Purpose:  Declarations for ODBC Access Cover API.
@@ -34,7 +34,7 @@
 #include "cpl_error.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: cpl_odbc.cpp 33775 2016-03-23 20:25:05Z tamas $");
 
 #ifndef SQLColumns_TABLE_CAT
 #define SQLColumns_TABLE_CAT 1
@@ -296,12 +296,11 @@ int CPLODBCSession::RollbackTransaction()
 
     if (m_bInTransaction)
     {
+        /* Rollback should not hide the previous error so Failed() is not called. */
+        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
         m_bInTransaction = FALSE;
 
-        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
-        {
-            return FALSE;
-        }
+        return (nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO );
     }
 
 #endif
