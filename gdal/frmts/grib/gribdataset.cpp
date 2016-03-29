@@ -418,25 +418,25 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum,
                                    double** data, grib_MetaData** metaData)
 {
-    /* Initialization, for calling the ReadGrib2Record function */
-  sInt4 f_endMsg = 1;  // 1 if we read the last grid in a GRIB message, or we
-                       // haven't read any messages.
+    // Initialization, for calling the ReadGrib2Record function.
+    sInt4 f_endMsg = 1;  // 1 if we read the last grid in a GRIB message, or we
+                         // haven't read any messages.
     // int subgNum = 0; // The subgrid in the message that we are interested in.
-    sChar f_unit = 2;        /* None = 0, English = 1, Metric = 2 */
-    double majEarth = 0;     /* -radEarth if < 6000 ignore, otherwise use this
-                              * to override the radEarth in the GRIB1 or GRIB2
-                              * message.  Needed because NCEP uses 6371.2 but
-                              * GRIB1 could only state 6367.47. */
-    double minEarth = 0;     /* -minEarth if < 6000 ignore, otherwise use this
-                              * to override the minEarth in the GRIB1 or GRIB2
-                              * message. */
-    sChar f_SimpleVer = 4;   /* Which version of the simple NDFD Weather table
-                              * to use. (1 is 6/2003) (2 is 1/2004) (3 is
-                              * 2/2004) (4 is 11/2004) (default 4) */
-    LatLon lwlf;         /* lower left corner (cookie slicing) -lwlf */
-    LatLon uprt;         /* upper right corner (cookie slicing) -uprt */
-    IS_dataType is;      /* Un-parsed meta data for this GRIB2 message. As well
-                          * as some memory used by the unpacker. */
+    sChar f_unit = 2;        // None = 0, English = 1, Metric = 2
+    double majEarth = 0.0;   // -radEarth if < 6000 ignore, otherwise use this
+                             // to override the radEarth in the GRIB1 or GRIB2
+                             // message.  Needed because NCEP uses 6371.2 but
+                             // GRIB1 could only state 6367.47.
+    double minEarth = 0.0;   // -minEarth if < 6000 ignore, otherwise use this
+                             // to override the minEarth in the GRIB1 or GRIB2
+                             // message.
+    sChar f_SimpleVer = 4;   // Which version of the simple NDFD Weather table
+                             // to use. (1 is 6/2003) (2 is 1/2004) (3 is
+                             // 2/2004) (4 is 11/2004) (default 4)
+    LatLon lwlf;         // lower left corner (cookie slicing) -lwlf
+    LatLon uprt;         // upper right corner (cookie slicing) -uprt
+    IS_dataType is;      // Un-parsed meta data for this GRIB2 message. As well
+                         // as some memory used by the unpacker.
 
     lwlf.lat = -100; // lat == -100 instructs the GRIB decoder that we don't
                      // want a subgrid
@@ -662,8 +662,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Contains an GRIB2 message inventory of the file.
     inventoryType *Inv = NULL;
-    uInt4 LenInv = 0;        /* size of Inv (also # of GRIB2 messages) */
-    int msgNum = 0;          /* The messageNumber during the inventory. */
+    uInt4 LenInv = 0;        // Size of Inv (also # of GRIB2 messages).
+    int msgNum = 0;          // The messageNumber during the inventory.
 
     if( GRIB2Inventory (grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
     {
