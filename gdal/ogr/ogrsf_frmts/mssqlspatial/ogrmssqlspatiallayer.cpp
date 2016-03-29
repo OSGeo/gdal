@@ -181,7 +181,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                         EQUAL(poStmtIn->GetColTypeName( iCol ), "bigint identity"))
                         bIsIdentityFid = TRUE;
 
-                    /* skip FID */
+                    nFIDColumnIndex = iCol;
                     continue;
                 }
             }

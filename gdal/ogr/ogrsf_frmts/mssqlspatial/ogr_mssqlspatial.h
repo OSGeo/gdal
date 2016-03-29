@@ -310,6 +310,8 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     int                 nBCPCount;
     BCPData             **papstBindBuffer;
 
+    int                 bIdentityInsert;
+
     void		ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
 
