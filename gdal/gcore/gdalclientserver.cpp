@@ -5120,7 +5120,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nXOff == 0 && nXSize == nRasterXSize && nYSize == 1 &&
             nBufXSize == nXSize && nBufYSize == nYSize )
         {
-            const int nBufTypeSize = GDALGetDataTypeSize(eBufType);
+            const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
 
             /* Is the current line already cached ? */
             if( nCachedYStart >= 0 &&
