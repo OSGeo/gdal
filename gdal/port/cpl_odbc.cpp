@@ -296,12 +296,11 @@ int CPLODBCSession::RollbackTransaction()
 
     if (m_bInTransaction)
     {
+        /* Rollback should not hide the previous error so Failed() is not called. */
+        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
         m_bInTransaction = FALSE;
 
-        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
-        {
-            return FALSE;
-        }
+        return (nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO );
     }
 
 #endif
