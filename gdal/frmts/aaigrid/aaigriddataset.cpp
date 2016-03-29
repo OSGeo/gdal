@@ -321,12 +321,11 @@ AAIGDataset::AAIGDataset() :
     papszPrj(NULL),
     pszProjection(CPLStrdup("")),
     nBufferOffset(0),
-    nOffsetInBuffer(256)
+    nOffsetInBuffer(256),
+    eDataType(GDT_Int32),
+    bNoDataSet(FALSE),
+    dfNoDataValue(-9999.0)
 {
-    eDataType = GDT_Int32;
-    bNoDataSet = FALSE;
-    dfNoDataValue = -9999.0;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -391,7 +390,7 @@ char AAIGDataset::Getc()
         return achReadBuf[nOffsetInBuffer++];
 
     nBufferOffset = VSIFTellL( fp );
-    int nRead =
+    const int nRead =
         static_cast<int>(VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp ));
     for( unsigned int i=nRead; i < sizeof(achReadBuf); i++ )
         achReadBuf[i] = '\0';
@@ -695,6 +694,7 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
         }
         if( eDataType == GDT_Float32 )
         {
+            // TODO(schwehr): Is this really what we want?
             dfNoDataValue =
                 static_cast<double>( static_cast<float>( dfNoDataValue ) );
         }
@@ -817,7 +817,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Recognize the type of data.										*/
+/*      Recognize the type of data.                                     */
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
@@ -876,16 +876,21 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
 /*      Try to read projection file.                                    */
 /* -------------------------------------------------------------------- */
 
-    char *pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+    char * const pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char * const pszBasename =
+        CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
     poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-    VSIStatBufL   sStatBuf;
-    int nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
-
+    int nRet = 0;
+    {
+        VSIStatBufL sStatBuf;
+        nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
+    }
     if( nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename) )
     {
         poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
+
+        VSIStatBufL sStatBuf;
         nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
     }
 
