@@ -170,9 +170,9 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     GDALDataType eGreenType = green->GetRasterDataType();
     GDALDataType eBlueType = blue->GetRasterDataType();
 
-    int dataRedSize = GDALGetDataTypeSize(eRedType) / 8;
-    int dataGreenSize = GDALGetDataTypeSize(eGreenType) / 8;
-    int dataBlueSize = GDALGetDataTypeSize(eBlueType) / 8;
+    const int dataRedSize = GDALGetDataTypeSizeBytes(eRedType);
+    const int dataGreenSize = GDALGetDataTypeSizeBytes(eGreenType);
+    const int dataBlueSize = GDALGetDataTypeSizeBytes(eBlueType);
 
     void *paRedLayer = CPLMalloc(dataRedSize * nWidth * nHeight);
     void *paGreenLayer = CPLMalloc(dataGreenSize * nWidth * nHeight);

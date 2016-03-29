@@ -930,7 +930,8 @@ static void ClampValues(T* panBuffer, int nValues, T nMaxVal)
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
  * @param pDataBuf output buffer. Must be nXSize * nYSize *
- *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
+ *                 GDALGetDataTypeSizeBytes(eBufDataType) *
+ *                 psOptions->nOutPansharpenedBands large.
  *                 It begins with all values of the first output band, followed
  *                 by values of the second output band, etc...
  * @param eBufDataType data type of the output buffer
@@ -954,7 +955,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     if( eWorkDataType != GDT_Byte && eWorkDataType != GDT_UInt16 )
         eWorkDataType = GDT_Float64;
 #endif
-    const int nDataTypeSize = GDALGetDataTypeSize(eWorkDataType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eWorkDataType);
     GByte* pUpsampledSpectralBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize,
         psOptions->nInputSpectralBands * nDataTypeSize);
     GByte* pPanBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize, nDataTypeSize);
@@ -1313,7 +1314,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                 pasJobs[i].eBufDataType = eBufDataType;
                 pasJobs[i].pPanBuffer = pPanBuffer + iStartLine *  nXSize * nDataTypeSize;
                 pasJobs[i].pUpsampledSpectralBuffer = pUpsampledSpectralBuffer + iStartLine * nXSize * nDataTypeSize;
-                pasJobs[i].pDataBuf = (GByte*)pDataBuf + iStartLine * nXSize * (GDALGetDataTypeSize(eBufDataType) / 8);
+                pasJobs[i].pDataBuf =
+                    static_cast<GByte*>(pDataBuf) +
+                    iStartLine * nXSize *
+                    GDALGetDataTypeSizeBytes(eBufDataType);
                 pasJobs[i].nValues = (int)(iNextStartLine - iStartLine) * nXSize;
                 pasJobs[i].nBandValues = nXSize * nYSize;
                 pasJobs[i].nMaxValue = nMaxValue;
@@ -1351,7 +1355,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     {
         GDALCopyWords(padfTempBuffer, GDT_Float64, sizeof(double),
                       pDataBufOri, eBufDataTypeOri,
-                      GDALGetDataTypeSize(eBufDataTypeOri)/8,
+                      GDALGetDataTypeSizeBytes(eBufDataTypeOri),
                       nXSize*nYSize*psOptions->nOutPansharpenedBands);
         VSIFree(padfTempBuffer);
     }
@@ -1604,7 +1608,8 @@ void GDALDestroyPansharpenOperation( GDALPansharpenOperationH hOperation )
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
  * @param pDataBuf output buffer. Must be nXSize * nYSize *
- *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
+ *                 GDALGetDataTypeSizeBytes(eBufDataType) *
+ *                 psOptions->nOutPansharpenedBands large.
  *                 It begins with all values of the first output band, followed
  *                 by values of the second output band, etc...
  * @param eBufDataType data type of the output buffer

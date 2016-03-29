@@ -907,7 +907,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
     if( pszSubClass != NULL && EQUAL(pszSubClass,"VRTRawRasterBand") )
     {
-        const int nWordDataSize = GDALGetDataTypeSize( eType ) / 8;
+        const int nWordDataSize = GDALGetDataTypeSizeBytes( eType );
 
 /* -------------------------------------------------------------------- */
 /*      Collect required information.                                   */

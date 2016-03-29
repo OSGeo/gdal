@@ -1271,7 +1271,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
     void *pDstBuffer;
-    int  nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
     int  nBandSize = nWordSize * nDstXSize * nDstYSize;
 
     if (nDstXSize > INT_MAX / nDstYSize ||
@@ -1505,7 +1505,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 {
     CPLErr eErr = CE_None;
     int    i;
-    int    nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
 
     (void) eBufDataType;
     CPLAssert( eBufDataType == psOptions->eWorkingDataType );

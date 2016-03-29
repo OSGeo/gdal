@@ -1645,7 +1645,7 @@ static void GDALGridJobProcess(void* user_data)
     GDALDataType eType = psJob->eType;
     int (*pfnProgress)(GDALGridJob* psJob) = psJob->pfnProgress;
 
-    int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+    int         nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
     int         nLineSpace = nXSize * nDataTypeSize;
 
     /* -------------------------------------------------------------------- */

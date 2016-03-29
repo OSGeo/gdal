@@ -4573,7 +4573,7 @@ NITFDataset::NITFCreateCopy(
             return NULL;
         }
 
-        void  *pData = VSIMalloc2(nXSize, (GDALGetDataTypeSize(eType) / 8));
+        void *pData = VSIMalloc2(nXSize, GDALGetDataTypeSizeBytes(eType));
         if (pData == NULL)
         {
             delete poDstDS;

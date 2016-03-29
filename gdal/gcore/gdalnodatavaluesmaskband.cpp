@@ -124,11 +124,12 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
-    GByte *pabySrc;
     CPLErr eErr;
 
     int nBands = poDS->GetRasterCount();
-    pabySrc = (GByte *) VSI_MALLOC3_VERBOSE( nBands * GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
+    GByte *pabySrc = static_cast<GByte *>(
+        VSI_MALLOC3_VERBOSE( nBands * GDALGetDataTypeSizeBytes(eWrkDT),
+                             nBlockXSize, nBlockYSize ) );
     if (pabySrc == NULL)
     {
         return CE_Failure;
@@ -145,20 +146,28 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     {
         /* memset the whole buffer to avoid Valgrind warnings in case we can't */
         /* fetch a full block */
-        memset(pabySrc, 0, nBands * GDALGetDataTypeSize(eWrkDT)/8 * nBlockXSize * nBlockYSize );
+        memset( pabySrc, 0,
+                nBands * GDALGetDataTypeSizeBytes(eWrkDT) *
+                nBlockXSize * nBlockYSize );
     }
 
     int nBlockOffsetPixels = nBlockXSize * nBlockYSize;
-    int nBandOffsetByte = (GDALGetDataTypeSize(eWrkDT)/8) * nBlockXSize * nBlockYSize;
+    const int nBandOffsetByte =
+        GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize;
     for(iBand=0;iBand<nBands;iBand++)
     {
         eErr = poDS->GetRasterBand(iBand + 1)->RasterIO(
-                                   GF_Read,
-                                   nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
-                                   nXSizeRequest, nYSizeRequest,
-                                   pabySrc + iBand * nBandOffsetByte, nXSizeRequest, nYSizeRequest,
-                                   eWrkDT, 0, nBlockXSize * (GDALGetDataTypeSize(eWrkDT)/8),
-                                   NULL);
+            GF_Read,
+            nXBlockOff * nBlockXSize,
+            nYBlockOff * nBlockYSize,
+            nXSizeRequest,
+            nYSizeRequest,
+            pabySrc + iBand * nBandOffsetByte,
+            nXSizeRequest,
+            nYSizeRequest,
+            eWrkDT, 0,
+            nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
+            NULL );
         if( eErr != CE_None )
             return eErr;
     }

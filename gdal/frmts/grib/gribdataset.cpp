@@ -107,7 +107,7 @@ private:
     CPLErr       LoadData();
 
     static void ReadGribData( DataSource &, sInt4, int, double**,
-                              grib_MetaData**);
+                              grib_MetaData** );
     sInt4 start;
     int subgNum;
     char *longFstLevel;
