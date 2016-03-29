@@ -2254,7 +2254,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int	nDataSize = GDALGetDataTypeSize(eType)/8;
+    const int nDataSize = GDALGetDataTypeSizeBytes(eType);
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
     CPLAssert(nDataSize != 0);

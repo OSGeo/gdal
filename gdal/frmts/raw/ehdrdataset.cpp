@@ -1359,7 +1359,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     int nPixelOffset;
     int nLineOffset;
     vsi_l_offset    nBandOffset;

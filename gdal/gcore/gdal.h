@@ -70,7 +70,9 @@ typedef enum {
     GDT_TypeCount = 12          /* maximum type # + 1 */
 } GDALDataType;
 
-int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits( GDALDataType eDataType );
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex( GDALDataType );
 const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
 GDALDataType CPL_DLL CPL_STDCALL GDALGetDataTypeByName( const char * );
@@ -449,7 +451,6 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 
 #define     GDAL_OF_RESERVED_1            0x300
 #define     GDAL_OF_BLOCK_ACCESS_MASK     0x300
-
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
                                              unsigned int nOpenFlags,

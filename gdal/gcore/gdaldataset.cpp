@@ -1939,7 +1939,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
-        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes( eBufType );
 
     if( nLineSpace == 0 )
     {

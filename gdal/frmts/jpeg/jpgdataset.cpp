@@ -423,6 +423,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
 /* -------------------------------------------------------------------- */
 /*      Search for APP1 chunk.                                          */
 /* -------------------------------------------------------------------- */
+    // TODO(schwehr): What are these constants?
     GByte abyChunkHeader[2+2+29] = { 0 };
     int nChunkLoc = 2;
     int bFoundXMP = FALSE;
@@ -2335,6 +2336,8 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
             return NULL;
         }
     }
+    else
+        fpImage = fpLin;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -2653,7 +2656,7 @@ void JPGDatasetCommon::CheckForMask()
     CPLDebug( "JPEG", "Got %d byte compressed bitmask.",
               nCMaskSize );
 
-    // TODO: Refactor to not use goto.
+    // TODO(schwehr): Refactor to not use goto.
 end:
     VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
 }
@@ -2764,8 +2767,9 @@ void JPGDatasetCommon::DecompressMask()
             bMaskLSBOrder = TRUE;
     }
     else
+    {
         bMaskLSBOrder = TRUE;
-
+    }
 }
 
 #endif // !defined(JPGDataset)
@@ -3341,7 +3345,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "JPEG driver ignores color table. "
                   "The source raster band will be considered as grey level.\n"
                   "Consider using color table expansion "
-                  "(-expand option in gdal_translate)\n" );
+                  "(-expand option in gdal_translate)" );
         if (bStrict)
             return NULL;
     }
@@ -3694,7 +3698,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         sArgs.bDoPAMInitialize = TRUE;
         sArgs.bUseInternalOverviews = TRUE;
 
-        // TODO: Dynamic cast?
+        // TODO(schwehr): Dynamic cast?
         JPGDataset *poDS = (JPGDataset*) Open( &sArgs );
         CPLPopErrorHandler();
         if( poDS )

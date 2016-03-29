@@ -112,10 +112,11 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
-    GByte *pabySrc;
     CPLErr eErr;
 
-    pabySrc = (GByte *) VSI_MALLOC3_VERBOSE( GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
+    GByte *pabySrc = static_cast<GByte *>(
+        VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDT),
+                             nBlockXSize, nBlockYSize ) );
     if (pabySrc == NULL)
     {
         return CE_Failure;
@@ -133,14 +134,17 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     {
         /* memset the whole buffer to avoid Valgrind warnings in case we can't */
         /* fetch a full block */
-        memset(pabySrc, 0, GDALGetDataTypeSize(eWrkDT)/8 * nBlockXSize * nBlockYSize );
+        memset( pabySrc, 0,
+                GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize );
     }
 
     eErr = poParent->RasterIO( GF_Read,
-                               nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
+                               nXBlockOff * nBlockXSize,
+                               nYBlockOff * nBlockYSize,
                                nXSizeRequest, nYSizeRequest,
                                pabySrc, nXSizeRequest, nYSizeRequest,
-                               eWrkDT, 0, nBlockXSize * (GDALGetDataTypeSize(eWrkDT)/8),
+                               eWrkDT, 0,
+                               nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
                                NULL );
     if( eErr != CE_None )
     {

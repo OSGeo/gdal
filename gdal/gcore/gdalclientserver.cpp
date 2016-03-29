@@ -2845,8 +2845,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                interleaved buffers are valid. Other combinations will lead
                to segfaults. */
             eBufType = (GDALDataType)nBufType;
-            int nSize = nBufXSize * nBufYSize * nBandCount *
-                (GDALGetDataTypeSize(eBufType) / 8);
+            const int nSize = nBufXSize * nBufYSize * nBandCount *
+                GDALGetDataTypeSizeBytes(eBufType);
             if( nSize > nBufferSize )
             {
                 nBufferSize = nSize;
@@ -2898,8 +2898,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                interleaved buffers are valid. Other combinations will lead
                to segfaults. */
             eBufType = (GDALDataType)nBufType;
-            int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
-                (GDALGetDataTypeSize(eBufType) / 8);
+            const int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
+                GDALGetDataTypeSizeBytes(eBufType);
             int nSize;
             if( !GDALPipeRead(p, &nSize) || nSize != nExpectedSize )
             {
@@ -3143,8 +3143,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            int nSize = nBlockXSize * nBlockYSize *
-                (GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8);
+            const int nSize = nBlockXSize * nBlockYSize *
+                GDALGetDataTypeSizeBytes(poBand->GetRasterDataType());
             if( nSize > nBufferSize )
             {
                 nBufferSize = nSize;
@@ -3164,8 +3164,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            int nExpectedSize = nBlockXSize * nBlockYSize *
-                (GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8);
+            const int nExpectedSize = nBlockXSize * nBlockYSize *
+                GDALGetDataTypeSizeBytes(poBand->GetRasterDataType());
             if( nExpectedSize != nSize )
                 break;
             if( nSize > nBufferSize )
@@ -3195,8 +3195,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 !GDALPipeRead(p, &nBufType) )
                 break;
             eBufType = (GDALDataType)nBufType;
-            int nSize = nBufXSize * nBufYSize *
-                (GDALGetDataTypeSize(eBufType) / 8);
+            const int nSize = nBufXSize * nBufYSize *
+                GDALGetDataTypeSizeBytes(eBufType);
             if( nSize > nBufferSize )
             {
                 nBufferSize = nSize;
@@ -3226,8 +3226,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 !GDALPipeRead(p, &nBufType) )
                 break;
             eBufType = (GDALDataType)nBufType;
-            int nExpectedSize = nBufXSize * nBufYSize *
-                (GDALGetDataTypeSize(eBufType) / 8);
+            const int nExpectedSize = nBufXSize * nBufYSize *
+                GDALGetDataTypeSizeBytes(eBufType);
             int nSize;
             if( !GDALPipeRead(p, &nSize) )
                 break;
@@ -3764,7 +3764,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     ProcessAsyncProgress();
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int bDirectCopy;
     if( nPixelSpace == nDataTypeSize &&
         nLineSpace == static_cast<GSpacing>(nBufXSize) * nDataTypeSize &&
@@ -4980,7 +4980,7 @@ CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pI
         return eRet;
     int nSize;
     if( !GDALPipeRead(p, &nSize) ||
-        nSize != nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) ||
+        nSize != nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) ||
         !GDALPipeRead_nolength(p, nSize, pImage) )
         return CE_Failure;
 
@@ -5000,7 +5000,8 @@ CPLErr GDALClientRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* p
     InvalidateCachedLines();
 
     CLIENT_ENTER();
-    int nSize = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
+    const int nSize =
+        nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType);
     if( !WriteInstr(INSTR_Band_IWriteBlock) ||
         !GDALPipeWrite(p, nBlockXOff) ||
         !GDALPipeWrite(p, nBlockYOff) ||
@@ -5039,7 +5040,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
     int nSize;
     if( !GDALPipeRead(p, &nSize) )
         return CE_Failure;
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     GIntBig nExpectedSize = (GIntBig)nBufXSize * nBufYSize * nDataTypeSize;
     if( nSize != nExpectedSize )
         return CE_Failure;
@@ -5119,7 +5120,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nXOff == 0 && nXSize == nRasterXSize && nYSize == 1 &&
             nBufXSize == nXSize && nBufYSize == nYSize )
         {
-            int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            const int nBufTypeSize = GDALGetDataTypeSize(eBufType);
 
             /* Is the current line already cached ? */
             if( nCachedYStart >= 0 &&
@@ -5128,7 +5129,8 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 nSuccessiveLinesRead ++;
 
-                int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
+                const int nCachedBufTypeSize =
+                    GDALGetDataTypeSizeBytes(eCachedBufType);
                 GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                               eCachedBufType, nCachedBufTypeSize,
                               pData, eBufType, static_cast<int>(nPixelSpace),
@@ -5166,7 +5168,8 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             eCachedBufType = eBufType;
                             nCachedYStart = nYOff;
 
-                            int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
+                            const int nCachedBufTypeSize =
+                                  GDALGetDataTypeSizeBytes(eCachedBufType);
                             GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                                         eCachedBufType, nCachedBufTypeSize,
                                         pData, eBufType, static_cast<int>(nPixelSpace),
@@ -5209,7 +5212,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             !GDALPipeWrite(p, eBufType) )
             return CE_Failure;
 
-        int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+        const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         GIntBig nSizeBig = (GIntBig)nBufXSize * nBufYSize * nDataTypeSize;
         int nSize = (int)nSizeBig;
         if( nSizeBig != nSize )

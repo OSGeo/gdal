@@ -182,7 +182,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    const int nWorkDTSize = GDALGetDataTypeSize(eWorkDT) / 8;
+    const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
 
     GByte *pabyScanline = reinterpret_cast<GByte *>(
         CPLMalloc( nBands * nBlockXSize * nWorkDTSize ) );
