@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrmssqlspatiallayer.cpp 33775 2016-03-23 20:25:05Z tamas $
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Definition of classes for OGR MSSQL Spatial driver.
@@ -29,7 +29,7 @@
 
 #include "ogr_mssqlspatial.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrmssqlspatiallayer.cpp 33775 2016-03-23 20:25:05Z tamas $");
 /************************************************************************/
 /*                        OGRMSSQLSpatialLayer()                        */
 /************************************************************************/
@@ -181,7 +181,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                         EQUAL(poStmtIn->GetColTypeName( iCol ), "bigint identity"))
                         bIsIdentityFid = TRUE;
 
-                    /* skip FID */
+                    nFIDColumnIndex = iCol;
                     continue;
                 }
             }

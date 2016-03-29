@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrmssqlspatialdatasource.cpp 33776 2016-03-23 20:52:00Z tamas $
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLSpatialDataSource class..
@@ -30,7 +30,7 @@
 
 #include "ogr_mssqlspatial.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrmssqlspatialdatasource.cpp 33776 2016-03-23 20:52:00Z tamas $");
 
 /************************************************************************/
 /*                          OGRMSSQLSpatialDataSource()                 */
@@ -430,7 +430,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Error creating layer: %s", GetSession()->GetLastError() );
+                    "Error creating layer: %s When using the overwrite option and the layer doesn't contain geometry column, you might require to use the MSSQLSPATIAL_LIST_ALL_TABLES config option to get the previous layer deleted before creating the new one.", GetSession()->GetLastError() );
 
         if (!bInTransaction)
             oSession.RollbackTransaction();
