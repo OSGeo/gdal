@@ -244,8 +244,12 @@ int GDALOverviewDataset::CloseDependentDatasets()
     {
         for(int i=0;i<nBands;i++)
         {
-            dynamic_cast<GDALOverviewBand*>(papoBands[i])->
-                poUnderlyingBand = NULL;
+            GDALOverviewBand* const band =
+                dynamic_cast<GDALOverviewBand*>(papoBands[i]);
+            if( band == NULL )
+                CPLError( CE_Fatal, CPLE_AppDefined,
+                         "OverviewBand cast fail." );
+            band->poUnderlyingBand = NULL;
         }
         GDALClose( poMainDS );
         poMainDS = NULL;
@@ -295,7 +299,6 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
         GDALOverviewBand *poBand =
             dynamic_cast<GDALOverviewBand *>(
                 GetRasterBand(panBandMap[iBandIndex]) );
-
         if (poBand == NULL)
         {
             eErr = CE_Failure;
@@ -568,6 +571,8 @@ int GDALOverviewBand::GetOverviewCount()
 {
     GDALOverviewDataset * const poOvrDS =
         dynamic_cast<GDALOverviewDataset *>(poDS);
+    if( poOvrDS == NULL )
+        CPLError( CE_Fatal, CPLE_AppDefined, "OverviewDataset cast fail." );
     if( poOvrDS->bThisLevelOnly )
         return 0;
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
@@ -585,6 +590,8 @@ GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
         return NULL;
     GDALOverviewDataset * const poOvrDS =
         dynamic_cast<GDALOverviewDataset *>(poDS);
+    if( poOvrDS == NULL )
+        CPLError( CE_Fatal, CPLE_AppDefined, "OverviewDataset cast fail." );
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
     return poMainDS->GetRasterBand(nBand)->
         GetOverview(iOvr + poOvrDS->nOvrLevel + 1);
