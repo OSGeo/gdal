@@ -266,13 +266,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    int typesize = GDALGetDataTypeSize(eBufType) / 8;
+    int typesize = GDALGetDataTypeSizeBytes(eBufType);
     if (GDALGetDataTypeSize(eBufType) % 8 > 0) typesize++;
     GDALDataType eSrcType = eSourceTransferType;
     if ((eSrcType == GDT_Unknown) || (eSrcType >= GDT_TypeCount)) {
 	eSrcType = eBufType;
     }
-    const int sourcesize = GDALGetDataTypeSize(eSrcType) / 8;
+    const int sourcesize = GDALGetDataTypeSizeBytes(eSrcType);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the buffer to some background value. Use the         */
@@ -370,8 +370,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
 	    nXOff, nYOff, nXSize, nYSize,
             pBuffers[iSource], nBufXSize, nBufYSize,
-            eSrcType, GDALGetDataTypeSize( eSrcType ) / 8,
-            (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize, &sExtraArg);
+            eSrcType, GDALGetDataTypeSizeBytes( eSrcType ),
+            GDALGetDataTypeSizeBytes( eSrcType ) * nBufXSize, &sExtraArg);
     }
 
     /* ---- Apply pixel function ---- */

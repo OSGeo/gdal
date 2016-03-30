@@ -59,8 +59,11 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
         nBCPSize = atoi(nBCPSizeParam);
     else
         nBCPSize = 1000;
-
-    bUseCopy = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "FALSE"));
+#ifdef MSSQL_BCP_SUPPORTED
+    bUseCopy = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "TRUE"));
+#else
+    bUseCopy = FALSE;
+#endif
 }
 
 /************************************************************************/

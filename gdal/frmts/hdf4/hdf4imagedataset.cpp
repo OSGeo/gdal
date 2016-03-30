@@ -284,7 +284,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
-                * GDALGetDataTypeSize(eDataType) / 8 );
+                * GDALGetDataTypeSizeBytes(eDataType) );
         return CE_None;
     }
 
@@ -386,7 +386,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       case HDF4_GR:
       {
           const int nDataTypeSize =
-              GDALGetDataTypeSize(poGDS->GetDataType(poGDS->iNumType)) / 8;
+              GDALGetDataTypeSizeBytes(poGDS->GetDataType(poGDS->iNumType));
           GByte *pbBuffer = reinterpret_cast<GByte *>(
               CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize) );
 

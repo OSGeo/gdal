@@ -143,7 +143,7 @@ GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDSIn,
         nBandCount = 1;
     }
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nPixelSpace == nDataTypeSize &&
         nLineSpace == (GIntBig)nBufXSize * nPixelSpace &&
         nBandSpace == nBufYSize * nLineSpace )
@@ -670,7 +670,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
     if( hDS != NULL && !GDALCheckBandParameters(hDS, nBandCount, panBandMap ) )
         return NULL;
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nPixelSpace == 0 )
         nPixelSpace = nDataTypeSize;
     if( nLineSpace == 0 )
@@ -802,13 +802,15 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * buffer size (nBufXSize x nBufYSize).
  *
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
- * writing from various organization of buffers. Arbitrary values for the spacing
- * parameters are not supported. Those values must be multiple of the size of the
- * buffer data type, and must be either band sequential organization (typically
- * nPixelSpace = GDALGetDataTypeSize(eBufType) / 8, nLineSpace = nPixelSpace * nBufXSize,
+ * writing from various organization of buffers. Arbitrary values for the
+ * spacing parameters are not supported. Those values must be multiple of the
+ * size of thebuffer data type, and must be either band sequential
+ * organization (typically nPixelSpace = GDALGetDataTypeSizeBytes(eBufType),
+ * nLineSpace = nPixelSpace * nBufXSize,
  * nBandSpace = nLineSpace * nBufYSize), or pixel-interleaved organization
- * (typically nPixelSpace = nBandSpace * nBandCount, nLineSpace = nPixelSpace * nBufXSize,
- * nBandSpace = GDALGetDataTypeSize(eBufType) / 8)
+ * (typically nPixelSpace = nBandSpace * nBandCount,
+ * nLineSpace = nPixelSpace * nBufXSize,
+ * nBandSpace = GDALGetDataTypeSizeBytes(eBufType))
  *
  * @param hDS Dataset object
  *
@@ -1116,7 +1118,7 @@ GDALTiledVirtualMem::~GDALTiledVirtualMem()
 void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
                                 void* pPage, size_t nBytes ) const
 {
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
     size_t nPageSize = nTileXSize * nTileYSize * nDataTypeSize;
@@ -1263,7 +1265,7 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
     if( hDS != NULL && !GDALCheckBandParameters(hDS, nBandCount, panBandMap ) )
         return NULL;
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
     GUIntBig nReqMem = (GUIntBig)nTilesPerRow * nTilesPerCol *

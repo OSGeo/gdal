@@ -401,7 +401,8 @@ int main( int argc, char ** argv )
 /*      Allocate one big buffer for the whole imagery area to           */
 /*      transfer.                                                       */
 /* -------------------------------------------------------------------- */
-    int nBytesPerPixel = nBandCount * (GDALGetDataTypeSize(eOutputType) / 8);
+    const int nBytesPerPixel =
+        nBandCount * GDALGetDataTypeSizeBytes(eOutputType);
     void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel );
 
     if( pImage == NULL )

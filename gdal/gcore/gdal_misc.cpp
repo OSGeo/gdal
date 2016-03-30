@@ -188,13 +188,81 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 
 /************************************************************************/
+/*                        GDALGetDataTypeSizeBytes()                    */
+/************************************************************************/
+
+/**
+ * \brief Get data type size in <b>bytes</b>.
+ *
+ * Returns the size of a GDT_* type in bytes.  In contrast,
+ * GDALGetDataTypeBits() returns the size in <b>bits</b>.
+ *
+ * @param eDataType type, such as GDT_Byte.
+ * @return the number of bytes or zero if it is not recognised.
+ */
+
+int CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType eDataType )
+
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return 1;
+
+      case GDT_UInt16:
+      case GDT_Int16:
+        return 2;
+
+      case GDT_UInt32:
+      case GDT_Int32:
+      case GDT_Float32:
+      case GDT_CInt16:
+        return 4;
+
+      case GDT_Float64:
+      case GDT_CInt32:
+      case GDT_CFloat32:
+        return 8;
+
+      case GDT_CFloat64:
+        return 16;
+
+      default:
+        return 0;
+    }
+}
+
+/************************************************************************/
+/*                        GDALGetDataTypeSizeBits()                     */
+/************************************************************************/
+
+/**
+ * \brief Get data type size in <b>bits</b>.
+ *
+ * Returns the size of a GDT_* type in bits, <b>not bytes</b>!  Use
+ * GDALGetDataTypeSizeBytes() for bytes.
+ *
+ * @param eDataType type, such as GDT_Byte.
+ * @return the number of bits or zero if it is not recognised.
+ */
+
+int CPL_STDCALL GDALGetDataTypeSizeBits( GDALDataType eDataType )
+
+{
+    return GDALGetDataTypeSizeBytes( eDataType ) * 8;
+}
+
+/************************************************************************/
 /*                        GDALGetDataTypeSize()                         */
 /************************************************************************/
 
 /**
- * \brief Get data type size in bits.
+ * \brief Get data type size in bits.  <b>Deprecated</b>.
  *
  * Returns the size of a GDT_* type in bits, <b>not bytes</b>!
+ *
+ * Use GDALGetDataTypeSizeBytes() for bytes.
+ * Use GDALGetDataTypeSizeBits() for bits.
  *
  * @param eDataType type, such as GDT_Byte.
  * @return the number of bits or zero if it is not recognised.
@@ -203,32 +271,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 int CPL_STDCALL GDALGetDataTypeSize( GDALDataType eDataType )
 
 {
-    switch( eDataType )
-    {
-      case GDT_Byte:
-        return 8;
-
-      case GDT_UInt16:
-      case GDT_Int16:
-        return 16;
-
-      case GDT_UInt32:
-      case GDT_Int32:
-      case GDT_Float32:
-      case GDT_CInt16:
-        return 32;
-
-      case GDT_Float64:
-      case GDT_CInt32:
-      case GDT_CFloat32:
-        return 64;
-
-      case GDT_CFloat64:
-        return 128;
-
-      default:
-        return 0;
-    }
+    return GDALGetDataTypeSizeBytes( eDataType ) * 8;
 }
 
 /************************************************************************/

@@ -522,7 +522,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
       {
           double  *padfWrk;
           int     iLine, iPixel;
-          int     nWordSize = GDALGetDataTypeSize(eType)/8;
+          const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
           int bIsNoDataRealNan = CPLIsNan(padfNoData[0]);
           int bIsNoDataImagNan = CPLIsNan(padfNoData[1]);

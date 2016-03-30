@@ -493,8 +493,9 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( EQUAL(psImage->szIC,"C3") || EQUAL(psImage->szIC,"M3") )
     {
         CPLErr eErr = poGDS->ReadJPEGBlock( nBlockXOff, nBlockYOff );
-        int nBlockBandSize = psImage->nBlockWidth*psImage->nBlockHeight*
-                             (GDALGetDataTypeSize(eDataType)/8);
+        const int nBlockBandSize =
+            psImage->nBlockWidth * psImage->nBlockHeight *
+            GDALGetDataTypeSizeBytes(eDataType);
 
         if( eErr != CE_None )
             return eErr;

@@ -631,7 +631,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         eType = GDT_Float64;
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
-        * (GDALGetDataTypeSize(eType)/8);
+        * GDALGetDataTypeSizeBytes(eType);
 
     const char  *pszYChunkSize = CSLFetchNameValue(papszOptions, "CHUNKYSIZE");
     if( pszYChunkSize == NULL || ((nYChunkSize = atoi(pszYChunkSize))) == 0)
@@ -832,7 +832,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         eType = GDT_Float64;
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
-        * (GDALGetDataTypeSize(eType)/8);
+        * GDALGetDataTypeSizeBytes(eType);
 
     if ( pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0 )
         ;
@@ -1170,8 +1170,10 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace != 0 )
-        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
-    if( nPixelSpace != GDALGetDataTypeSize( eBufType ) / 8 )
+    {
+        nPixelSpace = GDALGetDataTypeSizeBytes( eBufType );
+    }
+    if( nPixelSpace != GDALGetDataTypeSizeBytes( eBufType ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                 "GDALRasterizeLayersBuf(): unsupported value of nPixelSpace" );
@@ -1179,7 +1181,9 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     }
 
     if( nLineSpace == 0 )
+    {
         nLineSpace = nPixelSpace * nBufXSize;
+    }
     if( nLineSpace != nPixelSpace * nBufXSize )
     {
         CPLError( CE_Failure, CPLE_NotSupported,

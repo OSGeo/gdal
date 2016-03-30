@@ -57,8 +57,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   GDALRasterIOExtraArg* psExtraArg )
 
 {
-    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    const int nBandDataSize = GDALGetDataTypeSizeBytes( eDataType );
+    const int nBufDataSize = GDALGetDataTypeSizeBytes( eBufType );
     GByte       *pabySrcBlock = NULL;
     GDALRasterBlock *poBlock = NULL;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
@@ -916,8 +916,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
         void * pChunk =
-            VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eWrkDataType)/8),
-                        nFullResXSizeQueried, nFullResYSizeQueried );
+            VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDataType),
+                                 nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
         GDALRasterBand* poMaskBand = NULL;
@@ -1325,8 +1325,9 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
         void * pChunk =
-            VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eWrkDataType)/8) * nBandCount,
-                        nFullResXSizeQueried, nFullResYSizeQueried );
+            VSI_MALLOC3_VERBOSE(
+                GDALGetDataTypeSizeBytes(eWrkDataType) * nBandCount,
+                nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
         GDALRasterBand* poMaskBand = NULL;
@@ -1501,8 +1502,10 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 else
 #endif
                 {
-                    size_t nChunkBandOffset = (size_t)nChunkXSizeQueried *
-                            nChunkYSizeQueried * (GDALGetDataTypeSize(eWrkDataType)/8);
+                    size_t nChunkBandOffset =
+                        static_cast<size_t>(nChunkXSizeQueried) *
+                        nChunkYSizeQueried *
+                        GDALGetDataTypeSizeBytes(eWrkDataType);
                     for(int i=0; i<nBandCount && !bSkipResample && eErr == CE_None; i++ )
                     {
                         eErr = pfnResampleFunc( dfXRatioDstToSrc,
@@ -2247,9 +2250,9 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nS
 
 {
     // On platforms where alignment matters, be careful
-    const int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
+    const int nSrcDataTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-    int nDstDataTypeSize = GDALGetDataTypeSize(eDstType) / 8;
+    const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstType);
     if( !(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
         ( (((GPtrDiff_t)pSrcData) % nSrcDataTypeSize) != 0 ||
           (((GPtrDiff_t)pDstData) % nDstDataTypeSize) != 0 ||
@@ -2982,7 +2985,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      request.  This is the most general implementation.              */
 /* ==================================================================== */
 
-    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    const int nBandDataSize = GDALGetDataTypeSizeBytes( eDataType );
 
     papabySrcBlock = (GByte **) CPLCalloc(sizeof(GByte*),nBandCount);
     papoBlocks = (GDALRasterBlock **) CPLCalloc(sizeof(void*),nBandCount);
@@ -3175,7 +3178,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nMaxBlockXSize = MAX(nBlockXSize, nSrcBlockXSize);
     int nMaxBlockYSize = MAX(nBlockYSize, nSrcBlockYSize);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
     if( bInterleave)
         nPixelSize *= nBandCount;
 
@@ -3477,7 +3480,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                                     bDstIsCompressed, bInterleave,
                                     &nSwathCols, &nSwathLines);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
     if( bInterleave)
         nPixelSize *= nBandCount;
 
@@ -3729,7 +3732,7 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
                                     bDstIsCompressed, FALSE,
                                     &nSwathCols, &nSwathLines);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    const int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
 
     void *pSwathBuf = VSI_MALLOC3_VERBOSE(nSwathCols, nSwathLines, nPixelSize );
     if( pSwathBuf == NULL )

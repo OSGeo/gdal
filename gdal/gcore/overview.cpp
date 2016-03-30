@@ -60,7 +60,9 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    T* pDstScanline = (T *) VSI_MALLOC_VERBOSE(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    T* pDstScanline = static_cast<T *>(
+        VSI_MALLOC_VERBOSE(
+            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
     int* panSrcXOff = (int*)VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOff == NULL )
@@ -255,7 +257,9 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    T *pDstScanline = (T *) VSI_MALLOC_VERBOSE(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    T *pDstScanline = static_cast<T *>(
+        VSI_MALLOC_VERBOSE(
+            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
     int* panSrcXOffShifted = (int*)VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOffShifted == NULL )
@@ -2430,7 +2434,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     GByte *pabyChunkNodataMask = NULL;
     void *pChunk =
-        VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eType)/8), nMaxChunkYSizeQueried, nWidth );
+        VSI_MALLOC3_VERBOSE(
+            GDALGetDataTypeSizeBytes(eType), nMaxChunkYSizeQueried, nWidth );
     if (bUseNoDataMask)
     {
         pabyChunkNodataMask =
@@ -2845,7 +2850,10 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         GByte* pabyChunkNoDataMask = NULL;
         for(int iBand=0;iBand<nBands;iBand++)
         {
-            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(nFullResXChunkQueried, nFullResYChunkQueried, GDALGetDataTypeSize(eWrkDataType) / 8);
+            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(
+                nFullResXChunkQueried,
+                nFullResYChunkQueried,
+                GDALGetDataTypeSizeBytes(eWrkDataType) );
             if( papaChunk[iBand] == NULL )
             {
                 while ( --iBand >= 0)
