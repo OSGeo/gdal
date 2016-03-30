@@ -2482,3 +2482,26 @@ CPLLockHolder::~CPLLockHolder()
     }
 #endif /* ndef MUTEX_NONE */
 }
+
+/************************************************************************/
+/*                       CPLGetCurrentProcessID()                       */
+/************************************************************************/
+
+#ifdef CPL_MULTIPROC_WIN32
+
+int CPLGetCurrentProcessID()
+{
+    return GetCurrentProcessId();
+}
+
+#else
+
+#include <sys/types.h>
+#include <unistd.h>
+
+int CPLGetCurrentProcessID()
+{
+    return getpid();
+}
+
+#endif
