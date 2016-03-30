@@ -2304,7 +2304,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
         {
             // bind UTF8 as unicode parameter
             wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
-            int nLen = wcslen(buffer) + 1;
+            size_t nLen = wcslen(buffer) + 1;
             if (nLen > 4000)
             {
                 /* need to handle nvarchar(max) */
