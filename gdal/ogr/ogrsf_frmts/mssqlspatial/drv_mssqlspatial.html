@@ -127,7 +127,9 @@ Options</a> which help control the behavior of this driver.</p>
     Client 11.0. To specify a BCP supported driver in the connection string, use the
     driver parameter, like DRIVER={SQL Server Native Client 11.0}. If GDAL is
     compiled against SQL Server Native Client 10.0 or 11.0 the driver is selected
-    automatically not requiring to specify that in the connection string.</li>
+    automatically not requiring to specify that in the connection string. If GDAL is 
+    compiled against SQL Server Native Client 10.0 or 11.0 the default setting of 
+    this parameter is TRUE, otherwise the parameter is ignored by the driver.</li>
 <li><b>MSSQLSPATIAL_BCP_SIZE</b>: (From GDAL 2.1.0) Specifies the bulk insert batch size. The larger value makes the insert faster, but consumes more memory. Default = 1000.</li>
 <li><b>MSSQLSPATIAL_OGR_FID</b>: Override FID column name. Default = ogr_fid.</li>
 <li><b>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS</b>: Use/create geometry_columns metadata table in the database. Default = "YES".</li>
