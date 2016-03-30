@@ -1,6 +1,38 @@
 #include "gdal_map_algebra.h"
 
 int main() {
+
+    // test hash of a hash
+    gma_hash<gma_hash<gma_int> > *I;
+
+    I = new gma_hash<gma_hash<gma_int> >;
+
+    gma_hash<gma_int> *J;
+
+    J = new gma_hash<gma_int>;
+    J->put(5, new gma_int(1));
+    J->put(6, new gma_int(1));
+
+    I->put(6, J);
+
+    int n = I->size();
+    int *keys = I->keys_sorted(n);
+    for (int i = 0; i < n; i++) {
+        printf("%i =>\n", keys[i]);
+
+        J = I->get(keys[i]);
+        int n_j = J->size();
+        int *keys_j = J->keys_sorted(n_j);
+        for (int j = 0; j < n_j; j++) {
+            printf("    %i\n", keys_j[j]);
+        }
+        CPLFree(keys_j);
+    }
+    CPLFree(keys);
+    delete I;
+
+    return 0;
+
     GDALAllRegister();
     srand(time(NULL));
     GDALDriver *d = GetGDALDriverManager()->GetDriverByName("MEM");

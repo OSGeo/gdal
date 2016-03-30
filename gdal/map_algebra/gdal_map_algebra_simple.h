@@ -1,99 +1,90 @@
-typedef int (*gma_simple_callback)(void*, int, int);
+template<typename datatype>
+int gma_print(gma_block *block) {
+}
 
-#define gma_typecast(type, var) ((type*)(var))
-
-// can use templates if use streams
-#define gma_print(type) int gma_print_##type(void* block, int w, int h) { \
-        for (int y = 0; y < h; y++) {                                   \
-            for (int x = 0; x < w; x++) {                               \
-                printf("%02i ", gma_typecast(type, block)[x+y*w]);      \
+#define _gma_print(datatype, format)                                    \
+    template<>                                                          \
+    int gma_print<datatype>(gma_block *block) {                         \
+        gma_cell_index i;                                               \
+        for (i.y = 0; i.y < block->h; i.y++) {                          \
+            for (i.x = 0; i.x < block->w; i.x++) {                      \
+                printf(format" ", gma_block_cell(datatype, block, i));  \
             }                                                           \
             printf("\n");                                               \
         }                                                               \
         return 1;                                                       \
     }
 
-gma_print(int16_t)
-gma_print(int32_t)
+_gma_print(uint8_t, "%03i")
+_gma_print(uint16_t, "%04i")
+_gma_print(int16_t, "%04i")
+_gma_print(uint32_t, "%04i")
+_gma_print(int32_t, "%04i")
+_gma_print(float, "%04.1f")
+_gma_print(double, "%04.2f")
 
-int gma_print_double(void* block, int w, int h) {
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            printf("%04.1f ", gma_typecast(double, block)[x+y*w]);
-        }
-        printf("\n");
-    }
-    return 1;
-}
-
-template<typename data_t>
-int gma_rand(void* block, int w, int h) {
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            gma_typecast(data_t, block)[x+y*w] = rand() % 20;
+template<typename datatype>
+int gma_rand(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = rand() % 20;
         }
     }
     return 2;
 }
 
-template<typename data_t>
-void gma_proc_simple(GDALRasterBand *b, gma_simple_callback cb) {
-    int w_band = b->GetXSize(), h_band = b->GetYSize();
-    int w_block, h_block;
-    b->GetBlockSize(&w_block, &h_block);
-    int w_blocks = (w_band + w_block - 1) / w_block;
-    int h_blocks = (h_band + h_block - 1) / h_block;
-    for (int y_block = 0; y_block < h_blocks; y_block++) {
-        for (int x_block = 0; x_block < w_blocks; x_block++) {
-            int w, h;
-            if( (x_block+1) * w_block > w_band )
-                w = w_band - x_block * w_block;
-            else
-                w = w_block;
-            if( (y_block+1) * h_block > h_band )
-                h = h_band - y_block * h_block;
-            else
-                h = h_block;
-            data_t block[w_block*h_block];
-            CPLErr e = b->ReadBlock(x_block, y_block, block);
-            int ret = cb(block, w, h);
-            switch (ret) {
-            case 0: return;
-            case 1: break;
-            case 2: {
-                e = b->WriteBlock(x_block, y_block, block);
+template<typename datatype>
+void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
+    if (GDALDataTypeTraits<datatype>::datatype != b->GetRasterDataType()) {
+        fprintf(stderr, "band and mapper are incompatible.");
+        return;
+    }
+    gma_band band = gma_band_initialize(b);
+    gma_block_index i;
+    for (i.y = 0; i.y < band.h_blocks; i.y++) {
+        for (i.x = 0; i.x < band.w_blocks; i.x++) {
+            gma_band_add_to_cache(&band, i);
+            gma_block *block = gma_band_get_block(band, i);
+            int ret;
+            switch (method) {
+            case gma_method_print:
+                ret = gma_print<datatype>(block);
+                break;
+            case gma_method_rand:
+                ret = gma_rand<datatype>(block);
+                break;
             }
-            }
+            if (ret == 2)
+                CPLErr e = gma_band_write_block(band, block);
         }
     }
 }
 
 void gma_simple(GDALRasterBand *b, gma_method_t method) {
-    switch (method) {
-    case gma_method_rand: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Int32:
-            gma_proc_simple<int32_t>(b, gma_rand<int32_t>);
-            break;
-        case GDT_Float64:
-            gma_proc_simple<double>(b, gma_rand<double>);
-            break;
-        }
+    switch (b->GetRasterDataType()) {
+    case GDT_Byte:
+        gma_proc_simple<uint8_t>(b, method);
         break;
-    }
-    case gma_method_print: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Int16:
-            gma_proc_simple<int16_t>(b, gma_print_int16_t);
-            break;
-        case GDT_Int32:
-            gma_proc_simple<int32_t>(b, gma_print_int32_t);
-            break;
-        case GDT_Float64:
-            gma_proc_simple<double>(b, gma_print_double);
-            break;
-        }
+    case GDT_UInt16:
+        gma_proc_simple<uint16_t>(b, method);
         break;
-    }
+    case GDT_Int16:
+        gma_proc_simple<int16_t>(b, method);
+        break;
+    case GDT_UInt32:
+        gma_proc_simple<uint32_t>(b, method);
+        break;
+    case GDT_Int32:
+        gma_proc_simple<int32_t>(b, method);
+        break;
+    case GDT_Float32:
+        gma_proc_simple<float>(b, method);
+        break;
+    case GDT_Float64:
+        gma_proc_simple<double>(b, method);
+        break;
+    default:
+        fprintf(stderr, "datatype not supported");
     }
 }
