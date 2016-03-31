@@ -419,7 +419,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_papoLayers(NULL),
     m_nLayers(0),
     m_bUtf8(false),
-    m_bNew(false),
     m_bIdentifierAsCO(false),
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
@@ -431,24 +430,10 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_nSRID(-1),  // Unknown cartesian.
     m_dfTMSMinX(0.0),
     m_dfTMSMaxY(0.0),
-    m_nZoomLevel(-1),
-    m_pabyCachedTiles(NULL),
-    m_nShiftXTiles(0),
-    m_nShiftXPixelsMod(0),
-    m_nShiftYTiles(0),
-    m_nShiftYPixelsMod(0),
-    m_nTileMatrixWidth(0),
-    m_nTileMatrixHeight(0),
-    m_eTF(GPKG_TF_PNG_JPEG),
-    m_bPNGSupports2Bands(true),
-    m_bPNGSupportsCT(true),
-    m_nZLevel(6),
-    m_nQuality(75),
-    m_bDither(false),
-    m_poParentDS(NULL),
     m_nOverviewCount(0),
     m_papoOverviewDS(NULL),
-    m_bZoomOther(false)
+    m_bZoomOther(false),
+    m_bInFlushCache(false)
 {
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -456,23 +441,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
-    for(int i=0;i<4;i++)
-    {
-        m_asCachedTilesDesc[i].nRow = -1;
-        m_asCachedTilesDesc[i].nCol = -1;
-        m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
-        m_asCachedTilesDesc[i].abBandDirty[0] = FALSE;
-        m_asCachedTilesDesc[i].abBandDirty[1] = FALSE;
-        m_asCachedTilesDesc[i].abBandDirty[2] = FALSE;
-        m_asCachedTilesDesc[i].abBandDirty[3] = FALSE;
-    }
-    m_bTriedEstablishingCT = false;
-    m_pabyHugeColorArray = NULL;
-    m_poCT = NULL;
-    m_bInWriteTile = false;
-    m_hTempDB = NULL;
-    m_bInFlushCache = false;
-    m_nTileInsertionCount = 0;
     m_osTilingScheme = "CUSTOM";
 }
 
@@ -505,12 +473,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     {
         hDB = NULL;
     }
-    else if( m_hTempDB != NULL )
-    {
-        sqlite3_close(m_hTempDB);
-        m_hTempDB = NULL;
-        VSIUnlink(m_osTempDBFilename);
-    }
 
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
@@ -519,9 +481,28 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     CPLFree( m_papoOverviewDS );
     CSLDestroy( m_papszSubDatasets );
     CPLFree(m_pszProjection);
-    CPLFree(m_pabyCachedTiles);
-    delete m_poCT;
-    CPLFree(m_pabyHugeColorArray);
+}
+
+/************************************************************************/
+/*                         ICanIWriteBlock()                            */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::ICanIWriteBlock()
+{
+    if( !bUpdate )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "IWriteBlock() not supported on dataset opened in read-only mode");
+        return false;
+    }
+
+    if( !m_bGeoTransformValid || m_nSRID == UNKNOWN_SRID )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "IWriteBlock() not supported if georeferencing not set");
+        return false;
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -910,7 +891,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     }
 
     for(int i = 1; i <= nBandCount; i ++)
-        SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
+        SetBand( i, new GDALGeoPackageRasterBand(this, nTileWidth, nTileHeight) );
 
     ComputeTileAndPixelShifts();
 
@@ -937,10 +918,10 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
 }
 
 /************************************************************************/
-/*                         GetTileFormat()                              */
+/*                 GDALGPKGMBTilesGetTileFormat()                       */
 /************************************************************************/
 
-static GPKGTileFormat GetTileFormat(const char* pszTF )
+GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char* pszTF )
 {
     GPKGTileFormat eTF = GPKG_TF_PNG_JPEG;
     if( pszTF )
@@ -1105,7 +1086,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
         else
         {
-            GPKGTileFormat eTF = GetTileFormat(pszTF);
+            GPKGTileFormat eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
             if( eTF == GPKG_TF_WEBP && m_eTF != eTF )
             {
                 if( !RegisterWebPExtension() )
@@ -1458,10 +1439,10 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
 void GDALGeoPackageDataset::FlushCache()
 {
-    FlushCacheWithErrCode();
+    IFlushCacheWithErrCode();
 }
 
-CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
+CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
 
 {
     if( m_bInFlushCache )
@@ -1476,25 +1457,7 @@ CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
         m_papoLayers[i]->CreateSpatialIndexIfNecessary();
     }
 
-    CPLErr eErr = CE_None;
-    if( bUpdate )
-    {
-        if( m_nShiftXPixelsMod || m_nShiftYPixelsMod )
-        {
-            eErr = FlushRemainingShiftedTiles();
-        }
-        else
-        {
-            eErr = WriteTile();
-        }
-    }
-
-    GDALGeoPackageDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
-    if( poMainDS->m_nTileInsertionCount )
-    {
-        poMainDS->SoftCommitTransaction();
-        poMainDS->m_nTileInsertionCount = 0;
-    }
+    CPLErr eErr = FlushTiles();
 
     m_bInFlushCache = false;
     return eErr;
@@ -2866,7 +2829,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         }
 
         for(int i = 1; i <= nBandsIn; i ++)
-            SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
+            SetBand( i, new GDALGeoPackageRasterBand(this, nTileWidth, nTileHeight) );
 
         GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
@@ -2875,7 +2838,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
         if( pszTF )
-            m_eTF = GetTileFormat(pszTF);
+            m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
 
         ParseCompressionOptions(papszOptions);
 
@@ -2955,6 +2918,7 @@ typedef struct
 
 static const WarpResamplingAlg asResamplingAlg[] =
 {
+    { "NEAREST", GRA_NearestNeighbour },
     { "BILINEAR", GRA_Bilinear },
     { "CUBIC", GRA_Cubic },
     { "CUBICSPLINE", GRA_CubicSpline },
