@@ -39,11 +39,12 @@ static const int HAS_MIN_FLAG = 0x1;
 static const int HAS_MAX_FLAG = 0x2;
 static const int HAS_MEAN_FLAG = 0x4;
 static const int HAS_STDDEV_FLAG = 0x8;
-static const int HAS_ALL_FLAGS = (HAS_MIN_FLAG | HAS_MAX_FLAG | HAS_MEAN_FLAG | HAS_STDDEV_FLAG);
+static const int HAS_ALL_FLAGS =
+    HAS_MIN_FLAG | HAS_MAX_FLAG | HAS_MEAN_FLAG | HAS_STDDEV_FLAG;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				EHdrDataset				*/
+/*                       EHdrDataset                                    */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -53,7 +54,7 @@ class EHdrDataset : public RawDataset
 {
     friend class EHdrRasterBand;
 
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE   *fpImage;  // image data file.
 
     CPLString   osHeaderExt;
 
@@ -75,7 +76,7 @@ class EHdrDataset : public RawDataset
 
   public:
     EHdrDataset();
-    ~EHdrDataset();
+    virtual ~EHdrDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
@@ -132,6 +133,7 @@ class EHdrRasterBand : public RawRasterBand
                     int nLineOffset,
                     GDALDataType eDataType, int bNativeOrder,
                     int nBits);
+    virtual ~EHdrRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -157,9 +159,9 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
                                 vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                                 int nLineOffsetIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                int nBitsIn)
-: RawRasterBand( poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
-                         eDataTypeIn, bNativeOrderIn, TRUE ),
+                                int nBitsIn) :
+  RawRasterBand( poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                 nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE ),
   nBits(nBitsIn),
   nStartBit(0),
   nPixelOffsetBits(0),
@@ -179,7 +181,8 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
         if( nSkipBytes < 0 || nSkipBytes > INT_MAX / 8 )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid SKIPBYTES: %d", nSkipBytes);
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid SKIPBYTES: %d", nSkipBytes);
             nStartBit = 0;
         }
         else
@@ -188,15 +191,20 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         }
         if (nBand >= 2)
         {
-            GIntBig nBandRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("BANDROWBYTES"));
+            GIntBig nBandRowBytes =
+                CPLAtoGIntBig(poEDS->GetKeyValue("BANDROWBYTES"));
             if( nBandRowBytes < 0 )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid BANDROWBYTES: " CPL_FRMT_GIB, nBandRowBytes);
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Invalid BANDROWBYTES: " CPL_FRMT_GIB,
+                          nBandRowBytes );
                 nBandRowBytes = 0;
             }
-            vsi_l_offset nRowBytes;
+            vsi_l_offset nRowBytes = 0;
             if (nBandRowBytes == 0)
-                nRowBytes = (static_cast<vsi_l_offset>(nBits) * poDS->GetRasterXSize() + 7) / 8;
+                nRowBytes =
+                    (static_cast<vsi_l_offset>(nBits) *
+                     poDS->GetRasterXSize() + 7) / 8;
             else
                 nRowBytes = static_cast<vsi_l_offset>(nBandRowBytes);
 
@@ -204,16 +212,20 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         }
 
         nPixelOffsetBits = nBits;
-        GIntBig nTotalRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
+        GIntBig nTotalRowBytes =
+            CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
         if( nTotalRowBytes < 0 )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
             nTotalRowBytes = 0;
         }
         if( nTotalRowBytes > 0 )
             nLineOffsetBits = static_cast<vsi_l_offset>(nTotalRowBytes * 8);
         else
-            nLineOffsetBits = static_cast<vsi_l_offset>(nPixelOffsetBits) * poDS->GetRasterXSize();
+            nLineOffsetBits =
+                static_cast<vsi_l_offset>(nPixelOffsetBits) *
+                poDS->GetRasterXSize();
 
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
@@ -243,18 +255,21 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    const vsi_l_offset nLineBytesBig =
+        (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7) / 8;
     if( nLineBytesBig > INT_MAX )
         return CE_Failure;
-    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
-    const vsi_l_offset nLineStart = (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
+    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
+    const vsi_l_offset nLineStart =
+        (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
         (nStartBit + nLineOffsetBits * nBlockYOff) % 8);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes) );
+    GByte *pabyBuffer =
+        static_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes) );
     if( pabyBuffer == NULL )
         return CE_Failure;
 
@@ -263,7 +278,7 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u bytes at offset %lu.\n%s",
-                  nLineBytes, (unsigned long)nLineStart,
+                  nLineBytes, static_cast<unsigned long>(nLineStart),
                   VSIStrerror( errno ) );
         CPLFree( pabyBuffer );
         return CE_Failure;
@@ -299,20 +314,20 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                    void * pImage )
 
 {
     if (nBits >= 8)
       return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
 
-
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    const vsi_l_offset nLineBytesBig =
+        (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7) / 8;
     if( nLineBytesBig > INT_MAX )
         return CE_Failure;
-    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
+    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
         (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
@@ -321,7 +336,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE(nLineBytes, 1) );
+    GByte *pabyBuffer =
+        static_cast<GByte *>( VSI_CALLOC_VERBOSE(nLineBytes, 1) );
     if( pabyBuffer == NULL )
         return CE_Failure;
 
@@ -329,7 +345,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u bytes at offset %lu.\n%s",
-                  nLineBytes, (unsigned long)nLineStart,
+                  nLineBytes, static_cast<unsigned long>(nLineStart),
                   VSIStrerror( errno ) );
         CPLFree( pabyBuffer );
         return CE_Failure;
@@ -342,7 +358,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     for( int iX = 0, iPixel = 0; iX < nBlockXSize; iX++ )
     {
-        int nOutWord = reinterpret_cast<GByte *>( pImage )[iPixel++];
+        const int nOutWord = reinterpret_cast<GByte *>( pImage )[iPixel++];
 
         for( int iBit = 0; iBit < nBits; iBit++ )
         {
@@ -365,7 +381,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write %u bytes at offset %lu.\n%s",
-                  nLineBytes, (unsigned long)nLineStart,
+                  nLineBytes, static_cast<unsigned long>(nLineStart),
                   VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -393,7 +409,8 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return RawRasterBand::IRasterIO( eRWFlag,
                                          nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize,
-                                         eBufType, nPixelSpace, nLineSpace, psExtraArg );
+                                         eBufType, nPixelSpace, nLineSpace,
+                                         psExtraArg );
 
     // Force use of IReadBlock() and IWriteBlock()
     return GDALRasterBand::IRasterIO( eRWFlag,
@@ -415,7 +432,7 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
     if( papszNV == NULL || papszNV[0] == NULL )
         return pszDefaultValue;
 
-    int iLine = 0;
+    int iLine = 0;  // Used after for.
     for( ;
          papszNV[iLine] != NULL &&
              !EQUALN(papszNV[iLine],pszField,strlen(pszField));
@@ -423,25 +440,23 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
 
     if( papszNV[iLine] == NULL )
         return pszDefaultValue;
+
+    char **papszTokens = CSLTokenizeString(papszNV[iLine]);
+
+    if( CSLCount(papszTokens) > 1 )
+        strncpy( pszResult, papszTokens[1], nResultLen);
     else
-    {
-        char **papszTokens = CSLTokenizeString(papszNV[iLine]);
+        strncpy( pszResult, pszDefaultValue, nResultLen);
+    pszResult[nResultLen-1] = '\0';
 
-        if( CSLCount(papszTokens) > 1 )
-            strncpy( pszResult, papszTokens[1], nResultLen);
-        else
-            strncpy( pszResult, pszDefaultValue, nResultLen);
-        pszResult[nResultLen-1] = '\0';
-
-        CSLDestroy( papszTokens );
-        return pszResult;
-    }
+    CSLDestroy( papszTokens );
+    return pszResult;
 }
 
 
 /************************************************************************/
 /* ==================================================================== */
-/*				EHdrDataset				*/
+/*                            EHdrDataset                               */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -548,12 +563,12 @@ void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
         return;
     }
 
-    char szNewLine[82];
+  char szNewLine[82] = { '\0' };
     snprintf( szNewLine, sizeof(szNewLine), "%-15s%s", pszKey, pszValue );
 
     for( int i = CSLCount(papszHDR)-1; i >= 0; i-- )
     {
-        if( EQUALN(papszHDR[i],szNewLine,strlen(pszKey)+1 ) )
+        if( EQUALN(papszHDR[i], szNewLine, strlen(pszKey) + 1 ) )
         {
             if( strcmp(papszHDR[i],szNewLine) != 0 )
             {
@@ -582,7 +597,9 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
         VSILFILE *fp = VSIFOpenL( osCLRFilename, "wt" );
         if( fp != NULL )
         {
-            for( int iColor = 0; iColor < poTable->GetColorEntryCount(); iColor++ )
+            for( int iColor = 0;
+                 iColor < poTable->GetColorEntryCount();
+                 iColor++ )
             {
                 GDALColorEntry sEntry;
                 poTable->GetColorEntryAsRGB( iColor, &sEntry );
@@ -592,10 +609,12 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
                 oLine.Printf( "%3d %3d %3d %3d\n",
                               iColor, sEntry.c1, sEntry.c2, sEntry.c3 );
                 if( VSIFWriteL(
-                    reinterpret_cast<void *>( const_cast<char *>( oLine.c_str() ) ),
+                    reinterpret_cast<void *>(
+                        const_cast<char *>( oLine.c_str() ) ),
                     strlen(oLine), 1, fp ) != 1 )
                 {
-                    CPLError(CE_Failure, CPLE_FileIO, "Error while write color table");
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Error while write color table");
                     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return;
                 }
@@ -662,8 +681,9 @@ CPLErr EHdrDataset::SetProjection( const char *pszSRS )
     if( fp != NULL )
     {
         size_t nCount = VSIFWriteL( pszESRI_SRS, strlen(pszESRI_SRS), 1, fp );
-        nCount += VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
-                    1, 1, fp );
+        nCount += VSIFWriteL(
+            reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
+            1, 1, fp );
         if( VSIFCloseL( fp ) != 0 ||
             nCount != 2 )
         {
@@ -775,8 +795,9 @@ CPLErr EHdrDataset::RewriteHDR()
     for( int i = 0; papszHDR[i] != NULL; i++ )
     {
         size_t nCount = VSIFWriteL( papszHDR[i], strlen(papszHDR[i]), 1, fp );
-        nCount += VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
-                    1, 1, fp );
+        nCount += VSIFWriteL(
+            reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
+            1, 1, fp );
         if( nCount != 2 )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -818,7 +839,8 @@ CPLErr EHdrDataset::RewriteSTX()
     {
         EHdrRasterBand* poBand
             = reinterpret_cast<EHdrRasterBand *>( papoBands[i] );
-        bOK &= VSIFPrintfL( fp, "%d %.10f %.10f ", i+1, poBand->dfMin, poBand->dfMax ) >= 0;
+        bOK &= VSIFPrintfL( fp, "%d %.10f %.10f ", i+1,
+                            poBand->dfMin, poBand->dfMax ) >= 0;
         if ( poBand->minmaxmeanstddev & HAS_MEAN_FLAG )
             bOK &= VSIFPrintfL( fp, "%.10f ", poBand->dfMean) >= 0;
         else
@@ -833,7 +855,7 @@ CPLErr EHdrDataset::RewriteSTX()
     if( VSIFCloseL( fp ) != 0 )
         bOK = false;
 
-    return (bOK) ? CE_None : CE_Failure;
+    return bOK ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -853,14 +875,15 @@ CPLErr EHdrDataset::ReadSTX()
     if (fp == NULL)
         return CE_None;
 
-    const char *	pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
-        char **papszTokens = CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
-        int nTokens = CSLCount( papszTokens );
+        char **papszTokens =
+            CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
+        const int nTokens = CSLCount( papszTokens );
         if( nTokens >= 5 )
         {
-            int i = atoi(papszTokens[0]);
+            const int i = atoi(papszTokens[0]);
             if (i > 0 && i <= nBands)
             {
               EHdrRasterBand* poBand
@@ -872,7 +895,8 @@ CPLErr EHdrDataset::ReadSTX()
               const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
               if (bNoDataSet && dfNoData == poBand->dfMin)
               {
-                  /* Triggered by /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil */
+                  // Triggered by
+                  // /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil
                   CPLDebug( "EHDr", "Ignoring .stx file where min == nodata. "
                             "The nodata value should not be taken into account "
                             "in minimum value computation.");
@@ -882,7 +906,7 @@ CPLErr EHdrDataset::ReadSTX()
               }
 
               poBand->minmaxmeanstddev = HAS_MIN_FLAG | HAS_MAX_FLAG;
-              // reads optional mean and stddev
+              // Reads optional mean and stddev.
               if ( !EQUAL(papszTokens[3], "#") )
               {
                 poBand->dfMean   = CPLAtof(papszTokens[3]);
@@ -895,10 +919,12 @@ CPLErr EHdrDataset::ReadSTX()
               }
 
               if( nTokens >= 6 && !EQUAL(papszTokens[5], "#") )
-                poBand->SetMetadataItem( "STRETCHMIN", papszTokens[5], "RENDERING_HINTS" );
+                poBand->SetMetadataItem(
+                  "STRETCHMIN", papszTokens[5], "RENDERING_HINTS" );
 
               if( nTokens >= 7 && !EQUAL(papszTokens[6], "#") )
-                poBand->SetMetadataItem( "STRETCHMAX", papszTokens[6], "RENDERING_HINTS" );
+                poBand->SetMetadataItem(
+                  "STRETCHMAX", papszTokens[6], "RENDERING_HINTS" );
             }
           }
 
@@ -931,14 +957,16 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
         CPLFormCIFilename( osPath, osName, "rep" );
 
     VSIStatBufL sStatBuf;
-    if( VSIStatExL( osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+    if( VSIStatExL(
+            osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         return osREPFilename;
 
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
         EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
     {
         CPLString osImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
-        if( VSIStatExL( osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+        if( VSIStatExL(
+                osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             return osImageRepFilename;
 
         /* Try in the upper directories if not found in the BIL image directory */
@@ -952,14 +980,18 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
                 CPLFree(cwd);
             }
         }
-        while (dirName[0] != 0 && EQUAL(dirName, ".") == FALSE && EQUAL(dirName, "/") == FALSE)
+        while( dirName[0] != 0 && EQUAL(dirName, ".") == FALSE &&
+               EQUAL(dirName, "/") == FALSE )
         {
-            osImageRepFilename = CPLFormCIFilename( dirName.c_str(), "image", "rep" );
-            if( VSIStatExL( osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            osImageRepFilename =
+                CPLFormCIFilename( dirName.c_str(), "image", "rep" );
+            if( VSIStatExL(
+                    osImageRepFilename.c_str(), &sStatBuf,
+                    VSI_STAT_EXISTS_FLAG ) == 0 )
                 return osImageRepFilename;
 
             /* Don't try to recurse above the 'image' subdirectory */
-            if (EQUAL(dirName, "image"))
+            if( EQUAL(dirName, "image") )
             {
                 break;
             }
@@ -1032,11 +1064,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     const char* pszHeaderExt = "hdr";
     if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "SRC" ) &&
         osName.size() == 7 &&
-        (osName[0] == 'e' || osName[0] == 'E' || osName[0] == 'w' || osName[0] == 'W') &&
-        (osName[4] == 'n' || osName[4] == 'N' || osName[4] == 's' || osName[4] == 'S') )
+        (osName[0] == 'e' || osName[0] == 'E' ||
+         osName[0] == 'w' || osName[0] == 'W') &&
+        (osName[4] == 'n' || osName[4] == 'N' ||
+         osName[4] == 's' || osName[4] == 'S') )
     {
-        /* It is a GTOPO30 or SRTM30 source file, whose header extension is .sch */
-        /* see http://dds.cr.usgs.gov/srtm/version1/SRTM30/GTOPO30_Documentation */
+        // It is a GTOPO30 or SRTM30 source file, whose header extension is .sch
+        // see http://dds.cr.usgs.gov/srtm/version1/SRTM30/GTOPO30_Documentation
         pszHeaderExt = "sch";
     }
 
@@ -1044,9 +1078,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osHDRFilename;
     if( papszSiblingFiles )
     {
-        const int iFile = CSLFindString(papszSiblingFiles,
-                                  CPLFormFilename( NULL, osName, pszHeaderExt ) );
-        if( iFile < 0 ) // return if there is no corresponding .hdr file
+        const int iFile =
+            CSLFindString( papszSiblingFiles,
+                           CPLFormFilename( NULL, osName, pszHeaderExt ) );
+        if( iFile < 0 )  // Return if there is no corresponding .hdr file.
             return NULL;
 
         osHDRFilename =
@@ -1073,22 +1108,30 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Is this file an ESRI header file?  Read a few lines of text     */
 /*      searching for something starting with nrows or ncols.           */
 /* -------------------------------------------------------------------- */
-    int			nRows = -1, nCols = -1, nBands = 1;
-    int			nSkipBytes = 0;
-    double		dfULXMap=0.5, dfULYMap = 0.5, dfYLLCorner = -123.456;
-    int                 bCenter = TRUE;
-    double		dfXDim = 1.0, dfYDim = 1.0, dfNoData = 0.0;
-    int			nLineCount = 0, bNoDataSet = FALSE;
-    GDALDataType	eDataType = GDT_Byte;
-    int                 nBits = -1;
-    char		chByteOrder = 'M';
-    char                chPixelType = 'N'; // not defined
-    char                szLayout[10] = "BIL";
-    char              **papszHDR = NULL;
-    int                 bHasInternalProjection = FALSE;
-    int                 bHasMin = FALSE;
-    int                 bHasMax = FALSE;
-    double              dfMin = 0, dfMax = 0;
+    int nRows = -1;
+    int nCols = -1;
+    int nBands = 1;
+    int nSkipBytes = 0;
+    double dfULXMap = 0.5;
+    double dfULYMap = 0.5;
+    double dfYLLCorner = -123.456;
+    int bCenter = TRUE;
+    double dfXDim = 1.0;
+    double dfYDim = 1.0;
+    double dfNoData = 0.0;
+    int nLineCount = 0;
+    int bNoDataSet = FALSE;
+    GDALDataType eDataType = GDT_Byte;
+    int nBits = -1;
+    char chByteOrder = 'M';
+    char chPixelType = 'N'; // not defined
+    char szLayout[10] = "BIL";
+    char **papszHDR = NULL;
+    int bHasInternalProjection = FALSE;
+    int bHasMin = FALSE;
+    int bHasMax = FALSE;
+    double dfMin = 0;
+    double dfMax = 0;
 
     const char *pszLine;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
@@ -1226,11 +1269,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     if( bSelectedHDR )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "The selected file is an ESRI BIL header file, but to\n"
-                  "open ESRI BIL datasets, the data file should be selected\n"
-                  "instead of the .hdr file.  Please try again selecting\n"
-                  "the data file (often with the extension .bil) corresponding\n"
-                  "to the header file: %s\n",
+                  "The selected file is an ESRI BIL header file, but to "
+                  "open ESRI BIL datasets, the data file should be selected "
+                  "instead of the .hdr file.  Please try again selecting "
+                  "the data file (often with the extension .bil) corresponding "
+                  "to the header file: %s",
                   poOpenInfo->pszFilename );
         CSLDestroy( papszHDR );
         return NULL;
@@ -1246,10 +1289,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIStatBufL sStatBuf;
         if( VSIStatL( poOpenInfo->pszFilename, &sStatBuf ) == 0 )
         {
-            size_t nBytes
+            const size_t nBytes
                 = static_cast<size_t>( sStatBuf.st_size/nCols/nRows/nBands );
             if( nBytes > 0 && nBytes != 3 )
-                nBits = static_cast<int>(nBytes*8);
+                nBits = static_cast<int>(nBytes * 8);
 
             if( nBytes == 4 )
                 chPixelType = 'F';
@@ -1353,6 +1396,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "EHdr driver does not support %d NBITS value.",
                   nBits );
         delete poDS;
+        poDS = NULL;
         return NULL;
     }
 
@@ -1360,17 +1404,18 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
-    int nPixelOffset;
-    int nLineOffset;
+    int nPixelOffset = 0;
+    int nLineOffset = 0;
     vsi_l_offset    nBandOffset;
     CPLAssert(nItemSize != 0);
     CPLAssert(nBands != 0);
 
-    if( EQUAL(szLayout,"BIP") )
+    if( EQUAL(szLayout, "BIP") )
     {
         if (nCols > INT_MAX / (nItemSize * nBands))
         {
             delete poDS;
+            poDS = NULL;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Int overflow occurred.");
             return NULL;
@@ -1384,6 +1429,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         if (nCols > INT_MAX / nItemSize)
         {
             delete poDS;
+            poDS = NULL;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Int overflow occurred.");
             return NULL;
@@ -1397,6 +1443,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         if (nCols > INT_MAX / (nItemSize * nBands))
         {
             delete poDS;
+            poDS = NULL;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Int overflow occurred.");
             return NULL;
@@ -1425,7 +1472,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
                                 chByteOrder == 'M',
 #endif
-                                nBits);
+                                nBits );
 
         poBand->bNoDataSet = bNoDataSet;
         poBand->dfNoData = dfNoData;
@@ -1498,8 +1545,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     fp = VSIFOpenL( pszPrjFilename, "r" );
 
-    /* .hdr files from http://www.worldclim.org/futdown.htm have the projection */
-    /* info in the .hdr file itself ! */
+    // .hdr files from http://www.worldclim.org/futdown.htm have the projection
+    // info in the .hdr file itself.
     if (fp == NULL && bHasInternalProjection)
     {
         pszPrjFilename = osHDRFilename;
@@ -1509,6 +1556,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fp != NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+        fp = NULL;
 
         char **papszLines = CSLLoad( pszPrjFilename );
 
@@ -1517,7 +1565,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             // If geographic values are in seconds, we must transform.
             // Is there a code for minutes too?
-            char szResult[80];
+            char szResult[80] = { '\0' };
             if( oSRS.IsGeographic()
                 && EQUAL(OSR_GDS( szResult, sizeof(szResult),
                                   papszLines, "Units", ""), "DS") )
@@ -1544,7 +1592,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  For the specification of SPDF (in French),                          */
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
-        const CPLString szImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
+        const CPLString szImageRepFilename =
+            GetImageRepFilename(poOpenInfo->pszFilename );
         if (!szImageRepFilename.empty())
         {
             fp = VSIFOpenL( szImageRepFilename.c_str(), "r" );
@@ -1575,11 +1624,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                             utmZone = atoi(c);
                             if (utmZone >= 1 && utmZone <= 60)
                             {
-                                if (strstr(pszLine, "Nord") || strstr(pszLine, "NORD"))
+                                if( strstr(pszLine, "Nord") ||
+                                    strstr(pszLine, "NORD") )
                                 {
                                     bNorth = TRUE;
                                 }
-                                else if (strstr(pszLine, "Sud") || strstr(pszLine, "SUD"))
+                                else if( strstr(pszLine, "Sud") ||
+                                         strstr(pszLine, "SUD") )
                                 {
                                     bSouth = true;
                                 }
@@ -1613,12 +1664,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                else if (STARTS_WITH(pszLine, "HORIZ_DATUM") &&
-                         (strstr(pszLine, "WGS 84") || strstr(pszLine, "WGS84")))
+                else if( STARTS_WITH(pszLine, "HORIZ_DATUM") &&
+                         (strstr(pszLine, "WGS 84") ||
+                          strstr(pszLine, "WGS84")) )
                 {
                     bWGS84 = true;
                 }
-                else if (STARTS_WITH(pszLine, "MAP_NUMBER"))
+                else if(STARTS_WITH(pszLine, "MAP_NUMBER") )
                 {
                     const char* c = strchr(pszLine, '"');
                     if (c)
@@ -1646,7 +1698,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
             {
-                char projCSStr[64];
+                char projCSStr[64] = { '\0' };
                 snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
                         utmZone, (bNorth) ? 'N' : 'S');
 
@@ -1654,7 +1706,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                 oSRS.SetProjCS(projCSStr);
                 oSRS.SetWellKnownGeogCS( "WGS84" );
                 oSRS.SetUTM(utmZone, bNorth);
-                oSRS.SetAuthority("PROJCS", "EPSG", ((bNorth) ? 32600 : 32700) + utmZone);
+                oSRS.SetAuthority("PROJCS", "EPSG",
+                                  (bNorth ? 32600 : 32700) + utmZone);
                 oSRS.AutoIdentifyEPSG();
 
                 CPLFree( poDS->pszProjection );
@@ -1695,28 +1748,32 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             char **papszValues = CSLTokenizeString2(pszLine, "\t ",
                                                     CSLT_HONOURSTRINGS);
-            GDALColorEntry oEntry;
+
 
             if ( CSLCount(papszValues) >= 4 )
             {
                 int nIndex = atoi( papszValues[0] ); // Index
                 if (nIndex >= 0 && nIndex < 65536)
                 {
-                    oEntry.c1 = (short) atoi( papszValues[1] ); // Red
-                    oEntry.c2 = (short) atoi( papszValues[2] ); // Green
-                    oEntry.c3 = (short) atoi( papszValues[3] ); // Blue
+                    GDALColorEntry oEntry;
+                    oEntry.c1 =
+                        static_cast<short>( atoi( papszValues[1] ) ); // Red
+                    oEntry.c2 =
+                        static_cast<short>( atoi( papszValues[2] ) ); // Green
+                    oEntry.c3 =
+                        static_cast<short>( atoi( papszValues[3] ) ); // Blue
                     oEntry.c4 = 255;
 
                     oColorTable.SetColorEntry( nIndex, &oEntry );
                 }
                 else
                 {
-                    /* Negative values are valid. At least we can find use of */
-                    /* them here : http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/ */
-                    /* but there's no way of representing them with GDAL color */
-                    /* table model */
+                    // Negative values are valid. At least we can find use of
+                    // them here: http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/
+                    // but there's no way of representing them with GDAL color
+                    // table model.
                     if (!bHasWarned)
-                        CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
+                        CPLDebug( "EHdr", "Ignoring color index : %d", nIndex );
                     bHasWarned = TRUE;
                 }
             }
@@ -1751,7 +1808,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1778,9 +1835,9 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
         && eType != GDT_Int16 && eType != GDT_Int32 && eType != GDT_UInt32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create ESRI .hdr labelled dataset with an illegal\n"
-              "data type (%s).\n",
-              GDALGetDataTypeName(eType) );
+                  "Attempt to create ESRI .hdr labelled dataset with an illegal"
+                  "data type (%s).",
+                  GDALGetDataTypeName(eType) );
 
         return NULL;
     }
@@ -1793,7 +1850,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
+                  "Attempt to create file `%s' failed.",
                   pszFilename );
         return NULL;
     }
@@ -1802,17 +1859,19 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    bool bOK = VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
-                2, 1, fp ) == 1;
+    bool bOK =
+        VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
+                    2, 1, fp ) == 1;
     if( VSIFCloseL( fp ) != 0 )
         bOK = false;
+    fp = NULL;
     if( !bOK )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the hdr filename.                                        */
 /* -------------------------------------------------------------------- */
-    char *pszHdrFilename
+    char * const pszHdrFilename
         = CPLStrdup( CPLResetExtension( pszFilename, "hdr" ) );
 
 /* -------------------------------------------------------------------- */
@@ -1876,6 +1935,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 
     if( !bOK )
         return NULL;
+
     return
         reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
@@ -1910,9 +1970,11 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
         && CSLFetchNameValue( papszOptions, "NBITS" ) == NULL )
     {
         papszAdjustedOptions =
-            CSLSetNameValue( papszAdjustedOptions,
-                             "NBITS",
-                             poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS","IMAGE_STRUCTURE") );
+            CSLSetNameValue(
+                papszAdjustedOptions,
+                "NBITS",
+                poSrcDS->GetRasterBand(1)->
+                    GetMetadataItem("NBITS","IMAGE_STRUCTURE") );
     }
 
     if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "PIXELTYPE",
@@ -1920,16 +1982,18 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
         && CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL )
     {
         papszAdjustedOptions =
-            CSLSetNameValue( papszAdjustedOptions,
-                             "PIXELTYPE",
-                             poSrcDS->GetRasterBand(1)->GetMetadataItem("PIXELTYPE","IMAGE_STRUCTURE") );
+            CSLSetNameValue(
+                papszAdjustedOptions,
+                "PIXELTYPE",
+                poSrcDS->GetRasterBand(1)->
+                    GetMetadataItem("PIXELTYPE","IMAGE_STRUCTURE") );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Proceed with normal copying using the default createcopy        */
 /*      operators.                                                      */
 /* -------------------------------------------------------------------- */
-    GDALDriver	*poDriver = reinterpret_cast<GDALDriver *>(
+    GDALDriver *poDriver = reinterpret_cast<GDALDriver *>(
         GDALGetDriverByName( "EHdr" ) );
 
     GDALDataset *poOutDS
@@ -1993,49 +2057,51 @@ double EHdrRasterBand::GetMaximum( int *pbSuccess )
 /*                           GetStatistics()                            */
 /************************************************************************/
 
-CPLErr EHdrRasterBand::GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
+CPLErr EHdrRasterBand::GetStatistics(
+    int bApproxOK, int bForce,
+    double *pdfMin, double *pdfMax,
+    double *pdfMean, double *pdfStdDev )
 {
     if( (minmaxmeanstddev & HAS_ALL_FLAGS) == HAS_ALL_FLAGS)
     {
-        if ( pdfMin ) *pdfMin = dfMin;
-        if ( pdfMax ) *pdfMax = dfMax;
-        if ( pdfMean ) *pdfMean = dfMean;
-        if ( pdfStdDev ) *pdfStdDev = dfStdDev;
+        if( pdfMin ) *pdfMin = dfMin;
+        if( pdfMax ) *pdfMax = dfMax;
+        if( pdfMean ) *pdfMean = dfMean;
+        if( pdfStdDev ) *pdfStdDev = dfStdDev;
         return CE_None;
     }
 
-    CPLErr eErr = RawRasterBand::GetStatistics( bApproxOK, bForce,
+    const CPLErr eErr = RawRasterBand::GetStatistics( bApproxOK, bForce,
                                                 &dfMin, &dfMax,
                                                 &dfMean, &dfStdDev );
+    if( eErr != CE_None )
+        return eErr;
 
-    if( eErr == CE_None )
-    {
-        EHdrDataset* poEDS = reinterpret_cast<EHdrDataset *>( poDS );
+    EHdrDataset* poEDS = reinterpret_cast<EHdrDataset *>( poDS );
 
-        minmaxmeanstddev = HAS_ALL_FLAGS;
+    minmaxmeanstddev = HAS_ALL_FLAGS;
 
-        if( poEDS->RewriteSTX() != CE_None )
-            RawRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    if( poEDS->RewriteSTX() != CE_None )
+        RawRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
-        if( pdfMin )
-            *pdfMin = dfMin;
-        if( pdfMax )
-            *pdfMax = dfMax;
-        if( pdfMean )
-            *pdfMean = dfMean;
-        if( pdfStdDev )
-            *pdfStdDev = dfStdDev;
-    }
+    if( pdfMin )
+        *pdfMin = dfMin;
+    if( pdfMax )
+        *pdfMax = dfMax;
+    if( pdfMean )
+        *pdfMean = dfMean;
+    if( pdfStdDev )
+        *pdfStdDev = dfStdDev;
 
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
 /*                           SetStatistics()                            */
 /************************************************************************/
 
-CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn, double dfMeanIn,
-                                      double dfStdDevIn )
+CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
+                                      double dfMeanIn, double dfStdDevIn )
 {
     // avoid churn if nothing is changing.
     if( dfMin == dfMinIn
@@ -2067,7 +2133,7 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn, double dfM
 
 CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
 {
-    CPLErr err = RawRasterBand::SetColorTable( poNewCT );
+    const CPLErr err = RawRasterBand::SetColorTable( poNewCT );
     if( err != CE_None )
         return err;
 
