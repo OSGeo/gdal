@@ -1215,18 +1215,18 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 /* -------------------------------------------------------------------- */
     const char *pszOzi = CPLResetExtension( pszBaseFilename, "map" );
 
-    FILE *fpOzi = VSIFOpen( pszOzi, "rt" );
+    VSILFILE *fpOzi = VSIFOpenL( pszOzi, "rt" );
 
     if ( fpOzi == NULL && VSIIsCaseSensitiveFS(pszOzi) )
     {
         pszOzi = CPLResetExtension( pszBaseFilename, "MAP" );
-        fpOzi = VSIFOpen( pszOzi, "rt" );
+        fpOzi = VSIFOpenL( pszOzi, "rt" );
     }
 
     if ( fpOzi == NULL )
         return FALSE;
 
-    CPL_IGNORE_RET_VAL(VSIFClose( fpOzi ));
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpOzi ));
 
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
