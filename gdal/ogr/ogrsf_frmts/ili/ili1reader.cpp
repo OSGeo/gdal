@@ -656,6 +656,10 @@ char ** ILI1Reader::ReadParseLine()
       tokens[CSLCount(tokens)-1] = NULL;
 
       pszLine = CPLReadLine( fpItf );
+      if( pszLine == NULL )
+      {
+          break;
+      }
       char **conttok = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
       if (!conttok || !EQUAL(conttok[0], "CONT"))
       {
