@@ -47,13 +47,15 @@ SHPHandle OGRShapeDataSource::DS_SHPOpen( const char * pszShapeFile, const char 
     if( STARTS_WITH(pszShapeFile, "/vsicurl/") &&
         strcmp(pszAccess, "r") == 0 )
         pszAccess = "rl";
-    
+
     SHPHandle hSHP;
-    if( CPLTestBool( CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE") ) )
-        hSHP = SHPOpenLLEx( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit) );
-    else
-        hSHP = SHPOpenLL( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit) );
+    int bRestoreSHX = CPLTestBool( CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE") );
     
+    if( bRestoreSHX )
+        hSHP = SHPOpenLLEx( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit), true );
+    else
+        hSHP = SHPOpenLLEx( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit), false );
+
     if( hSHP != NULL )
         SHPSetFastModeReadObject( hSHP, TRUE );
     return hSHP;

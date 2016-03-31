@@ -386,6 +386,10 @@ SHPHandle SHPAPI_CALL
                  SAHooks *psHooks );
 SHPHandle SHPAPI_CALL
       SHPOpenLLEx( const char *pszShapeFile, const char *pszAccess,
+                  SAHooks *psHooks, int bRestoreSHX );
+
+int       SHPAPI_CALL
+      SHPRestoreSHX( const char *pszShapeFile, const char *pszAccess,
                   SAHooks *psHooks );
 
 /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
