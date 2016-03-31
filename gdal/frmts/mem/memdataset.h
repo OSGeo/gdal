@@ -40,11 +40,12 @@ void GDALRegister_MEM();
 GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
                                              GDALDataType, int, int, int );
 GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
-                                             GDALDataType, GSpacing, GSpacing, int );
+                                               GDALDataType, GSpacing, GSpacing,
+                                               int );
 CPL_C_END
 
 /************************************************************************/
-/*				MEMDataset				*/
+/*                            MEMDataset                                */
 /************************************************************************/
 
 class MEMRasterBand;
@@ -52,7 +53,7 @@ class MEMRasterBand;
 class CPL_DLL MEMDataset : public GDALDataset
 {
     int         bGeoTransformSet;
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
     char        *pszProjection;
 
@@ -129,12 +130,13 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     double         dfScale;
 
     CPLXMLNode    *psSavedHistograms;
-  public:
 
+  public:
                    MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType,
                                   GSpacing nPixelOffset, GSpacing nLineOffset,
-                                  int bAssumeOwnership,  const char * pszPixelType = NULL);
+                                  int bAssumeOwnership,
+                                  const char * pszPixelType = NULL );
     virtual        ~MEMRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -170,12 +172,13 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, GUIntBig *panHistogram );
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, GUIntBig ** ppanHistogram,
+                                        int *pnBuckets,
+                                        GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
 
-    // allow access to MEM driver's private internal memory buffer
-    GByte *GetData(void) const {return(pabyData);}
+    // Allow access to MEM driver's private internal memory buffer.
+    GByte *GetData(void) const { return(pabyData); }
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
