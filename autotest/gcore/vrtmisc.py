@@ -387,6 +387,45 @@ def vrtmisc_13():
     return "success"
 
 ###############################################################################
+# Test SrcRect/DstRect are serialized as integers
+
+def vrtmisc_14():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
+    src_ds = None
+    fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 10000, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
+    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
+
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0 or \
+       content.find('<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
+    src_ds = None
+    fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 10000, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
+    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
+
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0 or \
+       content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -406,6 +445,7 @@ gdaltest_list = [
     vrtmisc_11,
     vrtmisc_12,
     vrtmisc_13,
+    vrtmisc_14,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
