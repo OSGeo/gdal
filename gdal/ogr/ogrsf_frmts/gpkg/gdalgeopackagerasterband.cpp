@@ -1760,20 +1760,21 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
         VSIUnlink(m_osTempDBFilename);
         CPLPopErrorHandler();
         m_hTempDB = NULL;
+        int rc;
 #ifdef HAVE_SQLITE_VFS
         if (STARTS_WITH(m_osTempDBFilename, "/vsi"))
         {
             m_pMyVFS = OGRSQLiteCreateVFS(NULL, NULL);
             sqlite3_vfs_register(m_pMyVFS, 0);
-            sqlite3_open_v2( m_osTempDBFilename, &m_hTempDB,
+            rc = sqlite3_open_v2( m_osTempDBFilename, &m_hTempDB,
                              SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, m_pMyVFS->zName );
         }
         else
 #endif
         {
-            sqlite3_open(m_osTempDBFilename, &m_hTempDB);
+            rc = sqlite3_open(m_osTempDBFilename, &m_hTempDB);
         }
-        if( m_hTempDB == NULL )
+        if( rc != SQLITE_OK || m_hTempDB == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "Cannot create temporary database %s",
