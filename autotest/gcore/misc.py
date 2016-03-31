@@ -221,6 +221,9 @@ def misc_5():
         if drv.ShortName == 'PDF':
             # PDF Create() is vector-only
             continue
+        if drv.ShortName == 'MBTiles':
+            # MBTiles only support some precise resolutions
+            continue
         if 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
             datatype = gdal.GDT_Byte
             for nBands in range(6):
