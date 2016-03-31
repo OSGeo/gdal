@@ -1060,8 +1060,8 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
 
     ComputeTileAndPixelShifts();
 
-    GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    GDALPamDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
+    GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
     if( poParentDS )
     {
@@ -1142,6 +1142,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
         return aosList.List();
 
     bFetchedMetadata = true;
+    aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
             "SELECT name, value FROM metadata", NULL, NULL);

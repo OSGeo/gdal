@@ -255,7 +255,7 @@ def mbtiles_5():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
+    expected_md = {'ZOOM_LEVEL': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
     if set(got_md.keys()) != set(expected_md.keys()):
         gdaltest.post_reason('fail')
         print(got_md)
@@ -302,7 +302,7 @@ def mbtiles_6():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
+    expected_md = {'ZOOM_LEVEL': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         print(got_md)
