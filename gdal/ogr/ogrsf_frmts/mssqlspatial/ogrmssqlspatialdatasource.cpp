@@ -740,6 +740,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     if ( pszDriver == NULL )
     {
+        char* pszConnectionName2 = pszConnectionName;
 #if SQLNCLI_VERSION == 11
         pszDriver = CPLStrdup("{SQL Server Native Client 11.0}");
 #elif SQLNCLI_VERSION == 10
@@ -747,7 +748,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 #else
         pszDriver = CPLStrdup("{SQL Server}");
 #endif
-        pszConnectionName = CPLStrdup(CPLSPrintf("DRIVER=%s;%s", pszDriver, pszConnectionName));
+        pszConnectionName = CPLStrdup(CPLSPrintf("DRIVER=%s;%s", pszDriver, pszConnectionName2));
+        CPLFree(pszConnectionName2);
     }
 
     CPLFree(pszDriver);
