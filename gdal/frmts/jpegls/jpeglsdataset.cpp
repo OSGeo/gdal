@@ -553,7 +553,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLErr eErr;
-    eErr = poSrcDS->s(GF_Read, 0, 0, nXSize, nYSize,
+    eErr = poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
                       pabyDataUncompressed, nXSize, nYSize,
                       eDT, nBands, NULL,
                       nBands * nWordSize, nBands * nWordSize * nXSize, nWordSize, NULL);
