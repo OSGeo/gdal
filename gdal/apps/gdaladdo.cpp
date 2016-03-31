@@ -73,6 +73,30 @@ static void Usage(const char* pszErrorMsg = NULL)
 }
 
 /************************************************************************/
+/*                        GDALAddoErrorHandler()                        */
+/************************************************************************/
+
+class GDALError
+{
+  public:
+      CPLErr            m_eErr;
+      CPLErrorNum       m_errNum;
+      CPLString         m_osMsg;
+
+      GDALError( CPLErr eErr = CE_None, CPLErrorNum errNum= CPLE_None, const char * pszMsg = "") :
+          m_eErr(eErr), m_errNum(errNum), m_osMsg(pszMsg ? pszMsg : "")
+      {
+      }
+};
+
+std::vector<GDALError> aoErrors;
+
+static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum, const char * pszMsg )
+{
+    aoErrors.push_back(GDALError(eErr, errNum, pszMsg));
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -188,9 +212,17 @@ int main( int nArgc, char ** papszArgv )
         hDataset = NULL;
     else
     {
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+        CPLPushErrorHandler( GDALAddoErrorHandler );
         hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE, NULL, papszOpenOptions, NULL );
         CPLPopErrorHandler();
+        if( hDataset != NULL )
+        {
+            for(size_t i=0;i<aoErrors.size();i++)
+            {
+                CPLError( aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
+                          aoErrors[i].m_osMsg.c_str() );
+            }
+        }
     }
 
     if( hDataset == NULL )
