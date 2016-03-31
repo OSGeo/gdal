@@ -46,6 +46,8 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg );
 void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree );
 CPL_C_END
 
+static const int MAX_ABS_VALUE_WARNINGS = 20;
+
 /************************************************************************/
 /*                            RPCInfoToMD()                             */
 /*                                                                      */
@@ -305,11 +307,53 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
     // Make sure padfTerms is aligned on a 16-byte boundary for SSE2 aligned loads
     double* padfTerms = adfTermsWithMargin + (((size_t)adfTermsWithMargin) % 16) / 8;
 
-    RPCComputeTerms(
-        (dfLong   - psRPCTransformInfo->sRPC.dfLONG_OFF) / psRPCTransformInfo->sRPC.dfLONG_SCALE,
-        (dfLat    - psRPCTransformInfo->sRPC.dfLAT_OFF) / psRPCTransformInfo->sRPC.dfLAT_SCALE,
-        (dfHeight - psRPCTransformInfo->sRPC.dfHEIGHT_OFF) / psRPCTransformInfo->sRPC.dfHEIGHT_SCALE,
-        padfTerms );
+    const double dfNormalizedLong =
+      (dfLong   - psRPCTransformInfo->sRPC.dfLONG_OFF) / psRPCTransformInfo->sRPC.dfLONG_SCALE;
+    const double dfNormalizedLat =
+      (dfLat    - psRPCTransformInfo->sRPC.dfLAT_OFF) / psRPCTransformInfo->sRPC.dfLAT_SCALE;
+    const double dfNormalizedHeight =
+      (dfHeight - psRPCTransformInfo->sRPC.dfHEIGHT_OFF) / psRPCTransformInfo->sRPC.dfHEIGHT_SCALE;
+
+    // The absolute values of the 3 above normalized values are supposed to be
+    // below 1. Warn (as debug message) if it is not the case. We allow for some
+    // margin above 1 (1.5, somewhat arbitrary chosen) before warning
+    static int nCountWarningsAboutAboveOneNormalizedValues = 0;
+    if( nCountWarningsAboutAboveOneNormalizedValues < MAX_ABS_VALUE_WARNINGS )
+    {
+        bool bWarned = false;
+        if( fabs(dfNormalizedLong) > 1.5 )
+        {
+            bWarned = true;
+            CPLDebug("RPC", "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
+                    "ie with an absolute value of > 1, which may cause numeric stability problems",
+                    "longitude", dfLong, dfLat, dfHeight, dfNormalizedLong);
+        }
+        if( fabs(dfNormalizedLat) > 1.5 )
+        {
+            bWarned = true;
+            CPLDebug("RPC", "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
+                    "ie with an absolute value of > 1, which may cause numeric stability problems",
+                    "latitude", dfLong, dfLat, dfHeight, dfNormalizedLat);
+        }
+        if( fabs(dfNormalizedHeight) > 1.5 )
+        {
+            bWarned = true;
+            CPLDebug("RPC", "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
+                    "ie with an absolute value of > 1, which may cause numeric stability problems",
+                    "height", dfLong, dfLat, dfHeight, dfNormalizedHeight);
+        }
+        if( bWarned )
+        {
+            // Limit the number of warnings
+            nCountWarningsAboutAboveOneNormalizedValues ++;
+            if( nCountWarningsAboutAboveOneNormalizedValues == MAX_ABS_VALUE_WARNINGS )
+            {
+                CPLDebug("RPC", "No more such debug warnings will be emitted");
+            }
+        }
+    }
+
+    RPCComputeTerms( dfNormalizedLong, dfNormalizedLat, dfNormalizedHeight, padfTerms );
 
 #ifdef USE_SSE2_OPTIM
     double dfSampNum, dfSampDen, dfLineNum, dfLineDen;
@@ -1130,7 +1174,7 @@ near_fallback:
 /*                    GDALRPCTransformWholeLineWithDEM()                */
 /************************************************************************/
 
-static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
+static int GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
                                              int nPointCount,
                                              double *padfX, double *padfY, double *padfZ,
                                              int *panSuccess,
