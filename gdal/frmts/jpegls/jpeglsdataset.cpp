@@ -93,14 +93,14 @@ class JPEGLSRasterBand : public GDALPamRasterBand
 /*                        JPEGLSRasterBand()                            */
 /************************************************************************/
 
-JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDS, int nBand)
+JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = (poDS->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
-    this->nBlockXSize = poDS->nRasterXSize;
-    this->nBlockYSize = poDS->nRasterYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
+    this->nBlockXSize = poDSIn->nRasterXSize;
+    this->nBlockYSize = poDSIn->nRasterYSize;
 }
 
 /************************************************************************/
@@ -137,7 +137,7 @@ static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JPEGLSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr JPEGLSRasterBand::IReadBlock( int /*nBlockXOff*/, int /*nBlockYOff*/,
                                       void * pImage )
 {
     JPEGLSDataset *poGDS = (JPEGLSDataset *) poDS;
@@ -494,7 +494,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *
 JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 int bStrict, char ** papszOptions,
-                GDALProgressFunc pfnProgress, void * pProgressData )
+                GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
 
 {
     int  nBands = poSrcDS->GetRasterCount();
