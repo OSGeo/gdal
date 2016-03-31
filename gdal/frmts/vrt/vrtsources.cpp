@@ -397,13 +397,13 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         || m_dfSrcYSize != -1 )
     {
         CPLSetXMLValue( psSrc, "SrcRect.#xOff",
-                        CPLSPrintf( "%g", m_dfSrcXOff ) );
+                        CPLSPrintf( "%.15g", m_dfSrcXOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#yOff",
-                        CPLSPrintf( "%g", m_dfSrcYOff ) );
+                        CPLSPrintf( "%.15g", m_dfSrcYOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#xSize",
-                        CPLSPrintf( "%g", m_dfSrcXSize ) );
+                        CPLSPrintf( "%.15g", m_dfSrcXSize ) );
         CPLSetXMLValue( psSrc, "SrcRect.#ySize",
-                        CPLSPrintf( "%g", m_dfSrcYSize ) );
+                        CPLSPrintf( "%.15g", m_dfSrcYSize ) );
     }
 
     if( m_dfDstXOff != -1
@@ -411,10 +411,10 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         || m_dfDstXSize != -1
         || m_dfDstYSize != -1 )
     {
-        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%g", m_dfDstXOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%g", m_dfDstYOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%g", m_dfDstXSize ));
-        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%g", m_dfDstYSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%.15g", m_dfDstXOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%.15g", m_dfDstYOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%.15g", m_dfDstXSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%.15g", m_dfDstYSize ));
     }
 
     return psSrc;
