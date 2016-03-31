@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_sqlite.h"
 #include "ogrgeopackageutility.h"
+#include "gpkgmbtilescommon.h"
 
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
@@ -43,24 +44,7 @@
 
 class OGRGeoPackageTableLayer;
 
-typedef struct
-{
-    int     nRow;
-    int     nCol;
-    int     nIdxWithinTileData;
-    bool    abBandDirty[4];
-} CachedTileDesc;
-
-typedef enum
-{
-    GPKG_TF_PNG_JPEG,
-    GPKG_TF_PNG,
-    GPKG_TF_PNG8,
-    GPKG_TF_JPEG,
-    GPKG_TF_WEBP
-} GPKGTileFormat;
-
-class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
+class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
@@ -70,9 +54,6 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
     bool                m_bUtf8;
     void                CheckUnknownExtensions(bool bCheckRasterTable = false);
 
-    bool                m_bNew;
-
-    CPLString           m_osRasterTable;
     CPLString           m_osIdentifier;
     bool                m_bIdentifierAsCO;
     CPLString           m_osDescription;
@@ -87,40 +68,12 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
     int                 m_nSRID;
     double              m_dfTMSMinX;
     double              m_dfTMSMaxY;
-    int                 m_nZoomLevel;
-    GByte              *m_pabyCachedTiles;
-    CachedTileDesc      m_asCachedTilesDesc[4];
-    int                 m_nShiftXTiles;
-    int                 m_nShiftXPixelsMod;
-    int                 m_nShiftYTiles;
-    int                 m_nShiftYPixelsMod;
-    int                 m_nTileMatrixWidth;
-    int                 m_nTileMatrixHeight;
 
-    GPKGTileFormat      m_eTF;
-    bool                m_bPNGSupports2Bands; // for test/debug purposes only. true is the nominal value
-    bool                m_bPNGSupportsCT; // for test/debug purposes only. true is the nominal value
-    int                 m_nZLevel;
-    int                 m_nQuality;
-    bool                m_bDither;
-
-    GDALColorTable*     m_poCT;
-    bool                m_bTriedEstablishingCT;
-    GByte*              m_pabyHugeColorArray;
-
-    GDALGeoPackageDataset* m_poParentDS;
     int                 m_nOverviewCount;
     GDALGeoPackageDataset** m_papoOverviewDS;
     bool                m_bZoomOther;
 
-    CPLString           m_osWHERE;
-
-    sqlite3            *m_hTempDB;
-    CPLString           m_osTempDBFilename;
-
     bool                m_bInFlushCache;
-
-    int                 m_nTileInsertionCount;
 
     CPLString           m_osTilingScheme;
 
@@ -170,22 +123,6 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
                             char** papszOptions );
         CPLErr   FinalizeRasterRegistration();
 
-        CPLErr                  ReadTile(const CPLString& osMemFileName,
-                                         GByte* pabyTileData,
-                                         bool* pbIsLossyFormat = NULL);
-        GByte*                  ReadTile(int nRow, int nCol);
-        GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
-                                         bool* pbIsLossyFormat = NULL);
-
-        bool                    m_bInWriteTile;
-        CPLErr                  WriteTile();
-
-        CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
-        CPLErr                  FlushRemainingShiftedTiles();
-        CPLErr                  WriteShiftedTile(int nRow, int nCol, int iBand,
-                                                 int nDstXOffset, int nDstYOffset,
-                                                 int nDstXSize, int nDstYSize);
-
         int                     RegisterWebPExtension();
         int                     RegisterZoomOtherExtension();
         void                    ParseCompressionOptions(char** papszOptions);
@@ -218,7 +155,6 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
 
         virtual void        FlushCache();
-        CPLErr              FlushCacheWithErrCode();
         virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                              int, int *, GDALProgressFunc, void * );
 
@@ -265,6 +201,21 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
                                                    char ** papszOptions,
                                                    GDALProgressFunc pfnProgress,
                                                    void * pProgressData );
+
+    protected:
+        // Coming from GDALGPKGMBTilesLikePseudoDataset
+
+        virtual CPLErr                  IFlushCacheWithErrCode();
+        virtual int                     IGetRasterCount() { return nBands; }
+        virtual GDALRasterBand*         IGetRasterBand(int nBand) { return GetRasterBand(nBand); }
+        virtual sqlite3                *IGetDB() { return GetDB(); }
+        virtual bool                    IGetUpdate() { return bUpdate != FALSE; }
+        virtual bool                    ICanIWriteBlock();
+        virtual void                    IStartTransaction() { SoftStartTransaction(); }
+        virtual void                    ICommitTransaction() { SoftCommitTransaction(); }
+        virtual const char             *IGetFilename() { return m_pszFilename; }
+        virtual int                     GetRowFromIntoTopConvention(int nRow) { return nRow; }
+
     private:
 
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
@@ -277,24 +228,11 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
 /*                        GDALGeoPackageRasterBand                      */
 /************************************************************************/
 
-class GDALGeoPackageRasterBand CPL_FINAL: public GDALPamRasterBand
+class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
 {
     public:
                                 GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
-                                                         int nBand,
                                                          int nTileWidth, int nTileHeight);
-
-        virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
-                                           void* pData);
-        virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                           void* pData);
-        virtual CPLErr          FlushCache();
-
-        virtual GDALColorTable* GetColorTable();
-        virtual CPLErr          SetColorTable(GDALColorTable* poCT);
-
-        virtual GDALColorInterp GetColorInterpretation();
-        virtual CPLErr          SetColorInterpretation( GDALColorInterp );
 
         virtual int             GetOverviewCount();
         virtual GDALRasterBand* GetOverview(int nIdx);
