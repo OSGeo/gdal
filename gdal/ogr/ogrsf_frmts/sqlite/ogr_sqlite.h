@@ -727,6 +727,8 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 
     virtual int         TestCapability( const char * );
 
+    virtual void *GetInternalHandle( const char * );
+
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
     OGRErr              SoftRollbackTransaction();
