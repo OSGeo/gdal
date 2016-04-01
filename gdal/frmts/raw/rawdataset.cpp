@@ -73,7 +73,7 @@ RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
 
     CPLDebug( "GDALRaw",
               "RawRasterBand(%p,%d,%p,\n"
-              "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
+              "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)",
               poDS, nBand, fpRaw,
               static_cast<unsigned int>(nImgOffset), nPixelOffset, nLineOffset,
               GDALGetDataTypeName(eDataType), bNativeOrder );
@@ -129,8 +129,9 @@ RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffsetIn,
     }
 
     CPLDebug( "GDALRaw",
-              "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
-              (unsigned int) nImgOffset, nPixelOffset, nLineOffset,
+              "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)",
+              static_cast<unsigned int>( nImgOffset ),
+              nPixelOffset, nLineOffset,
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
 /* -------------------------------------------------------------------- */
@@ -305,7 +306,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".\n",
+                  "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".",
                   iLine, nImgOffset + (vsi_l_offset)iLine * nLineOffset );
             return CE_Failure;
         }
@@ -331,7 +332,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read scanline %d.\n",
+                      "Failed to read scanline %d.",
                       iLine);
             return CE_Failure;
         }
@@ -464,7 +465,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB
-                  " to write to file.\n",
+                  " to write to file.",
                   nBlockYOff, nImgOffset + nBlockYOff * nLineOffset );
 
         eErr = CE_Failure;
