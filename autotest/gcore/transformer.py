@@ -252,8 +252,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 :
+       or abs(pnt[0]-20.5) > 0.05 \
+       or abs(pnt[1]-10.5) > 0.05 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(4)' )
         return 'fail'
@@ -276,8 +276,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 :
+       or abs(pnt[0]-20.5) > 0.05 \
+       or abs(pnt[1]-10.5) > 0.05 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(5)' )
         return 'fail'
@@ -300,8 +300,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 :
+       or abs(pnt[0]-20.5) > 0.05 \
+       or abs(pnt[1]-10.5) > 0.05 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(6)' )
         return 'fail'
@@ -343,8 +343,8 @@ def transformer_5():
 
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
     if not success \
-       or abs(pnt[0]--99.5) > 0.001 \
-       or abs(pnt[1]-0.5) > 0.001 :
+       or abs(pnt[0]--99.5) > 0.05 \
+       or abs(pnt[1]-0.5) > 0.05 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
@@ -711,7 +711,7 @@ def transformer_13():
 
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=data/transformer_13_dem.tif' ] )
     (success,pnt) = tr.TransformPoint( 0, 6600, 24 )
-    if not success or abs(pnt[0] - -108.00066006090175) > 1e-7 or abs(pnt[1] - 39.157694114659051) > 1e-7:
+    if not success or abs(pnt[0] - -108.00066000065341) > 1e-7 or abs(pnt[1] - 39.157694013439489) > 1e-7:
         print(pnt)
         return 'fail'
 
