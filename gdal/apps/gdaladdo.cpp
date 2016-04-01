@@ -213,6 +213,7 @@ int main( int nArgc, char ** papszArgv )
     else
     {
         CPLPushErrorHandler( GDALAddoErrorHandler );
+        CPLSetCurrentErrorHandlerCatchDebug( FALSE );
         hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE, NULL, papszOpenOptions, NULL );
         CPLPopErrorHandler();
         if( hDataset != NULL )

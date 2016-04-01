@@ -9948,6 +9948,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Store errors/warnings and emit them later */
     std::vector<GTIFFErrorStruct> aoErrors;
     CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
+    CPLSetCurrentErrorHandlerCatchDebug( FALSE );
     hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "rc" : "r+c",
                           poOpenInfo->fpL );
     CPLPopErrorHandler();
