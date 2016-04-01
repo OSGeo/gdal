@@ -25,6 +25,8 @@ Prerequisites:
     It may also be helpful to check:
       http://upstream-tracker.org/versions/gdal.html
 
+2) Delete existing fix_typos directory and run scripts/fix_typos.sh
+
 Process :
 
 1) a) Regenerate configure using autogen.sh and commit if changed.
