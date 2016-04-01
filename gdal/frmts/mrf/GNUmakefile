@@ -13,7 +13,7 @@
 include ../../GDALmake.opt
 
 PLUGIN_PATH	=	$(prefix)/lib/gdalplugins/$(GDAL_VERSION_MAJOR).$(GDAL_VERSION_MINOR)
-FILES	=	marfa_dataset mrf_band JPEG_band PNG_band Raw_band Tif_band mrf_util mrf_overview
+FILES	=	marfa_dataset mrf_band JPEG_band PNG_band JPNG_band Raw_band Tif_band mrf_util mrf_overview
 OBJ 	=	$(addsuffix .o, $(FILES))
 LO_O_OBJ	=	$(addsuffix .lo,$(basename $(O_OBJ)))
 DEPENDS	= marfa.h
@@ -46,7 +46,7 @@ XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I $(LIBLERC)
 SUBLIBS := libLERC
 endif
 
-CPPFLAGS        :=      $(XTRA_OPT)  $(CPPFLAGS)
+CPPFLAGS        := -fPIC $(XTRA_OPT)  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
