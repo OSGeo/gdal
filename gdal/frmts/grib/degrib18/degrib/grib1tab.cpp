@@ -4351,7 +4351,7 @@ const GRIB1ParmTable parm_table_ecmwf_150[256] = {
    /* 177 */ {"var177", "undefined", "-", UC_NONE},
    /* 178 */ {"var178", "undefined", "-", UC_NONE},
    /* 179 */ {"var179", "undefined", "-", UC_NONE},
-   /* 180 */ {"var180", "Diagnosed SST eror", "C", UC_NONE},
+   /* 180 */ {"var180", "Diagnosed SST error", "C", UC_NONE},
    /* 181 */ {"var181", "Heat flux correction", "W/m^2", UC_NONE},
    /* 182 */ {"var182", "Observed SST", "C", UC_NONE},
    /* 183 */ {"var183", "Observed heat flux", "W/m^2", UC_NONE},

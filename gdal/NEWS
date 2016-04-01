@@ -3514,7 +3514,7 @@ NetCDF driver:
  * Add support for deflate compression
  * Add format support information and CreateOptionList to driver metadata 
  * Add support for valid_range/valid_min/valid_max
- * Proper handling of singed/unsigned byte data
+ * Proper handling of signed/unsigned byte data
  * Add support for Create() function and significantly refactor code for export (#4221)
  * Improvements to CF projection support (see wiki:NetCDF_ProjectionTestingStatus)
  

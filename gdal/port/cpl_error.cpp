@@ -1148,7 +1148,7 @@ void CPL_STDCALL CPLPopErrorHandler()
  * By default when installing a custom error handler, this one intercepts
  * debug messages. In some cases, this might not be desirable and the user
  * would prefer that the previous installed handler (or the default one if no
- * previous installed handler exists in the stack) deal withh it. In which
+ * previous installed handler exists in the stack) deal with it. In which
  * case, this function should be called with bCatchDebug.
  *
  * @param bCatchDebug FALSE if the current error handler should not intercept debug messages
