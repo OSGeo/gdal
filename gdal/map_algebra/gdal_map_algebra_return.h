@@ -1,6 +1,24 @@
 typedef int (*gma_compute_value_callback)(gma_band band, gma_block *block, void*);
 
 template<typename datatype>
+int gma_get_min(gma_band band, gma_block *block, void *arg) {
+    datatype mn = *(datatype*)arg;
+    gma_cell_index i;
+    int f = 1;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            datatype x = gma_block_cell(datatype, block, i);
+            if (f || x < mn) {
+                f = 0;
+                mn = x;
+            }
+        }
+    }
+    *(datatype*)arg = mn;
+    return 1;
+}
+
+template<typename datatype>
 int gma_get_max(gma_band band, gma_block *block, void *arg) {
     datatype mx = *(datatype*)arg;
     gma_cell_index i;
@@ -89,10 +107,6 @@ int gma_get_cells(gma_band band, gma_block *block, void *cells) {
 
 template<typename datatype>
 void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, void *ret_val, int focal_distance) {
-    if (GDALDataTypeTraits<datatype>::datatype != b->GetRasterDataType()) {
-        fprintf(stderr, "band and mapper are incompatible.");
-        return;
-    }
     gma_band band = gma_band_initialize(b);
     gma_block_index i;
     for (i.y = 0; i.y < band.h_blocks; i.y++) {
@@ -116,61 +130,14 @@ template <typename retval_t>
 retval_t *gma_compute_value_object(GDALRasterBand *b, gma_method_compute_value_t method) {
     retval_t *retval = new retval_t;
     switch (method) {
-    case gma_method_histogram: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Byte:
-            gma_proc_compute_value<uint8_t>(b, gma_histogram<uint8_t>, retval, 0);
-            break;
-        case GDT_UInt16:
-            gma_proc_compute_value<uint16_t>(b, gma_histogram<uint16_t>, retval, 0);
-            break;
-        case GDT_Int32:
-            gma_proc_compute_value<int32_t>(b, gma_histogram<int32_t>, retval, 0);
-            break;
-        case GDT_UInt32:
-            gma_proc_compute_value<uint32_t>(b, gma_histogram<uint32_t>, retval, 0);
-            break;
-        default:
-            goto not_implemented_for_this_datatype;
-        }
+    case gma_method_histogram:
+        type_switch_single(gma_histogram, 0);
         break;
-    }
-    case gma_method_zonal_neighbors: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Byte:
-            gma_proc_compute_value<uint8_t>(b, gma_zonal_neighbors<uint8_t>, retval, 1);
-            break;
-        case GDT_UInt16:
-            gma_proc_compute_value<uint16_t>(b, gma_zonal_neighbors<uint16_t>, retval, 1);
-            break;
-        case GDT_Int32:
-            gma_proc_compute_value<int32_t>(b, gma_zonal_neighbors<int32_t>, retval, 1);
-            break;
-        case GDT_UInt32:
-            gma_proc_compute_value<uint32_t>(b, gma_zonal_neighbors<uint32_t>, retval, 1);
-            break;
-        default:
-            goto not_implemented_for_this_datatype;
-        }
+    case gma_method_zonal_neighbors:
+        type_switch_single(gma_zonal_neighbors, 1);
         break;
-    }
     case gma_method_get_cells: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Byte:
-            gma_proc_compute_value<uint8_t>(b, gma_get_cells<uint8_t>, retval, 0);
-            break;
-        case GDT_UInt16:
-            gma_proc_compute_value<uint16_t>(b, gma_get_cells<uint16_t>, retval, 0);
-            break;
-        case GDT_Int32:
-            gma_proc_compute_value<int32_t>(b, gma_get_cells<int32_t>, retval, 0);
-            break;
-        case GDT_UInt32:
-            gma_proc_compute_value<uint32_t>(b, gma_get_cells<uint32_t>, retval, 0);
-            break;
-        default:
-            goto not_implemented_for_this_datatype;
-        }
+        type_switch_single(gma_get_cells, 0);
         break;
     }
     default:
@@ -189,36 +156,12 @@ template <typename retval_t>
 retval_t gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method) {
     retval_t retval;
     switch (method) {
-    case gma_method_get_max: {
-        switch (b->GetRasterDataType()) {
-        case GDT_Byte: {
-            uint8_t arg;
-            gma_proc_compute_value<uint8_t>(b, gma_get_max<uint8_t>, &arg, 0);
-            retval = arg;
-            break;
-        }
-        case GDT_UInt16: {
-            uint8_t arg;
-            gma_proc_compute_value<uint16_t>(b, gma_get_max<uint16_t>, &arg, 0);
-            retval = arg;
-            break;
-        }
-        case GDT_Int32: {
-            int32_t arg;
-            gma_proc_compute_value<int32_t>(b, gma_get_max<int32_t>, &arg, 0);
-            retval = arg;
-            break;
-        }
-        case GDT_UInt32: {
-            uint32_t arg;
-            gma_proc_compute_value<uint32_t>(b, gma_get_max<uint32_t>, &arg, 0);
-            retval = arg;
-            break;
-        }
-        default:
-            goto not_implemented_for_this_datatype;
-        }
-    }
+    case gma_method_get_min:
+        type_switch_single2(gma_get_min, 0);
+        break;
+    case gma_method_get_max:
+        type_switch_single2(gma_get_max, 0);
+        break;
     default:
         goto unknown_method;
     }

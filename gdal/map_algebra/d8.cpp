@@ -35,7 +35,7 @@ int main() {
         int h = ua->GetYSize();
         GDALRasterBand *ua2 = driver->Create("ua2.tiff", w, h, 1, GDT_Float32, NULL)->GetRasterBand(1);
         gma_two_bands(ua2, gma_method_add_band, ua);
-        gma_two_bands(ua2, gma_method_multiply_with_band, c);
+        gma_two_bands(ua2, gma_method_multiply_by_band, c);
         gma_simple(ua2, gma_method_log);
     }
 
@@ -54,20 +54,20 @@ int main() {
         gma_simple(c, gma_method_set_border_cells);
 
         // c *= ua
-        gma_two_bands(c, gma_method_multiply_with_band, ua);
+        gma_two_bands(c, gma_method_multiply_by_band, ua);
 
         //c *= c > 10000;
         gma_operator<uint32_t> op;
         op.op = gma_gt;
         op.value = 10000;
-        gma_two_bands(c, gma_method_multiply_with_band, c, &op);
+        gma_two_bands(c, gma_method_multiply_by_band, c, &op);
 
         // outlet cells
         gma_array<gma_cell<uint32_t> > *outlets = 
             gma_compute_value_object<gma_array<gma_cell<uint32_t> > >(c, gma_method_get_cells);
 
         // c = 0
-        gma_with_arg<uint32_t>(c, gma_method_set, 0);
+        gma_with_arg<uint32_t>(c, gma_method_assign, 0);
 
         for (int i = 0; i < outlets->size(); i++) {
             gma_cell<uint32_t> *cell = outlets->get(i);

@@ -18,6 +18,18 @@ public:
 };
 
 template<typename datatype>
+int gma_assign(gma_block *block, void *assign_to) {
+    datatype a = *(datatype *)assign_to;
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = a;
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
 int gma_add(gma_block *block, void *to_add) {
     datatype a = *(datatype *)to_add;
     gma_cell_index i;
@@ -30,15 +42,63 @@ int gma_add(gma_block *block, void *to_add) {
 }
 
 template<typename datatype>
-int gma_set(gma_block *block, void *set_to) {
-    datatype a = *(datatype *)set_to;
+int gma_subtract(gma_block *block, void *to_subtract) {
+    datatype a = *(datatype *)to_subtract;
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            gma_block_cell(datatype, block, i) = a;
+            gma_block_cell(datatype, block, i) -= a;
         }
     }
     return 2;
+}
+
+template<typename datatype>
+int gma_multiply(gma_block *block, void *to_multiply) {
+    datatype a = *(datatype *)to_multiply;
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) *= a;
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_divide(gma_block *block, void *to_divide) {
+    datatype a = *(datatype *)to_divide;
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) /= a;
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_modulus(gma_block *block, void *op) {
+    datatype a = *(datatype *)op;
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) %= a;
+        }
+    }
+    return 2;
+}
+
+template<>
+int gma_modulus<float>(gma_block *block, void *op) {
+    fprintf(stderr, "invalid type ‘float’ to binary operator %%");
+    return 0;
+}
+
+template<>
+int gma_modulus<double>(gma_block *block, void *op) {
+    fprintf(stderr, "invalid type ‘double’ to binary operator %%");
+    return 0;
 }
 
 template<typename datatype>
@@ -77,15 +137,25 @@ void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback cb, void *arg) {
 template<typename datatype>
 void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, datatype arg) {
     // need conversion method arg type -> cell type?
-    if (GDALDataTypeTraits<datatype>::datatype != b->GetRasterDataType()) {
-        fprintf(stderr, "band and mapper are incompatible.");
-        return;
-    }
     switch (method) {
+    case gma_method_assign:
+        gma_with_arg_proc<datatype>(b, gma_assign<datatype>, &arg);
+        break;
     case gma_method_add:
         gma_with_arg_proc<datatype>(b, gma_add<datatype>, &arg);
-    case gma_method_set:
-        gma_with_arg_proc<datatype>(b, gma_set<datatype>, &arg);
+        break;
+    case gma_method_subtract:
+        gma_with_arg_proc<datatype>(b, gma_subtract<datatype>, &arg);
+        break;
+    case gma_method_multiply:
+        gma_with_arg_proc<datatype>(b, gma_multiply<datatype>, &arg);
+        break;
+    case gma_method_divide:
+        gma_with_arg_proc<datatype>(b, gma_divide<datatype>, &arg);
+        break;
+    case gma_method_modulus:
+        gma_with_arg_proc<datatype>(b, gma_modulus<datatype>, &arg);
+        break;
     }
 }
 

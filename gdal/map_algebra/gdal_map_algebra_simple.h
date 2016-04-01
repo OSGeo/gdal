@@ -37,11 +37,133 @@ int gma_rand(gma_block *block) {
 #include <math.h>
 
 template<typename datatype>
+int gma_abs(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = abs(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+// fabs for floats
+
+template<typename datatype>
+int gma_exp(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = exp(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_exp2(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = exp2(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
 int gma_log(gma_block *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             gma_block_cell(datatype, block, i) = log(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_log2(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = log2(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_log10(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = log10(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_sqrt(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = sqrt(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_sin(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = sin(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_cos(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = cos(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_tan(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = tan(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_ceil(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = ceil(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_floor(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = floor(gma_block_cell(datatype, block, i));
         }
     }
     return 2;
@@ -62,10 +184,6 @@ int gma_set_border_cells(gma_band band, gma_block *block) {
 
 template<typename datatype>
 void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
-    if (GDALDataTypeTraits<datatype>::datatype != b->GetRasterDataType()) {
-        fprintf(stderr, "band and mapper are incompatible.");
-        return;
-    }
     gma_band band = gma_band_initialize(b);
     gma_block_index i;
     for (i.y = 0; i.y < band.h_blocks; i.y++) {
@@ -80,8 +198,41 @@ void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
             case gma_method_rand:
                 ret = gma_rand<datatype>(block);
                 break;
+            case gma_method_abs:
+                ret = gma_abs<datatype>(block);
+                break;
+            case gma_method_exp:
+                ret = gma_exp<datatype>(block);
+                break;
+            case gma_method_exp2:
+                ret = gma_exp2<datatype>(block);
+                break;
             case gma_method_log:
                 ret = gma_log<datatype>(block);
+                break;
+            case gma_method_log2:
+                ret = gma_log2<datatype>(block);
+                break;
+            case gma_method_log10:
+                ret = gma_log10<datatype>(block);
+                break;
+            case gma_method_sqrt:
+                ret = gma_sqrt<datatype>(block);
+                break;
+            case gma_method_sin:
+                ret = gma_sin<datatype>(block);
+                break;
+            case gma_method_cos:
+                ret = gma_cos<datatype>(block);
+                break;
+            case gma_method_tan:
+                ret = gma_tan<datatype>(block);
+                break;
+            case gma_method_ceil:
+                ret = gma_ceil<datatype>(block);
+                break;
+            case gma_method_floor:
+                ret = gma_floor<datatype>(block);
                 break;
             case gma_method_set_border_cells:
                 ret = gma_set_border_cells<datatype>(band, block);

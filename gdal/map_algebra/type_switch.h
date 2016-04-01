@@ -593,3 +593,76 @@
     default:                                                            \
         goto not_implemented_for_these_datatypes;                       \
     }
+
+#define type_switch_single(sub,fd) switch (b->GetRasterDataType()) {    \
+    case GDT_Byte:                                                      \
+        gma_proc_compute_value<uint8_t>(b, sub<uint8_t>, retval, fd);   \
+        break;                                                          \
+    case GDT_UInt16:                                                    \
+        gma_proc_compute_value<uint16_t>(b, sub<uint16_t>, retval, fd); \
+        break;                                                          \
+    case GDT_Int16:                                                     \
+        gma_proc_compute_value<int16_t>(b, sub<int16_t>, retval, fd);   \
+        break;                                                          \
+    case GDT_UInt32:                                                    \
+        gma_proc_compute_value<uint32_t>(b, sub<uint32_t>, retval, fd); \
+        break;                                                          \
+    case GDT_Int32:                                                     \
+        gma_proc_compute_value<int32_t>(b, sub<int32_t>, retval, fd);   \
+        break;                                                          \
+    case GDT_Float32:                                                   \
+        gma_proc_compute_value<float>(b, sub<float>, retval, fd);       \
+        break;                                                          \
+    case GDT_Float64:                                                   \
+        gma_proc_compute_value<double>(b, sub<double>, retval, fd);     \
+        break;                                                          \
+    default:                                                            \
+        goto not_implemented_for_this_datatype;                         \
+    }
+
+#define type_switch_single2(sub,fd) {switch (b->GetRasterDataType()) {  \
+    case GDT_Byte: {                                                    \
+        uint8_t arg;                                                    \
+        gma_proc_compute_value<uint8_t>(b, sub<uint8_t>, &arg, fd);     \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_UInt16: {                                                  \
+        uint8_t arg;                                                    \
+        gma_proc_compute_value<uint16_t>(b, sub<uint16_t>, &arg, fd);   \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_Int16: {                                                   \
+        int8_t arg;                                                     \
+        gma_proc_compute_value<int16_t>(b, sub<int16_t>, &arg, fd);     \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_UInt32: {                                                  \
+        uint32_t arg;                                                   \
+        gma_proc_compute_value<uint32_t>(b, sub<uint32_t>, &arg, fd);   \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_Int32: {                                                   \
+        uint32_t arg;                                                   \
+        gma_proc_compute_value<int32_t>(b, sub<int32_t>, &arg, fd);     \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_Float32: {                                                 \
+        float arg;                                                      \
+        gma_proc_compute_value<float>(b, sub<float>, &arg, fd);         \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    case GDT_Float64: {                                                 \
+        double arg;                                                     \
+        gma_proc_compute_value<double>(b, sub<double>, &arg, fd);       \
+        retval = arg;                                                   \
+        break;                                                          \
+    }                                                                   \
+    default:                                                            \
+        goto not_implemented_for_this_datatype;                         \
+    }}

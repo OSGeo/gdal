@@ -1,7 +1,7 @@
 
 typedef int (*gma_two_bands_callback)(gma_band, gma_block*, gma_band, void*);
 
-typedef enum { 
+typedef enum {
     gma_eq,
     gma_ne,
     gma_gt,
@@ -20,39 +20,174 @@ struct gma_operator {
 };
 
 template<typename type1,typename type2>
-int gma_add_band(gma_band band1, gma_block *block1, gma_band band2, void *) {
+type1 gma_use_operator(gma_operator<type2> *op, type2 value) {
+    switch (op->op) {
+    case gma_eq:
+        return value == op->value;
+    case gma_ne:
+        return value != op->value;
+    case gma_gt:
+        return value > op->value;
+    case gma_lt:
+        return value < op->value;
+    case gma_ge:
+        return value >= op->value;
+    case gma_le:
+        return value <= op->value;
+    case gma_and:
+        return value && op->value;
+    case gma_or:
+        return value || op->value;
+    case gma_not:
+        return not value;
+    }
+}
+
+template<typename type1,typename type2>
+int gma_assign_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type2 to_add;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &to_add))
-                gma_block_cell(type1, block1, i1) += to_add;
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) = value1;
+            }
         }
     }
     return 2;
 }
 
 template<typename type1,typename type2>
-int gma_multiply_with_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+int gma_add_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type2 multiplier;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &multiplier)) {
-                if (op) {
-                    gma_operator<type2> *o = (gma_operator<type2> *)op;
-                    switch (o->op) {
-                    case gma_gt:
-                        multiplier = multiplier > o->value;
-                        break;
-                    }
-                }
-                gma_block_cell(type1, block1, i1) *= multiplier;
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) += value1;
             }
         }
     }
     return 2;
 }
+
+template<typename type1,typename type2>
+int gma_subtract_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1->h; i1.y++) {
+        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) -= value1;
+            }
+        }
+    }
+    return 2;
+}
+
+template<typename type1,typename type2>
+int gma_multiply_by_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1->h; i1.y++) {
+        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) *= value1;
+            }
+        }
+    }
+    return 2;
+}
+
+template<typename type1,typename type2>
+int gma_divide_by_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1->h; i1.y++) {
+        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) /= value1;
+            }
+        }
+    }
+    return 2;
+}
+
+template<typename type1,typename type2>
+int gma_modulus_by_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1->h; i1.y++) {
+        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+            type1 value1;
+            type2 value2;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
+                if (op)
+                    value1 = gma_use_operator<type1,type2>((gma_operator<type2> *)op, value2);
+                else
+                    value1 = value2;
+                gma_block_cell(type1, block1, i1) %= value1;
+            }
+        }
+    }
+    return 2;
+}
+
+#define gma_modulus_by_band_type_error(type1,type2)                     \
+    template<>                                                          \
+    int gma_modulus_by_band<type1,type2>(gma_band, gma_block*, gma_band, void*) { \
+        fprintf(stderr, "invalid type to binary operator %%");          \
+        return 0;                                                       \
+    }
+
+gma_modulus_by_band_type_error(uint8_t,float)
+gma_modulus_by_band_type_error(uint8_t,double)
+gma_modulus_by_band_type_error(float,uint8_t)
+gma_modulus_by_band_type_error(double,uint8_t)
+gma_modulus_by_band_type_error(uint16_t,float)
+gma_modulus_by_band_type_error(uint16_t,double)
+gma_modulus_by_band_type_error(float,uint16_t)
+gma_modulus_by_band_type_error(double,uint16_t)
+gma_modulus_by_band_type_error(int16_t,float)
+gma_modulus_by_band_type_error(int16_t,double)
+gma_modulus_by_band_type_error(float,int16_t)
+gma_modulus_by_band_type_error(double,int16_t)
+gma_modulus_by_band_type_error(uint32_t,float)
+gma_modulus_by_band_type_error(uint32_t,double)
+gma_modulus_by_band_type_error(float,uint32_t)
+gma_modulus_by_band_type_error(double,uint32_t)
+gma_modulus_by_band_type_error(int32_t,float)
+gma_modulus_by_band_type_error(int32_t,double)
+gma_modulus_by_band_type_error(float,int32_t)
+gma_modulus_by_band_type_error(double,int32_t)
+gma_modulus_by_band_type_error(float,float)
+gma_modulus_by_band_type_error(float,double)
+gma_modulus_by_band_type_error(double,float)
+gma_modulus_by_band_type_error(double,double)
 
 // zonal min should be gma_hash<gma_int> or gma_hash<gma_float> depending on the datatype
 
@@ -70,6 +205,28 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
             if (z->exists(zone)) {
                 values_type old_value = z->get(zone)->value();
                 if (value > old_value)
+                    continue;
+            }
+            z->put(zone, new gma_int(value));
+        }
+    }
+    return 1;
+}
+
+template<typename zones_type,typename values_type>
+int gma_zonal_max(gma_band zones_band, gma_block *zones_block, gma_band values_band, void *zonal_max) {
+    gma_hash<gma_int> *z = (gma_hash<gma_int>*)zonal_max;
+    gma_cell_index zones_i;
+    for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
+        for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
+            values_type value;
+            gma_value_from_other_band<values_type>(zones_band, zones_block, zones_i, values_band, &value);
+            zones_type zone = gma_block_cell(zones_type, zones_block, zones_i);
+            if (!zone)
+                continue;
+            if (z->exists(zone)) {
+                values_type old_value = z->get(zone)->value();
+                if (value < old_value)
                     continue;
             }
             z->put(zone, new gma_int(value));
@@ -137,7 +294,7 @@ int gma_rim_by8(gma_band rims_band, gma_block *rims_block, gma_band areas_band, 
                     break;
                 }
             }
-            
+
             gma_block_cell(rims_type, rims_block, i) = my_area;
 
         }
@@ -211,7 +368,7 @@ int gma_D8(gma_band band_fd, gma_block *block_fd, gma_band band_dem, void *) {
     for (i_fd.y = 0; i_fd.y < block_fd->h; i_fd.y++) {
         for (i_fd.x = 0; i_fd.x < block_fd->w; i_fd.x++) {
             int border_cell = is_border_cell(block_fd, border_block, i_fd);
-            
+
             dem_t my_elevation;
             gma_value_from_other_band<dem_t>(band_fd, block_fd, i_fd, band_dem,  &my_elevation);
 
@@ -226,7 +383,7 @@ int gma_D8(gma_band band_fd, gma_block *block_fd, gma_band band_dem, void *) {
                 dem_t tmp;
                 if (!gma_value_from_other_band<dem_t>(band_fd, block_fd, i_n_fd, band_dem, &tmp))
                     continue;
-                
+
                 if (first || tmp < lowest) {
                     first = 0;
                     lowest = tmp;
@@ -350,7 +507,7 @@ int gma_fill(gma_band filled_band, gma_block *filled_block, gma_band dem_band, v
                 gma_block_cell(filled_t, filled_block, i) = new_e;
                 changed++;
             }
-            
+
         }
     }
 
@@ -369,7 +526,7 @@ typedef struct {
     int cells_added;
     int basin_id;
     int depressions;
-    gma_hash<gma_hash<gma_int> > *splits; // basin => (basin => 1) 
+    gma_hash<gma_hash<gma_int> > *splits; // basin => (basin => 1)
 } gma_depressions_data;
 
 // return depressions, i.e., areas, which drain to pits or flat cells
@@ -378,7 +535,7 @@ template<typename deps_t, typename fd_t>
 int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd, void *data) {
     gma_cell_index i_deps;
     gma_depressions_data *d = (gma_depressions_data *)data;
-    
+
     if (gma_first_block(block_deps)) {
         d->cells_added = 0;
         d->basin_id = 0;
@@ -392,7 +549,7 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
 
             fd_t my_dir;
             gma_value_from_other_band<fd_t>(band_deps, block_deps, i_deps, band_fd,  &my_dir);
-            
+
             // if pit, mark and we're done
             if (my_dir == 0) {
                 d->basin_id++;
@@ -403,19 +560,19 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
             }
 
             // do we flow to a basin? or are we flat with a flat neighbor, which is a part of a basin?
-            // this may lead to situations where a flat area is marked with two or more basin id's 
+            // this may lead to situations where a flat area is marked with two or more basin id's
             // although they are part of the same basin => that has to be fixed later
             deps_t n_basin[9] = {0,0,0,0,0,0,0,0,0};
             fd_t n_dir[9] = {0,0,0,0,0,0,0,0,0};
-            
+
             gma_cell_index in_deps = gma_cell_first_neighbor(i_deps);
             for (int neighbor = 1; neighbor < 9; neighbor++) {
                 gma_cell_move_to_neighbor(in_deps, neighbor);
-                
-                if (!gma_value_from_other_band<deps_t>(band_deps, block_deps, in_deps, 
+
+                if (!gma_value_from_other_band<deps_t>(band_deps, block_deps, in_deps,
                                                          band_deps, &n_basin[neighbor]))
                     continue;  // we are at border and this is outside
-                
+
                 gma_value_from_other_band<fd_t>(band_deps, block_deps, in_deps, band_fd,  &n_dir[neighbor]);
 
             }
@@ -590,19 +747,19 @@ int gma_catchment(gma_band catchment_band, gma_block *catchment_block, gma_band 
             for (int neighbor = 1; neighbor <= my_dir; neighbor++) {
                 gma_cell_move_to_neighbor(id, neighbor);
             }
-             
+
             catchment_t my_down;
             if (!gma_value_from_other_band<catchment_t>(catchment_band, catchment_block, id, catchment_band, &my_down))
                 continue;
-            
+
             if (my_down == d->mark) {
                 gma_block_cell(catchment_t, catchment_block, i) = d->mark;
                 d->cells_added++;
             }
-            
+
         }
     }
-    
+
     if (gma_last_block(catchment_band, catchment_block))
         fprintf(stderr, "%i cells added\n", d->cells_added);
 
@@ -659,8 +816,6 @@ void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRaste
     gma_band_empty_cache(&band2);
 }
 
-#include "type_switch.h"
-
 void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, void *arg = NULL) {
     void *retval = NULL;
     // b1 is changed, b2 is not
@@ -669,18 +824,37 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
         return NULL;
     }
     switch (method) {
-    case gma_method_add_band: // b1 += b2
-        type_switch_bb(gma_add_band, 0, NULL);
+    case gma_method_assign_band: // b1 = b2
+        type_switch_bb(gma_assign_band, 0, arg);
         break;
-    case gma_method_multiply_with_band: // b1 *= b2
-        type_switch_bb(gma_multiply_with_band, 0, arg);
+    case gma_method_add_band: // b1 += b2
+        type_switch_bb(gma_add_band, 0, arg);
+        break;
+    case gma_method_subtract_band:
+        type_switch_bb(gma_subtract_band, 0, arg);
+        break;
+    case gma_method_multiply_by_band: // b1 *= b2
+        type_switch_bb(gma_multiply_by_band, 0, arg);
+        break;
+    case gma_method_divide_by_band:
+        type_switch_bb(gma_divide_by_band, 0, arg);
+        break;
+    case gma_method_modulus_by_band:
+        type_switch_bb(gma_modulus_by_band, 0, arg);
         break;
     case gma_method_zonal_min: { // b1 = zones, b2 = values
-        gma_hash<gma_int> *zonal_min = new gma_hash<gma_int>;
+        gma_hash<gma_int> *zonal_min = new gma_hash<gma_int>; // fixme: if b2 is float, hash must be gma_float
         retval = (void*)zonal_min;
         type_switch_ib(gma_zonal_min, 0, zonal_min);
         break;
     }
+    case gma_method_zonal_max: { // b1 = zones, b2 = values
+        gma_hash<gma_int> *zonal_max = new gma_hash<gma_int>; // fixme: if b2 is float, hash must be gma_float
+        retval = (void*)zonal_max;
+        type_switch_ib(gma_zonal_max, 0, zonal_max);
+        break;
+    }
+        // b1 = b2 if op
     case gma_method_set_zonal_min: { // b1 = values, b2 = zones, arg = hash of zonal mins, b1 is changed
         gma_set_zonal_min_data data;
         data.zonal_min = (gma_hash<gma_int>*)arg;
@@ -709,16 +883,16 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
 
         switch (b1->GetRasterDataType()) {
         case GDT_UInt16:
-            gma_with_arg<uint16_t>(b1, gma_method_set, max_value);
+            gma_with_arg<uint16_t>(b1, gma_method_assign, max_value);
             break;
         case GDT_Int16:
-            gma_with_arg<int16_t>(b1, gma_method_set, max_value);
+            gma_with_arg<int16_t>(b1, gma_method_assign, max_value);
             break;
         case GDT_UInt32:
-            gma_with_arg<uint32_t>(b1, gma_method_set, max_value);
+            gma_with_arg<uint32_t>(b1, gma_method_assign, max_value);
             break;
         case GDT_Int32:
-            gma_with_arg<int32_t>(b1, gma_method_set, max_value);
+            gma_with_arg<int32_t>(b1, gma_method_assign, max_value);
             break;
         default:
             goto not_implemented_for_these_datatypes;
@@ -808,12 +982,12 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
                     }
                     a = key1;
                     b = key2;
-                    if (!to->exists(a)) { 
+                    if (!to->exists(a)) {
                         if (a != b && !map->exists(a) && !map->exists(b)) {
                             map->put(a, new gma_int(b));
                             to->put(b, new gma_int(1));
                         }
-                    }                        
+                    }
                 }
                 CPLFree(keys2);
             }
