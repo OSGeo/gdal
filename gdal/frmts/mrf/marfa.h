@@ -91,10 +91,10 @@ NAMESPACE_MRF_START
 // Force LERC to be included, normally off, detected in the makefile
 // #define LERC
 
-// These are a pain to maintain in sync.  They should be replaced with
+// These are a pain to maintain in sync.  They should be replaced with 
 // C++11 uniform initializers.  The externs reside in util.cpp
 enum ILCompression {
-    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_NONE, IL_ZLIB, IL_TIF,
+    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF, 
 #if defined(LERC)
     IL_LERC,
 #endif
@@ -125,15 +125,15 @@ typedef struct {
 struct ILSize {
     GInt32 x, y, z, c, l;
     ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
-	const int c_ = -1, const int l_ = -1)
+        const int c_ = -1, const int l_ = -1)
     {
-	x = x_; y = y_; z = z_; c = c_; l = l_;
+        x = x_; y = y_; z = z_; c = c_; l = l_;
     }
 
     bool operator==(const ILSize& other)
     {
-	return ((x == other.x) && (y == other.y) && (z == other.z) &&
-	    (c == other.c) && (l == other.l));
+        return ((x == other.x) && (y == other.y) && (z == other.z) &&
+            (c == other.c) && (l == other.l));
     }
 
     bool operator!=(const ILSize& other) { return !(*this == other); }
@@ -192,13 +192,13 @@ static inline unsigned short int swab16(const unsigned short int val)
 static inline unsigned int swab32(unsigned int val)
 {
     return (unsigned int)(swab16((unsigned short int) val)) << 16
-	| swab16((unsigned short int) (val >> 16));
+        | swab16((unsigned short int) (val >> 16));
 }
 
 static inline unsigned long long int swab64(const unsigned long long int val)
 {
     return (unsigned long long int) (swab32((unsigned int)val)) << 32
-	| swab32((unsigned int)(val >> 32));
+        | swab32((unsigned int)(val >> 32));
 }
 
 // NET_ORDER is true if machine is BE, false otherwise
@@ -305,28 +305,28 @@ public:
     void Crystalize();
 
     static GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-	int bStrict, char **papszOptions, GDALProgressFunc pfnProgress,
-	void *pProgressData);
+        int bStrict, char **papszOptions, GDALProgressFunc pfnProgress,
+        void *pProgressData);
 
     static GDALDataset *Create(const char * pszName,
-	int nXSize, int nYSize, int nBands,
-	GDALDataType eType, char ** papszOptions);
+        int nXSize, int nYSize, int nBands,
+        GDALDataType eType, char ** papszOptions);
 
     // Stub for delete, GDAL should only overwrite the XML
     static CPLErr Delete(const char *) {
-	return CE_None;
+        return CE_None;
     }
 
     virtual const char *GetProjectionRef() { return projection; }
     virtual CPLErr SetProjection(const char *proj) {
-	projection = proj;
-	return CE_None;
+        projection = proj;
+        return CE_None;
     }
 
     virtual CPLString const &GetPhotometricInterpretation() { return photometric; }
     virtual CPLErr SetPhotometricInterpretation(const char *photo) {
-	photometric = photo;
-	return CE_None;
+        photometric = photo;
+        return CE_None;
     }
 
     virtual CPLErr GetGeoTransform(double *gt);
@@ -334,10 +334,10 @@ public:
 
 #ifdef unused
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
-	int nBufXSize, int nBufYSize,
-	GDALDataType eDT,
-	int nBandCount, int *panBandList,
-	char **papszOptions);
+        int nBufXSize, int nBufYSize,
+        GDALDataType eDT,
+        int nBandCount, int *panBandList,
+        char **papszOptions);
 #endif
 
     virtual char **GetFileList();
@@ -352,16 +352,16 @@ public:
     const CPLString GetFname() { return fname; };
     // Patches a region of all the next overview, argument counts are in blocks
     virtual CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
-	int srcLevel = 0, int recursive = false, int sampling_mode = SAMPLING_Avg);
+        int srcLevel = 0, int recursive = false, int sampling_mode = SAMPLING_Avg);
 
     // Creates an XML tree from the current MRF.  If written to a file it becomes an MRF
     CPLXMLNode *BuildConfig();
 
     void SetPBufferSize(unsigned int sz) {
-	pbsize = sz;
+        pbsize = sz;
     }
     unsigned int GetPBufferSize() {
-	return pbsize;
+        return pbsize;
     }
 
 protected:
@@ -388,9 +388,9 @@ protected:
     // Late allocation buffer
     bool SetPBuffer(unsigned int sz);
     void *GetPBuffer() {
-	if (!pbuffer && pbsize)
-	    SetPBuffer(pbsize);
-	return pbuffer;
+        if (!pbuffer && pbsize)
+            SetPBuffer(pbsize);
+        return pbuffer;
     }
 
 #if GDAL_VERSION_MAJOR >= 2
@@ -399,12 +399,12 @@ protected:
         int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*);
 #else
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
-	void *, int, int, GDALDataType,
-	int, int *, int, int, int);
+        void *, int, int, GDALDataType,
+        int, int *, int, int, int);
 #endif
 
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
-	GDALProgressFunc, void*);
+        GDALProgressFunc, void*);
 
 
     // Write a tile, the infooffset is the relative position in the index file
@@ -419,12 +419,12 @@ protected:
     VSILFILE *IdxFP();
     VSILFILE *DataFP();
     GDALRWFlag IdxMode() {
-	if (!ifp.FP) IdxFP();
-	return ifp.acc;
+        if (!ifp.FP) IdxFP();
+        return ifp.acc;
     };
     GDALRWFlag DataMode() {
-	if (!dfp.FP) DataFP();
-	return dfp.acc;
+        if (!dfp.FP) DataFP();
+        return dfp.acc;
     };
     GDALDataset *GetSrcDS();
 
@@ -556,7 +556,7 @@ protected:
     // How many bytes are in a band block (not a page, a single band block)
     // Easiest is to calculate it from the pageSizeBytes
     GUInt32 blockSizeBytes() {
-	return poDS->current.pageSizeBytes / poDS->current.pagesize.c;
+        return poDS->current.pageSizeBytes / poDS->current.pagesize.c;
     }
 
     const CPLStringList & GetOptlist() const { return poDS->optlist; }
@@ -588,31 +588,45 @@ protected:
  *
  */
 
+class PNG_Codec {
+public:
+    PNG_Codec(const ILImage &image) : img(image), 
+        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0) {};
+
+    virtual ~PNG_Codec() {
+        CPLFree(PNGColors);
+        CPLFree(PNGAlpha);
+    }
+
+    CPLErr CompressPNG(buf_mgr &dst, buf_mgr &src);
+    CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
+
+    const ILImage &img;
+
+    void *PNGColors;
+    void *PNGAlpha;
+    int PalSize, TransSize, deflate_flags;
+};
+
 class PNG_Band : public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~PNG_Band();
+
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src);
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src);
 
-    CPLErr CompressPNG(buf_mgr &dst, buf_mgr &src);
-    CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
-    CPLErr ResetPalette();
-    void *PNGColors;
-    void *PNGAlpha;
-    int PalSize, TransSize;
+    PNG_Codec codec;
 };
 
-class JPEG_Band : public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+/* 
+ * The JPEG Codec can be used outside of the JPEG_Band
+*/
+
+class JPEG_Codec {
 public:
-    JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~JPEG_Band() {};
-protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src);
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src);
+    JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {};
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
@@ -623,17 +637,47 @@ protected:
     CPLErr DecompressJPEG12(buf_mgr &dst, buf_mgr &src);
 #endif
 
-    // Stored format flags, significant only for 3 band data
+    const ILImage &img;
+
+    // JPEG specific flags
     bool sameres;
     bool rgb;
     bool optimize;
+};
+
+class JPEG_Band : public GDALMRFRasterBand {
+    friend class GDALMRFDataset;
+public:
+    JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    virtual ~JPEG_Band() {};
+
+protected:
+    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src);
+    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src);
+
+    JPEG_Codec codec;
+};
+
+// A 2 or 4 band, with JPEG and/or PNG page encoding, optimized for size
+class JPNG_Band : public GDALMRFRasterBand {
+    friend class GDALMRFDataset;
+public:
+    JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    virtual ~JPNG_Band();
+protected:
+    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src);
+    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src);
+
+    CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
+    CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
+    int rgb, sameres, optimize;
 };
 
 class Raw_Band : public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     Raw_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-	GDALMRFRasterBand(pDS, image, b, int(level)) {};
+        GDALMRFRasterBand(pDS, image, b, int(level)) {};
     virtual ~Raw_Band() {};
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src);
@@ -675,33 +719,33 @@ protected:
 class GDALMRFLRasterBand : public GDALPamRasterBand {
 public:
     GDALMRFLRasterBand(GDALMRFRasterBand *b) {
-	pBand = b;
-	eDataType = b->GetRasterDataType();
-	b->GetBlockSize(&nBlockXSize, &nBlockYSize);
-	eAccess = b->GetAccess();
-	nRasterXSize = b->GetXSize();
-	nRasterYSize = b->GetYSize();
+        pBand = b;
+        eDataType = b->GetRasterDataType();
+        b->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        eAccess = b->GetAccess();
+        nRasterXSize = b->GetXSize();
+        nRasterYSize = b->GetYSize();
     }
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) {
-	return pBand->IReadBlock(xblk, yblk, buffer);
+        return pBand->IReadBlock(xblk, yblk, buffer);
     }
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) {
-	return pBand->IWriteBlock(xblk, yblk, buffer);
+        return pBand->IWriteBlock(xblk, yblk, buffer);
     }
     virtual GDALColorTable *GetColorTable() {
-	return pBand->GetColorTable();
+        return pBand->GetColorTable();
     }
     virtual GDALColorInterp GetColorInterpretation() {
-	return pBand->GetColorInterpretation();
+        return pBand->GetColorInterpretation();
     }
     virtual double  GetNoDataValue(int * pbSuccess) {
-	return pBand->GetNoDataValue(pbSuccess);
+        return pBand->GetNoDataValue(pbSuccess);
     }
     virtual double  GetMinimum(int *b) {
-	return pBand->GetMinimum(b);
+        return pBand->GetMinimum(b);
     }
     virtual double  GetMaximum(int *b) {
-	return pBand->GetMaximum(b);
+        return pBand->GetMaximum(b);
     }
 
 protected:
@@ -714,3 +758,4 @@ protected:
 NAMESPACE_MRF_END
 
 #endif // GDAL_FRMTS_MRF_MARFA_H_INCLUDED
+

@@ -99,33 +99,33 @@ static void write_png(png_structp pngp, png_bytep data, png_size_t length) {
 }
 
 /**
- *\brief In memory decompression of PNG file
- */
+*\brief In memory decompression of PNG file
+*/
 
-CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
+CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
     png_bytep* png_rowp = NULL;
-    volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *) &png_rowp;
+    volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *)&png_rowp;
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
     png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (NULL == pngp) {
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG decompress");
-	return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG decompress");
+        return CE_Failure;
     }
 
     png_infop infop = png_create_info_struct(pngp);
     if (NULL == infop) {
-	if (pngp) png_destroy_read_struct(&pngp, &infop, NULL);
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG info");
-	return CE_Failure;
+        if (pngp) png_destroy_read_struct(&pngp, &infop, NULL);
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG info");
+        return CE_Failure;
     }
 
     if (setjmp(png_jmpbuf(pngp))) {
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during PNG decompress");
-	CPLFree((void*)(*p_volatile_png_rowp));
-	png_destroy_read_struct(&pngp, &infop, NULL);
-	return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during PNG decompress");
+        CPLFree((void*)(*p_volatile_png_rowp));
+        png_destroy_read_struct(&pngp, &infop, NULL);
+        return CE_Failure;
     }
 
     // The mgr data ptr is already set up
@@ -136,17 +136,17 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     GInt32 byte_count = png_get_bit_depth(pngp, infop) / 8;
     // Check the size
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
-	CPLError(CE_Failure, CPLE_AppDefined,
-	    "MRF: PNG Page data bigger than the buffer provided");
-	png_destroy_read_struct(&pngp, &infop, NULL);
-	return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "MRF: PNG Page data bigger than the buffer provided");
+        png_destroy_read_struct(&pngp, &infop, NULL);
+        return CE_Failure;
     }
 
     png_rowp = (png_bytep *)CPLMalloc(sizeof(png_bytep)*height);
 
     int rowbytes = static_cast<int>(png_get_rowbytes(pngp, infop));
     for (int i = 0; i < height; i++)
-	png_rowp[i] = (png_bytep)dst.buffer + i*rowbytes;
+        png_rowp[i] = (png_bytep)dst.buffer + i*rowbytes;
 
     // Finally, the read
     // This is the lower level, the png_read_end allows some transforms
@@ -154,11 +154,11 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     png_read_image(pngp, png_rowp);
 
     if (byte_count != 1) { // Swap from net order if data is short
-	for (int i = 0; i < height; i++) {
-	    unsigned short int*p = (unsigned short int *)png_rowp[i];
-	    for (int j = 0; j < rowbytes / 2; j++, p++)
-		*p = net16(*p);
-	}
+        for (int i = 0; i < height; i++) {
+            unsigned short int*p = (unsigned short int *)png_rowp[i];
+            for (int j = 0; j < rowbytes / 2; j++, p++)
+                *p = net16(*p);
+        }
     }
 
     //    ppmWrite("Test.ppm",(char *)data,ILSize(512,512,1,4,0));
@@ -174,12 +174,12 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 }
 
 /**
- *\Brief Compress a page in PNG format
- * Returns the compressed size in dst.size
- *
- */
+*\Brief Compress a page in PNG format
+* Returns the compressed size in dst.size
+*
+*/
 
-CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
+CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
 
 {
     png_structp pngp;
@@ -188,20 +188,20 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
 
     pngp = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, pngEH, pngWH);
     if (!pngp) {
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png structure");
-	return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png structure");
+        return CE_Failure;
     }
     infop = png_create_info_struct(pngp);
     if (!infop) {
-	png_destroy_write_struct(&pngp, NULL);
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png info structure");
-	return CE_Failure;
+        png_destroy_write_struct(&pngp, NULL);
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png info structure");
+        return CE_Failure;
     }
 
     if (setjmp(png_jmpbuf(pngp))) {
-	png_destroy_write_struct(&pngp, &infop);
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during png init");
-	return CE_Failure;
+        png_destroy_write_struct(&pngp, &infop);
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during png init");
+        return CE_Failure;
     }
 
     png_set_write_fn(pngp, &mgr, write_png, flush_png);
@@ -210,21 +210,21 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
 
     switch (img.pagesize.c) {
     case 1: if (PNGColors != NULL) png_ctype = PNG_COLOR_TYPE_PALETTE;
-	    else png_ctype = PNG_COLOR_TYPE_GRAY;
-	    break;
+            else png_ctype = PNG_COLOR_TYPE_GRAY;
+            break;
     case 2: png_ctype = PNG_COLOR_TYPE_GRAY_ALPHA; break;
     case 3: png_ctype = PNG_COLOR_TYPE_RGB; break;
     case 4: png_ctype = PNG_COLOR_TYPE_RGB_ALPHA; break;
     default: { // This never happens if we check at the open
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF:PNG Write with %d colors called",
-	    img.pagesize.c);
-	return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF:PNG Write with %d colors called",
+            img.pagesize.c);
+        return CE_Failure;
     }
     }
 
     png_set_IHDR(pngp, infop, img.pagesize.x, img.pagesize.y,
-	GDALGetDataTypeSize(img.dt), png_ctype,
-	PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        GDALGetDataTypeSize(img.dt), png_ctype,
+        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
     // Optional, force certain filters only.  Makes it somewhat faster but worse compression
     // png_set_filter(pngp, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB);
@@ -247,14 +247,14 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
 
     // Custom strategy for zlib, set using the band option Z_STRATEGY
     if (deflate_flags & ZFLAG_SMASK)
-	png_set_compression_strategy(pngp, (deflate_flags & ZFLAG_SMASK) >> 6);
+        png_set_compression_strategy(pngp, (deflate_flags & ZFLAG_SMASK) >> 6);
 
     // Write the palette and the transparencies if they exist
     if (PNGColors != NULL)
     {
-	png_set_PLTE(pngp, infop, (png_colorp)PNGColors, PalSize);
-	if (TransSize != 0)
-	    png_set_tRNS(pngp, infop, (unsigned char*)PNGAlpha, TransSize, NULL);
+        png_set_PLTE(pngp, infop, (png_colorp)PNGColors, PalSize);
+        if (TransSize != 0)
+            png_set_tRNS(pngp, infop, (unsigned char*)PNGAlpha, TransSize, NULL);
     }
 
     png_write_info(pngp, infop);
@@ -262,19 +262,19 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
     png_bytep *png_rowp = (png_bytep *)CPLMalloc(sizeof(png_bytep)*img.pagesize.y);
 
     if (setjmp(png_jmpbuf(pngp))) {
-	CPLFree(png_rowp);
-	png_destroy_write_struct(&pngp, &infop);
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during png compression");
-	return CE_Failure;
+        CPLFree(png_rowp);
+        png_destroy_write_struct(&pngp, &infop);
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during png compression");
+        return CE_Failure;
     }
 
     int rowbytes = static_cast<int>(png_get_rowbytes(pngp, infop));
     for (int i = 0; i < img.pagesize.y; i++) {
-	png_rowp[i] = (png_bytep)(src.buffer + i*rowbytes);
-	if (img.dt != GDT_Byte) { // Swap to net order if data is short
-	    unsigned short int*p = (unsigned short int *)png_rowp[i];
-	    for (int j = 0; j < rowbytes / 2; j++, p++) *p = net16(*p);
-	}
+        png_rowp[i] = (png_bytep)(src.buffer + i*rowbytes);
+        if (img.dt != GDT_Byte) { // Swap to net order if data is short
+            unsigned short int*p = (unsigned short int *)png_rowp[i];
+            for (int j = 0; j < rowbytes / 2; j++, p++) *p = net16(*p);
+        }
     }
 
     png_write_image(pngp, png_rowp);
@@ -292,55 +292,52 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
     return CE_None;
 }
 
-CPLErr PNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
-{
-    return DecompressPNG(dst, src);
-}
-
-// The PNG internal palette is set on first band write
-CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
-{   // Late set palette
-    if (img.comp == IL_PPNG && !PNGColors && ResetPalette() != CE_None)
-	return CE_Failure;
-    return CompressPNG(dst, src);
-}
-
-
-CPLErr PNG_Band::ResetPalette()
+// Builds a PNG palette from a GDAL color table
+static void ResetPalette(GDALColorTable *poCT, PNG_Codec &codec)
 {   // Convert the GDAL LUT to PNG style
-    GDALColorTable *poCT = GetColorTable();
+    codec.TransSize = codec.PalSize = poCT->GetColorEntryCount();
 
-    if (!poCT) {
-	CPLError(CE_Failure, CPLE_NotSupported, "MRF PPNG needs a color table");
-	return CE_Failure;
-    }
-
-    TransSize = PalSize = poCT->GetColorEntryCount();
-
-    png_color *pasPNGColors = (png_color *)CPLMalloc(sizeof(png_color) * PalSize);
-    unsigned char *pabyAlpha = (unsigned char *)CPLMalloc(TransSize);
-    PNGColors = (void *)pasPNGColors;
-    PNGAlpha = (void *)pabyAlpha;
+    png_color *pasPNGColors = (png_color *)CPLMalloc(sizeof(png_color) * codec.PalSize);
+    unsigned char *pabyAlpha = (unsigned char *)CPLMalloc(codec.TransSize);
+    codec.PNGColors = (void *)pasPNGColors;
+    codec.PNGAlpha = (void *)pabyAlpha;
     bool NoTranspYet = true;
 
     // Set the palette from the end to reduce the size of the opacity mask
-    for (int iColor = PalSize - 1; iColor >= 0; iColor--)
+    for (int iColor = codec.PalSize - 1; iColor >= 0; iColor--)
     {
-	GDALColorEntry  sEntry;
-	poCT->GetColorEntryAsRGB(iColor, &sEntry);
+        GDALColorEntry  sEntry;
+        poCT->GetColorEntryAsRGB(iColor, &sEntry);
 
-	pasPNGColors[iColor].red = (png_byte)sEntry.c1;
-	pasPNGColors[iColor].green = (png_byte)sEntry.c2;
-	pasPNGColors[iColor].blue = (png_byte)sEntry.c3;
-	if (NoTranspYet && sEntry.c4 == 255)
-	    TransSize--;
-	else {
-	    NoTranspYet = false;
-	    pabyAlpha[iColor] = (unsigned char)sEntry.c4;
-	}
+        pasPNGColors[iColor].red = (png_byte)sEntry.c1;
+        pasPNGColors[iColor].green = (png_byte)sEntry.c2;
+        pasPNGColors[iColor].blue = (png_byte)sEntry.c3;
+        if (NoTranspYet && sEntry.c4 == 255)
+            codec.TransSize--;
+        else {
+            NoTranspYet = false;
+            pabyAlpha[iColor] = (unsigned char)sEntry.c4;
+        }
+    }
+}
+
+CPLErr PNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
+{
+    return codec.DecompressPNG(dst, src);
+}
+
+CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
+{   
+    if (!codec.PNGColors && img.comp == IL_PPNG) { // Late set PNG palette to conserve memory
+        GDALColorTable *poCT = GetColorTable();
+        if (!poCT) {
+            CPLError(CE_Failure, CPLE_NotSupported, "MRF PPNG needs a color table");
+            return CE_Failure;
+        }
+        ResetPalette(poCT, codec);
     }
 
-    return CE_None;
+    return codec.CompressPNG(dst, src);
 }
 
 /**
@@ -349,24 +346,19 @@ CPLErr PNG_Band::ResetPalette()
  */
 
 PNG_Band::PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, level), PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0)
+GDALMRFRasterBand(pDS, image, b, level), codec(image)
 
 {   // Check error conditions
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16) {
-	CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF PNG");
-	return;
+        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF PNG");
+        return;
     }
     if (image.pagesize.c > 4) {
-	CPLError(CE_Failure, CPLE_NotSupported, "MRF PNG can only handle up to 4 bands per page");
-	return;
+        CPLError(CE_Failure, CPLE_NotSupported, "MRF PNG can only handle up to 4 bands per page");
+        return;
     }
     // PNGs can be larger than the source, especially for small page size
     poDS->SetPBufferSize( image.pageSizeBytes + 100);
-}
-
-PNG_Band::~PNG_Band() {
-    CPLFree(PNGColors);
-    CPLFree(PNGAlpha);
 }
 
 NAMESPACE_MRF_END

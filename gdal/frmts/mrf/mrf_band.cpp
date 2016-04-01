@@ -4,18 +4,18 @@
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-*   2. Redistributions in binary form must reproduce the above copyright notice,
+*   2. Redistributions in binary form must reproduce the above copyright notice, 
 *      this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL),
-*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to
+*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL), 
+*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to 
 *      endorse or promote products derived from this software without specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 * Copyright 2014-2015 Esri
@@ -45,9 +45,9 @@
 ******************************************************************************
 *
 *
+* 
 *
-*
-*
+* 
 ****************************************************************************/
 
 #include "marfa.h"
@@ -68,7 +68,7 @@ NAMESPACE_MRF_START
 // Count is the number of items that need to be copied
 // These are separate to allow for optimization
 
-template <typename T> void cpy_stride_in(void *dst,
+template <typename T> void cpy_stride_in(void *dst, 
 	const void *src, int c, int stride)
 {
     T *s=(T *)src;
@@ -80,7 +80,7 @@ template <typename T> void cpy_stride_in(void *dst,
     }
 }
 
-template <typename T> void cpy_stride_out(void *dst,
+template <typename T> void cpy_stride_out(void *dst, 
 	const void *src, int c, int stride)
 {
     T *s=(T *)src;
@@ -99,14 +99,10 @@ template<typename T> inline int isAllVal(const T *b, size_t bytecount, double nd
     T val = (T)(ndv);
     size_t count = bytecount / sizeof(T);
     while (count--) {
-    	if (*b) {
-			if (*(b++)!=val) {
-				return FALSE;
-			}
-    	} else {
-    		return FALSE;
-    	}
-	}
+        if (*(b++) != val) {
+            return FALSE;
+        }
+    }
     return TRUE;
 }
 
@@ -195,17 +191,17 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     // source size is used to hold the output size
     src.size = dst.size;
     // If we didn't allocate a buffer, the receiver can use it already
-    if (!dbuff)
+    if (!dbuff) 
 	return dst.buffer;
 
-    // If we allocated a buffer, we need to copy the data to the input buffer
+    // If we allocated a buffer, we need to copy the data to the input buffer 
     memcpy(src.buffer, dbuff, src.size);
     CPLFree(dbuff);
     return src.buffer;
 }
 
 //
-// The deflate_flags are available in all bands even if the DEFLATE option
+// The deflate_flags are available in all bands even if the DEFLATE option 
 // itself is not set.  This allows for PNG features to be controlled, as well
 // as any other bands that use zlib by itself
 //
@@ -389,7 +385,7 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
                 break;
 	    ob = poBlock->GetDataRef();
 	    blocks.push_back(poBlock);
-	}
+	} 
 
 // Just the right mix of templates and macros make deinterleaving tidy
 #define CpySI(T) cpy_stride_in<T> (ob, (T *)poDS->GetPBuffer() + i,\
@@ -434,8 +430,8 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 	return FetchClonedBlock(xblk, yblk, buffer);
 
     GDALDataset *poSrcDS;
-    const GInt32 cstride = img.pagesize.c; // 1 if pixel interleaved
-    ILSize req(xblk, yblk, 0, m_band/cstride, m_l);
+    const GInt32 cstride = img.pagesize.c; // 1 if band separate
+    ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
     if ( NULL == (poSrcDS = poDS->GetSrcDS())) {
@@ -468,14 +464,14 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 
     // This is where the whole page fits
     void *ob = buffer;
-    if (cstride != 1)
+    if (cstride != 1) 
 	ob = poDS->GetPBuffer();
 
     // Fill buffer with NoData if clipping
     if (clip)
 	FillBlock(ob);
 
-    // Use the dataset RasterIO to read all bands
+    // Use the dataset RasterIO to read one or all bands if interleaved
     CPLErr ret = poSrcDS->RasterIO(GF_Read, Xoff, Yoff, readszx, readszy,
 	ob, pcount(readszx, int(scl)), pcount(readszy, int(scl)),
 	eDataType, cstride, (1 == cstride)? &nBand: NULL,
@@ -501,10 +497,12 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 	return RB(xblk, yblk, filesrc, buffer);
     }
 
-    // Test to see if it need to be written, or just marked
+    // Test to see if it needs to be written, or just marked as checked
     int success;
     double val = GetNoDataValue(&success);
     if (!success) val = 0.0;
+
+    // TODO: test band by band if data is interleaved
     if (isAllVal(eDataType, ob, img.pageSizeBytes, val)) {
 	// Mark it empty and checked, ignore the possible write error
 	poDS->WriteTile((void *)1, infooffset, 0);
@@ -517,7 +515,7 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     void *outbuff = VSIMalloc(poDS->pbsize);
 
     if (!outbuff) {
-	CPLError(CE_Failure, CPLE_AppDefined,
+	CPLError(CE_Failure, CPLE_AppDefined, 
 	    "Can't get buffer for writing page");
 	// This is not really an error for a cache, the data is fine
 	return CE_Failure;
@@ -605,7 +603,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 
     srcfd = poSrc->DataFP();
     if (NULL == srcfd) {
-	CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source data file %s",
+	CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source data file %s", 
 	    poDS->source.c_str());
 	return CE_Failure;
     }
@@ -645,7 +643,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 
 /**
 *\brief read a block in the provided buffer
-*
+* 
 *  For separate band model, the DS buffer is not used, the read is direct in the buffer
 *  For pixel interleaved model, the DS buffer holds the temp copy
 *  and all the other bands are force read
@@ -657,7 +655,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
-    CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n",
+    CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n", 
 	xblk, yblk, m_band, m_l, IdxOffset(req,img));
 
     // If this is a caching file and bypass is on, just do the fetch
@@ -674,7 +672,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 	// Offset != 0 means no data, Update mode is for local MRFs only
 	// if caching index mode is RO don't try to fetch
 	// Also, caching MRFs can't be opened in update mode
-	if ( 0 != tinfo.offset || GA_Update == poDS->eAccess
+	if ( 0 != tinfo.offset || GA_Update == poDS->eAccess 
 	    || poDS->source.empty() || IdxMode() == GF_Read )
 	    return FillBlock(buffer);
 
@@ -780,7 +778,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     CPLFree(data);
 
     // Swap whatever we decompressed if we need to
-    if (is_Endianess_Dependent(img.dt,img.comp) && (img.nbo != NET_ORDER) )
+    if (is_Endianess_Dependent(img.dt,img.comp) && (img.nbo != NET_ORDER) ) 
 	swab_buff(dst, img);
 
     // If pages are separate, we're done, the read was in the output buffer
@@ -794,10 +792,10 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
 /**
 *\brief Write a block from the provided buffer
-*
+* 
 * Same trick as read, use a temporary tile buffer for pixel interleave
-* For band separate, use a
-* Write the block once it has all the bands, report
+* For band separate, use a 
+* Write the block once it has all the bands, report 
 * if a new block is started before the old one was completed
 *
 */
@@ -809,7 +807,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     ILSize req(xblk, yblk, 0, m_band/cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
-    CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk,
+    CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk, 
 	m_band, m_l, cstride);
 
     if (1 == cstride) {     // Separate bands, we can write it as is
@@ -829,8 +827,8 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         src.size = static_cast<size_t>(img.pageSizeBytes);
 	buf_mgr dst = {(char *)poDS->GetPBuffer(), poDS->GetPBufferSize()};
 
-	// Swab the source before encoding if we need to
-	if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
+	// Swab the source before encoding if we need to 
+	if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER)) 
 	    swab_buff(src, img);
 
 	// Compress functions need to return the compressed size in
@@ -860,7 +858,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	CPLError(CE_Failure,CPLE_AppDefined, "MRF: Can't allocate write buffer");
 	return CE_Failure;
     }
-
+	
     // Get the other bands from the block cache
     for (int iBand=0; iBand < poDS->nBands; iBand++ )
     {
@@ -888,13 +886,14 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	int success;
 	double val = GetNoDataValue(&success);
 	if (!success) val = 0.0;
-	if (isAllVal(eDataType, buffer, img.pageSizeBytes, val))
+        if (isAllVal(eDataType, (char *)pabyThisImage, blockSizeBytes(), val))
 	    empties |= bandbit(iBand);
 
 	// Copy the data into the dataset buffer here
 	// Just the right mix of templates and macros make this real tidy
 #define CpySO(T) cpy_stride_out<T> (((T *)tbuffer)+iBand, pabyThisImage,\
 		blockSizeBytes()/sizeof(T), cstride)
+
 
 	// Build the page in tbuffer
 	switch (GDALGetDataTypeSize(eDataType)/8)
@@ -924,6 +923,10 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	}
     }
 
+    // Should keep track of the individual band buffers and only mix them if this is not
+    // an empty page ( move the Copy with Stride Out from above below this test
+    // This way works fine, but it does work extra for empty pages
+
     if (GIntBig(empties) == AllBandMask()) {
 	CPLFree(tbuffer);
 	return poDS->WriteTile(NULL, infooffset, 0);
@@ -934,8 +937,6 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	"MRF: IWrite, band dirty mask is " CPL_FRMT_GIB " instead of " CPL_FRMT_GIB,
 	poDS->bdirty, AllBandMask());
 
-//    ppmWrite("test.ppm",(char *)tbuffer, ILSize(nBlockXSize,nBlockYSize,0,poDS->nBands));
-
     buf_mgr src;
     src.buffer = (char *)tbuffer;
     src.size = static_cast<size_t>(img.pageSizeBytes);
@@ -944,7 +945,15 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     char *outbuff = (char *)tbuffer + img.pageSizeBytes;
 
     buf_mgr dst = {outbuff, poDS->pbsize};
-    Compress(dst, src);
+    CPLErr ret;
+
+    ret = Compress(dst, src);
+    if (ret != CE_None) {
+        // Compress failed, write it as an empty tile
+        CPLFree(tbuffer);
+        poDS->WriteTile(NULL, infooffset, 0);
+        return CE_None; // Should report the error, but it triggers partial band attempts
+    }
 
     // Where the output is, in case we deflate
     void *usebuff = outbuff;
@@ -956,11 +965,13 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	if (!usebuff) {
 	    CPLError(CE_Failure,CPLE_AppDefined, "MRF: Deflate error");
 	    CPLFree(tbuffer);
+            poDS->WriteTile(NULL, infooffset, 0);
+            poDS->bdirty = 0;
 	    return CE_Failure;
 	}
     }
 
-    CPLErr ret = poDS->WriteTile(usebuff, infooffset, dst.size);
+    ret = poDS->WriteTile(usebuff, infooffset, dst.size);
     CPLFree(tbuffer);
 
     poDS->bdirty = 0;
