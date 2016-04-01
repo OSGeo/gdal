@@ -337,6 +337,7 @@ CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
         ResetPalette(poCT, codec);
     }
 
+    codec.deflate_flags = deflate_flags;
     return codec.CompressPNG(dst, src);
 }
 
