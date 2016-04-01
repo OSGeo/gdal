@@ -152,7 +152,7 @@ There are five major modules that are included with the GDAL_ Python bindings.::
 Additionally, there are five compatibility modules that are included but 
 provide notices to state that they are deprecated and will be going away.  
 If you are using GDAL 1.7 bindings, you should update your imports to utilize 
-the usage above, but the following will work until at least GDAL 2.0. ::
+the usage above, but the following will work until at least GDAL 2.1. ::
 
   >>> import gdal
   >>> import ogr
