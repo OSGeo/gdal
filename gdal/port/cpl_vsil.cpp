@@ -68,7 +68,7 @@ char **VSIReadDir(const char *pszPath)
 }
 
 /************************************************************************/
-/*                             VSIReadDir()                             */
+/*                             VSIReadDirEx()                           */
 /************************************************************************/
 
 /**
@@ -89,7 +89,8 @@ char **VSIReadDir(const char *pszPath)
  *
  * @param pszPath the relative, or absolute path of a directory to read.
  * UTF-8 encoded.
- * @param nMaxFiles maximum number of files after which to stop, or 0 for no limit.
+ * @param nMaxFiles maximum number of files after which to stop, or 0 for no
+ * limit.
  * @return The list of entries in the directory, or NULL if the directory
  * doesn't exist.  Filenames are returned in UTF-8 encoding.
  * @since GDAL 2.1
