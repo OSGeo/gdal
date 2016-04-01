@@ -43,6 +43,7 @@ CPL_CVSID("$Id$");
 static CPLMutex *hErrorMutex = NULL;
 static void *pErrorHandlerUserData = NULL;
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
+static bool gbCatchDebug = false;
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
@@ -57,6 +58,7 @@ typedef struct errHandler
     struct errHandler   *psNext;
     void                *pUserData;
     CPLErrorHandler     pfnHandler;
+    bool                bCatchDebug;
 } CPLErrorHandlerNode;
 
 typedef struct {
@@ -575,13 +577,42 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
     if( psCtx->psHandlerStack != NULL )
     {
-        psCtx->psHandlerStack->pfnHandler( CE_Debug, CPLE_None, pszMessage );
+        if( psCtx->psHandlerStack->bCatchDebug )
+        {
+            psCtx->psHandlerStack->pfnHandler( CE_Debug, CPLE_None, pszMessage );
+        }
+        else
+        {
+            CPLErrorHandlerNode *psNode = psCtx->psHandlerStack->psNext;
+            while( psNode != NULL )
+            {
+                if( psNode->bCatchDebug )
+                {
+                    psNode->pfnHandler( CE_Debug, CPLE_None, pszMessage );
+                    break;
+                }
+                psNode = psNode->psNext;
+            }
+            if( psNode == NULL )
+            {
+                CPLMutexHolderD( &hErrorMutex );
+                if( gbCatchDebug )
+                    pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
+                else
+                    CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
+            }
+        }
     }
     else
     {
         CPLMutexHolderD( &hErrorMutex );
         if( pfnErrorHandler != NULL )
-            pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
+        {
+            if( gbCatchDebug )
+                pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
+            else
+                CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
+        }
     }
 
     VSIFree( pszMessage );
@@ -1069,6 +1100,7 @@ void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
     psNode->psNext = psCtx->psHandlerStack;
     psNode->pfnHandler = pfnErrorHandlerNew;
     psNode->pUserData = pUserData;
+    psNode->bCatchDebug = true;
     psCtx->psHandlerStack = psNode;
 }
 
@@ -1103,6 +1135,40 @@ void CPL_STDCALL CPLPopErrorHandler()
         psCtx->psHandlerStack = psNode->psNext;
         VSIFree( psNode );
     }
+}
+
+/************************************************************************/
+/*                 CPLSetCurrentErrorHandlerCatchDebug()                */
+/************************************************************************/
+
+/**
+ * Set if the current error handler should intercept debug messages, or if
+ * they should be processed by the previous handler.
+ *
+ * By default when installing a custom error handler, this one intercepts
+ * debug messages. In some cases, this might not be desirable and the user
+ * would prefer that the previous installed handler (or the default one if no
+ * previous installed handler exists in the stack) deal withh it. In which
+ * case, this function should be called with bCatchDebug.
+ *
+ * @param bCatchDebug FALSE if the current error handler should not intercept debug messages
+ * @since GDAL 2.1
+ */
+
+void CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug )
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if( psCtx == NULL || IS_PREFEFINED_ERROR_CTX(psCtx) )
+    {
+        fprintf(stderr, "CPLSetCurrentErrorHandlerCatchDebug() failed.\n");
+        return;
+    }
+
+    if( psCtx->psHandlerStack != NULL )
+        psCtx->psHandlerStack->bCatchDebug = CPL_TO_BOOL(bCatchDebug);
+    else
+        gbCatchDebug = CPL_TO_BOOL(bCatchDebug);
 }
 
 /************************************************************************/
