@@ -40,12 +40,12 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              int bStrict, char ** papszOptions,
              GDALProgressFunc pfnProgress, void * pProgressData );
 
-#define R_NILSXP        0
-#define R_LISTSXP       2
-#define R_CHARSXP       9
-#define R_INTSXP        13
-#define R_REALSXP       14
-#define R_STRSXP        16
+// static const int R_NILSXP = 0;
+static const int R_LISTSXP = 2;
+static const int R_CHARSXP = 9;
+static const int R_INTSXP = 13;
+static const int R_REALSXP = 14;
+static const int R_STRSXP = 16;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -56,7 +56,7 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 class RDataset : public GDALPamDataset
 {
     friend class RRasterBand;
-    VSILFILE       *fp;
+    VSILFILE   *fp;
     int         bASCII;
     CPLString   osLastStringRead;
 
@@ -91,9 +91,8 @@ class RRasterBand : public GDALPamRasterBand
     const double *padfMatrixValues;
 
   public:
-
                 RRasterBand( RDataset *, int, const double * );
-    virtual ~RRasterBand();
+    virtual ~RRasterBand() {}
 
     virtual CPLErr          IReadBlock( int, int, void * );
 };
@@ -103,11 +102,11 @@ class RRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn,
-                          const double *padfMatrixValuesIn )
+                          const double *padfMatrixValuesIn ) :
+    padfMatrixValues(padfMatrixValuesIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->padfMatrixValues = padfMatrixValuesIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Float64;
 
@@ -116,18 +115,10 @@ RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                            ~RRasterBand()                            */
-/************************************************************************/
-
-RRasterBand::~RRasterBand()
-{
-}
-
-/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr RRasterBand::IReadBlock( int /* nBlockXOff */,
                                 int nBlockYOff,
                                 void * pImage )
 {
@@ -175,7 +166,7 @@ RDataset::~RDataset()
 const char *RDataset::ASCIIFGets()
 
 {
-    char chNextChar;
+    char chNextChar = '\0';
 
     osLastStringRead.resize(0);
 
@@ -226,7 +217,7 @@ double RDataset::ReadFloat()
     }
     else
     {
-        double  dfValue;
+        double dfValue = 0.0;
 
         if( VSIFReadL( &dfValue, 8, 1, fp ) != 1 )
             return -1;
@@ -249,7 +240,7 @@ const char *RDataset::ReadString()
         return "";
     }
 
-    int nLenSigned = ReadInteger();
+    const int nLenSigned = ReadInteger();
     if( nLenSigned < 0 )
     {
         osLastStringRead = "";
@@ -257,7 +248,7 @@ const char *RDataset::ReadString()
     }
     const size_t nLen = static_cast<size_t>(nLenSigned);
 
-    char *pachWrkBuf = (char *) VSIMalloc(nLen);
+    char *pachWrkBuf = static_cast<char *>( VSIMalloc(nLen) );
     if (pachWrkBuf == NULL)
     {
         osLastStringRead = "";
@@ -272,7 +263,7 @@ const char *RDataset::ReadString()
 
     if( bASCII )
     {
-        /* suck up newline and any extra junk */
+        // Suck up newline and any extra junk.
         ASCIIFGets();
     }
 
@@ -395,7 +386,8 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->bASCII = STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n");
+    poDS->bASCII =
+        STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n");
 
 /* -------------------------------------------------------------------- */
 /*      Confirm this is a version 2 file.                               */
