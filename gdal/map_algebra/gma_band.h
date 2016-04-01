@@ -347,3 +347,67 @@ int gma_value_from_other_band(gma_band this_band,
     } else
         return 0;
 }
+
+#define gma_first_block(block) block->index.x == 0 && block->index.y == 0
+
+#define gma_last_block(band, block) block->index.x == band.w_blocks-1 && block->index.y == band.h_blocks-1
+
+int is_border_block(gma_band band, gma_block *block) {
+    if (block->index.x == 0) {
+        if (block->index.y == 0)
+            return 8;
+        else if (block->index.y == band.h_blocks - 1)
+            return 6;
+        else
+            return 7;
+    } else if (block->index.x == band.w_blocks - 1) {
+        if (block->index.y == 0)
+            return 2;
+        else if (block->index.y == band.h_blocks - 1)
+            return 4;
+        else
+            return 3;
+    } else if (block->index.y == 0)
+        return 1;
+    else if (block->index.y == band.h_blocks - 1)
+        return 5;
+    return 0;
+}
+
+int is_border_cell(gma_block *block, int border_block, gma_cell_index i) {
+    if (!border_block)
+        return 0;
+    if (i.x == 0) {
+        if (i.y == 0 && border_block == 1)
+            return 8;
+        else if (i.y == block->h - 1 && border_block == 6)
+            return 6;
+        else if (border_block == 8 || border_block == 6 || border_block == 7)
+            return 7;
+    } else if (i.x == block->w - 1) {
+        if (i.y == 0 && border_block == 2)
+            return 2;
+        else if (i.y == block->h - 1 && border_block == 4)
+            return 4;
+        else if (border_block == 2 || border_block == 4 || border_block == 3)
+            return 3;
+    } else if (i.y == 0 && (border_block == 8 || border_block == 2 || border_block == 1))
+        return 1;
+    else if (i.y == block->h - 1 && (border_block == 6 || border_block == 4 || border_block == 5))
+        return 5;
+    else
+        return 0;
+}
+
+#define gma_cell_first_neighbor(center_cell) { .x = center_cell.x, .y = center_cell.y-1 }
+
+#define gma_cell_move_to_neighbor(cell, neighbor)       \
+    switch(neighbor) {                                   \
+    case 2: cell.x++; break;                             \
+    case 3: cell.y++; break;                             \
+    case 4: cell.y++; break;                             \
+    case 5: cell.x--; break;                             \
+    case 6: cell.x--; break;                             \
+    case 7: cell.y--; break;                             \
+    case 8: cell.y--; break;                             \
+    }

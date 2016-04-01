@@ -34,6 +34,32 @@ int gma_rand(gma_block *block) {
     return 2;
 }
 
+#include <math.h>
+
+template<typename datatype>
+int gma_log(gma_block *block) {
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = log(gma_block_cell(datatype, block, i));
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
+int gma_set_border_cells(gma_band band, gma_block *block) {
+    int border_block = is_border_block(band, block);
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            int border_cell = is_border_cell(block, border_block, i);
+            gma_block_cell(datatype, block, i) = border_cell ? 1 : 0;
+        }
+    }
+    return 2;
+}
+
 template<typename datatype>
 void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
     if (GDALDataTypeTraits<datatype>::datatype != b->GetRasterDataType()) {
@@ -53,6 +79,12 @@ void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
                 break;
             case gma_method_rand:
                 ret = gma_rand<datatype>(block);
+                break;
+            case gma_method_log:
+                ret = gma_log<datatype>(block);
+                break;
+            case gma_method_set_border_cells:
+                ret = gma_set_border_cells<datatype>(band, block);
                 break;
             }
             if (ret == 2)

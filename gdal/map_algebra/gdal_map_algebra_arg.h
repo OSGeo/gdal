@@ -30,6 +30,18 @@ int gma_add(gma_block *block, void *to_add) {
 }
 
 template<typename datatype>
+int gma_set(gma_block *block, void *set_to) {
+    datatype a = *(datatype *)set_to;
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            gma_block_cell(datatype, block, i) = a;
+        }
+    }
+    return 2;
+}
+
+template<typename datatype>
 int gma_map_block(gma_block *block, gma_mapper<datatype> *mapper) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
@@ -72,6 +84,8 @@ void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, datatype arg)
     switch (method) {
     case gma_method_add:
         gma_with_arg_proc<datatype>(b, gma_add<datatype>, &arg);
+    case gma_method_set:
+        gma_with_arg_proc<datatype>(b, gma_set<datatype>, &arg);
     }
 }
 

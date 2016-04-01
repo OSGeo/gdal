@@ -1,15 +1,54 @@
 
 typedef int (*gma_two_bands_callback)(gma_band, gma_block*, gma_band, void*);
 
+typedef enum { 
+    gma_eq,
+    gma_ne,
+    gma_gt,
+    gma_lt,
+    gma_ge,
+    gma_le,
+    gma_and,
+    gma_or,
+    gma_not
+} gma_operator_t;
+
+template<typename datatype>
+struct gma_operator {
+    gma_operator_t op;
+    datatype value;
+};
+
 template<typename type1,typename type2>
 int gma_add_band(gma_band band1, gma_block *block1, gma_band band2, void *) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            gma_cell_index i2;
-            gma_block *block2 = gma_index12index2(band1, block1, i1, band2, &i2);
-            if (block2)
-                gma_block_cell(type1, block1, i1) += gma_block_cell(type2, block2, i2);
+            type2 to_add;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &to_add))
+                gma_block_cell(type1, block1, i1) += to_add;
+        }
+    }
+    return 2;
+}
+
+template<typename type1,typename type2>
+int gma_multiply_with_band(gma_band band1, gma_block *block1, gma_band band2, void *op) {
+    gma_cell_index i1;
+    for (i1.y = 0; i1.y < block1->h; i1.y++) {
+        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+            type2 multiplier;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &multiplier)) {
+                if (op) {
+                    gma_operator<type2> *o = (gma_operator<type2> *)op;
+                    switch (o->op) {
+                    case gma_gt:
+                        multiplier = multiplier > o->value;
+                        break;
+                    }
+                }
+                gma_block_cell(type1, block1, i1) *= multiplier;
+            }
         }
     }
     return 2;
@@ -23,10 +62,11 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
         for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
-            gma_cell_index values_i;
-            gma_block *values_block = gma_index12index2(zones_band, zones_block, zones_i, values_band, &values_i);
+            values_type value;
+            gma_value_from_other_band<values_type>(zones_band, zones_block, zones_i, values_band, &value);
             zones_type zone = gma_block_cell(zones_type, zones_block, zones_i);
-            values_type value = gma_block_cell(values_type, values_block, values_i);
+            if (!zone)
+                continue;
             if (z->exists(zone)) {
                 values_type old_value = z->get(zone)->value();
                 if (value > old_value)
@@ -41,94 +81,44 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
 // raise values in zones to at least zonal min
 // zonal min should be gma_hash<gma_int> or gma_hash<gma_float> depending on the datatype
 
+typedef struct {
+    int cells_changed;
+    gma_hash<gma_int> *zonal_min;
+} gma_set_zonal_min_data;
+
 template<typename values_type,typename zones_type>
-int gma_set_zonal_min(gma_band values_band, gma_block *values_block, gma_band zones_band, void *zonal_min) {
-    gma_hash<gma_int> *z = (gma_hash<gma_int>*)zonal_min;
+int gma_set_zonal_min(gma_band values_band, gma_block *values_block, gma_band zones_band, void *data) {
+    gma_set_zonal_min_data *d = (gma_set_zonal_min_data*)data;
+    if (gma_first_block(values_block)) {
+        d->cells_changed = 0;
+    }
     gma_cell_index values_i;
     for (values_i.y = 0; values_i.y < values_block->h; values_i.y++) {
         for (values_i.x = 0; values_i.x < values_block->w; values_i.x++) {
-            gma_cell_index zones_i;
-            gma_block *zones_block = gma_index12index2(values_band, values_block, values_i, zones_band, &zones_i);
+            zones_type zone;
+            gma_value_from_other_band<zones_type>(values_band, values_block, values_i, zones_band, &zone);
+            if (!zone)
+                continue;
+            if (!d->zonal_min->exists(zone))
+                continue;
+            values_type new_value = d->zonal_min->get(zone)->value();
             values_type value = gma_block_cell(values_type, values_block, values_i);
-            zones_type zone = gma_block_cell(zones_type, zones_block, zones_i);
-            if (z->exists(zone)) {
-                zones_type new_value = z->get(zone)->value();
-                if (value < new_value)
-                    gma_block_cell(values_type, values_block, values_i) = new_value;
+            if (value < new_value) {
+                gma_block_cell(values_type, values_block, values_i) = new_value;
+                d->cells_changed++;
             }
         }
     }
-    return 1;
+    if (gma_last_block(values_band, values_block))
+        fprintf(stderr, "%i cells raised.\n", d->cells_changed);
+    return 2;
 }
-
-int is_border_block(gma_band band, gma_block *block) {
-    if (block->index.x == 0) {
-        if (block->index.y == 0)
-            return 8;
-        else if (block->index.y == band.h_blocks - 1)
-            return 6;
-        else
-            return 7;
-    } else if (block->index.x == band.w_blocks - 1) {
-        if (block->index.y == 0)
-            return 2;
-        else if (block->index.y == band.h_blocks - 1)
-            return 4;
-        else
-            return 3;
-    } else if (block->index.y == 0)
-        return 1;
-    else if (block->index.y == band.h_blocks - 1)
-        return 5;
-    return 0;
-}
-
-int is_border_cell(gma_block *block, int border_block, gma_cell_index i) {
-    if (!border_block)
-        return 0;
-    if (i.x == 0) {
-        if (i.y == 0 && border_block == 1)
-            return 8;
-        else if (i.y == block->h - 1 && border_block == 6)
-            return 6;
-        else if (border_block == 8 || border_block == 6 || border_block == 7)
-            return 7;
-    } else if (i.x == block->w - 1) {
-        if (i.y == 0 && border_block == 2)
-            return 2;
-        else if (i.y == block->h - 1 && border_block == 4)
-            return 4;
-        else if (border_block == 2 || border_block == 4 || border_block == 3)
-            return 3;
-    } else if (i.y == 0 && (border_block == 8 || border_block == 2 || border_block == 1))
-        return 1;
-    else if (i.y == block->h - 1 && (border_block == 6 || border_block == 4 || border_block == 5))
-        return 5;
-    else
-        return 0;
-}
-
-#define gma_cell_first_neighbor(center_cell) { .x = center_cell.x, .y = center_cell.y-1 }
-
-#define gma_cell_move_to_neighbor(cell, neighbor)       \
-    switch(neighbor) {                                   \
-    case 2: cell.x++; break;                             \
-    case 3: cell.y++; break;                             \
-    case 4: cell.y++; break;                             \
-    case 5: cell.x--; break;                             \
-    case 6: cell.x--; break;                             \
-    case 7: cell.y--; break;                             \
-    case 8: cell.y--; break;                             \
-    }
 
 template<typename rims_type,typename areas_type>
 int gma_rim_by8(gma_band rims_band, gma_block *rims_block, gma_band areas_band, void *) {
-    int border_block = is_border_block(rims_band, rims_block);
     gma_cell_index i;
     for (i.y = 0; i.y < rims_block->h; i.y++) {
         for (i.x = 0; i.x < rims_block->w; i.x++) {
-            int border_cell = is_border_cell(rims_block, border_block, i);
-            if (border_cell) continue;
 
             // if the 8-neighborhood in areas is all of the same area, then set rims = 0, otherwise from area
 
@@ -141,18 +131,61 @@ int gma_rim_by8(gma_band rims_band, gma_block *rims_block, gma_band areas_band, 
             for (int neighbor = 1; neighbor < 9; neighbor++) {
                 gma_cell_move_to_neighbor(in, neighbor);
                 areas_type n_area;
-                gma_value_from_other_band<areas_type>(rims_band, rims_block, in, areas_band,  &n_area);
-                if (n_area != area) {
+                int has_neighbor = gma_value_from_other_band<areas_type>(rims_band, rims_block, in, areas_band,  &n_area);
+                if (!has_neighbor || (has_neighbor && (n_area != area))) {
                     my_area = area;
                     break;
                 }
             }
-
+            
             gma_block_cell(rims_type, rims_block, i) = my_area;
 
         }
     }
     return 2;
+}
+
+// the lowest neighbor outside the depression with its depression
+// -1 is outside and its value is the elevation of the border cell
+
+template<typename depr_type,typename dem_type>
+int gma_depression_pour_elevation(gma_band depr_band, gma_block *depr_block, gma_band dem_band, void *zonal_min) {
+    gma_hash<gma_hash<gma_int> > *z = (gma_hash<gma_hash<gma_int> > *)zonal_min;
+    gma_cell_index i;
+    for (i.y = 0; i.y < depr_block->h; i.y++) {
+        for (i.x = 0; i.x < depr_block->w; i.x++) {
+            depr_type zone = gma_block_cell(depr_type, depr_block, i);
+            gma_hash<gma_int> *ns;
+            if (z->exists(zone))
+                ns = z->get(zone);
+            else {
+                ns = new gma_hash<gma_int>;
+                z->put(zone, ns);
+            }
+            dem_type value;
+            gma_value_from_other_band<dem_type>(depr_band, depr_block, i, dem_band,  &value);
+
+            gma_cell_index in = gma_cell_first_neighbor(i);
+            for (int neighbor = 1; neighbor < 9; neighbor++) {
+                gma_cell_move_to_neighbor(in, neighbor);
+                dem_type n_value;
+                if (!gma_value_from_other_band<dem_type>(depr_band, depr_block, in, dem_band,  &n_value)) {
+                    if (!ns->exists(-1) || value < ns->get(-1)->value())
+                        ns->put(-1, new gma_int(value));
+                    continue;
+                }
+                depr_type n_zone;
+                gma_value_from_other_band<depr_type>(depr_band, depr_block, in, depr_band,  &n_zone);
+
+                if (n_zone == zone)
+                    continue;
+
+                if (!ns->exists(n_zone) || n_value < ns->get(n_zone)->value())
+                    ns->put(n_zone, new gma_int(n_value));
+            }
+
+        }
+    }
 }
 
 // The D8 directions method, compute direction to lowest 8-neighbor
@@ -218,10 +251,6 @@ int gma_D8(gma_band band_fd, gma_block *block_fd, gma_band band_dem, void *) {
     return 2;
 }
 
-#define gma_first_block(block) block->index.x == 0 && block->index.y == 0
-
-#define gma_last_block(band, block) block->index.x == band.w_blocks-1 && block->index.y == band.h_blocks-1
-
 // drain flat cells (10) to neighboring non-flat cells which are at same or lower elevation
 // this leaves low lying flat areas undrained
 template<typename fd_t, typename dem_t>
@@ -280,37 +309,95 @@ int gma_route_flats(gma_band band_fd, gma_block *block_fd, gma_band band_dem, vo
         return 2;
 }
 
+template<typename filled_t, typename dem_t>
+int gma_fill(gma_band filled_band, gma_block *filled_block, gma_band dem_band, void *data) {
+    int changed = *(int*)data;
+    if (gma_first_block(filled_block)) {
+        changed = 0;
+    }
+    int border_block = is_border_block(filled_band, filled_block);
+    gma_cell_index i;
+    for (i.y = 0; i.y < filled_block->h; i.y++) {
+        for (i.x = 0; i.x < filled_block->w; i.x++) {
+            int border_cell = is_border_cell(filled_block, border_block, i);
+            dem_t dem_e;
+            gma_value_from_other_band<dem_t>(filled_band, filled_block, i, dem_band, &dem_e);
+
+            // initially my_e is set to max e of dem
+            // set my_e = max(dem_e, lowest_e_in_nhood)
+
+            filled_t new_e = dem_e, lowest_e_in_nhood;
+            if (border_cell)
+                lowest_e_in_nhood = 0;
+            else {
+                int f = 1;
+                gma_cell_index in = gma_cell_first_neighbor(i);
+                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                    gma_cell_move_to_neighbor(in, neighbor);
+                    filled_t n_e;
+                    gma_value_from_other_band<filled_t>(filled_band, filled_block, in, filled_band, &n_e);
+                    if (f || n_e < lowest_e_in_nhood) {
+                        f = 0;
+                        lowest_e_in_nhood = n_e;
+                    }
+                }
+            }
+            if (lowest_e_in_nhood > new_e)
+                new_e = lowest_e_in_nhood;
+
+            filled_t old_e = gma_block_cell(filled_t, filled_block, i);
+            if (new_e < old_e) {
+                gma_block_cell(filled_t, filled_block, i) = new_e;
+                changed++;
+            }
+            
+        }
+    }
+
+    if (gma_last_block(filled_band, filled_block)) {
+        fprintf(stderr, "%i cells changed\n", changed);
+    }
+    *(int*)data = changed;
+
+    if (changed)
+        return 4;
+    else
+        return 2;
+}
+
 typedef struct {
     int cells_added;
     int basin_id;
+    int depressions;
     gma_hash<gma_hash<gma_int> > *splits; // basin => (basin => 1) 
-} gma_basins_data;
+} gma_depressions_data;
 
-// return basins, i.e., areas, which drain to pits or flat cells
-// iterate until no new cell is added to basins
-template<typename basins_t, typename fd_t>
-int gma_basins(gma_band band_basins, gma_block *block_basins, gma_band band_fd, void *data) {
-    gma_cell_index i_basins;
-    gma_basins_data *d = (gma_basins_data *)data;
+// return depressions, i.e., areas, which drain to pits or flat cells
+// iterate until no new cell is added to depressions
+template<typename deps_t, typename fd_t>
+int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd, void *data) {
+    gma_cell_index i_deps;
+    gma_depressions_data *d = (gma_depressions_data *)data;
     
-    if (gma_first_block(block_basins)) {
+    if (gma_first_block(block_deps)) {
         d->cells_added = 0;
         d->basin_id = 0;
     }
 
-    for (i_basins.y = 0; i_basins.y < block_basins->h; i_basins.y++) {
-        for (i_basins.x = 0; i_basins.x < block_basins->w; i_basins.x++) {
+    for (i_deps.y = 0; i_deps.y < block_deps->h; i_deps.y++) {
+        for (i_deps.x = 0; i_deps.x < block_deps->w; i_deps.x++) {
 
             // if on a basin, nothing to do
-            if (gma_block_cell(basins_t, block_basins, i_basins)) continue;
+            if (gma_block_cell(deps_t, block_deps, i_deps)) continue;
 
             fd_t my_dir;
-            gma_value_from_other_band<fd_t>(band_basins, block_basins, i_basins, band_fd,  &my_dir);
+            gma_value_from_other_band<fd_t>(band_deps, block_deps, i_deps, band_fd,  &my_dir);
             
             // if pit, mark and we're done
             if (my_dir == 0) {
                 d->basin_id++;
-                gma_block_cell(basins_t, block_basins, i_basins) = d->basin_id;
+                d->depressions++;
+                gma_block_cell(deps_t, block_deps, i_deps) = d->basin_id;
                 d->cells_added++;
                 continue;
             }
@@ -318,30 +405,30 @@ int gma_basins(gma_band band_basins, gma_block *block_basins, gma_band band_fd, 
             // do we flow to a basin? or are we flat with a flat neighbor, which is a part of a basin?
             // this may lead to situations where a flat area is marked with two or more basin id's 
             // although they are part of the same basin => that has to be fixed later
-            basins_t n_basin[9] = {0,0,0,0,0,0,0,0,0};
+            deps_t n_basin[9] = {0,0,0,0,0,0,0,0,0};
             fd_t n_dir[9] = {0,0,0,0,0,0,0,0,0};
             
-            gma_cell_index in_basins = gma_cell_first_neighbor(i_basins);
+            gma_cell_index in_deps = gma_cell_first_neighbor(i_deps);
             for (int neighbor = 1; neighbor < 9; neighbor++) {
-                gma_cell_move_to_neighbor(in_basins, neighbor);
+                gma_cell_move_to_neighbor(in_deps, neighbor);
                 
-                if (!gma_value_from_other_band<basins_t>(band_basins, block_basins, in_basins, 
-                                                         band_basins, &n_basin[neighbor]))
+                if (!gma_value_from_other_band<deps_t>(band_deps, block_deps, in_deps, 
+                                                         band_deps, &n_basin[neighbor]))
                     continue;  // we are at border and this is outside
                 
-                gma_value_from_other_band<fd_t>(band_basins, block_basins, in_basins, band_fd,  &n_dir[neighbor]);
+                gma_value_from_other_band<fd_t>(band_deps, block_deps, in_deps, band_fd,  &n_dir[neighbor]);
 
             }
 
             if (my_dir == 10) {
-                // we're flat, look for basins among flat neighbors
-                basins_t split_basin = 0;
+                // we're flat, look for deps among flat neighbors
+                deps_t split_basin = 0;
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    basins_t basin = n_basin[neighbor];
+                    deps_t basin = n_basin[neighbor];
                     if (basin && (n_dir[neighbor] == 10)) {
                         // mark at first
-                        if (!gma_block_cell(basins_t, block_basins, i_basins)) {
-                            gma_block_cell(basins_t, block_basins, i_basins) = basin;
+                        if (!gma_block_cell(deps_t, block_deps, i_deps)) {
+                            gma_block_cell(deps_t, block_deps, i_deps) = basin;
                             d->cells_added++;
                         }
                         // denote the basin split
@@ -363,22 +450,23 @@ int gma_basins(gma_band band_basins, gma_block *block_basins, gma_band band_fd, 
                     }
                 }
                 // not done, do it now
-                if (!gma_block_cell(basins_t, block_basins, i_basins)) {
+                if (!gma_block_cell(deps_t, block_deps, i_deps)) {
                     d->basin_id++;
-                    gma_block_cell(basins_t, block_basins, i_basins) = d->basin_id;
+                    d->depressions++;
+                    gma_block_cell(deps_t, block_deps, i_deps) = d->basin_id;
                     d->cells_added++;
                 }
             } else if (n_basin[my_dir]) {
                 // flow into a basin
-                gma_block_cell(basins_t, block_basins, i_basins) = n_basin[my_dir];
+                gma_block_cell(deps_t, block_deps, i_deps) = n_basin[my_dir];
                 d->cells_added++;
             }
 
         }
     }
 
-    if (gma_last_block(band_basins, block_basins))
-        fprintf(stderr, "%i cells added to basins.\n", d->cells_added);
+    if (gma_last_block(band_deps, block_deps))
+        fprintf(stderr, "%i cells added to depressions, %i depressions.\n", d->cells_added, d->depressions);
 
     if (d->cells_added)
         return 4;
@@ -389,10 +477,12 @@ int gma_basins(gma_band band_basins, gma_block *block_basins, gma_band band_fd, 
 // band2 = flow directions
 // band1 = upstream area = 1 + cells upstream
 template<typename data1_t, typename data2_t>
-int gma_upstream_area(gma_band band1, gma_block *block1, gma_band band2, void *) {
+int gma_upstream_area(gma_band band1, gma_block *block1, gma_band band2, void *data) {
+    int not_done = *(int*)data;
+    if (gma_first_block(block1))
+        not_done = 0;
     int border_block = is_border_block(band1, block1);
     gma_cell_index i1;
-    int not_done = 0;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
             int border_cell = is_border_cell(block1, border_block, i1);
@@ -421,7 +511,7 @@ int gma_upstream_area(gma_band band1, gma_block *block1, gma_band band2, void *)
 
                 data2_t tmp2 = gma_block_cell(data2_t, block2, i2);
                 // if this neighbor does not point to us, then we're not interested
-                if (tmp2 - neighbor != 4)
+                if (abs(tmp2 - neighbor) != 4)
                     continue;
 
                 upstream_neighbors++;
@@ -452,14 +542,76 @@ int gma_upstream_area(gma_band band1, gma_block *block1, gma_band band2, void *)
         }
     }
 
-    if (block1->index.x == band1.w_blocks-1 && block1->index.y == band1.h_blocks-1)
+    if (gma_last_block(band1, block1))
         fprintf(stderr, "%i cells with unresolved upstream area.\n", not_done);
+
+    *(int*)data = not_done;
 
     if (not_done)
         return 4;
     else
         return 2;
 }
+
+template<typename datatype>
+struct gma_catchment_data {
+    gma_cell<datatype> *outlet;
+    int mark;
+    int cells_added;
+};
+
+template<typename catchment_t, typename fd_t>
+int gma_catchment(gma_band catchment_band, gma_block *catchment_block, gma_band band_fd, void *data) {
+    gma_cell_index i;
+    gma_catchment_data<catchment_t> *d = (gma_catchment_data<catchment_t>*)data;
+    if (gma_first_block(catchment_block))
+        d->cells_added = 0;
+
+    for (i.y = 0; i.y < catchment_block->h; i.y++) {
+        for (i.x = 0; i.x < catchment_block->w; i.x++) {
+
+            if (gma_block_cell(catchment_t, catchment_block, i) == d->mark) continue;
+
+            // if this is the outlet cell, mark
+            // global cell index
+            int x = catchment_block->index.x * catchment_band.w_block + i.x;
+            int y = catchment_block->index.y * catchment_band.h_block + i.y;
+            if (d->outlet->x() == x && d->outlet->y() == y) {
+                gma_block_cell(catchment_t, catchment_block, i) = d->mark;
+                d->cells_added++;
+                continue;
+            }
+
+            // if this flows into a marked cell, then mark this
+            fd_t my_dir;
+            gma_value_from_other_band<fd_t>(catchment_band, catchment_block, i, band_fd, &my_dir);
+
+            gma_cell_index id = gma_cell_first_neighbor(i);
+            for (int neighbor = 1; neighbor <= my_dir; neighbor++) {
+                gma_cell_move_to_neighbor(id, neighbor);
+            }
+             
+            catchment_t my_down;
+            if (!gma_value_from_other_band<catchment_t>(catchment_band, catchment_block, id, catchment_band, &my_down))
+                continue;
+            
+            if (my_down == d->mark) {
+                gma_block_cell(catchment_t, catchment_block, i) = d->mark;
+                d->cells_added++;
+            }
+            
+        }
+    }
+    
+    if (gma_last_block(catchment_band, catchment_block))
+        fprintf(stderr, "%i cells added\n", d->cells_added);
+
+    if (d->cells_added)
+        return 4;
+    else
+        return 2;
+}
+
 
 // focal distance & cache updates might be best done in callback since the knowledge is there
 // unless we want to have focal distance in user space too
@@ -507,6 +659,8 @@ void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRaste
     gma_band_empty_cache(&band2);
 }
 
+#include "type_switch.h"
+
 void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, void *arg = NULL) {
     void *retval = NULL;
     // b1 is changed, b2 is not
@@ -516,107 +670,61 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
     }
     switch (method) {
     case gma_method_add_band: // b1 += b2
-        if (b1->GetRasterDataType() != b2->GetRasterDataType()) {
-            fprintf(stderr, "This method assumes the data types are the same.\n");
-            return NULL;
-        }
-        switch (b1->GetRasterDataType()) {
-        case GDT_Int16:
-            gma_two_bands_proc<int16_t,int16_t>(b1, gma_add_band<int16_t,int16_t>, b2, 0, NULL);
-            break;
-        case GDT_Int32:
-            gma_two_bands_proc<int32_t,int32_t>(b1, gma_add_band<int32_t,int32_t>, b2, 0, NULL);
-            break;
-        case GDT_Float64:
-            gma_two_bands_proc<double,double>(b1, gma_add_band<double,double>, b2, 0, NULL);
-            break;
-        default:
-            goto not_implemented_for_these_datatypes;
-        }
+        type_switch_bb(gma_add_band, 0, NULL);
+        break;
+    case gma_method_multiply_with_band: // b1 *= b2
+        type_switch_bb(gma_multiply_with_band, 0, arg);
         break;
     case gma_method_zonal_min: { // b1 = zones, b2 = values
         gma_hash<gma_int> *zonal_min = new gma_hash<gma_int>;
         retval = (void*)zonal_min;
-        switch (b1->GetRasterDataType()) {
-        case GDT_Int16:
-            switch (b2->GetRasterDataType()) {
-                case GDT_Int16:
-                    gma_two_bands_proc<int16_t,int16_t>(b1, gma_zonal_min<int16_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
-            break;
-        case GDT_Int32:
-            switch (b2->GetRasterDataType()) {
-                case GDT_Int16:
-                    gma_two_bands_proc<int32_t,int16_t>(b1, gma_zonal_min<int32_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
-            
-            break;
-        case GDT_UInt32:
-            switch (b2->GetRasterDataType()) {
-                case GDT_UInt16:
-                    gma_two_bands_proc<uint32_t,uint16_t>(b1, gma_zonal_min<uint32_t,uint16_t>, b2, 0, zonal_min);
-                    break;
-                case GDT_Int16:
-                    gma_two_bands_proc<uint32_t,int16_t>(b1, gma_zonal_min<uint32_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
-            break;
-        default:
-            goto not_implemented_for_these_datatypes;
-        }
+        type_switch_ib(gma_zonal_min, 0, zonal_min);
         break;
     }
     case gma_method_set_zonal_min: { // b1 = values, b2 = zones, arg = hash of zonal mins, b1 is changed
-        gma_hash<gma_int> *zonal_min = (gma_hash<gma_int>*)arg;
-        switch (b1->GetRasterDataType()) {
-        case GDT_Int16:
-            switch (b2->GetRasterDataType()) {
-                case GDT_Int16:
-                    gma_two_bands_proc<int16_t,int16_t>(b1, gma_set_zonal_min<int16_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
+        gma_set_zonal_min_data data;
+        data.zonal_min = (gma_hash<gma_int>*)arg;
+        type_switch_bi(gma_set_zonal_min, 0, &data);
+        break;
+    }
+    case gma_method_fill_dem: { // b1 = filled, b2 = dem
+        int32_t max_value;
+
+        switch (b2->GetRasterDataType()) {
+        case GDT_UInt16:
+            max_value = gma_compute_value<uint16_t>(b2, gma_method_get_max);
             break;
-        case GDT_Int32:
-            switch (b2->GetRasterDataType()) {
-                case GDT_Int16:
-                    gma_two_bands_proc<int32_t,int16_t>(b1, gma_set_zonal_min<int32_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
-            
+        case GDT_Int16:
+            max_value = gma_compute_value<int16_t>(b2, gma_method_get_max);
             break;
         case GDT_UInt32:
-            switch (b2->GetRasterDataType()) {
-                case GDT_UInt16:
-                    gma_two_bands_proc<uint32_t,uint16_t>(b1, gma_set_zonal_min<uint32_t,uint16_t>, b2, 0, zonal_min);
-                    break;
-                case GDT_Int16:
-                    gma_two_bands_proc<uint32_t,int16_t>(b1, gma_set_zonal_min<uint32_t,int16_t>, b2, 0, zonal_min);
-                    break;
-            default:
-                delete zonal_min;
-                goto not_implemented_for_these_datatypes;
-            }
+            max_value = gma_compute_value<uint32_t>(b2, gma_method_get_max);
+            break;
+        case GDT_Int32:
+            max_value = gma_compute_value<int32_t>(b2, gma_method_get_max);
             break;
         default:
             goto not_implemented_for_these_datatypes;
         }
+
+        switch (b1->GetRasterDataType()) {
+        case GDT_UInt16:
+            gma_with_arg<uint16_t>(b1, gma_method_set, max_value);
+            break;
+        case GDT_Int16:
+            gma_with_arg<int16_t>(b1, gma_method_set, max_value);
+            break;
+        case GDT_UInt32:
+            gma_with_arg<uint32_t>(b1, gma_method_set, max_value);
+            break;
+        case GDT_Int32:
+            gma_with_arg<int32_t>(b1, gma_method_set, max_value);
+            break;
+        default:
+            goto not_implemented_for_these_datatypes;
+        }
+        int changed;
+        type_switch_bb(gma_fill, 1, &changed);
         break;
     }
     case gma_method_rim_by8: // rims <- areas
@@ -638,6 +746,12 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
             goto not_implemented_for_these_datatypes;
         }
         break;
+    case gma_method_depression_pour_elevation: { // depression, dem compute depression => (depression => elevation)
+        gma_hash<gma_hash<gma_int> > *depression_pour_elevation = new gma_hash<gma_hash<gma_int> >;
+        retval = (void*)depression_pour_elevation;
+        type_switch_ib(gma_depression_pour_elevation, 1, retval);
+        break;
+    }
     case gma_method_D8: // fd <- dem
         // compute flow directions from DEM
         switch (b1->GetRasterDataType()) {
@@ -661,55 +775,14 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
         // iterative method to route flats in fdr
         // datatypes must be the same in iteration
         int flats;
-        switch (b1->GetRasterDataType()) {
-        case GDT_Byte:
-            switch (b2->GetRasterDataType()) {
-            case GDT_Byte:
-                gma_two_bands_proc<uint8_t,uint8_t>(b1, gma_route_flats<uint8_t,uint8_t>, b2, 1, &flats);
-                break;
-            case GDT_UInt16:
-                gma_two_bands_proc<uint8_t,uint16_t>(b1, gma_route_flats<uint8_t,uint16_t>, b2, 1, &flats);
-                break;
-            case GDT_Float64:
-                gma_two_bands_proc<uint8_t,double>(b1, gma_route_flats<uint8_t,double>, b2, 1, &flats);
-                break;
-            default:
-                goto not_implemented_for_these_datatypes;
-            }
-            break;
-        default:
-            goto not_implemented_for_these_datatypes;
-        }
+        type_switch_ib(gma_route_flats, 1, &flats);
         break;
     }
     case gma_method_depressions: { // depressions <- fd
-        gma_basins_data data;
+        gma_depressions_data data;
         data.splits = NULL;
-        switch (b1->GetRasterDataType()) {
-        case GDT_Byte:
-            switch (b2->GetRasterDataType()) {
-            case GDT_Byte:
-                gma_two_bands_proc<uint8_t,uint8_t>(b1, gma_basins<uint8_t,uint8_t>, b2, 1, &data);
-                break;
-            }
-            break;
-        case GDT_UInt16:
-            switch (b2->GetRasterDataType()) {
-            case GDT_Byte:
-                gma_two_bands_proc<uint16_t,uint8_t>(b1, gma_basins<uint16_t,uint8_t>, b2, 1, &data);
-                break;
-            }
-            break;
-        case GDT_UInt32:
-            switch (b2->GetRasterDataType()) {
-            case GDT_Byte:
-                gma_two_bands_proc<uint32_t,uint8_t>(b1, gma_basins<uint32_t,uint8_t>, b2, 1, &data);
-                break;
-            }
-            break;
-        default:
-            goto not_implemented_for_these_datatypes;
-        }
+        data.depressions = 0;
+        type_switch_ii(gma_depressions, 1, &data);
         if (data.splits) {
             // prune the splits into distinct linked sets
             gma_hash<gma_int> *map = new gma_hash<gma_int>;
@@ -767,63 +840,17 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
                 break;
             }
             }
-            
-
-            if (1) {
-                // report the splits
-                int n = map->size();
-                int32_t *keys = map->keys_sorted(n);
-                for (int i = 0; i < n; i++) {
-                    int32_t value = map->get(keys[i])->value();
-                    printf("%i => %i\n", keys[i], value);
-                }
-                CPLFree(keys);
-            }
             delete map;
         }
         break;
     }
-    case gma_method_upstream_area: {
-        switch (b1->GetRasterDataType()) {
-        case GDT_Byte: {
-            switch (b2->GetRasterDataType()) {
-            case GDT_UInt16:
-                gma_two_bands_proc<uint8_t,uint16_t>(b1, gma_upstream_area<uint8_t,uint16_t>, b2, 1, NULL);
-                break;
-            case GDT_UInt32:
-                gma_two_bands_proc<uint8_t,uint32_t>(b1, gma_upstream_area<uint8_t,uint32_t>, b2, 1, NULL);
-                break;
-            }
-            break;
-        }
-        case GDT_UInt16:{
-            switch (b2->GetRasterDataType()) {
-            case GDT_UInt16:
-                gma_two_bands_proc<uint16_t,uint16_t>(b1, gma_upstream_area<uint16_t,uint16_t>, b2, 1, NULL);
-                break;
-            case GDT_UInt32:
-                gma_two_bands_proc<uint16_t,uint32_t>(b1, gma_upstream_area<uint16_t,uint32_t>, b2, 1, NULL);
-                break;
-            }
-            break;
-        }
-        case GDT_UInt32:{
-            switch (b2->GetRasterDataType()) {
-            case GDT_Byte:
-                gma_two_bands_proc<uint32_t,uint8_t>(b1, gma_upstream_area<uint32_t,uint8_t>, b2, 1, NULL);
-                break;
-            case GDT_UInt16:
-                gma_two_bands_proc<uint32_t,uint16_t>(b1, gma_upstream_area<uint32_t,uint16_t>, b2, 1, NULL);
-                break;
-            case GDT_UInt32:
-                gma_two_bands_proc<uint32_t,uint32_t>(b1, gma_upstream_area<uint32_t,uint32_t>, b2, 1, NULL);
-                break;
-            }
-            break;
-        }
-        default:
-            goto not_implemented_for_these_datatypes;
-        }
+    case gma_method_upstream_area: { // ua, fd
+        int arg;
+        type_switch_bi(gma_upstream_area, 1, &arg);
+        break;
+    }
+    case gma_method_catchment: { // mark into b1 the catchment with arg (), b2 contains fd
+        type_switch_ii(gma_catchment, 1, arg);
         break;
     }
     default:
