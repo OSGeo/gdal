@@ -805,7 +805,7 @@ GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 /*                           GetBigIntField()                           */
 /*                                                                      */
 /*      This is just a helper method that reads two ULONG array         */
-/*      entries as a GBigInt.  The passed name should be the name of    */
+/*      entries as a GIntBig.  The passed name should be the name of    */
 /*      the array with no array index.  Array indexes 0 and 1 will      */
 /*      be concatenated.                                                */
 /************************************************************************/
