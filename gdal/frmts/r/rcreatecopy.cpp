@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -53,7 +53,7 @@ static void RWriteInteger( VSILFILE *fp, int bASCII, int nValue )
 {
     if( bASCII )
     {
-        char szOutput[50];
+        char szOutput[50] = { '\0' };
         snprintf( szOutput, sizeof(szOutput), "%d\n", nValue );
         VSIFWriteL( szOutput, 1, strlen(szOutput), fp );
     }
@@ -101,7 +101,8 @@ RCreateCopy( const char * pszFilename,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
     const int bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
-    const int bCompressed = CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII );
+    const bool bCompressed =
+        CPL_TO_BOOL( CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII ) );
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -125,7 +126,7 @@ RCreateCopy( const char * pszFilename,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create file %s.\n",
+                  "Unable to create file %s.",
                   pszFilename );
         return NULL;
     }
@@ -171,13 +172,14 @@ RCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the raster data.                                          */
 /* -------------------------------------------------------------------- */
-    CPLErr      eErr = CE_None;
+    CPLErr eErr = CE_None;
 
-    double *padfScanline = (double *) CPLMalloc( nXSize * sizeof(double) );
+    double *padfScanline =
+        static_cast<double *>( CPLMalloc( nXSize * sizeof(double) ) );
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
 
         for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
@@ -191,7 +193,7 @@ RCreateCopy( const char * pszFilename,
             {
                 for( iValue = 0; iValue < nXSize; iValue++ )
                 {
-                    char szValue[128];
+                    char szValue[128] = { '\0' };
                     CPLsnprintf( szValue, sizeof(szValue), "%.16g\n",
                                  padfScanline[iValue] );
                     VSIFWriteL( szValue, 1, strlen(szValue), fp );
@@ -251,7 +253,7 @@ RCreateCopy( const char * pszFilename,
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALPamDataset *poDS =
-        (GDALPamDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+        static_cast<GDALPamDataset *>( GDALOpen( pszFilename, GA_ReadOnly ) );
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
