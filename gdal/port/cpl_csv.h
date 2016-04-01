@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Common Portability Library
- * Purpose:  Functions for reading and scaning CSV (comma separated,
+ * Purpose:  Functions for reading and scanning CSV (comma separated,
  *           variable length text files holding tables) files.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  WMS Client Driver
- * Purpose:  Mini driver for Internel Imaging Protocol (IIP)
+ * Purpose:  Mini driver for Internet Imaging Protocol (IIP)
  * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  ******************************************************************************
