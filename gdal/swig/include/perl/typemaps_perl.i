@@ -10,17 +10,31 @@
  */
 %include "typemaps.i"
 
-%include "../../port/cpl_config.h"
-#if defined(WIN32) && defined(_MSC_VER)
-typedef __int64            GIntBig;
-typedef unsigned __int64   GUIntBig;
-#elif HAVE_LONG_LONG
-typedef long long          GIntBig;
-typedef unsigned long long GUIntBig;
-#else
-typedef long               GIntBig;
-typedef unsigned long      GUIntBig;
-#endif
+%typemap(in) GIntBig
+{
+    $1 = strtoll(SvPV_nolen($input), 0, 0);
+}
+
+%typemap(out) GIntBig
+{
+    char temp[256];
+    sprintf(temp, "%lld", $1);
+    $result = sv_2mortal(newSVpv(temp, 0));
+    argvi++;
+}
+
+%typemap(in) GUIntBig
+{
+    $1 = strtoull(SvPV_nolen($input), 0, 0);
+}
+
+%typemap(out) GUIntBig
+{
+    char temp[256];
+    sprintf(temp, "%llu", $1);
+    $result = sv_2mortal(newSVpv(temp, 0));
+    argvi++;
+}
 
 %apply (long *OUTPUT) { long *argout };
 %apply (double *OUTPUT) { double *argout };
@@ -551,7 +565,7 @@ typedef unsigned long      GUIntBig;
     if ($2) {
         for( int i = 0; i<$1; i++ ) {
             SV **sv = av_fetch(av, i, 0);
-            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+            $2[i] =  strtoll(SvPV_nolen(*sv), NULL, 10);
         }
     } else
         SWIG_fail;
@@ -1057,7 +1071,7 @@ typedef unsigned long      GUIntBig;
         $1 = 0;
     }
     else {
-        val = strtoull(SvPV_nolen($input), 0, 0);
+        val = strtoll(SvPV_nolen($input), 0, 0);
         $1 = ($1_type)&val;
     }
 }
