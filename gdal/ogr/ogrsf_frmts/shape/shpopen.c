@@ -880,7 +880,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     unsigned int    nSHPFilesize;
 
     size_t          nMessageLen;
-    char            *pszMessage
+    char            *pszMessage;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
