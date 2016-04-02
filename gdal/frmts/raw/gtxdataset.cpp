@@ -62,20 +62,20 @@ Values are an offset in meters between two vertical datums.
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GTXDataset				*/
+/*                              GTXDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class GTXDataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
 
   public:
-    		GTXDataset() : fpImage(NULL) {}
-    	        ~GTXDataset();
+                GTXDataset() : fpImage(NULL) {}
+                ~GTXDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );
@@ -90,7 +90,7 @@ class GTXDataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GTXDataset				*/
+/*                              GTXDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 

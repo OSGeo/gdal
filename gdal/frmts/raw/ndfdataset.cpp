@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				NDFDataset				*/
+/*                              NDFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -45,15 +45,15 @@ class NDFDataset : public RawDataset
 {
     double      adfGeoTransform[6];
 
-    char	*pszProjection;
+    char        *pszProjection;
     char       **papszExtraFiles;
 
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
 
   public:
-    		NDFDataset();
-    	        ~NDFDataset();
+                NDFDataset();
+                ~NDFDataset();
 
     virtual CPLErr  GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
@@ -239,7 +239,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    NDFDataset 	*poDS = new NDFDataset();
+    NDFDataset *poDS = new NDFDataset();
     poDS->papszHeader = papszHeader;
 
     poDS->nRasterXSize = atoi(poDS->Get("PIXELS_PER_LINE",""));

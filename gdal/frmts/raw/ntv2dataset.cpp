@@ -78,7 +78,7 @@ these both in the more conventional orientation.
 
 /************************************************************************/
 /* ==================================================================== */
-/*				NTv2Dataset				*/
+/*                              NTv2Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -86,7 +86,7 @@ class NTv2Dataset : public RawDataset
 {
   public:
     bool        m_bMustSwap;
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     int         nRecordLength;
     vsi_l_offset nGridOffset;
@@ -98,8 +98,8 @@ class NTv2Dataset : public RawDataset
     int         OpenGrid( char *pachGridHeader, vsi_l_offset nDataStart );
 
   public:
-    		NTv2Dataset();
-    	        ~NTv2Dataset();
+                NTv2Dataset();
+                ~NTv2Dataset();
 
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual CPLErr GetGeoTransform( double * padfTransform );
@@ -115,7 +115,7 @@ class NTv2Dataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				NTv2Dataset				*/
+/*                              NTv2Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 

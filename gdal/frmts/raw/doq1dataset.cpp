@@ -54,24 +54,24 @@ static void DOQGetDescription( GDALDataset *, unsigned char * );
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DOQ1Dataset				*/
+/*                              DOQ1Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class DOQ1Dataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;       // image data file.
 
-    double	dfULX, dfULY;
-    double	dfXPixelSize, dfYPixelSize;
+    double      dfULX, dfULY;
+    double      dfXPixelSize, dfYPixelSize;
 
-    char	*pszProjection;
+    char        *pszProjection;
 
   public:
-    		DOQ1Dataset();
-    	        ~DOQ1Dataset();
+                DOQ1Dataset();
+                ~DOQ1Dataset();
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -145,7 +145,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*	Attempt to extract a few key values from the header.		*/
+/*      Attempt to extract a few key values from the header.            */
 /* -------------------------------------------------------------------- */
     const double dfWidth = DOQGetField(poOpenInfo->pabyHeader + 150, 6 );
     const double dfHeight = DOQGetField(poOpenInfo->pabyHeader + 144, 6 );
@@ -365,7 +365,7 @@ void GDALRegister_DOQ1()
 static double DOQGetField( unsigned char *pabyData, int nBytes )
 
 {
-    char	szWork[128];
+    char szWork[128];
 
     strncpy( szWork, reinterpret_cast<const char *>( pabyData ), nBytes );
     szWork[nBytes] = '\0';
@@ -386,7 +386,7 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
 static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 
 {
-    char	szWork[128];
+    char szWork[128];
 
     memset( szWork, ' ', 128 );
     strncpy( szWork, "USGS GeoTIFF DOQ 1:12000 Q-Quad of ", 35 );

@@ -41,17 +41,17 @@ CPL_CVSID("$Id$");
 
 typedef struct {
     GInt32      NBIH;   /* bytes in header, normally 1024 */
-    GInt32      NBPR;	/* bytes per data record (all bands of scanline) */
-    GInt32	IL;	/* initial line - normally 1 */
-    GInt32	LL;	/* last line */
-    GInt32	IE;	/* initial element (pixel), normally 1 */
-    GInt32	LE;	/* last element (pixel) */
-    GInt32	NC;	/* number of channels (bands) */
-    GInt32	H4322;	/* header record identifier - always 4322. */
+    GInt32      NBPR;   /* bytes per data record (all bands of scanline) */
+    GInt32      IL;     /* initial line - normally 1 */
+    GInt32      LL;     /* last line */
+    GInt32      IE;     /* initial element (pixel), normally 1 */
+    GInt32      LE;     /* last element (pixel) */
+    GInt32      NC;     /* number of channels (bands) */
+    GInt32      H4322;  /* header record identifier - always 4322. */
     char        unused1[40];
-    GByte	IH19[4];/* data type, and size flags */
-    GInt32	IH20;	/* number of secondary headers */
-    GInt32	SRID;
+    GByte       IH19[4];/* data type, and size flags */
+    GInt32      IH20;   /* number of secondary headers */
+    GInt32      SRID;
     char        unused2[12];
     double      YOffset;
     double      XOffset;
@@ -59,13 +59,13 @@ typedef struct {
     double      XPixSize;
     double      Matrix[4];
     char        unused3[344];
-    GUInt16	ColorTable[256];  /* RGB packed with 4 bits each */
-    char	unused4[32];
+    GUInt16     ColorTable[256];  /* RGB packed with 4 bits each */
+    char        unused4[32];
 } DIPExHeader;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DIPExDataset				*/
+/*                              DIPExDataset                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -75,14 +75,14 @@ class DIPExDataset : public GDALPamDataset
 {
     friend class DIPExRasterBand;
 
-    VSILFILE	*fp;
+    VSILFILE    *fp;
     CPLString    osSRS;
 
     DIPExHeader  sHeader;
 
     GDALDataType eRasterDataType;
 
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
   public:
                  DIPExDataset();
@@ -297,7 +297,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Extract the projection coordinates, if present.			*/
+/*      Extract the projection coordinates, if present.                 */
 /* -------------------------------------------------------------------- */
     CPL_LSBPTR64(&(poDS->sHeader.XPixSize));
     CPL_LSBPTR64(&(poDS->sHeader.YPixSize));

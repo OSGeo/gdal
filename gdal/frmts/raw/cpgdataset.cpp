@@ -39,7 +39,7 @@ enum Interleave {BSQ, BIL, BIP};
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CPGDataset				*/
+/*                              CPGDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -51,7 +51,7 @@ class CPGDataset : public RawDataset
     friend class SIRC_QSLCRasterBand;
     friend class CPG_STOKESRasterBand;
 
-    FILE	*afpImage[4];
+    FILE *afpImage[4];
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
@@ -75,8 +75,8 @@ class CPGDataset : public RawDataset
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
 
   public:
-		CPGDataset();
-	        ~CPGDataset();
+                CPGDataset();
+                ~CPGDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -602,7 +602,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         }
         for( int iBand = 0; iBand < 4; iBand++ )
         {
-            SIRC_QSLCRasterBand	*poBand;
+            SIRC_QSLCRasterBand *poBand;
 
             poBand = new SIRC_QSLCRasterBand( poDS, iBand+1, GDT_CFloat32 );
             poDS->SetBand( iBand+1, poBand );

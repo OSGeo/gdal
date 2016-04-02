@@ -40,19 +40,19 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				FujiBASDataset				*/
+/*                              FujiBASDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
 class FujiBASDataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
+    FILE        *fpImage;  // image data file.
 
-    char	**papszHeader;
+    char        **papszHeader;
 
   public:
-    		FujiBASDataset();
-    	        ~FujiBASDataset();
+                FujiBASDataset();
+                ~FujiBASDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -98,7 +98,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*	Load the header file.						*/
+/*      Load the header file.                                           */
 /* -------------------------------------------------------------------- */
     char **papszHeader = CSLLoad( poOpenInfo->pszFilename );
 
@@ -110,7 +110,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int i = 0; papszHeader[i] != NULL; i++ )
     {
-        char	*pszSep = strstr(papszHeader[i]," = ");
+        char *pszSep = strstr(papszHeader[i]," = ");
 
         if( pszSep != NULL )
         {

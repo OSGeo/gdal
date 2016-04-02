@@ -50,7 +50,7 @@ class HKVRasterBand : public RawRasterBand
     friend class HKVDataset;
 
   public:
-    		HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
+                HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
@@ -145,7 +145,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HKVDataset				*/
+/*                              HKVDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -153,8 +153,8 @@ class HKVDataset : public RawDataset
 {
     friend class HKVRasterBand;
 
-    char	*pszPath;
-    VSILFILE	*fpBlob;
+    char        *pszPath;
+    VSILFILE    *fpBlob;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -175,10 +175,10 @@ class HKVDataset : public RawDataset
     char        *pszGCPProjection;
     double      adfGeoTransform[6];
 
-    char	**papszAttrib;
+    char        **papszAttrib;
 
-    int		bGeorefChanged;
-    char	**papszGeoref;
+    int         bGeorefChanged;
+    char        **papszGeoref;
 
    /* NOTE: The MFF2 format goes against GDAL's API in that nodata values are set
     *       per-dataset rather than per-band.  To compromise, for writing out, the
@@ -191,7 +191,7 @@ class HKVDataset : public RawDataset
     double      dfNoDataValue;
 
   public:
-    		HKVDataset();
+                HKVDataset();
     virtual     ~HKVDataset();
 
     virtual int    GetGCPCount();
@@ -259,7 +259,7 @@ CPLErr HKVRasterBand::SetNoDataValue( double dfNewValue )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HKVDataset				*/
+/*                              HKVDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -377,7 +377,7 @@ void HKVDataset::SetNoDataValue( double dfNewValue )
 
 CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
                                     int nXSize, int nYSize, int nBands,
-				    GDALDataType eType, int bNoDataSet,
+                                    GDALDataType eType, int bNoDataSet,
                                     double dfNoDataValue )
 
 {
@@ -1517,7 +1517,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /*      Establish the name of the directory we will be creating the     */
 /*      new HKV directory in.  Verify that this is a directory.         */
 /* -------------------------------------------------------------------- */
-    char	*pszBaseDir;
+    char *pszBaseDir;
 
     if( strlen(CPLGetPath(pszFilenameIn)) == 0 )
         pszBaseDir = CPLStrdup(".");
@@ -1594,7 +1594,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 CPLErr HKVDataset::Delete( const char * pszName )
 
 {
-    VSIStatBuf	sStat;
+    VSIStatBuf sStat;
     if( CPLStat( pszName, &sStat ) != 0 || !VSI_ISDIR(sStat.st_mode) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1670,7 +1670,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
     }
 
-    HKVDataset	*poDS
+    HKVDataset *poDS
         = reinterpret_cast<HKVDataset *>( Create( pszFilename,
                                                   poSrcDS->GetRasterXSize(),
                                                   poSrcDS->GetRasterYSize(),
@@ -1704,7 +1704,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
         int pbSuccess;
         double dfSrcNoDataValue = poSrcBand->GetNoDataValue( &pbSuccess );
         if ( pbSuccess )
-  	    poDS->SetNoDataValue( dfSrcNoDataValue );
+            poDS->SetNoDataValue( dfSrcNoDataValue );
 
         void *pData = CPLMalloc(
             nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) / 8);

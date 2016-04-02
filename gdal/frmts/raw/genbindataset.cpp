@@ -184,7 +184,7 @@ static const int anUsgsEsriZones[] =
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GenBinDataset				*/
+/*                              GenBinDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -192,7 +192,7 @@ class GenBinDataset : public RawDataset
 {
     friend class GenBinBitRasterBand;
 
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     int         bGotTransform;
     double      adfGeoTransform[6];
@@ -331,7 +331,7 @@ CPLErr GenBinBitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GenBinDataset				*/
+/*                              GenBinDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -749,7 +749,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Work out interleaving info.					*/
+/*      Work out interleaving info.                                     */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
     const char *pszInterleaving = CSLFetchNameValue(papszHdr,"INTERLEAVING");

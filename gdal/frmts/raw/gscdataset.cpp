@@ -36,21 +36,21 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GSCDataset				*/
+/*                              GSCDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class GSCDataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
   public:
-    		GSCDataset();
-    	        ~GSCDataset();
+                GSCDataset();
+                ~GSCDataset();
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -159,9 +159,9 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the header information in the second record. 		*/
+/*      Read the header information in the second record.               */
 /* -------------------------------------------------------------------- */
-    float	afHeaderInfo[8];
+    float afHeaderInfo[8];
 
     if( VSIFSeekL( poDS->fpImage, nRecordLen + 12, SEEK_SET ) != 0
         || VSIFReadL( afHeaderInfo, sizeof(float), 8, poDS->fpImage ) != 8 )
