@@ -696,9 +696,6 @@ vsi_l_offset VSICurlHandle::GetFileSize(bool bSetError)
     /* when doing a HEAD when recycling connections */
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
-    /* HACK for mbtiles driver: proper fix would be to auto-detect servers that don't accept HEAD */
-    /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
-    /* and interrupt is as soon as the header is found */
     CPLString osVerb;
     if( UseLimitRangeGetInsteadOfHead() )
     {
@@ -710,8 +707,13 @@ vsi_l_offset VSICurlHandle::GetFileSize(bool bSetError)
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, "0-4095");
     }
-    else if (strstr(pszURL, ".tiles.mapbox.com/") != NULL
-	|| !CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
+    /* HACK for mbtiles driver: http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, */
+    /* as it is a redirect to AWS S3 signed URL, but those are only valid for a */
+    /* given type of HTTP request, and thus GET. This is valid for any signed URL for AWS S3. */
+    else if (strstr(pszURL, ".tiles.mapbox.com/") != NULL ||
+             (strstr(pszURL, ".s3.amazonaws.com/") != NULL && (strstr(pszURL, "&Signature=") != NULL ||
+                                                               strstr(pszURL, "?Signature=") != NULL)) ||
+             !CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
