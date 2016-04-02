@@ -1200,7 +1200,9 @@ const char *MBTilesDataset::GetMetadataItem( const char* pszName, const char * p
 
 int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
+    if ( (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
+      // Allow direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
+          strstr(poOpenInfo->pszFilename, ".mbtiles") != NULL) &&
         poOpenInfo->nHeaderBytes >= 1024 &&
         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
