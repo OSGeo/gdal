@@ -718,6 +718,69 @@ def transformer_13():
 
     return 'success'
 
+###############################################################################
+# Test inverse RPC transform when iterations do oscillations (#6377)
+
+def transformer_14():
+    ds = gdal.GetDriverByName('MEM').Create('', 4032, 2688)
+    rpc = [ "MIN_LAT=0",
+            "MAX_LAT=0",
+            "MIN_LONG=0",
+            "MAX_LONG=0",
+            "HEIGHT_OFF=244.72924043124081",
+            "HEIGHT_SCALE=391.44066987292678",
+            "LAT_OFF=0.095493639758799986",
+            "LAT_SCALE=-0.0977494003085103",
+            "LINE_DEN_COEFF=1 1.73399671259238e-05 -6.18169396309642e-06 -3.11498839490863e-05 -1.18048814815295e-05 -5.46123898974842e-05 -2.51203895820587e-05 -5.77299008756702e-05 -1.37836923606953e-05 -3.24029327866125e-06 2.06307542696228e-07 -5.16777154466466e-08 2.98762926005741e-07 3.17761145061869e-08 1.48077371641094e-07 -7.69738626480047e-08 2.94990048269861e-08 -3.37468052222007e-08 -3.67859879729462e-08 8.79847359414426e-10 ",
+            "LINE_NUM_COEFF=0.000721904493927027 1.02330510505135 -1.27742813759689 -0.0973049949136407 -0.014260789316429 0.00229308399354221 -0.0016640916975237 0.0124508639909873 0.00336835383694126 1.1987123734283e-05 -1.85240614830659e-05 4.40716454954686e-05 2.3198555492418e-05 -8.31659287301587e-08 -5.10329082923063e-05 2.56477008932482e-05 1.01465909326012e-05 1.04407036240869e-05 4.27413648628578e-05 2.91696764503125e-07 ",
+            "LINE_OFF=1343.99369782095",
+            "LINE_SCALE=1343.96638400536",
+            "LONG_OFF=-0.034423410000698595",
+            "LONG_SCALE=0.143444599019706",
+            "SAMP_DEN_COEFF=1 1.83636704399141e-05 3.55794197969218e-06 -1.33255440425932e-05 -4.25424777986987e-06 -3.95287146748821e-05 1.35786181318561e-05 -3.86131208639696e-05 -1.10085128708761e-05 -1.26863939055319e-05 -2.88045902675552e-07 -1.58732907217101e-07 4.08999884183478e-07 6.6854211618061e-08 -1.46399266323942e-07 -4.69718293745237e-08 -4.14626818788491e-08 -3.00588241056424e-07 4.54784506604435e-08 3.24214474149225e-08 ",
+            "SAMP_NUM_COEFF=-0.0112062780844554 -1.05096833835297 -0.704023055461029 0.0384547265206585 -0.00987134340336078 -0.00310989611092616 -0.00116937850565916 -0.0102714370609919 0.000930565787504389 7.03834691339565e-05 -3.83216250787844e-05 -3.67841179314918e-05 2.45498653278515e-05 1.06302833544472e-05 -6.26921822677631e-05 1.29769009118128e-05 1.1336284460811e-05 -3.01250967502161e-05 -7.60511798099513e-06 -4.45260900205512e-07 ",
+            "SAMP_OFF=2015.99417232167",
+            "SAMP_SCALE=2015.9777295656"
+    ]
+    ds.SetMetadata(rpc, 'RPC')
+
+    old_rpc_inverse_verbose = gdal.GetConfigOption('RPC_INVERSE_VERBOSE')
+    gdal.SetConfigOption('RPC_INVERSE_VERBOSE', 'YES')
+    old_rpc_inverse_log = gdal.GetConfigOption('RPC_INVERSE_LOG')
+    gdal.SetConfigOption('RPC_INVERSE_LOG', '/vsimem/transformer_14.csv')
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=data/transformer_14_dem.tif' ] )
+    gdal.SetConfigOption('RPC_INVERSE_VERBOSE', old_rpc_inverse_verbose)
+    gdal.SetConfigOption('RPC_INVERSE_LOG', old_rpc_inverse_log)
+    (success,pnt) = tr.TransformPoint( 0, 0, 0 )
+    if not success or abs(pnt[0] - 1.9391846640653961e-05) > 1e-7 or abs(pnt[1] -  -0.0038824752244123275) > 1e-7:
+        gdaltest.post_reason('fail')
+        print(pnt)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/transformer_14.csvt', 'rb')
+    if f is not None:
+        content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
+        gdal.VSIFCloseL(f)
+    if content.find('Integer,Real,Real,Real,String,Real,Real') != 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/transformer_14.csv', 'rb')
+    if f is not None:
+        content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
+        gdal.VSIFCloseL(f)
+    if content.find("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
+0,""") != 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/transformer_14.csvt')
+    gdal.Unlink('/vsimem/transformer_14.csv')
+
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -731,7 +794,8 @@ gdaltest_list = [
     transformer_10,
     transformer_11,
     transformer_12,
-    transformer_13
+    transformer_13,
+    transformer_14
     ]
 
 disabled_gdaltest_list = [
