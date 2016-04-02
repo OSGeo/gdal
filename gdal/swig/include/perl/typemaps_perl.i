@@ -10,6 +10,7 @@
  */
 %include "typemaps.i"
 
+%{
 %include "../../port/cpl_config.h"
 #if defined(WIN32) && defined(_MSC_VER)
 typedef __int64            GIntBig;
@@ -21,6 +22,7 @@ typedef unsigned long long GUIntBig;
 typedef long               GIntBig;
 typedef unsigned long      GUIntBig;
 #endif
+ %}
 
 %apply (long *OUTPUT) { long *argout };
 %apply (double *OUTPUT) { double *argout };
