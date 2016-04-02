@@ -76,7 +76,7 @@ class CPGDataset : public RawDataset
 
   public:
                 CPGDataset();
-                ~CPGDataset();
+    virtual ~CPGDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -150,6 +150,7 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
 
   public:
                    SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
+    virtual ~SIRC_QSLCRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * );
 };

@@ -79,7 +79,7 @@ class IDADataset : public RawDataset
 
   public:
                 IDADataset();
-                ~IDADataset();
+    virtual ~IDADataset();
 
     virtual void FlushCache();
     virtual const char *GetProjectionRef(void);

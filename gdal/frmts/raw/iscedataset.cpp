@@ -86,7 +86,7 @@ class ISCEDataset : public RawDataset
 
   public:
                 ISCEDataset();
-                ~ISCEDataset();
+    virtual ~ISCEDataset();
 
     virtual void        FlushCache();
     virtual char      **GetFileList();

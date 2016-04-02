@@ -86,7 +86,7 @@ class DIPExDataset : public GDALPamDataset
 
   public:
                  DIPExDataset();
-                 ~DIPExDataset();
+    virtual ~DIPExDataset();
 
     virtual CPLErr GetGeoTransform( double * );
 

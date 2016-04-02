@@ -57,7 +57,7 @@ class EIRDataset : public RawDataset
 
   public:
     EIRDataset();
-    ~EIRDataset();
+    virtual ~EIRDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
 

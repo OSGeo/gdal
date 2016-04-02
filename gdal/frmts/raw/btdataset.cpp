@@ -62,7 +62,7 @@ class BTDataset : public GDALPamDataset
   public:
 
                 BTDataset();
-                ~BTDataset();
+    virtual ~BTDataset();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -90,6 +90,7 @@ class BTRasterBand : public GDALPamRasterBand
   public:
                    BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
                                  GDALDataType eType );
+    virtual ~BTRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );

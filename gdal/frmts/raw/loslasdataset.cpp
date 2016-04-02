@@ -83,7 +83,7 @@ class LOSLASDataset : public RawDataset
 
   public:
                 LOSLASDataset();
-                ~LOSLASDataset();
+    virtual ~LOSLASDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();

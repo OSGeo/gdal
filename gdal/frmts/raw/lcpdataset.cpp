@@ -63,7 +63,7 @@ class LCPDataset : public RawDataset
 
   public:
                 LCPDataset();
-                ~LCPDataset();
+    virtual ~LCPDataset();
 
     virtual char **GetFileList(void);
 

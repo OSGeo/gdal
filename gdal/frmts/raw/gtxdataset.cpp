@@ -75,7 +75,7 @@ class GTXDataset : public RawDataset
 
   public:
                 GTXDataset() : fpImage(NULL) {}
-                ~GTXDataset();
+    virtual ~GTXDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );
