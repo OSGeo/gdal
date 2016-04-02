@@ -72,7 +72,8 @@ static void RGBA2RGB(const char *start, const char *stop, char *target) {
 // works backwards, from stop to start, the last pointer is the end of the source region
 static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        *--stop = 0xff;
+        --stop;
+        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
         *--stop = *--source_end;
         *--stop = *--source_end;
         *--stop = *--source_end;
@@ -91,7 +92,8 @@ static void LA2L(const char *start, const char *stop, char *target) {
 // works backwards, from stop to start, the last pointer is the end of the source region
 static void L2LA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        *--stop = 0xff;
+        --stop;
+        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
         *--stop = *--source_end;
     }
 }
