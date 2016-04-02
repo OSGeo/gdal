@@ -42,7 +42,7 @@ static void c2tp(double n, GByte *r);
 
 /************************************************************************/
 /* ==================================================================== */
-/*				IDADataset				*/
+/*                              IDADataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -78,8 +78,8 @@ class IDADataset : public RawDataset
     void        ReadColorTable();
 
   public:
-    		IDADataset();
-    	        ~IDADataset();
+                IDADataset();
+                ~IDADataset();
 
     virtual void FlushCache();
     virtual const char *GetProjectionRef(void);
@@ -98,7 +98,7 @@ class IDADataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*			        IDARasterBand                           */
+/*                              IDARasterBand                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -110,7 +110,7 @@ class IDARasterBand : public RawRasterBand
     GDALColorTable       *poColorTable;
 
   public:
-    		IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
+                 IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
     virtual GDALRasterAttributeTable *GetDefaultRAT();
@@ -275,7 +275,7 @@ GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				IDADataset				*/
+/*                              IDADataset                              */
 /* ==================================================================== */
 /************************************************************************/
 

@@ -68,22 +68,22 @@ even the header record is this length though it means some waste.
 
 /************************************************************************/
 /* ==================================================================== */
-/*				LOSLASDataset				*/
+/*                              LOSLASDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
 class LOSLASDataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     int         nRecordLength;
 
     double      adfGeoTransform[6];
 
   public:
-    		LOSLASDataset();
-    	        ~LOSLASDataset();
+                LOSLASDataset();
+                ~LOSLASDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
@@ -94,7 +94,7 @@ class LOSLASDataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				LOSLASDataset				*/
+/*                              LOSLASDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 

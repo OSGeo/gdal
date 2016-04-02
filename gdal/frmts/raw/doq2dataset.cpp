@@ -55,24 +55,24 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DOQ2Dataset				*/
+/*                              DOQ2Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class DOQ2Dataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
-    double	dfULX, dfULY;
-    double	dfXPixelSize, dfYPixelSize;
+    double      dfULX, dfULY;
+    double      dfXPixelSize, dfYPixelSize;
 
-    char	*pszProjection;
+    char        *pszProjection;
 
   public:
-    		DOQ2Dataset();
-    	        ~DOQ2Dataset();
+                DOQ2Dataset();
+                ~DOQ2Dataset();
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -153,7 +153,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     int nLineCount = 0;
-    int	nBytesPerPixel=0;
+    int nBytesPerPixel=0;
     int nWidth=0, nHeight=0, nBandStorage=0, nBandTypes=0;
     const char *pszDatumLong=NULL, *pszDatumShort=NULL;
     const char *pszUnits=NULL;
@@ -172,14 +172,14 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszLine;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
-	char    **papszTokens;
+        char    **papszTokens;
 
         nLineCount++;
 
-	if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
+        if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
             break;
 
-	papszTokens = CSLTokenizeString( pszLine );
+        papszTokens = CSLTokenizeString( pszLine );
         if( CSLCount( papszTokens ) < 2 )
         {
             CSLDestroy( papszTokens );
@@ -204,7 +204,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             dfXDim = dfYDim = CPLAtof(papszTokens[1]);
         }
-	else if( EQUAL(papszTokens[0],"BAND_ORGANIZATION") )
+        else if( EQUAL(papszTokens[0],"BAND_ORGANIZATION") )
         {
             if( EQUAL(papszTokens[1],"SINGLE FILE") )
                 nBandStorage = 1;
@@ -214,8 +214,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 nBandStorage = 1;
             if( EQUAL(papszTokens[1],"BIP") )
                 nBandStorage = 4;
-	}
-	else if( EQUAL(papszTokens[0],"BAND_CONTENT") )
+        }
+        else if( EQUAL(papszTokens[0],"BAND_CONTENT") )
         {
             if( EQUAL(papszTokens[1],"BLACK&WHITE") )
                 nBandTypes = 1;
@@ -234,15 +234,15 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"BITS_PER_PIXEL") )
         {
-	    nBytesPerPixel = (atoi(papszTokens[1]) / 8);
+            nBytesPerPixel = (atoi(papszTokens[1]) / 8);
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_COORDINATE_SYSTEM") )
         {
-	    if( EQUAL(papszTokens[1],"UTM") )
+            if( EQUAL(papszTokens[1],"UTM") )
                 nProjType = 1;
-	    else if( EQUAL(papszTokens[1],"SPCS") )
+            else if( EQUAL(papszTokens[1],"SPCS") )
                 nProjType = 2;
-	    else if( EQUAL(papszTokens[1],"GEOGRAPHIC") )
+            else if( EQUAL(papszTokens[1],"GEOGRAPHIC") )
                 nProjType = 0;
         }
         else if( EQUAL(papszTokens[0],"COORDINATE_ZONE") )
@@ -251,37 +251,37 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_UNITS") )
         {
-	    if( EQUAL(papszTokens[1],"METERS") )
+            if( EQUAL(papszTokens[1],"METERS") )
                 pszUnits = "UNIT[\"metre\",1]";
-	    else if( EQUAL(papszTokens[1],"FEET") )
+            else if( EQUAL(papszTokens[1],"FEET") )
                 pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_DATUM") )
         {
-	    if( EQUAL(papszTokens[1],"NAD27") )
+            if( EQUAL(papszTokens[1],"NAD27") )
             {
-		pszDatumLong = NAD27_DATUM;
-		pszDatumShort = "NAD 27";
+                pszDatumLong = NAD27_DATUM;
+                pszDatumShort = "NAD 27";
             }
-	    else if( EQUAL(papszTokens[1],"WGS72") )
+            else if( EQUAL(papszTokens[1],"WGS72") )
             {
-		pszDatumLong = WGS72_DATUM;
-		pszDatumShort = "WGS 72";
+                pszDatumLong = WGS72_DATUM;
+                pszDatumShort = "WGS 72";
             }
-	    else if( EQUAL(papszTokens[1],"WGS84") )
+            else if( EQUAL(papszTokens[1],"WGS84") )
             {
-		pszDatumLong = WGS84_DATUM;
-		pszDatumShort = "WGS 84";
+                pszDatumLong = WGS84_DATUM;
+                pszDatumShort = "WGS 84";
             }
-	    else if( EQUAL(papszTokens[1],"NAD83") )
+            else if( EQUAL(papszTokens[1],"NAD83") )
             {
-		pszDatumLong = NAD83_DATUM;
-		pszDatumShort = "NAD 83";
+                pszDatumLong = NAD83_DATUM;
+                pszDatumShort = "NAD 83";
             }
-	    else
+            else
             {
-		pszDatumLong = "DATUM[\"unknown\"]";
-		pszDatumShort = "unknown";
+                pszDatumLong = "DATUM[\"unknown\"]";
+                pszDatumShort = "unknown";
             }
         }
         else
@@ -394,7 +394,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (nProjType == 1)
     {
-	poDS->pszProjection =
+        poDS->pszProjection =
             CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort ? pszDatumShort : "", nZone,
                                   pszDatumLong ? pszDatumLong : "",
                                   (nZone >= 1 && nZone <= 60) ? nZone * 6 - 183 : 0,
@@ -402,7 +402,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-	poDS->pszProjection = CPLStrdup("");
+        poDS->pszProjection = CPLStrdup("");
     }
 
     poDS->dfULX = dfULXMap;

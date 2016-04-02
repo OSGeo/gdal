@@ -52,7 +52,7 @@ static const int LCP_MAX_CLASSES = 100;
 class LCPDataset : public RawDataset
 {
     VSILFILE    *fpImage;       // image data file.
-    char	pachHeader[LCP_HEADER_SIZE];
+    char        pachHeader[LCP_HEADER_SIZE];
 
     CPLString   osPrjFilename;
     char        *pszProjection;

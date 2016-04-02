@@ -449,21 +449,21 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     int nPixelOffset, nLineOffset, nBandOffset;
     if ( EQUAL( sScheme, "BIL" ) )
     {
-		poDS->eScheme = BIL;
+                poDS->eScheme = BIL;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
         nLineOffset = nPixelOffset * nWidth * nBands;
         nBandOffset = GDALGetDataTypeSize(eDataType)/8 * nWidth;
     }
     else if ( EQUAL( sScheme, "BIP" ) )
     {
-		poDS->eScheme = BIP;
+        poDS->eScheme = BIP;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8 * nBands;
         nLineOffset = nPixelOffset * nWidth * nBands;
         nBandOffset = GDALGetDataTypeSize(eDataType)/8;
     }
     else if ( EQUAL( sScheme, "BSQ" ) )
     {
-		poDS->eScheme = BSQ;
+        poDS->eScheme = BSQ;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
         nLineOffset = nPixelOffset * nWidth;
         nBandOffset = nLineOffset * nFileLength;

@@ -1463,7 +1463,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLErrorReset();
     for( int i = 0; i < poDS->nBands; i++ )
     {
-        EHdrRasterBand	*poBand =
+        EHdrRasterBand *poBand =
             new EHdrRasterBand( poDS, i+1, poDS->fpImage,
                                 nSkipBytes + nBandOffset * i,
                                 nPixelOffset, nLineOffset, eDataType,

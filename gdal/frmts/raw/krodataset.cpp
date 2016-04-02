@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 class KRODataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
   public:
                     KRODataset() : fpImage(NULL) {};
@@ -111,7 +111,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    KRODataset 	*poDS = new KRODataset();
+    KRODataset *poDS = new KRODataset();
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */

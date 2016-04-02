@@ -37,20 +37,20 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CTable2Dataset				*/
+/*                              CTable2Dataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
 class CTable2Dataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
 
   public:
-    		CTable2Dataset();
-    	        ~CTable2Dataset();
+                CTable2Dataset();
+                ~CTable2Dataset();
 
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual CPLErr GetGeoTransform( double * padfTransform );
@@ -66,7 +66,7 @@ class CTable2Dataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CTable2Dataset				*/
+/*                              CTable2Dataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
