@@ -334,6 +334,16 @@ static int OGRSQLiteVFSFullPathname (sqlite3_vfs* pVFS, const char *zName, int n
 #endif
     if (zName[0] == '/')
     {
+        if( static_cast<int>(strlen( zName )) >= nOut )
+        {
+            // The +8 comes from the fact that sqlite3 does this check as
+            // it needs to be able to append .journal to the filename
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Maximum pathname length reserved for SQLite3 VFS "
+                     "isn't large enough. Try raising OGR_SQLITE_VFS_MAXPATHNAME to at least %d",
+                     static_cast<int>(strlen(zName)) + 8);
+            return SQLITE_CANTOPEN;
+        }
         strncpy(zOut, zName, nOut);
         zOut[nOut-1] = '\0';
         return SQLITE_OK;
@@ -463,7 +473,8 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
     pMyVFS->iVersion = 1;
 #endif
     pMyVFS->szOsFile = sizeof(OGRSQLiteFileStruct);
-    pMyVFS->mxPathname = pDefaultVFS->mxPathname;
+    // must be large enough to hold potentially very long names like /vsicurl/.... with AWS S3 security tokens
+    pMyVFS->mxPathname = atoi(CPLGetConfigOption("OGR_SQLITE_VFS_MAXPATHNAME", "2048"));
     pMyVFS->zName = pVFSAppData->szVFSName;
     pMyVFS->pAppData = pVFSAppData;
     pMyVFS->xOpen = OGRSQLiteVFSOpen;
