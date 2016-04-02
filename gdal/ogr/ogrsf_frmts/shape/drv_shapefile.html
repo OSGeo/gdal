@@ -42,18 +42,18 @@ fans and meshes.</p>
 <p>If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
 it will be read and used to associate a projection with features.</p>
 
-<p>The read driver assumes that multipart polygons follow the specification, 
-that is to say the vertices of outer rings should be oriented clockwise on the 
+<p>The read driver assumes that multipart polygons follow the specification,
+that is to say the vertices of outer rings should be oriented clockwise on the
 X/Y plane, and those of inner rings counterclockwise.
-If a Shapefile is broken w.r.t. that rule, it is possible to define the 
-configuration option OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full 
-analysis based on topological relationships of the parts of the polygons so 
+If a Shapefile is broken w.r.t. that rule, it is possible to define the
+configuration option OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full
+analysis based on topological relationships of the parts of the polygons so
 that the resulting polygons are correctly
 defined in the OGC Simple Feature convention. </p>
 
-<p>An attempt is made to read the LDID/codepage setting from the .dbf file 
+<p>An attempt is made to read the LDID/codepage setting from the .dbf file
 and use it to translate string fields to UTF-8 on read, and back when writing.
-LDID "87 / 0x57" is treated as ISO8859_1 which may not be appropriate.  
+LDID "87 / 0x57" is treated as ISO8859_1 which may not be appropriate.
 The SHAPE_ENCODING <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
 configuration option</a> may be used to override the encoding interpretation
 of the shapefile with any encoding supported by CPLRecode or to "" to avoid
@@ -68,7 +68,7 @@ shapefile with any encoding supported by CPLRecode or to "" to avoid any
 recoding</li>
 <li><b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: Modification
 date to write in DBF header with year-month-day format. If not specified, current date is used.</li>
-<li><b>ADJUST_TYPE</b>=YES/NO: Set to YES (default is NO) to read the whole .dbf to adjust 
+<li><b>ADJUST_TYPE</b>=YES/NO: Set to YES (default is NO) to read the whole .dbf to adjust
 Real->Integer/Integer64 or Integer64->Integer field types when possible. This
 can be used when field widths are ambiguous and that by default OGR would select
 the larger data type. For example, a numeric column with 0 decimal figures and with
@@ -94,7 +94,7 @@ are used by UMN MapServer. Spatial indexing can accelerate spatially filtered
 passes through large datasets to pick out a small area quite dramatically.</p>
 
 <p>Starting with OGR 1.10, it can also use the ESRI spatial index
-files (.sbn / .sbx), but writing them is not supported currently.</p> 
+files (.sbn / .sbx), but writing them is not supported currently.</p>
 
 <p>To create a spatial index (in .qix format), issue a SQL command of the form</p>
 <pre>CREATE SPATIAL INDEX ON tablename [DEPTH N]</pre>
@@ -115,7 +115,7 @@ More information is available about this utility at the
 <a href="http://mapserver.org/utilities/shptree.html">MapServer shptree page</a>
 </p>
 
-<p>Currently the OGR Shapefile driver only supports attribute indexes for 
+<p>Currently the OGR Shapefile driver only supports attribute indexes for
 looking up specific values in a unique key column.  To create an attribute
 index for a column issue an SQL command of the form "CREATE INDEX ON tablename
 USING fieldname".  To drop the attribute indexes issue a command of the
@@ -128,14 +128,14 @@ with any other shapefile applications.</p>
 
 <p>The Shapefile driver treats a directory as a dataset, and each Shapefile
 set (.shp, .shx, and .dbf) as a layer.  The dataset name will be treated
-as a directory name.  If the directory already exists it is used and 
+as a directory name.  If the directory already exists it is used and
 existing files in the directory are ignored.  If the directory does not
 exist it will be created.</p>
 
 <p>As a special case attempts to create a new dataset with the extension .shp
 will result in a single file set being created instead of a directory.</p>
 
-<p>ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
+<p>ESRI shapefiles can only store one kind of geometry per layer (shapefile).
 On creation this is may be set based on the source file (if a uniform geometry
 type is known from the source driver), or it may be set directly by the
 user with the layer creation option SHPT (shown below).  If not set the
@@ -144,7 +144,7 @@ to the layer, the output will be terminated with an error.</p>
 
 <p>Note that this can make it very difficult to translate a mixed geometry layer
 from another format into Shapefile format using ogr2ogr, since ogr2ogr has
-no support for separating out geometries from a source layer. See 
+no support for separating out geometries from a source layer. See
 the <a href="http://trac.osgeo.org/gdal/wiki/FAQVector#HowdoItranslateamixedgeometryfiletoshapefileformat">FAQ</a> for a solution.</p>
 
 <p>Shapefile feature attributes are stored in an associated .dbf file, and so
@@ -164,7 +164,7 @@ with a serial number from 1 to 99. </p><p>For example:</p>
 field types are supported.  The various list, and binary field types cannot
 be created.</p></li>
 
-<li><p> The field width and precision are directly used to establish storage 
+<li><p> The field width and precision are directly used to establish storage
 size in the .dbf file.  This means that strings longer than the field
 width, or numbers that don't fit into the indicated field format will suffer
 truncation.</p></li>
@@ -187,7 +187,7 @@ by the application an "FID" field will be automatically created and populated
 with the record number.</p>
 
 <p>The OGR shapefile driver supports rewriting existing shapes in a shapefile
-as well as deleting shapes.  Deleted shapes are marked for deletion in 
+as well as deleting shapes.  Deleted shapes are marked for deletion in
 the .dbf file, and then ignored by OGR.  To actually remove them permanently
 (resulting in renumbering of FIDs) invoke the SQL 'REPACK &lt;tablename&gt;' via
 the datasource ExecuteSQL() method.</p>
@@ -317,6 +317,10 @@ by the Shapefile specification. This can be useful in some situations where
 a MultiPolygon passed to the shapefile writer is not really a compliant Single
 Feature polygon, but originates from example from a MultiPatch object (from
 a Shapefile/FileGDB/PGeo datasource).
+</p>
+<p>
+(GDAL &gt;= 2.1) The SHAPE_RESTORE_SHX configuration option/environment variable
+can be set to YES (default NO) to restore broken or absent .shx file from associated .shp file during opening.
 </p>
 
 <h3>See Also</h3>

@@ -839,7 +839,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /*                                                                      */
 /*      Open the .shp and .shx files based on the basename of the       */
 /*      files or either file name. It generally invokes SHPRestoreSHX() */
-/*      in case when SHP_RESTORE_SHX true config option was passed.     */
+/*      in case when bRestoreSHX equals true.                           */
 /************************************************************************/
 
 SHPHandle SHPAPI_CALL
@@ -855,7 +855,7 @@ SHPOpenLLEx( const char * pszLayer, const char * pszAccess, SAHooks *psHooks,
             return SHPOpenLL ( pszLayer, pszAccess, psHooks );
         }
     }
-    
+
     return( NULL );
 }
 
@@ -878,6 +878,9 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     int             bLazySHXLoading = FALSE;
     size_t          nFullnameLen;
     unsigned int    nSHPFilesize;
+
+    size_t          nMessageLen;
+    char            *pszMessage
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
@@ -934,8 +937,8 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 
     if( fpSHP == NULL )
     {
-        size_t nMessageLen = strlen(pszBasename)*2+256;
-        char *pszMessage = (char *) malloc(nMessageLen);
+        nMessageLen = strlen(pszBasename)*2+256;
+        pszMessage = (char *) malloc(nMessageLen);
         snprintf( pszMessage, nMessageLen, "Unable to open %s.shp or %s.SHP.",
                   pszBasename, pszBasename );
         psHooks->Error( pszMessage );
@@ -968,8 +971,8 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 
     if( fpSHX == NULL )
     {
-        size_t nMessageLen = strlen( pszBasename ) * 2 + 256;
-        char *pszMessage = (char *) malloc( nMessageLen );
+        nMessageLen = strlen( pszBasename ) * 2 + 256;
+        pszMessage = (char *) malloc( nMessageLen );
         snprintf( pszMessage, nMessageLen, "Error opening file %s.shx for writing",
                  pszBasename );
         psHooks->Error( pszMessage );
@@ -977,12 +980,14 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 
         psHooks->FClose( fpSHX );
 
+        free( pabyBuf );
         free( pszBasename );
         free( pszFullname );
 
         return( 0 );
     }
 
+    free( pabyBuf );
 /* -------------------------------------------------------------------- */
 /*  Open SHX and create it using SHP file content.                      */
 /* -------------------------------------------------------------------- */
@@ -995,7 +1000,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     unsigned int nCurrentSHPOffset = 100;
     size_t nRealSHXContentSize = 100;
 
-    char *pabyReadedRecord = (char *) malloc ( 8 );
+    char abyReadedRecord[8];
     int niRecord = 0;
     int nRecordLength = 0;
     int nRecordOffset = 50;
@@ -1006,10 +1011,10 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
             psHooks->FRead( &nRecordLength, 4, 1, fpSHP ) == 1)
         {
             if( !bBigEndian ) SwapWord( 4, &nRecordOffset );
-            memcpy( pabyReadedRecord, &nRecordOffset, 4 );
-            memcpy( pabyReadedRecord + 4, &nRecordLength, 4 );
+            memcpy( abyReadedRecord, &nRecordOffset, 4 );
+            memcpy( abyReadedRecord + 4, &nRecordLength, 4 );
 
-            psHooks->FWrite( pabyReadedRecord, 8, 1, fpSHX );
+            psHooks->FWrite( abyReadedRecord, 8, 1, fpSHX );
 
             if ( !bBigEndian ) SwapWord( 4, &nRecordOffset );
             if ( !bBigEndian ) SwapWord( 4, &nRecordLength );
@@ -1022,8 +1027,8 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
         }
         else
         {
-            size_t nMessageLen = strlen( pszBasename ) * 2 + 256;
-            char *pszMessage = (char *) malloc( nMessageLen );
+            nMessageLen = strlen( pszBasename ) * 2 + 256;
+            pszMessage = (char *) malloc( nMessageLen );
             snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx" );
             psHooks->Error( pszMessage );
             free( pszMessage );
