@@ -149,7 +149,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
     ILImage image(img);
     CPLErr retval = CE_None;
 
-    buf_mgr temp = { NULL, img.pageSizeBytes };
+    buf_mgr temp = { NULL, static_cast<size_t>(img.pageSizeBytes) };
     retval = initBuffer(temp);
     if (retval != CE_None)
         return retval;
