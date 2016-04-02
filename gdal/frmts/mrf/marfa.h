@@ -670,7 +670,7 @@ protected:
 
     CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
-    int rgb, sameres, optimize;
+    bool rgb, sameres, optimize;
 };
 
 class Raw_Band : public GDALMRFRasterBand {
