@@ -99,7 +99,7 @@ class NTv2Dataset : public RawDataset
 
   public:
                 NTv2Dataset();
-                ~NTv2Dataset();
+    virtual ~NTv2Dataset();
 
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual CPLErr GetGeoTransform( double * padfTransform );

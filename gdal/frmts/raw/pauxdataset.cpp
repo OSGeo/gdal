@@ -60,7 +60,7 @@ class PAuxDataset : public RawDataset
 
   public:
                 PAuxDataset();
-                ~PAuxDataset();
+    virtual ~PAuxDataset();
 
     char        *pszAuxFilename;
     char        **papszAuxLines;
@@ -97,7 +97,7 @@ class PAuxRasterBand : public RawRasterBand
                                  int nLineOffset,
                                  GDALDataType eDataType, int bNativeOrder );
 
-                 ~PAuxRasterBand();
+    virtual ~PAuxRasterBand();
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );

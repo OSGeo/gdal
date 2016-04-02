@@ -68,7 +68,7 @@ class MFFDataset : public RawDataset
 
   public:
                 MFFDataset();
-                ~MFFDataset();
+    virtual ~MFFDataset();
 
     char        **papszHdrLines;
 
@@ -110,7 +110,7 @@ class MFFTiledBand : public GDALRasterBand
 
                    MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
                                  GDALDataType, int );
-                   ~MFFTiledBand();
+    virtual ~MFFTiledBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 };

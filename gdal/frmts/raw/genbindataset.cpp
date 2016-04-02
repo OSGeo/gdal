@@ -204,7 +204,7 @@ class GenBinDataset : public RawDataset
 
   public:
     GenBinDataset();
-    ~GenBinDataset();
+    virtual ~GenBinDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
@@ -226,6 +226,7 @@ class GenBinBitRasterBand : public GDALPamRasterBand
 
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
+    virtual ~GenBinBitRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * );
 };

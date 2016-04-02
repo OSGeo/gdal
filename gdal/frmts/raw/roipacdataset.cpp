@@ -56,7 +56,7 @@ class ROIPACDataset : public RawDataset
 
   public:
                 ROIPACDataset( void );
-                ~ROIPACDataset( void );
+    virtual ~ROIPACDataset( void );
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int          Identify( GDALOpenInfo *poOpenInfo );

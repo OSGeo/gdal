@@ -53,7 +53,7 @@ class NDFDataset : public RawDataset
 
   public:
                 NDFDataset();
-                ~NDFDataset();
+    virtual ~NDFDataset();
 
     virtual CPLErr  GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);

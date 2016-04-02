@@ -100,6 +100,7 @@ class ACE2Dataset : public GDALPamDataset
 
   public:
                 ACE2Dataset();
+    virtual ~ACE2Dataset() {}
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
@@ -116,13 +117,14 @@ class ACE2Dataset : public GDALPamDataset
 
 class ACE2RasterBand : public RawRasterBand
 {
-    public:
+  public:
             ACE2RasterBand(VSILFILE* fpRaw,
                            GDALDataType eDataType,
                            int nXSize, int nYSize);
+    virtual ~ACE2RasterBand() {}
 
-        virtual const char *GetUnitType();
-        virtual char **GetCategoryNames();
+    virtual const char *GetUnitType();
+    virtual char **GetCategoryNames();
 };
 
 /************************************************************************/

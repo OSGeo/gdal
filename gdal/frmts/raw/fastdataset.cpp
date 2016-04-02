@@ -120,7 +120,7 @@ class FASTDataset : public GDALPamDataset
 
   public:
                 FASTDataset();
-                ~FASTDataset();
+    virtual ~FASTDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -143,7 +143,6 @@ class FASTRasterBand : public RawRasterBand
     friend class FASTDataset;
 
   public:
-
                 FASTRasterBand( FASTDataset *, int, VSILFILE *, vsi_l_offset,
                                 int, int, GDALDataType, int );
 };

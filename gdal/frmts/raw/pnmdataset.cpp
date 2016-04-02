@@ -54,7 +54,7 @@ class PNMDataset : public RawDataset
 
   public:
                 PNMDataset();
-                ~PNMDataset();
+    virtual ~PNMDataset();
 
     virtual CPLErr GetGeoTransform( double * );
 

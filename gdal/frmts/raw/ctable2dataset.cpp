@@ -50,7 +50,7 @@ class CTable2Dataset : public RawDataset
 
   public:
                 CTable2Dataset();
-                ~CTable2Dataset();
+    virtual ~CTable2Dataset();
 
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual CPLErr GetGeoTransform( double * padfTransform );

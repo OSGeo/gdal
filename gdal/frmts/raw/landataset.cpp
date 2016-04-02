@@ -116,7 +116,7 @@ class LAN4BitRasterBand : public GDALPamRasterBand
 
   public:
                    LAN4BitRasterBand( LANDataset *, int );
-                  ~LAN4BitRasterBand();
+    virtual ~LAN4BitRasterBand();
 
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
@@ -150,7 +150,7 @@ class LANDataset : public RawDataset
 
   public:
                 LANDataset();
-                ~LANDataset();
+    virtual ~LANDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );

@@ -60,7 +60,7 @@ class SNODASDataset : public RawDataset
 
   public:
                     SNODASDataset();
-                    ~SNODASDataset();
+    virtual ~SNODASDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
@@ -80,12 +80,13 @@ class SNODASDataset : public RawDataset
 
 class SNODASRasterBand : public RawRasterBand
 {
-    public:
+  public:
             SNODASRasterBand(VSILFILE* fpRaw, int nXSize, int nYSize);
+    virtual ~SNODASRasterBand() {}
 
-        virtual double GetNoDataValue( int *pbSuccess = NULL );
-        virtual double GetMinimum( int *pbSuccess = NULL );
-        virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
 };
 
 
