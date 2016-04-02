@@ -56,9 +56,12 @@ exit;
 my $source_tree;
 if ($ARGV{'--gdal-source-tree'}) {
     $source_tree = $ARGV{'--gdal-source-tree'};
-    die "Path '$source_tree' does not exist." unless -e $source_tree && -d $source_tree;
-}
-elsif ($ARGV{'--gdal-source-tree'} eq '0') {
+    # hack to force downloading of the source
+    if ($ARGV{'--gdal-source-tree'} eq 'download') {
+        $source_tree = '';
+    } else {
+        die "Path '$source_tree' does not exist." unless -e $source_tree && -d $source_tree;
+    }
 }
 elsif (-r '../../GDALmake.opt.in') {
     $source_tree = '../..';
