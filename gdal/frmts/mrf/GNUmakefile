@@ -46,7 +46,7 @@ XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I $(LIBLERC)
 SUBLIBS := libLERC
 endif
 
-CPPFLAGS        := -fPIC $(XTRA_OPT)  $(CPPFLAGS)
+CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
