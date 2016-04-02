@@ -1,19 +1,36 @@
 // simple hash table for storing mappings from integer keys to objects
+// hm. not so simple and small. Use boost?
 
-class gma_int {
-private:
-    int32_t m_value;
+class gma_base {
 public:
-    gma_int(int32_t value) {
+    virtual int value_as_int() {
+    }
+};
+
+class gma_numeric_base : gma_base {
+public:
+    virtual int value_as_int() {
+    }
+};
+
+template <typename type> class gma_numeric : gma_numeric_base {
+private:
+    type m_value;
+public:
+    gma_numeric(type value) {
         m_value = value;
     }
-    int32_t value() {
+    type value() {
         return m_value;
     }
-    void add(int32_t value) {
+    virtual int value_as_int() {
+        return (int)m_value;
+    }
+    void add(type value) {
         m_value += value;
     }
     char *as_string() {
+        // use type traits GDALDataTypeTraits<type>::is_integer etc
         char *s = (char*)CPLMalloc(10);
         snprintf(s, 10, "%i", m_value);
         return s;
@@ -79,6 +96,7 @@ public:
     }
 };
 
+// int32_t => object
 template <class V> class gma_hash_entry {
 private:
     int32_t m_key;
@@ -118,19 +136,31 @@ int compare_int32s(const void *a, const void *b)
   return (*da > *db) - (*da < *db);
 }
 
-const int TABLE_SIZE = 128;
+class gma_hash_base {
+public:
+    virtual int exists(int32_t key) {
+    }
+    virtual gma_base *get(int32_t key) {
+    }
+    virtual int size() {
+    }
+    virtual int32_t *keys_sorted(int size) {
+    }
+};
 
-template <class V> class gma_hash {
+// replace with std::unordered_map?
+template <class V> class gma_hash : gma_hash_base {
 private:
     gma_hash_entry<V> **table;
+    static const int table_size = 128;
 public:
     gma_hash() {
-        table = (gma_hash_entry<V> **)CPLMalloc(sizeof(void*)*TABLE_SIZE);
-        for (int i = 0; i < TABLE_SIZE; i++)
+        table = (gma_hash_entry<V> **)CPLMalloc(sizeof(void*)*table_size);
+        for (int i = 0; i < table_size; i++)
             table[i] = NULL;
     }
     ~gma_hash() {
-        for (int i = 0; i < TABLE_SIZE; i++) {
+        for (int i = 0; i < table_size; i++) {
             gma_hash_entry<V> *e = table[i];
             while (e) {
                 gma_hash_entry<V> *n = e->next();
@@ -140,15 +170,15 @@ public:
         }
         CPLFree(table);
     }
-    int exists(int32_t key) {
-        int hash = (abs(key) % TABLE_SIZE);
+    virtual int exists(int32_t key) {
+        int hash = (abs(key) % table_size);
         gma_hash_entry<V> *e = table[hash];
         while (e && e->key() != key)
             e = e->next();
         return e != NULL;
     }
     void del(int32_t key) {
-        int hash = (abs(key) % TABLE_SIZE);
+        int hash = (abs(key) % table_size);
         gma_hash_entry<V> *e = table[hash], *p = NULL;
         while (e && e->key() != key) {
             p = e;
@@ -163,16 +193,16 @@ public:
                 table[hash] = NULL;
         }
     }
-    V *get(int32_t key) {
-        int hash = (abs(key) % TABLE_SIZE);
+    gma_base *get(int32_t key) {
+        int hash = (abs(key) % table_size);
         gma_hash_entry<V> *e = table[hash];
         while (e && e->key() != key)
             e = e->next();
         if (e)
-            return e->value();
+            return (gma_base *)e->value();
     }
     void put(int32_t key, V *value) {
-        int hash = (abs(key) % TABLE_SIZE);
+        int hash = (abs(key) % table_size);
         gma_hash_entry<V> *e = table[hash], *p = NULL;
         while (e && e->key() != key) {
             p = e;
@@ -188,9 +218,9 @@ public:
                 table[hash] = e;
         }
     }
-    int size() {
+    virtual int size() {
         int n = 0;
-        for (int i = 0; i < TABLE_SIZE; i++) {
+        for (int i = 0; i < table_size; i++) {
             gma_hash_entry<V> *e = table[i];
             while (e) {
                 n++;
@@ -199,10 +229,10 @@ public:
         }
         return n;
     }
-    int32_t *keys(int size) {
+    virtual int32_t *keys(int size) {
         int32_t *keys = (int *)CPLMalloc(size*sizeof(int32_t));
         int i = 0;
-        for (int j = 0; j < TABLE_SIZE; j++) {
+        for (int j = 0; j < table_size; j++) {
             gma_hash_entry<V> *e = table[j];
             while (e) {
                 int32_t key = e->key();
@@ -213,13 +243,14 @@ public:
         }
         return keys;
     }
-    int32_t *keys_sorted(int size) {
+    virtual int32_t *keys_sorted(int size) {
         int32_t *k = keys(size);
         qsort(k, size, sizeof(int32_t), compare_int32s);
         return k;
     }
 };
 
+// replace with std::vector
 template <class V> class gma_array {
 private:
     int table_size;
@@ -273,5 +304,62 @@ public:
             return NULL;
         m_size--;
         return table[m_size];
+    }
+};
+
+// a class to divide real | integer line into intervals without holes in between
+// -inf ... x(i) .. x(i+1) .. .. +inf
+// each range is (x(i),x(i+1)]
+template <typename datatype> class gma_bins {
+    int n_intervals;
+    datatype *table;
+public:
+    gma_bins(int n_intervals) {
+        table = (datatype*)CPLMalloc(sizeof(datatype)*(n_intervals-1));
+    }
+    ~gma_bins() {
+        CPLFree(table);
+    }
+    datatype get(int i) {
+        if (i >= 0 && i < n_intervals-1)
+            return table[i];
+    }
+    void set(int i, datatype x) {
+        if (i >= 0 && i < n_intervals-1)
+            table[i] = x;
+    }
+    int bin(datatype x) {
+        int i = 0;
+        while (i < n_intervals-1 && x > table[i])
+            i++;
+        return i;
+    }
+};
+
+class gma_histogram_base : gma_base {
+public:
+    virtual int size() {}
+    virtual int count(int i) {}
+    virtual gma_base *bin(int i) {} // either gma_numeric<integer_datatype> or gma_interval<datatype>
+    virtual int32_t *keys_sorted(int size) {}
+    virtual gma_base *get(int i) {}
+};
+
+template <typename datatype> class gma_histogram : public gma_histogram_base {
+    gma_hash<gma_numeric<datatype> > *hash;
+public:
+    gma_histogram(int) {
+        hash = new gma_hash<gma_numeric<datatype> >;
+    }
+    ~gma_histogram() {
+    }
+    virtual int size() {};
+    virtual int count(int i) {};
+    virtual gma_base *bin(int i) {}; // either gma_numeric<integer_datatype> or gma_interval<datatype>
+    virtual int32_t *keys_sorted(int size) {
+        return hash->keys_sorted(size);
+    }
+    virtual gma_base *get(int i) {
+        return hash->get(i);
     }
 };

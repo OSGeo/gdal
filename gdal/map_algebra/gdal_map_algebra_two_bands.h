@@ -193,7 +193,7 @@ gma_modulus_by_band_type_error(double,double)
 
 template<typename zones_type,typename values_type>
 int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_band, void *zonal_min) {
-    gma_hash<gma_int> *z = (gma_hash<gma_int>*)zonal_min;
+    gma_hash<gma_numeric<values_type> > *z = (gma_hash<gma_numeric<values_type> >*)zonal_min;
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
         for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
@@ -203,11 +203,11 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
             if (!zone)
                 continue;
             if (z->exists(zone)) {
-                values_type old_value = z->get(zone)->value();
+                values_type old_value = ((gma_numeric<values_type>*)z->get(zone))->value();
                 if (value > old_value)
                     continue;
             }
-            z->put(zone, new gma_int(value));
+            z->put(zone, new gma_numeric<values_type>(value));
         }
     }
     return 1;
@@ -215,7 +215,7 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
 
 template<typename zones_type,typename values_type>
 int gma_zonal_max(gma_band zones_band, gma_block *zones_block, gma_band values_band, void *zonal_max) {
-    gma_hash<gma_int> *z = (gma_hash<gma_int>*)zonal_max;
+    gma_hash<gma_numeric<values_type> > *z = (gma_hash<gma_numeric<values_type> >*)zonal_max;
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
         for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
@@ -225,11 +225,11 @@ int gma_zonal_max(gma_band zones_band, gma_block *zones_block, gma_band values_b
             if (!zone)
                 continue;
             if (z->exists(zone)) {
-                values_type old_value = z->get(zone)->value();
+                values_type old_value = ((gma_numeric<values_type>*)z->get(zone))->value();
                 if (value < old_value)
                     continue;
             }
-            z->put(zone, new gma_int(value));
+            z->put(zone, new gma_numeric<values_type>(value));
         }
     }
     return 1;
@@ -238,14 +238,15 @@ int gma_zonal_max(gma_band zones_band, gma_block *zones_block, gma_band values_b
 // raise values in zones to at least zonal min
 // zonal min should be gma_hash<gma_int> or gma_hash<gma_float> depending on the datatype
 
-typedef struct {
+template<typename values_type>
+struct gma_set_zonal_min_data {
     int cells_changed;
-    gma_hash<gma_int> *zonal_min;
-} gma_set_zonal_min_data;
+    gma_hash<gma_numeric<values_type> > *zonal_min;
+};
 
 template<typename values_type,typename zones_type>
 int gma_set_zonal_min(gma_band values_band, gma_block *values_block, gma_band zones_band, void *data) {
-    gma_set_zonal_min_data *d = (gma_set_zonal_min_data*)data;
+    gma_set_zonal_min_data<values_type> *d = (gma_set_zonal_min_data<values_type>*)data;
     if (gma_first_block(values_block)) {
         d->cells_changed = 0;
     }
@@ -258,7 +259,7 @@ int gma_set_zonal_min(gma_band values_band, gma_block *values_block, gma_band zo
                 continue;
             if (!d->zonal_min->exists(zone))
                 continue;
-            values_type new_value = d->zonal_min->get(zone)->value();
+            values_type new_value = ((gma_numeric<values_type>*)d->zonal_min->get(zone))->value();
             values_type value = gma_block_cell(values_type, values_block, values_i);
             if (value < new_value) {
                 gma_block_cell(values_type, values_block, values_i) = new_value;
@@ -307,16 +308,16 @@ int gma_rim_by8(gma_band rims_band, gma_block *rims_block, gma_band areas_band, 
 
 template<typename depr_type,typename dem_type>
 int gma_depression_pour_elevation(gma_band depr_band, gma_block *depr_block, gma_band dem_band, void *zonal_min) {
-    gma_hash<gma_hash<gma_int> > *z = (gma_hash<gma_hash<gma_int> > *)zonal_min;
+    gma_hash<gma_hash<gma_numeric<dem_type> > > *z = (gma_hash<gma_hash<gma_numeric<dem_type> > > *)zonal_min;
     gma_cell_index i;
     for (i.y = 0; i.y < depr_block->h; i.y++) {
         for (i.x = 0; i.x < depr_block->w; i.x++) {
             depr_type zone = gma_block_cell(depr_type, depr_block, i);
-            gma_hash<gma_int> *ns;
+            gma_hash<gma_numeric<dem_type> > *ns;
             if (z->exists(zone))
-                ns = z->get(zone);
+                ns = (gma_hash<gma_numeric<dem_type> >*)z->get(zone);
             else {
-                ns = new gma_hash<gma_int>;
+                ns = new gma_hash<gma_numeric<dem_type> >;
                 z->put(zone, ns);
             }
             dem_type value;
@@ -327,8 +328,8 @@ int gma_depression_pour_elevation(gma_band depr_band, gma_block *depr_block, gma
                 gma_cell_move_to_neighbor(in, neighbor);
                 dem_type n_value;
                 if (!gma_value_from_other_band<dem_type>(depr_band, depr_block, in, dem_band,  &n_value)) {
-                    if (!ns->exists(-1) || value < ns->get(-1)->value())
-                        ns->put(-1, new gma_int(value));
+                    if (!ns->exists(-1) || value < ((gma_numeric<dem_type>*)ns->get(-1))->value())
+                        ns->put(-1, new gma_numeric<dem_type>(value));
                     continue;
                 }
                 depr_type n_zone;
@@ -337,8 +338,8 @@ int gma_depression_pour_elevation(gma_band depr_band, gma_block *depr_block, gma
                 if (n_zone == zone)
                     continue;
 
-                if (!ns->exists(n_zone) || n_value < ns->get(n_zone)->value())
-                    ns->put(n_zone, new gma_int(n_value));
+                if (!ns->exists(n_zone) || n_value < ((gma_numeric<dem_type>*)ns->get(n_zone))->value())
+                    ns->put(n_zone, new gma_numeric<dem_type>(n_value));
             }
 
         }
@@ -522,19 +523,20 @@ int gma_fill(gma_band filled_band, gma_block *filled_block, gma_band dem_band, v
         return 2;
 }
 
-typedef struct {
+template<typename datatype>
+struct gma_depressions_data {
     int cells_added;
     int basin_id;
     int depressions;
-    gma_hash<gma_hash<gma_int> > *splits; // basin => (basin => 1)
-} gma_depressions_data;
+    gma_hash<gma_hash<gma_numeric<datatype> > > *splits; // basin => (basin => 1)
+};
 
 // return depressions, i.e., areas, which drain to pits or flat cells
 // iterate until no new cell is added to depressions
 template<typename deps_t, typename fd_t>
 int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd, void *data) {
     gma_cell_index i_deps;
-    gma_depressions_data *d = (gma_depressions_data *)data;
+    gma_depressions_data<deps_t> *d = (gma_depressions_data<deps_t> *)data;
 
     if (gma_first_block(block_deps)) {
         d->cells_added = 0;
@@ -593,15 +595,15 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
                             split_basin = basin;
                         else if (basin != split_basin) {
                             if (!d->splits) {
-                                d->splits = new gma_hash<gma_hash<gma_int> >;
+                                d->splits = new gma_hash<gma_hash<gma_numeric<deps_t> > >;
                             } else if (!d->splits->exists(split_basin)) {
-                                gma_hash<gma_int> *b = new gma_hash<gma_int>;
-                                b->put(basin, new gma_int(1));
+                                gma_hash<gma_numeric<deps_t> > *b = new gma_hash<gma_numeric<deps_t> >;
+                                b->put(basin, new gma_numeric<deps_t>(1));
                                 d->splits->put(split_basin, b);
                             } else {
-                                gma_hash<gma_int> *b = d->splits->get(split_basin);
+                                gma_hash<gma_numeric<deps_t> > *b = (gma_hash<gma_numeric<deps_t> > *)d->splits->get(split_basin);
                                 if (!b->exists(basin))
-                                    b->put(basin, new gma_int(1));
+                                    b->put(basin, new gma_numeric<deps_t>(1));
                             }
                         }
                     }
@@ -629,6 +631,46 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
         return 4;
     else
         return 2;
+}
+
+// function to fix the splitted depressions
+template<typename datatype>
+gma_hash<gma_numeric<datatype> > *gma_split_mapper(gma_hash<gma_hash<gma_numeric<datatype> > > *splits) {
+    gma_hash<gma_numeric<datatype> > *map = new gma_hash<gma_numeric<datatype> >;
+    gma_hash<gma_numeric<datatype> > *to = new gma_hash<gma_numeric<datatype> >;
+    int n1 = splits->size();
+    int32_t *keys1 = splits->keys(n1);
+    for (int i1 = 0; i1 < n1; i1++) {
+        int32_t key1 = keys1[i1];
+        gma_hash<gma_numeric<datatype> > *s2 = (gma_hash<gma_numeric<datatype> > *)splits->get(key1);
+        int n2 = s2->size();
+        int32_t *keys2 = s2->keys(n2);
+        for (int i2 = 0; i2 < n2; i2++) {
+            int32_t key2 = keys2[i2];
+            // key1 is unique, key2 may be what ever
+            // we need a => b, where b is from key1 and key2 and a is key1 and key2 minus b
+            int32_t a = key2;
+            int32_t b = key1;
+            if (!to->exists(a)) {
+                if (a != b && !map->exists(a) && !map->exists(b)) {
+                    map->put(a, new gma_numeric<datatype>(b));
+                    to->put(b, new gma_numeric<datatype>(1));
+                }
+            }
+            a = key1;
+            b = key2;
+            if (!to->exists(a)) {
+                if (a != b && !map->exists(a) && !map->exists(b)) {
+                    map->put(a, new gma_numeric<datatype>(b));
+                    to->put(b, new gma_numeric<datatype>(1));
+                }
+            }
+        }
+        CPLFree(keys2);
+    }
+    CPLFree(keys1);
+    delete to;
+    return map;
 }
 
 // band2 = flow directions
@@ -843,21 +885,21 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
         type_switch_bb(gma_modulus_by_band, 0, arg);
         break;
     case gma_method_zonal_min: { // b1 = zones, b2 = values
-        gma_hash<gma_int> *zonal_min = new gma_hash<gma_int>; // fixme: if b2 is float, hash must be gma_float
+        gma_hash<gma_numeric<uint32_t> > *zonal_min = new gma_hash<gma_numeric<uint32_t> >; // fixme: b2_t
         retval = (void*)zonal_min;
         type_switch_ib(gma_zonal_min, 0, zonal_min);
         break;
     }
     case gma_method_zonal_max: { // b1 = zones, b2 = values
-        gma_hash<gma_int> *zonal_max = new gma_hash<gma_int>; // fixme: if b2 is float, hash must be gma_float
+        gma_hash<gma_numeric<uint32_t> > *zonal_max = new gma_hash<gma_numeric<uint32_t> >; // fixme: b2_t
         retval = (void*)zonal_max;
         type_switch_ib(gma_zonal_max, 0, zonal_max);
         break;
     }
         // b1 = b2 if op
     case gma_method_set_zonal_min: { // b1 = values, b2 = zones, arg = hash of zonal mins, b1 is changed
-        gma_set_zonal_min_data data;
-        data.zonal_min = (gma_hash<gma_int>*)arg;
+        gma_set_zonal_min_data<uint32_t> data;  // fixme: b2_t
+        data.zonal_min = (gma_hash<gma_numeric<uint32_t> >*)arg;  // fixme: b2_t
         type_switch_bi(gma_set_zonal_min, 0, &data);
         break;
     }
@@ -921,7 +963,7 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
         }
         break;
     case gma_method_depression_pour_elevation: { // depression, dem compute depression => (depression => elevation)
-        gma_hash<gma_hash<gma_int> > *depression_pour_elevation = new gma_hash<gma_hash<gma_int> >;
+        gma_hash<gma_hash<gma_numeric<int32_t> > > *depression_pour_elevation = new gma_hash<gma_hash<gma_numeric<int32_t> > >; // fixme: dem_type
         retval = (void*)depression_pour_elevation;
         type_switch_ib(gma_depression_pour_elevation, 1, retval);
         break;
@@ -953,68 +995,53 @@ void *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRaste
         break;
     }
     case gma_method_depressions: { // depressions <- fd
-        gma_depressions_data data;
-        data.splits = NULL;
-        data.depressions = 0;
-        type_switch_ii(gma_depressions, 1, &data);
-        if (data.splits) {
-            // prune the splits into distinct linked sets
-            gma_hash<gma_int> *map = new gma_hash<gma_int>;
-            gma_hash<gma_int> *to = new gma_hash<gma_int>;
-            int n1 = data.splits->size();
-            int32_t *keys1 = data.splits->keys(n1);
-            for (int i1 = 0; i1 < n1; i1++) {
-                int32_t key1 = keys1[i1];
-                gma_hash<gma_int> *s2 = data.splits->get(key1);
-                int n2 = s2->size();
-                int32_t *keys2 = s2->keys(n2);
-                for (int i2 = 0; i2 < n2; i2++) {
-                    int32_t key2 = keys2[i2];
-                    // key1 is unique, key2 may be what ever
-                    // we need a => b, where b is from key1 and key2 and a is key1 and key2 minus b
-                    int32_t a = key2;
-                    int32_t b = key1;
-                    if (!to->exists(a)) {
-                        if (a != b && !map->exists(a) && !map->exists(b)) {
-                            map->put(a, new gma_int(b));
-                            to->put(b, new gma_int(1));
-                        }
-                    }
-                    a = key1;
-                    b = key2;
-                    if (!to->exists(a)) {
-                        if (a != b && !map->exists(a) && !map->exists(b)) {
-                            map->put(a, new gma_int(b));
-                            to->put(b, new gma_int(1));
-                        }
-                    }
-                }
-                CPLFree(keys2);
-            }
-            CPLFree(keys1);
-            delete to;
-            delete data.splits;
-
-            // fix depressions (b1) with map
-            printf("unite split depressions\n");
-            switch (b1->GetRasterDataType()) {
-            case GDT_Byte: {
-                gma_mapper<uint8_t> *mapper = new gma_mapper<uint8_t>(map);
-                gma_map(b1, mapper);
+        switch (b1->GetRasterDataType()) {
+        case GDT_UInt16: {
+            gma_depressions_data<uint16_t> data;
+            data.splits = NULL;
+            data.depressions = 0;
+            switch (b2->GetRasterDataType()) {
+            case GDT_Byte:
+                gma_two_bands_proc<uint16_t,uint8_t>(b1, gma_depressions<uint16_t,uint8_t>, b2, 1, &data);
                 break;
+            case GDT_UInt16:
+                gma_two_bands_proc<uint16_t,uint16_t>(b1, gma_depressions<uint16_t,uint16_t>, b2, 1, &data);
+                break;
+            default:
+                goto not_implemented_for_these_datatypes;
             }
-            case GDT_UInt16: {
+            if (data.splits) {
+                gma_hash<gma_numeric<uint16_t> > *map = gma_split_mapper(data.splits);
                 gma_mapper<uint16_t> *mapper = new gma_mapper<uint16_t>(map);
                 gma_map(b1, mapper);
-                break;
+                delete map;
+                delete data.splits;
             }
-            case GDT_UInt32: {
+            break;
+        }
+        case GDT_UInt32: {
+            gma_depressions_data<uint32_t> data;
+            data.splits = NULL;
+            data.depressions = 0;
+            switch (b2->GetRasterDataType()) {
+            case GDT_Byte:
+                gma_two_bands_proc<uint32_t,uint8_t>(b1, gma_depressions<uint32_t,uint8_t>, b2, 1, &data);
+                break;
+            case GDT_UInt16:
+                gma_two_bands_proc<uint32_t,uint16_t>(b1, gma_depressions<uint32_t,uint16_t>, b2, 1, &data);
+                break;
+            default:
+                goto not_implemented_for_these_datatypes;
+            }
+            if (data.splits) {
+                gma_hash<gma_numeric<uint32_t> > *map = gma_split_mapper(data.splits);
                 gma_mapper<uint32_t> *mapper = new gma_mapper<uint32_t>(map);
                 gma_map(b1, mapper);
-                break;
+                delete map;
+                delete data.splits;
             }
-            }
-            delete map;
+            break;
+        }
         }
         break;
     }

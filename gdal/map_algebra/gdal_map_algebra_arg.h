@@ -3,14 +3,17 @@ typedef int (*gma_with_arg_callback)(gma_block*, void*);
 template <typename datatype>
 class gma_mapper {
 private:
-    gma_hash<gma_int> *m_mapper;
+    // fixme:
+    // range => numeric or (for int types) int => int
+    // also default for the latter
+    gma_hash<gma_numeric<datatype> > *m_mapper;
 public:
-    gma_mapper(gma_hash<gma_int> *mapper) {
+    gma_mapper(gma_hash<gma_numeric<datatype> > *mapper) {
         m_mapper = mapper;
     }
     int map(datatype *value) {
         if (m_mapper->exists(*value)) {
-            *value = m_mapper->get(*value)->value();
+            *value = ((gma_numeric<datatype>*)m_mapper->get(*value))->value();
             return 1;
         } else
             return 0;

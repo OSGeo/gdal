@@ -666,3 +666,28 @@
     default:                                                            \
         goto not_implemented_for_this_datatype;                         \
     }}
+
+#define new_object(object,band,klass,arg) {             \
+            switch (band->GetRasterDataType()) {        \
+            case GDT_Byte:                              \
+                object = new klass<uint8_t>(arg);       \
+                break;                                  \
+            case GDT_UInt16:                            \
+                object = new klass<uint16_t>(arg);      \
+                break;                                  \
+            case GDT_Int16:                             \
+                object = new klass<int16_t>(arg);       \
+                break;                                  \
+            case GDT_UInt32:                            \
+                object = new klass<uint32_t>(arg);      \
+                break;                                  \
+            case GDT_Int32:                             \
+                object = new klass<int32_t>(arg);       \
+                break;                                  \
+            case GDT_Float32:                           \
+                object = new klass<float>(arg);         \
+                break;                                  \
+            case GDT_Float64:                           \
+                object = new klass<double>(arg);        \
+                break;                                  \
+            }}

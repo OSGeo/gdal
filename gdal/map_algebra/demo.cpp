@@ -3,15 +3,15 @@
 int main() {
 
     // test hash of a hash
-    gma_hash<gma_hash<gma_int> > *I;
+    gma_hash<gma_hash<gma_numeric<int> > > *I;
 
-    I = new gma_hash<gma_hash<gma_int> >;
+    I = new gma_hash<gma_hash<gma_numeric<int> > >;
 
-    gma_hash<gma_int> *J;
+    gma_hash<gma_numeric<int> > *J;
 
-    J = new gma_hash<gma_int>;
-    J->put(5, new gma_int(1));
-    J->put(6, new gma_int(1));
+    J = new gma_hash<gma_numeric<int> >;
+    J->put(5, new gma_numeric<int>(1));
+    J->put(6, new gma_numeric<int>(1));
 
     I->put(6, J);
 
@@ -20,7 +20,7 @@ int main() {
     for (int i = 0; i < n; i++) {
         printf("%i =>\n", keys[i]);
 
-        J = I->get(keys[i]);
+        J = (gma_hash<gma_numeric<int> > *)I->get(keys[i]);
         int n_j = J->size();
         int *keys_j = J->keys_sorted(n_j);
         for (int j = 0; j < n_j; j++) {

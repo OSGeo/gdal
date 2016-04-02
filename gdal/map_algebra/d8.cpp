@@ -63,8 +63,9 @@ int main() {
         gma_two_bands(c, gma_method_multiply_by_band, c, &op);
 
         // outlet cells
-        gma_array<gma_cell<uint32_t> > *outlets = 
-            gma_compute_value_object<gma_array<gma_cell<uint32_t> > >(c, gma_method_get_cells);
+        //gma_array<gma_cell<uint32_t> > *outlets = 
+        gma_array<gma_cell<uint32_t> > *outlets; // fixme: the type is datatype of c!
+        gma_compute_value_object(c, gma_method_get_cells, &outlets);
 
         // c = 0
         gma_with_arg<uint32_t>(c, gma_method_assign, 0);
