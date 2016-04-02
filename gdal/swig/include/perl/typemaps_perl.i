@@ -12,26 +12,26 @@
 
 %typemap(in) GIntBig
 {
-    $1 = strtoll(SvPV_nolen($input), 0, 0);
+    $1 = CPLAtoGIntBig(SvPV_nolen($input));
 }
 
 %typemap(out) GIntBig
 {
     char temp[256];
-    sprintf(temp, "%lld", $1);
+    sprintf(temp, ""CPL_FRMT_GIB"", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
 
 %typemap(in) GUIntBig
 {
-    $1 = strtoull(SvPV_nolen($input), 0, 0);
+    $1 = CPLScanUIntBig(SvPV_nolen($input), 30);
 }
 
 %typemap(out) GUIntBig
 {
     char temp[256];
-    sprintf(temp, "%llu", $1);
+    sprintf(temp, ""CPL_FRMT_GUIB"", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -565,7 +565,7 @@
     if ($2) {
         for( int i = 0; i<$1; i++ ) {
             SV **sv = av_fetch(av, i, 0);
-            $2[i] =  strtoll(SvPV_nolen(*sv), NULL, 10);
+            $2[i] =  CPLAtoGIntBig(SvPV_nolen(*sv));
         }
     } else
         SWIG_fail;
@@ -593,7 +593,7 @@
     if ($2) {
         for( int i = 0; i<$1; i++ ) {
             SV **sv = av_fetch(av, i, 0);
-            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+            $2[i] =  CPLScanUIntBig(SvPV_nolen(*sv), 30);
         }
     } else
         SWIG_fail;
@@ -1071,7 +1071,7 @@
         $1 = 0;
     }
     else {
-        val = strtoll(SvPV_nolen($input), 0, 0);
+        val = CPLAtoGIntBig(SvPV_nolen($input));
         $1 = ($1_type)&val;
     }
 }
