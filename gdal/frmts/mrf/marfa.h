@@ -606,6 +606,10 @@ public:
     void *PNGColors;
     void *PNGAlpha;
     int PalSize, TransSize, deflate_flags;
+
+private:
+    PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+
 };
 
 class PNG_Band : public GDALMRFRasterBand {
@@ -643,6 +647,9 @@ public:
     bool sameres;
     bool rgb;
     bool optimize;
+
+private:
+    JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
 class JPEG_Band : public GDALMRFRasterBand {
