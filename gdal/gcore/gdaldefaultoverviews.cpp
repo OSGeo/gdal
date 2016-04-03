@@ -196,16 +196,13 @@ void GDALDefaultOverviews::OverviewScan()
     if( pszInitName == NULL )
         pszInitName = CPLStrdup(poDS->GetDescription());
 
-    if( !EQUAL(pszInitName,":::VIRTUAL:::") )
+    if( !EQUAL(pszInitName,":::VIRTUAL:::") &&
+        GDALCanFileAcceptSidecarFile(pszInitName) )
     {
         if( bInitNameIsOVR )
             osOvrFilename = pszInitName;
         else
-        {
-            if( !GDALCanFileAcceptSidecarFile(pszInitName) )
-                return;
             osOvrFilename.Printf( "%s.ovr", pszInitName );
-        }
 
         std::vector<char> achOvrFilename;
         achOvrFilename.resize(osOvrFilename.size() + 1);
@@ -244,7 +241,8 @@ void GDALDefaultOverviews::OverviewScan()
 /*      We only use the .aux file for overviews if they already have    */
 /*      overviews existing, or if USE_RRD is set true.                  */
 /* -------------------------------------------------------------------- */
-    if( !poODS && !EQUAL(pszInitName,":::VIRTUAL:::") )
+    if( !poODS && !EQUAL(pszInitName,":::VIRTUAL:::") &&
+        GDALCanFileAcceptSidecarFile(pszInitName) )
     {
         bool bTryFindAssociatedAuxFile = true;
         if( papszInitSiblingFiles )
