@@ -1521,7 +1521,7 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
             bCalculateKnots = true;
 
             for( i = 0; i < (nControlPoints + nOrder); i++ )
-                adfWeights.push_back( 0.0 );
+                adfKnots.push_back( 0.0 );
 
             nKnots = static_cast<int>(adfKnots.size()) - 1;
         }
