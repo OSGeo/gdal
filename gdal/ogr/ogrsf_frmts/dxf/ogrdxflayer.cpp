@@ -1503,12 +1503,15 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
     bResult = ( nOrder >= 2 );
     if( bResult == true )
     {
+        // Check whether nctrlpts value matches number of vertices read
+        int nCheck = (static_cast<int>(adfControlPoints.size()) - 1) / 3;
+
         if( nControlPoints == -1 )
             nControlPoints =
                 (static_cast<int>(adfControlPoints.size()) - 1) / 3;
 
         // min( num(ctrlpts) ) = order
-        bResult = ( nControlPoints >= nOrder );
+        bResult = ( nControlPoints >= nOrder && nControlPoints == nCheck);
     }
 
     if( bResult == true )
