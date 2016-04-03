@@ -3479,5 +3479,8 @@ int GDALCanFileAcceptSidecarFile(const char* pszFilename)
 {
     if( strstr(pszFilename, "/vsicurl/") && strchr(pszFilename, '?') )
         return FALSE;
+    /* Do no attempt reading side-car files on /vsisubfile/ (#6241) */
+    if( strncmp(pszFilename, "/vsisubfile/", strlen("/vsisubfile/")) == 0 )
+        return FALSE;
     return TRUE;
 }
