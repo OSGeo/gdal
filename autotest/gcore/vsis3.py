@@ -601,9 +601,9 @@ def vsis3_extra_1():
     with gdaltest.error_handler():
         gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    if gdal.GetLastErrorMsg() == '':
+    if gdal.VSIGetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     # Invalid resource
@@ -611,7 +611,7 @@ def vsis3_extra_1():
     f = open_for_read('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE') + '/invalid_resource.baz')
     if f is not None:
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     return 'success'
