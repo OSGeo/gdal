@@ -2041,7 +2041,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         //  Uncompress
         //  ----------------------------------------------------------------
 
-        if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
+        if( EQUALN(sCompressionType.c_str(), "JPEG", strlen("JPEG")) )
         {
             UncompressJpeg( nBytesRead );
         }
