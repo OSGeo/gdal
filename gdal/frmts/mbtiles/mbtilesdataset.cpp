@@ -1068,6 +1068,7 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
         m_poParentDS = poParentDS;
         poMainDS = poParentDS;
         eAccess = poParentDS->eAccess;
+        hDS = poParentDS->hDS;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;
         m_nQuality = poParentDS->m_nQuality;
