@@ -30,6 +30,10 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
 
+ifeq ($(LIBJSONC_SETTING),external)
+LNK_FLAGS :=	$(LNK_FLAGS) $(LIBJSON_LINK)
+endif
+
 NON_DEFAULT_LIST = 	multireadtest$(EXE) dumpoverviews$(EXE) \
 	gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
 	gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE) \

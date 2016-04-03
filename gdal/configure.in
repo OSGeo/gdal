@@ -3527,11 +3527,17 @@ AC_ARG_WITH(libjson-c,[  --with-libjson-c[=ARG]       Include libjson-c support 
 
 if test "$with_libjson_c" = "external" -o "$with_libjson_c" = "" -o "$with_libjson_c" = "yes" ; then
   AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,)
+  if test "$LIBJSONC_SETTING" = "external" ; then
+    LIBJSON_LINK="-ljson-c"
+  fi
 elif test "$with_libjson_c" = "internal" ; then
   LIBJSONC_SETTING=internal
 elif test "$with_libjson_c" != "no"; then
   LIBS="-L$with_libjson_c/lib $LIBS"
   AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,-L$with_libjson_c/lib)
+  if test "$LIBJSONC_SETTING" = "external" ; then
+    LIBJSON_LINK="-L$with_libjson_c/lib -ljson-c"
+  fi
 else
   AC_MSG_ERROR([libjson-c (internal or external) is required])
 fi
@@ -3554,6 +3560,7 @@ else
 fi
 
 AC_SUBST(LIBJSONC_SETTING,$LIBJSONC_SETTING)
+AC_SUBST(LIBJSON_LINK,$LIBJSON_LINK)
 AC_SUBST(JSON_INCLUDE,$JSON_INCLUDE)
 
 
