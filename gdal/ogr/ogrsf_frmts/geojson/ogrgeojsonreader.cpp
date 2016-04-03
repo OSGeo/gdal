@@ -1844,6 +1844,9 @@ bool OGRJSonParse(const char* pszText, json_object** ppoObj, bool bVerboseError)
     if( ppoObj == NULL )
         return false;
     json_tokener* jstok = json_tokener_new();
+#ifndef INTERNAL_LIBJSON
+    CPLThreadLocaleC oLocaleC;
+#endif
     *ppoObj = json_tokener_parse_ex(jstok, pszText, -1);
     if( jstok->err != json_tokener_success)
     {

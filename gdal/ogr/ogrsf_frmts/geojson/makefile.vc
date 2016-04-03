@@ -15,7 +15,7 @@ GEOJSON_OBJ = \
 	ogresrijsonreader.obj \
 	ogrtopojsonreader.obj
 
-EXTRAFLAGS = -I. -I.. -I..\.. -Ilibjson
+EXTRAFLAGS = -I. -I.. -I..\.. -Ilibjson -DINTERNAL_LIBJSON
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
