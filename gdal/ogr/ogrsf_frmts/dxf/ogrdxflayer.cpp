@@ -1513,21 +1513,28 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
     if( bResult == true )
     {
-        if( nKnots == -1 )
-            nKnots = static_cast<int>(adfKnots.size()) - 1;
+        int nCheck = static_cast<int>(adfKnots.size()) - 1;
 
-        if( nKnots == 0 )
+        // Recalculate knots when:
+        // - no knots data present, nknots is -1 and ncheck is 0
+        // - nknots value present, no knot vertices
+        //   nknots is (nctrlpts + order), ncheck is 0
+        if( nCheck == 0 )
         {
             bCalculateKnots = true;
-
             for( i = 0; i < (nControlPoints + nOrder); i++ )
                 adfKnots.push_back( 0.0 );
 
-            nKnots = static_cast<int>(adfKnots.size()) - 1;
+            nCheck = static_cast<int>(adfKnots.size()) - 1;
         }
+        // Adjust nknots value when:
+        // - nknots value not present, knot vertices present
+        //   nknots is -1, ncheck is (nctrlpts + order)
+        if( nKnots == -1 )
+            nKnots = static_cast<int>(adfKnots.size()) - 1;
 
         // num(knots) = num(ctrlpts) + order
-        bResult = ( nKnots == (nControlPoints + nOrder) );
+        bResult = ( nKnots == (nControlPoints + nOrder) && nKnots == nCheck );
     }
 
     if( bResult == true )
