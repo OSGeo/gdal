@@ -42,6 +42,8 @@ from sys import version_info
 
 do_log = False
 
+TIME_SKEW = 30 * 60
+
 class GDAL_Handler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
@@ -58,6 +60,31 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain')
             self.send_header('Content-Length', 1000000)
             self.end_headers()
+            return
+
+        # Simulate a redirect to a S3 signed URL
+        if self.path == '/test_redirect/test.bin':
+            import time
+            # Simulate a big time difference between server and local machine
+            current_time = 1500
+            response = 'HTTP/1.1 302 FOUND\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += 'Location: http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d\r\n' % (self.server.port, current_time + 30)
+            response += '\r\n'
+            self.wfile.write(response.encode('ascii'))
+            return
+
+        # Simulate that we don't accept HEAD on signed URLs. The client should retry with a GET
+        if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
+            import time
+            # Simulate a big time difference between server and local machine
+            current_time = 1500
+            response = 'HTTP/1.1 403\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += '\r\n'
+            self.wfile.write(response.encode('ascii'))
             return
 
         self.send_error(404,'File Not Found: %s' % self.path)
@@ -292,6 +319,62 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 #sys.stderr.write('stop requested\n')
                 self.server.stop_requested = True
+                return
+
+            # First signed URL
+            if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
+                if 'Range' in self.headers:
+                    if self.headers['Range'] == 'bytes=0-16383':
+                        self.protocol_version = 'HTTP/1.1'
+                        self.send_response(200)
+                        self.send_header('Content-type', 'text/plain')
+                        self.send_header('Content-Range', 'bytes 0-16383/1000000')
+                        self.end_headers()
+                        self.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
+                    elif self.headers['Range'] == 'bytes=16384-49151':
+                        # Test expiration of the signed URL
+                        self.protocol_version = 'HTTP/1.1'
+                        self.send_response(403)
+                        self.end_headers()
+                    else:
+                        self.send_response(404)
+                        self.end_headers()
+                else:
+                    # After a failed attempt on a HEAD, the client should go there
+                    import time
+                    # Simulate a big time difference between server and local machine
+                    current_time = 1500
+                    response = 'HTTP/1.1 200\r\n'
+                    response += 'Server: foo\r\n'
+                    response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+                    response += 'Content-type: text/plain\r\n'
+                    response += 'Content-Length: 1000000\r\n'
+                    response += '\r\n'
+                    self.wfile.write(response.encode('ascii'))
+                return
+
+            # Second signed URL
+            if self.path.startswith('/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=') and 'Range' in self.headers and \
+               self.headers['Range'] == 'bytes=16384-49151':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Range', 'bytes 16384-16384/1000000')
+                self.end_headers()
+                self.wfile.write('y'.encode('ascii'))
+                return
+
+            # We should go there after expiration of the first signed URL
+            if self.path == '/test_redirect/test.bin' and 'Range' in self.headers and \
+               self.headers['Range'] == 'bytes=16384-49151':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(302)
+                # Return a new signed URL
+                import time
+                current_time = int(time.time())
+                self.send_header('Location', 'http://localhost:%d/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=%d' % (self.server.port, current_time + 30))
+                self.end_headers()
+                self.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
                 return
 
             if self.path == '/s3_delete_bucket/delete_file' and getattr(self.server, 'has_requested_s3_delete_bucket_delete_file', None) is None:

@@ -36,6 +36,7 @@ from sys import version_info
 sys.path.append( '../pymod' )
 
 import gdaltest
+import webserver
 
 ###############################################################################
 #
@@ -285,6 +286,71 @@ def vsicurl_11():
 
     return 'success'
 
+###############################################################################
+def vsicurl_start_webserver():
+
+    gdaltest.webserver_process = None
+    gdaltest.webserver_port = 0
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch()
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+def vsicurl_test_redirect():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.VSIFSeekL(f,0,2)
+    if gdal.VSIFTellL(f) != 1000000:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIFTellL(f))
+        gdal.VSIFCloseL(f)
+        return 'fail'
+    gdal.VSIFSeekL(f,0,0)
+    content = gdal.VSIFReadL(1, 16383, f).decode('ascii')
+    if len(content) != 16383 or content[0] != 'x':
+        gdaltest.post_reason('fail')
+        print(content)
+        gdal.VSIFCloseL(f)
+        return 'fail'
+    content = gdal.VSIFReadL(1, 2, f).decode('ascii')
+    if content != 'xy':
+        gdaltest.post_reason('fail')
+        print(content)
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
+    gdal.VSIFCloseL(f)
+
+    return 'success'
+
+###############################################################################
+def vsicurl_stop_webserver():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+    return 'success'
+
 gdaltest_list = [ vsicurl_1,
                   #vsicurl_2,
                   #vsicurl_3,
@@ -295,11 +361,16 @@ gdaltest_list = [ vsicurl_1,
                   #vsicurl_8,
                   vsicurl_9,
                   vsicurl_10,
-                  vsicurl_11 ]
+                  vsicurl_11,
+                  vsicurl_start_webserver,
+                  vsicurl_test_redirect,
+                  vsicurl_stop_webserver ]
 
 if __name__ == '__main__':
 
-    gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
+    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS') is None:
+        print('Enabling slow tests as GDAL_RUN_SLOW_TESTS is not defined')
+        gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 
     gdaltest.setup_run( 'vsicurl' )
 
