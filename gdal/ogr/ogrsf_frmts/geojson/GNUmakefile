@@ -6,6 +6,7 @@ include ../../../GDALmake.opt
 
 ifeq ($(LIBJSONC_SETTING),internal)
 SUBDIRS-yes	:= libjson
+GEOJSON_OPTS := -DINTERNAL_LIBJSON
 endif
 
 OBJ = \
@@ -19,7 +20,7 @@ OBJ = \
 	ogresrijsonreader.o \
 	ogrtopojsonreader.o
 
-CPPFLAGS	:= $(JSON_INCLUDE) -I. -I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:= $(JSON_INCLUDE) -I. -I.. -I../..  $(CPPFLAGS) $(GEOJSON_OPTS)
 
 default:        $(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 
