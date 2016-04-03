@@ -298,11 +298,15 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
     int nRet;
     if (flags == SQLITE_ACCESS_EXISTS)
     {
-        /* Do not try to check the presence of a journal on /vsicurl ! */
+        /* Do not try to check the presence of a journal or a wal on /vsicurl ! */
         if ( STARTS_WITH(zName, "/vsicurl/") &&
-             strlen(zName) > strlen("-journal") &&
-             strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0 )
+             ((strlen(zName) > strlen("-journal") &&
+               strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0) ||
+              (strlen(zName) > strlen("-wal") &&
+               strcmp(zName + strlen(zName) - strlen("-wal"), "-wal") == 0)) )
+        {
             nRet = -1;
+        }
         else
             nRet = VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG);
     }
