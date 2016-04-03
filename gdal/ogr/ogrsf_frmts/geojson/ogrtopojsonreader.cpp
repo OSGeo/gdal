@@ -66,9 +66,6 @@ OGRErr OGRTopoJSONReader::Parse( const char* pszText )
     if( NULL != pszText )
     {
         json_tokener *jstok = json_tokener_new();
-#ifndef INTERNAL_LIBJSON
-        CPLThreadLocaleC oLocaleC;
-#endif
         json_object *jsobj = json_tokener_parse_ex(jstok, pszText, -1);
         if( jstok->err != json_tokener_success)
         {
