@@ -145,7 +145,6 @@ typedef struct
     bool            bFoundContentRange;
     bool            bError;
     bool            bDownloadHeaderOnly;
-    //CPLString       osRedirectLocation;
     GIntBig         nTimestampDate; // Corresponds to Date: header field
 
     VSILFILE           *fp;
@@ -585,7 +584,6 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
     psStruct->bFoundContentRange = false;
     psStruct->bError = false;
     psStruct->bDownloadHeaderOnly = false;
-    //psStruct->osRedirectLocation.clear();
     psStruct->nTimestampDate = 0;
 
     psStruct->fp = fp;
@@ -638,22 +636,6 @@ static size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, v
                 //CPLDebug("VSICURL", "Timestamp = " CPL_FRMT_GIB, nTimestampDate);
                 psStruct->nTimestampDate = nTimestampDate;
             }
-#if 0
-            else if (STARTS_WITH_CI(pszLine, "Location: "))
-            {
-                psStruct->osRedirectLocation = pszLine + strlen("Location: ");
-                size_t nSizeLine = psStruct->osRedirectLocation.size();
-                while( nSizeLine &&
-                       (psStruct->osRedirectLocation[nSizeLine-1] == '\r' ||
-                        psStruct->osRedirectLocation[nSizeLine-1] == '\n') )
-                {
-                    psStruct->osRedirectLocation.resize(nSizeLine-1);
-                    nSizeLine --;
-                }
-                psStruct->osRedirectLocation.Trim();
-                CPLDebug("VSICURL", "Redirect to %s", psStruct->osRedirectLocation.c_str());
-            }
-#endif
             /*if (nSize > 2 && pszLine[nSize - 2] == '\r' &&
                 pszLine[nSize - 1] == '\n')
             {
@@ -838,6 +820,7 @@ retry:
     }
     else
     {
+        sWriteFuncHeaderData.bDownloadHeaderOnly = true;
         curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
