@@ -166,6 +166,17 @@
 /*      modified for new platforms.                                     */
 /* ==================================================================== */
 
+/* -------------------------------------------------------------------- */
+/*      Which versions of C++ are available.                            */
+/* -------------------------------------------------------------------- */
+
+#if defined(__cplusplus)
+#  if  __cplusplus >= 201103L
+#    define HAVE_CXX11 1
+#  endif
+/* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
+#endif
+
 /*---------------------------------------------------------------------
  *        types for 16 and 32 bits integers, etc...
  *--------------------------------------------------------------------*/
@@ -307,7 +318,7 @@ typedef int              GPtrDiff_t;
 
 // Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
 // to detect misuses of NULL
-#if defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L
+#if defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11)
 
 #ifdef __GNUC__
 // We need to include all that bunch of system headers, otherwise
@@ -343,11 +354,11 @@ extern "C++" {
 
 #undef NULL
 #define NULL nullptr
-#else /* defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L */
+#else /* defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11) */
 #ifndef NULL
 #  define NULL  0
 #endif
-#endif /* defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L */
+#endif /* defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11) */
 
 
 #ifndef MAX
@@ -802,7 +813,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 */
 #ifdef __cplusplus
 
-#if __cplusplus >= 201103L
+#if defined(HAVE_CXX11)
 #define CPL_FINAL final
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
