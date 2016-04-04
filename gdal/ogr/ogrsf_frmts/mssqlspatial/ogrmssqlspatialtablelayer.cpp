@@ -2222,12 +2222,20 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             CPLFree(bind_buffer[i]);
         CPLFree(bind_buffer);
 
+#ifdef SQL_SS_UDT
+        CPLFree(bind_datalen);
+#endif
+
         return OGRERR_FAILURE;
     }
 
     for( i = 0; i < bind_num; i++ )
             CPLFree(bind_buffer[i]);
     CPLFree(bind_buffer);
+
+#ifdef SQL_SS_UDT
+    CPLFree(bind_datalen);
+#endif
 
     return OGRERR_NONE;
 }
