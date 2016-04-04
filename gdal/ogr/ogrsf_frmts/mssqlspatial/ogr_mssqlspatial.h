@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogr_mssqlspatial.h 33798 2016-03-27 19:23:53Z tamas $
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Definition of classes for OGR MSSQL Spatial driver.
