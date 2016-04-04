@@ -897,7 +897,7 @@ retry:
         }
 
         if( bS3Redirect && response_code >= 200 && response_code < 300 &&
-            sWriteFuncHeaderData.nTimestampDate > 0 &&
+            sWriteFuncHeaderData.nTimestampDate > 0 && pszEffectiveURL != NULL &&
             CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")) )
         {
             GIntBig nExpireTimestamp = VSICurlGetExpiresFromS3SigneURL(pszEffectiveURL);
