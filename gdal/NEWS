@@ -678,10 +678,19 @@ Perl bindings:
  * use strict and warnings in overridden constructors.
  * add $VERSION to ogr_perl.i (OGR.pm), which is required by pause.perl.org.
  * Add some basic module info for CPAN.
+ * Bugfix for Geo::OGR::Feature->new().
+ * Add many utility level algorithms as methods to various classes.
+ * New class for XML stuff
  * New Makefile.PL, which can download and build GDAL. This allows automatic testing of the CPAN module.
- * Wrap VSIStdoutSetRedirection
- * Removed Geo::OGR::Driver and Geo::OGR::DataSource since they are now merged into respective GDAL classes.
+ * Wrap VSIStdoutSetRedirection and allow creating datasets via an object, which can write and close.
+ * Geo::OGR::Driver and Geo::OGR::DataSource are now Perl wrappers for respective GDAL classes.
  * Add to the error stack also errors from the bindings
+ * Fix sending utf8 from Perl to GDAL. Should also remove some "uninitialized value" warnings.
+ * ReadTile and WriteTile methods for Dataset, ReadTile accepts now tile size and scaling algorithm.
+ * Improved Parent - Child management.
+ * Improved support for 64bit ints.
+ * Measures support in Geometry class.
+ * Many new tests
 
 Python bindings:
  * make Feature.ExportToJson() output boolean value for a boolean field
