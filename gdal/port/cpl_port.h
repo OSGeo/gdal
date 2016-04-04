@@ -170,12 +170,12 @@
 /*      Which versions of C++ are available.                            */
 /* -------------------------------------------------------------------- */
 
-#if defined(__cplusplus)
-#  if  __cplusplus >= 201103L
+#ifdef __cplusplus
+#  if __cplusplus >= 201103L
 #    define HAVE_CXX11 1
 #  endif
 /* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
-#endif
+#endif  /* __cpluscplus */
 
 /*---------------------------------------------------------------------
  *        types for 16 and 32 bits integers, etc...
@@ -813,17 +813,17 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 */
 #ifdef __cplusplus
 
-#if defined(HAVE_CXX11)
-#define CPL_FINAL final
-#define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
+#ifdef HAVE_CXX11
+#  define CPL_FINAL final
+#  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
 #else
-#define CPL_FINAL
-#define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
+#  define CPL_FINAL
+#  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
     ClassName &operator=( const ClassName & );
-#endif
+#endif  /* HAVE_CXX11 */
 
 #endif /* __cplusplus */
 
@@ -963,7 +963,7 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #endif
 
 #ifndef TRUE
-#  define TRUE  1
+#  define TRUE 1
 #endif
 
 #define EMULATED_BOOL bool
