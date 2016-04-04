@@ -882,6 +882,17 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     size_t          nMessageLen;
     char            *pszMessage;
 
+    unsigned int    nCurrentRecordOffset = 0;
+    unsigned int    nCurrentSHPOffset = 100;
+    size_t          nRealSHXContentSize = 100;
+
+    const char      pszSHXAccess[] = "w+b";
+    char            *pabySHXHeader;
+    char            abyReadedRecord[8];
+    unsigned int    niRecord = 0;
+    unsigned int    nRecordLength = 0;
+    unsigned int    nRecordOffset = 50;
+
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
 /*      ensure the result string indicates binary to avoid common       */
@@ -965,7 +976,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     else
         nSHPFilesize = 0xFFFFFFFEU;
 
-    const char pszSHXAccess[] = "w+b";
     snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
     fpSHX = psHooks->FOpen( pszFullname, pszSHXAccess );
 
@@ -992,18 +1002,9 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 /*  Open SHX and create it using SHP file content.                      */
 /* -------------------------------------------------------------------- */
     psHooks->FSeek( fpSHP, 100, 0 );
-    char *pabySHXHeader = (char *) malloc ( 100 );
+    pabySHXHeader = (char *) malloc ( 100 );
     memcpy( pabySHXHeader, pabyBuf, 100 );
     psHooks->FWrite( pabySHXHeader, 100, 1, fpSHX );
-
-    unsigned int nCurrentRecordOffset = 0;
-    unsigned int nCurrentSHPOffset = 100;
-    size_t nRealSHXContentSize = 100;
-
-    char abyReadedRecord[8];
-    int niRecord = 0;
-    int nRecordLength = 0;
-    int nRecordOffset = 50;
 
     while( nCurrentSHPOffset < nSHPFilesize )
     {
