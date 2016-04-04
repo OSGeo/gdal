@@ -873,6 +873,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     char            *pszFullname, *pszBasename;
     SAFile          fpSHP, fpSHX;
 
+
     uchar           *pabyBuf;
     int             i;
     int             bLazySHXLoading = FALSE;
@@ -997,7 +998,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
         return( 0 );
     }
 
-    free( pabyBuf );
 /* -------------------------------------------------------------------- */
 /*  Open SHX and create it using SHP file content.                      */
 /* -------------------------------------------------------------------- */
@@ -1053,6 +1053,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     psHooks->FClose( fpSHP );
     psHooks->FClose( fpSHX );
 
+    free ( pabyBuf );
     free ( pszFullname );
     free ( pszBasename );
     free ( pabySHXHeader );
