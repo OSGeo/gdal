@@ -21,7 +21,7 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	rm -f $(O_OBJ) *.a *.o *.lo
+	rm -f $(O_OBJ) *.o *.lo $(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):   %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -I../../port $< -o $@
