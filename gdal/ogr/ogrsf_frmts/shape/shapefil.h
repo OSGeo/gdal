@@ -384,6 +384,13 @@ SHPHandle SHPAPI_CALL
 SHPHandle SHPAPI_CALL
       SHPOpenLL( const char *pszShapeFile, const char *pszAccess,
                  SAHooks *psHooks );
+SHPHandle SHPAPI_CALL
+      SHPOpenLLEx( const char *pszShapeFile, const char *pszAccess,
+                  SAHooks *psHooks, int bRestoreSHX );
+
+int       SHPAPI_CALL
+      SHPRestoreSHX( const char *pszShapeFile, const char *pszAccess,
+                  SAHooks *psHooks );
 
 /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
 /* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
