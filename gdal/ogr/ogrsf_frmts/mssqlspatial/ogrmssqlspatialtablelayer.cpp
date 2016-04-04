@@ -2085,8 +2085,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
                 CPLError( CE_Failure, CPLE_AppDefined,
                   "Native geometry upload is not supported" );
 
-                for( i = 0; i < bind_num; i++ )
-                    CPLFree(bind_buffer[i]);
+                // No need to free bind_buffer[i] since bind_num == 0 in that branch
                 CPLFree(bind_buffer);
 
                 return OGRERR_FAILURE;
