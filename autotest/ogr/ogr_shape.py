@@ -4479,7 +4479,32 @@ def ogr_shape_97():
     return 'success'
 
 ###############################################################################
-#
+# Test restore function when .shx file is missing
+
+def ogr_shape_98():
+    
+    if gdaltest.shape_ds is None:
+        return 'skip'
+    
+    gdal.SetConfigOption( 'SHAPE_RESTORE_SHX', 'TRUE' )
+    shutil.copy( 'data/can_caps.shp', 'tmp/can_caps.shp' )
+
+    shp_ds = ogr.Open( 'tmp/can_caps.shp', update = 1 )
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    if shp_lyr.GetFeatureCount() != 13:
+        gdaltest.post_reason( 'Got wrong number of features.' )
+        return 'fail'
+
+    shp_lyr = None
+    shp_ds = None
+    
+    os.remove( 'tmp/can_caps.shp' )
+    os.remove( 'tmp/can_caps.shx' )
+
+    gdal.SetConfigOption( 'SHAPE_RESTORE_SHX', None )
+
+    return 'success'
 
 def ogr_shape_cleanup():
 
@@ -4619,9 +4644,10 @@ gdaltest_list = [
     ogr_shape_95,
     ogr_shape_96,
     ogr_shape_97,
+    ogr_shape_98,
     ogr_shape_cleanup ]
 
-#gdaltest_list = [ ogr_shape_94 ]
+#gdaltest_list = [ ogr_shape_98 ]
 
 if __name__ == '__main__':
 

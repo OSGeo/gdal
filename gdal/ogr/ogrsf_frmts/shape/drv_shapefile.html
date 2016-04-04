@@ -318,6 +318,10 @@ a MultiPolygon passed to the shapefile writer is not really a compliant Single
 Feature polygon, but originates from example from a MultiPatch object (from
 a Shapefile/FileGDB/PGeo datasource).
 </p>
+<p>
+(GDAL &gt;= 2.1) The SHAPE_RESTORE_SHX configuration option/environment variable
+can be set to YES (default NO) to restore broken or absent .shx file from associated .shp file during opening.
+</p>
 
 <h3>See Also</h3>
 
