@@ -876,7 +876,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 
     uchar           *pabyBuf;
     int             i;
-    int             bLazySHXLoading = FALSE;
     size_t          nFullnameLen;
     unsigned int    nSHPFilesize;
 
@@ -904,7 +903,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
         pszAccess = "r+b";
     else
     {
-        bLazySHXLoading = strchr(pszAccess, 'l') != NULL;
         pszAccess = "rb";
     }
 
