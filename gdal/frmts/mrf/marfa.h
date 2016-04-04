@@ -591,7 +591,7 @@ protected:
 class PNG_Codec {
 public:
     PNG_Codec(const ILImage &image) : img(image), 
-        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0) {};
+        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {};
 
     virtual ~PNG_Codec() {
         CPLFree(PNGColors);
