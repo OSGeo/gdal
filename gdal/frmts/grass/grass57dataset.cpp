@@ -33,6 +33,11 @@
 
 #include <stdlib.h>
 
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
+
 extern "C" {
 #ifdef __cplusplus
 #define class _class
@@ -41,11 +46,6 @@ extern "C" {
 #ifdef __cplusplus
 #undef class
 #endif
-
-#include "cpl_string.h"
-#include "gdal_frmts.h"
-#include "gdal_priv.h"
-#include "ogr_spatialref.h"
 
 #include <grass/version.h>
 #include <grass/gprojects.h>
