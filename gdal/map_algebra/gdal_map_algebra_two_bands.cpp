@@ -1,3 +1,4 @@
+#include "gdal_map_algebra_private.h"
 
 typedef int (*gma_two_bands_callback)(gma_band, gma_block*, gma_band, gma_object_t**, gma_object_t*);
 
@@ -913,7 +914,7 @@ void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRaste
     gma_band_empty_cache(&band2);
 }
 
-gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg = NULL) {
+gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg) {
     gma_object_t *retval = NULL;
     // b1 is changed, b2 is not
     if (b1->GetXSize() != b2->GetXSize() || b1->GetYSize() != b2->GetYSize()) {

@@ -1,3 +1,5 @@
+#include "gdal_map_algebra_private.h"
+
 typedef int (*gma_compute_value_callback)(gma_band, gma_block*, gma_object_t**, gma_object_t*);
 
 template<typename datatype>
@@ -135,7 +137,7 @@ void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, gm
     }
 }
 
-gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg = NULL) {
+gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg) {
     gma_object_t *retval = NULL;
     switch (method) {
     case gma_method_get_min:

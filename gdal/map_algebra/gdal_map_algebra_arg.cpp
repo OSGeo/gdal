@@ -1,3 +1,5 @@
+#include "gdal_map_algebra_private.h"
+
 typedef int (*gma_with_arg_callback)(gma_block*, gma_object_t*);
 
 template<typename datatype>

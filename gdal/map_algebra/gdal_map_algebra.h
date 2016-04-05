@@ -160,15 +160,5 @@ void gma_simple(GDALRasterBand *b, gma_method_t method);
 void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, gma_object_t *arg);
 
 // return null if fail
-gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg);
-gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg);
-
-#include "gma_hash.h"
-#include "gma_band.h"
-#include "type_switch.h"
-#include "gdal_map_algebra_simple.h"
-#include "gdal_map_algebra_compute_value.h"
-#include "gdal_map_algebra_arg.h"
-#include "gdal_map_algebra_two_bands.h"
-
-
+gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg = NULL);
+gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg = NULL);
