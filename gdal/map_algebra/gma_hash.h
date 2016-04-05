@@ -1,30 +1,47 @@
 // simple hash table for storing mappings from integer keys to objects
-// hm. not so simple and small. Use boost?
+// hm. Maybe not so simple and small. Use Boost?
 
-class gma_base {
-public:
-    virtual int value_as_int() {
-    }
-};
-
-class gma_numeric_base : gma_base {
-public:
-    virtual int value_as_int() {
-    }
-};
-
-template <typename type> class gma_numeric : gma_numeric_base {
+template <typename type> class gma_number_p : public gma_number_t {
 private:
+    bool m_defined;
     type m_value;
 public:
-    gma_numeric(type value) {
+    gma_number_p() {
+        m_defined = false;
+    }
+    gma_number_p(type value) {
+        m_defined = true;
         m_value = value;
+    }
+    virtual gma_number_t *clone() {
+        gma_number_p<type> *n = new gma_number_p<type>();
+        if (m_defined)
+            n->set_value(m_value);
+        return n;
+    }
+    bool defined() {
+        return m_defined;
     }
     type value() {
         return m_value;
     }
+    virtual void set_value(double value) {
+        m_defined = true;
+        m_value = (type)value;
+    }
+    virtual void set_value(int value) {
+        m_defined = true;
+        m_value = (type)value;
+    }
+    virtual void set_value(unsigned int value) {
+        m_defined = true;
+        m_value = (type)value;
+    }
     virtual int value_as_int() {
         return (int)m_value;
+    }
+    virtual double value_as_double() {
+        return (double)m_value;
     }
     void add(type value) {
         m_value += value;
@@ -34,6 +51,32 @@ public:
         char *s = (char*)CPLMalloc(10);
         snprintf(s, 10, "%i", m_value);
         return s;
+    }
+    GDALDataType get_datatype();
+    bool is_integer() {};
+    bool is_float() {};
+};
+
+template <> GDALDataType gma_number_p<uint8_t>::get_datatype() { return GDT_Byte; }
+
+template <> bool gma_number_p<uint8_t>::is_integer() { return true; }
+template <> bool gma_number_p<uint8_t>::is_float() { return false; }
+
+// wrap std::pair as concrete type gma_pair_p, 
+// which is a subclass of public class gma_pair_t
+// fixme: make sure K and V are subclasses of gma_object_t
+template<class K, class V>class gma_pair_p : public gma_pair_t {
+public:
+    std::pair<K,V> m_pair;
+    gma_pair_p(K key, V value) {
+        m_pair.first = key;
+        m_pair.second = value;
+    }
+    virtual gma_object_t *first() {
+        return m_pair.first;
+    }
+    virtual gma_object_t *second() {
+        return m_pair.second;
     }
 };
 
@@ -74,25 +117,37 @@ public:
     }
 };
 
-template <typename datatype> class gma_cell {
+template <typename datatype> class gma_cell_p : gma_cell_t {
 private:
     int m_x;
     int m_y;
     datatype m_value;
 public:
-    gma_cell(int x, int y, datatype value) {
+    gma_cell_p(int x, int y, datatype value) {
         m_x = x;
         m_y = y;
         m_value = value;
     }
-    int x() {
+    virtual int x() {
         return m_x;
     }
-    int y() {
+    virtual int y() {
         return m_y;
     }
-    datatype value() {
+    virtual void set_value(double value) {
+        m_value = value;
+    }
+    virtual void set_value(int value) {
+        m_value = value;
+    }
+    virtual datatype value() {
         return m_value;
+    }
+    virtual int value_as_int() {
+        return (int)m_value;
+    }
+    virtual double value_as_double() {
+        return (double)m_value;
     }
 };
 
@@ -136,11 +191,11 @@ int compare_int32s(const void *a, const void *b)
   return (*da > *db) - (*da < *db);
 }
 
-class gma_hash_base {
+class gma_hash_t : public gma_object_t {
 public:
     virtual int exists(int32_t key) {
     }
-    virtual gma_base *get(int32_t key) {
+    virtual gma_object_t *get(int32_t key) {
     }
     virtual int size() {
     }
@@ -149,17 +204,16 @@ public:
 };
 
 // replace with std::unordered_map?
-template <class V> class gma_hash : gma_hash_base {
-private:
+template <class V> class gma_hash_p : public gma_hash_t {
+public:
     gma_hash_entry<V> **table;
     static const int table_size = 128;
-public:
-    gma_hash() {
+    gma_hash_p() {
         table = (gma_hash_entry<V> **)CPLMalloc(sizeof(void*)*table_size);
         for (int i = 0; i < table_size; i++)
             table[i] = NULL;
     }
-    ~gma_hash() {
+    ~gma_hash_p() {
         for (int i = 0; i < table_size; i++) {
             gma_hash_entry<V> *e = table[i];
             while (e) {
@@ -193,13 +247,13 @@ public:
                 table[hash] = NULL;
         }
     }
-    gma_base *get(int32_t key) {
+    gma_object_t *get(int32_t key) {
         int hash = (abs(key) % table_size);
         gma_hash_entry<V> *e = table[hash];
         while (e && e->key() != key)
             e = e->next();
         if (e)
-            return (gma_base *)e->value();
+            return (gma_object_t *)e->value();
     }
     void put(int32_t key, V *value) {
         int hash = (abs(key) % table_size);
@@ -310,14 +364,14 @@ public:
 // a class to divide real | integer line into intervals without holes in between
 // -inf ... x(i) .. x(i+1) .. .. +inf
 // each range is (x(i),x(i+1)]
-template <typename datatype> class gma_bins {
+template <typename datatype> class gma_bins_p {
     int n_intervals;
     datatype *table;
 public:
-    gma_bins(int n_intervals) {
+    gma_bins_p(int n_intervals) {
         table = (datatype*)CPLMalloc(sizeof(datatype)*(n_intervals-1));
     }
-    ~gma_bins() {
+    ~gma_bins_p() {
         CPLFree(table);
     }
     datatype get(int i) {
@@ -336,30 +390,68 @@ public:
     }
 };
 
-class gma_histogram_base : gma_base {
+// fixme: use std::unordered_map and std::bins
+template <typename datatype>
+class gma_histogram_p : public gma_histogram_t {
 public:
-    virtual int size() {}
-    virtual int count(int i) {}
-    virtual gma_base *bin(int i) {} // either gma_numeric<integer_datatype> or gma_interval<datatype>
-    virtual int32_t *keys_sorted(int size) {}
-    virtual gma_base *get(int i) {}
+    gma_hash_p<gma_number_p<unsigned int> > *hash;
+    gma_histogram_p(gma_object_t *arg) {
+        // fixme: use arg
+        hash = new gma_hash_p<gma_number_p<unsigned int> >;
+    }
+    ~gma_histogram_p() {
+        delete hash;
+    }
+    virtual unsigned int size() {
+        return hash->size();
+    }
+    virtual gma_object_t *at(unsigned int i) {
+        int n = 0;
+        for (int j = 0; j < hash->table_size; j++) {
+            gma_hash_entry<gma_number_p<unsigned int> > *e = hash->table[j];
+            while (e) {
+                if (n == i) {
+                    // return gma_pair_t
+                    gma_number_p<datatype> *k = new gma_number_p<datatype>(e->key());
+                    gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(e->value()->value());
+                    gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
+                        new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
+                    return pair;
+                }
+                n++;
+                e = e->next();
+            }
+        }
+        return NULL;
+    }
+    // fixme: remove these
+    virtual int exists(int32_t key) {
+        return hash->exists(key);
+    }
+    gma_number_p<unsigned int> *get(int32_t key) {
+        return (gma_number_p<unsigned int> *)hash->get(key);
+    }
+    void put(int32_t key, gma_number_p<unsigned int> *value) {
+        hash->put(key, value);
+    }
 };
 
-template <typename datatype> class gma_histogram : public gma_histogram_base {
-    gma_hash<gma_numeric<datatype> > *hash;
+template <typename datatype>
+class gma_mapper_p : public gma_object_t {
+private:
+    // fixme:
+    // range => numeric or (for int types) int => int
+    // also default for the latter
+    gma_hash_p<gma_number_p<datatype> > *m_mapper;
 public:
-    gma_histogram(int) {
-        hash = new gma_hash<gma_numeric<datatype> >;
+    gma_mapper_p(gma_hash_p<gma_number_p<datatype> > *mapper) {
+        m_mapper = mapper;
     }
-    ~gma_histogram() {
-    }
-    virtual int size() {};
-    virtual int count(int i) {};
-    virtual gma_base *bin(int i) {}; // either gma_numeric<integer_datatype> or gma_interval<datatype>
-    virtual int32_t *keys_sorted(int size) {
-        return hash->keys_sorted(size);
-    }
-    virtual gma_base *get(int i) {
-        return hash->get(i);
+    int map(datatype *value) {
+        if (m_mapper->exists(*value)) {
+            *value = ((gma_number_p<datatype>*)m_mapper->get(*value))->value();
+            return 1;
+        } else
+            return 0;
     }
 };

@@ -3,15 +3,15 @@
 int main() {
 
     // test hash of a hash
-    gma_hash<gma_hash<gma_numeric<int> > > *I;
+    gma_hash_p<gma_hash_p<gma_number_p<int> > > *I;
 
-    I = new gma_hash<gma_hash<gma_numeric<int> > >;
+    I = new gma_hash_p<gma_hash_p<gma_number_p<int> > >;
 
-    gma_hash<gma_numeric<int> > *J;
+    gma_hash_p<gma_number_p<int> > *J;
 
-    J = new gma_hash<gma_numeric<int> >;
-    J->put(5, new gma_numeric<int>(1));
-    J->put(6, new gma_numeric<int>(1));
+    J = new gma_hash_p<gma_number_p<int> >;
+    J->put(5, new gma_number_p<int>(1));
+    J->put(6, new gma_number_p<int>(1));
 
     I->put(6, J);
 
@@ -20,7 +20,7 @@ int main() {
     for (int i = 0; i < n; i++) {
         printf("%i =>\n", keys[i]);
 
-        J = (gma_hash<gma_numeric<int> > *)I->get(keys[i]);
+        J = (gma_hash_p<gma_number_p<int> > *)I->get(keys[i]);
         int n_j = J->size();
         int *keys_j = J->keys_sorted(n_j);
         for (int j = 0; j < n_j; j++) {
@@ -43,8 +43,9 @@ int main() {
     gma_simple(b, gma_method_print);
     printf("\n");
 
-    int32_t i = 5;
-    gma_with_arg(b, gma_method_add, i);
+    gma_number_t *x = (gma_number_t*)gma_new_object(b, gma_number);
+    x->set_value(5);
+    gma_with_arg(b, gma_method_add, x);
     gma_simple(b, gma_method_print);
     printf("\n");
 
@@ -63,7 +64,8 @@ int main() {
     gma_simple(b, gma_method_print);
     printf("\n");
 
-    double x = 1.1;
+    x = (gma_number_t*)gma_new_object(b, gma_number);
+    x->set_value(1.1);
     gma_with_arg(b, gma_method_add, x);
     gma_simple(b, gma_method_print);
 }

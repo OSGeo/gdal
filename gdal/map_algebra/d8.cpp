@@ -57,26 +57,29 @@ int main() {
         gma_two_bands(c, gma_method_multiply_by_band, ua);
 
         //c *= c > 10000;
-        gma_operator<uint32_t> op;
-        op.op = gma_gt;
-        op.value = 10000;
-        gma_two_bands(c, gma_method_multiply_by_band, c, &op);
+        gma_number_t *n = (gma_number_t *)gma_new_object(c, gma_number);
+        n->set_value(10000);
+        gma_logical_operation_t *op = (gma_logical_operation_t *)gma_new_object(c, gma_logical_operation);
+        op->set_operation(gma_gt);
+        op->set_number(n);
+        gma_two_bands(c, gma_method_multiply_by_band, c, op);
 
         // outlet cells
-        //gma_array<gma_cell<uint32_t> > *outlets = 
-        gma_array<gma_cell<uint32_t> > *outlets; // fixme: the type is datatype of c!
-        gma_compute_value_object(c, gma_method_get_cells, &outlets);
+        //gma_array<gma_cell_p<uint32_t> > *outlets = 
+        std::vector<gma_cell_t> *outlets = (std::vector<gma_cell_t>*)gma_compute_value(c, gma_method_get_cells);
 
         // c = 0
-        gma_with_arg<uint32_t>(c, gma_method_assign, 0);
+        gma_with_arg(c, gma_method_assign, 0);
 
-        for (int i = 0; i < outlets->size(); i++) {
-            gma_cell<uint32_t> *cell = outlets->get(i);
-            gma_catchment_data<uint32_t> data;
-            data.outlet = outlets->get(i);
-            data.mark = i+1;
-            printf("%i %i %i %i\n", cell->x(), cell->y(), cell->value(), data.mark);
-            gma_two_bands(c, gma_method_catchment, fd, &data);
+        int i = 0;
+        for (std::vector<gma_cell_t>::iterator cell = outlets->begin(); cell != outlets->end(); ++cell) {
+
+            i++;
+            printf("%i %i %i %i\n", cell->x(), cell->y(), cell->value_as_int(), i);
+
+            cell->set_value(i);
+
+            gma_two_bands(c, gma_method_catchment, fd, &(*cell));
             break;
         }
 

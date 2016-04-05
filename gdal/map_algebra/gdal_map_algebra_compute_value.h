@@ -1,38 +1,40 @@
-typedef int (*gma_compute_value_callback)(gma_band band, gma_block *block, void*);
+typedef int (*gma_compute_value_callback)(gma_band, gma_block*, gma_object_t**, gma_object_t*);
 
 template<typename datatype>
-int gma_get_min(gma_band band, gma_block *block, void *arg) {
-    datatype mn = *(datatype*)arg;
+int gma_get_min(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_number_p<datatype> *rv;
+    if (*retval == NULL) {
+        rv = new gma_number_p<datatype>;
+        *retval = rv;
+    } else
+        rv = (gma_number_p<datatype> *)*retval;
     gma_cell_index i;
-    int f = 1;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype x = gma_block_cell(datatype, block, i);
-            if (f || x < mn) {
-                f = 0;
-                mn = x;
-            }
+            if (!rv->defined() || x < rv->value())
+                rv->set_value(x);
         }
     }
-    *(datatype*)arg = mn;
     return 1;
 }
 
 template<typename datatype>
-int gma_get_max(gma_band band, gma_block *block, void *arg) {
-    datatype mx = *(datatype*)arg;
+int gma_get_max(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_number_p<datatype> *rv;
+    if (*retval == NULL) {
+        rv = new gma_number_p<datatype>;
+        *retval = rv;
+    } else
+        rv = (gma_number_p<datatype> *)*retval;
     gma_cell_index i;
-    int f = 1;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype x = gma_block_cell(datatype, block, i);
-            if (f || x > mx) {
-                f = 0;
-                mx = x;
-            }
+            if (!rv->defined() || x > rv->value())
+                rv->set_value(x);
         }
     }
-    *(datatype*)arg = mx;
     return 1;
 }
 
@@ -40,39 +42,39 @@ int gma_get_max(gma_band band, gma_block *block, void *arg) {
 // value => count is meaningful only for bands with integer cell value
 
 template<typename datatype>
-int gma_compute_histogram(gma_band band, gma_block *block, void *histogram) {
-    gma_hash<gma_numeric<datatype> > *hm;
-    if (*(void**)histogram == NULL) {
-        hm = new gma_hash<gma_numeric<datatype> >;
-        *(void**)histogram = hm;
+int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_histogram_p<datatype> *hm;
+    if (*retval == NULL) {
+        hm = new gma_histogram_p<datatype>(arg);
+        *retval = hm;
     } else
-        hm = *(gma_hash<gma_numeric<datatype> >**)histogram;
+        hm = (gma_histogram_p<datatype>*)*retval;
     gma_cell_index i;
     // use type traits 
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype key = gma_block_cell(datatype, block, i);
             if (hm->exists(key))
-                ((gma_numeric<datatype>*)hm->get(key))->add(1);
+                ((gma_number_p<unsigned int>*)hm->get(key))->add(1);
             else
-                hm->put(key, new gma_numeric<datatype>(1));
+                hm->put(key, new gma_number_p<unsigned int>(1));
         }
     }
     return 1;
 }
 
 template<typename datatype>
-int gma_zonal_neighbors(gma_band band, gma_block *block, void *zonal_neighbors) {
-    gma_hash<gma_hash<gma_numeric<datatype> > > *h = (gma_hash<gma_hash<gma_numeric<datatype> > >*)zonal_neighbors;
+int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_hash_p<gma_hash_p<gma_number_p<datatype> > > *h;
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype me = gma_block_cell(datatype, block, i);
-            gma_hash<gma_numeric<datatype> > *ns;
+            gma_hash_p<gma_number_p<datatype> > *ns;
             if (h->exists(me))
-                ns = (gma_hash<gma_numeric<datatype> > *)h->get(me);
+                ns = (gma_hash_p<gma_number_p<datatype> > *)h->get(me);
             else {
-                ns = new gma_hash<gma_numeric<datatype> >;
+                ns = new gma_hash_p<gma_number_p<datatype> >;
                 h->put(me, ns);
             }
 
@@ -82,12 +84,12 @@ int gma_zonal_neighbors(gma_band band, gma_block *block, void *zonal_neighbors) 
                 datatype n;
 
                 if (!gma_value_from_other_band<datatype>(band, block, in, band, &n)) {
-                    ns->put(-1, new gma_numeric<datatype>(1));
+                    ns->put(-1, new gma_number_p<datatype>(1));
                     continue;  // we are at border and this is outside
                 }
                 
                 if (n != me && !ns->exists(n))
-                    ns->put(n, new gma_numeric<datatype>(1));
+                    ns->put(n, new gma_number_p<datatype>(1));
                 
             }
 
@@ -97,8 +99,8 @@ int gma_zonal_neighbors(gma_band band, gma_block *block, void *zonal_neighbors) 
 }
 
 template<typename datatype>
-int gma_get_cells(gma_band band, gma_block *block, void *cells) {
-    gma_array<gma_cell<datatype> > *c = (gma_array<gma_cell<datatype> > *)cells;
+int gma_get_cells(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_array<gma_cell_p<datatype> > *c;
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -106,14 +108,14 @@ int gma_get_cells(gma_band band, gma_block *block, void *cells) {
             // global cell index
             int x = block->index.x * band.w_block + i.x;
             int y = block->index.y * band.h_block + i.y;
-            if (me) c->push(new gma_cell<datatype>(x, y, me));
+            if (me) c->push(new gma_cell_p<datatype>(x, y, me));
         }
     }
     return 1;
 }
 
 template<typename datatype>
-void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, void *retval, int focal_distance) {
+void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, gma_object_t **retval, gma_object_t *arg, int focal_distance) {
     gma_band band = gma_band_initialize(b);
     gma_block_index i;
     for (i.y = 0; i.y < band.h_blocks; i.y++) {
@@ -121,7 +123,7 @@ void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, vo
             gma_band_add_to_cache(&band, i);
             gma_block *block = gma_band_get_block(band, i);
             CPLErr e = gma_band_update_cache(&band, band, block, focal_distance);
-            int ret = cb(band, block, retval);
+            int ret = cb(band, block, retval, arg);
             switch (ret) {
             case 0: return;
             case 1: break;
@@ -133,9 +135,15 @@ void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, vo
     }
 }
 
-int gma_compute_value_object(GDALRasterBand *b, gma_method_compute_value_t method, void *retval) {
-    *(void**)retval = NULL;
+gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg = NULL) {
+    gma_object_t *retval = NULL;
     switch (method) {
+    case gma_method_get_min:
+        type_switch_single(gma_get_min, 0);
+        break;
+    case gma_method_get_max:
+        type_switch_single(gma_get_max, 0);
+        break;
     case gma_method_histogram:
         type_switch_single(gma_compute_histogram, 0);
         break;
@@ -149,33 +157,11 @@ int gma_compute_value_object(GDALRasterBand *b, gma_method_compute_value_t metho
     default:
         goto unknown_method;
     }
-    return 1;
-not_implemented_for_this_datatype:
-    fprintf(stderr, "Not implemented for this datatype.\n");
-    return 0;
-unknown_method:
-    fprintf(stderr, "Unknown method.\n");
-    return 0;
-}
-
-template <typename retval_t>
-retval_t gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method) {
-    retval_t retval;
-    switch (method) {
-    case gma_method_get_min:
-        type_switch_single2(gma_get_min, 0);
-        break;
-    case gma_method_get_max:
-        type_switch_single2(gma_get_max, 0);
-        break;
-    default:
-        goto unknown_method;
-    }
     return retval;
 not_implemented_for_this_datatype:
     fprintf(stderr, "Not implemented for this datatype.\n");
-    return 0;
+    return NULL;
 unknown_method:
     fprintf(stderr, "Unknown method.\n");
-    return 0;
+    return NULL;
 }

@@ -4,13 +4,19 @@ int main(int argc, char *argv[]) {
     GDALAllRegister();
     GDALDataset *ds = (GDALDataset*)GDALOpen(argv[1], GA_ReadOnly);
     GDALRasterBand *b = ds->GetRasterBand(1);
-    gma_histogram_base *hm;
-    new_object(hm, b, gma_histogram, 0);
-    gma_compute_value_object(b, gma_method_histogram, &hm);
-    int n = hm->size();
-    int32_t *keys = hm->keys_sorted(n);
-    for (int i = 0; i < n; i++)
-        printf("%i => %i\n", keys[i], hm->get(keys[i])->value_as_int());
-    CPLFree(keys);
+
+    // how many bins? for integer bands bins or counts of values? arg = NULL, n, or bins
+    // gma_object_t *arg = gma_new_object(b, gma_class_t klass);
+    gma_histogram_t *hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, NULL);
+
+    // histogram is an array of pairs
+    for (unsigned int i = 0; i < hm->size(); i++) {
+        gma_pair_t *kv = (gma_pair_t *)hm->at(i);
+        // kv is an interval=>number or number=>number, now the latter
+        gma_number_t *key = (gma_number_t*)kv->first();
+        gma_number_t *val = (gma_number_t*)kv->second();
+        printf("%i => %i\n", key->value_as_int(), val->value_as_int());
+    }
+
     delete hm;
 }
