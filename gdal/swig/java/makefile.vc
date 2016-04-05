@@ -68,6 +68,7 @@ test:
 	$(JAVA_RUN) GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	$(JAVA_RUN) testgetpoints
 	$(JAVA_RUN) ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
+	$(JAVA_RUN) OSRTest
 
 #	cd gnm
 #	$(MAKE) /f makefile.vc clean

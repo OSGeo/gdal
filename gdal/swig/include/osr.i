@@ -59,6 +59,35 @@
 %javaconst(0);
 #endif
 
+#ifndef SWIGCSHARP
+typedef int OGRAxisOrientation;
+#ifdef SWIGJAVA
+%javaconst(1);
+#endif
+%constant OAO_Other=0;
+%constant OAO_North=1;
+%constant OAO_South=2;
+%constant OAO_East=3;
+%constant OAO_West=4;
+%constant OAO_Up=5;
+%constant OAO_Down=6;
+#ifdef SWIGJAVA
+%javaconst(0);
+#endif
+#else
+%rename (AxisOrientation) OGRAxisOrientation;
+typedef enum OGRAxisOrientation
+{
+    OAO_Other=0,
+    OAO_North=1,
+    OAO_South=2,
+    OAO_East=3,
+    OAO_West=4,
+    OAO_Up=5,
+    OAO_Down=6
+};
+#endif
+
 #if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
 %inline %{
 typedef char retStringAndCPLFree;
@@ -342,6 +371,18 @@ public:
 
   const char *GetAuthorityName( const char *target_key ) {
     return OSRGetAuthorityName( self, target_key );
+  }
+
+  /* Added in GDAL 2.1 */
+  const char *GetAxisName( const char *target_key, int iAxis ) {
+    return OSRGetAxis( self, target_key, iAxis, NULL );
+  }
+
+  /* Added in GDAL 2.1 */
+  OGRAxisOrientation GetAxisOrientation( const char *target_key, int iAxis ) {
+    OGRAxisOrientation orientation = OAO_Other;
+    OSRGetAxis( self, target_key, iAxis, &orientation );
+    return orientation;
   }
 
   OGRErr SetUTM( int zone, int north =1 ) {

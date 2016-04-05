@@ -675,6 +675,36 @@ def osr_basic_19():
     return 'success'
 
 ###############################################################################
+# Test GetAxisName() and GetAxisOrientation()
+
+def osr_basic_20():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSGA(4326)
+
+    if sr.GetAxisName(None, 0) != 'Latitude':
+        gdaltest.post_reason('fail')
+        print(sr.GetAxisName(None, 0))
+        return 'fail'
+
+    if sr.GetAxisOrientation(None, 0) != osr.OAO_North:
+        gdaltest.post_reason('fail')
+        print(sr.GetAxisOrientation(None, 0))
+        return 'fail'
+
+    if sr.GetAxisName('GEOGCS', 1) != 'Longitude':
+        gdaltest.post_reason('fail')
+        print(sr.GetAxisName('GEOGCS', 1))
+        return 'fail'
+
+    if sr.GetAxisOrientation('GEOGCS', 1) != osr.OAO_East:
+        gdaltest.post_reason('fail')
+        print(sr.GetAxisOrientation('GEOGCS', 1))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_basic_1,
@@ -696,6 +726,7 @@ gdaltest_list = [
     osr_basic_17,
     osr_basic_18,
     osr_basic_19,
+    osr_basic_20,
     None ]
 
 if __name__ == '__main__':
