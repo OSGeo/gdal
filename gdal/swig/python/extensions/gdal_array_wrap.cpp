@@ -3609,7 +3609,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this a numpy dataset name?                                   */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
+    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8)
         || poOpenInfo->fpL != NULL )
         return NULL;
 
@@ -3617,9 +3617,9 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
     if( psArray == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to parse meaningful pointer value from NUMPY name\n"
-                  "string: %s\n", 
+                  "string: %s\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -3970,10 +3970,10 @@ GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
 retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 {
     char      szString[128];
-    
+
     GDALRegister_NUMPY();
-    
-    /* I wish I had a safe way of checking the type */        
+
+    /* I wish I had a safe way of checking the type */
     sprintf( szString, "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
