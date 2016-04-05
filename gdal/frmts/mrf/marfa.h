@@ -204,7 +204,7 @@ static inline unsigned long long int swab64(const unsigned long long int val)
 // NET_ORDER is true if machine is BE, false otherwise
 // Call netxx() if network (big) order is needed
 
-#ifdef WORDS_BIGENDIAN
+#ifdef CPL_MSB
 #define NET_ORDER true
 // These could be macros, but for the side effects related to type
 static inline unsigned short net16(const unsigned short x)

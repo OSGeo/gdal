@@ -48,16 +48,6 @@ template<int N> bool AllAlpha(const buf_mgr &src, const ILImage &img) {
 // Fully transparent
 #define transparent AllAlpha<0>
 
-// Are all pixels in the tile opaque?
-//static bool opaque(const buf_mgr &src, const ILImage &img) {
-//    int stride = img.pagesize.c;
-//    char *s = src.buffer + img.pagesize.c - 1;
-//    char *stop = src.buffer + img.pageSizeBytes;
-//    while (s < stop && 255 == static_cast<unsigned char>(*s))
-//        s += stride;
-//    return (s >= stop);
-//}
-
 // Strip the alpha from an RGBA buffer, safe to use in place
 static void RGBA2RGB(const char *start, const char *stop, char *target) {
     while (start < stop) {
@@ -69,7 +59,7 @@ static void RGBA2RGB(const char *start, const char *stop, char *target) {
 }
 
 // Add opaque alpha to an RGB buffer, safe to use in place
-// works backwards, from stop to start, the last pointer is the end of the source region
+// works from stop to start, the last parameter is the end of the source region
 static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
         --stop;
@@ -80,7 +70,7 @@ static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     }
 }
 
-// Strip the alpha from an Luma Alpha buffer, fafe to use in place
+// Strip the alpha from an Luma Alpha buffer, safe to use in place
 static void LA2L(const char *start, const char *stop, char *target) {
     while (start < stop) {
         *target++ = *start++;
@@ -89,7 +79,7 @@ static void LA2L(const char *start, const char *stop, char *target) {
 }
 
 // Add opaque alpha to a Luma buffer, safe to use in place
-// works backwards, from stop to start, the last pointer is the end of the source region
+// works from stop to start, the last parameter is the end of the source region
 static void L2LA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
         --stop;
@@ -110,6 +100,7 @@ static CPLErr initBuffer(buf_mgr &b)
 CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
     CPLErr retval = CE_None;
+
     const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
     const static GUInt32 PNG_SIG  = 0x474e5089;  // PNG 4CC code
 
@@ -117,7 +108,8 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     GUInt32 signature;
     memcpy(&signature, src.buffer, sizeof(GUInt32));
 
-    if (signature == JPEG_SIG) {
+    // test against an LSB signature
+    if (JPEG_SIG == CPL_LSBWORD32(signature)) {
         image.pagesize.c -= 1;
         JPEG_Codec codec(image);
 
@@ -134,7 +126,7 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
         }
     }
     else { // Should be PNG
-        assert(PNG_SIG == signature);
+        assert(PNG_SIG == CPL_LSBWORD32(signature));
         PNG_Codec codec(image);
         // PNG codec expands to 4 bands
         return codec.DecompressPNG(dst, src);
