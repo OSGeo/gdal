@@ -848,8 +848,8 @@ char **SRPDataset::GetFileList()
 
 void SRPDataset::AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName )
 {
-    char	szName[80];
-    int		nCount = CSLCount(papszSubDatasets ) / 2;
+    char szName[80];
+    int nCount = CSLCount(papszSubDatasets ) / 2;
 
     CPLString osSubDatasetName;
     osSubDatasetName = "SRP:";

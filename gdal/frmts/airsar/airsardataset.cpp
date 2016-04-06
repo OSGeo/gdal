@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				AirSARDataset				*/
+/*                              AirSARDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -48,7 +48,7 @@ class AirSARDataset : public GDALPamDataset
 {
     friend class AirSARRasterBand;
 
-    VSILFILE	*fp;
+    VSILFILE    *fp;
 
     int         nLoadedLine;
     GByte       *pabyCompressedLine;
@@ -64,7 +64,7 @@ class AirSARDataset : public GDALPamDataset
 
   public:
                 AirSARDataset();
-		~AirSARDataset();
+                ~AirSARDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -78,7 +78,7 @@ class AirSARDataset : public GDALPamDataset
 class AirSARRasterBand : public GDALPamRasterBand
 {
   public:
-    		AirSARRasterBand( AirSARDataset *, int );
+                AirSARRasterBand( AirSARDataset *, int );
     virtual     ~AirSARRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -258,7 +258,7 @@ CPLErr AirSARRasterBand::IReadBlock( int /* nBlockXOff */,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				AirSARDataset				*/
+/*                              AirSARDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
