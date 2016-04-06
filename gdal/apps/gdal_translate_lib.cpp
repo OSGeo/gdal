@@ -1262,12 +1262,20 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             continue;
         }
 
-        // Preserve nbits if no option change values
+        // Preserve NBITS if no option change values
         const char* pszNBits = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
         if( pszNBits && psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
             !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == NULL )
         {
             poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+        }
+
+        // Preserve PIXELTYPE if no option change values
+        const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        if( pszPixelType && psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
+            !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == NULL )
+        {
+            poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
         }
 
 /* -------------------------------------------------------------------- */
@@ -1421,10 +1429,45 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         if( psOptions->bSetNoData )
         {
+            bool bSignedByte = false;
+            pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
+            if( pszPixelType == NULL )
+            {
+              pszPixelType = poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            }
+            if( pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE") )
+              bSignedByte = true;
             int bClamped = FALSE, bRounded = FALSE;
             double dfVal = GDALAdjustValueToDataType(eBandType,
                                                      psOptions->dfNoDataReal,
                                                      &bClamped, &bRounded );
+            if( bSignedByte )
+            {
+              bClamped = FALSE;
+              bRounded = FALSE;
+              if( psOptions->dfNoDataReal < -128 )
+              {
+                dfVal = -128;
+                bClamped = TRUE;
+              }
+              else if( psOptions->dfNoDataReal > 127 )
+              {
+                dfVal = 127;
+                bClamped = TRUE;
+              }
+              else
+              {
+                dfVal = static_cast<int>(floor(psOptions->dfNoDataReal + 0.5));
+                if( dfVal != psOptions->dfNoDataReal )
+                  bRounded = TRUE;
+              }
+            }
+            else
+            {
+              dfVal = GDALAdjustValueToDataType(eBandType,
+                                                     psOptions->dfNoDataReal,
+                                                     &bClamped, &bRounded );
+            }
 
             if (bClamped)
             {

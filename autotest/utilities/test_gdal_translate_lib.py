@@ -386,6 +386,28 @@ def test_gdal_translate_lib_100():
     return 'success'
 
 ###############################################################################
+# Test behaviour with SIGNEDBYTE
+
+def test_gdal_translate_lib_101():
+
+    ds = gdal.Translate('/vsimem/test_gdal_translate_lib_101.tif', gdal.Open('../gcore/data/byte.tif'), creationOptions = ['PIXELTYPE=SIGNEDBYTE'], noData = -128)
+    if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
+        gdaltest.post_reason('Did not get SIGNEDBYTE')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != -128:
+        gdaltest.post_reason('Did not get -128')
+        return 'fail'
+    ds2 = gdal.Translate('/vsimem/test_gdal_translate_lib_101_2.tif', ds, noData = -127)
+    if ds2.GetRasterBand(1).GetNoDataValue() != -127:
+        gdaltest.post_reason('Did not get -127')
+        return 'fail'
+    ds = None
+    ds2 = None
+    gdal.Unlink('/vsimem/test_gdal_translate_lib_101.tif')
+    gdal.Unlink('/vsimem/test_gdal_translate_lib_101_2.tif')
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -417,6 +439,7 @@ gdaltest_list = [
     test_gdal_translate_lib_13,
     test_gdal_translate_lib_14,
     test_gdal_translate_lib_100,
+    test_gdal_translate_lib_101,
     test_gdal_translate_lib_cleanup
     ]
 
