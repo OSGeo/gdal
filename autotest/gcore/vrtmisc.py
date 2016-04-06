@@ -426,6 +426,21 @@ def vrtmisc_14():
     return "success"
 
 ###############################################################################
+# Test CreateCopy() preserve SIGNEDBYTE
+
+def vrtmisc_15():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options = ['PIXELTYPE=SIGNEDBYTE'])
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    if out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/vrtmisc_15.tif')
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -446,6 +461,7 @@ gdaltest_list = [
     vrtmisc_12,
     vrtmisc_13,
     vrtmisc_14,
+    vrtmisc_15,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
