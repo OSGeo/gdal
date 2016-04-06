@@ -49,7 +49,12 @@ public:
             return (int)m_value;
     }
     virtual double value_as_double() {
-        return (double)m_value;
+        if (m_inf < 0)
+            return inf_double(-1);
+        else if (m_inf > 0)
+            return inf_double(1);
+        else
+            return (double)m_value;
     }
     void add(type value) {
         m_value += value;
@@ -66,6 +71,7 @@ public:
     virtual bool is_integer();
     virtual bool is_float();
     virtual int inf_int(int sign);
+    virtual double inf_double(int sign);
 };
 
 // wrap std::pair as concrete type gma_pair_p, 
@@ -96,29 +102,7 @@ public:
     }
 };
 
-template <typename type> class gma_xy {
-private:
-    type m_x;
-    type m_y;
-public:
-    gma_xy(type x, type y) {
-        m_x = x;
-        m_y = y;
-    }
-    type x() {
-        return m_x;
-    }
-    type y() {
-        return m_y;
-    }
-    char *as_string() {
-        char *s = (char*)CPLMalloc(20);
-        my_xy_snprintf(s, m_x, m_y);
-        return s;
-    }
-};
-
-template <typename datatype> class gma_cell_p : gma_cell_t {
+template <typename datatype> class gma_cell_p : public gma_cell_t {
 private:
     int m_x;
     int m_y;
@@ -300,63 +284,6 @@ public:
     }
 };
 
-// replace with std::vector
-template <class V> class gma_array {
-private:
-    int table_size;
-    int m_size;
-    V **table;
-    void resize(int i) {
-        int old = table_size;
-        table_size = i;
-        table = (V **)CPLRealloc(table, sizeof(V*)*table_size);
-        for (int i = old; i < table_size; i++)
-            table[i] = NULL;
-    }
-public:
-    gma_array() {
-        table_size = 100;
-        table = (V **)CPLMalloc(sizeof(V*)*table_size);
-        for (int i = 0; i < table_size; i++)
-            table[i] = NULL;
-        m_size = 0;
-    }
-    ~gma_array() {
-        for (int i = 0; i < table_size; i++)
-            if (table[i]) delete table[i];
-        CPLFree(table);
-    }
-    int size() {
-        return m_size;
-    }
-    V *get(int i) {
-        if (i < 0 || i >= table_size)
-            return NULL;
-        else
-            return table[i];
-    }
-    void set(int i, V *item) {
-        if (i >= table_size) resize(i+100);
-        if (i >= 0 && i < table_size) {
-            if (table[i])
-                delete table[i];
-            table[i] = item;
-            m_size = i+1;
-        }
-    }
-    void push(V *item) {
-        if (m_size >= table_size) resize(table_size+100);
-        table[m_size] = item;
-        m_size++;
-    }
-    V *pop() {
-        if (m_size <= 0)
-            return NULL;
-        m_size--;
-        return table[m_size];
-    }
-};
-
 // a class to divide real | integer line into intervals without holes in between
 // -inf ... x(i) .. x(i+1) .. .. +inf
 // each range is (x(i),x(i+1)]
@@ -402,6 +329,7 @@ public:
 // fixme: use std::unordered_map and std::bins
 template <typename datatype>
 class gma_histogram_p : public gma_histogram_t {
+    int32_t *sorted_hash_keys;
 public:
     gma_hash_p<gma_number_p<unsigned int> > *hash;
     gma_bins_p<datatype> *bins;
@@ -409,6 +337,7 @@ public:
     gma_histogram_p(gma_object_t *arg) {
         // fixme: use arg = null, integer in gma_number_p<int>, or gma_bins_p<datatype>
         hash = NULL;
+        sorted_hash_keys = NULL;
         bins = NULL;
         counts = NULL;
         if (arg == NULL)
@@ -451,25 +380,30 @@ public:
             return hash->size();
         return bins->size();
     }
+    void sort_hash_keys() {
+        sorted_hash_keys = (int32_t*)CPLMalloc(hash->size()*sizeof(int32_t)); // fixme: make datatype hash key
+        int i = 0;
+        for (int j = 0; j < hash->table_size; j++) {
+            gma_hash_entry<gma_number_p<unsigned int> > *e = hash->table[j];
+            while (e) {
+                sorted_hash_keys[i] = e->key();
+                i++;
+                e = e->next();
+            }
+        }
+        qsort(sorted_hash_keys, i, sizeof(int32_t), compare_int32s);
+    }
     virtual gma_object_t *at(unsigned int i) {
         if (hash) {
-            int n = 0;
-            for (int j = 0; j < hash->table_size; j++) {
-                gma_hash_entry<gma_number_p<unsigned int> > *e = hash->table[j];
-                while (e) {
-                    if (n == i) {
-                        // return gma_pair_t
-                        gma_number_p<datatype> *k = new gma_number_p<datatype>(e->key());
-                        gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(e->value()->value());
-                        gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
-                            new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
-                        return pair;
-                    }
-                    n++;
-                    e = e->next();
-                }
-            }
-            return NULL;
+            if (!sorted_hash_keys) sort_hash_keys();
+            int32_t key = sorted_hash_keys[i];
+            gma_number_p<unsigned int> *value = (gma_number_p<unsigned int>*)hash->get(key);
+            // return gma_pair_t
+            gma_number_p<datatype> *k = new gma_number_p<datatype>(key);
+            gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(value->value());
+            gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
+                new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
+            return pair;
         }
         gma_number_p<datatype> *min;
         gma_number_p<datatype> *max;
@@ -533,5 +467,25 @@ public:
             return 1;
         } else
             return 0;
+    }
+};
+
+template <typename datatype>
+class gma_logical_operation_p : public gma_logical_operation_t {
+public:
+    gma_operator_t m_op;
+    datatype m_value;
+    gma_logical_operation_p() {
+        m_op = gma_eq;
+        m_value = 0;
+    }
+    virtual void set_operation(gma_operator_t op) {
+        m_op = op;
+    }
+    virtual void set_value(int value) {
+        m_value = value;
+    }
+    virtual void set_value(double value) {
+        m_value = value;
     }
 };

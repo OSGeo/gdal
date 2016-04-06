@@ -37,4 +37,16 @@ int main() {
     x->set_value(1.1);
     gma_with_arg(b, gma_method_add, x);
     gma_simple(b, gma_method_print);
+
+    gma_histogram_t *hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, NULL);
+    print_histogram(hm);
+    gma_pair_t *arg = (gma_pair_t *)gma_new_object(b, gma_pair);
+    {
+        gma_number_t *tmp = (gma_number_t *)gma_new_object(b, gma_integer);
+        tmp->set_value(5);
+        arg->set_first(tmp);
+        arg->set_second(gma_compute_value(b, gma_method_get_range));
+    }
+    hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+    print_histogram(hm);
 }

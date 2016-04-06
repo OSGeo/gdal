@@ -5,10 +5,7 @@
 
 /* 
    need classes for 
-   numbers, 
    intervals/ranges/zonal values (std::pair), 
-   bins (division of number line into intervals) (std::vector)
-   histograms (std::unordered_map of integer => count or bins => array of counts)
    reclassifiers (std::unordered_map of integer => integer or bins => array of numbers)
    cells (int,int,number)
    logical operations (eq, le, .., number) (for if (op) then value -operations)
@@ -23,7 +20,7 @@ typedef enum {
     gma_histogram,
     gma_reclassifier,
     gma_cell,
-    gma_logical_operation
+    gma_logical_operation // logical operator and a number
 } gma_class_t;
 
 // base class and introspection,
@@ -100,10 +97,10 @@ typedef enum {
 
 class gma_logical_operation_t  : public gma_object_t {
 public:
-    gma_logical_operation_t(gma_operator_t, gma_number_t);
-    virtual gma_class_t get_class() {return gma_cell;};
+    virtual gma_class_t get_class() {return gma_logical_operation;};
     virtual void set_operation(gma_operator_t) {};
-    virtual void set_number(gma_number_t*) {};
+    virtual void set_value(int value) {};
+    virtual void set_value(double value) {};
 };
 
 // methods in four groups
@@ -156,11 +153,11 @@ typedef enum {
     gma_method_zonal_max,
     gma_method_set_zonal_min,
     gma_method_rim_by8,
-    gma_method_depression_pour_elevation,
-    gma_method_fill_dem,
     gma_method_D8,
     gma_method_route_flats,
+    gma_method_fill_depressions,
     gma_method_depressions,
+    gma_method_depression_pour_elevation,
     gma_method_upstream_area,
     gma_method_catchment
 } gma_two_bands_method_t;
@@ -179,3 +176,7 @@ void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, gma_object_t 
 // return null if fail
 gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg = NULL);
 gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg = NULL);
+
+// optional helper functions
+
+void print_histogram(gma_histogram_t *hm);

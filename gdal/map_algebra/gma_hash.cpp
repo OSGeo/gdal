@@ -22,7 +22,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_cell:
             break;
         case gma_logical_operation:
-            break;
+            return new gma_logical_operation_p<uint8_t>;
         }
         break;
     case GDT_UInt16:
@@ -41,7 +41,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_cell:
             break;
         case gma_logical_operation:
-            break;
+            return new gma_logical_operation_p<uint16_t>;
         }
         break;
     case GDT_Int16:
@@ -56,8 +56,9 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_histogram:
         case gma_reclassifier:
         case gma_cell:
-        case gma_logical_operation:
             break;
+        case gma_logical_operation:
+            return new gma_logical_operation_p<int16_t>;
         }
         break;
     case GDT_UInt32:
@@ -72,8 +73,9 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_histogram:
         case gma_reclassifier:
         case gma_cell:
-        case gma_logical_operation:
             break;
+        case gma_logical_operation:
+            return new gma_logical_operation_p<uint32_t>;
         }
         break;
     case GDT_Int32:
@@ -88,8 +90,9 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_histogram:
         case gma_reclassifier:
         case gma_cell:
-        case gma_logical_operation:
             break;
+        case gma_logical_operation:
+            return new gma_logical_operation_p<int32_t>;
         }
         break;
     case GDT_Float32:
@@ -104,8 +107,9 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_histogram:
         case gma_reclassifier:
         case gma_cell:
-        case gma_logical_operation:
             break;
+        case gma_logical_operation:
+            return new gma_logical_operation_p<float>;
         }
         break;
     case GDT_Float64:
@@ -120,8 +124,9 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_histogram:
         case gma_reclassifier:
         case gma_cell:
-        case gma_logical_operation:
             break;
+        case gma_logical_operation:
+            return new gma_logical_operation_p<double>;
         }
         break;
     default:
@@ -136,30 +141,37 @@ template <> GDALDataType gma_number_p<uint8_t>::get_datatype() { return GDT_Byte
 template <> bool gma_number_p<uint8_t>::is_integer() { return true; }
 template <> bool gma_number_p<uint8_t>::is_float() { return false; }
 template <> int gma_number_p<uint8_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> double gma_number_p<uint8_t>::inf_double(int sign) { return sign < 0 ? 0 : 255; };
 
 template <> bool gma_number_p<uint16_t>::is_integer() { return true; }
 template <> bool gma_number_p<uint16_t>::is_float() { return false; }
-template <> int gma_number_p<uint16_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<uint16_t>::inf_int(int sign) { return sign < 0 ? 0 : 65535; };
+template <> double gma_number_p<uint16_t>::inf_double(int sign) { return sign < 0 ? 0 : 65535; };
 
 template <> bool gma_number_p<int16_t>::is_integer() { return true; }
 template <> bool gma_number_p<int16_t>::is_float() { return false; }
-template <> int gma_number_p<int16_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<int16_t>::inf_int(int sign) { return sign < 0 ? -32768 : 32768; };
+template <> double gma_number_p<int16_t>::inf_double(int sign) { return sign < 0 ? -32768 : 32768; };
 
 template <> bool gma_number_p<uint32_t>::is_integer() { return true; }
 template <> bool gma_number_p<uint32_t>::is_float() { return false; }
-template <> int gma_number_p<uint32_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<uint32_t>::inf_int(int sign) { return sign < 0 ? 0 : 4294967295; };
+template <> double gma_number_p<uint32_t>::inf_double(int sign) { return sign < 0 ? 0 : 4294967295; };
 
 template <> bool gma_number_p<int32_t>::is_integer() { return true; }
 template <> bool gma_number_p<int32_t>::is_float() { return false; }
-template <> int gma_number_p<int32_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<int32_t>::inf_int(int sign) { return sign < 0 ? -2147483648 : 2147483648; };
+template <> double gma_number_p<int32_t>::inf_double(int sign) { return sign < 0 ? -2147483648 : 2147483648; };
 
 template <> bool gma_number_p<float>::is_integer() { return false; }
 template <> bool gma_number_p<float>::is_float() { return true; }
-template <> int gma_number_p<float>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<float>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
+template <> double gma_number_p<float>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
 
 template <> bool gma_number_p<double>::is_integer() { return false; }
 template <> bool gma_number_p<double>::is_float() { return true; }
-template <> int gma_number_p<double>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
+template <> int gma_number_p<double>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
+template <> double gma_number_p<double>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
 
 template <typename type>
 int my_xy_snprintf(char *s, type x, type y) {

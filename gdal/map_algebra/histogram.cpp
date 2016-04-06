@@ -1,90 +1,76 @@
 #include "gdal_map_algebra.h"
 
+int usage() {
+    fprintf(stderr, "Usage 1): histogram [raster dataset] [mode]\n");
+    fprintf(stderr, "      2): histogram [raster dataset] [mode] [number of bins]\n");
+    fprintf(stderr, "      3): histogram [raster dataset] [mode] [number of bins] [min] [max]\n");
+    fprintf(stderr, "      4): histogram [raster dataset] [mode] [max of bin 1] [max of bin 2] ...\n");
+    fprintf(stderr, "Mode: 1: cell value => count\n");
+    fprintf(stderr, "      2: bin => count\n");
+    fprintf(stderr, "      3: bin => count\n");
+    fprintf(stderr, "      4: bin => count\n");
+
+    fprintf(stderr, "Bins are from a to b: (a,b]. a of the first bin is always -inf and b of the\n");
+    fprintf(stderr, "last bin is always inf. Therefore, in usage 3 the min and max are not a or b\n");
+    fprintf(stderr, "of any bin.\n");
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     GDALAllRegister();
+    if (argc < 3) return usage();
     GDALDataset *ds = (GDALDataset*)GDALOpen(argv[1], GA_ReadOnly);
     GDALRasterBand *b = ds->GetRasterBand(1);
 
-    // histogram of all values, should work only for integer bands
-    gma_histogram_t *hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, NULL);
-
-    // histogram is an array of pairs
-    printf("count of values:\n");
-    for (unsigned int i = 0; i < hm->size(); i++) {
-        gma_pair_t *kv = (gma_pair_t *)hm->at(i);
-        // kv is an interval=>number or number=>number, now the latter
-        gma_number_t *key = (gma_number_t*)kv->first();
-        gma_number_t *val = (gma_number_t*)kv->second();
-        printf("%i => %i\n", key->value_as_int(), val->value_as_int());
+    int mode = atoi(argv[2]);
+    
+    gma_histogram_t *hm;
+    switch (mode) {
+    case 1: {
+        // histogram of all values,  works only for integer bands
+        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, NULL);
+        break;
     }
-    printf("\n");
-
-    delete hm;
-
-    // histogram in 3 bins between min and max
-    gma_pair_t *arg2 = (gma_pair_t *)gma_new_object(b, gma_pair);
-    {
+    case 2: {
+        if (argc < 4) return usage();
+        int n = atoi(argv[3]);
+        // histogram in n bins between min and max
+        gma_pair_t *arg = (gma_pair_t *)gma_new_object(b, gma_pair);
         gma_number_t *tmp = (gma_number_t *)gma_new_object(b, gma_integer);
-        tmp->set_value(3);
-        arg2->set_first(tmp);
-        arg2->set_second(gma_compute_value(b, gma_method_get_range));
+        tmp->set_value(n);
+        arg->set_first(tmp);
+        arg->set_second(gma_compute_value(b, gma_method_get_range));
+        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        break;
     }
-    hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg2);
-
-    // histogram is an array of pairs
-    printf("3 bins between min and max:\n");
-    for (unsigned int i = 0; i < hm->size(); i++) {
-        gma_pair_t *kv = (gma_pair_t *)hm->at(i);
-        // kv is an interval=>number or number=>number, now the former
-        gma_pair_t *key = (gma_pair_t*)kv->first();
-        gma_number_t *min = (gma_number_t*)key->first();
-        gma_number_t *max = (gma_number_t*)key->second();
-        gma_number_t *val = (gma_number_t*)kv->second();
-        printf("(%i..%i] => %i\n", min->value_as_int(), max->value_as_int(), val->value_as_int());
-    }
-    printf("\n");
-
-    // histogram in 3 bins between specified min and max (actual min,max is always -inf,+inf)
-    arg2 = (gma_pair_t *)gma_new_object(b, gma_pair);
-    {
+    case 3: {
+        if (argc < 6) return usage();
+        int n = atoi(argv[3]);
+        double min = atof(argv[4]);
+        double max = atof(argv[4]);
+        gma_pair_t *arg = (gma_pair_t *)gma_new_object(b, gma_pair);
         gma_number_t *tmp = (gma_number_t *)gma_new_object(b, gma_integer);
-        tmp->set_value(3);
-        arg2->set_first(tmp);
+        tmp->set_value(n);
+        arg->set_first(tmp);
         gma_pair_t *tmp2 = (gma_pair_t *)gma_new_object(b, gma_range);
-        ((gma_number_t*)(tmp2->first()))->set_value(2);
-        ((gma_number_t*)(tmp2->second()))->set_value(5);
-        arg2->set_second(tmp2);
+        ((gma_number_t*)(tmp2->first()))->set_value(min);
+        ((gma_number_t*)(tmp2->second()))->set_value(max);
+        arg->set_second(tmp2);
+        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        break;
     }
-    hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg2);
-
-    // histogram is an array of pairs
-    printf("3 bins between 2 and 5:\n");
-    for (unsigned int i = 0; i < hm->size(); i++) {
-        gma_pair_t *kv = (gma_pair_t *)hm->at(i);
-        // kv is an interval=>number or number=>number, now the former
-        gma_pair_t *key = (gma_pair_t*)kv->first();
-        gma_number_t *min = (gma_number_t*)key->first();
-        gma_number_t *max = (gma_number_t*)key->second();
-        gma_number_t *val = (gma_number_t*)kv->second();
-        printf("(%i..%i] => %i\n", min->value_as_int(), max->value_as_int(), val->value_as_int());
+    case 4: {
+        if (argc < 4) return usage();
+        gma_bins_t *arg = (gma_bins_t *)gma_new_object(b, gma_bins);
+        int i = 3;
+        while (i < argc) {
+            arg->push(atof(argv[i]));
+            i++;
+        }
+        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        break;
     }
-    printf("\n");
-
-    // histogram in hand-made bins ..3, 4..5, 6..
-    gma_bins_t *arg3 = (gma_bins_t *)gma_new_object(b, gma_bins);
-    arg3->push(3);
-    arg3->push(5);
-    hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg3);
-
-    // histogram is an array of pairs
-    printf("hand-made bins ..3, 4..5, 6..:\n");
-    for (unsigned int i = 0; i < hm->size(); i++) {
-        gma_pair_t *kv = (gma_pair_t *)hm->at(i);
-        // kv is an interval=>number or number=>number, now the former
-        gma_pair_t *key = (gma_pair_t*)kv->first();
-        gma_number_t *min = (gma_number_t*)key->first();
-        gma_number_t *max = (gma_number_t*)key->second();
-        gma_number_t *val = (gma_number_t*)kv->second();
-        printf("(%i..%i] => %i\n", min->value_as_int(), max->value_as_int(), val->value_as_int());
     }
+    print_histogram(hm);
+    delete hm;
 }

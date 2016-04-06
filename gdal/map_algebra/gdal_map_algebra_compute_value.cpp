@@ -121,7 +121,12 @@ int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, 
 
 template<typename datatype>
 int gma_get_cells(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_array<gma_cell_p<datatype> > *c;
+    std::vector<gma_cell_t*> *cells;
+    if (*retval == NULL) {
+        cells = new std::vector<gma_cell_t*>;
+        *retval = (gma_object_t*)cells;
+    } else
+        cells = (std::vector<gma_cell_t*>*)*retval;
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -129,7 +134,8 @@ int gma_get_cells(gma_band band, gma_block *block, gma_object_t **retval, gma_ob
             // global cell index
             int x = block->index.x * band.w_block + i.x;
             int y = block->index.y * band.h_block + i.y;
-            if (me) c->push(new gma_cell_p<datatype>(x, y, me));
+            if (me)
+                cells->push_back(new gma_cell_p<datatype>(x, y, me));
         }
     }
     return 1;
@@ -169,7 +175,11 @@ gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t me
         type_switch_single(gma_get_range, 0);
         break;
     case gma_method_histogram:
-        type_switch_single(gma_compute_histogram, 0);
+        if (arg == NULL) {
+            type_switch_single_i(gma_compute_histogram, 0);
+        } else {
+            type_switch_single(gma_compute_histogram, 0);
+        }
         break;
     case gma_method_zonal_neighbors:
         type_switch_single(gma_zonal_neighbors, 1);

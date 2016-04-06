@@ -3,8 +3,12 @@
 typedef int (*gma_with_arg_callback)(gma_block*, gma_object_t*);
 
 template<typename datatype>
-int gma_assign(gma_block *block, gma_object_t *assign_to) {
-    datatype a = *(datatype *)assign_to;
+int gma_assign(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -15,8 +19,12 @@ int gma_assign(gma_block *block, gma_object_t *assign_to) {
 }
 
 template<typename datatype>
-int gma_add(gma_block *block, gma_object_t *to_add) {
-    datatype a = *(datatype *)to_add;
+int gma_add(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -27,8 +35,12 @@ int gma_add(gma_block *block, gma_object_t *to_add) {
 }
 
 template<typename datatype>
-int gma_subtract(gma_block *block, gma_object_t *to_subtract) {
-    datatype a = *(datatype *)to_subtract;
+int gma_subtract(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -39,8 +51,12 @@ int gma_subtract(gma_block *block, gma_object_t *to_subtract) {
 }
 
 template<typename datatype>
-int gma_multiply(gma_block *block, gma_object_t *to_multiply) {
-    datatype a = *(datatype *)to_multiply;
+int gma_multiply(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -51,8 +67,12 @@ int gma_multiply(gma_block *block, gma_object_t *to_multiply) {
 }
 
 template<typename datatype>
-int gma_divide(gma_block *block, gma_object_t *to_divide) {
-    datatype a = *(datatype *)to_divide;
+int gma_divide(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -63,8 +83,12 @@ int gma_divide(gma_block *block, gma_object_t *to_divide) {
 }
 
 template<typename datatype>
-int gma_modulus(gma_block *block, gma_object_t *op) {
-    datatype a = *(datatype *)op;
+int gma_modulus(gma_block *block, gma_object_t *arg) {
+    if (arg->get_class() != gma_number) {
+        fprintf(stderr, "Argument is not a number.");
+        return 0;
+    }
+    datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -75,13 +99,13 @@ int gma_modulus(gma_block *block, gma_object_t *op) {
 }
 
 template<>
-int gma_modulus<float>(gma_block *block, gma_object_t *op) {
+int gma_modulus<float>(gma_block *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘float’ to binary operator %%");
     return 0;
 }
 
 template<>
-int gma_modulus<double>(gma_block *block, gma_object_t *op) {
+int gma_modulus<double>(gma_block *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘double’ to binary operator %%");
     return 0;
 }
@@ -150,6 +174,7 @@ void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, gma_object_t 
     default:
         goto unknown_method;
     }
+    return;
 not_implemented_for_this_datatype:
     fprintf(stderr, "Not implemented for this datatype.\n");
     return;

@@ -2,29 +2,6 @@
 
 typedef int (*gma_two_bands_callback)(gma_band, gma_block*, gma_band, gma_object_t**, gma_object_t*);
 
-template <typename datatype>
-class gma_logical_operation_p : public gma_logical_operation_t {
-public:
-    gma_operator_t m_op;
-    datatype m_value;
-    gma_logical_operation_p(gma_operator_t op, gma_number_t *value) {
-        m_op = op;
-        if (GDALDataTypeTraits<datatype>::is_integer)
-            m_value = (datatype)value->value_as_int();
-        else
-            m_value = (datatype)value->value_as_double();
-    }
-    virtual void set_operation(gma_operator_t op) {
-        m_op = op;
-    }
-    virtual void set_number(gma_number_t *value) {
-        if (GDALDataTypeTraits<datatype>::is_integer)
-            m_value = (datatype)value->value_as_int();
-        else
-            m_value = (datatype)value->value_as_double();
-    }
-};
-
 template<typename type1,typename type2>
 type1 gma_use_operator(gma_logical_operation_p<type2> *op, type2 value) {
     switch (op->m_op) {
@@ -51,13 +28,14 @@ type1 gma_use_operator(gma_logical_operation_p<type2> *op, type2 value) {
 
 template<typename type1,typename type2>
 int gma_assign_band(gma_band band1, gma_block *block1, gma_band band2, gma_object_t **retval, gma_object_t *arg) {
+    // arg is checked here
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
             type1 value1;
             type2 value2;
             if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg) // arg is checked here
+                if (arg)
                     value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
                 else
                     value1 = value2;
@@ -501,7 +479,7 @@ int gma_route_flats(gma_band band_fd, gma_block *block_fd, gma_band band_dem, gm
 }
 
 template<typename filled_t, typename dem_t>
-int gma_fill(gma_band filled_band, gma_block *filled_block, gma_band dem_band, gma_object_t **retval, gma_object_t*) {
+int gma_fill_depressions(gma_band filled_band, gma_block *filled_block, gma_band dem_band, gma_object_t **retval, gma_object_t*) {
     gma_band_iterator_t *rv;
     if (*retval == NULL) {
         rv = new gma_band_iterator_t;
@@ -957,14 +935,8 @@ gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, G
     case gma_method_set_zonal_min: // b1 = values, b2 = zones, arg = hash of zonal mins, b1 is changed
         type_switch_bi(gma_set_zonal_min, 0);
         break;
-    case gma_method_fill_dem: // b1 = filled, b2 = dem
-        type_switch_bb(gma_fill, 1);
-        break;
     case gma_method_rim_by8: // rims <- areas
         type_switch_ii(gma_rim_by8, 1);
-        break;
-    case gma_method_depression_pour_elevation: // depression, dem compute depression => (depression => elevation)
-        type_switch_ib(gma_depression_pour_elevation, 1);
         break;
     case gma_method_D8: // fd <- dem
         // compute flow directions from DEM
@@ -976,9 +948,23 @@ gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, G
         type_switch_ib(gma_route_flats, 1);
         break;
     }
+    case gma_method_fill_depressions: { // b1 = filled, b2 = dem
+        // compute max of b2
+        gma_object_t *max = gma_compute_value(b2, gma_method_get_max);
+        // set b1 to it
+        gma_with_arg(b1, gma_method_assign, max);
+        type_switch_bb(gma_fill_depressions, 1);
+        break;
+    }
+
+    // the following two are not recommended
     case gma_method_depressions: // depressions <- fd
         type_switch_ii(gma_depressions, 1);
         break;
+    case gma_method_depression_pour_elevation: // depression, dem compute depression => (depression => elevation)
+        type_switch_ib(gma_depression_pour_elevation, 1);
+        break;
+    
     case gma_method_upstream_area: // ua, fd
         type_switch_bi(gma_upstream_area, 1);
         break;

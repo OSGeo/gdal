@@ -620,6 +620,26 @@
         goto not_implemented_for_this_datatype;                         \
     }
 
+#define type_switch_single_i(sub,fd) switch (b->GetRasterDataType()) {  \
+    case GDT_Byte:                                                      \
+        gma_proc_compute_value<uint8_t>(b, sub<uint8_t>, &retval, arg, fd); \
+        break;                                                          \
+    case GDT_UInt16:                                                    \
+        gma_proc_compute_value<uint16_t>(b, sub<uint16_t>, &retval, arg, fd); \
+        break;                                                          \
+    case GDT_Int16:                                                     \
+        gma_proc_compute_value<int16_t>(b, sub<int16_t>, &retval, arg, fd); \
+        break;                                                          \
+    case GDT_UInt32:                                                    \
+        gma_proc_compute_value<uint32_t>(b, sub<uint32_t>, &retval, arg, fd); \
+        break;                                                          \
+    case GDT_Int32:                                                     \
+        gma_proc_compute_value<int32_t>(b, sub<int32_t>, &retval, arg, fd); \
+        break;                                                          \
+    default:                                                            \
+        goto not_implemented_for_this_datatype;                         \
+    }
+
 #define type_switch_arg(sub) switch (b->GetRasterDataType()) {          \
     case GDT_Byte:                                                      \
         gma_with_arg_proc<uint8_t>(b, sub<uint8_t>, arg);               \
