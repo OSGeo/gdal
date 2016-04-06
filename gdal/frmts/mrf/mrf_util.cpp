@@ -268,9 +268,12 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 
 GIntBig IdxOffset(const ILSize &pos, const ILImage &img) 
 {
-    return img.idxoffset+sizeof(ILIdx)*
-	((GIntBig)pos.c+img.pagecount.c*(pos.x+img.pagecount.x*
-	(pos.y+img.pagecount.y*pos.z)));
+    return img.idxoffset + sizeof(ILIdx) *
+	(pos.c + img.pagecount.c * (
+         pos.x+img.pagecount.x * (
+         pos.y+img.pagecount.y * 
+         static_cast<GIntBig>(pos.z)
+        )));
 }
 
 // Is compression type endianness dependent?
