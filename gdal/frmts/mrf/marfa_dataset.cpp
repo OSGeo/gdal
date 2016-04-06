@@ -1415,8 +1415,8 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 	// Create and register the the overviews for each band
 	for (int i = 1; i <= nBands; i++) {
 	    GDALMRFRasterBand *b = (GDALMRFRasterBand *)GetRasterBand(i);
-	    if (!(b->GetOverview(img.size.l - 1)))
-		b->AddOverview(newMRFRasterBand(this, img, i, img.size.l));
+	    if (!(b->GetOverview(static_cast<int>(img.size.l) - 1)))
+		b->AddOverview(newMRFRasterBand(this, img, i, static_cast<int>(img.size.l)));
 	}
     }
 
