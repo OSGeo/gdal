@@ -1433,36 +1433,34 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
             if( pszPixelType == NULL )
             {
-              pszPixelType = poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                pszPixelType = poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
             }
             if( pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE") )
-              bSignedByte = true;
+                bSignedByte = true;
             int bClamped = FALSE, bRounded = FALSE;
             double dfVal;
             if( bSignedByte )
             {
-              bClamped = FALSE;
-              bRounded = FALSE;
-              if( psOptions->dfNoDataReal < -128 )
-              {
-                dfVal = -128;
-                bClamped = TRUE;
-              }
-              else if( psOptions->dfNoDataReal > 127 )
-              {
-                dfVal = 127;
-                bClamped = TRUE;
-              }
-              else
-              {
-                dfVal = static_cast<int>(floor(psOptions->dfNoDataReal + 0.5));
-                if( dfVal != psOptions->dfNoDataReal )
-                  bRounded = TRUE;
-              }
+                if( psOptions->dfNoDataReal < -128 )
+                {
+                    dfVal = -128;
+                    bClamped = TRUE;
+                }
+                else if( psOptions->dfNoDataReal > 127 )
+                {
+                    dfVal = 127;
+                    bClamped = TRUE;
+                }
+                else
+                {
+                    dfVal = static_cast<int>(floor(psOptions->dfNoDataReal + 0.5));
+                    if( dfVal != psOptions->dfNoDataReal )
+                        bRounded = TRUE;
+                }
             }
             else
             {
-              dfVal = GDALAdjustValueToDataType(eBandType,
+                dfVal = GDALAdjustValueToDataType(eBandType,
                                                      psOptions->dfNoDataReal,
                                                      &bClamped, &bRounded );
             }
