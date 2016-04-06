@@ -3,13 +3,16 @@
 
 template <typename type> class gma_number_p : public gma_number_t {
 private:
+    int m_inf;
     bool m_defined;
     type m_value;
 public:
     gma_number_p() {
+        m_inf = 0;
         m_defined = false;
     }
     gma_number_p(type value) {
+        m_inf = 0;
         m_defined = true;
         m_value = value;
     }
@@ -38,7 +41,12 @@ public:
         m_value = (type)value;
     }
     virtual int value_as_int() {
-        return (int)m_value;
+        if (m_inf < 0)
+            return inf_int(-1);
+        else if (m_inf > 0)
+            return inf_int(1);
+        else
+            return (int)m_value;
     }
     virtual double value_as_double() {
         return (double)m_value;
@@ -53,8 +61,11 @@ public:
         return s;
     }
     GDALDataType get_datatype();
-    bool is_integer() {};
-    bool is_float() {};
+    virtual void set_inf(int inf) { m_inf = inf; };
+    virtual bool is_inf() { return m_inf; };
+    virtual bool is_integer();
+    virtual bool is_float();
+    virtual int inf_int(int sign);
 };
 
 // wrap std::pair as concrete type gma_pair_p, 
@@ -63,9 +74,19 @@ public:
 template<class K, class V>class gma_pair_p : public gma_pair_t {
 public:
     std::pair<K,V> m_pair;
+    gma_pair_p() {
+        m_pair.first = NULL;
+        m_pair.second = NULL;
+    }
     gma_pair_p(K key, V value) {
         m_pair.first = key;
         m_pair.second = value;
+    }
+    virtual void set_first(gma_object_t *first) {
+        m_pair.first = (K)first;
+    }
+    virtual void set_second(gma_object_t *second) {
+        m_pair.second = (V)second;
     }
     virtual gma_object_t *first() {
         return m_pair.first;
@@ -339,29 +360,42 @@ public:
 // a class to divide real | integer line into intervals without holes in between
 // -inf ... x(i) .. x(i+1) .. .. +inf
 // each range is (x(i),x(i+1)]
-template <typename datatype> class gma_bins_p {
-    int n_intervals;
-    datatype *table;
+template <typename datatype> class gma_bins_p : public gma_bins_t {
 public:
-    gma_bins_p(int n_intervals) {
-        table = (datatype*)CPLMalloc(sizeof(datatype)*(n_intervals-1));
+    std::vector<datatype> *m_data;
+    gma_bins_p() {
+        m_data = new std::vector<datatype>;
     }
     ~gma_bins_p() {
-        CPLFree(table);
+        delete m_data;
     }
     datatype get(int i) {
-        if (i >= 0 && i < n_intervals-1)
-            return table[i];
+        // return pair?
+        return m_data->at(i);
     }
     void set(int i, datatype x) {
-        if (i >= 0 && i < n_intervals-1)
-            table[i] = x;
+        m_data->at(i) = x;
     }
     int bin(datatype x) {
         int i = 0;
-        while (i < n_intervals-1 && x > table[i])
+        while (i < m_data->size() && x > m_data->at(i))
             i++;
         return i;
+    }
+    virtual gma_object_t *clone() {
+        gma_bins_p<datatype> *c = new gma_bins_p<datatype>;
+        for (int i = 0; i < m_data->size(); i++)
+            c->m_data->push_back(m_data->at(i));
+        return c;
+    }
+    virtual unsigned int size() {
+        return m_data->size()+1;
+    }
+    virtual void push(int value) {
+        m_data->push_back((datatype)value);
+    }
+    virtual void push(double value) {
+        m_data->push_back((datatype)value);
     }
 };
 
@@ -370,35 +404,106 @@ template <typename datatype>
 class gma_histogram_p : public gma_histogram_t {
 public:
     gma_hash_p<gma_number_p<unsigned int> > *hash;
+    gma_bins_p<datatype> *bins;
+    std::vector<unsigned int> *counts;
     gma_histogram_p(gma_object_t *arg) {
-        // fixme: use arg
-        hash = new gma_hash_p<gma_number_p<unsigned int> >;
+        // fixme: use arg = null, integer in gma_number_p<int>, or gma_bins_p<datatype>
+        hash = NULL;
+        bins = NULL;
+        counts = NULL;
+        if (arg == NULL)
+            hash = new gma_hash_p<gma_number_p<unsigned int> >;
+        else if (arg->get_class() == gma_pair) { // (n bins, (min, max))
+            gma_pair_p<gma_object_t*,gma_object_t* > *a = (gma_pair_p<gma_object_t*,gma_object_t* > *)arg;
+            gma_number_p<int> *a1 = (gma_number_p<int> *)a->first();
+            gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>*> *a2 = 
+                (gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>*> *)a->second();
+            gma_number_p<datatype> *a21 = (gma_number_p<datatype> *)a2->first();
+            gma_number_p<datatype> *a22 = (gma_number_p<datatype> *)a2->second();
+            int n = a1->value();
+            double min = a21->value();
+            double max = a22->value();
+            double d = (max-min)/n;
+            bins = new gma_bins_p<datatype>;
+            counts = new std::vector<unsigned int>;
+            for (int i = 0; i < n-1; i++) {
+                bins->push(min+d*(i+1));
+            }
+            for (int i = 0; i < n; i++) {
+                counts->push_back(0);
+            }
+        } else if (arg->get_class() == gma_bins) {
+            bins = (gma_bins_p<datatype>*)arg->clone();
+            counts = new std::vector<unsigned int>;
+            for (int i = 0; i < bins->size(); i++)
+                counts->push_back(0);
+        } else {
+            // error
+        }
     }
     ~gma_histogram_p() {
         delete hash;
     }
+    void set_size(int size, datatype min, datatype max) {
+    }
     virtual unsigned int size() {
-        return hash->size();
+        if (hash)
+            return hash->size();
+        return bins->size();
     }
     virtual gma_object_t *at(unsigned int i) {
-        int n = 0;
-        for (int j = 0; j < hash->table_size; j++) {
-            gma_hash_entry<gma_number_p<unsigned int> > *e = hash->table[j];
-            while (e) {
-                if (n == i) {
-                    // return gma_pair_t
-                    gma_number_p<datatype> *k = new gma_number_p<datatype>(e->key());
-                    gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(e->value()->value());
-                    gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
-                        new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
-                    return pair;
+        if (hash) {
+            int n = 0;
+            for (int j = 0; j < hash->table_size; j++) {
+                gma_hash_entry<gma_number_p<unsigned int> > *e = hash->table[j];
+                while (e) {
+                    if (n == i) {
+                        // return gma_pair_t
+                        gma_number_p<datatype> *k = new gma_number_p<datatype>(e->key());
+                        gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(e->value()->value());
+                        gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
+                            new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
+                        return pair;
+                    }
+                    n++;
+                    e = e->next();
                 }
-                n++;
-                e = e->next();
             }
+            return NULL;
         }
-        return NULL;
+        gma_number_p<datatype> *min;
+        gma_number_p<datatype> *max;
+        if (i == 0) {
+            min = new gma_number_p<datatype>(0);
+            min->set_inf(-1);
+            max = new gma_number_p<datatype>(bins->get(i));
+        } else if (i < bins->size() - 1) {
+            min = new gma_number_p<datatype>(bins->get(i-1));
+            max = new gma_number_p<datatype>(bins->get(i));
+        } else {
+            min = new gma_number_p<datatype>(bins->get(i-1));
+            max = new gma_number_p<datatype>(0);
+            max->set_inf(1);
+        }
+        gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *k = 
+            new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(min,max);
+        gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(counts->at(i));
+        gma_pair_p<gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >*,gma_number_p<unsigned int>* > *pair = 
+            new gma_pair_p<gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >*,gma_number_p<unsigned int>* >(k,v);
+        return pair;
     }
+    void increase_count_at(datatype value) {
+        if (hash) {
+            if (hash->exists(value))
+                ((gma_number_p<unsigned int>*)hash->get(value))->add(1);
+            else
+                hash->put(value, new gma_number_p<unsigned int>(1));
+        } else {
+            int i = bins->bin(value);
+            counts->at(i)++;
+        }
+    }
+
     // fixme: remove these
     virtual int exists(int32_t key) {
         return hash->exists(key);

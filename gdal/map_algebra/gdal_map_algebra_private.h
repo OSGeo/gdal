@@ -1,6 +1,7 @@
 #include "gdal_map_algebra.h"
 #include "gma_hash.h"
 #include "type_switch.h"
+#include <math.h>
 
 template <typename T> struct GDALDataTypeTraits
 {

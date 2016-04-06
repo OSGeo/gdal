@@ -1,9 +1,5 @@
 #include "gdal_map_algebra_private.h"
 
-gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
-    return NULL;
-}
-
 template<typename datatype>
 int gma_print(gma_block *block) {
 }

@@ -40,8 +40,31 @@ int gma_get_max(gma_band band, gma_block *block, gma_object_t **retval, gma_obje
     return 1;
 }
 
-// histogram should be defined by the user, at least its kind: range | value => cound
-// value => count is meaningful only for bands with integer cell value
+template<typename datatype>
+int gma_get_range(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
+    gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *rv;
+    if (*retval == NULL) {
+        rv = new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(
+            new gma_number_p<datatype>,
+            new gma_number_p<datatype>
+            );
+        *retval = rv;
+    } else
+        rv = (gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *)*retval;
+    gma_number_p<datatype>* min = (gma_number_p<datatype>*)rv->first();
+    gma_number_p<datatype>* max = (gma_number_p<datatype>*)rv->second();
+    gma_cell_index i;
+    for (i.y = 0; i.y < block->h; i.y++) {
+        for (i.x = 0; i.x < block->w; i.x++) {
+            datatype x = gma_block_cell(datatype, block, i);
+            if (!min->defined() || x < min->value())
+                min->set_value(x);
+            if (!max->defined() || x > max->value())
+                max->set_value(x);
+        }
+    }
+    return 1;
+}
 
 template<typename datatype>
 int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
@@ -52,14 +75,10 @@ int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval
     } else
         hm = (gma_histogram_p<datatype>*)*retval;
     gma_cell_index i;
-    // use type traits 
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            datatype key = gma_block_cell(datatype, block, i);
-            if (hm->exists(key))
-                ((gma_number_p<unsigned int>*)hm->get(key))->add(1);
-            else
-                hm->put(key, new gma_number_p<unsigned int>(1));
+            datatype value = gma_block_cell(datatype, block, i);
+            hm->increase_count_at(value);
         }
     }
     return 1;
@@ -145,6 +164,9 @@ gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t me
         break;
     case gma_method_get_max:
         type_switch_single(gma_get_max, 0);
+        break;
+    case gma_method_get_range:
+        type_switch_single(gma_get_range, 0);
         break;
     case gma_method_histogram:
         type_switch_single(gma_compute_histogram, 0);

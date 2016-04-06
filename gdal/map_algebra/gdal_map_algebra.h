@@ -16,7 +16,9 @@
 typedef enum {
     gma_object,
     gma_number,
+    gma_integer, // not a real class, a number, which is integer
     gma_pair,
+    gma_range,  // not a real class, a pair of two numbers of band datatype
     gma_bins,
     gma_histogram,
     gma_reclassifier,
@@ -28,9 +30,9 @@ typedef enum {
 // after the class is known, it is legal to cast it to an object of that class
 class gma_object_t {
 public:
-    gma_object_t() {};
     virtual ~gma_object_t() {};
     virtual gma_class_t get_class() {return gma_object;};
+    virtual gma_object_t *clone() {};
 };
 
 class gma_number_t : public gma_object_t {
@@ -41,13 +43,27 @@ public:
     virtual int value_as_int() {};
     virtual double value_as_double() {};
     virtual gma_number_t *clone() {};
+    virtual void set_inf(int inf) {}; // -1 to minus inf, 0 to not inf, 1 to plus inf
+    virtual bool is_inf() {};
+    virtual bool is_integer() {};
+    virtual bool is_float() {};
 };
 
 class gma_pair_t : public gma_object_t {
-    public:
+public:
     virtual gma_class_t get_class() {return gma_pair;};
+    virtual void set_first(gma_object_t *first) {};
+    virtual void set_second(gma_object_t *second) {};    
     virtual gma_object_t *first() {};
     virtual gma_object_t *second() {};
+};
+
+class gma_bins_t : public gma_object_t {
+public:
+    virtual gma_class_t get_class() {return gma_bins;};
+    virtual unsigned int size() {};
+    virtual void push(int value) {};
+    virtual void push(double value) {};
 };
 
 class gma_histogram_t : public gma_object_t {
@@ -115,6 +131,7 @@ typedef enum {
     gma_method_zonal_neighbors,
     gma_method_get_min,
     gma_method_get_max,
+    gma_method_get_range,
     gma_method_get_cells
 } gma_method_compute_value_t;
 
