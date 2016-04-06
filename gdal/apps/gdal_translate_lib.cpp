@@ -1438,9 +1438,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if( pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE") )
               bSignedByte = true;
             int bClamped = FALSE, bRounded = FALSE;
-            double dfVal = GDALAdjustValueToDataType(eBandType,
-                                                     psOptions->dfNoDataReal,
-                                                     &bClamped, &bRounded );
+            double dfVal;
             if( bSignedByte )
             {
               bClamped = FALSE;
