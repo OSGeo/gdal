@@ -70,7 +70,7 @@ struct blxcontext_s {
     int debug;
 
     int fillundef;     /* If non-zero, fillundefval will be used instead of -32768 for undefined values in non-empty cells when
-			a cell is written */
+                        a cell is written */
     int fillundefval;
 
 #ifdef GDALDRIVER
