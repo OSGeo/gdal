@@ -10465,7 +10465,7 @@ public class SpatialReference:public int FixupOrdering()
 /**
  * Fetch angular geographic coordinate system units.
  * <p>
- * If no units are available, a value of "degree" and SRS_UA_DEGREE_CONV 
+ * If no units are available, a value of SRS_UA_DEGREE_CONV 
  * will be assumed.  This method only checks directly under the GEOGCS node
  * for units.
  *
@@ -10473,6 +10473,18 @@ public class SpatialReference:public int FixupOrdering()
  * radians.
  */
 public class SpatialReference:public double GetAngularUnits()
+
+/**
+ * Fetch angular geographic coordinate system units name.
+ * <p>
+ * If no units are available, a value of "degree"
+ * will be assumed.  This method only checks directly under the GEOGCS node
+ * for units.
+ *
+ * @return the units name
+ * @since Java bindings 2.1.0
+ */
+public class SpatialReference:public String GetAngularUnitsName()
 
 /**
  * Fetch first attribute of named node.

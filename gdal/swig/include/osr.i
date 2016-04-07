@@ -333,6 +333,15 @@ public:
     return OSRGetAngularUnits( self, 0 );
   }
 
+  // Added in GDAL 2.1
+  const char* GetAngularUnitsName()
+  {
+    char *name = 0;
+    OSRGetAngularUnits( self, &name );
+    // This is really a const char* that is returned and shouldn't be freed
+    return (const char*)name;
+  }
+
   OGRErr SetTargetLinearUnits( const char *target, const char*name, double to_meters ) {
     return OSRSetTargetLinearUnits( self, target, name, to_meters );
   }
