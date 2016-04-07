@@ -539,7 +539,6 @@ retry:
     json_object* poLocation = json_object_object_get(poHTTP, "location");
     json_object* poStatus = json_object_object_get(poHTTP, "status");
     bool bActive = false;
-    bool bActivating = false;
     if( poStatus != NULL && json_object_get_type(poStatus) == json_type_string )
     {
         const char* pszStatus = json_object_get_string(poStatus);
