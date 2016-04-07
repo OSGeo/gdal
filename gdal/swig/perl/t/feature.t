@@ -42,7 +42,41 @@ my $f = Geo::OGR::Feature->new(
 
 {
     my $i = $f->GetFieldIndex('Binary');
-    ok($i == 0, "Get field index");
+    ok($i == 0, "Get field index: valid field name");
+    $i = $f->GetFieldIndex(0);
+    ok($i == 0, "Get field index: valid field index");
+    eval {
+        $i = $f->GetFieldIndex('No');
+    };
+    ok($@ ne '', "Get field index: invalid field name");
+    eval {
+        $i = $f->GetFieldIndex(28);
+    };
+    ok($@ ne '', "Get field index: invalid index");
+}
+
+{
+    $f->{String} = 'x';
+    ok ($f->{String} eq 'x', "Set and get field using hashref syntax works for a non-spatial field.");
+    eval {
+        $f->{10} = 'x';
+    };
+    ok ($@ ne '', "Set field using hashref syntax and field index does not work.");
+    eval {
+        $f->{No} = 'x';
+    };
+    ok ($@ ne '', "Set using hashref syntax for a non-existing field is an error.");
+    eval {
+        my $test = $f->{No};
+    };
+    ok ($@ ne '', "Get using hashref syntax for a non-existing field is an error.");
+    my $wkt = "POINT (1 2)";
+    $f->{''} = {WKT => $wkt}; # the name of a single geometry field is ''
+    ok($f->Geometry('')->AsText eq $wkt, "Setting geometry using hashref syntax works");
+    eval {
+        my $test = $f->{''};
+    };
+    ok ($@ ne '', "Getting geometry field using hashref syntax is an error because it can't be done safely.");
 }
 
 {
