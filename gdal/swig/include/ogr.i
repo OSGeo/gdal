@@ -1577,10 +1577,8 @@ public:
 #endif
 
   int GetFieldIndex(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
-      if (i == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return i;
+      // Do not issue an error if the field doesn't exist. It is intended to be silent
+      return OGR_F_GetFieldIndex(self, name);
   }
 
 #ifdef SWIGPERL
@@ -1592,10 +1590,8 @@ public:
 #endif
 
   int GetGeomFieldIndex(const char* name) {
-      int i = OGR_F_GetGeomFieldIndex(self, name);
-      if (i == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return i;
+      // Do not issue an error if the field doesn't exist. It is intended to be silent
+      return OGR_F_GetGeomFieldIndex(self, name);
   }
 
   GIntBig GetFID() {
@@ -1977,10 +1973,8 @@ public:
 #endif
 
   int GetFieldIndex(const char* name) {
-      int i = OGR_FD_GetFieldIndex(self, name);
-      if (i == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return i;
+      // Do not issue an error if the field doesn't exist. It is intended to be silent
+      return OGR_FD_GetFieldIndex(self, name);
   }
 
 %apply Pointer NONNULL {OGRFieldDefnShadow* defn};
@@ -2018,6 +2012,7 @@ public:
 #endif
 
   int GetGeomFieldIndex(const char* name) {
+      // Do not issue an error if the field doesn't exist. It is intended to be silent
       return OGR_FD_GetGeomFieldIndex(self, name);
   }
 
