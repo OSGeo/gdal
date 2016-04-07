@@ -318,7 +318,7 @@ typedef int              GPtrDiff_t;
 
 // Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
 // to detect misuses of NULL
-#if defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11)
+#if defined(NULL_AS_NULLPTR) && HAVE_CXX11
 
 #ifdef __GNUC__
 // We need to include all that bunch of system headers, otherwise
@@ -354,11 +354,11 @@ extern "C++" {
 
 #undef NULL
 #define NULL nullptr
-#else /* defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11) */
+#else /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
 #ifndef NULL
 #  define NULL  0
 #endif
-#endif /* defined(NULL_AS_NULLPTR) && defined(HAVE_CXX11) */
+#endif /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
 
 
 #ifndef MAX
@@ -813,7 +813,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 */
 #ifdef __cplusplus
 
-#ifdef HAVE_CXX11
+#if HAVE_CXX11
 #  define CPL_FINAL final
 #  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
