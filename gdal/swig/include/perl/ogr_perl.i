@@ -718,7 +718,7 @@ sub FETCH {
     my $i;
     eval {$i = $self->GetFieldIndex($index)};
     return $self->GetField($i) unless $@;
-    Geo::GDAL::error("It is not safe to retrieve geometries from a feature this way.");
+    Geo::GDAL::error("'$index' is not a non-spatial field and it is not safe to retrieve geometries from a feature this way.");
 }
 
 sub STORE {
@@ -726,9 +726,12 @@ sub STORE {
     my $index = shift;
     my $i;
     eval {$i = $self->GetFieldIndex($index)};
-    $self->SetField($i, @_) unless $@;
-    $i = $self->GetGeomFieldIndex($index);
-    $self->Geometry($i, @_);
+    unless ($@) {
+      $self->SetField($i, @_);
+    } else {
+      $i = $self->GetGeomFieldIndex($index);
+      $self->Geometry($i, @_);
+    }
 }
 
 sub FID {
