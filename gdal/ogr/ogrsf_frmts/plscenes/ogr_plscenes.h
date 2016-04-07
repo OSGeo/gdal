@@ -145,9 +145,12 @@ class OGRPLScenesV1Dataset: public GDALDataset
         CPLString       m_osBaseURL;
         CPLString       m_osAPIKey;
         CPLString       m_osNextCatalogPageURL;
+        CPLString       m_osFilter;
 
         int                   m_nLayers;
         OGRPLScenesV1Layer  **m_papoLayers;
+
+        bool            m_bFollowLinks;
 
         char              **GetBaseHTTPOptions();
         OGRLayer           *ParseCatalog(json_object* poCatalog);
@@ -157,6 +160,7 @@ class OGRPLScenesV1Dataset: public GDALDataset
         GDALDataset       *OpenRasterScene(GDALOpenInfo* poOpenInfo,
                                            CPLString osScene,
                                            char** papszOptions);
+        CPLString           InsertAPIKeyInURL(CPLString osURL);
 
     public:
                             OGRPLScenesV1Dataset();
@@ -167,7 +171,14 @@ class OGRPLScenesV1Dataset: public GDALDataset
         virtual OGRLayer   *GetLayerByName(const char* pszName);
 
         json_object        *RunRequest(const char* pszURL,
-                                       int bQuiet404Error = FALSE);
+                                       int bQuiet404Error = FALSE,
+                                       const char* pszHTTPVerb = "GET",
+                                       bool bExpectJSonReturn = true,
+                                       const char* pszPostContent = NULL);
+
+        bool                DoesFollowLinks() const { return m_bFollowLinks; }
+        const CPLString&    GetFilter() const { return m_osFilter; }
+        const CPLString&    GetBaseURL() const { return m_osBaseURL; }
 
         static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
 };
@@ -213,6 +224,7 @@ class OGRPLScenesV1Layer: public OGRLayer
             CPLString             m_osNextURL;
             CPLString             m_osRequestURL;
             int                   m_nPageSize;
+            bool                  m_bInFeatureCountOrGetExtent;
 
             json_object          *m_poPageObj;
             json_object          *m_poFeatures;
@@ -236,11 +248,14 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                   json_object* poSpec,
                                                   CPLString& osPropertiesDesc,
                                                   const char* pszCategory);
-            void                  ParseEmbeds(json_object* poProperties,
+            void                  ParseAssetProperties(
                                               json_object* poSpec,
                                               CPLString& osPropertiesDesc);
+            void                  ProcessAssetFileProperties( json_object* poPropertiesAssetFile,
+                                                     const CPLString& osAssetCategory,
+                                                     CPLString& osPropertiesDesc );
             bool                  GetNextPage();
-            CPLString             BuildRequestURL(bool bForHits);
+            CPLString             BuildRequestURL();
             CPLString             BuildFilter(swq_expr_node* poNode);
             bool                  IsSimpleComparison(const swq_expr_node* poNode);
             void                  FlattendAndOperands(swq_expr_node* poNode,
@@ -250,8 +265,7 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                const char* pszName,
                                                const char* pszSpecURL,
                                                const char* pszItemsURL,
-                                               GIntBig nCount,
-                                               std::vector<CPLString> aoAssetCategories);
+                                               GIntBig nCount);
                            ~OGRPLScenesV1Layer();
 
         virtual void            ResetReading();
