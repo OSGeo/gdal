@@ -780,7 +780,7 @@ def ogr_plscenes_v1_catalog_no_paging():
     if gdaltest.plscenes_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": {}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": {}, "catalogs": [{"item_count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -814,9 +814,9 @@ def ogr_plscenes_v1_catalog_paging():
     if gdaltest.plscenes_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next" : "/vsimem/v1/catalogs_page_2"}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_2', '{ "_links": { "_next" : "/vsimem/v1/catalogs_page_3"}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_2/items/", "spec": "/vsimem/v1/catalogs/my_catalog_2/spec"}, "id": "my_catalog_2"}]}')
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_3', '{ "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_3/items/", "spec": "/vsimem/v1/catalogs/my_catalog_3/spec"}, "id": "my_catalog_3"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next" : "/vsimem/v1/catalogs_page_2"}, "catalogs": [{"item_count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_2', '{ "_links": { "_next" : "/vsimem/v1/catalogs_page_3"}, "catalogs": [{"item_count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_2/items/", "spec": "/vsimem/v1/catalogs/my_catalog_2/spec"}, "id": "my_catalog_2"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_3', '{ "catalogs": [{"item_count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_3/items/", "spec": "/vsimem/v1/catalogs/my_catalog_3/spec"}, "id": "my_catalog_3"}]}')
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -865,9 +865,10 @@ def ogr_plscenes_v1_nominal():
 
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs',
 """{"_links": {}, "catalogs": [
-    {"count": 2,
+    {"item_count": 2,
      "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"},
-     "asset_categories": {"analytic": {"description": "", "id": "analytic", "name": "Analytic Products"}, "visual": {"description": "", "id": "visual", "name": "Visual Products"}},
+     "display_description" : "display_description",
+     "display_name" : "display_name",
      "id": "my_catalog"}
 ]}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
@@ -878,7 +879,7 @@ def ogr_plscenes_v1_nominal():
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
-    ds = gdal.OpenEx('PLScenes:version=v1,api_key=foo', gdal.OF_VECTOR)
+    ds = gdal.OpenEx('PLScenes:version=v1,api_key=foo,FOLLOW_LINKS=YES', gdal.OF_VECTOR)
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
         gdaltest.post_reason('fail')
@@ -950,9 +951,127 @@ def ogr_plscenes_v1_nominal():
         "qString":{
             "in": "query",
             "name": "catalog::string"
+        },
+        "qPageSize":{
+            "in": "query",
+            "maximum": 100,
+            "name": "_page_size"
         }
     },
     "definitions": {
+        "PermissionFilter": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Filter"
+            },
+            {
+              "properties": {
+                "config": {
+                  "items": {
+                    "enum": [
+                      "assets:download",
+                      "assets.visual:download",
+                      "assets.analytic:download"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+
+        "Asset": {
+          "properties": {
+            "_links": {
+              "$ref": "#/definitions/SelfLink"
+            },
+            "_permissions": {
+              "items": {
+                "enum": [
+                  "download"
+                ],
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "files": {
+              "additionalProperties": {
+                "$ref": "#/definitions/AssetFile"
+              },
+              "description": "Various AssetFiles indicating how a user may download the image data associated with this Asset. The keys of this object reflect the type of each available AssetFile.",
+              "type": "object"
+            },
+            "mimetype": {
+              "description": "The MIME type of the underlying asset file.",
+              "type": "string"
+            },
+            "type": {
+              "description": "Type identifier of this Asset.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "mimetype",
+            "files",
+            "_links",
+            "_permissions"
+          ],
+          "type": "object"
+        },
+
+        "AssetFile": {
+          "description": "An AssetFile describes the means of downloading the image data associated with a specific Asset",
+          "properties": {
+            "_links": {
+              "properties": {
+                "activate": {
+                  "description": "If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "expires_at": {
+              "description": "If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "location": {
+              "description": "If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Current status of the AssetFile. 'inactive' indicates that the AssetFile is not currently available for download, but may be after activation. 'activating' indicates the AssetFile is currently undergoing activation, and may be available for download shortly. 'active' indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+              "enum": [
+                "inactive",
+                "activating",
+                "active"
+              ],
+              "type": "string"
+            },
+            "type": {
+              "description": "An identifier of the methodology that must be used to download the image data from the indicated location. In the case of 'http', the user must make an HTTP GET request against the provided URL.",
+              "enum": [
+                "http"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "status",
+            "_links"
+          ],
+          "type": "object"
+        },
 
         "ItemPage": {
             "type": "object",
@@ -999,38 +1118,6 @@ def ogr_plscenes_v1_nominal():
                     }
                 }
             ]
-        },
-
-        "ItemEmbeds": {
-          "properties": {
-            "assets": {
-              "additionalProperties": {
-                "$ref": "#/definitions/ItemAsset"
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-
-        "ItemAsset": {
-          "properties": {
-            "_links": {
-              "$ref": "#/definitions/SelfLink"
-            },
-            "category_id": {
-              "description": "Category identifier of this ItemAsset.",
-              "type": "string"
-            },
-            "file": {
-              "description": "RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
-              "type": "string"
-            },
-            "mimetype": {
-              "description": "The MIME type of the underlying asset file.",
-              "type": "string"
-            }
-          }
         },
 
         "ItemLinks": {
@@ -1151,40 +1238,112 @@ def ogr_plscenes_v1_nominal():
     "src_field":"properties.catalog::int64",
     "server_queryable":false
   },
-  "asset_analytic_self_link":{
-    "description":"RFC 3986 URI representing the canonical location of this asset.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic._links._self",
-    "server_queryable":false
-  },
-  "asset_analytic_file":{
-    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic.file",
-    "server_queryable":false
-  },
-  "asset_analytic_mimetype":{
-    "description":"The MIME type of the underlying asset file.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic.mimetype",
-    "server_queryable":false
-  },
   "asset_visual_self_link":{
     "description":"RFC 3986 URI representing the canonical location of this asset.",
     "type":"string",
-    "src_field":"_embeds.assets.visual._links._self",
+    "src_field":"\/assets.visual._links._self",
     "server_queryable":false
   },
-  "asset_visual_file":{
-    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+  "asset_visual_permissions":{
+    "items":{
+      "enum":[
+        "download"
+      ],
+      "type":"string"
+    },
+    "type":"array",
+    "uniqueItems":true,
+    "src_field":"\/assets.visual._permissions",
+    "server_queryable":false
+  },
+  "asset_visual_activate_link":{
+    "description":"If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
     "type":"string",
-    "src_field":"_embeds.assets.visual.file",
+    "src_field":"\/assets.visual.files._links.activate",
+    "server_queryable":false
+  },
+  "asset_visual_expires_at":{
+    "description":"If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+    "format":"date-time",
+    "type":"string",
+    "src_field":"\/assets.visual.files.expires_at",
+    "server_queryable":false
+  },
+  "asset_visual_product_link":{
+    "description":"If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+    "type":"string",
+    "src_field":"\/assets.visual.files.location",
+    "server_queryable":false
+  },
+  "asset_visual_product_link_status":{
+    "description":"Current status of the AssetFile. 'inactive' indicates that the AssetFile is not currently available for download, but may be after activation. 'activating' indicates the AssetFile is currently undergoing activation, and may be available for download shortly. 'active' indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+    "enum":[
+      "inactive",
+      "activating",
+      "active"
+    ],
+    "type":"string",
+    "src_field":"\/assets.visual.files.status",
     "server_queryable":false
   },
   "asset_visual_mimetype":{
     "description":"The MIME type of the underlying asset file.",
     "type":"string",
-    "src_field":"_embeds.assets.visual.mimetype",
+    "src_field":"\/assets.visual.mimetype",
+    "server_queryable":false
+  },
+  "asset_analytic_self_link":{
+    "description":"RFC 3986 URI representing the canonical location of this asset.",
+    "type":"string",
+    "src_field":"\/assets.analytic._links._self",
+    "server_queryable":false
+  },
+  "asset_analytic_permissions":{
+    "items":{
+      "enum":[
+        "download"
+      ],
+      "type":"string"
+    },
+    "type":"array",
+    "uniqueItems":true,
+    "src_field":"\/assets.analytic._permissions",
+    "server_queryable":false
+  },
+  "asset_analytic_activate_link":{
+    "description":"If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
+    "type":"string",
+    "src_field":"\/assets.analytic.files._links.activate",
+    "server_queryable":false
+  },
+  "asset_analytic_expires_at":{
+    "description":"If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+    "format":"date-time",
+    "type":"string",
+    "src_field":"\/assets.analytic.files.expires_at",
+    "server_queryable":false
+  },
+  "asset_analytic_product_link":{
+    "description":"If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+    "type":"string",
+    "src_field":"\/assets.analytic.files.location",
+    "server_queryable":false
+  },
+  "asset_analytic_product_link_status":{
+    "description":"Current status of the AssetFile. 'inactive' indicates that the AssetFile is not currently available for download, but may be after activation. 'activating' indicates the AssetFile is currently undergoing activation, and may be available for download shortly. 'active' indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+    "enum":[
+      "inactive",
+      "activating",
+      "active"
+    ],
+    "type":"string",
+    "src_field":"\/assets.analytic.files.status",
+    "server_queryable":false
+  },
+  "asset_analytic_mimetype":{
+    "description":"The MIME type of the underlying asset file.",
+    "type":"string",
+    "src_field":"\/assets.analytic.mimetype",
     "server_queryable":false
   }
 }"""
@@ -1196,7 +1355,7 @@ def ogr_plscenes_v1_nominal():
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
-    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'FOLLOW_LINKS=YES'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
 
@@ -1207,40 +1366,55 @@ def ogr_plscenes_v1_nominal():
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
-    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'FOLLOW_LINKS=YES'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
-    if field_count != 14:
+    if field_count != 22:
         gdaltest.post_reason('fail')
         print(field_count)
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000',
+    # Test QuickSearch
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/quick-search&POSTFIELDS={}',
+"""{
+    "features" : [
+        {
+            "id": "id",
+        }
+    ]
+}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'FILTER={}'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/quick-search&POSTFIELDS={}')
+
+
+    # Regular /items/ fetching
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download',
 """{
     "_links":
     {
-        "_next": "/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000"
+        "_next": "/vsimem/v1/catalogs/my_catalog/items_page2/?_page_size=100"
     },
     "features" : [
         {
             "id": "id",
             "_links" : {
                 "_self" : "self",
-                "assets" : "assets"
+                "assets" : "/vsimem/v1/catalogs/my_catalog/items/id/assets"
             },
-            "_embeds" : {
-              "assets": {
-                "visual" : {
-                    "_links": {
-                      "_self": "visual_links_self"
-                    },
-                    "file": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download",
-                    "mimetype": "visual_mimetype"
-                }
-              }
-            },
+            "_permissions" : [ "download" ],
             "properties": {
                 "created" : "2016-02-11T12:34:56.789Z",
                 "catalog::float": 1.23,
@@ -1257,18 +1431,47 @@ def ogr_plscenes_v1_nominal():
     ]
 }""")
 
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{
+  "visual" : {
+      "_links": {
+        "_self": "visual_links_self"
+      },
+      "_permissions": ["download"],
+      "files": {
+        "http": {
+          "_links": {
+            "activate": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate",
+          },
+          "location": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff",
+          "status": "active",
+          "expires_at": "2016-02-11T12:34:56.789",
+          "type": "http"
+        }
+      },
+      "mimetype": "visual_mimetype",
+      "type": "visual"
+  }
+}""")
+
+
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
-    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'FOLLOW_LINKS=YES', 'FILTER=_permissions=assets.visual:download'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
 
     f = lyr.GetNextFeature()
-    if f.GetFID() != 1 or f['id'] != 'id' or f['self_link'] != 'self' or f['assets_link'] != 'assets' or \
+    if f.GetFID() != 1 or f['id'] != 'id' or f['self_link'] != 'self' or \
+       f['assets_link'] != '/vsimem/v1/catalogs/my_catalog/items/id/assets' or \
        f['created'] != '2016/02/11 12:34:56.789+00' or \
        f['float'] != 1.23 or f['string'] != 'string' or f['int32'] != 123 or \
        f['int64'] != 1234567890123 or \
        f['asset_visual_self_link'] != 'visual_links_self' or \
-       f['asset_visual_file'] != '/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download' or \
+       f['asset_visual_permissions'] != '["download"]' or \
+       f['asset_visual_activate_link'] != '/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate' or \
+       f['asset_visual_expires_at'] != '2016/02/11 12:34:56.789' or \
+       f['asset_visual_product_link'] != '/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff' or \
+       f['asset_visual_product_link_status'] != 'active' or \
        f['asset_visual_mimetype'] != 'visual_mimetype' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
         gdaltest.post_reason('fail')
@@ -1310,7 +1513,7 @@ def ogr_plscenes_v1_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Missing file
+    # Missing files
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
 """{ "visual": { } }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
@@ -1321,9 +1524,9 @@ def ogr_plscenes_v1_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Empty file
+    # Empty files
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
-"""{ "visual": { "file": "" } }""")
+"""{ "visual": { "files": "" } }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     with gdaltest.error_handler():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
@@ -1332,20 +1535,98 @@ def ogr_plscenes_v1_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Inactive file, and activation link not working
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
-"""{ "visual": { "file": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download"} }""")
+"""{
+  "visual" : {
+      "_links": {
+        "_self": "visual_links_self"
+      },
+      "_permissions": ["download"],
+      "files": {
+        "http": {
+          "_links": {
+            "activate": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate",
+          },
+          "status": "inactive",
+          "type": "http"
+        }
+      },
+      "mimetype": "visual_mimetype",
+      "type": "visual"
+  }
+}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id', 'ACTIVATION_TIMEOUT=1'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
-    # Missing /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download
+    # File in activation
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{
+  "visual" : {
+      "_links": {
+        "_self": "visual_links_self"
+      },
+      "_permissions": ["download"],
+      "files": {
+        "http": {
+          "_links": {
+            "activate": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate",
+          },
+          "status": "activating",
+          "type": "http"
+        }
+      },
+      "mimetype": "visual_mimetype",
+      "type": "visual"
+  }
+}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id', 'ACTIVATION_TIMEOUT=1'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{
+  "visual" : {
+      "_links": {
+        "_self": "visual_links_self"
+      },
+      "_permissions": ["download"],
+      "files": {
+        "http": {
+          "_links": {
+            "activate": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate",
+          },
+          "location": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff",
+          "status": "active",
+          "expires_at": "2016-02-11T12:34:56.789",
+          "type": "http"
+        }
+      },
+      "mimetype": "visual_mimetype",
+      "type": "visual"
+  }
+}""")
+
+    # Missing /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     with gdaltest.error_handler():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
     gdal.SetConfigOption('PL_URL', None)
-    if ds_raster is not None or gdal.GetLastErrorMsg().find('The generation of the product is in progress. Retry later') < 0:
+    if ds_raster is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # JSon content for /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download',
+    # JSon content for /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff',
                            """{}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     with gdaltest.error_handler():
@@ -1356,7 +1637,7 @@ def ogr_plscenes_v1_nominal():
         return 'fail'
 
     # Missing /vsimem/v1/catalogs/my_catalog
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff',
                            open('../gcore/data/byte.tif', 'rb').read())
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     with gdaltest.error_handler():
@@ -1368,9 +1649,8 @@ def ogr_plscenes_v1_nominal():
 
     # Failed filter by scene id
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog',
-                           """{"count": 2,
+                           """{"item_count": 2,
      "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"},
-     "asset_categories": {"analytic": {"description": "", "id": "analytic", "name": "Analytic Products"}, "visual": {"description": "", "id": "visual", "name": "Visual Products"}},
      "id": "my_catalog"}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
@@ -1381,7 +1661,7 @@ def ogr_plscenes_v1_nominal():
     ds_raster = None
 
     # Test metadata items attached to dataset
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id?_embeds=assets',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id',
 """{
     "id": "id",
     "properties": {
@@ -1444,10 +1724,35 @@ def ogr_plscenes_v1_nominal():
 
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog')
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id?_embeds=assets')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id')
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000',
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{
+  "visual" : {
+      "_links": {
+        "_self": "visual_links_self"
+      },
+      "_permissions": ["download"],
+      "files": {
+        "http": {
+          "_links": {
+            "activate": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/activate",
+          },
+          "location": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/my.tiff",
+          "status": "active",
+          "expires_at": "2016-02-11T12:34:56.789",
+          "type": "http"
+        }
+      },
+      "mimetype": "visual_mimetype",
+      "type": "visual"
+  }
+}""")
+
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items_page2/?_page_size=100',
 """{
     "features" : [
         {
@@ -1485,7 +1790,7 @@ def ogr_plscenes_v1_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POINT(2%2049)',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&geometry=POINT(2%2049)',
 """{
     "features" : [
         {
@@ -1502,14 +1807,14 @@ def ogr_plscenes_v1_nominal():
         f.DumpReadable()
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=0&geometry=POINT(2%2049)',
-"""{ "_result_count": 123456 }""")
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&geometry=POINT(2%2049)',
+"""{"features" : [ { "id": "id3", "geometry": { "type": "Point", "coordinates": [2,49]} } }""")
 
-    if lyr.GetFeatureCount() != 123456:
+    if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))',
 """{
     "features" : [
         {
@@ -1552,7 +1857,7 @@ def ogr_plscenes_v1_nominal():
 
     # Test attribute filter on id (special case)
     lyr.SetAttributeFilter("id = 'filtered_id'")
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/filtered_id?_embeds=assets',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/filtered_id',
 """{
     "id": "filtered_id",
     "properties": {}
@@ -1566,7 +1871,7 @@ def ogr_plscenes_v1_nominal():
 
     # Test attribute filter fully evaluated on server side.
     lyr.SetAttributeFilter("float >= 0 AND int32 < 3 AND float <= 1 AND string = 'foo' AND int32 > 1 AND created = '2016/02/11 12:34:56'")
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]',
 """{
     "features" : [
         {
@@ -1597,7 +1902,7 @@ def ogr_plscenes_v1_nominal():
 
     # Another one but with no range
     lyr.SetAttributeFilter("float > 0 AND int32 < 3 AND created > '2016/02/11 12:34:56'")
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]',
 """{
     "features" : [
         {
@@ -1619,7 +1924,7 @@ def ogr_plscenes_v1_nominal():
 
     # Partly server / partly client
     lyr.SetAttributeFilter("int64 = 4 AND string = 'foo' AND int32 >= 3 AND int32 >= 3 AND float >= 0 AND float <= 2 AND float <= 3")
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]',
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]',
 """{
     "features" : [
         {
@@ -1657,15 +1962,15 @@ def ogr_plscenes_v1_nominal():
 
     gdal.Unlink('/vsimem/v1/catalogs')
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/spec')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POINT(2%2049)')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/filtered_id?_embeds=assets')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=0&geometry=POINT(2%2049)')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items_page2/?_page_size=100')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&geometry=POINT(2%2049)')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/filtered_id')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]')
 
     return 'success'
 
@@ -1743,7 +2048,7 @@ def ogr_plscenes_v1_errors():
         return 'fail'
 
     # Invalid next URL
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next": "/vsimem/inexisting" }, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next": "/vsimem/inexisting" }, "catalogs": [{"item_count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -1761,17 +2066,7 @@ def ogr_plscenes_v1_errors():
     with gdaltest.error_handler():
         lyr.GetLayerDefn().GetFieldCount()
 
-
-    # Invalid asset_categories
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/invalid_spec"}, "asset_categories": false, "id": "my_catalog"}]}')
-    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
-    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
-    gdal.SetConfigOption('PL_URL', None)
-    lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
-        lyr.GetLayerDefn().GetFieldCount()
-
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "asset_categories": { "my_asset": {} }, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
 
     # Test various errors in spec
     for spec in [ '{}', # no path
@@ -1969,139 +2264,6 @@ def ogr_plscenes_v1_errors():
                         ]
                        }}}}""", # Invalid parameters
 
-                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
-                        "responses": {
-                            "200": {
-                                "schema": {
-                                    "properties": {
-                                        "features": {
-                                            "items": {
-                                                "properties": {
-                                                    "properties": {
-                                                    },
-                                                    "_embeds": false
-                                                }
-                                            }
-                                        }
-                                     }
-                               }
-                            }
-                        }
-                       }}}}""", # invalid type for _embeds
-
-                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
-                        "responses": {
-                            "200": {
-                                "schema": {
-                                    "properties": {
-                                        "features": {
-                                            "items": {
-                                                "properties": {
-                                                    "properties": {
-                                                    },
-                                                    "_embeds": {
-                                                      "properties": {
-                                                        "assets": {
-                                                          "additionalProperties": {
-                                                            "$ref": "invalid_ref"
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                     }
-                               }
-                            }
-                        }
-                       }}}}""", # invalid ref for additionalProperties
-
-                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
-                        "responses": {
-                            "200": {
-                                "schema": {
-                                    "properties": {
-                                        "features": {
-                                            "items": {
-                                                "properties": {
-                                                    "properties": {
-                                                    },
-                                                    "_embeds": {
-                                                      "properties": {
-                                                        "assets": {
-                                                          "XXadditionalProperties": {
-                                                            "properties": {
-                                                                "file": {
-                                                                }
-                                                            }
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                     }
-                               }
-                            }
-                        }
-                       }}}}""", # missing additionalProperties
-
-                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
-                        "responses": {
-                            "200": {
-                                "schema": {
-                                    "properties": {
-                                        "features": {
-                                            "items": {
-                                                "properties": {
-                                                    "properties": {
-                                                    },
-                                                    "_embeds": {
-                                                      "properties": {
-                                                        "assets": {
-                                                          "additionalProperties": false
-                                                        }
-                                                      }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                     }
-                               }
-                            }
-                        }
-                       }}}}""", # additionalProperties of wrong type
-
-                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
-                        "responses": {
-                            "200": {
-                                "schema": {
-                                    "properties": {
-                                        "features": {
-                                            "items": {
-                                                "properties": {
-                                                    "properties": {
-                                                    },
-                                                    "_embeds": {
-                                                      "properties": {
-                                                        "assets": {
-                                                          "additionalProperties": {
-                                                            "xxproperties": {}
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                     }
-                               }
-                            }
-                        }
-                       }}}}""", # no properties in additionalProperties
-
                         ]:
         gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
         ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
@@ -2147,23 +2309,23 @@ def ogr_plscenes_v1_errors():
                         }
                        }}}}""")
 
-    # Cannot find /vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000
+    # Cannot find /vsimem/v1/catalogs/my_catalog/items/?_page_size=250
     with gdaltest.error_handler():
         lyr.GetNextFeature()
 
     # Empty object
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000', '{}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=250', '{}')
     lyr.ResetReading()
     lyr.GetNextFeature()
 
     # null feature
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000', '{ "features": [ null ] }')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=250', '{ "features": [ null ] }')
     lyr.ResetReading()
     lyr.GetNextFeature()
 
     gdal.Unlink('/vsimem/v1/catalogs')
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/spec')
-    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=250')
 
     return 'success'
 
@@ -2181,7 +2343,7 @@ def ogr_plscenes_v1_live():
         return 'skip'
 
     gdal.SetConfigOption('PLSCENES_PAGE_SIZE', '10')
-    ds = ogr.Open('PLScenes:version=v1')
+    ds = ogr.Open('PLScenes:version=v1,filter=_permissions=assets.visual:download')
     gdal.SetConfigOption('PLSCENES_PAGE_SIZE', None)
     if ds is None:
         gdaltest.post_reason('fail')
@@ -2196,14 +2358,16 @@ def ogr_plscenes_v1_live():
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
+    catalog = lyr.GetName()
+    scene = f['id']
 
     lyr_defn = lyr.GetLayerDefn()
-    created_field = lyr_defn.GetFieldIndex('created')
-    if created_field < 0 or lyr_defn.GetFieldDefn(created_field).GetType() != ogr.OFTDateTime:
+    acquired_field = lyr_defn.GetFieldIndex('acquired')
+    if acquired_field < 0 or lyr_defn.GetFieldDefn(acquired_field).GetType() != ogr.OFTDateTime:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if not f.IsFieldSet(created_field):
+    if not f.IsFieldSet(acquired_field):
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -2220,7 +2384,7 @@ def ogr_plscenes_v1_live():
         elif string_field < 0 and typ == ogr.OFTString and f.IsFieldSet(i):
             string_field = i
 
-    filter = "created='%s'" % f.GetFieldAsString(created_field)
+    filter = "acquired='%s'" % f.GetFieldAsString(acquired_field)
     if int_field >= 0:
         name = lyr_defn.GetFieldDefn(int_field).GetName()
         min = f.GetField(int_field) - 1
@@ -2239,6 +2403,13 @@ def ogr_plscenes_v1_live():
     lyr.SetAttributeFilter(filter)
     f = lyr.GetNextFeature()
     if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open('PLScenes:version=v1,catalog=%s,scene=%s' % (catalog, scene))
+    if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 

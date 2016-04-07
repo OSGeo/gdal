@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include <time.h>
 
 CPL_CVSID("$Id$");
 
@@ -41,6 +42,7 @@ OGRPLScenesV1Dataset::OGRPLScenesV1Dataset()
     m_bMustCleanPersistent = false;
     m_nLayers = 0;
     m_papoLayers = NULL;
+    m_bFollowLinks = false;
 }
 
 /************************************************************************/
@@ -107,25 +109,20 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
     json_object* poItems = json_object_object_get(poLinks, "items");
     if( poItems == NULL || json_object_get_type(poItems) != json_type_string )
         return NULL;
-    json_object* poCount = json_object_object_get(poCatalog, "count");
+    json_object* poCount = json_object_object_get(poCatalog, "item_count");
     GIntBig nCount = -1;
     if( poCount != NULL && json_object_get_type(poCount) == json_type_int )
     {
         nCount = json_object_get_int64(poCount);
     }
-    json_object* poAssetCategories = json_object_object_get(poCatalog, "asset_categories");
-    std::vector<CPLString> aoAssetCategories;
-    if( poAssetCategories != NULL && json_object_get_type(poAssetCategories) == json_type_object )
-    {
-        json_object_iter it;
-        it.key = NULL;
-        it.val = NULL;
-        it.entry = NULL;
-        json_object_object_foreachC( poAssetCategories, it )
-        {
-            aoAssetCategories.push_back(it.key);
-        }
-    }
+    CPLString osDisplayDescription;
+    json_object* poDisplayDescription = json_object_object_get(poCatalog, "display_description");
+    if( poDisplayDescription != NULL && json_object_get_type(poDisplayDescription) == json_type_string )
+        osDisplayDescription = json_object_get_string(poDisplayDescription);
+    CPLString osDisplayName;
+    json_object* poDisplayName = json_object_object_get(poCatalog, "display_name");
+    if( poDisplayName != NULL && json_object_get_type(poDisplayName) == json_type_string )
+        osDisplayName = json_object_get_string(poDisplayName);
 
     const char* pszId = json_object_get_string(poId);
     const char* pszSpecURL = json_object_get_string(poSpec);
@@ -143,7 +140,11 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
         return poExistingLayer;
 
     OGRPLScenesV1Layer* poPLLayer = new OGRPLScenesV1Layer(
-                            this, pszId, pszSpecURL, pszItemsURL, nCount, aoAssetCategories);
+                            this, pszId, pszSpecURL, pszItemsURL, nCount);
+    if( osDisplayName.size() )
+        poPLLayer->SetMetadataItem("SHORT_DESCRIPTION", osDisplayName.c_str());
+    if( osDisplayDescription.size() )
+        poPLLayer->SetMetadataItem("DESCRIPTION", osDisplayDescription.c_str());
     m_papoLayers = (OGRPLScenesV1Layer**) CPLRealloc(m_papoLayers,
                                 sizeof(OGRPLScenesV1Layer*) * (m_nLayers + 1));
     m_papoLayers[m_nLayers ++] = poPLLayer;
@@ -252,9 +253,23 @@ char** OGRPLScenesV1Dataset::GetBaseHTTPOptions()
 /************************************************************************/
 
 json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
-                                            int bQuiet404Error)
+                                              int bQuiet404Error,
+                                              const char* pszHTTPVerb,
+                                              bool bExpectJSonReturn,
+                                              const char* pszPostContent)
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
+    // We need to set it each time as CURL would reuse the previous value
+    // if reusing the same connection
+    papszOptions = CSLSetNameValue(papszOptions, "CUSTOMREQUEST", pszHTTPVerb);
+    if( pszPostContent != NULL )
+    {
+        CPLString osHeaders = "Content-Type: application/json";
+        //osHeaders += "\r\n";
+        //osHeaders += CPLSPrintf("Authorization: api-key %s", m_osAPIKey.c_str());
+        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders);
+        papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS", pszPostContent);
+    }
     CPLHTTPResult * psResult;
     if( STARTS_WITH(m_osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
@@ -265,6 +280,11 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
         CPLString osURL(pszURL);
         if( osURL[osURL.size()-1 ] == '/' )
             osURL.resize(osURL.size()-1);
+        if( pszPostContent != NULL )
+        {
+            osURL += "&POSTFIELDS=";
+            osURL += pszPostContent;
+        }
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLengthLarge, FALSE);
         size_t nDataLength = static_cast<size_t>(nDataLengthLarge);
         if( pabyBuf )
@@ -279,7 +299,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
         else
         {
             psResult->pszErrBuf =
-                CPLStrdup(CPLSPrintf("Error 404. Cannot find %s", pszURL));
+                CPLStrdup(CPLSPrintf("Error 404. Cannot find %s", osURL.c_str()));
         }
     }
     else
@@ -291,6 +311,14 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
             CPLPopErrorHandler();
     }
     CSLDestroy(papszOptions);
+    
+    if ( pszPostContent != NULL && m_bMustCleanPersistent)
+    {
+        papszOptions = CSLSetNameValue(NULL, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
+        CPLHTTPDestroyResult(CPLHTTPFetch(m_osBaseURL, papszOptions));
+        CSLDestroy(papszOptions);
+        m_bMustCleanPersistent = false;
+    }
 
     if( psResult->pszErrBuf != NULL )
     {
@@ -300,6 +328,12 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
                     psResult->pabyData ? (const char*) psResult->pabyData :
                     psResult->pszErrBuf);
         }
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+
+    if( !bExpectJSonReturn && (psResult->pabyData == NULL || psResult->nDataLen == 0) )
+    {
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
@@ -344,6 +378,23 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
 }
 
 /************************************************************************/
+/*                           InsertAPIKeyInURL()                        */
+/************************************************************************/
+
+CPLString OGRPLScenesV1Dataset::InsertAPIKeyInURL(CPLString osURL)
+{
+    if( STARTS_WITH(osURL, "http://") )
+    {
+        osURL = "http://" + m_osAPIKey + ":@" + osURL.substr(strlen("http://"));
+    }
+    else if( STARTS_WITH(osURL, "https://") )
+    {
+        osURL = "https://" + m_osAPIKey + ":@" + osURL.substr(strlen("https://"));
+    }
+    return osURL;
+}
+
+/************************************************************************/
 /*                            OpenRasterScene()                         */
 /************************************************************************/
 
@@ -358,6 +409,9 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         return NULL;
     }
 
+    int nActivationTimeout = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                      "ACTIVATION_TIMEOUT", "3600"));
+
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
     {
         char* pszKey;
@@ -368,7 +422,8 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                 !EQUAL(pszKey, "scene") &&
                 !EQUAL(pszKey, "product_type") &&
                 !EQUAL(pszKey, "catalog") &&
-                !EQUAL(pszKey, "version") )
+                !EQUAL(pszKey, "version") &&
+                !EQUAL(pszKey, "follow_links"))
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
                 CPLFree(pszKey);
@@ -396,6 +451,14 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     osRasterURL += osScene;
     osRasterURL += "/assets/";
 
+    time_t nStartTime = time(NULL);
+retry:
+    time_t nCurrentTime = time(NULL);
+    if( nCurrentTime - nStartTime > nActivationTimeout )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Activation timeout reached");
+        return NULL;
+    }
     json_object* poObj = RunRequest( osRasterURL );
     if( poObj == NULL )
         return NULL;
@@ -454,14 +517,66 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         json_object_put(poObj);
         return NULL;
     }
-    json_object* poFile = json_object_object_get(poSubObj, "file");
-    if( poFile == NULL || json_object_get_type(poFile) != json_type_string )
+
+    json_object* poPermissions = json_object_object_get(poSubObj, "_permissions");
+    if( poPermissions != NULL )
+    {
+        const char* pszPermissions = json_object_to_json_string_ext( poPermissions, 0 );
+        if( pszPermissions && strstr(pszPermissions, "download") == NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "You don't have download permissions for this product");
+        }
+    }
+
+    json_object* poHTTP = json_ex_get_object_by_path(poSubObj, "files.http");
+    if( poHTTP == NULL || json_object_get_type(poHTTP) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link");
         json_object_put(poObj);
         return NULL;
     }
-    const char* pszLink = json_object_get_string(poFile);
+    json_object* poLocation = json_object_object_get(poHTTP, "location");
+    json_object* poStatus = json_object_object_get(poHTTP, "status");
+    bool bActive = false;
+    bool bActivating = false;
+    if( poStatus != NULL && json_object_get_type(poStatus) == json_type_string )
+    {
+        const char* pszStatus = json_object_get_string(poStatus);
+        if( EQUAL( pszStatus, "activating" ) )
+        {
+            CPLDebug("PLScenes", "The product is in activation. Retrying...");
+            CPLSleep( nActivationTimeout == 1 ? 0.5 : 1.0);
+            poLocation = NULL;
+            json_object_put(poObj);
+            goto retry;
+        }
+        bActive = EQUAL( pszStatus, "active" );
+    }
+    if( poLocation == NULL || json_object_get_type(poLocation) != json_type_string ||
+        !bActive )
+    {
+        CPLDebug("PLScenes", "The product isn't actived yet. Activating it");
+        json_object* poActivate = json_ex_get_object_by_path(poHTTP, "_links.activate");
+        if( poActivate == NULL || json_object_get_type(poActivate) != json_type_string )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to activate scene %s",
+                      osScene.c_str());
+            json_object_put(poObj);
+            return NULL;
+        }
+        CPLString osActivate = json_object_get_string(poActivate);
+        poLocation = NULL;
+        json_object_put(poObj);
+        poObj = RunRequest( osActivate, FALSE, "POST", false );
+        if( poObj != NULL )
+            json_object_put(poObj);
+        poObj = NULL;
+        CPLSleep(nActivationTimeout == 1 ? 0.5 : 1.0);
+        goto retry;
+    }
+
+    const char* pszLink = json_object_get_string(poLocation);
 
     osRasterURL = pszLink ? pszLink : "";
     json_object_put(poObj);
@@ -472,14 +587,7 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         return NULL;
     }
 
-    if( STARTS_WITH(osRasterURL, "http://") )
-    {
-        osRasterURL = "http://" + m_osAPIKey + ":@" + osRasterURL.substr(strlen("http://"));
-    }
-    else if( STARTS_WITH(osRasterURL, "https://") )
-    {
-        osRasterURL = "https://" + m_osAPIKey + ":@" + osRasterURL.substr(strlen("https://"));
-    }
+    osRasterURL = InsertAPIKeyInURL(osRasterURL);
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
     CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
@@ -488,7 +596,6 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     if( bUseVSICURL && !(STARTS_WITH(m_osBaseURL, "/vsimem/")) )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
 
         VSIStatBufL sStat;
         if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
@@ -500,6 +607,10 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         {
             CPLDebug("PLSCENES", "Cannot use random access for that file");
         }
+
+        // URLs with tokens can have . in them which confuses CPL_VSIL_CURL_ALLOWED_EXTENSIONS={noext} if
+        // it is run before the previous VSIStatL()
+        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
     }
 
     GDALDataset* poOutDS = (GDALDataset*) GDALOpenEx(osRasterURL, GDAL_OF_RASTER, NULL, NULL, NULL);
@@ -596,6 +707,13 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
     }
 
+    poDS->m_bFollowLinks = CPLTestBool( CSLFetchNameValueDef(papszOptions, "follow_links",
+                CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FOLLOW_LINKS", "FALSE")) );
+
+    poDS->m_osFilter = CSLFetchNameValueDef(papszOptions, "filter",
+                CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FILTER", ""));
+    poDS->m_osFilter.Trim();
+
     const char* pszScene = CSLFetchNameValueDef(papszOptions, "scene",
                 CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SCENE"));
     if( pszScene )
@@ -606,6 +724,12 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
         CSLDestroy(papszOptions);
         return poRasterDS;
     }
+    else if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) &&
+             !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing scene");
+        return NULL;
+    }
 
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
     {
@@ -615,7 +739,9 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
         {
             if( !EQUAL(pszKey, "api_key") &&
                 !EQUAL(pszKey, "version") &&
-                !EQUAL(pszKey, "catalog") )
+                !EQUAL(pszKey, "catalog") &&
+                !EQUAL(pszKey, "follow_links") &&
+                !EQUAL(pszKey, "filter") )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option '%s'", pszKey);
                 CPLFree(pszKey);

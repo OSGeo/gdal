@@ -27,6 +27,9 @@ Currently the following one is supported :<p>
 <li> <b>version</b>=v0/v1: To specify the API version to request. Defaults to v0.</li>
 <li> <b>api_key</b>=value: To specify the Planet API KEY. It is mandatory, unless
 it is supplied through the open option API_KEY, or the configuration option PL_API_KEY.</li>
+<li><b>follow_links</b>=YES/NO: Whether assets links should be followed for each scene (API v1 only, vector).
+Getting assets links require a HTTP request per scene, which might be costly when
+enumerating through a lot of products. Defaults to NO.</li>
 <li> <b>scene</b>=scene_id: To specify the scene ID, when accessing raster data.
 Optional for vector layer access.</li>
 <li> <b>catalog</b>=name: To specify the catalog name.
@@ -36,6 +39,11 @@ Optional for vector layer access. Mandatory for raster access with v1 API.</li>
 if the option is not specified and the 'visual' asset category does not exist for the scene
 (or if the value is set to 'list'), the returned dataset will have subdatasets
 for the available asset categories.</li>
+<li> <b>filter</b>=string (API v1 only): To specify an additional filter on the request URL (/items endpoint)
+that will be only evaluated on server-side. Can be convenient for conditions that are not
+easily expressed in OGR SQL. For example, to restrict to scenes whose visual asset
+can be downloaded, use '_permissions=assets.visual:download'. It can also be a more
+complex query expressed as a JSon filter to be evaluated by the Quick Search API(/quick-search endpoint)</li>
 </ul>
 
 If several parameters are specified, they must be separated by a comma.<p>
@@ -46,9 +54,12 @@ The following open options are available :
 <ul>
 <li><b>VERSION</b>=v0/v1: To specify the API version to request. Defaults to v0.</li>
 <li><b>API_KEY</b>=value: To specify the Planet API KEY.</li>
+<li><b>FOLLOW_LINKS</b>=YES/NO: Whether assets links should be followed for each scene (API v1 only, vector).
+Getting assets links require a HTTP request per scene, which might be costly when
+enumerating through a lot of products. Defaults to NO.</li>
 <li><b>SCENE</b>=scene_id: To specify the scene ID, when accessing raster data.
 Optional for vector layer access.</li>
-<li><b>PRODUCT_TYPE</b>=value:: To specify the product type: 'visual', 'analytic' or 'thumb'
+<li><b>PRODUCT_TYPE</b>=value: To specify the product type: 'visual', 'analytic' or 'thumb'
 (for raster fetching). Default is "visual". Optional for vector layer access. For V1 API,
 if the option is not specified and the 'visual' asset category does not exist for the scene
 (or if the value is set to 'list'), the returned dataset will have subdatasets
@@ -58,6 +69,13 @@ Optional for vector layer access. Mandatory for raster access with v1 API.</li>
 <li><b>RANDOM_ACCESS</b>=YES/NO: Whether raster should be accessed in random access mode
 (but with potentially not optimal throughput). If NO, in-memory ingestion is done.
 Default is YES.</li>
+<li><b>ACTIVATION_TIMEOUT</b>=int: Number of seconds during which to wait for
+asset activation (API v1 only, raster). Default is 3600.</li>
+<li> <b>FILTER</b>=string (API v1 only): To specify an additional filter on the request URL (/items endpoint)
+that will be only evaluated on server-side. Can be convenient for conditions that are not
+easily expressed in OGR SQL. For example, to restrict to scenes whose visual asset
+can be downloaded, use '_permissions=assets.visual:download'. It can also be a more
+complex query expressed as a JSon filter to be evaluated by the Quick Search API(/quick-search endpoint)</li>
 </ul>
 
 <h2>Configuration options</h2>
@@ -112,7 +130,10 @@ For other layers / scene types, additional attributes may be retrieved.<p>
 
 <p>For the v1 API, the layer field definition is built dynamically from the catalog
 specification. The links to downloadable products are
-in <i>asset_XXXXX_file</i> attributes where XXXXX is the asset category id.</p>
+in <i>asset_XXXXX_product_link</i> attributes where XXXXX is the asset category id,
+when they are active. Otherwise they should be activated by sending a POST request to
+the URL in the <i>asset_XXXXX_activate_link</i> attribute (what the raster driver
+does automatically)</p>
 
 <p>The details about the layer field description are given in the FIELDS_DESCRIPTION
 metadata item as a JSon serialized object. The keys are the OGR field names, and
@@ -142,23 +163,23 @@ For example:</p>
     "server_queryable":false
   },
   "assets_link":{
-    "description":"RFC 3986 URI representing the canonical location of the ItemAssets subcollection.",
+    "description":"RFC 3986 URI representing the canonical location of the Assets subcollection.",
     "type":"string",
     "src_field":"_links.assets",
     "server_queryable":false
+  },
+  "published":{
+    "description":"The RFC 3339 timestamp at which this Item was added to the Catalog.",
+    "format":"date-time",
+    "type":"string",
+    "src_field":"properties.published",
+    "server_queryable":true
   },
   "acquired":{
     "description":"The RFC 3339 acquisition time of underlying image.",
     "format":"date-time",
     "type":"string",
-    "src_field":"properties.acquired",
-    "server_queryable":true
-  },
-  "created":{
-    "description":"The RFC 3339 timestamp at which this Item was added to the Catalog.",
-    "format":"date-time",
-    "type":"string",
-    "src_field":"properties.created",
+    "src_field":"properties.catalog::acquired",
     "server_queryable":true
   },
   "black_fill":{
@@ -211,6 +232,12 @@ For example:</p>
     "src_field":"properties.catalog::satellite_id",
     "server_queryable":true
   },
+  "strip_id":{
+    "description":"Identifier of the Item's parent strip.",
+    "type":"string",
+    "src_field":"properties.catalog::strip_id",
+    "server_queryable":true
+  },
   "sun_azimuth":{
     "description":"Angle from the True North to the Sun Vector projected on the horizontal plane in degrees.",
     "format":"float",
@@ -247,40 +274,112 @@ For example:</p>
     "src_field":"properties.catalog::view_angle",
     "server_queryable":true
   },
-  "asset_analytic_self_link":{
-    "description":"RFC 3986 URI representing the canonical location of this asset.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic._links._self",
-    "server_queryable":false
-  },
-  "asset_analytic_file":{
-    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic.file",
-    "server_queryable":false
-  },
-  "asset_analytic_mimetype":{
-    "description":"The MIME type of the underlying asset file.",
-    "type":"string",
-    "src_field":"_embeds.assets.analytic.mimetype",
-    "server_queryable":false
-  },
   "asset_visual_self_link":{
     "description":"RFC 3986 URI representing the canonical location of this asset.",
     "type":"string",
-    "src_field":"_embeds.assets.visual._links._self",
+    "src_field":"\/assets.visual._links._self",
     "server_queryable":false
   },
-  "asset_visual_file":{
-    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+  "asset_visual_permissions":{
+    "items":{
+      "enum":[
+        "download"
+      ],
+      "type":"string"
+    },
+    "type":"array",
+    "uniqueItems":true,
+    "src_field":"\/assets.visual._permissions",
+    "server_queryable":false
+  },
+  "asset_visual_activate_link":{
+    "description":"If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
     "type":"string",
-    "src_field":"_embeds.assets.visual.file",
+    "src_field":"\/assets.visual.files._links.activate",
+    "server_queryable":false
+  },
+  "asset_visual_expires_at":{
+    "description":"If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+    "format":"date-time",
+    "type":"string",
+    "src_field":"\/assets.visual.files.expires_at",
+    "server_queryable":false
+  },
+  "asset_visual_product_link":{
+    "description":"If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+    "type":"string",
+    "src_field":"\/assets.visual.files.location",
+    "server_queryable":false
+  },
+  "asset_visual_product_link_status":{
+    "description":"Current status of the AssetFile. \"inactive\" indicates that the AssetFile is not currently available for download, but may be after activation. \"activating\" indicates the AssetFile is currently undergoing activation, and may be available for download shortly. \"active\" indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+    "enum":[
+      "inactive",
+      "activating",
+      "active"
+    ],
+    "type":"string",
+    "src_field":"\/assets.visual.files.status",
     "server_queryable":false
   },
   "asset_visual_mimetype":{
     "description":"The MIME type of the underlying asset file.",
     "type":"string",
-    "src_field":"_embeds.assets.visual.mimetype",
+    "src_field":"\/assets.visual.mimetype",
+    "server_queryable":false
+  },
+  "asset_analytic_self_link":{
+    "description":"RFC 3986 URI representing the canonical location of this asset.",
+    "type":"string",
+    "src_field":"\/assets.analytic._links._self",
+    "server_queryable":false
+  },
+  "asset_analytic_permissions":{
+    "items":{
+      "enum":[
+        "download"
+      ],
+      "type":"string"
+    },
+    "type":"array",
+    "uniqueItems":true,
+    "src_field":"\/assets.analytic._permissions",
+    "server_queryable":false
+  },
+  "asset_analytic_activate_link":{
+    "description":"If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
+    "type":"string",
+    "src_field":"\/assets.analytic.files._links.activate",
+    "server_queryable":false
+  },
+  "asset_analytic_expires_at":{
+    "description":"If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+    "format":"date-time",
+    "type":"string",
+    "src_field":"\/assets.analytic.files.expires_at",
+    "server_queryable":false
+  },
+  "asset_analytic_product_link":{
+    "description":"If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+    "type":"string",
+    "src_field":"\/assets.analytic.files.location",
+    "server_queryable":false
+  },
+  "asset_analytic_product_link_status":{
+    "description":"Current status of the AssetFile. \"inactive\" indicates that the AssetFile is not currently available for download, but may be after activation. \"activating\" indicates the AssetFile is currently undergoing activation, and may be available for download shortly. \"active\" indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+    "enum":[
+      "inactive",
+      "activating",
+      "active"
+    ],
+    "type":"string",
+    "src_field":"\/assets.analytic.files.status",
+    "server_queryable":false
+  },
+  "asset_analytic_mimetype":{
+    "description":"The MIME type of the underlying asset file.",
+    "type":"string",
+    "src_field":"\/assets.analytic.mimetype",
     "server_queryable":false
   }
 }
@@ -343,6 +442,33 @@ ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -where "acquired >= '2015/03/
 </pre>
 <p>
 
+<li>
+List all downloadable scenes (API v1):
+<pre>
+ogrinfo -ro -al -q "PLScenes:" -oo VERSION=v1 -oo API_KEY=some_value -oo FILTER='_permissions=assets:download'
+</pre>
+
+<li>
+List scenes matching a filter using Quick Search API (API v1):
+<pre>
+ogrinfo -ro -al -q "PLScenes:" -oo VERSION=v1 -oo API_KEY=some_value -oo FILTER='{
+  "filter": {
+    "type": "OrFilter",
+    "config": [
+      {
+        "field_name": "published",
+        "config": {
+          "gte": "2015-10-01T00:00:00Z"
+        },
+        "type": "DateRangeFilter"
+      }
+    ]
+  }
+}'
+</pre>
+<p>
+
+
 <h2>Raster access</h2>
 
 <p>Scenes and their thumbnails can be accessed as raster datasets, provided
@@ -356,8 +482,9 @@ content of the value of the 'id' field of the features of the 'ortho' vector lay
 </p>
 
 <p>For API v1, the CATALOG open option must be specified. If the product is not
-already cached on the server, it will be asynchronously generated and the open
-attempt will return an error. Further retries will be needed.</p>
+already generated on the server, it will be activated, and the driver will wait
+for it to be available. The length of this retry can be configured with the
+ACTIVATION_TIMEOUT open option.</p>
 
 <h3>Raster access examples</h3>
 
@@ -370,6 +497,10 @@ gdalinfo "PLScenes:scene=scene_id,product_type=analytic" -oo API_KEY=some_value
 or
 <pre>
 gdalinfo "PLScenes:" -oo API_KEY=some_value -oo SCENE=scene_id -oo PRODUCT_TYPE=analytic
+</pre>
+or with V1 API:
+<pre>
+gdalinfo "PLScenes:" -oo API_KEY=some_value -oo VERSION=v1 -oo CATALOG=catalog_name -oo SCENE=scene_id -oo PRODUCT_TYPE=analytic
 </pre>
 
 <li>
@@ -384,7 +515,8 @@ gdal_translate "PLScenes:" -oo API_KEY=some_value -oo SCENE=scene_id \
 
 <ul>
 <li> <a href="https://www.planet.com/docs/v0/scenes/">Documentation of Planet Scenes API v0</a><p>
-<li> <a href="https://www.planet.com/docs/v0/general-concepts/#authentication">API Authentication</a><p>
+<li> <a href="https://www.planet.com/docs/v0/general-concepts/#authentication">API Authentication in API v0</a><p>
+<li> <a href="https://www.planet.com/docs/v1/">Documentation of Planet Scenes API v1</a><p>
 <li> <a href="frmt_plmosaic.html">Raster PLMosaic / Planet Mosaics API driver</a><p>
 </ul>
 

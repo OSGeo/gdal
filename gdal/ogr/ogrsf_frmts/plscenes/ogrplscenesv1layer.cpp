@@ -51,8 +51,7 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
                                        const char* pszName,
                                        const char* pszSpecURL,
                                        const char* pszItemsURL,
-                                       GIntBig nCount,
-                                       std::vector<CPLString> aoAssetCategories)
+                                       GIntBig nCount)
 {
     m_poDS = poDS;
     SetDescription(pszName);
@@ -65,15 +64,15 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
     m_osSpecURL = pszSpecURL;
     m_osItemsURL = pszItemsURL;
     m_nTotalFeatures = nCount;
-    m_aoAssetCategories = aoAssetCategories;
     m_nNextFID = 1;
     m_bEOF = false;
     m_bStillInFirstPage = true;
     m_poPageObj = NULL;
     m_poFeatures = NULL;
     m_nFeatureIdx = 0;
-    m_nPageSize = atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "1000"));
+    m_nPageSize = atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"));
     m_bFilterMustBeClientSideEvaluated = false;
+    m_bInFeatureCountOrGetExtent = false;
     ResetReading();
 }
 
@@ -166,6 +165,20 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     json_object* poSpec = m_poDS->RunRequest(m_osSpecURL);
     if( poSpec == NULL )
         return;
+
+    // Check page size
+    json_object* poMaximum = json_ex_get_object_by_path(poSpec, "parameters.qPageSize.maximum");
+    if( poMaximum != NULL && json_object_get_type(poMaximum) == json_type_int )
+    {
+        int nMaximum = json_object_get_int(poMaximum);
+        if( m_nPageSize > nMaximum )
+        {
+            CPLDebug("PLScenes", "Limiting page size to its maximum: %d", nMaximum);
+            m_nPageSize = nMaximum;
+            m_osRequestURL = BuildRequestURL();
+        }
+    }
+
     json_object* poPaths = json_object_object_get(poSpec, "paths");
     if( poPaths == NULL || json_object_get_type(poPaths) != json_type_object )
     {
@@ -437,8 +450,6 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         ParseProperties(poLinks, poSpec, osPropertiesDesc, "_links");
     }
 
-    json_object* poEmbeds = json_object_object_get(poProperties, "_embeds");
-
     poProperties = json_object_object_get(poProperties, "properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
     {
@@ -457,13 +468,78 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
 
     ParseProperties(poProperties, poSpec, osPropertiesDesc, "properties");
 
-    if( poEmbeds != NULL && json_object_get_type(poEmbeds) == json_type_object )
-        poEmbeds = ResolveRefIfNecessary(poEmbeds, poSpec);
-    else
-        poEmbeds = NULL;
-    if( poEmbeds != NULL )
+    // Find asset categories
+    /* Parse
+    "PermissionFilter": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Filter"
+        },
+        {
+          "properties": {
+            "config": {
+              "items": {
+                "enum": [
+                  "assets:download",
+                  "assets.visual:download",
+                  "assets.analytic:download"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    */
+    json_object* poPermissionFilterAllOf = json_ex_get_object_by_path(poSpec, "definitions.PermissionFilter.allOf");
+    poProperties = NULL;
+    if( poPermissionFilterAllOf != NULL && json_object_get_type(poPermissionFilterAllOf) == json_type_array )
     {
-        ParseEmbeds(poEmbeds, poSpec, osPropertiesDesc);
+        const int nItemsAllOfSize = json_object_array_length(poPermissionFilterAllOf);
+        for(int i=0;i<nItemsAllOfSize;i++)
+        {
+            json_object* poAllOfItem = json_object_array_get_idx(poPermissionFilterAllOf, i);
+            if( poAllOfItem != NULL && json_object_get_type(poAllOfItem) == json_type_object )
+            {
+                poProperties = json_object_object_get(poAllOfItem, "properties");
+                if( poProperties != NULL )
+                    break;
+            }
+        }
+    }
+    if( poProperties != NULL && json_object_get_type(poProperties) == json_type_object )
+    {
+        json_object* poEnum = json_ex_get_object_by_path(poProperties, "config.items.enum");
+        if( poEnum != NULL && json_object_get_type(poEnum) == json_type_array )
+        {
+            const int nEnumCount = json_object_array_length(poEnum);
+            for(int i=0;i<nEnumCount;i++)
+            {
+                json_object* poItem = json_object_array_get_idx(poEnum, i);
+                if( poItem != NULL && json_object_get_type(poItem) == json_type_string )
+                {
+                    const char* pszItem = json_object_get_string(poItem);
+                    const char* pszColumn = strchr(pszItem, ':');
+                    if( STARTS_WITH(pszItem, "assets.") && pszColumn != NULL )
+                    {
+                        CPLString osAssetCategory( pszItem + strlen("assets.") );
+                        osAssetCategory.resize( pszColumn - pszItem - strlen("assets.") );
+                        m_aoAssetCategories.push_back(osAssetCategory);
+                    }
+                }
+            }
+        }
+    }
+
+    if( m_poDS->DoesFollowLinks() && m_aoAssetCategories.size() )
+    {
+        ParseAssetProperties( poSpec, osPropertiesDesc );
     }
 
     osPropertiesDesc += "}";
@@ -527,6 +603,8 @@ static OGRFieldType OGRPLScenesV1LayerGetFieldType(json_object* poObj,
             eType = OFTReal;
         else if( EQUAL(pszType, "integer") )
             eType = OFTInteger;
+        else if( EQUAL(pszType, "array") )
+            eType = OFTString;
         else
         {
             CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
@@ -635,56 +713,64 @@ void OGRPLScenesV1Layer::ParseProperties(json_object* poProperties,
 }
 
 /************************************************************************/
-/*                           ParseEmbeds()                          */
+/*                       ParseAssetProperties()                         */
 /************************************************************************/
 
-void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
-                                         json_object* poSpec,
-                                         CPLString& osPropertiesDesc)
+void OGRPLScenesV1Layer::ParseAssetProperties(json_object* poSpec,
+                                              CPLString& osPropertiesDesc)
 {
-/*
-    "ItemEmbeds": {
-      "properties": {
-        "assets": {
-          "additionalProperties": {
-            "$ref": "#/definitions/ItemAsset"
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-*/
-    json_object* poAddProperties = json_ex_get_object_by_path(poProperties, "properties.assets.additionalProperties");
-    if( poAddProperties == NULL || json_object_get_type(poAddProperties) != json_type_object )
-        return;
-    poAddProperties = ResolveRefIfNecessary(poAddProperties, poSpec);
-    if( poAddProperties == NULL )
-      return;
-
-/*
-    "ItemAsset": {
+    /* Parse
+    "Asset": {
       "properties": {
         "_links": {
           "$ref": "#/definitions/SelfLink"
         },
-        "category_id": {
-          "description": "Category identifier of this ItemAsset.",
-          "type": "string"
+        "_permissions": {
+          "items": {
+            "enum": [
+              "download"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
         },
-        "file": {
-          "description": "RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
-          "type": "string"
+        "files": {
+          "additionalProperties": {
+            "$ref": "#/definitions/AssetFile"
+          },
+          "description": "Various AssetFiles indicating how a user may download the image data associated with this Asset. The keys of this object reflect the type of each available AssetFile.",
+          "type": "object"
         },
         "mimetype": {
           "description": "The MIME type of the underlying asset file.",
           "type": "string"
+        },
+        "type": {
+          "description": "Type identifier of this Asset.",
+          "type": "string"
         }
-      }
-*/
-    poProperties = json_object_object_get(poAddProperties, "properties");
+      },
+      "required": [
+        "type",
+        "mimetype",
+        "files",
+        "_links",
+        "_permissions"
+      ],
+      "type": "object"
+    },
+    */
+
+    json_object* poProperties = json_ex_get_object_by_path(poSpec, "definitions.Asset.properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
         return;
+
+    json_object* poPropertiesAssetFile = json_ex_get_object_by_path(poSpec, "definitions.AssetFile.properties");
+    if( poPropertiesAssetFile != NULL && json_object_get_type(poPropertiesAssetFile) != json_type_object )
+    {
+        poPropertiesAssetFile = NULL;
+    }
 
     bool bFoundLinks = false;
     for(size_t i = 0; i < m_aoAssetCategories.size(); i++ )
@@ -698,10 +784,16 @@ void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
             if( it.val != NULL && json_object_get_type(it.val) == json_type_object )
             {
                 const char* pszJSonFieldName = it.key;
-                if( strcmp(pszJSonFieldName, "category_id") == 0 )
-                  continue;
+                if( strcmp(pszJSonFieldName, "type") == 0 )
+                    continue; // type is contained in the field name
+                if( strcmp(pszJSonFieldName, "files") == 0 && poPropertiesAssetFile != NULL )
+                {
+                    ProcessAssetFileProperties( poPropertiesAssetFile, m_aoAssetCategories[i], osPropertiesDesc );
+                    continue;
+                }
+
                 const char* pszOGRFieldName;
-                CPLString osSrcField(CPLString("_embeds.assets.") + m_aoAssetCategories[i] + CPLString("."));
+                CPLString osSrcField(CPLString("/assets.") + m_aoAssetCategories[i] + CPLString("."));
                 json_object* poLinksRef = NULL;
                 if( EQUAL(pszJSonFieldName, "_links") &&
                     (bFoundLinks ||
@@ -715,7 +807,10 @@ void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
                 }
                 else
                 {
-                    pszOGRFieldName = CPLSPrintf("asset_%s_%s", m_aoAssetCategories[i].c_str(), pszJSonFieldName);
+                    if( EQUAL( pszJSonFieldName, "_permissions") )
+                        pszOGRFieldName = CPLSPrintf("asset_%s_permissions", m_aoAssetCategories[i].c_str());
+                    else
+                        pszOGRFieldName = CPLSPrintf("asset_%s_%s", m_aoAssetCategories[i].c_str(), pszJSonFieldName);
                     osSrcField += pszJSonFieldName;
                 }
                 json_object* poKey = json_object_new_string(pszOGRFieldName);
@@ -754,6 +849,120 @@ void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
 }
 
 /************************************************************************/
+/*                       ProcessAssetFileProperties()                   */
+/************************************************************************/
+
+void OGRPLScenesV1Layer::ProcessAssetFileProperties( json_object* poPropertiesAssetFile,
+                                                     const CPLString& osAssetCategory,
+                                                     CPLString& osPropertiesDesc )
+{
+    /* Parse
+        "AssetFile": {
+      "description": "An AssetFile describes the means of downloading the image data associated with a specific Asset",
+      "properties": {
+        "_links": {
+          "properties": {
+            "activate": {
+              "description": "If present, RFC 3986 URI indicating where an authenticated user may trigger activation of this AssetFile via a POST request. A 202 response indicates the activation request has been accepted. A 204 response indicates the AssetFile is already active. After successful activation, this AssetFile will have a non-empty location.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "expires_at": {
+          "description": "If present, RFC 3339 timestamp indicating when this AssetFile will become inactive and will require reactivation.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "location": {
+          "description": "If present, RFC 3986 URI that indicates a location that will yield image data. Consult the documentation of the AssetFile type to understand how to use this URI.",
+          "type": "string"
+        },
+        "status": {
+          "description": "Current status of the AssetFile. \"inactive\" indicates that the AssetFile is not currently available for download, but may be after activation. \"activating\" indicates the AssetFile is currently undergoing activation, and may be available for download shortly. \"active\" indicates the AssetFile has been activated, and may currently be available for download if the authentication context permits.",
+          "enum": [
+            "inactive",
+            "activating",
+            "active"
+          ],
+          "type": "string"
+        },
+        "type": {
+          "description": "An identifier of the methodology that must be used to download the image data from the indicated location. In the case of \"http\", the user must make an HTTP GET request against the provided URL.",
+          "enum": [
+            "http"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "status",
+        "_links"
+      ],
+      "type": "object"
+    },
+    */
+    json_object_iter it;
+    it.key = NULL;
+    it.val = NULL;
+    it.entry = NULL;
+    json_object_object_foreachC( poPropertiesAssetFile, it )
+    {
+        if( it.val != NULL && json_object_get_type(it.val) == json_type_object )
+        {
+            const char* pszJSonFieldName = it.key;
+            json_object* poFieldObj = it.val;
+            if( strcmp(pszJSonFieldName, "type") == 0 )
+                continue; // "http" not really interesting
+
+            const char* pszOGRFieldName;
+            CPLString osSrcField(CPLString("/assets.") + osAssetCategory + CPLString(".files."));
+            if( EQUAL(pszJSonFieldName, "_links") )
+            {
+                poFieldObj = json_ex_get_object_by_path(poFieldObj, "properties.activate");
+                if( poFieldObj == NULL )
+                    continue;
+                pszOGRFieldName = CPLSPrintf("asset_%s_activate_link", osAssetCategory.c_str());
+                osSrcField += "_links.activate";
+            }
+            else
+            {
+                if( EQUAL(pszJSonFieldName, "location") )
+                    pszOGRFieldName = CPLSPrintf("asset_%s_product_link", osAssetCategory.c_str());
+                else if( EQUAL(pszJSonFieldName, "status") )
+                    pszOGRFieldName = CPLSPrintf("asset_%s_product_link_status", osAssetCategory.c_str());
+                else
+                    pszOGRFieldName = CPLSPrintf("asset_%s_%s", osAssetCategory.c_str(), pszJSonFieldName);
+                osSrcField += pszJSonFieldName;
+            }
+            json_object* poKey = json_object_new_string(pszOGRFieldName);
+            const char* pszKeySerialized = json_object_to_json_string(poKey);
+            if( osPropertiesDesc != "{" )
+                osPropertiesDesc += ",";
+            osPropertiesDesc += pszKeySerialized;
+            osPropertiesDesc += ":";
+            json_object_put(poKey);
+
+            json_object_object_add( poFieldObj, "src_field",
+                json_object_new_string( osSrcField.c_str() ) );
+
+            json_object_object_add( poFieldObj, "server_queryable",
+                                    json_object_new_boolean( FALSE ) );
+
+            osPropertiesDesc += json_object_to_json_string(poFieldObj);
+
+            const OGRFieldType eType =
+              OGRPLScenesV1LayerGetFieldType(poFieldObj, pszJSonFieldName);
+            OGRFieldDefn oFieldDefn(pszOGRFieldName, eType);
+            RegisterField(&oFieldDefn,
+                          NULL,
+                          osSrcField.c_str());
+        }
+    }
+}
+
+/************************************************************************/
 /*                              GetNextPage()                           */
 /************************************************************************/
 
@@ -771,7 +980,11 @@ bool OGRPLScenesV1Layer::GetNextPage()
         return false;
     }
 
-    json_object* poObj = m_poDS->RunRequest(m_osRequestURL);
+    json_object* poObj;
+    if( m_osRequestURL == m_poDS->GetBaseURL() + GetName() + "/quick-search" )
+        poObj = m_poDS->RunRequest(m_osRequestURL, FALSE, "POST", true, m_poDS->GetFilter());
+    else
+        poObj = m_poDS->RunRequest(m_osRequestURL);
     if( poObj == NULL )
     {
         m_bEOF = true;
@@ -833,25 +1046,26 @@ void OGRPLScenesV1Layer::ResetReading()
         m_poFeatures = NULL;
     m_nNextFID = 1;
     m_bStillInFirstPage = true;
-    m_osRequestURL = BuildRequestURL(false);
+    m_osRequestURL = BuildRequestURL();
 }
 
 /************************************************************************/
 /*                          BuildRequestURL()                           */
 /************************************************************************/
 
-CPLString OGRPLScenesV1Layer::BuildRequestURL(bool bForHits)
+CPLString OGRPLScenesV1Layer::BuildRequestURL()
 {
-    CPLString osURL = m_osItemsURL;
-
-    if( bForHits )
-        osURL += "?_page_size=0";
-    else
+    const CPLString& osFilter = m_poDS->GetFilter();
+    if( osFilter.size() && osFilter[0] == '{' && osFilter[osFilter.size()-1] == '}' )
     {
-        osURL += "?_embeds=features.*.assets";
-        if( m_nPageSize > 0 )
-            osURL += CPLSPrintf("&_page_size=%d", m_nPageSize);
+        // Quick search
+        return m_poDS->GetBaseURL() + GetName() + "/quick-search";
     }
+
+    CPLString osURL = m_osItemsURL;
+    osURL += CPLSPrintf("?_page_size=%d", m_nPageSize);
+    if( osFilter.size() )
+        osURL += "&" + osFilter;
 
     if( m_poFilterGeom != NULL )
     {
@@ -882,7 +1096,7 @@ CPLString OGRPLScenesV1Layer::BuildRequestURL(bool bForHits)
         if( m_osFilterURLPart[0] == '&' )
             osURL += m_osFilterURLPart;
         else
-            osURL = m_osItemsURL + m_osFilterURLPart + "?_embeds=assets";
+            osURL = m_osItemsURL + m_osFilterURLPart;
     }
 
     return osURL;
@@ -1321,8 +1535,22 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
         }
     }
 
-    json_object* poAssets = json_ex_get_object_by_path(poJSonFeature, "_embeds.assets");
-    if( poAssets != NULL && json_object_get_type(poAssets) == json_type_object )
+    json_object* poAssets = NULL;
+    if( m_poDS->DoesFollowLinks() && (!m_bInFeatureCountOrGetExtent || m_poAttrQuery != NULL)  )
+    {
+        std::map<CPLString, int>::iterator oIter = m_oMapPrefixedJSonFieldNameToFieldIdx.find(
+                                                                                  "_links.assets");
+        if( oIter != m_oMapPrefixedJSonFieldNameToFieldIdx.end() )
+        {
+            const int iField = oIter->second;
+            if( poFeature->IsFieldSet( iField ) )
+            {
+                const char* pszAssetURL = poFeature->GetFieldAsString( iField );
+                poAssets = m_poDS->RunRequest(pszAssetURL);
+            }
+        }
+    }
+    if( poAssets != NULL )
     {
         json_object_iter itAsset;
         itAsset.key = NULL;
@@ -1340,24 +1568,52 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
                 json_object_object_foreachC( poAsset, it )
                 {
                     if( it.val == NULL ) continue;
-                    CPLString osPrefixedJSonFieldName("_embeds.assets." + CPLString(itAsset.key));
+                    CPLString osPrefixedJSonFieldName("/assets." + CPLString(itAsset.key));
+                    osPrefixedJSonFieldName += "." + CPLString(it.key);
+                    json_object* poHTTP = NULL;
                     if( strcmp(it.key, "_links") == 0 &&
                         json_object_get_type(it.val) == json_type_object &&
                         json_object_object_get(it.val, "_self") != NULL )
                     {
-                        osPrefixedJSonFieldName += "._links._self";
+                        osPrefixedJSonFieldName += "._self";
                         SetFieldFromPrefixedJSonFieldName(
                             poFeature, osPrefixedJSonFieldName, json_object_object_get(it.val, "_self"));
                     }
+                    else if( strcmp(it.key, "files") == 0 &&
+                             json_object_get_type(it.val) == json_type_object &&
+                             (poHTTP = json_object_object_get(it.val, "http")) != NULL &&
+                             json_object_get_type(poHTTP) == json_type_object )
+                    {
+                        json_object_iter itFiles;
+                        itFiles.key = NULL;
+                        itFiles.val = NULL;
+                        itFiles.entry = NULL;
+                        json_object_object_foreachC( poHTTP, itFiles )
+                        {
+                            json_object* poActivate = NULL;
+                            if( strcmp(itFiles.key, "_links") == 0 &&
+                                json_object_get_type(itFiles.val) == json_type_object &&
+                                (poActivate = json_object_object_get(itFiles.val, "activate")) != NULL )
+                            {
+                                SetFieldFromPrefixedJSonFieldName(
+                                  poFeature, osPrefixedJSonFieldName + "._links.activate", poActivate);
+                            }
+                            else
+                            {
+                                SetFieldFromPrefixedJSonFieldName(
+                                    poFeature, osPrefixedJSonFieldName + "." + CPLString(itFiles.key), itFiles.val);
+                            }
+                        }
+                    }
                     else
                     {
-                        osPrefixedJSonFieldName += "." + CPLString(it.key);
                         SetFieldFromPrefixedJSonFieldName(
                             poFeature, osPrefixedJSonFieldName, it.val);
                     }
                 }
             }
         }
+        json_object_put(poAssets);
     }
 
     return poFeature;
@@ -1391,6 +1647,10 @@ void OGRPLScenesV1Layer::SetFieldFromPrefixedJSonFieldName(
         {
             poFeature->SetField(iField, json_object_get_string(poVal));
         }
+        else
+        {
+            poFeature->SetField(iField, json_object_to_json_string_ext( poVal, 0 ));
+        }
     }
 }
 
@@ -1400,23 +1660,16 @@ void OGRPLScenesV1Layer::SetFieldFromPrefixedJSonFieldName(
 
 GIntBig OGRPLScenesV1Layer::GetFeatureCount(int bForce)
 {
-    if( m_nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL )
-        return m_nTotalFeatures;
-
-    json_object* poRes = m_poDS->RunRequest(BuildRequestURL(true));
-    if( poRes != NULL )
+    if( m_nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+        m_osRequestURL != m_poDS->GetBaseURL() + GetName() + "/quick-search" )
     {
-        json_object* poResultCount = json_object_object_get(poRes, "_result_count");
-        if( poResultCount != NULL && json_object_get_type(poResultCount) == json_type_int )
-        {
-            GIntBig nRes = static_cast<GIntBig>(json_object_get_int64(poResultCount));
-            json_object_put(poRes);
-            return nRes;
-        }
-        json_object_put(poRes);
+        return m_nTotalFeatures;
     }
 
-    return OGRLayer::GetFeatureCount(bForce);
+    m_bInFeatureCountOrGetExtent = true;
+    GIntBig nRes = OGRLayer::GetFeatureCount(bForce);
+    m_bInFeatureCountOrGetExtent = false;
+    return nRes;
 }
 
 /************************************************************************/
@@ -1430,7 +1683,10 @@ OGRErr OGRPLScenesV1Layer::GetExtent( OGREnvelope *psExtent, int bForce )
           m_bStillInFirstPage &&
           json_object_array_length(m_poFeatures) < m_nTotalFeatures) )
     {
-        return OGRLayer::GetExtentInternal(0, psExtent, bForce);
+        m_bInFeatureCountOrGetExtent = true;
+        OGRErr eErr = OGRLayer::GetExtentInternal(0, psExtent, bForce);
+        m_bInFeatureCountOrGetExtent = false;
+        return eErr;
     }
 
     psExtent->MinX = -180;
