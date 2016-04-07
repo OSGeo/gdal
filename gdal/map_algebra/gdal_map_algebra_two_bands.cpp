@@ -3,7 +3,7 @@
 typedef int (*gma_two_bands_callback)(gma_band, gma_block*, gma_band, gma_object_t**, gma_object_t*);
 
 template<typename type1,typename type2>
-type1 gma_use_operator(gma_logical_operation_p<type2> *op, type2 value) {
+type1 gma_test_operator(gma_logical_operation_p<type2> *op, type2 value) {
     switch (op->m_op) {
     case gma_eq:
         return value == op->m_value;
@@ -32,14 +32,13 @@ int gma_assign_band(gma_band band1, gma_block *block1, gma_band band2, gma_objec
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) = value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -51,14 +50,13 @@ int gma_add_band(gma_band band1, gma_block *block1, gma_band band2, gma_object_t
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) += value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -70,14 +68,13 @@ int gma_subtract_band(gma_band band1, gma_block *block1, gma_band band2, gma_obj
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) -= value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -89,14 +86,13 @@ int gma_multiply_by_band(gma_band band1, gma_block *block1, gma_band band2, gma_
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) *= value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -108,14 +104,13 @@ int gma_divide_by_band(gma_band band1, gma_block *block1, gma_band band2, gma_ob
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) /= value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -127,14 +122,13 @@ int gma_modulus_by_band(gma_band band1, gma_block *block1, gma_band band2, gma_o
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h; i1.y++) {
         for (i1.x = 0; i1.x < block1->w; i1.x++) {
-            type1 value1;
-            type2 value2;
-            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value2)) {
-                if (arg)
-                    value1 = gma_use_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value2);
-                else
-                    value1 = value2;
-                gma_block_cell(type1, block1, i1) %= value1;
+            type2 value;
+            if (gma_value_from_other_band<type2>(band1, block1, i1, band2, &value)) {
+                if (arg) {
+                    if (gma_test_operator<type1,type2>((gma_logical_operation_p<type2> *)arg, value))
+                        gma_block_cell(type1, block1, i1) = value;
+                } else
+                    gma_block_cell(type1, block1, i1) = value;
             }
         }
     }
@@ -177,12 +171,12 @@ gma_modulus_by_band_type_error(double,double)
 
 template<typename zones_type,typename values_type>
 int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_band, gma_object_t **retval, gma_object_t*) {
-    gma_hash_p<gma_number_p<values_type> > *rv;
+    gma_hash_p<zones_type,gma_number_p<values_type> > *rv;
     if (*retval == NULL) {
-        rv = new gma_hash_p<gma_number_p<values_type> >;
+        rv = new gma_hash_p<zones_type,gma_number_p<values_type> >;
         *retval = rv;
     } else
-        rv = (gma_hash_p<gma_number_p<values_type> > *)*retval;
+        rv = (gma_hash_p<zones_type,gma_number_p<values_type> > *)*retval;
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
         for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
@@ -192,7 +186,7 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
             if (!zone)
                 continue;
             if (rv->exists(zone)) {
-                values_type old_value = ((gma_number_p<values_type>*)rv->get(zone))->value();
+                values_type old_value = rv->get(zone)->value();
                 if (value > old_value)
                     continue;
             }
@@ -204,12 +198,12 @@ int gma_zonal_min(gma_band zones_band, gma_block *zones_block, gma_band values_b
 
 template<typename zones_type,typename values_type>
 int gma_zonal_max(gma_band zones_band, gma_block *zones_block, gma_band values_band, gma_object_t **retval, gma_object_t*) {
-    gma_hash_p<gma_number_p<values_type> > *rv;
+    gma_hash_p<zones_type,gma_number_p<values_type> > *rv;
     if (*retval == NULL) {
-        rv = new gma_hash_p<gma_number_p<values_type> >;
+        rv = new gma_hash_p<zones_type,gma_number_p<values_type> >;
         *retval = rv;
     } else
-        rv = (gma_hash_p<gma_number_p<values_type> > *)*retval;
+        rv = (gma_hash_p<zones_type,gma_number_p<values_type> > *)*retval;
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
         for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
@@ -257,7 +251,7 @@ int gma_set_zonal_min(gma_band values_band, gma_block *values_block, gma_band zo
         *retval = rv;
     } else
         rv = (gma_band_iterator_t*)*retval;
-    gma_hash_p<gma_number_p<values_type> > *zm = (gma_hash_p<gma_number_p<values_type> >*)zonal_min; // check?
+    gma_hash_p<zones_type,gma_number_p<values_type> > *zm = (gma_hash_p<zones_type,gma_number_p<values_type> >*)zonal_min;
     if (gma_first_block(values_block)) {
         rv->new_loop();
     }
@@ -319,16 +313,17 @@ int gma_rim_by8(gma_band rims_band, gma_block *rims_block, gma_band areas_band, 
 
 template<typename depr_type,typename dem_type>
 int gma_depression_pour_elevation(gma_band depr_band, gma_block *depr_block, gma_band dem_band, gma_object_t **retval, gma_object_t *arg) {
-    gma_hash_p<gma_hash_p<gma_number_p<dem_type> > > *z = (gma_hash_p<gma_hash_p<gma_number_p<dem_type> > > *)arg;
+    gma_hash_p<depr_type,gma_hash_p<depr_type,gma_number_p<dem_type> > > *z = 
+        (gma_hash_p<depr_type,gma_hash_p<depr_type,gma_number_p<dem_type> > > *)arg;
     gma_cell_index i;
     for (i.y = 0; i.y < depr_block->h; i.y++) {
         for (i.x = 0; i.x < depr_block->w; i.x++) {
             depr_type zone = gma_block_cell(depr_type, depr_block, i);
-            gma_hash_p<gma_number_p<dem_type> > *ns;
+            gma_hash_p<depr_type,gma_number_p<dem_type> > *ns;
             if (z->exists(zone))
-                ns = (gma_hash_p<gma_number_p<dem_type> >*)z->get(zone);
+                ns = (gma_hash_p<depr_type,gma_number_p<dem_type> >*)z->get(zone);
             else {
-                ns = new gma_hash_p<gma_number_p<dem_type> >;
+                ns = new gma_hash_p<depr_type,gma_number_p<dem_type> >;
                 z->put(zone, ns);
             }
             dem_type value;
@@ -544,13 +539,13 @@ public:
     long total_count;
     int basin_id;
     int depressions;
-    gma_hash_p<gma_hash_p<gma_number_p<datatype> > > *splits; // basin => (basin => 1)
+    gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<datatype> > > *splits;
     gma_depressions_iterator_t() {
         count_in_this_loop_of_band = 0;
         total_count = 0;
         basin_id = 0;
         depressions = 0;
-        splits = new gma_hash_p<gma_hash_p<gma_number_p<datatype> > >;
+        splits = new gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<datatype> > >;
     }
     void new_loop() {
         count_in_this_loop_of_band = 0;
@@ -631,11 +626,12 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
                             split_basin = basin;
                         else if (basin != split_basin) {
                             if (!rv->splits->exists(split_basin)) {
-                                gma_hash_p<gma_number_p<deps_t> > *b = new gma_hash_p<gma_number_p<deps_t> >;
+                                gma_hash_p<deps_t,gma_number_p<deps_t> > *b = new gma_hash_p<deps_t,gma_number_p<deps_t> >;
                                 b->put(basin, new gma_number_p<deps_t>(1));
                                 rv->splits->put(split_basin, b);
                             } else {
-                                gma_hash_p<gma_number_p<deps_t> > *b = (gma_hash_p<gma_number_p<deps_t> > *)rv->splits->get(split_basin);
+                                gma_hash_p<deps_t,gma_number_p<deps_t> > *b = 
+                                    (gma_hash_p<deps_t,gma_number_p<deps_t> > *)rv->splits->get(split_basin);
                                 if (!b->exists(basin))
                                     b->put(basin, new gma_number_p<deps_t>(1));
                             }
@@ -667,14 +663,15 @@ int gma_depressions(gma_band band_deps, gma_block *block_deps, gma_band band_fd,
 
 // function to fix the splitted depressions
 template<typename datatype>
-gma_hash_p<gma_number_p<datatype> > *gma_split_mapper(gma_hash_p<gma_hash_p<gma_number_p<datatype> > > *splits) {
-    gma_hash_p<gma_number_p<datatype> > *map = new gma_hash_p<gma_number_p<datatype> >;
-    gma_hash_p<gma_number_p<datatype> > *to = new gma_hash_p<gma_number_p<datatype> >;
+gma_hash_p<datatype,gma_number_p<datatype> > *gma_split_classifier
+    (gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<datatype> > > *splits) {
+    gma_hash_p<datatype,gma_number_p<datatype> > *map = new gma_hash_p<datatype,gma_number_p<datatype> >;
+    gma_hash_p<datatype,gma_number_p<datatype> > *to = new gma_hash_p<datatype,gma_number_p<datatype> >;
     int n1 = splits->size();
     int32_t *keys1 = splits->keys(n1);
     for (int i1 = 0; i1 < n1; i1++) {
         int32_t key1 = keys1[i1];
-        gma_hash_p<gma_number_p<datatype> > *s2 = (gma_hash_p<gma_number_p<datatype> > *)splits->get(key1);
+        gma_hash_p<datatype,gma_number_p<datatype> > *s2 = (gma_hash_p<datatype,gma_number_p<datatype> > *)splits->get(key1);
         int n2 = s2->size();
         int32_t *keys2 = s2->keys(n2);
         for (int i2 = 0; i2 < n2; i2++) {

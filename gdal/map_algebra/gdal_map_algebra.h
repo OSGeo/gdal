@@ -6,7 +6,7 @@
 /* 
    need classes for 
    intervals/ranges/zonal values (std::pair), 
-   reclassifiers (std::unordered_map of integer => integer or bins => array of numbers)
+   classifiers (std::unordered_map of integer => integer or bins => array of numbers)
    cells (int,int,number)
    logical operations (eq, le, .., number) (for if (op) then value -operations)
 */
@@ -18,9 +18,11 @@ typedef enum {
     gma_range,  // not a real class, a pair of two numbers of band datatype
     gma_bins,
     gma_histogram,
-    gma_reclassifier,
+    gma_classifier,
     gma_cell,
-    gma_logical_operation // logical operator and a number
+    gma_logical_operation, // logical operator and a number
+    gma_cell_callback,
+    gma_hash
 } gma_class_t;
 
 // base class and introspection,
@@ -70,6 +72,14 @@ public:
     virtual gma_object_t *at(unsigned int i) {};
 };
 
+class gma_classifier_t : public gma_object_t {
+public:
+    virtual gma_class_t get_class() {return gma_classifier;};
+    virtual void add_class(gma_number_t *interval_max, gma_number_t *value) {};
+    virtual unsigned int size() {};
+    virtual gma_object_t *at(unsigned int i) {};
+};
+
 class gma_cell_t  : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_cell;};
@@ -79,6 +89,14 @@ public:
     virtual void set_value(int value) {};
     virtual int value_as_int() {};
     virtual double value_as_double() {};
+};
+
+typedef int (*gma_cell_callback_f)(gma_cell_t*);
+
+class gma_cell_callback_t : public gma_object_t {
+public:
+    virtual gma_class_t get_class() {return gma_cell_callback;};
+    virtual void set_callback(gma_cell_callback_f callback) {};
 };
 
 // logical operators
@@ -103,6 +121,14 @@ public:
     virtual void set_value(double value) {};
 };
 
+class gma_hash_t : public gma_object_t {
+public:
+    virtual gma_class_t get_class() {return gma_hash;};
+    virtual int size() {};
+    virtual std::vector<gma_number_t*> *keys_sorted() {};
+    virtual gma_object_t *get(gma_number_t *key) {};
+};
+
 // methods in four groups
 
 typedef enum { 
@@ -125,7 +151,7 @@ typedef enum {
 
 typedef enum { 
     gma_method_histogram,
-    gma_method_zonal_neighbors,
+    gma_method_zonal_neighbors, // 
     gma_method_get_min,
     gma_method_get_max,
     gma_method_get_range,
@@ -139,7 +165,8 @@ typedef enum {
     gma_method_multiply,
     gma_method_divide,
     gma_method_modulus,
-    gma_method_map
+    gma_method_classify,
+    gma_method_cell_callback
 } gma_method_with_arg_t;
 
 typedef enum { 

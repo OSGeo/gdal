@@ -85,32 +85,38 @@ int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval
 }
 
 template<typename datatype>
-int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_hash_p<gma_hash_p<gma_number_p<datatype> > > *h;
+int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *) {
+    gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > > *h;
+    if (*retval == NULL) {
+        h = new gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > >;
+        *retval = h;
+    } else
+        h = (gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > >*)*retval;
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype me = gma_block_cell(datatype, block, i);
-            gma_hash_p<gma_number_p<datatype> > *ns;
+            gma_hash_p<datatype,gma_number_p<int> > *ns;
             if (h->exists(me))
-                ns = (gma_hash_p<gma_number_p<datatype> > *)h->get(me);
+                ns = h->get(me);
             else {
-                ns = new gma_hash_p<gma_number_p<datatype> >;
+                ns = new gma_hash_p<datatype,gma_number_p<int> >;
                 h->put(me, ns);
             }
-
             gma_cell_index in = gma_cell_first_neighbor(i);
             for (int neighbor = 1; neighbor < 9; neighbor++) {
                 gma_cell_move_to_neighbor(in, neighbor);
                 datatype n;
 
                 if (!gma_value_from_other_band<datatype>(band, block, in, band, &n)) {
-                    ns->put(-1, new gma_number_p<datatype>(1));
-                    continue;  // we are at border and this is outside
+                    // we are at border and this is outside
+                    if (!ns->exists(-1))
+                        ns->put((int32_t)-1, new gma_number_p<int>(1)); // using -1 to denote outside
+                    continue;
                 }
                 
                 if (n != me && !ns->exists(n))
-                    ns->put(n, new gma_number_p<datatype>(1));
+                    ns->put(n, new gma_number_p<int>(1) );
                 
             }
 
@@ -181,9 +187,14 @@ gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t me
             type_switch_single(gma_compute_histogram, 0);
         }
         break;
-    case gma_method_zonal_neighbors:
+    case gma_method_zonal_neighbors: {
         type_switch_single(gma_zonal_neighbors, 1);
+
+        // convert retval from gma_hash_p<gma_hash_p<gma_number_p<int> > > * 
+        // to vector of pairs of number and vector of numbers ??
+
         break;
+    }
     case gma_method_get_cells: {
         type_switch_single(gma_get_cells, 0);
         break;

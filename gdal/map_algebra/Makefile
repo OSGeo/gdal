@@ -6,7 +6,7 @@ objects = gdal_map_algebra_arg.o gdal_map_algebra_compute_value.o gdal_map_algeb
 
 headers = gma_hash.h gdal_map_algebra_private.h gdal_map_algebra.h
 
-all: demo d8 histogram
+all: demo d8 histogram test
 
 demo: demo.cpp $(objects)
 	gcc -o demo -I $(inc) demo.cpp $(objects) $(gdal) -g -lstdc++ -lm
@@ -16,6 +16,9 @@ d8: d8.cpp $(objects)
 
 histogram: histogram.cpp $(objects)
 	gcc -o histogram -I $(inc) histogram.cpp $(objects) $(gdal) -g -lstdc++ -lm
+
+test: test.cpp $(objects)
+	gcc -o test -I $(inc) test.cpp $(objects) $(gdal) -g -lstdc++ -lm
 
 gdal_map_algebra_arg.o: $(headers) gdal_map_algebra_arg.cpp
 	gcc -c -g -I $(inc) gdal_map_algebra_arg.cpp
@@ -39,4 +42,4 @@ gma_help.o: $(headers) gma_help.cpp
 	gcc -c -g -I $(inc) gma_help.cpp
 
 clean:
-	rm -f $(objects) demo d8 histogram
+	rm -f $(objects) demo d8 histogram test

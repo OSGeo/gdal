@@ -5,6 +5,12 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         return new gma_number_p<int>;
     if (klass == gma_pair)
         return new gma_pair_p<gma_object_t*,gma_object_t* >;
+    if (klass == gma_cell_callback)
+        return new gma_cell_callback_p;
+    if (klass == gma_histogram) {
+        fprintf(stderr, "Histogram is not used as an argument.");
+        return NULL;
+    }
     switch (b->GetRasterDataType()) {
     case GDT_Byte:
         switch (klass) {
@@ -15,10 +21,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<uint8_t>, new gma_number_p<uint8_t>);
         case gma_bins:
             return new gma_bins_p<uint8_t>;
-        case gma_histogram:
-            break;
-        case gma_reclassifier:
-            break;
+        case gma_classifier:
+            return new gma_classifier_p<uint8_t>(true);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -34,10 +38,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<uint16_t>, new gma_number_p<uint16_t>);
         case gma_bins:
             return new gma_bins_p<uint16_t>;
-        case gma_histogram:
-            break;
-        case gma_reclassifier:
-            break;
+        case gma_classifier:
+            return new gma_classifier_p<uint16_t>(true);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -53,8 +55,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<int16_t>, new gma_number_p<int16_t>);
         case gma_bins:
             return new gma_bins_p<int16_t>;
-        case gma_histogram:
-        case gma_reclassifier:
+        case gma_classifier:
+            return new gma_classifier_p<int16_t>(true);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -70,8 +72,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<uint32_t>, new gma_number_p<uint32_t>);
         case gma_bins:
             return new gma_bins_p<uint32_t>;
-        case gma_histogram:
-        case gma_reclassifier:
+        case gma_classifier:
+            return new gma_classifier_p<uint32_t>(true);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -87,8 +89,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<int32_t>, new gma_number_p<int32_t>);
         case gma_bins:
             return new gma_bins_p<int32_t>;
-        case gma_histogram:
-        case gma_reclassifier:
+        case gma_classifier:
+            return new gma_classifier_p<int32_t>(true);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -104,8 +106,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<float>, new gma_number_p<float>);
         case gma_bins:
             return new gma_bins_p<float>;
-        case gma_histogram:
-        case gma_reclassifier:
+        case gma_classifier:
+            return new gma_classifier_p<float>(false);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -121,8 +123,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
                 (new gma_number_p<double>, new gma_number_p<double>);
         case gma_bins:
             return new gma_bins_p<double>;
-        case gma_histogram:
-        case gma_reclassifier:
+        case gma_classifier:
+            return new gma_classifier_p<double>(false);
         case gma_cell:
             break;
         case gma_logical_operation:
@@ -186,11 +188,4 @@ int my_xy_snprintf<float>(char *s, float x, float y) {
 template <>
 int my_xy_snprintf<double>(char *s, double x, double y) {
     return snprintf(s, 40, "%f,%f", x, y);
-}
-
-int compare_int32s(const void *a, const void *b)
-{
-  const int32_t *da = (const int32_t *) a;
-  const int32_t *db = (const int32_t *) b;
-  return (*da > *db) - (*da < *db);
 }
