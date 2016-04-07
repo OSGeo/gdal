@@ -675,7 +675,7 @@ def osr_basic_19():
     return 'success'
 
 ###############################################################################
-# Test GetAxisName() and GetAxisOrientation()
+# Test GetAxisName() and GetAxisOrientation() and GetAngularUnitsName()
 
 def osr_basic_20():
 
@@ -700,6 +700,11 @@ def osr_basic_20():
     if sr.GetAxisOrientation('GEOGCS', 1) != osr.OAO_East:
         gdaltest.post_reason('fail')
         print(sr.GetAxisOrientation('GEOGCS', 1))
+        return 'fail'
+
+    if sr.GetAngularUnitsName() != 'degree':
+        gdaltest.post_reason('fail')
+        print(sr.GetAngularUnitsName())
         return 'fail'
 
     return 'success'

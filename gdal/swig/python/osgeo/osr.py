@@ -344,6 +344,10 @@ class SpatialReference(_object):
         """GetAngularUnits(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetAngularUnits(self, *args)
 
+    def GetAngularUnitsName(self, *args):
+        """GetAngularUnitsName(SpatialReference self) -> char const *"""
+        return _osr.SpatialReference_GetAngularUnitsName(self, *args)
+
     def SetTargetLinearUnits(self, *args):
         """SetTargetLinearUnits(SpatialReference self, char const * target, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetTargetLinearUnits(self, *args)

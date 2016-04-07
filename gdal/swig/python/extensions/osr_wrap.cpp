@@ -3661,6 +3661,12 @@ SWIGINTERN double OSRSpatialReferenceShadow_GetAngularUnits(OSRSpatialReferenceS
     // Return code ignored.
     return OSRGetAngularUnits( self, 0 );
   }
+SWIGINTERN char const *OSRSpatialReferenceShadow_GetAngularUnitsName(OSRSpatialReferenceShadow *self){
+    char *name = 0;
+    OSRGetAngularUnits( self, &name );
+    // This is really a const char* that is returned and shouldn't be freed
+    return (const char*)name;
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTargetLinearUnits(OSRSpatialReferenceShadow *self,char const *target,char const *name,double to_meters){
     return OSRSetTargetLinearUnits( self, target, name, to_meters );
   }
@@ -5235,6 +5241,42 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetAngularUnits(PyObject *SWIGUNUSED
 #endif
   }
   resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetAngularUnitsName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetAngularUnitsName",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetAngularUnitsName" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)OSRSpatialReferenceShadow_GetAngularUnitsName(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -13368,6 +13410,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetAttrValue", _wrap_SpatialReference_SetAttrValue, METH_VARARGS, (char *)"SpatialReference_SetAttrValue(SpatialReference self, char const * name, char const * value) -> OGRErr"},
 	 { (char *)"SpatialReference_SetAngularUnits", _wrap_SpatialReference_SetAngularUnits, METH_VARARGS, (char *)"SpatialReference_SetAngularUnits(SpatialReference self, char const * name, double to_radians) -> OGRErr"},
 	 { (char *)"SpatialReference_GetAngularUnits", _wrap_SpatialReference_GetAngularUnits, METH_VARARGS, (char *)"SpatialReference_GetAngularUnits(SpatialReference self) -> double"},
+	 { (char *)"SpatialReference_GetAngularUnitsName", _wrap_SpatialReference_GetAngularUnitsName, METH_VARARGS, (char *)"SpatialReference_GetAngularUnitsName(SpatialReference self) -> char const *"},
 	 { (char *)"SpatialReference_SetTargetLinearUnits", _wrap_SpatialReference_SetTargetLinearUnits, METH_VARARGS, (char *)"SpatialReference_SetTargetLinearUnits(SpatialReference self, char const * target, char const * name, double to_meters) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLinearUnits", _wrap_SpatialReference_SetLinearUnits, METH_VARARGS, (char *)"SpatialReference_SetLinearUnits(SpatialReference self, char const * name, double to_meters) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLinearUnitsAndUpdateParameters", _wrap_SpatialReference_SetLinearUnitsAndUpdateParameters, METH_VARARGS, (char *)"SpatialReference_SetLinearUnitsAndUpdateParameters(SpatialReference self, char const * name, double to_meters) -> OGRErr"},
