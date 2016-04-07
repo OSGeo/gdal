@@ -1266,7 +1266,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 #define OPTIMIZED_FOR_VSICURL
 #ifdef  OPTIMIZED_FOR_VSICURL
         int iLevel;
-        for(iLevel = 0; nMinLevel < 0 && iLevel < 16; iLevel ++)
+        for(iLevel = 0; nMinLevel < 0 && iLevel <= 32; iLevel ++)
         {
             pszSQL = CPLSPrintf(
                 "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
