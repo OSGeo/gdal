@@ -120,6 +120,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
   private:
 
     bool m_bWriteBounds;
+    bool m_bWriteMinMaxZoom;
     MBTilesDataset* poMainDS;
     bool m_bGeoTransformValid;
     double m_adfGeoTransform[6];
@@ -726,6 +727,7 @@ GDALRasterBand* MBTilesBand::GetOverview(int nLevel)
 MBTilesDataset::MBTilesDataset()
 {
     m_bWriteBounds = true;
+    m_bWriteMinMaxZoom = true;
     poMainDS = NULL;
     m_nOverviewCount = 0;
     hDS = NULL;
@@ -1002,6 +1004,18 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
     m_nOverviewCount = m_nZoomLevel;
     m_papoOverviewDS = (MBTilesDataset**) CPLCalloc(sizeof(MBTilesDataset*),
                                                            m_nOverviewCount);
+
+    if( m_bWriteMinMaxZoom )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", m_nZoomLevel );
+        sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+        sqlite3_free(pszSQL);
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO metadata (name, value) VALUES ('maxzoom', '%d')", m_nZoomLevel );
+        sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+        sqlite3_free(pszSQL);
+    }
 
     for(int i=0; i<m_nOverviewCount; i++)
     {
@@ -2038,6 +2052,7 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("MBTILES_PNG_SUPPORTS_2BANDS", "TRUE"));
     m_bPNGSupportsCT = CPLTestBool(CPLGetConfigOption("MBTILES_PNG_SUPPORTS_CT", "TRUE"));
     m_bWriteBounds = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_BOUNDS", true);
+    m_bWriteMinMaxZoom = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_MINMAXZOOM", true);
 
     VSIUnlink( pszFilename );
     SetDescription( pszFilename );
@@ -2454,6 +2469,20 @@ CPLErr MBTilesDataset::IBuildOverviews(
             sqlite3_free(pszErrMsg);
             return CE_Failure;
         }
+
+        int nRows = 0, nCols = 0;
+        char** papszResult = NULL;
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_free_table(papszResult);
+        if( nRows == 1 )
+        {
+            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'", NULL, NULL, NULL);
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", m_nZoomLevel );
+            sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+            sqlite3_free(pszSQL);
+        }
+
         return CE_None;
     }
 
@@ -2491,6 +2520,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
 
     GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
     int iCurOverview = 0;
+    int nMinZoom = m_nZoomLevel;
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
@@ -2508,7 +2538,9 @@ CPLErr MBTilesDataset::IBuildOverviews(
             {
                 continue;
             }
-            GDALDataset* poODS = m_papoOverviewDS[iOvr];
+            MBTilesDataset* poODS = m_papoOverviewDS[iOvr];
+            if( poODS->m_nZoomLevel < nMinZoom )
+                nMinZoom = poODS->m_nZoomLevel;
             papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
             iCurOverview++ ;
         }
@@ -2523,6 +2555,22 @@ CPLErr MBTilesDataset::IBuildOverviews(
         CPLFree(papapoOverviewBands[iBand]);
     }
     CPLFree(papapoOverviewBands);
+
+    if( eErr == CE_None )
+    {
+        int nRows = 0, nCols = 0;
+        char** papszResult = NULL;
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_free_table(papszResult);
+        if( nRows == 1 )
+        {
+            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'", NULL, NULL, NULL);
+            char* pszSQL = sqlite3_mprintf(
+                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", nMinZoom );
+            sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+            sqlite3_free(pszSQL);
+        }
+    }
 
     return eErr;
 }
@@ -2600,6 +2648,7 @@ COMPRESSION_OPTIONS
 "    <Value>AVERAGE</Value>"
 "  </Option>"
 "  <Option name='WRITE_BOUNDS' type='boolean' description='Whether to write the bounds metadata' default='YES'/>"
+"  <Option name='WRITE_MINMAXZOOM' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
 "</CreationOptionList>");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

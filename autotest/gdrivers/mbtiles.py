@@ -255,7 +255,7 @@ def mbtiles_5():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'ZOOM_LEVEL': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
+    expected_md = {'ZOOM_LEVEL': '11', 'minzoom' : '11', 'maxzoom' : '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
     if set(got_md.keys()) != set(expected_md.keys()):
         gdaltest.post_reason('fail')
         print(got_md)
@@ -302,7 +302,7 @@ def mbtiles_6():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'ZOOM_LEVEL': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
+    expected_md = {'ZOOM_LEVEL': '11', 'minzoom' : '11', 'maxzoom' : '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         print(got_md)
@@ -358,8 +358,26 @@ def mbtiles_7():
         gdaltest.post_reason('fail')
         print(got_ovr_cs)
         return 'fail'
+    if ds.GetMetadataItem('minzoom') != '0':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
 
-    return 'success'
+    ds = gdal.Open('/vsimem/mbtiles_7.mbtiles', gdal.GA_Update)
+    ds.BuildOverviews('NONE', [])
+    ds = None
+
+    ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    if ds.GetMetadataItem('minzoom') != '1':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
 
     gdal.Unlink('/vsimem/mbtiles_7.mbtiles')
 
