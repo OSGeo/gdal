@@ -34,6 +34,31 @@
 CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
+/*                   DoesDriverHandleExtension()                        */
+/* -------------------------------------------------------------------- */
+
+static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
+{
+    bool bRet = false;
+    const char* pszDriverExtensions = 
+        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, NULL );
+    if( pszDriverExtensions )
+    {
+        char** papszTokens = CSLTokenizeString( pszDriverExtensions );
+        for(int j=0; papszTokens[j]; j++)
+        {
+            if( EQUAL(pszExt, papszTokens[j]) )
+            {
+                bRet = true;
+                break;
+            }
+        }
+        CSLDestroy(papszTokens);
+    }
+    return bRet;
+}
+
+/* -------------------------------------------------------------------- */
 /*                      CheckExtensionConsistency()                     */
 /*                                                                      */
 /*      Check that the target file extension is consistent with the     */
@@ -46,40 +71,23 @@ void CheckExtensionConsistency(const char* pszDestFilename,
                                const char* pszDriverName)
 {
 
-    char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
-    if (pszDestExtension[0] != '\0')
+    CPLString osExt = CPLGetExtension(pszDestFilename);
+    if (osExt.size())
     {
+        GDALDriverH hThisDrv = GDALGetDriverByName(pszDriverName);
+        if( hThisDrv != NULL && DoesDriverHandleExtension(hThisDrv, osExt) )
+            return;
+
         int nDriverCount = GDALGetDriverCount();
         CPLString osConflictingDriverList;
         for(int i=0;i<nDriverCount;i++)
         {
             GDALDriverH hDriver = GDALGetDriver(i);
-            const char* pszDriverExtensions = 
-                GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, NULL );
-            if( pszDriverExtensions )
+            if( hDriver != hThisDrv && DoesDriverHandleExtension(hDriver, osExt) )
             {
-                char** papszTokens = CSLTokenizeString( pszDriverExtensions );
-                for(int j=0; papszTokens[j]; j++)
-                {
-                    const char* pszDriverExtension = papszTokens[j];
-                    if (EQUAL(pszDestExtension, pszDriverExtension))
-                    {
-                        if (GDALGetDriverByName(pszDriverName) != hDriver)
-                        {
-                            if (osConflictingDriverList.size())
-                                osConflictingDriverList += ", ";
-                            osConflictingDriverList += GDALGetDriverShortName(hDriver);
-                        }
-                        else
-                        {
-                            /* If the request driver allows the used extension, then */
-                            /* just stop iterating now */
-                            osConflictingDriverList = "";
-                            break;
-                        }
-                    }
-                }
-                CSLDestroy(papszTokens);
+                if (osConflictingDriverList.size())
+                    osConflictingDriverList += ", ";
+                osConflictingDriverList += GDALGetDriverShortName(hDriver);
             }
         }
         if (osConflictingDriverList.size())
@@ -87,14 +95,12 @@ void CheckExtensionConsistency(const char* pszDestFilename,
             fprintf(stderr,
                     "Warning: The target file has a '%s' extension, which is normally used by the %s driver%s,\n"
                     "but the requested output driver is %s. Is it really what you want ?\n",
-                    pszDestExtension,
+                    osExt.c_str(),
                     osConflictingDriverList.c_str(),
                     strchr(osConflictingDriverList.c_str(), ',') ? "s" : "",
                     pszDriverName);
         }
     }
-
-    CPLFree(pszDestExtension);
 }
 
 /* -------------------------------------------------------------------- */
