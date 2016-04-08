@@ -2054,24 +2054,34 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
 /* -------------------------------------------------------------------- */
     if( *ppMask == NULL )
     {
-        int nBytes;
+        GIntBig nBytes;
 
         if( nBitsPerPixel == 32 )
-            nBytes = (nXSize * nYSize + nExtraElts) * 4;
+            nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts) * 4;
         else
-            nBytes = (nXSize * nYSize + nExtraElts + 31) / 8;
+            nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
-        *ppMask = VSIMalloc( nBytes );
+        const size_t nByteSize_t = static_cast<size_t>(nBytes);
+#if SIZEOF_VOIDP != 8
+        if( static_cast<GIntBig>(nByteSize_t) != nBytes )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
+                      nBytes );
+            return CE_Failure;
+        }
+#endif
+
+        *ppMask = VSIMalloc( nByteSize_t );
 
         if( *ppMask == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Out of memory allocating %d bytes for %s mask.", 
+                      "Out of memory allocating " CPL_FRMT_GIB " bytes for %s mask.", 
                       nBytes, pszType );
             return CE_Failure;
         }
 
-        memset( *ppMask, nDefault, nBytes );
+        memset( *ppMask, nDefault, nByteSize_t );
     }
 
     return CE_None;
