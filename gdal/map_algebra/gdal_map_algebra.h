@@ -4,11 +4,8 @@
 #include "gdal_priv.h"
 
 /* 
-   need classes for 
-   intervals/ranges/zonal values (std::pair), 
-   classifiers (std::unordered_map of integer => integer or bins => array of numbers)
-   cells (int,int,number)
-   logical operations (eq, le, .., number) (for if (op) then value -operations)
+   Constants for creating argument objects or for
+   detecting the type of return value objects.
 */
 typedef enum {
     gma_object,
@@ -25,8 +22,11 @@ typedef enum {
     gma_hash
 } gma_class_t;
 
-// base class and introspection,
-// after the class is known, it is legal to cast it to an object of that class
+/*
+  Interface classes for argument and return value objects.
+  It is legal to cast gma_object_t* to the subclass
+  get_class() reports.
+*/
 class gma_object_t {
 public:
     virtual ~gma_object_t() {};
@@ -91,6 +91,10 @@ public:
     virtual double value_as_double() {};
 };
 
+/*
+  Return value 0 interrupts, 1 denotes ok, and 2 denotes ok and a need
+  save the cell value back to band.
+*/
 typedef int (*gma_cell_callback_f)(gma_cell_t*);
 
 class gma_cell_callback_t : public gma_object_t {

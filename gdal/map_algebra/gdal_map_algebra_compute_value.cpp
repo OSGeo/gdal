@@ -4,12 +4,7 @@ typedef int (*gma_compute_value_callback)(gma_band, gma_block*, gma_object_t**, 
 
 template<typename datatype>
 int gma_get_min(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_number_p<datatype> *rv;
-    if (*retval == NULL) {
-        rv = new gma_number_p<datatype>;
-        *retval = rv;
-    } else
-        rv = (gma_number_p<datatype> *)*retval;
+    gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -23,12 +18,7 @@ int gma_get_min(gma_band band, gma_block *block, gma_object_t **retval, gma_obje
 
 template<typename datatype>
 int gma_get_max(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_number_p<datatype> *rv;
-    if (*retval == NULL) {
-        rv = new gma_number_p<datatype>;
-        *retval = rv;
-    } else
-        rv = (gma_number_p<datatype> *)*retval;
+    gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -42,15 +32,7 @@ int gma_get_max(gma_band band, gma_block *block, gma_object_t **retval, gma_obje
 
 template<typename datatype>
 int gma_get_range(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *rv;
-    if (*retval == NULL) {
-        rv = new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(
-            new gma_number_p<datatype>,
-            new gma_number_p<datatype>
-            );
-        *retval = rv;
-    } else
-        rv = (gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *)*retval;
+    gma_retval_init(gma_pair_p<gma_number_p<datatype>* COMMA gma_number_p<datatype>* >, rv, );
     gma_number_p<datatype>* min = (gma_number_p<datatype>*)rv->first();
     gma_number_p<datatype>* max = (gma_number_p<datatype>*)rv->second();
     gma_cell_index i;
@@ -68,12 +50,7 @@ int gma_get_range(gma_band band, gma_block *block, gma_object_t **retval, gma_ob
 
 template<typename datatype>
 int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_histogram_p<datatype> *hm;
-    if (*retval == NULL) {
-        hm = new gma_histogram_p<datatype>(arg);
-        *retval = hm;
-    } else
-        hm = (gma_histogram_p<datatype>*)*retval;
+    gma_retval_init(gma_histogram_p<datatype>, hm, arg);
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
@@ -86,22 +63,17 @@ int gma_compute_histogram(gma_band band, gma_block *block, gma_object_t **retval
 
 template<typename datatype>
 int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *) {
-    gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > > *h;
-    if (*retval == NULL) {
-        h = new gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > >;
-        *retval = h;
-    } else
-        h = (gma_hash_p<datatype,gma_hash_p<datatype,gma_number_p<int> > >*)*retval;
+    gma_retval_init(gma_hash_p<datatype COMMA gma_hash_p<datatype COMMA gma_number_p<int> > >, zn, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             datatype me = gma_block_cell(datatype, block, i);
             gma_hash_p<datatype,gma_number_p<int> > *ns;
-            if (h->exists(me))
-                ns = h->get(me);
+            if (zn->exists(me))
+                ns = zn->get(me);
             else {
                 ns = new gma_hash_p<datatype,gma_number_p<int> >;
-                h->put(me, ns);
+                zn->put(me, ns);
             }
             gma_cell_index in = gma_cell_first_neighbor(i);
             for (int neighbor = 1; neighbor < 9; neighbor++) {
@@ -127,12 +99,7 @@ int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, 
 
 template<typename datatype>
 int gma_get_cells(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    std::vector<gma_cell_t*> *cells;
-    if (*retval == NULL) {
-        cells = new std::vector<gma_cell_t*>;
-        *retval = (gma_object_t*)cells;
-    } else
-        cells = (std::vector<gma_cell_t*>*)*retval;
+    gma_retval_init(std::vector<gma_cell_t*>, cells, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {

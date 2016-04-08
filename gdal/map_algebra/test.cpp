@@ -8,7 +8,7 @@ int callback(gma_cell_t *cell) {
     double y = cell->y();
     double d = sqrt(x*x+y*y);
     cell->set_value(d);
-    return 2; // 0 to interrupt, 1 to go on, 2 to save the cell value back to band
+    return 2;
 }
 
 main() {

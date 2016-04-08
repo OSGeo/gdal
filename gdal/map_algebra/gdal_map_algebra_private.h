@@ -149,3 +149,12 @@ int is_border_cell(gma_block *block, int border_block, gma_cell_index i);
     case 7: cell.y--; break;                             \
     case 8: cell.y--; break;                             \
     }
+
+#define COMMA ,
+#define gma_retval_init(class, var, arg)        \
+    class *var;                                 \
+    if (*retval == NULL) {                      \
+        var = new class(arg);                   \
+        *retval = (gma_object_t*)var;           \
+    } else                                      \
+        var = (class *)*retval;
