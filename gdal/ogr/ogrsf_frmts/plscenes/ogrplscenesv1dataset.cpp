@@ -727,6 +727,8 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
              !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing scene");
+        delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
 
