@@ -35,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-enum Interleave {BSQ, BIL, BIP};
+enum Interleave { BSQ, BIL, BIP };
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1124,7 +1124,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1175,7 +1175,7 @@ CPLErr CPGDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
