@@ -3013,7 +3013,7 @@ png_handle_unknown(png_structrp png_ptr, png_inforp info_ptr,
 
    /* Check for unhandled critical chunks */
    if (handled == 0 && PNG_CHUNK_CRITICAL(png_ptr->chunk_name))
-      png_chunk_error(png_ptr, "unhandled critical chunk");
+      png_chunk_warning(png_ptr, "unhandled critical chunk");
 }
 
 /* This function is called to verify that a chunk name is valid.
@@ -3040,7 +3040,7 @@ png_check_chunk_name(png_structrp png_ptr, png_uint_32 chunk_name)
       int c = chunk_name & 0xff;
 
       if (c < 65 || c > 122 || (c > 90 && c < 97))
-         png_chunk_error(png_ptr, "invalid chunk type");
+         png_chunk_warning(png_ptr, "invalid chunk type");
 
       chunk_name >>= 8;
    }
