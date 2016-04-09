@@ -224,7 +224,7 @@ Utilities:
  * gdaldem: correctly deal with NaN as nodata value (#6066)
  * gdaldem color-relief: deal with the case of repeated entries with the same value and the input raster has pixels that match that value exactly (#6422)
  * gdaladdo: emit error message if passed an invalid dataset name (#6240)
- * gdaladdo: do not silence warnings when opening in update mode, if the open is succesful
+ * gdaladdo: do not silence warnings when opening in update mode, if the open is successful
  * gdalbuildvrt: fix potential crash when using -b switch (#6095)
  * gdalbuildvrt: accept nan as value for -srcnodata and -vrtnodata
  * gdalbuildvrt: return non zero return code if the flush of the VRT to disk failed
@@ -622,7 +622,7 @@ PG driver:
  * make such that GEOMETRY_NAME layer creation option is honoured in ogr2ogr when the source geometry field has a not-null constraint (#6366)
  * read and set DESCRIPTION metadata item from/into pg_description system table; add DESCRIPTION layer creation option
  * support int2[] and numeric[] types, better map float4[] type
- * remove code that was intented to handled binary cursors as it cannot be triggered
+ * remove code that was intended to handled binary cursors as it cannot be triggered
  * fix append of several layers in PG_USE_COPY mode and within transaction (ogr2ogr -append use case) (#6411)
 
 PGDump driver:

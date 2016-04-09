@@ -555,7 +555,7 @@ retry:
     if( poLocation == NULL || json_object_get_type(poLocation) != json_type_string ||
         !bActive )
     {
-        CPLDebug("PLScenes", "The product isn't actived yet. Activating it");
+        CPLDebug("PLScenes", "The product isn't activated yet. Activating it");
         json_object* poActivate = json_ex_get_object_by_path(poHTTP, "_links.activate");
         if( poActivate == NULL || json_object_get_type(poActivate) != json_type_string )
         {
