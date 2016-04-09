@@ -248,7 +248,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /* Determine southwest coordinates from filename */
 
     /* e.g. 30S120W_5M.ACE2 */
-    char pszLatLonValueString[4];
+    char pszLatLonValueString[4] = { '\0' };
     memset(pszLatLonValueString, 0, 4);
     strncpy(pszLatLonValueString, &pszBasename[0], 2);
     int southWestLat = atoi(pszLatLonValueString);
@@ -270,8 +270,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else
         return NULL;
 
-
-    GDALDataType eDT;
+    GDALDataType eDT = GDT_Unknown;
     if (strstr(pszBasename, "_CONF_") ||
         strstr(pszBasename, "_QUALITY_") ||
         strstr(pszBasename, "_SOURCE_"))
@@ -368,7 +367,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
