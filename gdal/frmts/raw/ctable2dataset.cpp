@@ -162,7 +162,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 0, SEEK_SET ));
 
-    char  achHeader[160];
+    char achHeader[160] = { '\0' };
     CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, 160, poDS->fpImage ));
     achHeader[16+79] = '\0';
 
@@ -238,7 +238,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -268,8 +268,9 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
 
     if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Rotated and sheared geotransforms not supported for CTable2.");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Rotated and sheared geotransforms not supported for CTable2." );
         return CE_Failure;
     }
 
@@ -283,7 +284,7 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     // read grid header
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
 
-    char achHeader[160];
+    char achHeader[160] = { '\0' };
     CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, sizeof(achHeader), fpImage ));
 
     // lower left origin (longitude, center of pixel, radians)
@@ -338,9 +339,10 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 {
     if( eType != GDT_Float32 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create CTable2 file with unsupported data type '%s'.",
-                 GDALGetDataTypeName( eType ) );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Attempt to create CTable2 file with unsupported data type '%s'.",
+            GDALGetDataTypeName( eType ) );
         return NULL;
     }
 
@@ -360,7 +362,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create a file header, with a defaulted georeferencing.          */
 /* -------------------------------------------------------------------- */
-    char achHeader[160];
+    char achHeader[160] = { '\0' };
 
     memset( achHeader, 0, sizeof(achHeader));
 
