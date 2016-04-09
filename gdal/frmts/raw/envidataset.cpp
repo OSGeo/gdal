@@ -192,7 +192,7 @@ static const int anUsgsEsriZones[] =
 static int ITTVISToUSGSZone( int nITTVISZone )
 
 {
-    const int nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
+    const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
 
     // Default is to use the zone as-is, as long as it is in the
     // available list
@@ -230,9 +230,8 @@ class ENVIDataset : public RawDataset
     VSILFILE   *fp;  // header file
     char       *pszHDRFilename;
 
-    int         bFoundMapinfo;
-
-    int         bHeaderDirty;
+    bool        bFoundMapinfo;
+    bool        bHeaderDirty;
 
     double      adfGeoTransform[6];
 
@@ -318,8 +317,9 @@ ENVIDataset::ENVIDataset() :
     fpImage(NULL),
     fp(NULL),
     pszHDRFilename(NULL),
-    bFoundMapinfo(FALSE),
-    bHeaderDirty(FALSE),
+    bFoundMapinfo(false),
+    bHeaderDirty(false),
+    pszProjection(CPLStrdup("")),
     papszHeader(NULL),
     interleave(BSQ)
 {
@@ -329,8 +329,6 @@ ENVIDataset::ENVIDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -369,7 +367,7 @@ void ENVIDataset::FlushCache()
 {
     RawDataset::FlushCache();
 
-    GDALRasterBand* band = (GetRasterCount() > 0) ? GetRasterBand(1) : NULL;
+    GDALRasterBand* band = GetRasterCount() > 0 ? GetRasterBand(1) : NULL;
 
     if ( band == NULL || !bHeaderDirty )
         return;
@@ -395,9 +393,10 @@ void ENVIDataset::FlushCache()
 
     bool bOK = VSIFPrintfL( fp, "ENVI\n" ) >= 0;
     if ("" != sDescription)
-        bOK &= VSIFPrintfL( fp, "description = {\n%s}\n", sDescription.c_str()) >= 0;
+        bOK &= VSIFPrintfL( fp, "description = {\n%s}\n",
+                            sDescription.c_str()) >= 0;
     bOK &= VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
-                 nRasterXSize, nRasterYSize, nBands ) >= 0;
+                        nRasterXSize, nRasterYSize, nBands ) >= 0;
 
     char** catNames = band->GetCategoryNames();
 
@@ -410,16 +409,16 @@ void ENVIDataset::FlushCache()
     const int iENVIType = GetEnviType(band->GetRasterDataType());
     bOK &= VSIFPrintfL( fp, "data type = %d\n", iENVIType ) >= 0;
     const char *pszInterleaving = NULL;
-    switch (interleave)
+    switch( interleave )
     {
       case BIP:
-        pszInterleaving = "bip";  // interleaved by pixel
+        pszInterleaving = "bip";  // Interleaved by pixel
         break;
       case BIL:
-        pszInterleaving = "bil";  // interleaved by line
+        pszInterleaving = "bil";  // Interleaved by line
         break;
       case BSQ:
-        pszInterleaving = "bsq";  // band sequential by default
+        pszInterleaving = "bsq";  // Band sequential by default
         break;
       default:
         pszInterleaving = "bsq";
@@ -457,7 +456,7 @@ void ENVIDataset::FlushCache()
                     if (i < nrColors - 1)
                     {
                         bOK &= VSIFPrintfL(fp, ", ") >= 0;
-                        if (0 == (i+1) % 5)
+                        if( 0 == (i+1) % 5 )
                             bOK &= VSIFPrintfL(fp, "\n") >= 0;
                     }
                 }
@@ -497,7 +496,6 @@ void ENVIDataset::FlushCache()
             WriteProjectionInfo(); // standard - affine xform/coord sys str
         }
     }
-
 
     bOK &= VSIFPrintfL( fp, "band names = {\n" ) >= 0;
     for ( int i = 1; i <= nBands; i++ )
@@ -559,7 +557,8 @@ void ENVIDataset::FlushCache()
             CSLDestroy( papszTokens );
             continue;
         }
-        bOK &= VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]) >= 0;
+        bOK &= VSIFPrintfL( fp, "%s = %s\n",
+                            poKey.c_str(), papszTokens[1]) >= 0;
         CSLDestroy( papszTokens );
     }
 
@@ -567,7 +566,7 @@ void ENVIDataset::FlushCache()
         return;
 
     /* Clean dirty flag */
-    bHeaderDirty = FALSE;
+    bHeaderDirty = false;
 }
 
 /************************************************************************/
@@ -608,7 +607,7 @@ static int ENVIGetEPSGGeogCS( OGRSpatialReference *poThis )
 /* -------------------------------------------------------------------- */
 /*      Do we already have it?                                          */
 /* -------------------------------------------------------------------- */
-    if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+    if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
         return atoi(poThis->GetAuthorityCode( "GEOGCS" ));
 
 /* -------------------------------------------------------------------- */
@@ -690,7 +689,8 @@ void ENVIDataset::WriteProjectionInfo()
 /*      non-default geotransform.                                       */
 /* -------------------------------------------------------------------- */
     if( pszProjection == NULL || strlen(pszProjection) == 0  ||
-        (strlen(pszProjection) >= 8 && STARTS_WITH(pszProjection, "LOCAL_CS") ) )
+        ( strlen(pszProjection) >= 8 &&
+          STARTS_WITH(pszProjection, "LOCAL_CS") ) )
     {
         if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
@@ -858,7 +858,8 @@ void ENVIDataset::WriteProjectionInfo()
             VSIFPrintfL(
                 fp,
                 "projection info = {5, %.16g, %.16g, %.16g, %.16g, %.16g, "
-                "%.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator A}\n",
+                "%.16g, %.16g, %.16g, %.16g, %.16g%s, "
+                "Hotine Oblique Mercator A}\n",
                 dfA, dfB,
                 oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                 oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
@@ -1044,7 +1045,7 @@ void ENVIDataset::WriteProjectionInfo()
 
     if( !bOK )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Write error");
+        CPLError( CE_Failure, CPLE_FileIO, "Write error" );
     }
 }
 
@@ -1095,7 +1096,7 @@ int ENVIDataset::WriteRpcInfo()
     // Write out 90 rpc coeffs into the envi header plus 3 envi specific rpc
     // values returns 0 if the coeffs are not present or not valid.
     int idx = 0;
-  char* papszVal[93] = { NULL };
+    char* papszVal[93] = { NULL };
 
     papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_OFF", "RPC"));
     papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("SAMP_OFF", "RPC"));
@@ -1142,7 +1143,8 @@ int ENVIDataset::WriteRpcInfo()
             goto end;
     }
 
-    // ok all the needed 93 values are present so write the rpcs into the envi header
+    // All the needed 93 values are present so write the rpcs into the envi
+    // header.
     bRet = true;
     {
         int x = 1;
@@ -1231,7 +1233,7 @@ CPLErr ENVIDataset::SetProjection( const char *pszNewProjection )
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
 
-    bHeaderDirty = TRUE;
+    bHeaderDirty = true;
 
     return CE_None;
 }
@@ -1259,8 +1261,8 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
-    bHeaderDirty = TRUE;
-    bFoundMapinfo = TRUE;
+    bHeaderDirty = true;
+    bFoundMapinfo = true;
 
     return CE_None;
 }
@@ -1271,7 +1273,7 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
 
 void ENVIDataset::SetDescription( const char * pszDescription )
 {
-    bHeaderDirty = TRUE;
+    bHeaderDirty = true;
     RawDataset::SetDescription(pszDescription);
 }
 
@@ -1284,7 +1286,7 @@ CPLErr ENVIDataset::SetMetadata( char ** papszMetadata,
 {
     if( pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")) )
     {
-        bHeaderDirty = TRUE;
+        bHeaderDirty = true;
     }
     return RawDataset::SetMetadata(papszMetadata, pszDomain);
 }
@@ -1299,7 +1301,7 @@ CPLErr ENVIDataset::SetMetadataItem( const char * pszName,
 {
     if( pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")) )
     {
-        bHeaderDirty = TRUE;
+        bHeaderDirty = true;
     }
     return RawDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
@@ -1311,7 +1313,7 @@ CPLErr ENVIDataset::SetMetadataItem( const char * pszName,
 CPLErr ENVIDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                              const char *pszGCPProjection )
 {
-    bHeaderDirty = TRUE;
+    bHeaderDirty = true;
 
     return RawDataset::SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
 }
@@ -1859,7 +1861,6 @@ void ENVIDataset::ProcessStatsFile()
         nb = nBands;
     }
 
-
     int lOffset = 0;
     if( VSIFSeekL(fpStaFile, 40+(nb+1)*4, SEEK_SET) == 0 &&
         VSIFReadL(&lOffset, sizeof(int), 1, fpStaFile) == 1 &&
@@ -2093,7 +2094,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check that the first line says "ENVI".                          */
 /* -------------------------------------------------------------------- */
-  char szTestHdr[4] = { '\0' };
+    char szTestHdr[4] = { '\0' };
 
     if( VSIFReadL( szTestHdr, 4, 1, fpHeader ) != 1 )
     {
@@ -2293,10 +2294,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             // 'envi standard'
             // 'envi classification'
 
-        // When the file type is anything else we attempt to open it as a raster.
+        // When the file type is anything else we attempt to open it as a
+        // raster.
 
-        const char *pszEnviFileType
-            = CSLFetchNameValue(poDS->papszHeader, "file_type");
+        const char *pszEnviFileType =
+            CSLFetchNameValue(poDS->papszHeader, "file_type");
 
         // envi gdal does not support any of these
         // all others we will attempt to open
@@ -2428,10 +2430,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int i = 0; i < poDS->nBands; i++ )
     {
         poDS->SetBand( i + 1,
-                       new ENVIRasterBand(poDS, i + 1, poDS->fpImage,
-                                         nHeaderSize + nBandOffset * i,
-                                         nPixelOffset, nLineOffset, eType,
-                                         bNativeOrder, TRUE) );
+                       new ENVIRasterBand( poDS, i + 1, poDS->fpImage,
+                                           nHeaderSize + nBandOffset * i,
+                                           nPixelOffset, nLineOffset, eType,
+                                           bNativeOrder, TRUE) );
         if( CPLGetLastErrorType() != CE_None )
         {
             poDS->nBands = i + 1;
@@ -2464,11 +2466,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             if (pszWLUnits)
             {
                 /* Don't show unknown or index units */
-                if (EQUAL(pszWLUnits,"Unknown") ||
+                if( EQUAL(pszWLUnits,"Unknown") ||
                     EQUAL(pszWLUnits,"Index") )
                     pszWLUnits=NULL;
             }
-            if (pszWLUnits)
+            if( pszWLUnits )
             {
                 /* Set wavelength units to dataset metadata. */
                 poDS->SetMetadataItem("wavelength_units", pszWLUnits);
@@ -2611,9 +2613,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( poDS->papszHeader, "map_info" ) != NULL )
     {
-        poDS->bFoundMapinfo =
+        poDS->bFoundMapinfo = CPL_TO_BOOL(
             poDS->ProcessMapinfo(
-                CSLFetchNameValue(poDS->papszHeader, "map_info") );
+                CSLFetchNameValue(poDS->papszHeader, "map_info") ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2640,9 +2642,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // SetMetadata() calls in Open() makes the header dirty.
     // Don't re-write the header if nothing external has changed the metadata.
-    poDS->bHeaderDirty = FALSE;
+    poDS->bHeaderDirty = false;
 
-    return( poDS );
+    return poDS;
 }
 
 int ENVIDataset::GetEnviType(GDALDataType eType)
@@ -2704,7 +2706,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
     int iENVIType = GetEnviType(eType);
-    if (0 == iENVIType)
+    if( 0 == iENVIType )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2715,7 +2717,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
+                  "Attempt to create file `%s' failed.",
                   pszFilename );
         return NULL;
     }
@@ -2807,9 +2809,9 @@ ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn,
                                 int nLineOffsetIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn,
                                 int bIsVSILIn, int bOwnsFPIn ) :
-    RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
-                  bOwnsFPIn)
+    RawRasterBand( poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                   nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
+                   bOwnsFPIn )
 {}
 
 /************************************************************************/
@@ -2818,7 +2820,7 @@ ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn,
 
 void ENVIRasterBand::SetDescription( const char * pszDescription )
 {
-    reinterpret_cast<ENVIDataset *>( poDS )->bHeaderDirty = TRUE;
+    reinterpret_cast<ENVIDataset *>( poDS )->bHeaderDirty = true;
     RawRasterBand::SetDescription(pszDescription);
 }
 
@@ -2828,7 +2830,7 @@ void ENVIRasterBand::SetDescription( const char * pszDescription )
 
 CPLErr ENVIRasterBand::SetCategoryNames( char ** papszCategoryNamesIn )
 {
-    reinterpret_cast<ENVIDataset *>( poDS )->bHeaderDirty = TRUE;
+    reinterpret_cast<ENVIDataset *>( poDS )->bHeaderDirty = true;
     return RawRasterBand::SetCategoryNames(papszCategoryNamesIn);
 }
 
