@@ -46,9 +46,9 @@ class EIRDataset : public RawDataset
     friend class RawRasterBand;
 
     VSILFILE  *fpImage; // image data file
-    int    bGotTransform;
+    bool   bGotTransform;
     double adfGeoTransform[6];
-    int    bHDRDirty;
+    bool   bHDRDirty;
     char **papszHDR;
     char **papszExtraFiles;
 
@@ -80,12 +80,11 @@ class EIRDataset : public RawDataset
 
 EIRDataset::EIRDataset() :
     fpImage(NULL),
-    bGotTransform(FALSE),
-    bHDRDirty(FALSE),
+    bGotTransform(false),
+    bHDRDirty(false),
     papszHDR(NULL),
     papszExtraFiles(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                            ~EIRDataset()                            */
@@ -101,7 +100,7 @@ EIRDataset::~EIRDataset()
         RawRasterBand *poBand
             = reinterpret_cast<RawRasterBand *>( GetRasterBand( 1 ) );
 
-        int bNoDataSet;
+        int bNoDataSet = FALSE;
         const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
         if( bNoDataSet )
         {
@@ -131,7 +130,7 @@ const char *EIRDataset::GetKeyValue( const char *pszKey,
             && isspace((unsigned char)papszHDR[i][strlen(pszKey)]) )
         {
             const char *pszValue = papszHDR[i] + strlen(pszKey);
-            while( isspace((unsigned char)*pszValue) )
+            while( isspace(static_cast<unsigned char>(*pszValue)) )
                 pszValue++;
 
             return pszValue;
@@ -157,7 +156,7 @@ void EIRDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
         return;
     }
 
-    char szNewLine[82];
+    char szNewLine[82] = { '\0' };
     snprintf( szNewLine, sizeof(szNewLine), "%-15s%s", pszKey, pszValue );
 
     for( int i = CSLCount(papszHDR)-1; i >= 0; i-- )
@@ -168,13 +167,13 @@ void EIRDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
             {
                 CPLFree( papszHDR[i] );
                 papszHDR[i] = CPLStrdup( szNewLine );
-                bHDRDirty = TRUE;
+                bHDRDirty = true;
             }
             return;
         }
     }
 
-    bHDRDirty = TRUE;
+    bHDRDirty = true;
     papszHDR = CSLAddString( papszHDR, szNewLine );
 }
 
@@ -274,14 +273,16 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     binary data at the same time.
     */
 
-    int          nRows = -1, nCols = -1, nBands = 1;
-    int          nSkipBytes = 0;
-    int          nLineCount = 0;
+    int nRows = -1;
+    int nCols = -1;
+    int nBands = 1;
+    int nSkipBytes = 0;
+    int nLineCount = 0;
     GDALDataType eDataType = GDT_Byte;
-    int          nBits = 8;
-    char         chByteOrder = 'M';
-    char         szLayout[10] = "BIL";
-    char         **papszHDR = NULL;
+    int nBits = 8;
+    char chByteOrder = 'M';
+    char szLayout[10] = "BIL";
+    char **papszHDR = NULL;
 
     // default raster file: same name with no extension
     const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
@@ -289,16 +290,16 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osRasterFilename = CPLFormCIFilename( osPath, osName, "" );
 
     // parse the header file
-    const char *pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
 
-        if ( (nLineCount == 1) && !EQUAL(pszLine,"IMAGINE_RAW_FILE") ) {
+        if ( (nLineCount == 1) && !EQUAL(pszLine, "IMAGINE_RAW_FILE") ) {
             return NULL;
         }
 
-        if ( (nLineCount > 50) || EQUAL(pszLine,"END_RAW_FILE") ) {
+        if ( (nLineCount > 50) || EQUAL(pszLine, "END_RAW_FILE") ) {
             break;
         }
 
@@ -315,29 +316,29 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        if( EQUAL(papszTokens[0],"WIDTH") )
+        if( EQUAL(papszTokens[0], "WIDTH") )
         {
             nCols = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"HEIGHT") )
+        else if( EQUAL(papszTokens[0], "HEIGHT") )
         {
             nRows = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"NUM_LAYERS") )
+        else if( EQUAL(papszTokens[0], "NUM_LAYERS") )
         {
             nBands = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"PIXEL_FILES") )
+        else if( EQUAL(papszTokens[0], "PIXEL_FILES") )
         {
             osRasterFilename = CPLFormCIFilename( osPath, papszTokens[1], "" );
         }
-        else if( EQUAL(papszTokens[0],"FORMAT") )
+        else if( EQUAL(papszTokens[0], "FORMAT") )
         {
             strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
             szLayout[sizeof(szLayout)-1] = '\0';
         }
-        else if( EQUAL(papszTokens[0],"DATATYPE")
-                 || EQUAL(papszTokens[0],"DATA_TYPE") )
+        else if( EQUAL(papszTokens[0], "DATATYPE")
+                 || EQUAL(papszTokens[0], "DATA_TYPE") )
         {
             if ( EQUAL(papszTokens[1], "U1")
                  || EQUAL(papszTokens[1], "U2")
@@ -371,16 +372,17 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
                 eDataType = GDT_Float64;
             }
             else {
-                CPLError( CE_Failure, CPLE_NotSupported,
-                  "EIR driver does not support DATATYPE %s.",
-                  papszTokens[1] );
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "EIR driver does not support DATATYPE %s.",
+                    papszTokens[1] );
                 CSLDestroy( papszTokens );
                 CSLDestroy( papszHDR );
                 CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                 return NULL;
             }
         }
-        else if( EQUAL(papszTokens[0],"BYTE_ORDER") )
+        else if( EQUAL(papszTokens[0], "BYTE_ORDER") )
         {
             // M for MSB, L for LSB
             chByteOrder = static_cast<char>( toupper(papszTokens[1][0]) );
@@ -394,7 +396,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -422,7 +423,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszHDR );
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The EIR driver does not support update access to existing"
-                  " datasets.\n" );
+                  " datasets." );
         return NULL;
     }
 /* -------------------------------------------------------------------- */
@@ -444,7 +445,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open %s.\n%s",
+                  "Failed to open %s: %s",
                   osRasterFilename.c_str(), VSIStrerror( errno ) );
         delete poDS;
         return NULL;
@@ -458,27 +459,28 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int             nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int             nPixelOffset, nLineOffset;
-    vsi_l_offset    nBandOffset;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    int nPixelOffset = 0;
+    int nLineOffset = 0;
+    vsi_l_offset nBandOffset = 0;
 
-    if( EQUAL(szLayout,"BIP") )
+    if( EQUAL(szLayout, "BIP") )
     {
         nPixelOffset = nItemSize * nBands;
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = (vsi_l_offset)nItemSize;
+        nBandOffset = static_cast<vsi_l_offset>(nItemSize);
     }
-    else if( EQUAL(szLayout,"BSQ") )
+    else if( EQUAL(szLayout, "BSQ") )
     {
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = (vsi_l_offset)nLineOffset * nRows;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
         nLineOffset = nItemSize * nBands * nCols;
-        nBandOffset = (vsi_l_offset)nItemSize * nCols;
+        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
     }
 
     poDS->SetDescription( poOpenInfo->pszFilename );
@@ -509,14 +511,14 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform =
+        poDS->bGotTransform = CPL_TO_BOOL(
             GDALReadWorldFile( poOpenInfo->pszFilename, NULL,
-                               poDS->adfGeoTransform );
+                               poDS->adfGeoTransform ) );
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform =
+        poDS->bGotTransform = CPL_TO_BOOL(
             GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
-                               poDS->adfGeoTransform );
+                               poDS->adfGeoTransform ) );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -528,7 +530,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 
