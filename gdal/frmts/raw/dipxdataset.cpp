@@ -162,7 +162,7 @@ DIPExDataset::DIPExDataset() :
 DIPExDataset::~DIPExDataset()
 
 {
-    if (fp)
+    if( fp )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     fp = NULL;
 }
@@ -192,7 +192,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszAccess;
+    const char *pszAccess = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
         pszAccess = "r+b";
@@ -238,10 +238,10 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     nEnd = CPL_LSBWORD32( poDS->sHeader.LE );
     poDS->nRasterXSize = nEnd - nStart + 1;
 
-    int nBands = CPL_LSBWORD32( poDS->sHeader.NC );
+    const int nBands = CPL_LSBWORD32( poDS->sHeader.NC );
 
-    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        !GDALCheckBandCount(nBands, FALSE))
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBands, FALSE) )
     {
         delete poDS;
         return NULL;
@@ -262,7 +262,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognized image data type %d, with BytesPerSample=%d.\n",
+                  "Unrecognized image data type %d, with BytesPerSample=%d.",
                   nDIPExDataType, nBytesPerSample );
         return NULL;
     }
@@ -353,9 +353,10 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -377,7 +378,7 @@ CPLErr DIPExDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
