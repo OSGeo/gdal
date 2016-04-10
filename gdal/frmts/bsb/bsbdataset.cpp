@@ -873,8 +873,8 @@ static int BSBIsSRSOK(const char *pszWKT)
 
 static GDALDataset *
 BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-               int bStrict, char ** papszOptions,
-               GDALProgressFunc pfnProgress, void * pProgressData )
+               int bStrict, char ** /*papszOptions*/,
+               GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
 
 {
 /* -------------------------------------------------------------------- */
@@ -959,7 +959,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nPCTSize = nColorTableSize + 1;
 
         // Add entries for pixel values which apparently will not occur.
-        for( iColor = nPCTSize; iColor < 256; iColor++ )
+        for( int iColor = nPCTSize; iColor < 256; iColor++ )
             anRemap[iColor] = 1;
     }
 
@@ -1119,7 +1119,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                  pabyScanline, nXSize, 1, GDT_Byte,
-                                 nBands, nBands * nXSize );
+                                 nBands, nBands * nXSize, NULL );
         if( eErr == CE_None )
         {
             for( int i = 0; i < nXSize; i++ )
