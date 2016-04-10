@@ -67,7 +67,7 @@ FujiBASDataset::FujiBASDataset() :
 {}
 
 /************************************************************************/
-/*                            ~FujiBASDataset()                            */
+/*                            ~FujiBASDataset()                         */
 /************************************************************************/
 
 FujiBASDataset::~FujiBASDataset()
@@ -93,8 +93,10 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "[Raw data]")
-        || strstr((const char *)poOpenInfo->pabyHeader, "Fuji BAS") == NULL )
+    if( !STARTS_WITH_CI( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                         "[Raw data]")
+        || strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader), "Fuji BAS")
+        == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -147,15 +149,15 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "The FUJIBAS driver does not support update access to existing"
-                  " datasets.\n" );
+                  "The FUJIBAS driver does not support update access to "
+                  " existing datasets." );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the original data file.                             */
 /* -------------------------------------------------------------------- */
-    char       *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     const char *pszRawFile = CPLFormCIFilename( pszPath, pszOrgFile, "IMG" );
     CPLFree( pszPath );
 
@@ -165,7 +167,8 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Trying to open Fuji BAS image with the header file:\n"
                   "  Header=%s\n"
-                  "but expected raw image file doesn't appear to exist.  Trying to open:\n"
+                  "but expected raw image file doesn't appear to exist.  "
+                  "Trying to open:\n"
                   "  Raw File=%s\n"
                   "Perhaps the raw file needs to be renamed to match expected?",
                   poOpenInfo->pszFilename,
@@ -197,9 +200,10 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     FALSE
 #endif
         ;
-    poDS->SetBand( 1,
-                   new RawRasterBand( poDS, 1, poDS->fpImage,
-                                      0, 2, nXSize * 2, GDT_UInt16, bNativeOrder ));
+    poDS->SetBand(
+        1,
+        new RawRasterBand( poDS, 1, poDS->fpImage,
+                           0, 2, nXSize * 2, GDT_UInt16, bNativeOrder ) );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -212,7 +216,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
