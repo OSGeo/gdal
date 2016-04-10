@@ -806,7 +806,6 @@ int gma_catchment(gma_band catchment_band, gma_block *catchment_block, gma_band 
 // focal distance & cache updates might be best done in callback since the knowledge is there
 // unless we want to have focal distance in user space too
 // anyway, focal area may be needed only in b2 or both in b2 and b1
-template<typename data1_t, typename data2_t>
 void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback cb, GDALRasterBand *b2, gma_object_t **retval, gma_object_t *arg, int focal_distance) {
 
     gma_band band1 = gma_band_initialize(b1), band2 = gma_band_initialize(b2);

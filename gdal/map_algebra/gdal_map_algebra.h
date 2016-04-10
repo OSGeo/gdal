@@ -136,27 +136,27 @@ public:
 // methods in four groups
 
 typedef enum { 
-    gma_method_print, 
-    gma_method_rand,
-    gma_method_abs,
-    gma_method_exp,
-    gma_method_exp2,
-    gma_method_log,
-    gma_method_log2,
-    gma_method_log10,
-    gma_method_sqrt,
-    gma_method_sin,
-    gma_method_cos,
-    gma_method_tan,
-    gma_method_ceil,
-    gma_method_floor,
-    gma_method_set_border_cells
+    gma_method_print, // print the band to stdout, remove this?
+    gma_method_rand,  // sets the cell value with rand() [0..RAND_MAX]
+    gma_method_abs,   // cell = abs(cell)
+    gma_method_exp,   // cell = exp(cell)
+    gma_method_exp2,  // cell = exp2(cell)
+    gma_method_log,   // cell = log(cell)
+    gma_method_log2,  // cell = log2(cell)
+    gma_method_log10, // cell = log10(cell)
+    gma_method_sqrt,  // cell = sqrt(cell)
+    gma_method_sin,   // cell = sin(cell)
+    gma_method_cos,   // cell = cos(cell)
+    gma_method_tan,   // cell = tan(cell)
+    gma_method_ceil,  // cell = ceil(cell)
+    gma_method_floor, // cell = floor(cell)
+    gma_method_set_border_cells    // remove? user can use callback, which sets cell = 1 at border
 } gma_method_t;
 
 typedef enum { 
-    gma_method_histogram,
-    gma_method_zonal_neighbors, // 
-    gma_method_get_min,
+    gma_method_histogram,       // arg = NULL, pair:(n,pair:(min,max)), or bins; returns histogram
+    gma_method_zonal_neighbors, // arg = NULL; returns hash of a hashes, keys are zone numbers
+    gma_method_get_min,         // 
     gma_method_get_max,
     gma_method_get_range,
     gma_method_get_cells

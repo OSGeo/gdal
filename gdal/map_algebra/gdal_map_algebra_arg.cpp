@@ -150,7 +150,6 @@ int gma_cell_callback_m(gma_band band, gma_block *block, gma_object_t *callback)
     return retval;
 }
 
-template<typename datatype>
 void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback cb, gma_object_t *arg) {
     gma_band band = gma_band_initialize(b);
     gma_block_index i;

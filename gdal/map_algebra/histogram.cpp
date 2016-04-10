@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
         hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
         break;
     }
+    default:
+        return usage();
     }
     print_histogram(hm);
     delete hm;

@@ -9,10 +9,12 @@ int main() {
     GDALDataset *ds = d->Create("", w_band, h_band, 2, GDT_Int32, NULL);
     GDALRasterBand *b = ds->GetRasterBand(1);
     gma_simple(b, gma_method_rand);
+    gma_number_t *x = (gma_number_t*)gma_new_object(b, gma_number);
+    x->set_value(20);
+    gma_with_arg(b, gma_method_modulus, x);
     gma_simple(b, gma_method_print);
     printf("\n");
 
-    gma_number_t *x = (gma_number_t*)gma_new_object(b, gma_number);
     x->set_value(5);
     gma_with_arg(b, gma_method_add, x);
     gma_simple(b, gma_method_print);

@@ -30,7 +30,7 @@ int gma_rand(gma_block *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            gma_block_cell(datatype, block, i) = rand() % 20;
+            gma_block_cell(datatype, block, i) = rand();
         }
     }
     return 2;

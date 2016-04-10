@@ -74,8 +74,7 @@ public:
 };
 
 // wrap std::pair as concrete type gma_pair_p, 
-// which is a subclass of public class gma_pair_t
-// fixme: make sure K and V are subclasses of gma_object_t
+// K and V must be subclasses of gma_object_t
 template<class K, class V>class gma_pair_p : public gma_pair_t {
 public:
     std::pair<K,V> m_pair;
@@ -346,7 +345,6 @@ public:
     }
 };
 
-// fixme: use std::unordered_map and std::bins
 template <typename datatype>
 class gma_histogram_p : public gma_histogram_t {
     datatype *sorted_hash_keys;
@@ -355,7 +353,6 @@ public:
     gma_bins_p<datatype> *bins;
     std::vector<unsigned int> *counts;
     gma_histogram_p(gma_object_t *arg) {
-        // fixme: use arg = null, integer in gma_number_p<int>, or gma_bins_p<datatype>
         hash = NULL;
         sorted_hash_keys = NULL;
         bins = NULL;
@@ -457,25 +454,11 @@ public:
             counts->at(i)++;
         }
     }
-
-    // fixme: remove these
-    virtual int exists(int32_t key) {
-        return hash->exists(key);
-    }
-    gma_number_p<unsigned int> *get(int32_t key) {
-        return (gma_number_p<unsigned int> *)hash->get(key);
-    }
-    void put(int32_t key, gma_number_p<unsigned int> *value) {
-        hash->put(key, value);
-    }
 };
 
 template <typename datatype>
 class gma_classifier_p : public gma_classifier_t {
 private:
-    // fixme:
-    // range => numeric or (for int types) int => int
-    // also default for the latter
     gma_hash_p<datatype,gma_number_p<int> > *m_hash;
     gma_bins_p<datatype> *m_bins;
     std::vector<datatype> *m_values;

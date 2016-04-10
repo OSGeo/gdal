@@ -32,7 +32,12 @@ int gma_get_max(gma_band band, gma_block *block, gma_object_t **retval, gma_obje
 
 template<typename datatype>
 int gma_get_range(gma_band band, gma_block *block, gma_object_t **retval, gma_object_t *arg) {
-    gma_retval_init(gma_pair_p<gma_number_p<datatype>* COMMA gma_number_p<datatype>* >, rv, );
+    gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *rv;
+    if (*retval == NULL) {
+        rv = new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(new gma_number_p<datatype>, new gma_number_p<datatype>);
+        *retval = rv;
+    } else
+        rv = (gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >*)*retval;
     gma_number_p<datatype>* min = (gma_number_p<datatype>*)rv->first();
     gma_number_p<datatype>* max = (gma_number_p<datatype>*)rv->second();
     gma_cell_index i;
@@ -86,10 +91,10 @@ int gma_zonal_neighbors(gma_band band, gma_block *block, gma_object_t **retval, 
                         ns->put((int32_t)-1, new gma_number_p<int>(1)); // using -1 to denote outside
                     continue;
                 }
-                
+
                 if (n != me && !ns->exists(n))
                     ns->put(n, new gma_number_p<int>(1) );
-                
+
             }
 
         }
@@ -114,7 +119,6 @@ int gma_get_cells(gma_band band, gma_block *block, gma_object_t **retval, gma_ob
     return 1;
 }
 
-template<typename datatype>
 void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback cb, gma_object_t **retval, gma_object_t *arg, int focal_distance) {
     gma_band band = gma_band_initialize(b);
     gma_block_index i;
@@ -157,7 +161,7 @@ gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t me
     case gma_method_zonal_neighbors: {
         type_switch_single(gma_zonal_neighbors, 1);
 
-        // convert retval from gma_hash_p<gma_hash_p<gma_number_p<int> > > * 
+        // convert retval from gma_hash_p<gma_hash_p<gma_number_p<int> > > *
         // to vector of pairs of number and vector of numbers ??
 
         break;
