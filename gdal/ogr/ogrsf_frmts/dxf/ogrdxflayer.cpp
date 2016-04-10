@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "ogrdxf_polyline_smooth.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -1044,6 +1045,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 
     smoothPolyline.setCoordinateDimension(2);
 
+    OGRBoolean PolygonMesh = FALSE;
+    OGRBoolean PolyFaceMesh = FALSE;
+
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
     {
         // Eat non-vertex objects.
@@ -1097,6 +1101,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             return NULL;
         }
 
+        // Check if there is a polygon mesh associated with the polyline
+        if ((nVertexFlag & 64) == 0)
+          PolygonMesh = TRUE;
+        // Check if there is a polyface mesh associated with the polyline
+        if ((nVertexFlag & 128) == 0)
+          PolyFaceMesh = TRUE;
 
         // Ignore Spline frame control points ( see #4683 )
         if ((nVertexFlag & 16) == 0)
@@ -1117,6 +1127,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    // If there was a polygon mesh or polyface mesh associated with the polyline, it should be cast to multipolygon
+    if (PolygonMesh == TRUE || PolyFaceMesh == TRUE)
+      poGeom = OGRGeometryFactory::forceToMultiPolygon(poGeom);
     ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
