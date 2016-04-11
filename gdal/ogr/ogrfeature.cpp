@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrfeature.cpp 33631 2016-03-04 06:28:09Z goatbar $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFeature class implementation.
@@ -36,7 +36,7 @@
 #include <errno.h>
 #include <new>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrfeature.cpp 33631 2016-03-04 06:28:09Z goatbar $");
 
 /************************************************************************/
 /*                             OGRFeature()                             */
@@ -1700,27 +1700,9 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
                                            int nHour, int nMinute, float fSecond,
                                            int nTZFlag )
 {
-    int ms = OGR_GET_MS(fSecond);
-    if( ms != 0 )
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                "%04d/%02d/%02d %02d:%02d:%06.3f",
-                nYear,
-                nMonth,
-                nDay,
-                nHour,
-                nMinute,
-                fSecond );
-    else /* default format */
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                "%04d/%02d/%02d %02d:%02d:%02d",
-                nYear,
-                nMonth,
-                nDay,
-                nHour,
-                nMinute,
-                (int)fSecond );
-
-
+    const char *format = CPLGetConfigOption("OGR_DATETIME_FORMAT", NULL);
+    char tz[8];
+    tz[0] = '\0';
     if( nTZFlag > 1 )
     {
         int nOffset = (nTZFlag - 100) * 15;
@@ -1729,18 +1711,86 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
 
         if( nOffset < 0 )
         {
-            strcat( szTempBuffer, "-" );
+            tz[0] = '-';
             nHours = ABS(nHours);
         }
         else
-            strcat( szTempBuffer, "+" );
+            tz[0] = '+';
 
         if( nMinutes == 0 )
-            snprintf( szTempBuffer+strlen(szTempBuffer),
-                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
+            snprintf( &(tz[1]), 7, "%02d", nHours );
         else
-            snprintf( szTempBuffer+strlen(szTempBuffer),
-                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
+            snprintf( &(tz[1]), 7, "%02d%02d", nHours, nMinutes );
+    }
+    int ms = OGR_GET_MS(fSecond);
+    if (format && format[0] != '\0')
+    {
+        snprintf(szTempBuffer, TEMP_BUFFER_SIZE, "%04d/%02d/%02d", nYear, nMonth, nDay);
+        struct tm tm;
+        if (strptime(szTempBuffer, "%Y/%m/%d", &tm) != NULL)
+        {
+            tm.tm_hour = nHour;
+            tm.tm_min = nMinute;
+            tm.tm_sec = (int)fSecond;
+            tm.tm_isdst = 0;
+            strftime(szTempBuffer, TEMP_BUFFER_SIZE, format, &tm);
+            char temp[TEMP_BUFFER_SIZE];
+            strcpy(temp, szTempBuffer);
+            // add milliseconds and/or time offset, I'm assuming seconds are after the last :
+            char *sec = strrchr(temp, ':');
+            if (sec)
+            {
+                sec++;
+                while (isdigit(*sec)) sec++;
+                szTempBuffer[sec-&(temp[0])] = '\0'; // up to the end of seconds
+                int len = strlen(szTempBuffer);
+                if (ms != 0)
+                {
+                    char msec[7];
+                    snprintf(msec, 7, "%06.3f", fSecond);
+                    char *mss = strstr(msec, ".");
+                    len += snprintf(szTempBuffer+len, TEMP_BUFFER_SIZE-len, "%s", mss);
+                }
+                if (tz[0] != '\0')
+                    len += snprintf(szTempBuffer+len, TEMP_BUFFER_SIZE-len, "%s", tz);
+                len += snprintf(szTempBuffer+len, TEMP_BUFFER_SIZE-len, "%s", sec);
+            }
+        } 
+        else
+            snprintf(szTempBuffer, TEMP_BUFFER_SIZE, 
+                     "(invalid datetime)%04d-%02d-%02dT%02d:%02d:%06.3f%s", 
+                     nYear,
+                     nMonth,
+                     nDay,
+                     nHour,
+                     nMinute,
+                     fSecond,
+                     tz);
+    }
+    else if( ms != 0 )
+    {
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                  "%04d/%02d/%02d %02d:%02d:%06.3f%s",
+                  nYear,
+                  nMonth,
+                  nDay,
+                  nHour,
+                  nMinute,
+                  fSecond,
+                  tz );
+        
+    } 
+    else 
+    { /* default format */
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                  "%04d/%02d/%02d %02d:%02d:%02d%s",
+                  nYear,
+                  nMonth,
+                  nDay,
+                  nHour,
+                  nMinute,
+                  (int)fSecond,
+                  tz );
     }
 }
 
@@ -1899,7 +1949,22 @@ const char *OGRFeature::GetFieldAsString( int iField )
                   pauFields[iField].Date.Year,
                   pauFields[iField].Date.Month,
                   pauFields[iField].Date.Day );
-
+        const char *format = CPLGetConfigOption("OGR_DATE_FORMAT", NULL);
+        if (format && format[0] != '\0')
+        {
+            struct tm tm;
+            if (strptime(szTempBuffer, "%Y/%m/%d", &tm) != NULL)
+            {
+                tm.tm_hour = 0;
+                tm.tm_min = 0;
+                tm.tm_sec = 0;
+                strftime(szTempBuffer, TEMP_BUFFER_SIZE, format, &tm);
+            } else
+                snprintf(szTempBuffer, TEMP_BUFFER_SIZE, "(invalid date)%04d-%02d-%02d",
+                         pauFields[iField].Date.Year,
+                         pauFields[iField].Date.Month,
+                         pauFields[iField].Date.Day);
+        }
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
         if( m_pszTmpFieldValue == NULL )
             return "";
