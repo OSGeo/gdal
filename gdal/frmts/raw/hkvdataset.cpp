@@ -28,12 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include <ctype.h>
+
+#include "atlsci_spheroid.h"
+#include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
-#include "atlsci_spheroid.h"
 
 CPL_CVSID("$Id$");
 
@@ -65,8 +66,7 @@ class HKVRasterBand : public RawRasterBand
 
 class HKVSpheroidList : public SpheroidList
 {
-public:
-
+ public:
   HKVSpheroidList();
   ~HKVSpheroidList() {};
 };
@@ -159,13 +159,16 @@ class HKVDataset : public RawDataset
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-    void        ProcessGeoref(const char *);
-    void        ProcessGeorefGCP(char **, const char *, double, double);
-    void        SetVersion( float version_number );
-    float       GetVersion();
+    void        ProcessGeoref( const char * );
+    void        ProcessGeorefGCP( char **, const char *, double, double );
+    void        SetVersion ( float version_number ) {
+        // Update stored info.
+        MFF2version = version_number;
+    }
+    float       GetVersion() const { return MFF2version; }
     float       MFF2version;
 
-    CPLErr      SetGCPProjection(const char *); /* for use in CreateCopy */
+    CPLErr      SetGCPProjection(const char *); // For use in CreateCopy.
 
     GDALDataType eRasterType;
 
@@ -177,24 +180,23 @@ class HKVDataset : public RawDataset
 
     char        **papszAttrib;
 
-    int         bGeorefChanged;
+    bool        bGeorefChanged;
     char        **papszGeoref;
 
-   /* NOTE: The MFF2 format goes against GDAL's API in that nodata values are set
-    *       per-dataset rather than per-band.  To compromise, for writing out, the
-    *       dataset's nodata value will be set to the last value set on any of the
-    *       raster bands.
-    */
+    // NOTE: The MFF2 format goes against GDAL's API in that nodata values are
+    // set per-dataset rather than per-band.  To compromise, for writing out,
+    // the dataset's nodata value will be set to the last value set on any of
+    // the raster bands.
 
-    int         bNoDataSet;
-    int         bNoDataChanged;
+    bool        bNoDataSet;
+    bool        bNoDataChanged;
     double      dfNoDataValue;
 
   public:
                 HKVDataset();
     virtual     ~HKVDataset();
 
-    virtual int    GetGCPCount();
+    virtual int GetGCPCount() /* const */ { return nGCPCount; };
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
@@ -278,10 +280,10 @@ HKVDataset::HKVDataset() :
     pszProjection(CPLStrdup("")),
     pszGCPProjection(CPLStrdup("")),
     papszAttrib(NULL),
-    bGeorefChanged(FALSE),
+    bGeorefChanged(false),
     papszGeoref(NULL),
-    bNoDataSet(FALSE),
-    bNoDataChanged(FALSE),
+    bNoDataSet(false),
+    bNoDataChanged(false),
     dfNoDataValue(0.0)
 {
     adfGeoTransform[0] = 0.0;
@@ -308,13 +310,13 @@ HKVDataset::~HKVDataset()
 
     if( bNoDataChanged )
     {
-        SaveHKVAttribFile(pszPath,
-                             this->nRasterXSize,
-                             this->nRasterYSize,
-                             this->nBands,
-                             this->eRasterType,
-                             this->bNoDataSet,
-                             this->dfNoDataValue );
+        SaveHKVAttribFile( pszPath,
+                           nRasterXSize,
+                           nRasterYSize,
+                           nBands,
+                           eRasterType,
+                           bNoDataSet,
+                           dfNoDataValue );
     }
 
     if( fpBlob != NULL )
@@ -339,35 +341,14 @@ HKVDataset::~HKVDataset()
 }
 
 /************************************************************************/
-/*                          SetVersion()                                */
-/************************************************************************/
-
-void HKVDataset::SetVersion(float version_number)
-
-{
-  //update stored info
-  MFF2version = version_number;
-}
-
-/************************************************************************/
-/*                          GetVersion()                                */
-/************************************************************************/
-
-float HKVDataset::GetVersion()
-
-{
-    return( MFF2version );
-}
-
-/************************************************************************/
 /*                          SetNoDataValue()                            */
 /************************************************************************/
 
 void HKVDataset::SetNoDataValue( double dfNewValue )
 
 {
-    bNoDataSet = TRUE;
-    bNoDataChanged = TRUE;
+    bNoDataSet = true;
+    bNoDataChanged = true;
     dfNoDataValue = dfNewValue;
 }
 
@@ -387,7 +368,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Couldn't create %s.\n", pszFilename );
+                  "Couldn't create %s.", pszFilename );
         return CE_Failure;
     }
 
@@ -421,10 +402,10 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
-    fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSize(eType) );
+    fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSizeBits(eType) );
     if( GDALDataTypeIsComplex( eType ) )
         fprintf( fp, "pixel.field = { real *complex }\n" );
     else
@@ -439,7 +420,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
     if ( bNoDataSet )
         fprintf( fp, "pixel.no_data = %s\n", CPLSPrintf("%f", dfNoDataValue) );
 
-    /* version information- only create the new style */
+    // Version information- only create the new style.
     fprintf( fp, "version = 1.1");
 
     if( VSIFClose( fp ) != 0 )
@@ -455,7 +436,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 const char *HKVDataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -466,7 +447,7 @@ CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -476,16 +457,16 @@ CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
 CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
 {
-    /* NOTE:  Geotransform coordinates must match the current projection   */
-    /* of the dataset being changed (not the geotransform source).         */
-    /* i.e. be in lat/longs for LL projected; UTM for UTM projected.       */
-    /* SET PROJECTION BEFORE SETTING GEOTRANSFORM TO AVOID SYNCHRONIZATION */
-    /* PROBLEMS!                                                           */
+    // NOTE:  Geotransform coordinates must match the current projection
+    // of the dataset being changed (not the geotransform source).
+    // i.e. be in lat/longs for LL projected; UTM for UTM projected.
+    // SET PROJECTION BEFORE SETTING GEOTRANSFORM TO AVOID SYNCHRONIZATION
+    // PROBLEMS.
 
-    /* Update the geotransform itself */
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    // Update the geotransform itself.
+    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
-    /* Clear previous gcps */
+    // Clear previous gcps.
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -494,30 +475,29 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     nGCPCount = 0;
     pasGCPList = NULL;
 
-    /* Return if the identity transform is set */
+    // Return if the identity transform is set.
     if (adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0
         && adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0
         && adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0 )
         return CE_None;
 
-    /* Update georef text info for saving later, and */
-    /* update GCPs to match geotransform.            */
+    // Update georef text info for saving later, and update GCPs to match
+    // geotransform.
 
     OGRCoordinateTransformation *poTransform = NULL;
-    int bSuccess = true;
+    bool bSuccess = true;
 
-    /* Projection parameter checking will have been done */
-    /* in SetProjection.                                 */
+    // Projection parameter checking will have been done in SetProjection.
     if(( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
        ( EQUAL(CSLFetchNameValue( papszGeoref, "projection.name" ),"UTM" )))
     {
-        /* pass copies of projection info, not originals (pointers */
-        /* get updated by importFromWkt)                           */
+        // Pass copies of projection info, not originals (pointers get updated
+        // by importFromWkt).
         char *pszPtemp = CPLStrdup(pszProjection);
         OGRSpatialReference oUTM;
         oUTM.importFromWkt(&pszPtemp);
-    char *pszGCPtemp;
-        (oUTM.GetAttrNode("GEOGCS"))->exportToWkt(&pszGCPtemp);
+        char *pszGCPtemp = NULL;
+        oUTM.GetAttrNode("GEOGCS")->exportToWkt(&pszGCPtemp);
 
         OGRSpatialReference oLL;
         oLL.importFromWkt(&pszGCPtemp);
@@ -529,14 +509,15 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
         }
     }
     else if ((( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
-              ( !EQUAL(CSLFetchNameValue( papszGeoref, "projection.name" ),"LL" ))) ||
-             (CSLFetchNameValue( papszGeoref, "projection.name" ) == NULL ))
+              ( !EQUAL(CSLFetchNameValue( papszGeoref,
+                                          "projection.name" ),"LL" ))) ||
+             ( CSLFetchNameValue( papszGeoref, "projection.name" ) == NULL ) )
     {
-      return CE_Failure;
+        return CE_Failure;
     }
 
     nGCPCount = 0;
-    pasGCPList = reinterpret_cast<GDAL_GCP *>( CPLCalloc( sizeof(GDAL_GCP), 5 ) );
+    pasGCPList = static_cast<GDAL_GCP *>( CPLCalloc( sizeof(GDAL_GCP), 5 ) );
 
     /* -------------------------------------------------------------------- */
     /*      top left                                                        */
@@ -545,7 +526,8 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     CPLFree( pasGCPList[nGCPCount].pszId );
     pasGCPList[nGCPCount].pszId = CPLStrdup( "top_left" );
 
-    double temp_lat, temp_long;
+    double temp_lat = 0.0;
+    double temp_long = 0.0;
     if (MFF2version > 1.0)
     {
         temp_lat = padfTransform[3];
@@ -555,8 +537,10 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     }
     else
     {
-        temp_lat = padfTransform[3] + 0.5 * padfTransform[4] + 0.5 * padfTransform[5];
-        temp_long = padfTransform[0] + 0.5 * padfTransform[1]+ 0.5 * padfTransform[2];
+        temp_lat =
+            padfTransform[3] + 0.5 * padfTransform[4] + 0.5 * padfTransform[5];
+        temp_long =
+            padfTransform[0] + 0.5 * padfTransform[1]+ 0.5 * padfTransform[2];
         pasGCPList[nGCPCount].dfGCPPixel = 0.5;
         pasGCPList[nGCPCount].dfGCPLine = 0.5;
     }
@@ -571,9 +555,9 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
             bSuccess = false;
     }
 
-    if (bSuccess)
+    if( bSuccess )
     {
-        char szValue[128];
+        char szValue[128] = { '\0' };
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude",
                                        szValue );
@@ -599,8 +583,12 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     }
     else
     {
-        temp_lat = padfTransform[3] + (GetRasterXSize()-0.5) * padfTransform[4] + 0.5 * padfTransform[5];
-        temp_long = padfTransform[0] + (GetRasterXSize()-0.5) * padfTransform[1] + 0.5 * padfTransform[2];
+        temp_lat =
+            padfTransform[3] + (GetRasterXSize()-0.5) * padfTransform[4] +
+            0.5 * padfTransform[5];
+        temp_long =
+            padfTransform[0] + (GetRasterXSize()-0.5) * padfTransform[1] +
+            0.5 * padfTransform[2];
         pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize()-0.5;
         pasGCPList[nGCPCount].dfGCPLine = 0.5;
     }
@@ -609,15 +597,15 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     pasGCPList[nGCPCount].dfGCPZ = 0.0;
     nGCPCount++;
 
-    if (poTransform != NULL)
+    if( poTransform != NULL )
     {
         if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
             bSuccess = false;
     }
 
-    if (bSuccess)
+    if( bSuccess )
     {
-        char szValue[128];
+      char szValue[128] = { '\0' };
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude",
                                        szValue );
@@ -634,7 +622,7 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     CPLFree( pasGCPList[nGCPCount].pszId );
     pasGCPList[nGCPCount].pszId = CPLStrdup( "bottom_left" );
 
-    if (MFF2version > 1.0)
+    if( MFF2version > 1.0 )
     {
         temp_lat = padfTransform[3] + GetRasterYSize() * padfTransform[5];
         temp_long = padfTransform[0] + GetRasterYSize() * padfTransform[2];
@@ -643,8 +631,12 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     }
     else
     {
-        temp_lat = padfTransform[3] + 0.5 * padfTransform[4] + (GetRasterYSize()-0.5) * padfTransform[5];
-        temp_long = padfTransform[0] + 0.5 * padfTransform[1] + (GetRasterYSize()-0.5) * padfTransform[2];
+        temp_lat =
+            padfTransform[3] + 0.5 * padfTransform[4] +
+            (GetRasterYSize()-0.5) * padfTransform[5];
+        temp_long =
+            padfTransform[0] + 0.5 * padfTransform[1] +
+            (GetRasterYSize()-0.5) * padfTransform[2];
         pasGCPList[nGCPCount].dfGCPPixel = 0.5;
         pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize()-0.5;
     }
@@ -653,15 +645,15 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     pasGCPList[nGCPCount].dfGCPZ = 0.0;
     nGCPCount++;
 
-    if (poTransform != NULL)
+    if( poTransform != NULL )
     {
         if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
-            bSuccess = FALSE;
+            bSuccess = false;
     }
 
-    if (bSuccess)
+    if( bSuccess )
     {
-        char szValue[128];
+        char szValue[128] = { '\0' };
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude",
                                        szValue );
@@ -678,7 +670,7 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     CPLFree( pasGCPList[nGCPCount].pszId );
     pasGCPList[nGCPCount].pszId = CPLStrdup( "bottom_right" );
 
-    if (MFF2version > 1.0)
+    if( MFF2version > 1.0 )
     {
         temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] +
           GetRasterYSize() * padfTransform[5];
@@ -701,15 +693,15 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     pasGCPList[nGCPCount].dfGCPZ = 0.0;
     nGCPCount++;
 
-    if (poTransform != NULL)
+    if( poTransform != NULL )
     {
         if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
-            bSuccess = FALSE;
+            bSuccess = false;
     }
 
-    if (bSuccess)
+    if( bSuccess )
     {
-        char szValue[128];
+      char szValue[128] = { '\0' };
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude",
                                        szValue );
@@ -738,15 +730,15 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     pasGCPList[nGCPCount].dfGCPZ = 0.0;
     nGCPCount++;
 
-    if (poTransform != NULL)
+    if( poTransform != NULL )
     {
         if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
-            bSuccess = FALSE;
+            bSuccess = false;
     }
 
-    if (bSuccess)
+    if( bSuccess )
     {
-        char szValue[128];
+        char szValue[128] = { '\0' };
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude",
                                        szValue );
@@ -756,24 +748,26 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
                                        szValue );
     }
 
-    if (!bSuccess)
+    if( !bSuccess )
     {
-      CPLError(CE_Warning,CPLE_AppDefined,
-               "Warning- error setting header info in SetGeoTransform. Changes may not be saved properly.\n");
+      CPLError(
+          CE_Warning, CPLE_AppDefined,
+          "Error setting header info in SetGeoTransform. "
+          "Changes may not be saved properly." );
     }
 
-    if (poTransform != NULL)
+    if( poTransform != NULL )
         delete poTransform;
 
-    bGeorefChanged = TRUE;
+    bGeorefChanged = true;
 
-    return( CE_None );
+    return CE_None;
 }
 
 CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
 {
     CPLFree( pszGCPProjection );
-    this->pszGCPProjection = CPLStrdup(pszNewProjection);
+    pszGCPProjection = CPLStrdup(pszNewProjection);
 
     return CE_None;
 }
@@ -787,7 +781,7 @@ CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
 CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
 {
-    /* This function is used to update a georef file */
+    // Update a georef file.
 
 #ifdef DEBUG_VERBOSE
     printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );
@@ -798,13 +792,13 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
         && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Only OGC WKT Projections supported for writing to HKV.\n"
-                "%s not supported.",
+                  "Only OGC WKT Projections supported for writing to HKV.  "
+                  "%s not supported.",
                   pszNewProjection );
 
         return CE_Failure;
     }
-    else if (EQUAL(pszNewProjection,""))
+    else if( EQUAL(pszNewProjection,"") )
     {
       CPLFree( pszProjection );
       pszProjection = reinterpret_cast<char *>( CPLStrdup( pszNewProjection ) );
@@ -821,10 +815,13 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
         OGRErr ogrerrorOl = OGRERR_NONE;
-        papszGeoref = CSLSetNameValue( papszGeoref, "projection.origin_longitude",
-                        CPLSPrintf("%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl)));
+        papszGeoref = CSLSetNameValue(
+            papszGeoref, "projection.origin_longitude",
+            CPLSPrintf(
+                "%f",
+                oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &ogrerrorOl) ) );
     }
-    else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
+    else if( oSRS.GetAttrValue("PROJECTION") == NULL && oSRS.IsGeographic() )
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
     }
@@ -857,9 +854,8 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     }
     else
     {
-      /* default to previous behaviour if spheroid not found by */
-      /* radius and inverse flattening */
-
+        // Default to previous behaviour if spheroid not found by radius and
+        // inverse flattening.
         if( strstr(pszNewProjection,"Bessel") != NULL )
         {
             papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
@@ -871,18 +867,8 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
                                        "ev-wgs-84" );
         }
     }
-    bGeorefChanged = TRUE;
+    bGeorefChanged = true;
     return CE_None;
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int HKVDataset::GetGCPCount()
-
-{
-    return nGCPCount;
 }
 
 /************************************************************************/
@@ -916,16 +902,16 @@ void HKVDataset::ProcessGeorefGCP( char **papszGeorefIn, const char *pszBase,
 /* -------------------------------------------------------------------- */
 /*      Fetch the GCP from the string list.                             */
 /* -------------------------------------------------------------------- */
-    char szFieldName[128];
+    char szFieldName[128] = { '\0' };
     snprintf( szFieldName, sizeof(szFieldName), "%s.latitude", pszBase );
-    double dfLat;
+    double dfLat = 0.0;
     if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
     else
         dfLat = CPLAtof(CSLFetchNameValue(papszGeorefIn, szFieldName));
 
     snprintf( szFieldName, sizeof(szFieldName), "%s.longitude", pszBase );
-    double dfLong;
+    double dfLong = 0.0;
     if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
     else
@@ -1025,40 +1011,52 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Do we have a recognised projection?                             */
 /* -------------------------------------------------------------------- */
-    /* double eq_radius, inv_flattening; */
-
     const char *pszProjName = CSLFetchNameValue(papszGeoref, "projection.name");
     const char *pszOriginLong = CSLFetchNameValue(
         papszGeoref, "projection.origin_longitude");
-    const char *pszSpheroidName = CSLFetchNameValue(papszGeoref, "spheroid.name");
+    const char *pszSpheroidName =
+        CSLFetchNameValue(papszGeoref, "spheroid.name");
 
-
-    if ((pszSpheroidName != NULL) && (hkvEllipsoids->SpheroidInList(pszSpheroidName)))
+    if( pszSpheroidName != NULL &&
+        hkvEllipsoids->SpheroidInList(pszSpheroidName) )
     {
-      /* eq_radius=hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName); */
-      /* inv_flattening=hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName); */
+      CPLError( CE_Failure, CPLE_AppDefined,
+                "Unrecognized ellipsoid.  Not handled.");
+      // Why were eq_radius and inv_flattening never used?
+      // eq_radius = hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName);
+      // inv_flattening =
+      //     hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName);
     }
     else if (pszProjName != NULL)
     {
-      CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
-      /* eq_radius=hkvEllipsoids->GetSpheroidEqRadius("wgs-84"); */
-      /* inv_flattening=hkvEllipsoids->GetSpheroidInverseFlattening("wgs-84"); */
+      CPLError( CE_Failure, CPLE_AppDefined,
+                "Unrecognized ellipsoid.  Not handled.");
+      // TODO(schwehr): This error is was never what was happening.
+      // CPLError( CE_Warning, CPLE_AppDefined,
+      //           "Unrecognized ellipsoid.  Using wgs-84 parameters.");
+      // eq_radius=hkvEllipsoids->GetSpheroidEqRadius("wgs-84"); */
+      // inv_flattening=hkvEllipsoids->GetSpheroidInverseFlattening("wgs-84");
     }
 
-    if( (pszProjName != NULL) && EQUAL(pszProjName,"utm") && (nGCPCount == 5) )
+    if( pszProjName != NULL &&
+        EQUAL(pszProjName, "utm") &&
+        nGCPCount == 5 )
     {
-      /*int nZone = (int)((CPLAtof(pszOriginLong)+184.5) / 6.0); */
-        int nZone;
+        // int nZone = (int)((CPLAtof(pszOriginLong)+184.5) / 6.0);
+        int nZone = 31;  // TODO(schwehr): Where does 31 come from?
 
         if (pszOriginLong == NULL)
         {
-            /* If origin not specified, assume 0.0 */
-            CPLError(CE_Warning,CPLE_AppDefined,
-                   "Warning- no projection origin longitude specified.  Assuming 0.0.");
-            nZone = 31;
+            // If origin not specified, assume 0.0.
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "No projection origin longitude specified.  Assuming 0.0.");
         }
         else
-            nZone = 31 + static_cast<int>( floor( CPLAtof( pszOriginLong ) / 6.0) );
+        {
+            nZone =
+                31 + static_cast<int>( floor( CPLAtof( pszOriginLong ) / 6.0) );
+        }
 
         OGRSpatialReference oUTM;
 
@@ -1084,18 +1082,20 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
         {
           if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
           {
-            oUTM.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
-                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
-                          );
-            oLL.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
-                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
-                           );
+              oUTM.SetGeogCS(
+                  "unknown", "unknown", pszSpheroidName,
+                  hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
+                  hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName));
+              oLL.SetGeogCS(
+                  "unknown", "unknown", pszSpheroidName,
+                  hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
+                  hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName));
           }
           else
           {
-            CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Unrecognized ellipsoid.  Using wgs-84 parameters.");
             oUTM.SetWellKnownGeogCS( "WGS84" );
             oLL.SetWellKnownGeogCS( "WGS84" );
           }
@@ -1111,20 +1111,26 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             bSuccess = false;
         }
 
-        double dfUtmX[5], dfUtmY[5];
+        double dfUtmX[5] = { 0.0 };
+        double dfUtmY[5] = { 0.0 };
 
-        for( int gcp_index=0;gcp_index<5;gcp_index++ )
+        if( poTransform != NULL )
         {
-            dfUtmX[gcp_index] = pasGCPList[gcp_index].dfGCPX;
-            dfUtmY[gcp_index] = pasGCPList[gcp_index].dfGCPY;
+            for( int gcp_index=0; gcp_index<5; gcp_index++ )
+            {
+                dfUtmX[gcp_index] = pasGCPList[gcp_index].dfGCPX;
+                dfUtmY[gcp_index] = pasGCPList[gcp_index].dfGCPY;
 
-            if( bSuccess && !poTransform->Transform( 1, &(dfUtmX[gcp_index]), &(dfUtmY[gcp_index]) ) )
-                bSuccess = false;
+                if( bSuccess &&
+                    !poTransform->Transform( 1, &(dfUtmX[gcp_index]),
+                                             &(dfUtmY[gcp_index]) ) )
+                  bSuccess = false;
+            }
         }
 
         if( bSuccess )
         {
-            /* update GCPS to proper projection */
+            // Update GCPS to proper projection.
             for( int gcp_index = 0; gcp_index < 5; gcp_index++ )
             {
                 pasGCPList[gcp_index].dfGCPX = dfUtmX[gcp_index];
@@ -1135,13 +1141,16 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             pszGCPProjection = NULL;
             oUTM.exportToWkt( &pszGCPProjection );
 
-            int transform_ok = GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0);
+            bool transform_ok =
+                CPL_TO_BOOL(
+                    GDALGCPsToGeoTransform(5, pasGCPList, adfGeoTransform, 0) );
 
             CPLFree( pszProjection );
             pszProjection = NULL;
-            if (transform_ok == FALSE)
+            if( !transform_ok )
             {
-              /* transform may not be sufficient in all cases (slant range projection) */
+                // Transform may not be sufficient in all cases (slant range
+                // projection).
                 adfGeoTransform[0] = 0.0;
                 adfGeoTransform[1] = 1.0;
                 adfGeoTransform[2] = 0.0;
@@ -1151,14 +1160,15 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
                 pszProjection = CPLStrdup("");
             }
             else
+            {
                 oUTM.exportToWkt( &pszProjection );
-
+            }
         }
 
         if( poTransform != NULL )
             delete poTransform;
     }
-    else if ((pszProjName != NULL) && (nGCPCount == 5))
+    else if( pszProjName != NULL && nGCPCount == 5 )
     {
         OGRSpatialReference oLL;
 
@@ -1167,29 +1177,35 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
         }
 
-        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")) ||
-            (EQUAL(pszSpheroidName,"wgs_84")))
-          {
+        if( pszSpheroidName == NULL ||
+            EQUAL(pszSpheroidName,"wgs-84") ||  // Dash.
+            EQUAL(pszSpheroidName,"wgs_84") )  // Underscore.
+        {
             oLL.SetWellKnownGeogCS( "WGS84" );
-          }
+        }
         else
         {
-          if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
-          {
-            oLL.SetGeogCS( "","",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
-                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
-                           );
+            if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
+            {
+                oLL.SetGeogCS(
+                    "", "", pszSpheroidName,
+                    hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
+                    hkvEllipsoids->GetSpheroidInverseFlattening(
+                        pszSpheroidName) );
           }
           else
           {
-            CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Unrecognized ellipsoid.  "
+                "Using wgs-84 parameters.");
             oLL.SetWellKnownGeogCS( "WGS84" );
           }
         }
 
         const bool transform_ok
-            = CPL_TO_BOOL(GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0));
+            = CPL_TO_BOOL(
+                GDALGCPsToGeoTransform( 5, pasGCPList, adfGeoTransform, 0 ) );
 
         CPLFree( pszProjection );
         pszProjection = NULL;
@@ -1230,7 +1246,8 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poOpenInfo->bIsDirectory )
         return NULL;
 
-    const char *pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "image_data", NULL);
+    const char *pszFilename =
+        CPLFormFilename(poOpenInfo->pszFilename, "image_data", NULL);
     VSIStatBuf sStat;
     if( VSIStat(pszFilename,&sStat) != 0 )
         pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "blob", NULL );
@@ -1277,7 +1294,8 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
 /* -------------------------------------------------------------------- */
-    int bNative, bComplex;
+    bool bNative = false;
+    bool bComplex = false;
     int nRawBands = 0;
 
     if( CSLFetchNameValue( papszAttrib, "extent.cols" ) == NULL
@@ -1298,26 +1316,26 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const char *pszValue = CSLFetchNameValue(papszAttrib,"pixel.order");
     if( pszValue == NULL )
-        bNative = TRUE;
+        bNative = true;
     else
     {
 #ifdef CPL_MSB
-        bNative = (strstr(pszValue,"*msbf") != NULL);
+        bNative = strstr(pszValue,"*msbf") != NULL;
 #else
-        bNative = (strstr(pszValue,"*lsbf") != NULL);
+        bNative = strstr(pszValue,"*lsbf") != NULL;
 #endif
     }
 
     bool bNoDataSet = false;
     double dfNoDataValue = 0.0;
-    pszValue = CSLFetchNameValue(papszAttrib,"pixel.no_data");
+    pszValue = CSLFetchNameValue(papszAttrib, "pixel.no_data");
     if( pszValue != NULL )
     {
         bNoDataSet = true;
         dfNoDataValue = CPLAtof(pszValue);
     }
 
-    pszValue = CSLFetchNameValue(papszAttrib,"channel.enumeration");
+    pszValue = CSLFetchNameValue(papszAttrib, "channel.enumeration");
     if( pszValue != NULL )
         nRawBands = atoi(pszValue);
     else
@@ -1329,11 +1347,11 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    pszValue = CSLFetchNameValue(papszAttrib,"pixel.field");
-    if( pszValue != NULL && strstr(pszValue,"*complex") != NULL )
-        bComplex = TRUE;
+    pszValue = CSLFetchNameValue(papszAttrib, "pixel.field");
+    if( pszValue != NULL && strstr(pszValue, "*complex") != NULL )
+        bComplex = true;
     else
-        bComplex = FALSE;
+        bComplex = false;
 
     /* Get the version number, if present (if not, assume old version. */
     /* Versions differ in their interpretation of corner coordinates.  */
@@ -1351,7 +1369,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszEncoding == NULL )
         pszEncoding = "{ *unsigned }";
 
-    int          nSize = 1;
+    int nSize = 1;
     if( CSLFetchNameValue(papszAttrib,"pixel.size") != NULL )
         nSize = atoi(CSLFetchNameValue(papszAttrib,"pixel.size"))/8;
 #if 0
@@ -1389,7 +1407,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unsupported pixel data type in %s.\n"
-                  "pixel.size=%d pixel.encoding=%s\n",
+                  "pixel.size=%d pixel.encoding=%s",
                   poDS->pszPath, nSize, pszEncoding );
         delete poDS;
         return NULL;
@@ -1407,7 +1425,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poDS->fpBlob == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unable to open file %s for read access.\n",
+                      "Unable to open file %s for read access.",
                       pszFilename );
             delete poDS;
             return NULL;
@@ -1419,7 +1437,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poDS->fpBlob == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unable to open file %s for update access.\n",
+                      "Unable to open file %s for update access.",
                       pszFilename );
             delete poDS;
             return NULL;
@@ -1477,7 +1495,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLFree( pszOvrFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1496,7 +1514,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     if (nBands <= 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "HKV driver does not support %d bands.\n", nBands);
+                  "HKV driver does not support %d bands.", nBands );
         return NULL;
     }
 
@@ -1507,7 +1525,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
               "Attempt to create HKV file with currently unsupported\n"
-              "data type (%s).\n",
+              "data type (%s).",
               GDALGetDataTypeName(eType) );
 
         return NULL;
@@ -1517,19 +1535,19 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /*      Establish the name of the directory we will be creating the     */
 /*      new HKV directory in.  Verify that this is a directory.         */
 /* -------------------------------------------------------------------- */
-    char *pszBaseDir;
+    char *pszBaseDir = NULL;
 
     if( strlen(CPLGetPath(pszFilenameIn)) == 0 )
         pszBaseDir = CPLStrdup(".");
     else
         pszBaseDir = CPLStrdup(CPLGetPath(pszFilenameIn));
 
-    VSIStatBuf  sStat;
+    VSIStatBuf sStat;
     if( CPLStat( pszBaseDir, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create HKV dataset under %s,\n"
-                  "but this is not a valid directory.\n",
+                  "but this is not a valid directory.",
                   pszBaseDir);
         CPLFree( pszBaseDir );
         return NULL;
@@ -1541,7 +1559,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     if( VSIMkdir( pszFilenameIn, 0755 ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to create directory %s.\n",
+                  "Unable to create directory %s.",
                   pszFilenameIn );
         return NULL;
     }
@@ -1570,9 +1588,11 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
         return NULL;
     }
 
-    bool bOK = VSIFWrite( reinterpret_cast<void *>( const_cast<char *>( "" ) ), 1, 1, fp ) == 1;
+    bool bOK =
+        VSIFWrite( reinterpret_cast<void *>(
+            const_cast<char *>( "" ) ), 1, 1, fp ) == 1;
     if( VSIFClose( fp ) != 0 )
-        bOK = false;
+        bOK &= false;
 
     if( !bOK )
         return NULL;
@@ -1598,7 +1618,7 @@ CPLErr HKVDataset::Delete( const char * pszName )
     if( CPLStat( pszName, &sStat ) != 0 || !VSI_ISDIR(sStat.st_mode) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s does not appear to be an HKV Dataset, as it is not\n"
+                  "%s does not appear to be an HKV Dataset, as it is not "
                   "a path to a directory.",
                   pszName );
         return CE_Failure;
@@ -1614,8 +1634,8 @@ CPLErr HKVDataset::Delete( const char * pszName )
         if( VSIUnlink(pszTarget) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to delete file %s,\n"
-                      "HKVDataset Delete(%s) failed.\n",
+                      "Unable to delete file %s,"
+                      "HKVDataset Delete(%s) failed.",
                       pszTarget,
                       pszName );
             CSLDestroy( papszFiles );
@@ -1628,8 +1648,8 @@ CPLErr HKVDataset::Delete( const char * pszName )
     if( VSIRmdir( pszName ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to delete directory %s,\n"
-                  "HKVDataset Delete() failed.\n",
+                  "Unable to delete directory %s,"
+                  "HKVDataset Delete() failed.",
                   pszName );
         return CE_Failure;
     }
@@ -1653,7 +1673,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
     if (nBands == 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "HKV driver does not support source dataset with zero band.\n");
+                  "HKV driver does not support source dataset with zero band.");
         return NULL;
     }
 
@@ -1701,7 +1721,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
         GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
 
         /* Get nodata value, if relevant */
-        int pbSuccess;
+        int pbSuccess = FALSE;
         double dfSrcNoDataValue = poSrcBand->GetNoDataValue( &pbSuccess );
         if ( pbSuccess )
             poDS->SetNoDataValue( dfSrcNoDataValue );
@@ -1709,7 +1729,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
         void *pData = CPLMalloc(
             nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) / 8);
 
-        CPLErr eErr;
+        CPLErr eErr = CE_None;
         for( int iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
         {
             for( int iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
@@ -1769,7 +1789,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     double *tempGeoTransform
-        = reinterpret_cast<double *>( CPLMalloc( 6 * sizeof(double) ) );
+        = static_cast<double *>( CPLMalloc( 6 * sizeof(double) ) );
 
     if (( poSrcDS->GetGeoTransform( tempGeoTransform ) == CE_None)
         && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
@@ -1783,16 +1803,15 @@ HKVDataset::CreateCopy( const char * pszFilename,
 
           CPLFree(tempGeoTransform);
 
-          /* georef file will be saved automatically when dataset is deleted */
-          /* because SetProjection sets a flag to indicate it's necessary.   */
-
+          // georef file will be saved automatically when dataset is deleted
+          // because SetProjection sets a flag to indicate it's necessary.
     }
     else
     {
           CPLFree(tempGeoTransform);
     }
 
-    /* Make sure image data gets flushed */
+    // Make sure image data gets flushed.
     for( int iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
     {
         RawRasterBand *poDstBand = reinterpret_cast<RawRasterBand *>(
