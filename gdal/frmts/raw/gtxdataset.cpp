@@ -74,7 +74,14 @@ class GTXDataset : public RawDataset
     double      adfGeoTransform[6];
 
   public:
-                GTXDataset() : fpImage(NULL) {}
+                GTXDataset() : fpImage(NULL) {
+                      adfGeoTransform[0] = 0.0;
+                      adfGeoTransform[1] = 1.0;
+                      adfGeoTransform[2] = 0.0;
+                      adfGeoTransform[3] = 0.0;
+                      adfGeoTransform[4] = 0.0;
+                      adfGeoTransform[5] = 1.0;
+                }
     virtual ~GTXDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
@@ -107,7 +114,7 @@ GTXDataset::~GTXDataset()
     {
         if( VSIFCloseL( fpImage ) != 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
 }
@@ -122,7 +129,7 @@ int GTXDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 40 )
         return FALSE;
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"gtx") )
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gtx") )
         return FALSE;
 
     return TRUE;
@@ -165,10 +172,14 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[4] = 0.0;
 
-    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+3, 8, 1, poDS->fpImage ));
-    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+0, 8, 1, poDS->fpImage ));
-    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+5, 8, 1, poDS->fpImage ));
-    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+1, 8, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+3, 8, 1,
+                                  poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+0, 8, 1,
+                                  poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+5, 8, 1,
+                                  poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+1, 8, 1,
+                                  poDS->fpImage ));
 
     CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage ));
     CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage ));
@@ -203,23 +214,21 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
 
     GDALDataType eDT = GDT_Float32;
-    if( nSize == 40 + 8 * (vsi_l_offset)poDS->nRasterXSize * poDS->nRasterYSize )
+    if( nSize == 40 + 8 * static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+        poDS->nRasterYSize )
         eDT = GDT_Float64;
-    const int nDTSize = GDALGetDataTypeSize(eDT) / 8;
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
-                              (poDS->nRasterYSize-1)*poDS->nRasterXSize*nDTSize + 40,
-                              nDTSize, poDS->nRasterXSize * -nDTSize,
-                              eDT,
-                              !CPL_IS_LSB, TRUE, FALSE );
-    if (eDT == GDT_Float64)
-      poBand->SetNoDataValue( -88.8888 );
-    else
-      /* GDT_Float32 */
-      poBand->SetNoDataValue( -88.8888 );
+    RawRasterBand *poBand = new RawRasterBand(
+        poDS, 1, poDS->fpImage,
+        (poDS->nRasterYSize-1) * poDS->nRasterXSize*nDTSize + 40,
+        nDTSize, poDS->nRasterXSize * -nDTSize,
+        eDT,
+        !CPL_IS_LSB, TRUE, FALSE );
+    poBand->SetNoDataValue( -88.8888 );
     poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
@@ -233,7 +242,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -243,7 +252,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr GTXDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
     return CE_None;
 }
 
@@ -261,14 +270,15 @@ CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
         return CE_Failure;
     }
 
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
     const double dfXOrigin = adfGeoTransform[0] + 0.5 * adfGeoTransform[1];
-    const double dfYOrigin = adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5];
+    const double dfYOrigin =
+        adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5];
     const double dfWidth = adfGeoTransform[1];
-    const double dfHeight = - adfGeoTransform[5];
+    const double dfHeight = -adfGeoTransform[5];
 
-    unsigned char header[32];
+    unsigned char header[32] = { '\0' };
     memcpy( header + 0, &dfYOrigin, 8 );
     CPL_MSBPTR64( header + 0 );
 
@@ -309,9 +319,9 @@ const char *GTXDataset::GetProjectionRef()
 GDALDataset *GTXDataset::Create( const char * pszFilename,
                                  int nXSize,
                                  int nYSize,
-                                 CPL_UNUSED int nBands,
+                                 int /* nBands */,
                                  GDALDataType eType,
-                                 CPL_UNUSED char ** papszOptions )
+                                 char ** /* papszOptions */ )
 {
     if( eType != GDT_Float32 )
     {
@@ -344,20 +354,20 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 /*      Write out the header with stub georeferencing.                  */
 /* -------------------------------------------------------------------- */
 
-    unsigned char header[40];
-    double dfYOrigin=0;
+    unsigned char header[40] = { '\0' };
+    double dfYOrigin = 0.0;
     memcpy( header + 0, &dfYOrigin, 8 );
     CPL_MSBPTR64( header + 0 );
 
-    double dfXOrigin=0;
+    double dfXOrigin = 0.0;
     memcpy( header + 8, &dfXOrigin, 8 );
     CPL_MSBPTR64( header + 8 );
 
-    double dfYSize=0.01;
+    double dfYSize = 0.01;
     memcpy( header + 16, &dfYSize, 8 );
     CPL_MSBPTR64( header + 16 );
 
-    double dfXSize=0.01;
+    double dfXSize = 0.01;
     memcpy( header + 24, &dfXSize, 8 );
     CPL_MSBPTR64( header + 24 );
 
