@@ -1020,8 +1020,14 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     if( pszSpheroidName != NULL &&
         hkvEllipsoids->SpheroidInList(pszSpheroidName) )
     {
+#if 0
+      // TODO(schwehr): Enable in trunk after 2.1 branch and fix.
+      // Breaks tests on some platforms.
       CPLError( CE_Failure, CPLE_AppDefined,
-                "Unrecognized ellipsoid.  Not handled.");
+                "Unrecognized ellipsoid.  Not handled.  "
+                "Spheroid name not in spheroid list: '%s'",
+                pszSpheroidName );
+#endif
       // Why were eq_radius and inv_flattening never used?
       // eq_radius = hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName);
       // inv_flattening =
@@ -1029,7 +1035,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     }
     else if (pszProjName != NULL)
     {
-      CPLError( CE_Failure, CPLE_AppDefined,
+      CPLError( CE_Warning, CPLE_AppDefined,
                 "Unrecognized ellipsoid.  Not handled.");
       // TODO(schwehr): This error is was never what was happening.
       // CPLError( CE_Warning, CPLE_AppDefined,
