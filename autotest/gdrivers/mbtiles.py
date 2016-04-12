@@ -384,6 +384,38 @@ def mbtiles_7():
     return 'success'
 
 ###############################################################################
+# Single band with 24 bit color table, PNG
+
+def mbtiles_8():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/small_world_pct.tif')
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
+    out_ds = None
+    src_ds = None
+
+    expected_cs = [ 65245, 56985, 54768 ] # , 60492 
+    out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    got_ct = out_ds.GetRasterBand(1).GetColorTable()
+    if got_ct is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -401,6 +433,7 @@ gdaltest_list = [
     mbtiles_5,
     mbtiles_6,
     mbtiles_7,
+    mbtiles_8,
     mbtiles_cleanup ]
 
 #gdaltest_list = [ mbtiles_1, mbtiles_7 ]
