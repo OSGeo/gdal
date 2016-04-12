@@ -639,6 +639,50 @@ def ogr_basic_12():
     return 'success'
 
 ###############################################################################
+# Test OGRParseDate (#6452)
+
+def ogr_basic_13():
+  
+    feat_defn = ogr.FeatureDefn('test')
+    field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
+    feat_defn.AddFieldDefn(field_defn)
+
+    tests = [ ('2016/1/1', '2016/01/01 00:00:00'),
+              ('2016/1/1 12:34', '2016/01/01 12:34:00'),
+              ('2016/1/1 12:34:56', '2016/01/01 12:34:56'),
+              ('2016/1/1 12:34:56.789', '2016/01/01 12:34:56.789'),
+              ('2016/12/31', '2016/12/31 00:00:00'),
+              ('-2016/12/31', '-2016/12/31 00:00:00'),
+              ('2016-12-31', '2016/12/31 00:00:00'),
+              ('0080/1/1', '0080/01/01 00:00:00'),
+              ('80/1/1', '1980/01/01 00:00:00'),
+              ('0010/1/1', '0010/01/01 00:00:00'),
+              ('9/1/1', '2009/01/01 00:00:00'),
+              ('10/1/1', '2010/01/01 00:00:00'),
+              ('2016-13-31', None),
+              ('2016-0-31', None),
+              ('2016-1-32', None),
+              ('2016-1-0', None),
+              ('0/1/1','2000/01/01 00:00:00'),
+              ('00/1/1', '2000/01/01 00:00:00'),
+              ('00/00/00', None),
+              ('000/00/00', None),
+              ('0000/00/00', None),
+              ('//foo', None) ]
+
+    for (val, expected_ret) in tests:
+        f = ogr.Feature(feat_defn)
+        f.SetField('date', val)
+        if f.GetField('date') != expected_ret:
+            gdaltest.post_reason('fail')
+            print(val)
+            print(f.GetField('date'))
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -661,6 +705,7 @@ gdaltest_list = [
     ogr_basic_10,
     ogr_basic_11,
     ogr_basic_12,
+    ogr_basic_13,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
