@@ -2799,6 +2799,42 @@ def gpkg_35():
     return 'success'
 
 ###############################################################################
+# Single band with 24 bit color table, PNG, GoogleMapsCompatible
+
+def gpkg_36():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+    if gdaltest.png_dr is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    src_ds = gdal.Open('data/small_world_pct.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible','RESAMPLING=NEAREST']  )
+    out_ds = None
+    src_ds = None
+
+    expected_cs = [ 65245, 56985, 54768, 60492 ]
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    got_ct = out_ds.GetRasterBand(1).GetColorTable()
+    if got_ct is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('tmp/tmp.gpkg')
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2852,6 +2888,7 @@ gdaltest_list = [
     gpkg_30,
     gpkg_34,
     gpkg_35,
+    gpkg_36,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_35, gpkg_cleanup ]
