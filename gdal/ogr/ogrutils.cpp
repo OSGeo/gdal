@@ -584,6 +584,8 @@ int OGRParseDate( const char *pszInput,
     
     if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
     {
+        if( !(*pszInput == '-' || *pszInput == '+' || (*pszInput >= '0' && *pszInput <= '9')) )
+            return FALSE;
         int nYear = atoi(pszInput);
         if( nYear != (GInt16)nYear )
         {
@@ -592,12 +594,18 @@ int OGRParseDate( const char *pszInput,
             return FALSE;
         }
         psField->Date.Year = (GInt16)nYear;
-        if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
-            psField->Date.Year += 1900;
-        else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
-            psField->Date.Year += 2000;
+        if( (pszInput[1] == '-' || pszInput[1] == '/' ) ||
+            (pszInput[1] != '\0' && (pszInput[2] == '-' || pszInput[2] == '/' )) )
+        {
+            if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
+                psField->Date.Year += 1900;
+            else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
+                psField->Date.Year += 2000;
+        }
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        if( *pszInput == '-' )
+            pszInput ++;
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
             return FALSE;
@@ -605,7 +613,7 @@ int OGRParseDate( const char *pszInput,
             pszInput++;
 
         psField->Date.Month = (GByte)atoi(pszInput);
-        if( psField->Date.Month > 12 )
+        if( psField->Date.Month <= 0 || psField->Date.Month > 12 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' ) 
@@ -616,7 +624,7 @@ int OGRParseDate( const char *pszInput,
             pszInput++;
 
         psField->Date.Day = (GByte)atoi(pszInput);
-        if( psField->Date.Day > 31 )
+        if( psField->Date.Day <= 0 || psField->Date.Day > 31 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
