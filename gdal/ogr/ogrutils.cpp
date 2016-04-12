@@ -963,10 +963,13 @@ int OGRParseDate( const char *pszInput,
             return FALSE;
         }
         psField->Date.Year = (GInt16)nYear;
-        if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
-            psField->Date.Year += 1900;
-        else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
-            psField->Date.Year += 2000;
+        if( pszInput[1] != '\0' && (pszInput[2] == '-' || pszInput[2] == '/' ) )
+        {
+            if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
+                psField->Date.Year += 1900;
+            else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
+                psField->Date.Year += 2000;
+        }
 
         if( *pszInput == '-' )
             pszInput ++;
