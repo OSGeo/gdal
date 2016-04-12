@@ -2290,6 +2290,30 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
         }
     }
 
+    GDALResampleAlg eResampleAlg = GRA_Bilinear;
+    const char* pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
+    if( pszResampling )
+    {
+        for(size_t iAlg = 0; iAlg < sizeof(asResamplingAlg)/sizeof(asResamplingAlg[0]); iAlg ++)
+        {
+            if( EQUAL(pszResampling, asResamplingAlg[iAlg].pszName) )
+            {
+                eResampleAlg = asResamplingAlg[iAlg].eResampleAlg;
+                break;
+            }
+        }
+    }
+
+    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL &&
+        eResampleAlg != GRA_NearestNeighbour && eResampleAlg != GRA_Mode )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Input dataset has a color table, which will likely lead to "
+                 "bad results when using a resampling method other than "
+                 "nearest neighbour or mode. Converting the dataset to 24/32 bit "
+                 "(e.g. with gdal_translate -expand rgb/rgba) is advised.");
+    }
+
     GDALDataset* poDS = Create( pszFilename, nXSize, nYSize, nTargetBands, GDT_Byte,
                                    papszOptions );
     if( poDS == NULL )
@@ -2298,6 +2322,10 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
     poDS->SetGeoTransform(adfGeoTransform);
+    if( nTargetBands == 1 && nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
+    {
+        poDS->GetRasterBand(1)->SetColorTable( poSrcDS->GetRasterBand(1)->GetColorTable() );
+    }
 
     hTransformArg =
         GDALCreateGenImgProjTransformer2( poSrcDS, poDS, papszTO );
@@ -2325,19 +2353,6 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
     psWO->papszWarpOptions = NULL;
     psWO->eWorkingDataType = GDT_Byte;
 
-    GDALResampleAlg eResampleAlg = GRA_Bilinear;
-    const char* pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
-    if( pszResampling )
-    {
-        for(size_t iAlg = 0; iAlg < sizeof(asResamplingAlg)/sizeof(asResamplingAlg[0]); iAlg ++)
-        {
-            if( EQUAL(pszResampling, asResamplingAlg[iAlg].pszName) )
-            {
-                eResampleAlg = asResamplingAlg[iAlg].eResampleAlg;
-                break;
-            }
-        }
-    }
     psWO->eResampleAlg = eResampleAlg;
 
     psWO->hSrcDS = poSrcDS;
