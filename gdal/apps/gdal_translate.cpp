@@ -575,12 +575,12 @@ static int ProxyMain( int argc, char ** argv )
             {
                 pasScaleParams = (ScaleParams*)CPLRealloc(pasScaleParams,
                     (nIndex + 1) * sizeof(ScaleParams));
-                if( nIndex > nScaleRepeat )
-                    memset(pasScaleParams + nScaleRepeat, 0,
-                        sizeof(ScaleParams) * (nIndex - nScaleRepeat));
+                memset(pasScaleParams + nScaleRepeat, 0,
+                        sizeof(ScaleParams) * (nIndex - nScaleRepeat + 1));
                 nScaleRepeat = nIndex + 1;
             }
             pasScaleParams[nIndex].bScale = TRUE;
+            pasScaleParams[nIndex].bHaveScaleSrc = FALSE;
             if( i < argc-2 && ArgIsNumeric(argv[i+1]) )
             {
                 pasScaleParams[nIndex].bHaveScaleSrc = TRUE;
