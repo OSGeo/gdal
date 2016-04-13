@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-/* http://www.autopano.net/wiki-en/Format_KRO */
+// http://www.autopano.net/wiki-en/Format_KRO
 
 /************************************************************************/
 /* ==================================================================== */
@@ -77,7 +77,7 @@ KRODataset::~KRODataset()
     {
         if( VSIFCloseL( fpImage ) != 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+          CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
 }
@@ -92,7 +92,8 @@ int KRODataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 20 )
         return FALSE;
 
-    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "KRO\x01") )
+    if( !STARTS_WITH_CI( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                         "KRO\x01") )
         return FALSE;
 
     return TRUE;
@@ -131,27 +132,27 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the file header.                                           */
 /* -------------------------------------------------------------------- */
-    char  achHeader[20];
+    char achHeader[20] = { '\0' };
     CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, 20, poDS->fpImage ));
 
     int nXSize;
     memcpy(&nXSize, achHeader + 4, 4);
     CPL_MSBPTR32( &nXSize );
 
-    int nYSize;
+    int nYSize = 0;
     memcpy(&nYSize, achHeader + 8, 4);
     CPL_MSBPTR32( &nYSize );
 
-    int nDepth;
+    int nDepth = 0;
     memcpy(&nDepth, achHeader + 12, 4);
     CPL_MSBPTR32( &nDepth );
 
-    int nComp;
+    int nComp = 0;
     memcpy(&nComp, achHeader + 16, 4);
     CPL_MSBPTR32( &nComp );
 
-    if (!GDALCheckDatasetDimensions(nXSize, nYSize) ||
-        !GDALCheckBandCount(nComp, FALSE))
+    if( !GDALCheckDatasetDimensions(nXSize, nYSize) ||
+        !GDALCheckBandCount(nComp, FALSE) )
     {
         delete poDS;
         return NULL;
@@ -160,17 +161,23 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    GDALDataType eDT;
+    GDALDataType eDT = GDT_Unknown;
     if( nDepth == 8 )
+    {
         eDT = GDT_Byte;
+    }
     else if( nDepth == 16 )
+    {
         eDT = GDT_UInt16;
+    }
     else if( nDepth == 32 )
+    {
         eDT = GDT_Float32;
+    }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unhandled depth : %d", nDepth);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unhandled depth : %d", nDepth );
         delete poDS;
         return NULL;
     }
@@ -180,8 +187,8 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     if( nComp == 0 || nDataTypeSize == 0 ||
         poDS->nRasterXSize > INT_MAX / (nComp * nDataTypeSize) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too large width / number of bands");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Too large width / number of bands" );
         delete poDS;
         return NULL;
     }
@@ -224,7 +231,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -236,13 +243,13 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
                                  int nYSize,
                                  int nBands,
                                  GDALDataType eType,
-                                 CPL_UNUSED char ** papszOptions )
+                                 char ** /* papszOptions */ )
 {
     if( eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create KRO file with unsupported data type '%s'.",
-                 GDALGetDataTypeName( eType ) );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create KRO file with unsupported data type '%s'.",
+                  GDALGetDataTypeName( eType ) );
         return NULL;
     }
 
@@ -253,7 +260,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
+                  "Attempt to create file `%s' failed.",
                   pszFilename );
         return NULL;
     }
@@ -271,7 +278,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
     CPL_MSBPTR32(&nTmp);
     nRet += VSIFWriteL(&nTmp, 4, 1, fp);
 
-    nTmp = GDALGetDataTypeSize(eType);
+    nTmp = GDALGetDataTypeSizeBits(eType);
     CPL_MSBPTR32(&nTmp);
     nRet += VSIFWriteL(&nTmp, 4, 1, fp);
 
@@ -283,20 +290,24 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
 /*      Zero out image data                                             */
 /* -------------------------------------------------------------------- */
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fp, (vsi_l_offset)nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8) * nBands - 1,
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL( fp,
+                   static_cast<vsi_l_offset>(nXSize) * nYSize *
+                   GDALGetDataTypeSizeBytes(eType) * nBands - 1,
               SEEK_CUR));
     GByte byNul = 0;
     nRet += VSIFWriteL(&byNul, 1, 1, fp);
     if( VSIFCloseL(fp) != 0 )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         return NULL;
     }
 
     if( nRet != 6 )
         return NULL;
 
-    return reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
+    return
+        reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
 
 /************************************************************************/
