@@ -1450,6 +1450,11 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
                 break;
             }
         }
+        else if( isspace(*fmt) )
+        {
+            while( *str != '\0' && isspace(*str) )
+                ++str;
+        }
         else if( *str != *fmt )
             break;
         else

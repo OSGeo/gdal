@@ -34,7 +34,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Open Memory datasource.
@@ -200,7 +200,9 @@ def ogr_gmt_5():
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'))
     dst_feat.SetField( 'ID', 15 )
+    gdal.SetConfigOption('GMT_USE_TAB', 'TRUE') # Ticket #6453
     gdaltest.gmt_lyr.CreateFeature( dst_feat )
+    gdal.SetConfigOption('GMT_USE_TAB', None)
 
     dst_feat = ogr.Feature( feature_def = gdaltest.gmt_lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly(
