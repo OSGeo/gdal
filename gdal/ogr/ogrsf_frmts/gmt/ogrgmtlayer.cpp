@@ -961,7 +961,9 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 /* -------------------------------------------------------------------- */
     int iPoint, nPointCount = OGR_G_GetPointCount(hGeom);
     int nDim = OGR_G_GetCoordinateDimension(hGeom);
-
+    // For testing only. Ticket #6453
+    const bool bUseTab = CSLTestBoolean( CPLGetConfigOption("GMT_USE_TAB", "FALSE") ) != false;
+ 
     for( iPoint = 0; iPoint < nPointCount; iPoint++ )
     {
         char   szLine[128];
@@ -971,6 +973,14 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 
         sRegion.Merge( dfX, dfY );
         OGRMakeWktCoordinate( szLine, dfX, dfY, dfZ, nDim );
+        if( bUseTab )
+        {
+            for( char* szPtr = szLine; *szPtr != '\0'; ++szPtr )
+            {
+                if( *szPtr == ' ' )
+                    *szPtr = '\t';
+            }
+        }
         if( VSIFPrintfL( fp, "%s\n", szLine ) < 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
