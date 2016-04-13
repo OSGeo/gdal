@@ -36,7 +36,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import ogr, osr, gdal
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Create wasp datasource
@@ -543,4 +545,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

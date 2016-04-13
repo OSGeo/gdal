@@ -36,7 +36,8 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import gdal, ogr
+from osgeo import gdal
+from osgeo import ogr
 
 ###############################################################################
 # Basic test of .idf file
@@ -561,4 +562,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

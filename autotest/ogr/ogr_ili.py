@@ -32,7 +32,8 @@ sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
-from osgeo import ogr, gdal
+from osgeo import gdal
+from osgeo import ogr
 
 def cpl_debug_on():
     gdaltest.cpl_debug = gdal.GetConfigOption('CPL_DEBUG')

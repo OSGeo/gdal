@@ -41,7 +41,9 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
 
 sys.path.append( '../pymod' )
 
-from osgeo import ogr, osr, gdal
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 import gdaltest
 import ogrtest
 

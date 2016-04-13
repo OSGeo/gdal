@@ -37,7 +37,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import gdal, ogr, osr
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Test if driver is available
