@@ -444,4 +444,23 @@ namespace tut
         }
     }
 
+    template<>
+    template<>
+    void object::test<7>()
+    {
+      OGRStyleMgrH hSM = OGR_SM_Create(NULL);
+      OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")");
+      OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, NULL);
+      int bValueIsNull;
+
+      ensure_distance(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);
+      ensure_equals(OGR_ST_GetUnit(hTool), OGRSTUMM);
+
+      OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
+      ensure_equals(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
+      ensure_equals(OGR_ST_GetUnit(hTool), OGRSTUPixel);
+
+      OGR_SM_Destroy(hSM);
+    }
+
 } // namespace tut
