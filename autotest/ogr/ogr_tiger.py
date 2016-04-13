@@ -31,7 +31,8 @@
 import os
 import sys
 import shutil
-from osgeo import gdal, ogr
+from osgeo import gdal
+from osgeo import ogr
 
 sys.path.append( '../pymod' )
 
@@ -257,4 +258,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
