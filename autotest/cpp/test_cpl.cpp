@@ -833,4 +833,41 @@ namespace tut
         ensure( VSIGetDiskFreeSpace(".") == -1 || VSIGetDiskFreeSpace(".") >= 0 );
     }
 
+    template<>
+    template<>
+    void object::test<14>()
+    {
+        double a, b, c;
+
+        a = b = 0;
+        ensure_equals( CPLsscanf("1 2", "%lf %lf", &a, &b), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+
+        a = b = 0;
+        ensure_equals( CPLsscanf("1\t2", "%lf %lf", &a, &b), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+
+        a = b = 0;
+        ensure_equals( CPLsscanf("1 2", "%lf\t%lf", &a, &b), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+
+        a = b = 0;
+        ensure_equals( CPLsscanf("1  2", "%lf %lf", &a, &b), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+
+        a = b = 0;
+        ensure_equals( CPLsscanf("1 2", "%lf  %lf", &a, &b), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+
+        a = b = c = 0;
+        ensure_equals( CPLsscanf("1 2", "%lf %lf %lf", &a, &b, &c), 2 );
+        ensure_equals( a, 1.0 );
+        ensure_equals( b, 2.0 );
+    }
+
 } // namespace tut
