@@ -408,6 +408,33 @@ def test_gdal_translate_lib_101():
     return 'success'
 
 ###############################################################################
+# Test -scale
+
+def test_gdal_translate_lib_102():
+
+    ds = gdal.Translate('', gdal.Open('../gcore/data/byte.tif'), format = 'MEM', scaleParams = [[0, 255, 0, 65535]], outputType = gdal.GDT_UInt16)
+    (min, max) = ds.GetRasterBand(1).ComputeRasterMinMax(False)
+    if (min, max) != (19018.0, 65535.0):
+        gdaltest.post_reason('failure')
+        print(min, max)
+        return 'fail'
+
+    (approx_min, approx_max) = ds.GetRasterBand(1).ComputeRasterMinMax(True)
+    ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[approx_min, approx_max]], outputType = gdal.GDT_Byte)
+    expected_stats = ds2.GetRasterBand(1).ComputeStatistics(False)
+
+    # Implicit source statics use approximate source min/max
+    ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[]], outputType = gdal.GDT_Byte)
+    stats = ds2.GetRasterBand(1).ComputeStatistics(False)
+    for i in range(4):
+        if abs(stats[i] - expected_stats[i]) > 1e-3:
+            gdaltest.post_reason('failure')
+            print(stats)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -440,6 +467,7 @@ gdaltest_list = [
     test_gdal_translate_lib_14,
     test_gdal_translate_lib_100,
     test_gdal_translate_lib_101,
+    test_gdal_translate_lib_102,
     test_gdal_translate_lib_cleanup
     ]
 

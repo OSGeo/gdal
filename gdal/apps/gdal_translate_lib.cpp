@@ -1947,12 +1947,12 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             {
                 psOptions->pasScaleParams = (GDALTranslateScaleParams*)CPLRealloc(psOptions->pasScaleParams,
                     (nIndex + 1) * sizeof(GDALTranslateScaleParams));
-                if( nIndex > psOptions->nScaleRepeat )
-                    memset(psOptions->pasScaleParams + psOptions->nScaleRepeat, 0,
-                        sizeof(GDALTranslateScaleParams) * (nIndex - psOptions->nScaleRepeat));
+                memset(psOptions->pasScaleParams + psOptions->nScaleRepeat, 0,
+                        sizeof(GDALTranslateScaleParams) * (nIndex - psOptions->nScaleRepeat + 1));
                 psOptions->nScaleRepeat = nIndex + 1;
             }
             psOptions->pasScaleParams[nIndex].bScale = TRUE;
+            psOptions->pasScaleParams[nIndex].bHaveScaleSrc = FALSE;
             if( i < argc-2 && ArgIsNumeric(papszArgv[i+1]) )
             {
                 psOptions->pasScaleParams[nIndex].bHaveScaleSrc = TRUE;
