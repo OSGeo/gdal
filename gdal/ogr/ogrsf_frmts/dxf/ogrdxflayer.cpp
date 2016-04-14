@@ -1131,6 +1131,13 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
+    if( (nPolylineFlag & (16 ^ 64)) != 0 )
+    {
+        CPLDebug( "DXF", "Polygon/polyface mesh not supported." );
+        delete poFeature;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect VERTEXes as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
@@ -1214,7 +1221,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
-    ApplyOCSTransformer( poGeom );
+
+    if( nPolylineFlag & 8) == 0 )
+        ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
