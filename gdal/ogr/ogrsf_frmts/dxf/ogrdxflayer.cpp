@@ -960,7 +960,6 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
         poLS->addPoint( dfX2, dfY2 );
     }
 
-    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
