@@ -1222,7 +1222,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
 
-    if( nPolylineFlag & 8) == 0 )
+    if( (nPolylineFlag & 8) == 0 )
         ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
