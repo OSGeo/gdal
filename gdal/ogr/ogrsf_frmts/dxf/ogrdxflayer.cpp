@@ -792,7 +792,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
-    oStyle += CPLString().Printf(",p:%d", nAnchorPosition);
+    osStyle += CPLString().Printf(",p:%d", nAnchorPosition);
 
     if( dfAngle != 0.0 )
     {
