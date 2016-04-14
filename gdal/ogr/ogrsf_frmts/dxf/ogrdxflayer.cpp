@@ -639,6 +639,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfHeight = 0.0;
     CPLString osText;
     int bHaveZ = FALSE;
+    int nAnchorPosition = 1;
+    int nHorizontalAlignment = 0, nVerticalAlignment = 0;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -670,6 +672,14 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             dfAngle = CPLAtof(szLineBuf);
             break;
 
+          case 72:
+            nHorizontalAlignment = atoi(szLineBuf);
+            break;
+
+          case 73:
+            nVerticalAlignment = atoi(szLineBuf);
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -692,6 +702,33 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         poGeom = new OGRPoint( dfX, dfY );
     ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
+
+/* -------------------------------------------------------------------- */
+/*      Determine anchor position.                                      */
+/* -------------------------------------------------------------------- */
+    if( nHorizontalAlignment > 0 || nVerticalAlignment > 0 )
+    {
+        switch( nVerticalAlignment )
+        {
+          case 1: // bottom
+            nAnchorPosition = 10;
+            break;
+
+          case 2: // middle
+            nAnchorPosition = 4;
+            break;
+
+          case 3: // top
+            nAnchorPosition = 7;
+            break;
+
+          default:
+            break;
+        }
+        if( nHorizontalAlignment < 3 )
+            nAnchorPosition += nHorizontalAlignment;
+        // TODO other alignment options
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
@@ -754,6 +791,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     char szBuffer[64];
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
+
+    oStyle += CPLString().Printf(",p:%d", nAnchorPosition);
 
     if( dfAngle != 0.0 )
     {
