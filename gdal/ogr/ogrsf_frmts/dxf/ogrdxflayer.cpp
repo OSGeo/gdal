@@ -1699,7 +1699,6 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
     for( i = 0; i < p1; i++ )
         poLS->setPoint( i, p[i*3+1], p[i*3+2] );
 
-    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
