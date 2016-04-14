@@ -866,16 +866,16 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
         return NULL;
     }
 
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
     OGRPoint* poGeom;
     if( bHaveZ )
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
         poGeom = new OGRPoint( dfX, dfY );
-    ApplyOCSTransformer( poGeom );
-    poFeature->SetGeometryDirectly( poGeom );
 
-    if( nCode == 0 )
-        poDS->UnreadValue();
+    poFeature->SetGeometryDirectly( poGeom );
 
     // Set style pen color
     PrepareLineStyle( poFeature );
