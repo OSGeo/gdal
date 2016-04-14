@@ -93,7 +93,7 @@ public:
 
 /*
   Return value 0 interrupts, 1 denotes ok, and 2 denotes ok and a need
-  save the cell value back to band.
+  to save the cell value back to band.
 */
 typedef int (*gma_cell_callback_f)(gma_cell_t*);
 
@@ -138,60 +138,66 @@ public:
 typedef enum { 
     gma_method_print, // print the band to stdout, remove this?
     gma_method_rand,  // sets the cell value with rand() [0..RAND_MAX]
-    gma_method_abs,   // cell = abs(cell)
-    gma_method_exp,   // cell = exp(cell)
-    gma_method_exp2,  // cell = exp2(cell)
-    gma_method_log,   // cell = log(cell)
-    gma_method_log2,  // cell = log2(cell)
-    gma_method_log10, // cell = log10(cell)
-    gma_method_sqrt,  // cell = sqrt(cell)
-    gma_method_sin,   // cell = sin(cell)
-    gma_method_cos,   // cell = cos(cell)
-    gma_method_tan,   // cell = tan(cell)
-    gma_method_ceil,  // cell = ceil(cell)
-    gma_method_floor, // cell = floor(cell)
-    gma_method_set_border_cells    // remove? user can use callback, which sets cell = 1 at border
+    gma_method_abs,   // cell = abs(cell), no impact on nodata cells
+    gma_method_exp,   // cell = exp(cell), no impact on nodata cells
+    gma_method_exp2,  // cell = exp2(cell), no impact on nodata cells
+    gma_method_log,   // cell = log(cell), no impact on nodata cells
+    gma_method_log2,  // cell = log2(cell), no impact on nodata cells
+    gma_method_log10, // cell = log10(cell), no impact on nodata cells
+    gma_method_sqrt,  // cell = sqrt(cell), no impact on nodata cells
+    gma_method_sin,   // cell = sin(cell), no impact on nodata cells
+    gma_method_cos,   // cell = cos(cell), no impact on nodata cells
+    gma_method_tan,   // cell = tan(cell), no impact on nodata cells
+    gma_method_ceil,  // cell = ceil(cell), no impact on nodata cells
+    gma_method_floor, // cell = floor(cell), no impact on nodata cells
 } gma_method_t;
 
 typedef enum { 
     gma_method_histogram,       // arg = NULL, pair:(n,pair:(min,max)), or bins; returns histogram
-    gma_method_zonal_neighbors, // arg = NULL; returns hash of a hashes, keys are zone numbers
-    gma_method_get_min,         // 
-    gma_method_get_max,
-    gma_method_get_range,
-    gma_method_get_cells
+    gma_method_zonal_neighbors, // arg is ignored; returns hash of a hashes, keys are zone numbers
+    gma_method_get_min,         // arg is ignored; returns a number
+    gma_method_get_max,         // arg is ignored; returns a number
+    gma_method_get_range,       // arg is ignored; returns a pair of numbers
+    gma_method_get_cells        // arg is ignored; returns a std::vector of cells whose value is not zero
 } gma_method_compute_value_t;
 
 typedef enum { 
-    gma_method_assign,
-    gma_method_add,
-    gma_method_subtract,
-    gma_method_multiply,
-    gma_method_divide,
-    gma_method_modulus,
-    gma_method_classify,
-    gma_method_cell_callback
+    gma_method_assign,          // arg must be a number, no impact on nodata cells
+    gma_method_assign_all,      // arg must be a number, impact on all, also nodata, cells
+    gma_method_add,             // arg must be a number, no impact on nodata cells
+    gma_method_subtract,        // arg must be a number, no impact on nodata cells
+    gma_method_multiply,        // arg must be a number, no impact on nodata cells
+    gma_method_divide,          // arg must be a number, no impact on nodata cells
+    gma_method_modulus,         // arg must be a number, no impact on nodata cells
+    gma_method_classify,        // arg must be a classifier for the band datatype, no impact on nodata cells
+    gma_method_cell_callback    // arg must be a cell callback, not called for nodata cells
 } gma_method_with_arg_t;
 
 typedef enum { 
-    gma_method_assign_band,
-    gma_method_add_band,
-    gma_method_subtract_band,
-    gma_method_multiply_by_band,
-    gma_method_divide_by_band,
-    gma_method_modulus_by_band,
-    gma_method_zonal_min,
-    gma_method_zonal_max,
-    gma_method_set_zonal_min,
-    gma_method_rim_by8,
-    gma_method_D8,
-    gma_method_route_flats,
-    gma_method_fill_depressions,
-    gma_method_depressions,
-    gma_method_depression_pour_elevation,
-    gma_method_upstream_area,
-    gma_method_catchment
+    gma_method_assign_band,      // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_add_band,         // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_subtract_band,    // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_multiply_by_band, // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_divide_by_band,   // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_modulus_by_band,  // arg may be a logical operation, no impact on nodata cells, nodata cells are ignored
+    gma_method_zonal_min,        // arg is ignored; returns a hash of zone => number, nodata cells are ignored
+    gma_method_zonal_max,        // arg is ignored; returns a hash of zone => number, nodata cells are ignored
+    gma_method_rim_by8,          // arg is ignored; returns nothing
+    gma_method_D8,               // arg is ignored; return value should be ignored
+    gma_method_route_flats,      // arg is ignored; return value should be ignored
+    gma_method_fill_depressions, // arg is ignored; return value should be ignored
+
+    // these two could probably go away
+    gma_method_depressions,      // arg is ignored; return value should be ignored
+    gma_method_depression_pour_elevation, // arg is ignored; returns a hash depression id => pour point elevation
+
+    gma_method_upstream_area,   // arg is ignored; return value should be ignored
+    gma_method_catchment        // arg is cell; return value should be ignored
 } gma_two_bands_method_t;
+
+typedef enum {
+    gma_method_if // b1 = b2 if decision; decision band should be uint8_t
+} gma_spatial_decision_method_t;
 
 // an attempt at an API for the map algebra
 // goals: no templates, no void pointers
@@ -200,13 +206,19 @@ typedef enum {
 gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass);
 
 // this could also be -with-arg where the arg is null
-// return int for ok/fail?
+// failures are reported by CPLError
 void gma_simple(GDALRasterBand *b, gma_method_t method);
 void gma_with_arg(GDALRasterBand *b, gma_method_with_arg_t method, gma_object_t *arg);
 
-// return null if fail
+// failures are reported by CPLError
 gma_object_t *gma_compute_value(GDALRasterBand *b, gma_method_compute_value_t method, gma_object_t *arg = NULL);
 gma_object_t *gma_two_bands(GDALRasterBand *b1, gma_two_bands_method_t method, GDALRasterBand *b2, gma_object_t *arg = NULL);
+
+gma_object_t *gma_spatial_decision(GDALRasterBand *b1, 
+                                   gma_spatial_decision_method_t method, 
+                                   GDALRasterBand *decision, 
+                                   GDALRasterBand *b2, 
+                                   gma_object_t *arg = NULL);
 
 // optional helper functions
 

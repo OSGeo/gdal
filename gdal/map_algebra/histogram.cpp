@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     GDALAllRegister();
     if (argc < 3) return usage();
     GDALDataset *ds = (GDALDataset*)GDALOpen(argv[1], GA_ReadOnly);
+    if (!ds) return usage();
     GDALRasterBand *b = ds->GetRasterBand(1);
 
     int mode = atoi(argv[2]);

@@ -70,4 +70,8 @@ main() {
         }
     }
 
+    b2->SetNoDataValue(9);
+    printf("\n");
+    gma_simple(b2, gma_method_print);
+
 }

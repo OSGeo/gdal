@@ -1,189 +1,336 @@
 #define type_switch_bb(sub,fd) switch (b1->GetRasterDataType()) {       \
     case GDT_Byte:                                                      \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint8_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint8_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint8_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint8_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint8_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint8_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint8_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint8_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint8_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint8_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt16:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint16_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint16_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint16_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint16_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint16_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint16_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint16_t,float> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint16_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint16_t,double> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int16:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int16_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int16_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int16_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int16_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int16_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<int16_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<int16_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<int16_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<int16_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt32:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint32_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint32_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint32_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint32_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint32_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint32_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint32_t,float> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint32_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint32_t,double> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int32:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int32_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int32_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int32_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int32_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int32_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<int32_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<int32_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<int32_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<int32_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Float32:                                                   \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<float,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<float,uint8_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<float,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<float,uint16_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<float,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<float,int16_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<float,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<float,uint32_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<float,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<float,int32_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<float,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<float,float> cb;                     \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<float,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<float,double> cb;                    \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Float64:                                                   \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<double,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<double,uint8_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<double,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<double,uint16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<double,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<double,int16_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<double,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<double,uint32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<double,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<double,int32_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<double,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<double,float> cb;                    \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<double,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<double,double> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
@@ -195,147 +342,252 @@
 #define type_switch_bi(sub,fd) switch (b1->GetRasterDataType()) {       \
     case GDT_Byte:                                                      \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint8_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint8_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint8_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint8_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint8_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint8_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt16:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint16_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint16_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint16_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint16_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint16_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int16:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int16_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int16_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int16_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int16_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int16_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt32:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint32_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint32_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint32_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint32_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint32_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int32:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int32_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int32_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int32_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int32_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int32_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Float32:                                                   \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<float,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<float,uint8_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<float,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<float,uint16_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<float,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<float,int16_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<float,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<float,uint32_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<float,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<float,int32_t> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Float64:                                                   \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<double,uint8_t>, b2, &retval, arg, fd); \
-            break;                                      \
-        case GDT_UInt16:                                \
-            gma_two_bands_proc(b1, sub<double,uint16_t>, b2, &retval, arg, fd); \
-            break;                                      \
-        case GDT_Int16:                                 \
-            gma_two_bands_proc(b1, sub<double,int16_t>, b2, &retval, arg, fd); \
-            break;                                      \
-        case GDT_UInt32:                                \
-            gma_two_bands_proc(b1, sub<double,uint32_t>, b2, &retval, arg, fd); \
-            break;                                      \
-        case GDT_Int32:                                 \
-            gma_two_bands_proc(b1, sub<double,int32_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<double,uint8_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<double,uint16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
+            break;                                                      \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<double,int16_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
+            break;                                                      \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<double,uint32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
+            break;                                                      \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<double,int32_t> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
+            break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
@@ -347,135 +599,240 @@
 #define type_switch_ib(sub,fd) switch (b1->GetRasterDataType()) {       \
     case GDT_Byte:                                                      \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint8_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint8_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint8_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint8_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint8_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint8_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint8_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint8_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint8_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint8_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt16:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint16_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint16_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint16_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint16_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint16_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint16_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint16_t,float> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint16_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint16_t,double> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int16:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int16_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int16_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int16_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int16_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int16_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<int16_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<int16_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<int16_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<int16_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt32:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint32_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint32_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint32_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint32_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint32_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<uint32_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<uint32_t,float> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<uint32_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<uint32_t,double> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int32:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int32_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int32_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int32_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int32_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int32_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float32:                                               \
-            gma_two_bands_proc(b1, sub<int32_t,float>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float32: {                                             \
+            gma_two_bands_callback<int32_t,float> cb;                   \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Float64:                                               \
-            gma_two_bands_proc(b1, sub<int32_t,double>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Float64: {                                             \
+            gma_two_bands_callback<int32_t,double> cb;                  \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
@@ -487,105 +844,180 @@
 #define type_switch_ii(sub,fd) switch (b1->GetRasterDataType()) {       \
     case GDT_Byte:                                                      \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint8_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint8_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint8_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint8_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint8_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint8_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint8_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint8_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt16:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint16_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint16_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint16_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint16_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint16_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int16:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int16_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int16_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int16_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int16_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int16_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int16_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int16_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int16_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_UInt32:                                                    \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<uint32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<uint32_t,uint8_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<uint32_t,uint16_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<uint32_t,int16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<uint32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<uint32_t,uint32_t> cb;               \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<uint32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<uint32_t,int32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
         break;                                                          \
     case GDT_Int32:                                                     \
         switch (b2->GetRasterDataType()) {                              \
-        case GDT_Byte:                                                  \
-            gma_two_bands_proc(b1, sub<int32_t,uint8_t>, b2, &retval, arg, fd); \
+        case GDT_Byte: {                                                \
+            gma_two_bands_callback<int32_t,uint8_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt16:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt16: {                                              \
+            gma_two_bands_callback<int32_t,uint16_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int16:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int16_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int16: {                                               \
+            gma_two_bands_callback<int32_t,int16_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_UInt32:                                                \
-            gma_two_bands_proc(b1, sub<int32_t,uint32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_UInt32: {                                              \
+            gma_two_bands_callback<int32_t,uint32_t> cb;                \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
-        case GDT_Int32:                                                 \
-            gma_two_bands_proc(b1, sub<int32_t,int32_t>, b2, &retval, arg, fd); \
+        }                                                               \
+        case GDT_Int32: {                                               \
+            gma_two_bands_callback<int32_t,int32_t> cb;                 \
+            cb.fct = sub;                                               \
+            gma_two_bands_proc(b1, cb, b2, &retval, arg, fd);           \
             break;                                                      \
+        }                                                               \
         default:                                                        \
             goto not_implemented_for_these_datatypes;                   \
         }                                                               \
@@ -595,73 +1027,130 @@
     }
 
 #define type_switch_single(sub,fd) switch (b->GetRasterDataType()) {    \
-    case GDT_Byte:                                                      \
-        gma_proc_compute_value(b, sub<uint8_t>, &retval, arg, fd);      \
+    case GDT_Byte: {                                                    \
+        gma_compute_value_callback<uint8_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_UInt16:                                                    \
-        gma_proc_compute_value(b, sub<uint16_t>, &retval, arg, fd);     \
+    }                                                                   \
+    case GDT_UInt16: {                                                  \
+        gma_compute_value_callback<uint16_t> cb;                        \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Int16:                                                     \
-        gma_proc_compute_value(b, sub<int16_t>, &retval, arg, fd);      \
+    }                                                                   \
+    case GDT_Int16: {                                                   \
+        gma_compute_value_callback<int16_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_UInt32:                                                    \
-        gma_proc_compute_value(b, sub<uint32_t>, &retval, arg, fd);     \
+    }                                                                   \
+    case GDT_UInt32: {                                                  \
+        gma_compute_value_callback<uint32_t> cb;                        \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Int32:                                                     \
-        gma_proc_compute_value(b, sub<int32_t>, &retval, arg, fd);      \
+    }                                                                   \
+    case GDT_Int32: {                                                   \
+        gma_compute_value_callback<int32_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Float32:                                                   \
-        gma_proc_compute_value(b, sub<float>, &retval, arg, fd);        \
+    }                                                                   \
+    case GDT_Float32: {                                                 \
+        gma_compute_value_callback<float> cb;                           \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Float64:                                                   \
-        gma_proc_compute_value(b, sub<double>, &retval, arg, fd);       \
+    }                                                                   \
+    case GDT_Float64: {                                                 \
+        gma_compute_value_callback<double> cb;                          \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
+    }                                                                   \
     default:                                                            \
         goto not_implemented_for_this_datatype;                         \
     }
 
 #define type_switch_single_i(sub,fd) switch (b->GetRasterDataType()) {  \
-    case GDT_Byte:                                                      \
-        gma_proc_compute_value(b, sub<uint8_t>, &retval, arg, fd);      \
+    case GDT_Byte: {                                                    \
+        gma_compute_value_callback<uint8_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_UInt16:                                                    \
-        gma_proc_compute_value(b, sub<uint16_t>, &retval, arg, fd);     \
+    }                                                                   \
+    case GDT_UInt16: {                                                  \
+        gma_compute_value_callback<uint16_t> cb;                        \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Int16:                                                     \
-        gma_proc_compute_value(b, sub<int16_t>, &retval, arg, fd);      \
+    }                                                                   \
+    case GDT_Int16: {                                                   \
+        gma_compute_value_callback<int16_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_UInt32:                                                    \
-        gma_proc_compute_value(b, sub<uint32_t>, &retval, arg, fd);     \
+    }                                                                   \
+    case GDT_UInt32: {                                                  \
+        gma_compute_value_callback<uint32_t> cb;                        \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
-    case GDT_Int32:                                                     \
-        gma_proc_compute_value(b, sub<int32_t>, &retval, arg, fd);      \
+    }                                                                   \
+    case GDT_Int32: {                                                   \
+        gma_compute_value_callback<int32_t> cb;                         \
+        cb.fct = sub;                                                   \
+        gma_proc_compute_value(b, cb, &retval, arg, fd);                \
         break;                                                          \
+    }                                                                   \
     default:                                                            \
         goto not_implemented_for_this_datatype;                         \
     }
 
 #define type_switch_arg(sub) switch (b->GetRasterDataType()) {  \
-    case GDT_Byte:                                              \
-        gma_with_arg_proc(b, sub<uint8_t>, arg);                \
+    case GDT_Byte: {                                            \
+        gma_with_arg_callback<uint8_t> cb;                      \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_UInt16:                                            \
-        gma_with_arg_proc(b, sub<uint16_t>, arg);               \
+    }                                                           \
+    case GDT_UInt16: {                                          \
+        gma_with_arg_callback<uint16_t> cb;                     \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_Int16:                                             \
-        gma_with_arg_proc(b, sub<int16_t>, arg);                \
+    }                                                           \
+    case GDT_Int16: {                                           \
+        gma_with_arg_callback<int16_t> cb;                      \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_UInt32:                                            \
-        gma_with_arg_proc(b, sub<uint32_t>, arg);               \
+    }                                                           \
+    case GDT_UInt32: {                                          \
+        gma_with_arg_callback<uint32_t> cb;                     \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_Int32:                                             \
-        gma_with_arg_proc(b, sub<int32_t>, arg);                \
+    }                                                           \
+    case GDT_Int32: {                                           \
+        gma_with_arg_callback<int32_t> cb;                      \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_Float32:                                           \
-        gma_with_arg_proc(b, sub<float>, arg);                  \
+    }                                                           \
+    case GDT_Float32: {                                         \
+        gma_with_arg_callback<float> cb;                        \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
-    case GDT_Float64:                                           \
-        gma_with_arg_proc(b, sub<double>, arg);                 \
+    }                                                           \
+    case GDT_Float64: {                                         \
+        gma_with_arg_callback<double> cb;                       \
+        cb.fct = sub;                                           \
+        gma_with_arg_proc(b, cb, arg);                          \
         break;                                                  \
+    }                                                           \
     default:                                                    \
         goto not_implemented_for_this_datatype;                 \
     }
