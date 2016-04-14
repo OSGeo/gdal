@@ -1316,6 +1316,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfStartAngle = 0.0, dfEndAngle = 360.0;
     double dfAxisX=0.0, dfAxisY=0.0, dfAxisZ=0.0;
     int bHaveZ = FALSE;
+    double adfN[3];
+    bool bApplyOCSTransform = false;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1379,6 +1381,32 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
         poDS->UnreadValue();
 
 /* -------------------------------------------------------------------- */
+/*      Setup coordinate system                                         */
+/* -------------------------------------------------------------------- */
+    if( oStyleProperties.count("210_N.dX") != 0
+        && oStyleProperties.count("220_N.dY") != 0
+        && oStyleProperties.count("230_N.dZ") != 0 )
+    {
+        adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
+        adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
+        adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+
+        if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
+        {
+            double *x, *y, *z;
+            OCSTransformer oTransformer( adfN, true );
+
+            bApplyOCSTransform = true;
+
+            x = &dfX1; y = &dfY1, z = &dfZ1;
+            oTransformer.InverseTransform( 1, x, y, z );
+
+            x = &dfAxisX; y = &dfAxisY, z = &dfAxisZ;
+            oTransformer.InverseTransform( 1, x, y, z );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Compute primary and secondary axis lengths, and the angle of    */
 /*      rotation for the ellipse.                                       */
 /* -------------------------------------------------------------------- */
@@ -1396,26 +1424,6 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    if( oStyleProperties.count("210_N.dX") != 0
-        && oStyleProperties.count("220_N.dY") != 0
-        && oStyleProperties.count("230_N.dZ") != 0 )
-    {
-	    double adfN[3];
-
-	    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-	    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-	    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
-
-            if( adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == -1.0 )
-            {
-                // reverse angles
-		double temp = dfEndAngle;
-
-		dfEndAngle = 360.0 - dfStartAngle;
-		dfStartAngle = 360.0 - temp;
-            }
-    }
-
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
@@ -1430,8 +1438,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( !bHaveZ )
         poEllipse->flattenTo2D();
 
-    // disabled for ellipse entity
-    //ApplyOCSTransformer( poEllipse );
+    if( bApplyOCSTransform == true )
+        ApplyOCSTransformer( poEllipse );
     poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
