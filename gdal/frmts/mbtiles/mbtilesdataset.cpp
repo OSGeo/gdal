@@ -1316,30 +1316,28 @@ int MBTilesGetBounds(OGRDataSourceH hDS,
             char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
             if (CSLCount(papszTokens) != 4 ||
                 fabs(CPLAtof(papszTokens[0])) > 180 ||
-                fabs(CPLAtof(papszTokens[1])) > 86 ||
+                fabs(CPLAtof(papszTokens[1])) >= 89.99 ||
                 fabs(CPLAtof(papszTokens[2])) > 180 ||
-                fabs(CPLAtof(papszTokens[3])) > 86 ||
+                fabs(CPLAtof(papszTokens[3])) >= 89.99 ||
                 CPLAtof(papszTokens[0]) > CPLAtof(papszTokens[2]) ||
                 CPLAtof(papszTokens[1]) > CPLAtof(papszTokens[3]))
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for 'bounds' metadata");
-                CSLDestroy(papszTokens);
-                OGR_F_Destroy(hFeat);
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-                return FALSE;
+                CPLError(CE_Warning, CPLE_AppDefined, "Invalid value for 'bounds' metadata. Ignoring it and fall back to present tile extent");
             }
+            else
+            {
+                #define FORTPI      0.78539816339744833
+                /* Latitude to Google-mercator northing */
+                #define LAT_TO_NORTHING(lat) \
+                    6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
 
-            #define FORTPI      0.78539816339744833
-            /* Latitude to Google-mercator northing */
-            #define LAT_TO_NORTHING(lat) \
-                6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
+                nMinTileCol = (int)(((CPLAtof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
+                nMaxTileCol = (int)(((CPLAtof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
+                nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
+                nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
 
-            nMinTileCol = (int)(((CPLAtof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
-            nMaxTileCol = (int)(((CPLAtof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
-            nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-            nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-
-            bHasBounds = TRUE;
+                bHasBounds = TRUE;
+            }
 
             CSLDestroy(papszTokens);
 
