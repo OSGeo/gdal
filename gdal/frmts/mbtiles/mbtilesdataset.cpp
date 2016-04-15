@@ -1405,28 +1405,26 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
                     CPLAtof(papszTokens[0]) > CPLAtof(papszTokens[2]) ||
                     CPLAtof(papszTokens[1]) > CPLAtof(papszTokens[3]))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for 'bounds' metadata");
-                    CSLDestroy(papszTokens);
-                    OGR_F_Destroy(hFeat);
-                    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-                    return false;
+                    CPLError(CE_Warning, CPLE_AppDefined, "Invalid value for 'bounds' metadata. Ignoring it and fall back to present tile extent");
                 }
+                else
+                {
+                    minX = CPLAtof(papszTokens[0]);
+                    minY = CPLAtof(papszTokens[1]);
+                    maxX = CPLAtof(papszTokens[2]);
+                    maxY = CPLAtof(papszTokens[3]);
+                    LongLatToSphericalMercator(&minX, &minY);
+                    LongLatToSphericalMercator(&maxX, &maxY);
 
-                minX = CPLAtof(papszTokens[0]);
-                minY = CPLAtof(papszTokens[1]);
-                maxX = CPLAtof(papszTokens[2]);
-                maxY = CPLAtof(papszTokens[3]);
-                LongLatToSphericalMercator(&minX, &minY);
-                LongLatToSphericalMercator(&maxX, &maxY);
-
-                bHasBounds = true;
+                    bHasBounds = true;
+                }
 
                 CSLDestroy(papszTokens);
 
                 OGR_F_Destroy(hFeat);
             }
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-      }
+        }
     }
 
     if (!bHasBounds)
