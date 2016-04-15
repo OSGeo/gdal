@@ -416,6 +416,38 @@ def mbtiles_8():
     return 'success'
 
 ###############################################################################
+# Test we are robust to invalid bounds
+
+def mbtiles_9():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
+    src_ds = None
+    ds = ogr.Open('/vsimem/mbtiles_9.mbtiles', update = 1)
+    ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/mbtiles_9.mbtiles')
+    if ds.RasterXSize != 256 or ds.RasterYSize != 256:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) > 1e-6:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/mbtiles_9.mbtiles')
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -434,9 +466,10 @@ gdaltest_list = [
     mbtiles_6,
     mbtiles_7,
     mbtiles_8,
+    mbtiles_9,
     mbtiles_cleanup ]
 
-#gdaltest_list = [ mbtiles_1, mbtiles_7 ]
+#gdaltest_list = [ mbtiles_1, mbtiles_9 ]
 
 if __name__ == '__main__':
 
