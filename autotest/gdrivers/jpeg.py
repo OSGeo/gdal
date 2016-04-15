@@ -32,12 +32,13 @@
 
 import os
 import sys
-from osgeo import gdal
 import shutil
+import struct
 
 sys.path.append( '../pymod' )
-
 import gdaltest
+
+from osgeo import gdal
 from osgeo import gdalconst
 
 ###############################################################################
@@ -71,12 +72,13 @@ def jpeg_2():
     ds.GetFileList()
 
     try:
-        if md['EXIF_GPSLatitudeRef'] != 'N' \
-           or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' \
-           or md['EXIF_PixelXDimension'] != '361' \
-           or (md['EXIF_GPSVersionID'] != '0x2 00 00 00' and  md['EXIF_GPSVersionID'] != '0x2 0x0 0x0 0x0') \
-           or md['EXIF_ExifVersion'] != '0210' \
-           or md['EXIF_XResolution'] != '(96)':
+        if (md['EXIF_GPSLatitudeRef'] != 'N'
+            or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)'
+            or md['EXIF_PixelXDimension'] != '361'
+            or (md['EXIF_GPSVersionID'] != '0x2 00 00 00'
+                and md['EXIF_GPSVersionID'] != '0x2 0x0 0x0 0x0')
+            or md['EXIF_ExifVersion'] != '0210'
+            or md['EXIF_XResolution'] != '(96)'):
             print(md)
             gdaltest.post_reason( 'Exif metadata wrong.' )
             return 'fail'
@@ -239,18 +241,21 @@ def jpeg_6():
 
     ds = gdal.Open('data/vophead.jpg')
 
-    # Bacause of the optimization done in r17446, we should'nt yet get this error
-    if gdal.GetLastErrorType() == 2 \
-       and gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1:
+    # Because of the optimization in r17446, we shouldn't yet get this error.
+    if (gdal.GetLastErrorType() == 2
+        and gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1):
         gdaltest.post_reason( 'got error too soon.')
         return 'fail'
 
-    md = ds.GetMetadata()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        # Get this warning:
+        #   Ignoring EXIF directory with unlikely entry count (65499).
+        md = ds.GetMetadata()
 
     # Did we get an exif related warning?
-    if gdal.GetLastErrorType() != 2 \
-       or gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1:
-        gdaltest.post_reason( 'we did not get expected error.')
+    if (gdal.GetLastErrorType() != 2
+        or gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1):
+        gdaltest.post_reason( 'did not get expected error.')
         return 'fail'
 
     if len(md) != 1 or md['EXIF_Software'] != 'IrfanView':
@@ -617,22 +622,22 @@ def jpeg_16():
 # Test bogus files
 
 def jpeg_17():
-
     gdal.ErrorReset()
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/bogus.jpg')
-    gdal.PopErrorHandler()
-    if ds is not None or gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+      ds = gdal.Open('data/bogus.jpg')
+    if (ds is not None
+        or gdal.GetLastErrorType() != gdal.CE_Failure
+        or gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted.jpg')
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    # ERROR 1: libjpeg: Huffman table 0x00 was not defined
-    cs = ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        # ERROR 1: libjpeg: Huffman table 0x00 was not defined
+        cs = ds.GetRasterBand(1).Checksum()
+    if (gdal.GetLastErrorType() != gdal.CE_Failure
+        or gdal.GetLastErrorMsg() == ''):
         # libjpeg-turbo 1.4.0 doesn't emit errors...
         if cs != 4925:
             gdaltest.post_reason('fail')
@@ -640,23 +645,27 @@ def jpeg_17():
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted2.jpg')
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    # Warning 1: libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
-    ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == '':
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        # Get this warning:
+        #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
+        ds.GetRasterBand(1).Checksum()
+
+    if (gdal.GetLastErrorType() != gdal.CE_Warning
+        or gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted2.jpg')
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', 'TRUE')
-    # ERROR 1: libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
-    ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', None)
-    gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', 'TRUE')
+        # Get this ERROR 1:
+        #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
+        ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', None)
+
+    if (gdal.GetLastErrorType() != gdal.CE_Failure
+        or gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -666,17 +675,16 @@ def jpeg_17():
 # Test situation where we cause a restart and need to reset scale
 
 def jpeg_18():
-
-    import struct
-
     height = 1024
     width = 1024
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_18.tif', width, height, 1)
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_18.tif',
+                                                  width, height, 1)
     for i in range(height):
         data = struct.pack('B' * 1, int(i / (height / 256)))
         src_ds.WriteRaster(0,i,width,1,data,1,1)
 
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_18.jpg', src_ds, options = ['QUALITY=99'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_18.jpg', src_ds,
+                                                 options = ['QUALITY=99'])
     src_ds = None
     gdal.Unlink('/vsimem/jpeg_18.tif')
 
@@ -691,7 +699,9 @@ def jpeg_18():
     data = struct.unpack('B' * width, line1023)
     if abs(data[0] - 255) > 10:
         return 'fail'
-    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,int(width / 4),1)
+    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0,
+                                                               int(width / 4),
+                                                               1)
     data = struct.unpack('B' * (int(width / 4)), line0_ovr1)
     if abs(data[0] - 0) > 10:
         return 'fail'
@@ -703,19 +713,22 @@ def jpeg_18():
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,int(height / 4) - 1,int(width / 4),1)
-    data = struct.unpack('B' * (int(width / 4)), line255_ovr1)
+    line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
+        0, int(height / 4) - 1, int(width / 4), 1)
+    data = struct.unpack('B' * int(width / 4), line255_ovr1)
     if abs(data[0] - 255) > 10:
         return 'fail'
     line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,int(width / 4),1)
+    line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
+        0, 0, int(width / 4), 1)
     if line0_ovr1 != line0_ovr1_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,int(height / 4) - 1,int(width / 4),1)
+    line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
+        0, int(height / 4) - 1, int(width / 4), 1)
     if line255_ovr1 != line255_ovr1_bis:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -732,22 +745,26 @@ def jpeg_18():
 
 def jpeg_19():
 
-    import struct
-
     for (width, height, iX) in [ (32, 32, 12), (25, 25, 8), (24, 25, 8) ]:
-        src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif', width, height, 1)
+        src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif',
+                                                      width, height, 1)
         src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0,0,iX,height,struct.pack('B' * 1, 255),1,1)
-        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(iX,0,width-iX,height,struct.pack('B' * 1, 0),1,1)
-        tiff_mask_data = src_ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+            0, 0, iX,height, struct.pack('B' * 1, 255), 1, 1)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+            iX, 0, width-iX, height, struct.pack('B' * 1, 0), 1, 1)
+        tiff_mask_data = src_ds.GetRasterBand(1).GetMaskBand().ReadRaster(
+            0, 0, width, height)
 
         # Generate a JPEG file with a (default) LSB bit mask order
-        out_ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_19.jpg', src_ds)
+        out_ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_19.jpg',
+                                                         src_ds)
         out_ds = None
 
         # Generate a JPEG file with a MSB bit mask order
         gdal.SetConfigOption('JPEG_WRITE_MASK_BIT_ORDER', 'MSB')
-        out_ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_19_msb.jpg', src_ds)
+        out_ds = gdal.GetDriverByName('JPEG').CreateCopy(
+            '/vsimem/jpeg_19_msb.jpg', src_ds)
         del out_ds
         gdal.SetConfigOption('JPEG_WRITE_MASK_BIT_ORDER', None)
 
@@ -775,7 +792,8 @@ def jpeg_19():
 
         # Check the file with the LSB bit mask order
         ds = gdal.Open('/vsimem/jpeg_19.jpg')
-        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(
+            0, 0, width, height)
         ds = None
         if tiff_mask_data != jpg_mask_data:
             gdaltest.post_reason('fail')
@@ -783,7 +801,8 @@ def jpeg_19():
 
         # Check the file with the MSB bit mask order
         ds = gdal.Open('/vsimem/jpeg_19_msb.jpg')
-        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(
+            0, 0, width, height)
         ds = None
         if tiff_mask_data != jpg_mask_data:
             gdaltest.post_reason('fail')
@@ -836,7 +855,9 @@ def jpeg_21():
     for (expected_w, expected_h, expected_cs) in expected_dim_cs:
         ovr = ds.GetRasterBand(1).GetOverview(i)
         cs = ovr.Checksum()
-        if ovr.XSize != expected_w or ovr.YSize != expected_h or cs != expected_cs:
+        if (ovr.XSize != expected_w or
+            ovr.YSize != expected_h or
+            cs != expected_cs):
             gdaltest.post_reason('failure')
             print(ovr.XSize)
             print(ovr.YSize)
@@ -854,7 +875,8 @@ def jpeg_22():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 4096, 2048)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
     src_ds = None
     if ds.GetRasterBand(1).GetOverviewCount() != 4:
         gdaltest.post_reason('failure')
@@ -873,7 +895,8 @@ def jpeg_22():
     # With 3 bands
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096, 3)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 64 or ovr.YSize != 128:
@@ -886,7 +909,9 @@ def jpeg_22():
     # With comment
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/jpeg_22.jpg', src_ds,
+        options = ['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ds.GetMetadataItem('COMMENT') != 'foo':
@@ -901,7 +926,9 @@ def jpeg_22():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_HEIGHT=60'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/jpeg_22.jpg', src_ds,
+        options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_HEIGHT=60'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 30 or ovr.YSize != 60:
@@ -913,7 +940,11 @@ def jpeg_22():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=50', 'THUMBNAIL_HEIGHT=40'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/jpeg_22.jpg', src_ds,
+        options = ['EXIF_THUMBNAIL=YES',
+                   'THUMBNAIL_WIDTH=50',
+                   'THUMBNAIL_HEIGHT=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 50 or ovr.YSize != 40:
@@ -936,7 +967,8 @@ def jpeg_23():
 
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
-    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds = gdal.GetDriverByName('Mem').Create(
+        '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
@@ -944,18 +976,24 @@ def jpeg_23():
         return 'fail'
 
     # Pixel interleaved
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 3, buf_band_space = 1)
-    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 3, buf_band_space = 1)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
+                         buf_pixel_space = 3, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create(
+        '', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
+                       buf_pixel_space = 3, buf_band_space = 1)
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved with padding
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 4, buf_band_space = 1)
-    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 4, buf_band_space = 1)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
+                         buf_pixel_space = 4, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create(
+        '', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
+                       buf_pixel_space = 4, buf_band_space = 1)
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
@@ -969,7 +1007,8 @@ def jpeg_23():
 
 def jpeg_24():
 
-    if gdal.GetDriverByName('JPEG').GetMetadataItem('DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
+    if gdal.GetDriverByName('JPEG').GetMetadataItem(
+        'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
         has_arithmetic = True
     else:
         has_arithmetic = False
@@ -1000,8 +1039,8 @@ def jpeg_24():
 def jpeg_25():
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', src_ds,
-                                                  options = ['COMMENT=my comment'] )
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsimem/byte.jpg', src_ds, options = ['COMMENT=my comment'] )
     ds = None
     ds = gdal.Open( '/vsimem/byte.jpg' )
     if ds.GetMetadataItem('COMMENT') != 'my comment':
@@ -1029,6 +1068,7 @@ def jpeg_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     jpeg_1,
@@ -1065,4 +1105,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
