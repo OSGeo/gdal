@@ -1,4 +1,4 @@
-#include "gdal_map_algebra_private.h"
+#include "private.hpp"
 
 template<typename datatype> struct gma_with_arg_callback {
     typedef int (*type)(gma_band<datatype>*, gma_block<datatype>*, gma_object_t*);
@@ -13,8 +13,8 @@ int gma_assign(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) = a;
         }
@@ -30,7 +30,7 @@ int gma_assign_all(gma_band<datatype> *band, gma_block<datatype> *block, gma_obj
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
             block->cell(i) = a;
         }
@@ -46,8 +46,8 @@ int gma_add(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) += a;
         }
@@ -63,8 +63,8 @@ int gma_subtract(gma_band<datatype> *band, gma_block<datatype> *block, gma_objec
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) -= a;
         }
@@ -80,8 +80,8 @@ int gma_multiply(gma_band<datatype> *band, gma_block<datatype> *block, gma_objec
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) *= a;
         }
@@ -97,8 +97,8 @@ int gma_divide(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) /= a;
         }
@@ -114,8 +114,8 @@ int gma_modulus(gma_band<datatype> *band, gma_block<datatype> *block, gma_object
     }
     datatype a = (datatype)(((gma_number_t*)arg)->value_as_double());
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             if (band->cell_is_nodata(block, i)) continue;
             block->cell(i) %= a;
         }
@@ -143,8 +143,8 @@ int gma_classify_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_obj
     }
     gma_classifier_p<datatype> *c = (gma_classifier_p<datatype> *)classifier;
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype a = block->cell(i);
             if (band->is_nodata(a))
                 block->cell(i) = c->classify(a);
@@ -161,8 +161,8 @@ int gma_cell_callback_m(gma_band<datatype> *band, gma_block<datatype> *block, gm
     }
     gma_cell_index i;
     int retval;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype a = block->cell(i);
             if (band->is_nodata(a)) continue;
             gma_cell_index gi = band->global_cell_index(block, i);

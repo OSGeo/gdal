@@ -1,4 +1,4 @@
-#include "gdal_map_algebra_private.h"
+#include "private.hpp"
 
 template<typename datatype1,typename datatype2> struct gma_two_bands_callback {
     typedef int (*type)(gma_band<datatype1>*, gma_block<datatype1>*, gma_band<datatype2>*, gma_object_t**, gma_object_t*);
@@ -33,8 +33,8 @@ template<typename type1,typename type2>
 int gma_assign_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     // fixme in all subs arg is checked here
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1,i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -52,8 +52,8 @@ int gma_assign_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<t
 template<typename type1,typename type2>
 int gma_add_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1, i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -71,8 +71,8 @@ int gma_add_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type
 template<typename type1,typename type2>
 int gma_subtract_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1,i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -90,8 +90,8 @@ int gma_subtract_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band
 template<typename type1,typename type2>
 int gma_multiply_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1,i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -109,8 +109,8 @@ int gma_multiply_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_b
 template<typename type1,typename type2>
 int gma_divide_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1,i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -128,8 +128,8 @@ int gma_divide_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_ban
 template<typename type1,typename type2>
 int gma_modulus_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             if (band1->cell_is_nodata(block1,i1)) continue;
             type2 value;
             if (band2->has_value(band1, block1, i1, &value)) {
@@ -182,8 +182,8 @@ template<typename zones_type,typename values_type>
 int gma_zonal_min(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_hash_p<zones_type COMMA gma_number_p<values_type> >, rv, );
     gma_cell_index zones_i;
-    for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
-        for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
+    for (zones_i.y = 0; zones_i.y < zones_block->h(); zones_i.y++) {
+        for (zones_i.x = 0; zones_i.x < zones_block->w(); zones_i.x++) {
             if (zones_band->cell_is_nodata(zones_block,zones_i)) continue;
             values_type value;
             values_band->has_value(zones_band, zones_block, zones_i, &value);
@@ -205,8 +205,8 @@ template<typename zones_type,typename values_type>
 int gma_zonal_max(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_hash_p<zones_type COMMA gma_number_p<values_type> >, rv, );
     gma_cell_index zones_i;
-    for (zones_i.y = 0; zones_i.y < zones_block->h; zones_i.y++) {
-        for (zones_i.x = 0; zones_i.x < zones_block->w; zones_i.x++) {
+    for (zones_i.y = 0; zones_i.y < zones_block->h(); zones_i.y++) {
+        for (zones_i.x = 0; zones_i.x < zones_block->w(); zones_i.x++) {
             if (zones_band->cell_is_nodata(zones_block,zones_i)) continue;
             values_type value;
             values_band->has_value(zones_band, zones_block, zones_i, &value);
@@ -227,8 +227,8 @@ int gma_zonal_max(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones
 template<typename rims_type,typename areas_type>
 int gma_rim_by8(gma_band<rims_type> *rims_band, gma_block<rims_type> *rims_block, gma_band<areas_type> *areas_band, gma_object_t**, gma_object_t*) {
     gma_cell_index i;
-    for (i.y = 0; i.y < rims_block->h; i.y++) {
-        for (i.x = 0; i.x < rims_block->w; i.x++) {
+    for (i.y = 0; i.y < rims_block->h(); i.y++) {
+        for (i.x = 0; i.x < rims_block->w(); i.x++) {
 
             // if the 8-neighborhood in areas is all of the same area, then set rims = 0, otherwise from area
 
@@ -275,8 +275,8 @@ template<typename fd_t, typename dem_t>
 int gma_D8(gma_band<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band<dem_t> *band_dem, gma_object_t**, gma_object_t*) {
     int border_block = band_fd->is_border_block(block_fd);
     gma_cell_index i_fd;
-    for (i_fd.y = 0; i_fd.y < block_fd->h; i_fd.y++) {
-        for (i_fd.x = 0; i_fd.x < block_fd->w; i_fd.x++) {
+    for (i_fd.y = 0; i_fd.y < block_fd->h(); i_fd.y++) {
+        for (i_fd.x = 0; i_fd.x < block_fd->w(); i_fd.x++) {
             int border_cell = block_fd->is_border_cell(border_block, i_fd);
 
             dem_t my_elevation;
@@ -343,8 +343,8 @@ int gma_route_flats(gma_band<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band
     if (block_fd->first_block())
         rv->new_loop();
     gma_cell_index i_fd;
-    for (i_fd.y = 0; i_fd.y < block_fd->h; i_fd.y++) {
-        for (i_fd.x = 0; i_fd.x < block_fd->w; i_fd.x++) {
+    for (i_fd.y = 0; i_fd.y < block_fd->h(); i_fd.y++) {
+        for (i_fd.x = 0; i_fd.x < block_fd->w(); i_fd.x++) {
 
             // if not flat cell, nothing to do
             if (block_fd->cell(i_fd) != 10) continue;
@@ -397,8 +397,8 @@ int gma_fill_depressions(gma_band<filled_t> *filled_band, gma_block<filled_t> *f
         rv->new_loop();
     int border_block = filled_band->is_border_block(filled_block);
     gma_cell_index i;
-    for (i.y = 0; i.y < filled_block->h; i.y++) {
-        for (i.x = 0; i.x < filled_block->w; i.x++) {
+    for (i.y = 0; i.y < filled_block->h(); i.y++) {
+        for (i.x = 0; i.x < filled_block->w(); i.x++) {
             int border_cell = filled_block->is_border_cell(border_block, i);
             dem_t dem_e;
             dem_band->has_value(filled_band, filled_block, i, &dem_e);
@@ -453,8 +453,8 @@ int gma_upstream_area(gma_band<data1_t> *band1, gma_block<data1_t> *block1, gma_
         rv->new_loop();
     int border_block = band1->is_border_block(block1);
     gma_cell_index i1;
-    for (i1.y = 0; i1.y < block1->h; i1.y++) {
-        for (i1.x = 0; i1.x < block1->w; i1.x++) {
+    for (i1.y = 0; i1.y < block1->h(); i1.y++) {
+        for (i1.x = 0; i1.x < block1->w(); i1.x++) {
             int border_cell = block1->is_border_cell(border_block, i1);
 
             // upstream area is already computed
@@ -531,8 +531,8 @@ int gma_catchment(gma_band<catchment_t> *catchment_band, gma_block<catchment_t> 
     gma_cell_index i;
     gma_cell_p<catchment_t> *cell = (gma_cell_p<catchment_t> *)arg; // check?
 
-    for (i.y = 0; i.y < catchment_block->h; i.y++) {
-        for (i.x = 0; i.x < catchment_block->w; i.x++) {
+    for (i.y = 0; i.y < catchment_block->h(); i.y++) {
+        for (i.x = 0; i.x < catchment_block->w(); i.x++) {
 
             if (catchment_block->cell(i) == cell->value()) continue;
 

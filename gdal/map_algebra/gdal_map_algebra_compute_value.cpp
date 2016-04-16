@@ -1,4 +1,4 @@
-#include "gdal_map_algebra_private.h"
+#include "private.hpp"
 
 template<typename datatype> struct gma_compute_value_callback {
     typedef int (*type)(gma_band<datatype>*, gma_block<datatype>*, gma_object_t**, gma_object_t*);
@@ -9,8 +9,8 @@ template<typename datatype>
 int gma_get_min(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype x = block->cell(i);
             if (band->is_nodata(x)) continue;
             if (!rv->defined() || x < rv->value())
@@ -24,8 +24,8 @@ template<typename datatype>
 int gma_get_max(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype x = block->cell(i);
             if (band->is_nodata(x)) continue;
             if (!rv->defined() || x > rv->value())
@@ -46,8 +46,8 @@ int gma_get_range(gma_band<datatype> *band, gma_block<datatype> *block, gma_obje
     gma_number_p<datatype>* min = (gma_number_p<datatype>*)rv->first();
     gma_number_p<datatype>* max = (gma_number_p<datatype>*)rv->second();
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype x = block->cell(i);
             if (band->is_nodata(x)) continue;
             if (!min->defined() || x < min->value())
@@ -63,8 +63,8 @@ template<typename datatype>
 int gma_compute_histogram(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_histogram_p<datatype>, hm, arg);
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype value = block->cell(i);
             if (band->is_nodata(value)) continue;
             hm->increase_count_at(value);
@@ -77,8 +77,8 @@ template<typename datatype>
 int gma_zonal_neighbors(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *) {
     gma_retval_init(gma_hash_p<datatype COMMA gma_hash_p<datatype COMMA gma_number_p<int> > >, zn, );
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype me = block->cell(i);
             if (band->is_nodata(me)) continue;
             gma_hash_p<datatype,gma_number_p<int> > *ns;
@@ -114,8 +114,8 @@ template<typename datatype>
 int gma_get_cells(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(std::vector<gma_cell_t*>, cells, );
     gma_cell_index i;
-    for (i.y = 0; i.y < block->h; i.y++) {
-        for (i.x = 0; i.x < block->w; i.x++) {
+    for (i.y = 0; i.y < block->h(); i.y++) {
+        for (i.x = 0; i.x < block->w(); i.x++) {
             datatype me = block->cell(i);
             if (band->is_nodata(me)) continue;
             gma_cell_index gi = band->global_cell_index(block, i);

@@ -1,6 +1,6 @@
-#include "gdal_map_algebra.h"
-#include "gma_hash.h"
-#include "type_switch.h"
+#include "gdal_map_algebra.hpp"
+#include "hash.hpp"
+#include "type_switch.hpp"
 #include <math.h>
 
 template <typename T> struct GDALDataTypeTraits
@@ -91,29 +91,35 @@ typedef struct {
     }
 
 template <typename datatype> class gma_block {
-    void *_block;
+    void *block;
 public:
-    gma_block_index index;
-    int w; // width of data in block
-    int h; // height of data in block
-    gma_block() {
-        _block = NULL;
+    gma_block_index m_index;
+    int m_w; // width of data in block
+    int m_h; // height of data in block
+    gma_block(gma_block_index index, int w, int h, GDALRasterBand *band, int w_block, int h_block) {
+        m_index = index;
+        m_w = w;
+        m_h = h;
+        block = CPLMalloc(w_block * h_block * sizeof(datatype));
+        CPLErr e = band->ReadBlock(m_index.x, m_index.y, block);
+        if (e != CE_None) {
+            fprintf(stderr, "ReadBlock error.");
+            exit(1);
+        }
     }
     ~gma_block() {
-        CPLFree(_block);
+        CPLFree(block);
     }
+    inline int w() { return m_w; }
+    inline int h() { return m_h; }
     inline datatype& cell(gma_cell_index i) {
-        return ((datatype*)_block)[i.x+i.y*w];
+        return ((datatype*)block)[i.x+i.y*m_w];
     }
     inline void cell(gma_cell_index i, datatype value) {
-        ((datatype*)_block)[i.x+i.y*w] = value;
-    }
-    CPLErr read(GDALRasterBand *band) {
-        _block = CPLMalloc(w * h * sizeof(datatype));
-        return band->ReadBlock(index.x, index.y, _block);
+        ((datatype*)block)[i.x+i.y*m_w] = value;
     }
     CPLErr write(GDALRasterBand *band) {
-        return band->WriteBlock(index.x, index.y, _block);
+        return band->WriteBlock(m_index.x, m_index.y, block);
     }
     int is_border_cell(int border_block, gma_cell_index i) {
         if (!border_block)
@@ -121,26 +127,26 @@ public:
         if (i.x == 0) {
             if (i.y == 0 && border_block == 1)
                 return 8;
-            else if (i.y == h - 1 && border_block == 6)
+            else if (i.y == m_h - 1 && border_block == 6)
                 return 6;
             else if (border_block == 8 || border_block == 6 || border_block == 7)
                 return 7;
-        } else if (i.x == w - 1) {
+        } else if (i.x == m_w - 1) {
             if (i.y == 0 && border_block == 2)
                 return 2;
-            else if (i.y == h - 1 && border_block == 4)
+            else if (i.y == m_h - 1 && border_block == 4)
                 return 4;
             else if (border_block == 2 || border_block == 4 || border_block == 3)
                 return 3;
         } else if (i.y == 0 && (border_block == 8 || border_block == 2 || border_block == 1))
             return 1;
-        else if (i.y == h - 1 && (border_block == 6 || border_block == 4 || border_block == 5))
+        else if (i.y == m_h - 1 && (border_block == 6 || border_block == 4 || border_block == 5))
             return 5;
         else
             return 0;
     }
     inline bool first_block() {
-        return index.x == 0 && index.y == 0;
+        return m_index.x == 0 && m_index.y == 0;
     }
 };
 
@@ -182,7 +188,7 @@ public:
     }
     gma_block<datatype> *retrieve(gma_block_index index) {
         for (int i = 0; i < m_n; i++)
-            if (m_blocks[i]->index.x == index.x && m_blocks[i]->index.y == index.y)
+            if (m_blocks[i]->m_index.x == index.x && m_blocks[i]->m_index.y == index.y)
                 return m_blocks[i];
         return NULL;
     }
@@ -197,8 +203,8 @@ public:
     void remove(gma_block_index i20, gma_block_index i21) {
         int i = 0;
         while (i < m_n) {
-            if (m_blocks[i]->index.x < i20.x || m_blocks[i]->index.x > i21.x ||
-                m_blocks[i]->index.y < i20.y || m_blocks[i]->index.y > i21.y)
+            if (m_blocks[i]->m_index.x < i20.x || m_blocks[i]->m_index.x > i21.x ||
+                m_blocks[i]->m_index.y < i20.y || m_blocks[i]->m_index.y > i21.y)
                 remove(i);
             else
                 i++;
@@ -291,8 +297,7 @@ public:
         if (mask) mask->empty_cache();
     }
     void set_block_size(gma_block<datatype> *block) {
-        block->w = ( (block->index.x+1) * m_w_block > m_w ) ? m_w - block->index.x * m_w_block : m_w_block;
-        block->h = ( (block->index.y+1) * m_h_block > m_h ) ? m_h - block->index.y * m_h_block : m_h_block;
+        
     }
     gma_block<datatype> *get_block(gma_block_index i) {
         return cache.retrieve(i);
@@ -303,10 +308,9 @@ public:
     CPLErr add_to_cache(gma_block_index i) {
         gma_block<datatype> *b = cache.retrieve(i);
         if (!b) {
-            b = new gma_block<datatype>();
-            b->index = i;
-            set_block_size(b);
-            b->read(band);
+            int w = ( (i.x+1) * m_w_block > m_w ) ? m_w - i.x * m_w_block : m_w_block;
+            int h = ( (i.y+1) * m_h_block > m_h ) ? m_h - i.y * m_h_block : m_h_block;
+            b = new gma_block<datatype>(i, w, h, band, m_w_block, m_h_block);
             cache.add(b);
         }
         if (mask) {
@@ -323,10 +327,10 @@ public:
         gma_block_index i20, i21;
 
         // index of top left cell to be covered
-        int x10 = b1->index.x * band1->w_block() - d, y10 = b1->index.y * band1->h_block() - d;
+        int x10 = b1->m_index.x * band1->w_block() - d, y10 = b1->m_index.y * band1->h_block() - d;
 
         // index of bottom right cell to be covered
-        int x11 = x10 + d + b1->w-1 + d, y11 = y10 + d + b1->h-1 + d;
+        int x11 = x10 + d + b1->w()-1 + d, y11 = y10 + d + b1->h()-1 + d;
         
         // which block covers x10, y10 in band2?
         i20.x = MAX(x10 / m_w_block, 0);
@@ -352,8 +356,8 @@ public:
     }
     inline gma_cell_index global_cell_index(gma_block<datatype> *b, gma_cell_index i) {
         gma_cell_index ret;
-        ret.x = b->index.x * m_w_block + i.x;
-        ret.y = b->index.y * m_h_block + i.y;
+        ret.x = b->m_index.x * m_w_block + i.x;
+        ret.y = b->m_index.y * m_h_block + i.y;
         return ret;
     }
     inline gma_cell_index cell_index(gma_cell_index i) {
@@ -370,8 +374,8 @@ public:
     }
     inline bool cell_is_outside(gma_block<datatype> *b, gma_cell_index i) {
         // global cell index
-        int x = b->index.x * m_w_block + i.x;
-        int y = b->index.y * m_h_block + i.y;
+        int x = b->m_index.x * m_w_block + i.x;
+        int y = b->m_index.y * m_h_block + i.y;
         return (x < 0 || y < 0 || x >= m_w || y >= m_h);
     }
     inline bool cell_is_outside(gma_cell_index i) {
@@ -393,28 +397,28 @@ public:
         return m_has_nodata && b->cell(i) == m_nodata;
     }
     int is_border_block(gma_block<datatype> *block) {
-        if (block->index.x == 0) {
-            if (block->index.y == 0)
+        if (block->m_index.x == 0) {
+            if (block->m_index.y == 0)
                 return 8;
-            else if (block->index.y == h_blocks - 1)
+            else if (block->m_index.y == h_blocks - 1)
                 return 6;
             else
                 return 7;
-        } else if (block->index.x == w_blocks - 1) {
-            if (block->index.y == 0)
+        } else if (block->m_index.x == w_blocks - 1) {
+            if (block->m_index.y == 0)
                 return 2;
-            else if (block->index.y == h_blocks - 1)
+            else if (block->m_index.y == h_blocks - 1)
                 return 4;
             else
                 return 3;
-        } else if (block->index.y == 0)
+        } else if (block->m_index.y == 0)
             return 1;
-        else if (block->index.y == h_blocks - 1)
+        else if (block->m_index.y == h_blocks - 1)
             return 5;
         return 0;
     }
     inline bool last_block(gma_block<datatype> *b) {
-        return b->index.x == w_blocks-1 && b->index.y == h_blocks-1;
+        return b->m_index.x == w_blocks-1 && b->m_index.y == h_blocks-1;
     }
     // get the block, which has the cell, that is pointed to by i2 in block2 in band2
     template <typename type2> gma_block<datatype> *get_block(gma_band<type2> *band2, gma_block<type2> *b2, gma_cell_index i2, gma_cell_index *i1) {

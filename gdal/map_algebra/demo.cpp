@@ -1,4 +1,4 @@
-#include "gdal_map_algebra.h"
+#include "gdal_map_algebra.hpp"
 
 int main() {
 

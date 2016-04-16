@@ -1,4 +1,4 @@
-#include "gdal_map_algebra_private.h"
+#include "private.hpp"
 
 gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
     if (klass == gma_integer)
@@ -174,18 +174,3 @@ template <> bool gma_number_p<double>::is_integer() { return false; }
 template <> bool gma_number_p<double>::is_float() { return true; }
 template <> int gma_number_p<double>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
 template <> double gma_number_p<double>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
-
-template <typename type>
-int my_xy_snprintf(char *s, type x, type y) {
-    return snprintf(s, 20, "%i,%i", x, y);
-}
-
-template <>
-int my_xy_snprintf<float>(char *s, float x, float y) {
-    return snprintf(s, 40, "%f,%f", x, y);
-}
-
-template <>
-int my_xy_snprintf<double>(char *s, double x, double y) {
-    return snprintf(s, 40, "%f,%f", x, y);
-}

@@ -1,4 +1,4 @@
-#include "gdal_map_algebra.h"
+#include "gdal_map_algebra.hpp"
 
 int set_border_cells(gma_cell_t *cell, gma_object_t *band_size) {
     int w = ((gma_cell_t *)band_size)->x();

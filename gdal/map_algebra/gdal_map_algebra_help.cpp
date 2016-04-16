@@ -1,4 +1,4 @@
-#include "gdal_map_algebra_private.h"
+#include "private.hpp"
 
 void print_histogram(gma_histogram_t *hm) {
     if (hm == NULL) {

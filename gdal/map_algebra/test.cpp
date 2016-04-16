@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include "gdal_map_algebra.h"
+#include "gdal_map_algebra.hpp"
 
 int callback(gma_cell_t *cell, gma_object_t *loc) {
     // set cell value = distance from loc

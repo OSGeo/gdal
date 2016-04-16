@@ -1,5 +1,4 @@
-// simple hash table for storing mappings from integer keys to objects
-// hm. Maybe not so simple and small. Use Boost?
+// concrete classes
 
 template <typename type> class gma_number_p : public gma_number_t {
 public:
