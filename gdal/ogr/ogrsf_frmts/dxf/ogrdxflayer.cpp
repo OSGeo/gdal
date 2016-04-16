@@ -287,12 +287,22 @@ private:
     double adfAX[3];
     double adfAY[3];
 
+    double dfDeterminant;
+    double aadfInverse[4][4];
+
+    double Det2x2( double a, double b, double c, double d )
+    {
+        return (a*d - b*c);
+    }
+
 public:
-    OCSTransformer( double adfNIn[3] ) {
+    OCSTransformer( double adfNIn[3], bool bInverse = false ) {
         static const double dSmall = 1.0 / 64.0;
         static const double adfWZ[3] = {0, 0, 1};
         static const double adfWY[3] = {0, 1, 0};
 
+        dfDeterminant = 0.0;
+        Scale2Unit( adfNIn );
         memcpy( this->adfN, adfNIn, sizeof(double)*3 );
 
     if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
@@ -303,6 +313,35 @@ public:
     Scale2Unit( adfAX );
     CrossProduct(adfN, adfAX, adfAY);
     Scale2Unit( adfAY );
+
+    if( bInverse == true ) {
+        double a[4] = { 0.0, adfAX[0], adfAY[0], adfN[0] };
+        double b[4] = { 0.0, adfAX[1], adfAY[1], adfN[1] };
+        double c[4] = { 0.0, adfAX[2], adfAY[2], adfN[2] };
+
+        dfDeterminant = a[1]*b[2]*c[3] - a[1]*b[3]*c[2]
+                      + a[2]*b[3]*c[1] - a[2]*b[1]*c[3]
+                      + a[3]*b[1]*c[2] - a[3]*b[2]*c[1];
+
+        if( dfDeterminant != 0.0 ) {
+            double k = 1 / dfDeterminant;
+            double a11 = adfAX[0], a12 = adfAY[0], a13 = adfN[0];
+            double a21 = adfAX[1], a22 = adfAY[1], a23 = adfN[1];
+            double a31 = adfAX[2], a32 = adfAY[2], a33 = adfN[2];
+
+            aadfInverse[1][1] = k * Det2x2( a22,a23,a32,a33 );
+            aadfInverse[1][2] = k * Det2x2( a13,a12,a33,a32 );
+            aadfInverse[1][3] = k * Det2x2( a12,a13,a22,a23 );
+
+            aadfInverse[2][1] = k * Det2x2( a23,a21,a33,a31 );
+            aadfInverse[2][2] = k * Det2x2( a11,a13,a31,a33 );
+            aadfInverse[2][3] = k * Det2x2( a13,a11,a23,a21 );
+
+            aadfInverse[3][1] = k * Det2x2( a21,a22,a31,a32 );
+            aadfInverse[3][2] = k * Det2x2( a12,a11,a32,a31 );
+            aadfInverse[3][3] = k * Det2x2( a11,a12,a21,a22 );
+        }
+    }
     }
 
     void CrossProduct(const double *a, const double *b, double *vResult) {
@@ -327,7 +366,7 @@ public:
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
-                     double *adfX, double *adfY, double *adfZ = NULL,
+                     double *adfX, double *adfY, double *adfZ,
                      int *pabSuccess = NULL )
         {
             int i;
@@ -344,6 +383,26 @@ public:
             }
             return TRUE;
         }
+
+    int InverseTransform( int nCount,
+                          double *adfX, double *adfY, double *adfZ )
+    {
+        if( dfDeterminant == 0.0 )
+            return FALSE;
+
+        for( int i = 0; i < nCount; i++ )
+        {
+            double x = adfX[i], y = adfY[i], z = adfZ[i];
+
+            adfX[i] = x * aadfInverse[1][1] + y * aadfInverse[1][2]
+                    + z * aadfInverse[1][3];
+            adfY[i] = x * aadfInverse[2][1] + y * aadfInverse[2][2]
+                    + z * aadfInverse[2][3];
+            adfZ[i] = x * aadfInverse[3][1] + y * aadfInverse[3][2]
+                    + z * aadfInverse[3][3];
+        }
+        return TRUE;
+    }
 };
 
 /************************************************************************/
@@ -580,6 +639,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfHeight = 0.0;
     CPLString osText;
     int bHaveZ = FALSE;
+    int nAnchorPosition = 1;
+    int nHorizontalAlignment = 0, nVerticalAlignment = 0;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -611,6 +672,14 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             dfAngle = CPLAtof(szLineBuf);
             break;
 
+          case 72:
+            nHorizontalAlignment = atoi(szLineBuf);
+            break;
+
+          case 73:
+            nVerticalAlignment = atoi(szLineBuf);
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -633,6 +702,33 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         poGeom = new OGRPoint( dfX, dfY );
     ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
+
+/* -------------------------------------------------------------------- */
+/*      Determine anchor position.                                      */
+/* -------------------------------------------------------------------- */
+    if( nHorizontalAlignment > 0 || nVerticalAlignment > 0 )
+    {
+        switch( nVerticalAlignment )
+        {
+          case 1: // bottom
+            nAnchorPosition = 10;
+            break;
+
+          case 2: // middle
+            nAnchorPosition = 4;
+            break;
+
+          case 3: // top
+            nAnchorPosition = 7;
+            break;
+
+          default:
+            break;
+        }
+        if( nHorizontalAlignment < 3 )
+            nAnchorPosition += nHorizontalAlignment;
+        // TODO other alignment options
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
@@ -695,6 +791,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     char szBuffer[64];
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
+
+    osStyle += CPLString().Printf(",p:%d", nAnchorPosition);
 
     if( dfAngle != 0.0 )
     {
@@ -768,16 +866,16 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
         return NULL;
     }
 
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
     OGRPoint* poGeom;
     if( bHaveZ )
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
         poGeom = new OGRPoint( dfX, dfY );
-    ApplyOCSTransformer( poGeom );
-    poFeature->SetGeometryDirectly( poGeom );
 
-    if( nCode == 0 )
-        poDS->UnreadValue();
+    poFeature->SetGeometryDirectly( poGeom );
 
     // Set style pen color
     PrepareLineStyle( poFeature );
@@ -862,7 +960,6 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
         poLS->addPoint( dfX2, dfY2 );
     }
 
-    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
@@ -1034,6 +1131,13 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
+    if( (nPolylineFlag & (16 ^ 64)) != 0 )
+    {
+        CPLDebug( "DXF", "Polygon/polyface mesh not supported." );
+        delete poFeature;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect VERTEXes as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
@@ -1117,7 +1221,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
-    ApplyOCSTransformer( poGeom );
+
+    if( (nPolylineFlag & 8) == 0 )
+        ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
@@ -1210,6 +1316,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfStartAngle = 0.0, dfEndAngle = 360.0;
     double dfAxisX=0.0, dfAxisY=0.0, dfAxisZ=0.0;
     int bHaveZ = FALSE;
+    double adfN[3];
+    bool bApplyOCSTransform = false;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1273,6 +1381,32 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
         poDS->UnreadValue();
 
 /* -------------------------------------------------------------------- */
+/*      Setup coordinate system                                         */
+/* -------------------------------------------------------------------- */
+    if( oStyleProperties.count("210_N.dX") != 0
+        && oStyleProperties.count("220_N.dY") != 0
+        && oStyleProperties.count("230_N.dZ") != 0 )
+    {
+        adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
+        adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
+        adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+
+        if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
+        {
+            double *x, *y, *z;
+            OCSTransformer oTransformer( adfN, true );
+
+            bApplyOCSTransform = true;
+
+            x = &dfX1; y = &dfY1, z = &dfZ1;
+            oTransformer.InverseTransform( 1, x, y, z );
+
+            x = &dfAxisX; y = &dfAxisY, z = &dfAxisZ;
+            oTransformer.InverseTransform( 1, x, y, z );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Compute primary and secondary axis lengths, and the angle of    */
 /*      rotation for the ellipse.                                       */
 /* -------------------------------------------------------------------- */
@@ -1290,26 +1424,6 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    if( oStyleProperties.count("210_N.dX") != 0
-        && oStyleProperties.count("220_N.dY") != 0
-        && oStyleProperties.count("230_N.dZ") != 0 )
-    {
-	    double adfN[3];
-
-	    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-	    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-	    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
-
-            if( adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == -1.0 )
-            {
-                // reverse angles
-		double temp = dfEndAngle;
-
-		dfEndAngle = 360.0 - dfStartAngle;
-		dfStartAngle = 360.0 - temp;
-            }
-    }
-
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
@@ -1324,8 +1438,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( !bHaveZ )
         poEllipse->flattenTo2D();
 
-    // disabled for ellipse entity
-    //ApplyOCSTransformer( poEllipse );
+    if( bApplyOCSTransform == true )
+        ApplyOCSTransformer( poEllipse );
     poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
@@ -1585,7 +1699,6 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
     for( i = 0; i < p1; i++ )
         poLS->setPoint( i, p[i*3+1], p[i*3+2] );
 
-    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
