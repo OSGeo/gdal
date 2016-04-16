@@ -111,10 +111,10 @@ public:
         m_y = y;
         m_value = value;
     }
-    virtual int x() {
+    virtual int& x() {
         return m_x;
     }
-    virtual int y() {
+    virtual int& y() {
         return m_y;
     }
     virtual void set_value(double value) {
@@ -533,7 +533,12 @@ public:
 class gma_cell_callback_p : public gma_cell_callback_t {
 public:
     gma_cell_callback_f m_callback;
+    gma_object_t *m_user_data;
     virtual void set_callback(gma_cell_callback_f callback) {
         m_callback = callback;
+        m_user_data = NULL;
+    }
+    virtual void set_user_data(gma_object_t *user_data) {
+        m_user_data = user_data;
     }
 };

@@ -83,8 +83,8 @@ public:
 class gma_cell_t  : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_cell;};
-    virtual int x() {};
-    virtual int y() {};
+    virtual int& x() {};
+    virtual int& y() {};
     virtual void set_value(double value) {};
     virtual void set_value(int value) {};
     virtual int value_as_int() {};
@@ -95,12 +95,13 @@ public:
   Return value 0 interrupts, 1 denotes ok, and 2 denotes ok and a need
   to save the cell value back to band.
 */
-typedef int (*gma_cell_callback_f)(gma_cell_t*);
+typedef int (*gma_cell_callback_f)(gma_cell_t*, gma_object_t*);
 
 class gma_cell_callback_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_cell_callback;};
     virtual void set_callback(gma_cell_callback_f callback) {};
+    virtual void set_user_data(gma_object_t*) {};
 };
 
 // logical operators

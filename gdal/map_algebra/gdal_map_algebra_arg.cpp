@@ -1,12 +1,12 @@
 #include "gdal_map_algebra_private.h"
 
 template<typename datatype> struct gma_with_arg_callback {
-    typedef int (*type)(gma_band<datatype>, gma_block*, gma_object_t*);
+    typedef int (*type)(gma_band<datatype>*, gma_block<datatype>*, gma_object_t*);
     type fct;
 };
 
 template<typename datatype>
-int gma_assign(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_assign(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -15,15 +15,15 @@ int gma_assign(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) = a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) = a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_assign_all(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_assign_all(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -32,14 +32,14 @@ int gma_assign_all(gma_band<datatype> band, gma_block *block, gma_object_t *arg)
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            gma_block_cell(datatype, block, i) = a;
+            block->cell(i) = a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_add(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_add(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -48,15 +48,15 @@ int gma_add(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) += a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) += a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_subtract(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_subtract(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -65,15 +65,15 @@ int gma_subtract(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) -= a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) -= a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_multiply(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_multiply(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -82,15 +82,15 @@ int gma_multiply(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) *= a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) *= a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_divide(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_divide(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -99,15 +99,15 @@ int gma_divide(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) /= a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) /= a;
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_modulus(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
+int gma_modulus(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -116,27 +116,27 @@ int gma_modulus(gma_band<datatype> band, gma_block *block, gma_object_t *arg) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            if (gma_is_nodata(datatype, band, block, i)) continue;
-            gma_block_cell(datatype, block, i) %= a;
+            if (band->cell_is_nodata(block, i)) continue;
+            block->cell(i) %= a;
         }
     }
     return 2;
 }
 
 template<>
-int gma_modulus<float>(gma_band<float> band, gma_block *block, gma_object_t *arg) {
+int gma_modulus<float>(gma_band<float> *band, gma_block<float> *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘float’ to binary operator %%");
     return 0;
 }
 
 template<>
-int gma_modulus<double>(gma_band<double> band, gma_block *block, gma_object_t *arg) {
+int gma_modulus<double>(gma_band<double> *band, gma_block<double> *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘double’ to binary operator %%");
     return 0;
 }
 
 template<typename datatype>
-int gma_classify_m(gma_band<datatype> band, gma_block *block, gma_object_t *classifier) {
+int gma_classify_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *classifier) {
     if (classifier->get_class() != gma_classifier) {
         fprintf(stderr, "Wrong kind of argument.\n");
         return 0;
@@ -145,16 +145,16 @@ int gma_classify_m(gma_band<datatype> band, gma_block *block, gma_object_t *clas
     gma_cell_index i;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            datatype a = gma_block_cell(datatype, block, i);
-            if (!band.has_nodata || a != band.nodata)
-                gma_block_cell(datatype, block, i) = c->classify(a);
+            datatype a = block->cell(i);
+            if (band->is_nodata(a))
+                block->cell(i) = c->classify(a);
         }
     }
     return 2;
 }
 
 template<typename datatype>
-int gma_cell_callback_m(gma_band<datatype> band, gma_block *block, gma_object_t *callback) {
+int gma_cell_callback_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *callback) {
     if (callback->get_class() != gma_cell_callback) {
         fprintf(stderr, "Wrong kind of argument.\n");
         return 0;
@@ -163,15 +163,14 @@ int gma_cell_callback_m(gma_band<datatype> band, gma_block *block, gma_object_t 
     int retval;
     for (i.y = 0; i.y < block->h; i.y++) {
         for (i.x = 0; i.x < block->w; i.x++) {
-            datatype a = gma_block_cell(datatype, block, i);
-            if (band.has_nodata && a == band.nodata) continue;
-            int x = block->index.x * band.w_block + i.x;
-            int y = block->index.y * band.h_block + i.y;
-            gma_cell_p<datatype> *c = new gma_cell_p<datatype>(x,y,a);
-            retval = ((gma_cell_callback_p*)callback)->m_callback(c);
+            datatype a = block->cell(i);
+            if (band->is_nodata(a)) continue;
+            gma_cell_index gi = band->global_cell_index(block, i);
+            gma_cell_p<datatype> *c = new gma_cell_p<datatype>(gi.x, gi.y, a);
+            retval = ((gma_cell_callback_p*)callback)->m_callback(c, ((gma_cell_callback_p*)callback)->m_user_data);
             if (retval == 0) return 0;
             if (retval == 2)
-                gma_block_cell(datatype, block, i) = c->value();
+                block->cell(i) = c->value();
         }
     }
     return retval;
@@ -179,18 +178,18 @@ int gma_cell_callback_m(gma_band<datatype> band, gma_block *block, gma_object_t 
 
 template<typename datatype>
 void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback<datatype> cb, gma_object_t *arg) {
-    gma_band<datatype> band = gma_band_initialize<datatype>(b);
+    gma_band<datatype> *band = new gma_band<datatype>(b);
     gma_block_index i;
-    for (i.y = 0; i.y < band.h_blocks; i.y++) {
-        for (i.x = 0; i.x < band.w_blocks; i.x++) {
-            gma_band_add_to_cache(&band, i);
-            gma_block *block = gma_band_get_block(band, i);
+    for (i.y = 0; i.y < band->h_blocks; i.y++) {
+        for (i.x = 0; i.x < band->w_blocks; i.x++) {
+            band->add_to_cache(i);
+            gma_block<datatype> *block = band->get_block(i);
             int ret = cb.fct(band, block, arg);
             switch (ret) {
             case 0: return;
             case 1: break;
             case 2: {
-                CPLErr e = gma_band_write_block(band, block);
+                CPLErr e = band->write_block(block);
             }
             }
         }

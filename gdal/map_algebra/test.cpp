@@ -2,10 +2,10 @@
 #include <math.h>
 #include "gdal_map_algebra.h"
 
-int callback(gma_cell_t *cell) {
-    // set cell value = distance from 0,0
-    double x = cell->x();
-    double y = cell->y();
+int callback(gma_cell_t *cell, gma_object_t *loc) {
+    // set cell value = distance from loc
+    double x = cell->x() - ((gma_cell_t*)loc)->x();
+    double y = cell->y() - ((gma_cell_t*)loc)->y();
     double d = sqrt(x*x+y*y);
     cell->set_value(d);
     return 2;
@@ -18,9 +18,13 @@ main() {
     int w_band = 16, h_band = 10;
     GDALRasterBand *b = d->Create("", w_band, h_band, 1, GDT_Float64, NULL)->GetRasterBand(1);
     
-    gma_cell_callback_t *x = (gma_cell_callback_t*)gma_new_object(b, gma_cell_callback);
-    x->set_callback(callback);
-    gma_with_arg(b, gma_method_cell_callback, x);
+    gma_cell_callback_t *cb = (gma_cell_callback_t*)gma_new_object(b, gma_cell_callback);
+    cb->set_callback(callback);
+    gma_cell_t *loc = (gma_cell_t*)gma_new_object(b, gma_cell);
+    loc->x() = 5;
+    loc->y() = 5;
+    cb->set_user_data(loc);
+    gma_with_arg(b, gma_method_cell_callback, cb);
 
     gma_simple(b, gma_method_print);
 
@@ -49,7 +53,7 @@ main() {
     GDALRasterBand *b2 = d->Create("", w_band, h_band, 1, GDT_Byte, NULL)->GetRasterBand(1);
     gma_logical_operation_t *op = (gma_logical_operation_t*)gma_new_object(b, gma_logical_operation);
     op->set_operation(gma_lt);
-    op->set_value(18);
+    op->set_value(11);
     gma_two_bands(b2, gma_method_assign_band, b, op);
 
     printf("\n");

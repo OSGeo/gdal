@@ -10,7 +10,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
     if (klass == gma_histogram) {
         fprintf(stderr, "Histogram is not used as an argument.");
         return NULL;
-    }
+    }   
     switch (b->GetRasterDataType()) {
     case GDT_Byte:
         switch (klass) {
@@ -24,7 +24,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<uint8_t>(true);
         case gma_cell:
-            break;
+            return new gma_cell_p<uint8_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint8_t>;
         }
@@ -41,7 +41,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<uint16_t>(true);
         case gma_cell:
-            break;
+            return new gma_cell_p<uint16_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint16_t>;
         }
@@ -58,7 +58,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<int16_t>(true);
         case gma_cell:
-            break;
+            return new gma_cell_p<int16_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<int16_t>;
         }
@@ -75,7 +75,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<uint32_t>(true);
         case gma_cell:
-            break;
+            return new gma_cell_p<uint32_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint32_t>;
         }
@@ -92,7 +92,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<int32_t>(true);
         case gma_cell:
-            break;
+            return new gma_cell_p<int32_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<int32_t>;
         }
@@ -109,7 +109,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<float>(false);
         case gma_cell:
-            break;
+            return new gma_cell_p<float>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<float>;
         }
@@ -126,7 +126,7 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
         case gma_classifier:
             return new gma_classifier_p<double>(false);
         case gma_cell:
-            break;
+            return new gma_cell_p<double>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<double>;
         }

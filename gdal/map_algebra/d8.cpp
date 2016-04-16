@@ -1,11 +1,9 @@
 #include "gdal_map_algebra.h"
 
-// fixme: set these as user data to callback
-int W;
-int H;
-
-int set_border_cells(gma_cell_t *cell) {
-    if (cell->x() == 0 || cell->x() == W-1 || cell->y() == 0 || cell->y() == H-1)
+int set_border_cells(gma_cell_t *cell, gma_object_t *band_size) {
+    int w = ((gma_cell_t *)band_size)->x();
+    int h = ((gma_cell_t *)band_size)->y();
+    if (cell->x() == 0 || cell->x() == w-1 || cell->y() == 0 || cell->y() == h-1)
         cell->set_value(1);
     else 
         cell->set_value(0);
@@ -52,10 +50,12 @@ int main() {
         GDALRasterBand *c = driver->Create("catchments.tiff", w, h, 1, GDT_UInt32, NULL)->GetRasterBand(1);
 
         // c = 0 except 1 on the borders
-        W = w;
-        H = h;
         gma_cell_callback_t *cb = (gma_cell_callback_t*)gma_new_object(c, gma_cell_callback);
         cb->set_callback(set_border_cells);
+        gma_cell_t *wh = (gma_cell_t*)gma_new_object(c, gma_cell);
+        wh->x() = w;
+        wh->y() = h;
+        cb->set_user_data(wh);
         gma_with_arg(c, gma_method_cell_callback, cb);
 
         // c *= ua

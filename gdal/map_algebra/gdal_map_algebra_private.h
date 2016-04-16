@@ -75,108 +75,371 @@ typedef struct {
 typedef struct {
     int x;
     int y;
-} gma_cell_index; // cell coordinates in block
+} gma_cell_index; // cell coordinates in block or globally
 
-typedef struct {
+#define gma_cell_first_neighbor(center_cell) { .x = center_cell.x, .y = center_cell.y-1 }
+
+#define gma_cell_move_to_neighbor(cell, neighbor)       \
+    switch(neighbor) {                                   \
+    case 2: cell.x++; break;                             \
+    case 3: cell.y++; break;                             \
+    case 4: cell.y++; break;                             \
+    case 5: cell.x--; break;                             \
+    case 6: cell.x--; break;                             \
+    case 7: cell.y--; break;                             \
+    case 8: cell.y--; break;                             \
+    }
+
+template <typename datatype> class gma_block {
+    void *_block;
+public:
     gma_block_index index;
     int w; // width of data in block
     int h; // height of data in block
-    void *_block;
-} gma_block;
-
-gma_block *gma_block_create();
-void gma_block_destroy(gma_block *block);
-
-#define gma_typecast(type, var) ((type*)(var))
-#define gma_block_cell(type, block, cell) gma_typecast(type, block->_block)[cell.x+cell.y*block->w]
-
-typedef struct {
-    size_t n;
-    gma_block **blocks;
-} gma_block_cache;
-
-gma_block_cache gma_cache_initialize();
-void gma_empty_cache(gma_block_cache *cache);
-void gma_cache_remove(gma_block_cache *cache, int i);
-
-gma_block *gma_cache_retrieve(gma_block_cache cache, gma_block_index index);
-CPLErr gma_cache_add(gma_block_cache *cache, gma_block *block);
-
-// fixme: make this template struct and add nodata value and bool has_nodata
-// add also information about mask band
-template <typename datatype_t> struct gma_band {
-    GDALRasterBand *band;
-    GDALRasterBand *mask;
-    int w;
-    int h;
-    int w_block;
-    int h_block;
-    int w_blocks;
-    int h_blocks;
-    GDALDataType datatype;
-    int datatype_size;
-    gma_block_cache cache;
-    datatype_t nodata;
-    bool has_nodata;
+    gma_block() {
+        _block = NULL;
+    }
+    ~gma_block() {
+        CPLFree(_block);
+    }
+    inline datatype& cell(gma_cell_index i) {
+        return ((datatype*)_block)[i.x+i.y*w];
+    }
+    inline void cell(gma_cell_index i, datatype value) {
+        ((datatype*)_block)[i.x+i.y*w] = value;
+    }
+    CPLErr read(GDALRasterBand *band) {
+        _block = CPLMalloc(w * h * sizeof(datatype));
+        return band->ReadBlock(index.x, index.y, _block);
+    }
+    CPLErr write(GDALRasterBand *band) {
+        return band->WriteBlock(index.x, index.y, _block);
+    }
+    int is_border_cell(int border_block, gma_cell_index i) {
+        if (!border_block)
+            return 0;
+        if (i.x == 0) {
+            if (i.y == 0 && border_block == 1)
+                return 8;
+            else if (i.y == h - 1 && border_block == 6)
+                return 6;
+            else if (border_block == 8 || border_block == 6 || border_block == 7)
+                return 7;
+        } else if (i.x == w - 1) {
+            if (i.y == 0 && border_block == 2)
+                return 2;
+            else if (i.y == h - 1 && border_block == 4)
+                return 4;
+            else if (border_block == 2 || border_block == 4 || border_block == 3)
+                return 3;
+        } else if (i.y == 0 && (border_block == 8 || border_block == 2 || border_block == 1))
+            return 1;
+        else if (i.y == h - 1 && (border_block == 6 || border_block == 4 || border_block == 5))
+            return 5;
+        else
+            return 0;
+    }
+    inline bool first_block() {
+        return index.x == 0 && index.y == 0;
+    }
 };
 
-#define gma_is_nodata(type,band,block,cell_index) band.has_nodata && gma_block_cell(type, block, cell_index) == band.nodata
-
-#define gma_is_nodata_value(type,band,value) band.has_nodata && value == band.nodata
-
-template <typename datatype> gma_band<datatype> gma_band_initialize(GDALRasterBand *b) {
-    gma_band<datatype> band;
-    band.band = b;
-    band.w = b->GetXSize();
-    band.h = b->GetYSize();
-    b->GetBlockSize(&band.w_block, &band.h_block);
-    band.w_blocks = (band.w + band.w_block - 1) / band.w_block;
-    band.h_blocks = (band.h + band.h_block - 1) / band.h_block;
-    band.datatype = b->GetRasterDataType();
-    int has_nodata;
-    double nodata = b->GetNoDataValue(&has_nodata);
-    band.has_nodata = has_nodata != 0;
-    band.nodata = band.has_nodata ? (datatype)nodata : 0;
-    int mask_flags = b->GetMaskFlags();
-    if (mask_flags | GMF_PER_DATASET || mask_flags | GMF_ALPHA)
-        band.mask = b->GetMaskBand();
-    else
-        band.mask = NULL;
-    switch (band.datatype) {
-    case GDT_Byte:
-        band.datatype_size = sizeof(uint8_t);
-        break;
-    case GDT_UInt16:
-        band.datatype_size = sizeof(uint16_t);
-        break;
-    case GDT_Int16:
-        band.datatype_size = sizeof(int16_t);
-        break;
-    case GDT_UInt32:
-        band.datatype_size = sizeof(uint32_t);
-        break;
-    case GDT_Int32:
-        band.datatype_size = sizeof(int32_t);
-        break;
-    case GDT_Float32:
-        band.datatype_size = sizeof(float);
-        break;
-    case GDT_Float64:
-        band.datatype_size = sizeof(double);
-        break;
-    default:
-        fprintf(stderr, "datatype not supported");
+template <typename datatype> class gma_block_cache {
+    size_t m_n;
+    gma_block<datatype> **m_blocks;
+public:
+    gma_block_cache() {
+        m_n = 0;
+        m_blocks = NULL;
     }
-    band.cache = gma_cache_initialize();
-    return band;
-}
+    inline size_t size() {
+        return m_n;
+    }
+    void empty() {
+        if (m_n == 0)
+            return;
+        for (int i = 0; i < m_n; i++)
+            delete m_blocks[i];
+        CPLFree(m_blocks);
+        m_n = 0;
+        m_blocks = NULL;
+    }
+    void remove(int i) {
+        if (i < 0 || i >= m_n) return;
+        gma_block<datatype> **blocks = (gma_block<datatype>**)CPLMalloc((m_n-1) * sizeof(gma_block<datatype>*));
+        int d = 0;
+        for (int j = 0; j < m_n; j++) {
+            if (j == i) {
+                delete m_blocks[j];
+                d = 1;
+            } else {
+                blocks[j-d] = m_blocks[j];
+            }
+        }
+        CPLFree(m_blocks);
+        m_n--;
+        m_blocks = blocks;
+    }
+    gma_block<datatype> *retrieve(gma_block_index index) {
+        for (int i = 0; i < m_n; i++)
+            if (m_blocks[i]->index.x == index.x && m_blocks[i]->index.y == index.y)
+                return m_blocks[i];
+        return NULL;
+    }
+    CPLErr add(gma_block<datatype> *block) {
+        m_n++;
+        if (m_n == 1)
+            m_blocks = (gma_block<datatype>**)CPLMalloc(sizeof(gma_block<datatype>*));
+        else
+            m_blocks = (gma_block<datatype>**)CPLRealloc(m_blocks, m_n * sizeof(gma_block<datatype>*));
+        m_blocks[m_n-1] = block;
+    }
+    void remove(gma_block_index i20, gma_block_index i21) {
+        int i = 0;
+        while (i < m_n) {
+            if (m_blocks[i]->index.x < i20.x || m_blocks[i]->index.x > i21.x ||
+                m_blocks[i]->index.y < i20.y || m_blocks[i]->index.y > i21.y)
+                remove(i);
+            else
+                i++;
+        }
+    }
+};
 
-template <typename datatype> void gma_band_empty_cache(gma_band<datatype> *band) {
-    gma_empty_cache(&band->cache);
-}
+template <typename datatype> class gma_band {
+    GDALRasterBand *band;
+    int m_w;
+    int m_h;
+    int m_w_block;
+    int m_h_block;
+    GDALDataType m_gdal_datatype;
+    int datatype_size;
+    gma_block_cache<datatype> cache;
+    datatype m_nodata;
+    bool m_has_nodata;
+    gma_band<uint8_t> *mask;
+public:
+    int w_blocks;
+    int h_blocks;
+    gma_band(GDALRasterBand *b) {
+        band = b;
+        m_w = b->GetXSize();
+        m_h = b->GetYSize();
+        b->GetBlockSize(&m_w_block, &m_h_block);
+        w_blocks = (m_w + m_w_block - 1) / m_w_block;
+        h_blocks = (m_h + m_h_block - 1) / m_h_block;
+        m_gdal_datatype = b->GetRasterDataType();
+        int has_nodata;
+        double nodata = b->GetNoDataValue(&has_nodata);
+        m_has_nodata = has_nodata != 0;
+        m_nodata = has_nodata ? (datatype)nodata : 0;
+        int mask_flags = b->GetMaskFlags();
+        mask = NULL;
+        if (mask_flags & GMF_PER_DATASET || mask_flags & GMF_ALPHA) {
+            GDALRasterBand *m = b->GetMaskBand();
+            if (m) mask = new gma_band<uint8_t>(m);
+        }   
+        switch (m_gdal_datatype) {
+        case GDT_Byte:
+            datatype_size = sizeof(uint8_t);
+            break;
+        case GDT_UInt16:
+            datatype_size = sizeof(uint16_t);
+            break;
+        case GDT_Int16:
+            datatype_size = sizeof(int16_t);
+            break;
+        case GDT_UInt32:
+            datatype_size = sizeof(uint32_t);
+            break;
+        case GDT_Int32:
+            datatype_size = sizeof(int32_t);
+            break;
+        case GDT_Float32:
+            datatype_size = sizeof(float);
+            break;
+        case GDT_Float64:
+            datatype_size = sizeof(double);
+            break;
+        default:
+            fprintf(stderr, "datatype not supported");
+        }
+    }
+    ~gma_band() {
+        delete(mask);
+    }
+    GDALDataset *dataset() {
+        return band->GetDataset();
+    }
+    int w() {
+        return m_w;
+    }
+    int h() {
+        return m_h;
+    }
+    int w_block() {
+        return m_w_block;
+    }
+    int h_block() {
+        return m_h_block;
+    }
+    GDALDataType gdal_datatype() {
+        return m_gdal_datatype;
+    }
+    void empty_cache() {
+        cache.empty();
+        if (mask) mask->empty_cache();
+    }
+    void set_block_size(gma_block<datatype> *block) {
+        block->w = ( (block->index.x+1) * m_w_block > m_w ) ? m_w - block->index.x * m_w_block : m_w_block;
+        block->h = ( (block->index.y+1) * m_h_block > m_h ) ? m_h - block->index.y * m_h_block : m_h_block;
+    }
+    gma_block<datatype> *get_block(gma_block_index i) {
+        return cache.retrieve(i);
+    }
+    CPLErr write_block(gma_block<datatype> *block) {
+        return block->write(band);
+    }
+    CPLErr add_to_cache(gma_block_index i) {
+        gma_block<datatype> *b = cache.retrieve(i);
+        if (!b) {
+            b = new gma_block<datatype>();
+            b->index = i;
+            set_block_size(b);
+            b->read(band);
+            cache.add(b);
+        }
+        if (mask) {
+        }
+        // fixme: add here update mask cache
+    }
+    template <typename type1> CPLErr update_cache(gma_band<type1> *band1, gma_block<type1> *b1, int d) {
 
-template <typename type1,typename type2> CPLErr gma_band_iteration(gma_band<type1> *band1, gma_band<type2> *band2) {
-    GDALDataset *ds1 = band1->band->GetDataset();
+        // fixme: add here update mask cache
+
+        // which blocks in this band are needed to cover a block extended with focal distance d in band 1?
+        // assuming the raster size is the same
+
+        gma_block_index i20, i21;
+
+        // index of top left cell to be covered
+        int x10 = b1->index.x * band1->w_block() - d, y10 = b1->index.y * band1->h_block() - d;
+
+        // index of bottom right cell to be covered
+        int x11 = x10 + d + b1->w-1 + d, y11 = y10 + d + b1->h-1 + d;
+        
+        // which block covers x10, y10 in band2?
+        i20.x = MAX(x10 / m_w_block, 0);
+        i20.y = MAX(y10 / m_h_block, 0);
+        
+        // which block covers x11, y11 in band2?
+        i21.x = MIN(x11 / m_w_block, w_blocks-1);
+        i21.y = MIN(y11 / m_h_block, h_blocks-1);
+        
+        {
+            // add needed blocks
+            gma_block_index i;
+            for (i.y = i20.y; i.y <= i21.y; i.y++) {
+                for (i.x = i20.x; i.x <= i21.x; i.x++) {
+                    add_to_cache(i);
+                }
+            }
+        }
+        {
+            // remove unneeded blocks
+            cache.remove(i20, i21);
+        }
+    }
+    inline gma_cell_index global_cell_index(gma_block<datatype> *b, gma_cell_index i) {
+        gma_cell_index ret;
+        ret.x = b->index.x * m_w_block + i.x;
+        ret.y = b->index.y * m_h_block + i.y;
+        return ret;
+    }
+    inline gma_cell_index cell_index(gma_cell_index i) {
+        gma_cell_index ret;
+        ret.x = i.x % m_w_block;
+        ret.y = i.y % m_h_block;
+        return ret;
+    }
+    inline gma_block_index block_index(gma_cell_index gi) {
+        gma_block_index i;
+        i.x = gi.x / m_w_block;
+        i.y = gi.y / m_h_block;
+        return i;
+    }
+    inline bool cell_is_outside(gma_block<datatype> *b, gma_cell_index i) {
+        // global cell index
+        int x = b->index.x * m_w_block + i.x;
+        int y = b->index.y * m_h_block + i.y;
+        return (x < 0 || y < 0 || x >= m_w || y >= m_h);
+    }
+    inline bool cell_is_outside(gma_cell_index i) {
+        return (i.x < 0 || i.y < 0 || i.x >= m_w || i.y >= m_h);
+    }
+    inline bool is_nodata(datatype value) {
+        return m_has_nodata && value == m_nodata;
+    }
+    inline bool cell_is_nodata(gma_block<datatype> *b, gma_cell_index i) {
+        if (mask) {
+            uint8_t mask_value;
+            if (mask->has_value(this, b, i, &mask_value)) {
+                if (mask_value == 0) return true;
+            } else {
+                fprintf(stderr, "Mask's cache not updated.");
+                exit(1);
+            }
+        }
+        return m_has_nodata && b->cell(i) == m_nodata;
+    }
+    int is_border_block(gma_block<datatype> *block) {
+        if (block->index.x == 0) {
+            if (block->index.y == 0)
+                return 8;
+            else if (block->index.y == h_blocks - 1)
+                return 6;
+            else
+                return 7;
+        } else if (block->index.x == w_blocks - 1) {
+            if (block->index.y == 0)
+                return 2;
+            else if (block->index.y == h_blocks - 1)
+                return 4;
+            else
+                return 3;
+        } else if (block->index.y == 0)
+            return 1;
+        else if (block->index.y == h_blocks - 1)
+            return 5;
+        return 0;
+    }
+    inline bool last_block(gma_block<datatype> *b) {
+        return b->index.x == w_blocks-1 && b->index.y == h_blocks-1;
+    }
+    // get the block, which has the cell, that is pointed to by i2 in block2 in band2
+    template <typename type2> gma_block<datatype> *get_block(gma_band<type2> *band2, gma_block<type2> *b2, gma_cell_index i2, gma_cell_index *i1) {
+        gma_cell_index gi = band2->global_cell_index(b2, i2);
+        if (cell_is_outside(gi)) return NULL;
+        gma_block_index i = block_index(gi);
+        gma_block<datatype> *rv = get_block(i);
+        if (rv) *i1 = cell_index(gi);
+        return rv;
+    }
+    // returns false if cell is not on the band or is nodata cell
+    template<typename type2> bool has_value(gma_band<type2> *band2, gma_block<type2> *block2, gma_cell_index index2, datatype *value) {
+        gma_cell_index index;
+        gma_block<datatype> *block = get_block(band2, block2, index2, &index);
+        if (block) {
+            if (cell_is_nodata(block, index)) return false;
+            *value = block->cell(index);
+            return true;
+        } else
+            return false;
+    }
+};
+
+template <typename type1,typename type2> CPLErr gma_band_iteration(gma_band<type1> **band1, gma_band<type2> **band2) {
+    GDALDataset *ds1 = (*band1)->dataset();
     GDALDriver *d = ds1->GetDriver();
     char **files = ds1->GetFileList();
 
@@ -191,170 +454,18 @@ template <typename type1,typename type2> CPLErr gma_band_iteration(gma_band<type
     int e = VSIRename(files[0], newpath);
 
     // reopen old b1 as b2
-    gma_band_empty_cache(band2);
+    (*band2)->empty_cache();
     GDALDataset *ds2 = (GDALDataset*)GDALOpen(newpath, GA_ReadOnly);
-    *band2 = gma_band_initialize<type2>(ds2->GetRasterBand(1));
+    *band2 = new gma_band<type2>(ds2->GetRasterBand(1));
 
     // create new b1
-    gma_band_empty_cache(band1);
-    ds1 = d->Create(files[0], band1->w, band1->h, 1, band1->datatype, NULL);
-    *band1 = gma_band_initialize<type1>(ds1->GetRasterBand(1));
+    (*band1)->empty_cache();
+    ds1 = d->Create(files[0], (*band1)->w(), (*band1)->h(), 1, (*band1)->gdal_datatype(), NULL);
+    *band1 = new gma_band<type1>(ds1->GetRasterBand(1));
 
     CPLFree(newpath);
     CSLDestroy(files);
 }
-
-template <typename datatype> void gma_band_set_block_size(gma_band<datatype> band, gma_block *block) {
-    block->w = ( (block->index.x+1) * band.w_block > band.w ) ? band.w - block->index.x * band.w_block : band.w_block;
-    block->h = ( (block->index.y+1) * band.h_block > band.h ) ? band.h - block->index.y * band.h_block : band.h_block;
-}
-
-template <typename datatype>
-gma_block *gma_band_get_block(gma_band<datatype> band, gma_block_index i) {
-    for (int j = 0; j < band.cache.n; j++)
-        if (band.cache.blocks[j]->index.x == i.x && band.cache.blocks[j]->index.y == i.y) {
-            return band.cache.blocks[j];
-        }
-    return NULL;
-}
-
-template <typename datatype> CPLErr gma_band_write_block(gma_band<datatype> band, gma_block *block) {
-    return band.band->WriteBlock(block->index.x, block->index.y, block->_block);
-}
-
-template <typename datatype> CPLErr gma_band_add_to_cache(gma_band<datatype> *band, gma_block_index i) {
-    gma_block *b = gma_cache_retrieve(band->cache, i);
-    if (!b) {
-        b = gma_block_create();
-        b->index = i;
-        gma_band_set_block_size(*band, b);
-        b->_block = CPLMalloc(band->w_block * band->h_block * band->datatype_size);
-        CPLErr e = band->band->ReadBlock(b->index.x, b->index.y, b->_block);
-        gma_cache_add(&(band->cache), b);
-    }
-}
-
-template <typename type1,typename type2>
-CPLErr gma_band_update_cache(gma_band<type2> *band2, gma_band<type1> band1, gma_block *b1, int d) {
-
-    // which blocks in band 2 are needed to cover a block extended with focal distance d in band 1?
-    // assuming the raster size if the same
-
-    gma_block_index i20, i21;
-
-    // index of top left cell to be covered
-    int x10 = b1->index.x * band1.w_block - d, y10 = b1->index.y * band1.h_block - d;
-
-    // index of bottom right cell to be covered
-    int x11 = x10 + d + b1->w-1 + d, y11 = y10 + d + b1->h-1 + d;
-
-    // which block covers x10, y10 in band2?
-    i20.x = MAX(x10 / band2->w_block, 0);
-    i20.y = MAX(y10 / band2->h_block, 0);
-
-    // which block covers x11, y11 in band2?
-    i21.x = MIN(x11 / band2->w_block, band2->w_blocks-1);
-    i21.y = MIN(y11 / band2->h_block, band2->h_blocks-1);
-
-    {
-        // add needed blocks
-        gma_block_index i;
-        for (i.y = i20.y; i.y <= i21.y; i.y++) {
-            for (i.x = i20.x; i.x <= i21.x; i.x++) {
-                gma_band_add_to_cache(band2, i);
-            }
-        }
-    }
-    {
-        // remove unneeded blocks
-        int i = 0;
-        while (i < band2->cache.n) {
-            if (band2->cache.blocks[i]->index.x < i20.x || band2->cache.blocks[i]->index.x > i21.x ||
-                band2->cache.blocks[i]->index.y < i20.y || band2->cache.blocks[i]->index.y > i21.y)
-                gma_cache_remove(&(band2->cache), i);
-            else
-                i++;
-        }
-    }
-
-}
-
-// get the block, which has the cell, that is pointed to by i1 in block1
-// return the index within the block
-template <typename type1,typename type2>
-gma_block *gma_index12index2(gma_band<type1> band1, gma_block *b1, gma_cell_index i1, gma_band<type2> band2, gma_cell_index *i2) {
-    // global cell index
-    int x = b1->index.x * band1.w_block + i1.x;
-    int y = b1->index.y * band1.h_block + i1.y;
-    if (x < 0 || y < 0 || x >= band1.w || y >= band1.h)
-        return NULL;
-    // index of block 2
-    int x2 = x / band2.w_block;
-    int y2 = y / band2.h_block;
-    for (int i = 0; i < band2.cache.n; i++)
-        if (band2.cache.blocks[i]->index.x == x2 && band2.cache.blocks[i]->index.y == y2) {
-            i2->x = x % band2.w_block;
-            i2->y = y % band2.h_block;
-            return band2.cache.blocks[i];
-        }
-    return NULL;
-}
-
-// fixme: return false if cell is nodata cell or masked off (alpha == 0)
-template<typename this_datatype, typename other_datatype>
-int gma_value_from_other_band(gma_band<this_datatype> this_band, 
-                              gma_block *this_block,
-                              gma_cell_index this_index,
-                              gma_band<other_datatype> other_band,
-                              other_datatype *value) {
-    gma_cell_index other_index;
-    gma_block *other_block = gma_index12index2<this_datatype,other_datatype>(this_band, this_block, this_index, other_band, &other_index);
-    if (other_block) {
-        *value = gma_block_cell(other_datatype, other_block, other_index);
-        return 1;
-    } else
-        return 0;
-}
-
-#define gma_first_block(block) block->index.x == 0 && block->index.y == 0
-#define gma_last_block(band, block) block->index.x == band.w_blocks-1 && block->index.y == band.h_blocks-1
-
-template <typename datatype> int is_border_block(gma_band<datatype> band, gma_block *block) {
-    if (block->index.x == 0) {
-        if (block->index.y == 0)
-            return 8;
-        else if (block->index.y == band.h_blocks - 1)
-            return 6;
-        else
-            return 7;
-    } else if (block->index.x == band.w_blocks - 1) {
-        if (block->index.y == 0)
-            return 2;
-        else if (block->index.y == band.h_blocks - 1)
-            return 4;
-        else
-            return 3;
-    } else if (block->index.y == 0)
-        return 1;
-    else if (block->index.y == band.h_blocks - 1)
-        return 5;
-    return 0;
-}
-
-int is_border_cell(gma_block *block, int border_block, gma_cell_index i);
-
-#define gma_cell_first_neighbor(center_cell) { .x = center_cell.x, .y = center_cell.y-1 }
-
-#define gma_cell_move_to_neighbor(cell, neighbor)       \
-    switch(neighbor) {                                   \
-    case 2: cell.x++; break;                             \
-    case 3: cell.y++; break;                             \
-    case 4: cell.y++; break;                             \
-    case 5: cell.x--; break;                             \
-    case 6: cell.x--; break;                             \
-    case 7: cell.y--; break;                             \
-    case 8: cell.y--; break;                             \
-    }
 
 #define COMMA ,
 #define gma_retval_init(class, var, arg)        \
