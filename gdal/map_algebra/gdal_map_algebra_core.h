@@ -16,6 +16,7 @@ extern "C"
 */
 typedef enum {
     gma_object,
+    gma_band,
     gma_number,
     gma_integer, /* not a real class, a number, which is integer */
     gma_pair,

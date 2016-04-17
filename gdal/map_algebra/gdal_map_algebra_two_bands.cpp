@@ -1,7 +1,7 @@
 #include "private.hpp"
 
 template<typename datatype1,typename datatype2> struct gma_two_bands_callback {
-    typedef int (*type)(gma_band<datatype1>*, gma_block<datatype1>*, gma_band<datatype2>*, gma_object_t**, gma_object_t*);
+    typedef int (*type)(gma_band_p<datatype1>*, gma_block<datatype1>*, gma_band_p<datatype2>*, gma_object_t**, gma_object_t*);
     type fct;
 };
 
@@ -30,7 +30,7 @@ type1 gma_test_operator(gma_logical_operation_p<type2> *op, type2 value) {
 }
 
 template<typename type1,typename type2>
-int gma_assign_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_assign_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     // fixme in all subs arg is checked here
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
@@ -50,7 +50,7 @@ int gma_assign_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<t
 }
 
 template<typename type1,typename type2>
-int gma_add_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_add_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
         for (i1.x = 0; i1.x < block1->w(); i1.x++) {
@@ -69,7 +69,7 @@ int gma_add_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type
 }
 
 template<typename type1,typename type2>
-int gma_subtract_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_subtract_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
         for (i1.x = 0; i1.x < block1->w(); i1.x++) {
@@ -88,7 +88,7 @@ int gma_subtract_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band
 }
 
 template<typename type1,typename type2>
-int gma_multiply_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_multiply_by_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
         for (i1.x = 0; i1.x < block1->w(); i1.x++) {
@@ -107,7 +107,7 @@ int gma_multiply_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_b
 }
 
 template<typename type1,typename type2>
-int gma_divide_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_divide_by_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
         for (i1.x = 0; i1.x < block1->w(); i1.x++) {
@@ -126,7 +126,7 @@ int gma_divide_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_ban
 }
 
 template<typename type1,typename type2>
-int gma_modulus_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_band<type2> *band2, gma_object_t**, gma_object_t *arg) {
+int gma_modulus_by_band(gma_band_p<type1> *band1, gma_block<type1> *block1, gma_band_p<type2> *band2, gma_object_t**, gma_object_t *arg) {
     gma_cell_index i1;
     for (i1.y = 0; i1.y < block1->h(); i1.y++) {
         for (i1.x = 0; i1.x < block1->w(); i1.x++) {
@@ -146,7 +146,7 @@ int gma_modulus_by_band(gma_band<type1> *band1, gma_block<type1> *block1, gma_ba
 
 #define gma_modulus_by_band_type_error(type1,type2)                     \
     template<>                                                          \
-    int gma_modulus_by_band<type1,type2>(gma_band<type1>*, gma_block<type1>*, gma_band<type2>*, gma_object_t**, gma_object_t*) { \
+    int gma_modulus_by_band<type1,type2>(gma_band_p<type1>*, gma_block<type1>*, gma_band_p<type2>*, gma_object_t**, gma_object_t*) { \
         fprintf(stderr, "invalid type to binary operator %%");          \
         return 0;                                                       \
     }
@@ -179,7 +179,7 @@ gma_modulus_by_band_type_error(double,double)
 // zonal min should be gma_hash_p<gma_int> or gma_hash_p<gma_float> depending on the datatype
 
 template<typename zones_type,typename values_type>
-int gma_zonal_min(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
+int gma_zonal_min(gma_band_p<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band_p<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_hash_p<zones_type COMMA gma_number_p<values_type> >, rv, );
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h(); zones_i.y++) {
@@ -202,7 +202,7 @@ int gma_zonal_min(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones
 }
 
 template<typename zones_type,typename values_type>
-int gma_zonal_max(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
+int gma_zonal_max(gma_band_p<zones_type> *zones_band, gma_block<zones_type> *zones_block, gma_band_p<values_type> *values_band, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_hash_p<zones_type COMMA gma_number_p<values_type> >, rv, );
     gma_cell_index zones_i;
     for (zones_i.y = 0; zones_i.y < zones_block->h(); zones_i.y++) {
@@ -225,7 +225,7 @@ int gma_zonal_max(gma_band<zones_type> *zones_band, gma_block<zones_type> *zones
 }
 
 template<typename rims_type,typename areas_type>
-int gma_rim_by8(gma_band<rims_type> *rims_band, gma_block<rims_type> *rims_block, gma_band<areas_type> *areas_band, gma_object_t**, gma_object_t*) {
+int gma_rim_by8(gma_band_p<rims_type> *rims_band, gma_block<rims_type> *rims_block, gma_band_p<areas_type> *areas_band, gma_object_t**, gma_object_t*) {
     gma_cell_index i;
     for (i.y = 0; i.y < rims_block->h(); i.y++) {
         for (i.x = 0; i.x < rims_block->w(); i.x++) {
@@ -272,7 +272,7 @@ int gma_rim_by8(gma_band<rims_type> *rims_band, gma_block<rims_type> *rims_block
 // currently if two neighbors are equally lower, the first is picked
 //
 template<typename fd_t, typename dem_t>
-int gma_D8(gma_band<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band<dem_t> *band_dem, gma_object_t**, gma_object_t*) {
+int gma_D8(gma_band_p<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band_p<dem_t> *band_dem, gma_object_t**, gma_object_t*) {
     int border_block = band_fd->is_border_block(block_fd);
     gma_cell_index i_fd;
     for (i_fd.y = 0; i_fd.y < block_fd->h(); i_fd.y++) {
@@ -338,7 +338,7 @@ public:
 // drain flat cells (10) to neighboring non-flat cells which are at same or lower elevation
 // this leaves low lying flat areas undrained
 template<typename fd_t, typename dem_t>
-int gma_route_flats(gma_band<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band<dem_t> *band_dem, gma_object_t **retval, gma_object_t*) {
+int gma_route_flats(gma_band_p<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band_p<dem_t> *band_dem, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_band_iterator_t, rv, );
     if (block_fd->first_block())
         rv->new_loop();
@@ -391,7 +391,7 @@ int gma_route_flats(gma_band<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band
 }
 
 template<typename filled_t, typename dem_t>
-int gma_fill_depressions(gma_band<filled_t> *filled_band, gma_block<filled_t> *filled_block, gma_band<dem_t> *dem_band, gma_object_t **retval, gma_object_t*) {
+int gma_fill_depressions(gma_band_p<filled_t> *filled_band, gma_block<filled_t> *filled_block, gma_band_p<dem_t> *dem_band, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_band_iterator_t, rv, );
     if (filled_block->first_block())
         rv->new_loop();
@@ -447,7 +447,7 @@ int gma_fill_depressions(gma_band<filled_t> *filled_band, gma_block<filled_t> *f
 // band2 = flow directions
 // band1 = upstream area = 1 + cells upstream
 template<typename data1_t, typename data2_t>
-int gma_upstream_area(gma_band<data1_t> *band1, gma_block<data1_t> *block1, gma_band<data2_t> *band2, gma_object_t **retval, gma_object_t*) {
+int gma_upstream_area(gma_band_p<data1_t> *band1, gma_block<data1_t> *block1, gma_band_p<data2_t> *band2, gma_object_t **retval, gma_object_t*) {
     gma_retval_init(gma_band_iterator_t, rv, );
     if (block1->first_block())
         rv->new_loop();
@@ -523,7 +523,7 @@ int gma_upstream_area(gma_band<data1_t> *band1, gma_block<data1_t> *block1, gma_
 }
 
 template<typename catchment_t, typename fd_t>
-int gma_catchment(gma_band<catchment_t> *catchment_band, gma_block<catchment_t> *catchment_block, gma_band<fd_t> *band_fd, gma_object_t **retval, gma_object_t *arg) {
+int gma_catchment(gma_band_p<catchment_t> *catchment_band, gma_block<catchment_t> *catchment_block, gma_band_p<fd_t> *band_fd, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_band_iterator_t, rv,  );
     if (catchment_block->first_block())
         rv->new_loop();
@@ -581,8 +581,8 @@ int gma_catchment(gma_band<catchment_t> *catchment_band, gma_block<catchment_t> 
 template<typename type1, typename type2>
 void gma_two_bands_proc(GDALRasterBand *b1, gma_two_bands_callback<type1,type2> cb, GDALRasterBand *b2, gma_object_t **retval, gma_object_t *arg, int focal_distance) {
 
-    gma_band<type1> *band1 = new gma_band<type1>(b1);
-    gma_band<type2> *band2 = new gma_band<type2>(b2);
+    gma_band_p<type1> *band1 = new gma_band_p<type1>(b1);
+    gma_band_p<type2> *band2 = new gma_band_p<type2>(b2);
     gma_block_index i;
 
     int iterate = 1;

@@ -1,12 +1,12 @@
 #include "private.hpp"
 
 template<typename datatype> struct gma_compute_value_callback {
-    typedef int (*type)(gma_band<datatype>*, gma_block<datatype>*, gma_object_t**, gma_object_t*);
+    typedef int (*type)(gma_band_p<datatype>*, gma_block<datatype>*, gma_object_t**, gma_object_t*);
     type fct;
 };
 
 template<typename datatype>
-int gma_get_min(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
+int gma_get_min(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
@@ -21,7 +21,7 @@ int gma_get_min(gma_band<datatype> *band, gma_block<datatype> *block, gma_object
 }
 
 template<typename datatype>
-int gma_get_max(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
+int gma_get_max(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_number_p<datatype>, rv, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
@@ -36,7 +36,7 @@ int gma_get_max(gma_band<datatype> *band, gma_block<datatype> *block, gma_object
 }
 
 template<typename datatype>
-int gma_get_range(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
+int gma_get_range(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *rv;
     if (*retval == NULL) {
         rv = new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(new gma_number_p<datatype>, new gma_number_p<datatype>);
@@ -60,7 +60,7 @@ int gma_get_range(gma_band<datatype> *band, gma_block<datatype> *block, gma_obje
 }
 
 template<typename datatype>
-int gma_compute_histogram(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
+int gma_compute_histogram(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(gma_histogram_p<datatype>, hm, arg);
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
@@ -74,7 +74,7 @@ int gma_compute_histogram(gma_band<datatype> *band, gma_block<datatype> *block, 
 }
 
 template<typename datatype>
-int gma_zonal_neighbors(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *) {
+int gma_zonal_neighbors(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *) {
     gma_retval_init(gma_hash_p<datatype COMMA gma_hash_p<datatype COMMA gma_number_p<int> > >, zn, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
@@ -111,7 +111,7 @@ int gma_zonal_neighbors(gma_band<datatype> *band, gma_block<datatype> *block, gm
 }
 
 template<typename datatype>
-int gma_get_cells(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
+int gma_get_cells(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t **retval, gma_object_t *arg) {
     gma_retval_init(std::vector<gma_cell_t*>, cells, );
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
@@ -127,7 +127,7 @@ int gma_get_cells(gma_band<datatype> *band, gma_block<datatype> *block, gma_obje
 
 template <typename datatype>
 void gma_proc_compute_value(GDALRasterBand *b, gma_compute_value_callback<datatype> cb, gma_object_t **retval, gma_object_t *arg, int focal_distance) {
-    gma_band<datatype> *band = new gma_band<datatype>(b);
+    gma_band_p<datatype> *band = new gma_band_p<datatype>(b);
     gma_block_index i;
     for (i.y = 0; i.y < band->h_blocks; i.y++) {
         for (i.x = 0; i.x < band->w_blocks; i.x++) {

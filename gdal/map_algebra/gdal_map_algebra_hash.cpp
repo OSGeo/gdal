@@ -27,6 +27,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<uint8_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint8_t>;
+        case gma_band:
+            return new gma_band_p<uint8_t>(b);
         }
         break;
     case GDT_UInt16:
@@ -44,6 +46,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<uint16_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint16_t>;
+        case gma_band:
+            return new gma_band_p<uint16_t>(b);
         }
         break;
     case GDT_Int16:
@@ -61,6 +65,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<int16_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<int16_t>;
+        case gma_band:
+            return new gma_band_p<int16_t>(b);
         }
         break;
     case GDT_UInt32:
@@ -78,6 +84,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<uint32_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<uint32_t>;
+        case gma_band:
+            return new gma_band_p<uint32_t>(b);
         }
         break;
     case GDT_Int32:
@@ -95,6 +103,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<int32_t>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<int32_t>;
+        case gma_band:
+            return new gma_band_p<int32_t>(b);
         }
         break;
     case GDT_Float32:
@@ -112,6 +122,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<float>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<float>;
+        case gma_band:
+            return new gma_band_p<float>(b);
         }
         break;
     case GDT_Float64:
@@ -129,6 +141,8 @@ gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
             return new gma_cell_p<double>(0, 0, 0);
         case gma_logical_operation:
             return new gma_logical_operation_p<double>;
+        case gma_band:
+            return new gma_band_p<double>(b);
         }
         break;
     default:
@@ -174,3 +188,154 @@ template <> bool gma_number_p<double>::is_integer() { return false; }
 template <> bool gma_number_p<double>::is_float() { return true; }
 template <> int gma_number_p<double>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
 template <> double gma_number_p<double>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
+
+
+template <> const char *gma_band_p<uint8_t>::space() { return "   "; }
+template <> const char *gma_band_p<uint16_t>::space() { return "   "; }
+template <> const char *gma_band_p<int16_t>::space() { return "   "; }
+template <> const char *gma_band_p<uint32_t>::space() { return "   "; }
+template <> const char *gma_band_p<int32_t>::space() { return "   "; }
+template <> const char *gma_band_p<float>::space() { return "    "; }
+template <> const char *gma_band_p<double>::space() { return "     "; }
+
+template <> const char *gma_band_p<uint8_t>::format() { return "%03i "; }
+template <> const char *gma_band_p<uint16_t>::format() { return "%04i "; }
+template <> const char *gma_band_p<int16_t>::format() { return "%04i "; }
+template <> const char *gma_band_p<uint32_t>::format() { return "%04i "; }
+template <> const char *gma_band_p<int32_t>::format() { return "%04i "; }
+template <> const char *gma_band_p<float>::format() { return "%04.1f "; }
+template <> const char *gma_band_p<double>::format() { return "%04.2f "; }
+
+template <> int gma_band_p<float>::_modulus(gma_block<float>*, gma_object_t**, gma_object_t*) { return 0; }
+template <> int gma_band_p<double>::_modulus(gma_block<double>*, gma_object_t**, gma_object_t*) { return 0; }
+
+gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
+    switch (type1) {
+    case GDT_Byte: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<uint8_t,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<uint8_t,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<uint8_t,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<uint8_t,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<uint8_t,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<uint8_t,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<uint8_t,double>;
+        }
+    }
+    case GDT_UInt16: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<uint16_t,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<uint16_t,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<uint16_t,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<uint16_t,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<uint16_t,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<uint16_t,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<uint16_t,double>;
+        }
+    }
+    case GDT_Int16: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<int16_t,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<int16_t,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<int16_t,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<int16_t,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<int16_t,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<int16_t,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<int16_t,double>;
+        }
+    }
+    case GDT_UInt32: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<uint32_t,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<uint32_t,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<uint32_t,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<uint32_t,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<uint32_t,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<uint32_t,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<uint32_t,double>;
+        }
+    }
+    case GDT_Int32: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<int32_t,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<int32_t,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<int32_t,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<int32_t,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<int32_t,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<int32_t,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<int32_t,double>;
+        }
+    }
+    case GDT_Float32: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<float,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<float,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<float,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<float,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<float,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<float,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<float,double>;
+        }
+    }
+    case GDT_Float64: {
+        switch (type2) {
+        case GDT_Byte:
+            return new gma_two_bands_p<double,uint8_t>;
+        case GDT_UInt16:
+            return new gma_two_bands_p<double,uint16_t>;
+        case GDT_Int16:
+            return new gma_two_bands_p<double,int16_t>;
+        case GDT_UInt32:
+            return new gma_two_bands_p<double,uint32_t>;
+        case GDT_Int32:
+            return new gma_two_bands_p<double,int32_t>;
+        case GDT_Float32:
+            return new gma_two_bands_p<double,float>;
+        case GDT_Float64:
+            return new gma_two_bands_p<double,double>;
+        }
+    }
+    }
+}

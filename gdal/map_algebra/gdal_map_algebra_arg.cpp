@@ -1,12 +1,12 @@
 #include "private.hpp"
 
 template<typename datatype> struct gma_with_arg_callback {
-    typedef int (*type)(gma_band<datatype>*, gma_block<datatype>*, gma_object_t*);
+    typedef int (*type)(gma_band_p<datatype>*, gma_block<datatype>*, gma_object_t*);
     type fct;
 };
 
 template<typename datatype>
-int gma_assign(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_assign(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -23,7 +23,7 @@ int gma_assign(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_
 }
 
 template<typename datatype>
-int gma_assign_all(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_assign_all(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -39,7 +39,7 @@ int gma_assign_all(gma_band<datatype> *band, gma_block<datatype> *block, gma_obj
 }
 
 template<typename datatype>
-int gma_add(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_add(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -56,7 +56,7 @@ int gma_add(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *
 }
 
 template<typename datatype>
-int gma_subtract(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_subtract(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -73,7 +73,7 @@ int gma_subtract(gma_band<datatype> *band, gma_block<datatype> *block, gma_objec
 }
 
 template<typename datatype>
-int gma_multiply(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_multiply(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -90,7 +90,7 @@ int gma_multiply(gma_band<datatype> *band, gma_block<datatype> *block, gma_objec
 }
 
 template<typename datatype>
-int gma_divide(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_divide(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -107,7 +107,7 @@ int gma_divide(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_
 }
 
 template<typename datatype>
-int gma_modulus(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
+int gma_modulus(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *arg) {
     if (arg->get_class() != gma_number) {
         fprintf(stderr, "Argument is not a number.");
         return 0;
@@ -124,19 +124,19 @@ int gma_modulus(gma_band<datatype> *band, gma_block<datatype> *block, gma_object
 }
 
 template<>
-int gma_modulus<float>(gma_band<float> *band, gma_block<float> *block, gma_object_t *arg) {
+int gma_modulus<float>(gma_band_p<float> *band, gma_block<float> *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘float’ to binary operator %%");
     return 0;
 }
 
 template<>
-int gma_modulus<double>(gma_band<double> *band, gma_block<double> *block, gma_object_t *arg) {
+int gma_modulus<double>(gma_band_p<double> *band, gma_block<double> *block, gma_object_t *arg) {
     fprintf(stderr, "invalid type ‘double’ to binary operator %%");
     return 0;
 }
 
 template<typename datatype>
-int gma_classify_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *classifier) {
+int gma_classify_m(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *classifier) {
     if (classifier->get_class() != gma_classifier) {
         fprintf(stderr, "Wrong kind of argument.\n");
         return 0;
@@ -154,7 +154,7 @@ int gma_classify_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_obj
 }
 
 template<typename datatype>
-int gma_cell_callback_m(gma_band<datatype> *band, gma_block<datatype> *block, gma_object_t *callback) {
+int gma_cell_callback_m(gma_band_p<datatype> *band, gma_block<datatype> *block, gma_object_t *callback) {
     if (callback->get_class() != gma_cell_callback) {
         fprintf(stderr, "Wrong kind of argument.\n");
         return 0;
@@ -178,7 +178,7 @@ int gma_cell_callback_m(gma_band<datatype> *band, gma_block<datatype> *block, gm
 
 template<typename datatype>
 void gma_with_arg_proc(GDALRasterBand *b, gma_with_arg_callback<datatype> cb, gma_object_t *arg) {
-    gma_band<datatype> *band = new gma_band<datatype>(b);
+    gma_band_p<datatype> *band = new gma_band_p<datatype>(b);
     gma_block_index i;
     for (i.y = 0; i.y < band->h_blocks; i.y++) {
         for (i.x = 0; i.x < band->w_blocks; i.x++) {

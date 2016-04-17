@@ -1,4 +1,5 @@
 #include "gdal_map_algebra_core.h"
+#include "gdal.h"
 #include <vector>
 
 /*
@@ -98,4 +99,18 @@ public:
     virtual int size() {};
     virtual std::vector<gma_number_t*> *keys_sorted() {};
     virtual gma_object_t *get(gma_number_t *key) {};
+};
+
+class gma_band_t : public gma_object_t {
+public:
+    virtual gma_class_t get_class() {return gma_band;};
+    virtual GDALDataType gdal_datatype() {};
+    virtual gma_number_t *new_number(int value) {};
+    virtual void print() {};
+    virtual void rand() {};
+    virtual void add(int summand) {};
+    virtual void modulus(int divisor) {};
+    virtual void add(gma_band_t *summand) {};
+    virtual gma_pair_t *get_range() {};
+    virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) {};
 };

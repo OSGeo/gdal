@@ -1,12 +1,12 @@
 #include "private.hpp"
 
 template<typename datatype>
-int gma_print(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_print(gma_band_p<datatype> *band, gma_block<datatype> *block) {
 }
 
 #define _gma_print(type, format, space)                                 \
     template<>                                                          \
-    int gma_print<type>(gma_band<type> *band, gma_block<type> *block) { \
+    int gma_print<type>(gma_band_p<type> *band, gma_block<type> *block) { \
     gma_cell_index i;                                                   \
     for (i.y = 0; i.y < block->h(); i.y++) {                            \
         for (i.x = 0; i.x < block->w(); i.x++) {                        \
@@ -42,7 +42,7 @@ int gma_rand(gma_block<datatype> *block) {
 #include <math.h>
 
 template<typename datatype>
-int gma_abs(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_abs(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -55,7 +55,7 @@ int gma_abs(gma_band<datatype> *band, gma_block<datatype> *block) {
 // fabs for floats
 
 template<typename datatype>
-int gma_exp(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_exp(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -67,7 +67,7 @@ int gma_exp(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_exp2(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_exp2(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -79,7 +79,7 @@ int gma_exp2(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_log(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_log(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -91,7 +91,7 @@ int gma_log(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_log2(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_log2(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -103,7 +103,7 @@ int gma_log2(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_log10(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_log10(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -115,7 +115,7 @@ int gma_log10(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_sqrt(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_sqrt(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -127,7 +127,7 @@ int gma_sqrt(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_sin(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_sin(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -139,7 +139,7 @@ int gma_sin(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_cos(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_cos(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -151,7 +151,7 @@ int gma_cos(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_tan(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_tan(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -163,7 +163,7 @@ int gma_tan(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_ceil(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_ceil(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -175,7 +175,7 @@ int gma_ceil(gma_band<datatype> *band, gma_block<datatype> *block) {
 }
 
 template<typename datatype>
-int gma_floor(gma_band<datatype> *band, gma_block<datatype> *block) {
+int gma_floor(gma_band_p<datatype> *band, gma_block<datatype> *block) {
     gma_cell_index i;
     for (i.y = 0; i.y < block->h(); i.y++) {
         for (i.x = 0; i.x < block->w(); i.x++) {
@@ -188,7 +188,7 @@ int gma_floor(gma_band<datatype> *band, gma_block<datatype> *block) {
 
 template<typename datatype>
 void gma_proc_simple(GDALRasterBand *b, gma_method_t method) {
-    gma_band<datatype> *band = new gma_band<datatype>(b);
+    gma_band_p<datatype> *band = new gma_band_p<datatype>(b);
     gma_block_index i;
     for (i.y = 0; i.y < band->h_blocks; i.y++) {
         for (i.x = 0; i.x < band->w_blocks; i.x++) {
