@@ -179,8 +179,10 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nCurBlockYSize = nLastTileHeight;
     else
         nCurBlockYSize = nBlockYSize;
-
-    if ( VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET ) < 0 )
+        
+    vsi_l_offset nTileOffset = poGDS->GetFileOffset( poGDS->paiTiles[2 * nTile] );
+    
+    if ( VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
 	// in update state and data for this block will be available later
@@ -189,7 +191,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld in input file to read data.\n%s\n",
-                  static_cast<long>( poGDS->paiTiles[2 * nTile] ),
+                  static_cast<long>( nTileOffset ),
                   VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -499,13 +501,15 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    if ( poGDS->paiTiles[2 * nTile] )
+    vsi_l_offset nTileOffset = poGDS->GetFileOffset( poGDS->paiTiles[2 * nTile] );
+
+    if ( nTileOffset )
     {
-        if ( VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET ) < 0 )
+        if ( VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET ) < 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                 "Can't seek to offset %ld in output file to write data.\n%s",
-                      static_cast<long>( poGDS->paiTiles[2 * nTile] ),
+                      static_cast<long>( nTileOffset ),
                       VSIStrerror( errno ) );
             return CE_Failure;
         }
@@ -516,12 +520,26 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                 "Can't seek to offset %ld in output file to write data.\n%s",
-                      static_cast<long>( poGDS->paiTiles[2 * nTile] ),
+                      static_cast<long>( nTileOffset ),
                       VSIStrerror( errno ) );
             return CE_Failure;
         }
-        poGDS->paiTiles[2 * nTile] = (GUInt32) VSIFTellL( poGDS->fp );
-
+        vsi_l_offset    nNewTileOffset;
+        nTileOffset = VSIFTellL( poGDS->fp );
+        poGDS->paiTiles[2 * nTile] = poGDS->GetRMFOffset( nTileOffset, &nNewTileOffset );
+        
+        if( nTileOffset != nNewTileOffset )
+        {   //May be it is better to write some zeros here?
+            if ( VSIFSeekL( poGDS->fp, nNewTileOffset, SEEK_SET ) < 0 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                    "Can't seek to offset %ld in output file to write data.\n%s",
+                          static_cast<long>( nNewTileOffset ),
+                          VSIStrerror( errno ) );
+                return CE_Failure;
+            }
+        }
+        nTileOffset = nNewTileOffset;
         poGDS->bHeaderDirty = TRUE;
     }
 
@@ -568,7 +586,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             if ( poGDS->paiTiles[2 * nTile + 1] )
             {
                 VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
-                VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
+                VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET );
             }
 
             for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
@@ -591,7 +609,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             if ( poGDS->paiTiles[2 * nTile + 1] )
             {
                 VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
-                VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
+                VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET );
             }
 
             for ( iInPixel = 0, iOutPixel = nBytesPerPixel - nBand;
@@ -1000,7 +1018,7 @@ do {                                                    \
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nDatum, 32 );
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nZone, 36 );
 
-        VSIFSeekL( fp, sHeader.nExtHdrOffset, SEEK_SET );
+        VSIFSeekL( fp, GetFileOffset( sHeader.nExtHdrOffset ), SEEK_SET );
         VSIFWriteL( pabyExtHeader, 1, sHeader.nExtHdrSize, fp );
 
         CPLFree( pabyExtHeader );
@@ -1016,7 +1034,7 @@ do {                                                    \
 
     if ( sHeader.nClrTblOffset && sHeader.nClrTblSize )
     {
-        VSIFSeekL( fp, sHeader.nClrTblOffset, SEEK_SET );
+        VSIFSeekL( fp, GetFileOffset( sHeader.nClrTblOffset ), SEEK_SET );
         VSIFWriteL( pabyColorTable, 1, sHeader.nClrTblSize, fp );
     }
 
@@ -1024,7 +1042,7 @@ do {                                                    \
 /*  Write out the block table, swap if needed.                          */
 /* -------------------------------------------------------------------- */
 
-    VSIFSeekL( fp, sHeader.nTileTblOffset, SEEK_SET );
+    VSIFSeekL( fp, GetFileOffset( sHeader.nTileTblOffset ), SEEK_SET );
 
 #ifdef CPL_MSB
     GUInt32 *paiTilesSwapped = reinterpret_cast<GUInt32 *>(
@@ -1275,7 +1293,7 @@ do {                                                                    \
             return NULL;
         }
 
-        VSIFSeekL( poDS->fp, poDS->sHeader.nExtHdrOffset, SEEK_SET );
+        VSIFSeekL( poDS->fp, poDS->GetFileOffset( poDS->sHeader.nExtHdrOffset ), SEEK_SET );
         VSIFReadL( pabyExtHeader, 1, poDS->sHeader.nExtHdrSize, poDS->fp );
 
         RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
@@ -1288,6 +1306,8 @@ do {                                                                    \
 #undef RMF_READ_DOUBLE
 #undef RMF_READ_LONG
 #undef RMF_READ_ULONG
+
+    CPLDebug( "RMF", "Version %d", poDS->sHeader.iVersion );
 
 #ifdef DEBUG
 
@@ -1319,7 +1339,9 @@ do {                                                                    \
         /* coverity[tainted_data] */
         for ( GUInt32 i = 0; i < poDS->sHeader.nROISize; i += sizeof(nValue) )
         {
-            if( VSIFSeekL( poDS->fp, poDS->sHeader.nROIOffset + i, SEEK_SET ) != 0 ||
+            if( VSIFSeekL( poDS->fp, 
+                           poDS->GetFileOffset( poDS->sHeader.nROIOffset + i ), 
+                           SEEK_SET ) != 0 ||
                 VSIFReadL( &nValue, 1, sizeof(nValue), poDS->fp ) != sizeof(nValue) )
             {
                 delete poDS;
@@ -1334,7 +1356,9 @@ do {                                                                    \
 /* -------------------------------------------------------------------- */
 /*  Read array of blocks offsets/sizes.                                 */
 /* -------------------------------------------------------------------- */
-    if ( VSIFSeekL( poDS->fp, poDS->sHeader.nTileTblOffset, SEEK_SET ) < 0)
+    if ( VSIFSeekL( poDS->fp, 
+                    poDS->GetFileOffset( poDS->sHeader.nTileTblOffset ), 
+                    SEEK_SET ) < 0)
     {
         delete poDS;
         return NULL;
@@ -1428,7 +1452,8 @@ do {                                                                    \
                         delete poDS;
                         return NULL;
                     }
-                    if ( VSIFSeekL( poDS->fp, poDS->sHeader.nClrTblOffset,
+                    if ( VSIFSeekL( poDS->fp, 
+                                    poDS->GetFileOffset( poDS->sHeader.nClrTblOffset ),
                                     SEEK_SET ) < 0 )
                     {
                         CPLDebug( "RMF", "Can't seek to color table location." );
@@ -1718,7 +1743,40 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         memcpy( poDS->sHeader.bySignature, RMF_SigMTW, RMF_SIGNATURE_SIZE );
     else
         memcpy( poDS->sHeader.bySignature, RMF_SigRSW, RMF_SIGNATURE_SIZE );
-    poDS->sHeader.iVersion = 0x0200;
+        
+    const char *pszRMFHUGE = CSLFetchNameValue(papszParmList, "RMFHUGE");
+    GUInt32     iVersion = RMF_VERSION;
+    
+    if( pszRMFHUGE == NULL )
+        pszRMFHUGE = "NO";// Keep old behavior by default
+
+    if( EQUAL(pszRMFHUGE,"NO") )
+    {
+        iVersion = RMF_VERSION;
+    }
+    else if( EQUAL(pszRMFHUGE,"YES") )
+    {
+        iVersion = RMF_VERSION_HUGE;
+    }
+    else if( EQUAL(pszRMFHUGE,"IF_SAFER") )
+    {
+        double  dfImageSize = ((double)nXSize) *
+                              ((double)nYSize) *
+                              ((double)nBands) *
+                              ((double)(GDALGetDataTypeSize(eType)/8));
+        if( dfImageSize > 3.0*1024.0*1024.0*1024.0 )
+        {
+            iVersion = RMF_VERSION_HUGE;
+        }
+        else
+        {
+            iVersion = RMF_VERSION;
+        }
+    }
+    
+    CPLDebug( "RMF", "Version %d", iVersion );
+
+    poDS->sHeader.iVersion = iVersion;
     poDS->sHeader.nOvrOffset = 0x00;
     poDS->sHeader.iUserID = 0x00;
     memset( poDS->sHeader.byName, 0, sizeof(poDS->sHeader.byName) );
@@ -1755,10 +1813,10 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.nROIOffset = 0x00;
     poDS->sHeader.nROISize = 0x00;
 
-    GUInt32 nCurPtr = RMF_HEADER_SIZE;
+    vsi_l_offset nCurPtr = RMF_HEADER_SIZE;
 
     // Extended header
-    poDS->sHeader.nExtHdrOffset = nCurPtr;
+    poDS->sHeader.nExtHdrOffset = poDS->GetRMFOffset( nCurPtr, &nCurPtr );
     poDS->sHeader.nExtHdrSize = RMF_EXT_HEADER_SIZE;
     nCurPtr += poDS->sHeader.nExtHdrSize;
 
@@ -1774,7 +1832,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
             return NULL;
         }
 
-        poDS->sHeader.nClrTblOffset = nCurPtr;
+        poDS->sHeader.nClrTblOffset = poDS->GetRMFOffset( nCurPtr, &nCurPtr );
         poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
         poDS->sHeader.nClrTblSize = poDS->nColorTableSize * 4;
         poDS->pabyColorTable = reinterpret_cast<GByte *>(
@@ -1800,7 +1858,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     }
 
     // Blocks table
-    poDS->sHeader.nTileTblOffset = nCurPtr;
+    poDS->sHeader.nTileTblOffset = poDS->GetRMFOffset( nCurPtr, &nCurPtr );
     poDS->sHeader.nTileTblSize =
         poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * 4 * 2;
     poDS->paiTiles = reinterpret_cast<GUInt32 *>(
@@ -1861,6 +1919,41 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     return reinterpret_cast<GDALDataset *>( poDS );
 }
 
+//GIS Panorama 11 was introduced new format for huge files (greater than 3 Gb)
+vsi_l_offset RMFDataset::GetFileOffset( GUInt32 iRMFOffset )
+{
+    if ( sHeader.iVersion >= RMF_VERSION_HUGE )
+    {
+        return ((vsi_l_offset)iRMFOffset) * RMF_HUGE_OFFSET_FACTOR;
+    }
+    else
+    {
+        return (vsi_l_offset)iRMFOffset;
+    }
+}
+
+GUInt32 RMFDataset::GetRMFOffset( vsi_l_offset nFileOffset, vsi_l_offset* pnNewFileOffset )
+{
+    if ( sHeader.iVersion >= RMF_VERSION_HUGE )
+    {
+        //Round offset to next RMF_HUGE_OFFSET_FACTOR
+        GUInt32 iRMFOffset = (GUInt32) ((nFileOffset + (RMF_HUGE_OFFSET_FACTOR-1) ) / RMF_HUGE_OFFSET_FACTOR );
+        if ( pnNewFileOffset != NULL )
+        {
+            *pnNewFileOffset = GetFileOffset( iRMFOffset );
+        }
+        return iRMFOffset;
+    }
+    else
+    {
+        if ( pnNewFileOffset != NULL )
+        {
+            *pnNewFileOffset = nFileOffset;
+        }
+        return (GUInt32)nFileOffset;
+    }
+} 
+
 /************************************************************************/
 /*                        GDALRegister_RMF()                            */
 /************************************************************************/
@@ -1885,6 +1978,11 @@ void GDALRegister_RMF()
 "   <Option name='MTW' type='boolean' description='Create MTW DEM matrix'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
+"   <Option name='RMFHUGE' type='string-select' description='Creation of huge RMF file (Supported by GIS Panorama since v11)'>"
+"     <Value>NO</Value>"
+"     <Value>YES</Value>"
+"     <Value>IF_SAFER</Value>"
+"   </Option>"
 "</CreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

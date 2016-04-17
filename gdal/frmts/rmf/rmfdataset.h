@@ -43,6 +43,14 @@ enum RMFType
     RMFT_MTW        // Digital elevation model
 };
 
+enum RMFVersion
+{
+    RMF_VERSION = 0x0200,        // Version for "small" files less than 4 Gb
+    RMF_VERSION_HUGE = 0x0201    // Version for "huge" files less than 4 Tb. Since GIS Panorama v11
+};
+
+#define RMF_HUGE_OFFSET_FACTOR  256
+
 /************************************************************************/
 /*                            RMFHeader                                 */
 /************************************************************************/
@@ -164,6 +172,9 @@ class RMFDataset : public GDALDataset
     virtual CPLErr      SetGeoTransform( double * );
     virtual const char  *GetProjectionRef();
     virtual CPLErr      SetProjection( const char * );
+    
+    vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
+    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );    
 };
 
 /************************************************************************/
