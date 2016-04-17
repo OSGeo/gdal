@@ -7,7 +7,7 @@
 #include "gdal_alg.h"
 
 #ifdef notdef
-static void test_huge_mapping_cbk(CPLVirtualMem* ctxt, 
+static void test_huge_mapping_cbk(CPLVirtualMem* ctxt,
                   size_t nOffset,
                   void* pPageToFill,
                   size_t nPageSize,
@@ -115,7 +115,7 @@ static int test_two_pages()
     CPLVirtualMemUnDeclareThread(ctxt);
     CPLJoinThread(hThread);
     CPLVirtualMemFree(ctxt);
-    
+
     return TRUE;
 }
 
@@ -124,9 +124,9 @@ static void test_raw_auto(int bFileMapping)
     printf("test_raw_auto(bFileMapping=%d)\n", bFileMapping);
 
     GDALAllRegister();
-    
+
     CPLString osTmpFile;
-    
+
     if( bFileMapping )
         osTmpFile = CPLResetExtension(CPLGenerateTempFilename("ehdr"), "img");
     else
@@ -189,7 +189,7 @@ int main(int /* argc */, char* /* argv */[])
     test_huge_mapping();*/
 
     printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
-    
+
     if( CPLIsVirtualMemFileMapAvailable() )
     {
         printf("Testing CPLVirtualMemFileMapNew()\n");

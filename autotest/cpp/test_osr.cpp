@@ -310,7 +310,7 @@ namespace tut
         char* wkt1 = NULL;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1); 
+        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
@@ -339,7 +339,7 @@ namespace tut
         char* wkt1 = NULL;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1); 
+        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
 
         std::string expect("PROJCS[\"UTM Zone 11, Northern Hemisphere\","
                            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","

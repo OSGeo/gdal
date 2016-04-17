@@ -46,7 +46,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-    
+
 namespace tut
 {
 
