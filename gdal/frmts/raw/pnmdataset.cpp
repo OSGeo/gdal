@@ -31,13 +31,9 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "rawdataset.h"
-#include <ctype.h>
+#include <cctype>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PNM();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -47,9 +43,9 @@ CPL_C_END
 
 class PNMDataset : public RawDataset
 {
-    VSILFILE        *fpImage;       // image data file.
+    VSILFILE   *fpImage;  // Image data file.
 
-    int         bGeoTransformValid;
+    bool        bGeoTransformValid;
     double      adfGeoTransform[6];
 
   public:
@@ -71,7 +67,7 @@ class PNMDataset : public RawDataset
 
 PNMDataset::PNMDataset() :
     fpImage(NULL),
-    bGeoTransformValid(FALSE)
+    bGeoTransformValid(false)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -89,12 +85,9 @@ PNMDataset::~PNMDataset()
 
 {
     FlushCache();
-    if( fpImage != NULL )
+    if( fpImage != NULL && VSIFCloseL( fpImage ) != 0 )
     {
-        if( VSIFCloseL( fpImage ) != 0 )
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-        }
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error" );
     }
 }
 
@@ -129,10 +122,10 @@ int PNMDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'P'  ||
-        (poOpenInfo->pabyHeader[2] != ' '  &&    // XXX: Magick number
-         poOpenInfo->pabyHeader[2] != '\t' &&    // may be followed
-         poOpenInfo->pabyHeader[2] != '\n' &&    // any of the blank
-         poOpenInfo->pabyHeader[2] != '\r') )    // characters
+        (poOpenInfo->pabyHeader[2] != ' '  &&  // XXX: Magick number
+         poOpenInfo->pabyHeader[2] != '\t' &&  // may be followed
+         poOpenInfo->pabyHeader[2] != '\n' &&  // any of the blank
+         poOpenInfo->pabyHeader[2] != '\r') )  // characters
         return FALSE;
 
     if( poOpenInfo->pabyHeader[1] != '5'
@@ -159,18 +152,17 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Parse out the tokens from the header.                           */
 /* -------------------------------------------------------------------- */
-    const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
-    char szToken[512];
+    const char *pszSrc = reinterpret_cast<char *>( poOpenInfo->pabyHeader );
+    char szToken[512] = { '\0' };
     int iToken = 0;
     int nWidth = -1;
     int nHeight = -1;
     int nMaxValue = -1;
-    unsigned int iOut;
 
     int iIn = 2;
     while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )
     {
-        iOut = 0;
+        unsigned int iOut = 0;
         szToken[0] = '\0';
         while( iOut < sizeof(szToken) && iIn < poOpenInfo->nHeaderBytes )
         {
@@ -181,7 +173,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
                     iIn++;
             }
 
-            if( iOut != 0 && isspace((unsigned char)pszSrc[iIn]) )
+            if( iOut != 0 && isspace(static_cast<unsigned char>(pszSrc[iIn])) )
             {
                 szToken[iOut] = '\0';
 
@@ -197,7 +189,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
 
-            else if( !isspace((unsigned char)pszSrc[iIn]) )
+            else if( !isspace(static_cast<unsigned char>(pszSrc[iIn])) )
             {
                 szToken[iOut++] = pszSrc[iIn];
             }
@@ -235,7 +227,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within PNM driver.\n",
+                  "Failed to re-open %s within PNM driver.",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -246,18 +238,18 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
-    const int bMSBFirst = FALSE;
+    const bool bMSBFirst = false;
 #else
-    const int bMSBFirst = TRUE;
+    const bool bMSBFirst = true;
 #endif
 
-    GDALDataType eDataType;
+    GDALDataType eDataType = GDT_Unknown;
     if ( nMaxValue < 256 )
         eDataType = GDT_Byte;
     else
         eDataType = GDT_UInt16;
 
-    const int iPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
+    const int iPixelSize = GDALGetDataTypeSizeBytes( eDataType );
 
     if( poOpenInfo->pabyHeader[1] == '5' )
     {
@@ -270,7 +262,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, iPixelSize,
-                                  nWidth*iPixelSize, eDataType, bMSBFirst, TRUE ));
+                                  nWidth*iPixelSize, eDataType, bMSBFirst,
+                                  TRUE ) );
         poDS->GetRasterBand(1)->SetColorInterpretation( GCI_GrayIndex );
     }
     else
@@ -284,7 +277,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, 3*iPixelSize,
-                                  nWidth*3*iPixelSize, eDataType, bMSBFirst, TRUE ));
+                                  nWidth*3*iPixelSize, eDataType, bMSBFirst,
+                                  TRUE ));
         poDS->SetBand(
             2, new RawRasterBand( poDS, 2, poDS->fpImage, iIn+iPixelSize,
                                   3*iPixelSize, nWidth*3*iPixelSize,
@@ -303,8 +297,9 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid =
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
-                           poDS->adfGeoTransform );
+        CPL_TO_BOOL(
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
+                               poDS->adfGeoTransform ) );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -317,7 +312,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -336,8 +331,8 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
     if( eType != GDT_Byte && eType != GDT_UInt16 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create PNM dataset with an illegal\n"
-              "data type (%s), only Byte and UInt16 supported.\n",
+              "Attempt to create PNM dataset with an illegal "
+              "data type (%s), only Byte and UInt16 supported.",
               GDALGetDataTypeName(eType) );
 
         return NULL;
@@ -346,8 +341,8 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
     if( nBands != 1 && nBands != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to create PNM dataset with an illegal number\n"
-                  "of bands (%d).  Must be 1 (greyscale) or 3 (RGB).\n",
+                  "Attempt to create PNM dataset with an illegal number"
+                  "of bands (%d).  Must be 1 (greyscale) or 3 (RGB).",
                   nBands );
 
         return NULL;
@@ -360,7 +355,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
+                  "Attempt to create file `%s' failed.",
                   pszFilename );
         return NULL;
     }
@@ -368,7 +363,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
-    int         nMaxValue = 0;
+    int nMaxValue = 0;
 
     const char *pszMaxValue = CSLFetchNameValue( papszOptions, "MAXVAL" );
     if ( pszMaxValue )
@@ -387,22 +382,23 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
             nMaxValue = 65535;
     }
 
-    char szHeader[500];
-    memset( szHeader, 0, sizeof(szHeader) );
+    char szHeader[500] = { '\0' };
 
     if( nBands == 3 )
-        snprintf( szHeader, sizeof(szHeader), "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader),
+                  "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
     else
-        snprintf( szHeader, sizeof(szHeader), "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader),
+                  "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
 
-    bool bOK = VSIFWriteL( reinterpret_cast<void *>( szHeader ),
-                strlen(szHeader) + 2, 1, fp ) == 1;
+    bool bOK = VSIFWriteL( szHeader, strlen(szHeader) + 2, 1, fp ) == 1;
     if( VSIFCloseL( fp ) != 0 )
         bOK = false;
 
     if( !bOK )
         return NULL;
-    return reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
+    return
+        reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
 
 /************************************************************************/
