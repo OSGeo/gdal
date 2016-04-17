@@ -34,8 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-// g++ -g -Wall -fPIC frmts/raw/snodasdataset.cpp -shared -o gdal_SNODAS.so -Iport -Igcore -Ifrmts/raw -Iogr -L. -lgdal
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            SNODASDataset                             */
@@ -47,11 +45,11 @@ class SNODASRasterBand;
 class SNODASDataset : public RawDataset
 {
     CPLString   osDataFilename;
-    int         bGotTransform;
+    bool        bGotTransform;
     double      adfGeoTransform[6];
-    int         bHasNoData;
+    bool        bHasNoData;
     double      dfNoData;
-    int         bHasMin;
+    bool        bHasMin;
     double      dfMin;
     int         bHasMax;
     double      dfMax;
@@ -81,7 +79,7 @@ class SNODASDataset : public RawDataset
 class SNODASRasterBand : public RawRasterBand
 {
   public:
-            SNODASRasterBand(VSILFILE* fpRaw, int nXSize, int nYSize);
+            SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
     virtual ~SNODASRasterBand() {}
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -94,8 +92,8 @@ class SNODASRasterBand : public RawRasterBand
 /*                         SNODASRasterBand()                           */
 /************************************************************************/
 
-SNODASRasterBand::SNODASRasterBand(VSILFILE* fpRawIn,
-                                   int nXSize, int nYSize) :
+SNODASRasterBand::SNODASRasterBand( VSILFILE* fpRawIn,
+                                    int nXSize, int nYSize ) :
     RawRasterBand( fpRawIn, 0, 2,
                    nXSize * 2, GDT_Int16,
                    !CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
@@ -109,10 +107,10 @@ SNODASRasterBand::SNODASRasterBand(VSILFILE* fpRawIn,
 double SNODASRasterBand::GetNoDataValue( int *pbSuccess )
 {
     SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
-    if (pbSuccess)
+    if( pbSuccess )
         *pbSuccess = poGDS->bHasNoData;
 
-    if (poGDS->bHasNoData)
+    if( poGDS->bHasNoData )
         return poGDS->dfNoData;
 
     return RawRasterBand::GetNoDataValue(pbSuccess);
@@ -125,10 +123,10 @@ double SNODASRasterBand::GetNoDataValue( int *pbSuccess )
 double SNODASRasterBand::GetMinimum( int *pbSuccess )
 {
     SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
-    if (pbSuccess)
+    if( pbSuccess )
         *pbSuccess = poGDS->bHasMin;
 
-    if (poGDS->bHasMin)
+    if( poGDS->bHasMin )
         return poGDS->dfMin;
 
     return RawRasterBand::GetMinimum(pbSuccess);
@@ -141,10 +139,10 @@ double SNODASRasterBand::GetMinimum( int *pbSuccess )
 double SNODASRasterBand::GetMaximum( int *pbSuccess )
 {
     SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
-    if (pbSuccess)
+    if( pbSuccess )
         *pbSuccess = poGDS->bHasMax;
 
-    if (poGDS->bHasMax)
+    if( poGDS->bHasMax )
         return poGDS->dfMax;
 
     return RawRasterBand::GetMaximum(pbSuccess);
@@ -161,12 +159,12 @@ double SNODASRasterBand::GetMaximum( int *pbSuccess )
 /************************************************************************/
 
 SNODASDataset::SNODASDataset() :
-    bGotTransform(FALSE),
-    bHasNoData(FALSE),
+    bGotTransform(false),
+    bHasNoData(false),
     dfNoData(0.0),
-    bHasMin(FALSE),
+    bHasMin(false),
     dfMin(0.0),
-    bHasMax(FALSE),
+    bHasMax(false),
     dfMax(0.0)
 {
     adfGeoTransform[0] = 0.0;
@@ -238,7 +236,9 @@ int SNODASDataset::Identify( GDALOpenInfo * poOpenInfo )
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    return STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "Format version: NOHRSC GIS/RS raster file v1.1");}
+    return STARTS_WITH_CI(
+        reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+        "Format version: NOHRSC GIS/RS raster file v1.1" );}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -256,7 +256,8 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    int             nRows = -1, nCols = -1;
+    int nRows = -1;
+    int nCols = -1;
     CPLString       osDataFilename;
     bool bIsInteger = false;
     bool bIs2Bytes = false;
@@ -266,40 +267,54 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     bool bHasMin = false;
     double          dfMax = 0;
     bool bHasMax = false;
-    double          dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+    double dfMinX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxX = 0.0;
+    double dfMaxY = 0.0;
     bool bHasMinX = false;
     bool bHasMinY = false;
     bool bHasMaxX = false;
     bool bHasMaxY = false;
     bool bNotProjected = false;
     bool bIsWGS84 = false;
-    CPLString       osDescription, osDataUnits;
-    int             nStartYear = -1, nStartMonth = -1, nStartDay = -1,
-                    nStartHour = -1, nStartMinute = -1, nStartSecond = -1;
-    int             nStopYear = -1, nStopMonth = -1, nStopDay = -1,
-                    nStopHour = -1, nStopMinute = -1, nStopSecond = -1;
+    CPLString       osDataUnits;
+    CPLString       osDescription;
+    int nStartYear = -1;
+    int nStartMonth = -1;
+    int nStartDay = -1;
+    int nStartHour = -1;
+    int nStartMinute = -1;
+    int nStartSecond = -1;
+    int nStopYear = -1;
+    int nStopMonth = -1;
+    int nStopDay = -1;
+    int nStopHour = -1;
+    int nStopMinute = -1;
+    int nStopSecond = -1;
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLine2L( fp, 256, NULL )) != NULL )
     {
-        char** papszTokens = CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );
+        char** papszTokens =
+            CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );
         if( CSLCount( papszTokens ) != 2 )
         {
             CSLDestroy( papszTokens );
             continue;
         }
         if( papszTokens[1][0] == ' ' )
-            memmove(papszTokens[1], papszTokens[1] + 1, strlen(papszTokens[1] + 1) + 1);
+            memmove( papszTokens[1], papszTokens[1] + 1,
+                     strlen(papszTokens[1] + 1) + 1);
 
-        if( EQUAL(papszTokens[0],"Data file pathname") )
+        if( EQUAL(papszTokens[0], "Data file pathname") )
         {
             osDataFilename = papszTokens[1];
         }
-        else if( EQUAL(papszTokens[0],"Description") )
+        else if( EQUAL(papszTokens[0], "Description") )
         {
             osDescription = papszTokens[1];
         }
-        else if( EQUAL(papszTokens[0],"Data units") )
+        else if( EQUAL(papszTokens[0], "Data units") )
         {
             osDataUnits= papszTokens[1];
         }
@@ -310,81 +325,81 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
             nStartMonth = atoi(papszTokens[1]);
         else if( EQUAL(papszTokens[0],"Start day") )
             nStartDay = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Start hour") )
+        else if( EQUAL(papszTokens[0], "Start hour") )
             nStartHour = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Start minute") )
+        else if( EQUAL(papszTokens[0]," Start minute") )
             nStartMinute = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Start second") )
+        else if( EQUAL(papszTokens[0], "Start second") )
             nStartSecond = atoi(papszTokens[1]);
 
-        else if( EQUAL(papszTokens[0],"Stop year") )
+        else if( EQUAL(papszTokens[0], "Stop year") )
             nStopYear = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Stop month") )
+        else if( EQUAL(papszTokens[0], "Stop month") )
             nStopMonth = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Stop day") )
+        else if( EQUAL(papszTokens[0], "Stop day") )
             nStopDay = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Stop hour") )
+        else if( EQUAL(papszTokens[0], "Stop hour") )
             nStopHour = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Stop minute") )
+        else if( EQUAL(papszTokens[0], "Stop minute") )
             nStopMinute = atoi(papszTokens[1]);
-        else if( EQUAL(papszTokens[0],"Stop second") )
+        else if( EQUAL(papszTokens[0], "Stop second") )
             nStopSecond = atoi(papszTokens[1]);
 
-        else if( EQUAL(papszTokens[0],"Number of columns") )
+        else if( EQUAL(papszTokens[0], "Number of columns") )
         {
             nCols = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Number of rows") )
+        else if( EQUAL(papszTokens[0], "Number of rows") )
         {
             nRows = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Data type"))
+        else if( EQUAL(papszTokens[0], "Data type") )
         {
             bIsInteger = EQUAL(papszTokens[1],"integer");
         }
-        else if( EQUAL(papszTokens[0],"Data bytes per pixel"))
+        else if( EQUAL(papszTokens[0], "Data bytes per pixel") )
         {
             bIs2Bytes = EQUAL(papszTokens[1],"2");
         }
-        else if( EQUAL(papszTokens[0],"Projected"))
+        else if( EQUAL(papszTokens[0], "Projected") )
         {
             bNotProjected = EQUAL(papszTokens[1],"no");
         }
-        else if( EQUAL(papszTokens[0],"Horizontal datum"))
+        else if( EQUAL(papszTokens[0], "Horizontal datum") )
         {
             bIsWGS84 = EQUAL(papszTokens[1],"WGS84");
         }
-        else if( EQUAL(papszTokens[0],"No data value"))
+        else if( EQUAL(papszTokens[0], "No data value") )
         {
             bHasNoData = true;
             dfNoData = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Minimum data value"))
+        else if( EQUAL(papszTokens[0],"Minimum data value") )
         {
             bHasMin = true;
             dfMin = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Maximum data value"))
+        else if( EQUAL(papszTokens[0], "Maximum data value") )
         {
             bHasMax = true;
             dfMax = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Minimum x-axis coordinate") )
+        else if( EQUAL(papszTokens[0], "Minimum x-axis coordinate") )
         {
             bHasMinX = true;
             dfMinX = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Minimum y-axis coordinate") )
+        else if( EQUAL(papszTokens[0], "Minimum y-axis coordinate") )
         {
             bHasMinY = true;
             dfMinY = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Maximum x-axis coordinate") )
+        else if( EQUAL(papszTokens[0], "Maximum x-axis coordinate") )
         {
             bHasMaxX = true;
             dfMaxX = CPLAtofM(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"Maximum y-axis coordinate") )
+        else if( EQUAL(papszTokens[0], "Maximum y-axis coordinate") )
         {
             bHasMaxY = true;
             dfMaxY = CPLAtofM(papszTokens[1]);
@@ -409,7 +424,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( osDataFilename.size() == 0 )
         return NULL;
 
-    if (!GDALCheckDatasetDimensions(nCols, nRows))
+    if( !GDALCheckDatasetDimensions(nCols, nRows) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -437,9 +452,9 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->dfMin = dfMin;
     poDS->bHasMax = bHasMax;
     poDS->dfMax = dfMax;
-    if (bHasMinX && bHasMinY && bHasMaxX && bHasMaxY)
+    if( bHasMinX && bHasMinY && bHasMaxX && bHasMaxY )
     {
-        poDS->bGotTransform = TRUE;
+        poDS->bGotTransform = true;
         poDS->adfGeoTransform[0] = dfMinX;
         poDS->adfGeoTransform[1] = (dfMaxX - dfMinX) / nCols;
         poDS->adfGeoTransform[2] = 0.0;
@@ -448,18 +463,18 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = - (dfMaxY - dfMinY) / nRows;
     }
 
-    if (osDescription.size())
+    if( osDescription.size() )
         poDS->SetMetadataItem("Description", osDescription);
-    if (osDataUnits.size())
+    if( osDataUnits.size() )
         poDS->SetMetadataItem("Data_Units", osDataUnits);
-    if (nStartYear != -1 && nStartMonth != -1 && nStartDay != -1 &&
-        nStartHour != -1 && nStartMinute != -1 && nStartSecond != -1)
+    if( nStartYear != -1 && nStartMonth != -1 && nStartDay != -1 &&
+        nStartHour != -1 && nStartMinute != -1 && nStartSecond != -1 )
         poDS->SetMetadataItem("Start_Date",
                               CPLSPrintf("%04d/%02d/%02d %02d:%02d:%02d",
                                         nStartYear, nStartMonth, nStartDay,
                                         nStartHour, nStartMinute, nStartSecond));
-    if (nStopYear != -1 && nStopMonth != -1 && nStopDay != -1 &&
-        nStopHour != -1 && nStopMinute != -1 && nStopSecond != -1)
+    if( nStopYear != -1 && nStopMonth != -1 && nStopDay != -1 &&
+        nStopHour != -1 && nStopMinute != -1 && nStopSecond != -1 )
         poDS->SetMetadataItem("Stop_Date",
                               CPLSPrintf("%04d/%02d/%02d %02d:%02d:%02d",
                                         nStopYear, nStopMonth, nStopDay,
@@ -481,7 +496,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
