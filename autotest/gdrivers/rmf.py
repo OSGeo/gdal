@@ -91,6 +91,15 @@ def rmf_8():
     return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
 
 ###############################################################################
+# Create RMFHUGE=YES
+
+def rmf_9():
+
+    tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672, options = ['RMFHUGE=YES'] )
+
+    return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
+
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -100,7 +109,8 @@ gdaltest_list = [
     rmf_5,
     rmf_6,
     rmf_7,
-    rmf_8
+    rmf_8,
+    rmf_9
 ]
 
 if __name__ == '__main__':
