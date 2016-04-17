@@ -40,9 +40,9 @@ void AssertRes(GDALDataType intype, ConstantType inval, GDALDataType outtype, Co
     if (fabs((double)outval - (double)expected_outval) > .1)
     {
         std::cout << "Test failed at line " << numLine <<
-                     " (intype=" << GDALGetDataTypeName(intype) << 
+                     " (intype=" << GDALGetDataTypeName(intype) <<
                      ",inval=" << (double)inval <<
-                     ",outtype=" << GDALGetDataTypeName(outtype) << 
+                     ",outtype=" << GDALGetDataTypeName(outtype) <<
                      ",got " << (double)outval <<
                      " expected  " << expected_outval << std::endl;
         bErr = TRUE;
@@ -113,55 +113,55 @@ void Test(GDALDataType intype, ConstantType inval, ConstantType invali,
 
 template <class InType, class ConstantType> void FromR_2(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDataType outtype, ConstantType outval, ConstantType outvali, int numLine)
 {
-    if (outtype == GDT_Byte) 
-        Test<InType,GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_Int16) 
-        Test<InType,GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_UInt16) 
-        Test<InType,GUInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_Int32) 
-        Test<InType,GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_UInt32) 
-        Test<InType,GUInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_Float32) 
-        Test<InType,float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_Float64) 
-        Test<InType,double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_CInt16) 
-        Test<InType,GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_CInt32) 
-        Test<InType,GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_CFloat32) 
-        Test<InType,float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (outtype == GDT_CFloat64) 
-        Test<InType,double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
+    if (outtype == GDT_Byte)
+        Test<InType,GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_Int16)
+        Test<InType,GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_UInt16)
+        Test<InType,GUInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_Int32)
+        Test<InType,GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_UInt32)
+        Test<InType,GUInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_Float32)
+        Test<InType,float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_Float64)
+        Test<InType,double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_CInt16)
+        Test<InType,GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_CInt32)
+        Test<InType,GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_CFloat32)
+        Test<InType,float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_CFloat64)
+        Test<InType,double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
 }
 
 template<class ConstantType>
 void FromR(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDataType outtype, ConstantType outval, ConstantType outvali, int numLine)
 {
-    if (intype == GDT_Byte) 
-        FromR_2<GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_Int16) 
-        FromR_2<GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_UInt16) 
-        FromR_2<GUInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_Int32) 
-        FromR_2<GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_UInt32) 
-        FromR_2<GUInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_Float32) 
-        FromR_2<float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_Float64) 
-        FromR_2<double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_CInt16) 
-        FromR_2<GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_CInt32) 
-        FromR_2<GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_CFloat32) 
-        FromR_2<float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
-    else if (intype == GDT_CFloat64) 
-        FromR_2<double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine); 
+    if (intype == GDT_Byte)
+        FromR_2<GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_Int16)
+        FromR_2<GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_UInt16)
+        FromR_2<GUInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_Int32)
+        FromR_2<GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_UInt32)
+        FromR_2<GUInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_Float32)
+        FromR_2<float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_Float64)
+        FromR_2<double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_CInt16)
+        FromR_2<GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_CInt32)
+        FromR_2<GInt32,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_CFloat32)
+        FromR_2<float,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_CFloat64)
+        FromR_2<double,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
 }
 
 
@@ -209,7 +209,7 @@ void check_GDT_Int16()
     {
         FROM_R(GDT_Int16, 127, outtype, 127);
     }
-    
+
     FROM_R(GDT_Int16, 32000, GDT_Byte, 255); /* clamp */
     FROM_R(GDT_Int16, 32000, GDT_Int16, 32000);
     FROM_R(GDT_Int16, 32000, GDT_UInt16, 32000);
@@ -231,7 +231,7 @@ void check_GDT_UInt16()
         FROM_R(GDT_UInt16, 0, outtype, 0);
         FROM_R(GDT_UInt16, 127, outtype, 127);
     }
-    
+
     FROM_R(GDT_UInt16, 65000, GDT_Byte, 255); /* clamp */
     FROM_R(GDT_UInt16, 65000, GDT_Int16, 32767); /* clamp */
     FROM_R(GDT_UInt16, 65000, GDT_UInt16, 65000);
@@ -263,7 +263,7 @@ void check_GDT_Int32()
     {
         FROM_R(GDT_Int32, 127, outtype, 127);
     }
-    
+
     FROM_R(GDT_Int32, 67000, GDT_Byte, 255); /* clamp */
     FROM_R(GDT_Int32, 67000, GDT_Int16, 32767);  /* clamp */
     FROM_R(GDT_Int32, 67000, GDT_UInt16, 65535);  /* clamp */
@@ -285,7 +285,7 @@ void check_GDT_UInt32()
         FROM_R(GDT_UInt32, 0, outtype, 0);
         FROM_R(GDT_UInt32, 127, outtype, 127);
     }
-    
+
     FROM_R(GDT_UInt32, 3000000000U, GDT_Byte, 255); /* clamp */
     FROM_R(GDT_UInt32, 3000000000U, GDT_Int16, 32767);  /* clamp */
     FROM_R(GDT_UInt32, 3000000000U, GDT_UInt16, 65535);  /* clamp */
@@ -316,17 +316,17 @@ void check_GDT_Float32and64()
             {
                 FROM_R_F(intype, 127.1, outtype, 127);
                 FROM_R_F(intype, 127.9, outtype, 128);
-                
+
                 FROM_R_F(intype, 0.4, outtype, 0);
                 FROM_R_F(intype, 0.5, outtype, 1); /* We could argue how to do this rounding */
                 FROM_R_F(intype, 0.6, outtype, 1);
                 FROM_R_F(intype, 127.5, outtype, 128); /* We could argue how to do this rounding */
-                
+
                 if (!IS_UNSIGNED(outtype))
                 {
                     FROM_R_F(intype, -125.9, outtype, -126);
                     FROM_R_F(intype, -127.1, outtype, -127);
-                    
+
                     FROM_R_F(intype, -0.4, outtype, 0);
                     FROM_R_F(intype, -0.5, outtype, -1); /* We could argue how to do this rounding */
                     FROM_R_F(intype, -0.6, outtype, -1);
@@ -377,7 +377,7 @@ void check_GDT_CInt16()
     {
         FROM_C(GDT_CInt16, 127, 128, outtype, 127, 128);
     }
-    
+
     FROM_C(GDT_CInt16, 32000, 32500, GDT_Byte, 255, 0); /* clamp */
     FROM_C(GDT_CInt16, 32000, 32500, GDT_Int16, 32000, 0);
     FROM_C(GDT_CInt16, 32000, 32500, GDT_UInt16, 32000, 0);
@@ -409,7 +409,7 @@ void check_GDT_CInt32()
     {
         FROM_C(GDT_CInt32, 127, 128, outtype, 127, 128);
     }
-    
+
     FROM_C(GDT_CInt32, 67000, 67500, GDT_Byte, 255, 0); /* clamp */
     FROM_C(GDT_CInt32, 67000, 67500, GDT_Int16, 32767, 0); /* clamp */
     FROM_C(GDT_CInt32, 67000, 67500, GDT_UInt16, 65535, 0); /* clamp */

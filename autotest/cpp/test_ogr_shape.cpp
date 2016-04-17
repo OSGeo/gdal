@@ -4,21 +4,21 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Shapefile driver testing. Ported from ogr/ogr_shape.py.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -167,7 +167,7 @@ namespace tut
     void object::test<4>()
     {
         OGRErr err = OGRERR_NONE;
-        const int size = 5; 
+        const int size = 5;
         const int expect[size] = { 168, 169, 166, 158, 165 };
 
         std::string source(data_tmp_);
@@ -266,7 +266,7 @@ namespace tut
         ensure("Can't find field 'PRFEDEA'", fldIndex >= 0);
 
         OGR_F_SetFieldString(featNonSpatial, fldIndex, "nulled");
-       
+
         OGRErr err = OGR_L_CreateFeature(lyr, featNonSpatial);
         ensure_equals("Can't write non-spatial feature to layer", OGRERR_NONE, err);
 
@@ -406,7 +406,7 @@ namespace tut
         std::vector<int> list;
         list.push_back(158);
         list.push_back(0);
-       
+
         // Test attributes
         ensure_equal_attributes(lyr, "eas_id", list);
 

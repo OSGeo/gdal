@@ -4,21 +4,21 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general CPL features.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -61,7 +61,7 @@ namespace tut
     void object::test<1>()
     {
         CPLList* list;
-    
+
         list = CPLListInsert(NULL, (void*)0, 0);
         ensure(CPLListCount(list) == 1);
         list = CPLListRemove(list, 2);
@@ -71,7 +71,7 @@ namespace tut
         list = CPLListRemove(list, 0);
         ensure(CPLListCount(list) == 0);
         list = NULL;
-        
+
         list = CPLListInsert(NULL, (void*)0, 2);
         ensure(CPLListCount(list) == 3);
         list = CPLListRemove(list, 2);
@@ -81,7 +81,7 @@ namespace tut
         list = CPLListRemove(list, 0);
         ensure(CPLListCount(list) == 0);
         list = NULL;
-    
+
         list = CPLListAppend(list, (void*)1);
         ensure(CPLListGet(list,0) == list);
         ensure(CPLListGet(list,1) == NULL);
@@ -90,7 +90,7 @@ namespace tut
         ensure(CPLListCount(list) == 3);
         CPLListDestroy(list);
         list = NULL;
-    
+
         list = CPLListAppend(list, (void*)1);
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)4, 3);
@@ -102,7 +102,7 @@ namespace tut
         ensure(CPLListGet(list,3)->pData == (void*)4);
         CPLListDestroy(list);
         list = NULL;
-    
+
         list = CPLListInsert(list, (void*)4, 1);
         CPLListGet(list,0)->pData = (void*)2;
         list = CPLListInsert(list, (void*)1, 0);
@@ -153,20 +153,20 @@ namespace tut
 
             { "d1", CPL_VALUE_STRING } /* #6305 */
         };
-    
+
         size_t i;
         for(i=0;i < sizeof(apszTestStrings) / sizeof(apszTestStrings[0]); i++)
         {
             ensure(CPLGetValueType(apszTestStrings[i].testString) == apszTestStrings[i].expectedResult);
             if (CPLGetValueType(apszTestStrings[i].testString) != apszTestStrings[i].expectedResult)
                 fprintf(stderr, "mismatch on item %d : value=\"%s\", expect_result=%d, result=%d\n", (int)i,
-                        apszTestStrings[i].testString, 
+                        apszTestStrings[i].testString,
                         apszTestStrings[i].expectedResult,
                         CPLGetValueType(apszTestStrings[i].testString));
         }
     }
-    
-    
+
+
     // Test cpl_hash_set API
     template<>
     template<>
@@ -495,7 +495,7 @@ namespace tut
         CPLStringList  oCSL;
 
         ensure( "7nil", oCSL.List() == NULL );
-        
+
         oCSL.AddString( "def" );
         oCSL.AddString( "abc" );
 
@@ -509,9 +509,9 @@ namespace tut
         CSLDestroy( oCSL.StealList() );
         ensure_equals( "75", oCSL.Count(), 0 );
         ensure( "76", oCSL.List() == NULL );
-        
+
         // Test that the list will make an internal copy when needed to
-        // modify a read-only list. 
+        // modify a read-only list.
 
         oCSL.AddString( "def" );
         oCSL.AddString( "abc" );
@@ -532,7 +532,7 @@ namespace tut
     template<>
     void object::test<8>()
     {
-        // Test some name=value handling stuff. 
+        // Test some name=value handling stuff.
         CPLStringList oNVL;
 
         oNVL.AddNameValue( "KEY1", "VALUE1" );
@@ -605,13 +605,13 @@ namespace tut
         ensure( "c6", EQUAL(oTestSort[2],"T=3") );
         ensure( "c7", EQUAL(oTestSort[3],"Z=1") );
         ensure_equals( "c8", oTestSort[4], (const char*)NULL );
-        
+
         // Test FetchNameValue() in a sorted list
         ensure( "c9", EQUAL(oTestSort.FetchNameValue("A"),"4") );
         ensure( "c10", EQUAL(oTestSort.FetchNameValue("L"),"2") );
         ensure( "c11", EQUAL(oTestSort.FetchNameValue("T"),"3") );
         ensure( "c12", EQUAL(oTestSort.FetchNameValue("Z"),"1") );
-        
+
         // Test AddNameValue() in a sorted list
         oTestSort.AddNameValue("B", "5");
         ensure( "c13", EQUAL(oTestSort[0],"A=4") );
@@ -620,11 +620,11 @@ namespace tut
         ensure( "c16", EQUAL(oTestSort[3],"T=3") );
         ensure( "c17", EQUAL(oTestSort[4],"Z=1") );
         ensure_equals( "c18", oTestSort[5], (const char*)NULL );
-        
+
         // Test SetNameValue() of an existing item in a sorted list
         oTestSort.SetNameValue("Z", "6");
         ensure( "c19", EQUAL(oTestSort[4],"Z=6") );
-        
+
         // Test SetNameValue() of a non-existing item in a sorted list
         oTestSort.SetNameValue("W", "7");
         ensure( "c20", EQUAL(oTestSort[0],"A=4") );
@@ -669,7 +669,7 @@ namespace tut
         // Test insertion logic pretty carefully.
         oNVL.Clear();
         ensure( "9c", oNVL.IsSorted() == TRUE );
-        
+
         oNVL.SetNameValue( "B", "BB" );
         oNVL.SetNameValue( "A", "AA" );
         oNVL.SetNameValue( "D", "DD" );

@@ -458,7 +458,7 @@ int main(int argc, char* argv[])
             }
             VSIFree(pabyLine);
         }
-        if( bMemDriver ) 
+        if( bMemDriver )
             poMEMDS = poDS;
         else
             GDALClose(poDS);
@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
     }
     CSLDestroy(papszOptions);
     papszOptions = NULL;
-    
+
     Request* psGlobalRequestLast = NULL;
 
     for(i = 0; i < nThreads; i++ )
@@ -478,7 +478,7 @@ int main(int argc, char* argv[])
         // Since GDAL 2.0, the MEM driver is thread-safe, i.e. does not use the block
         // cache, but only for operations not involving resampling, which is
         // the case here
-        if( poMEMDS ) 
+        if( poMEMDS )
             poDS = poMEMDS;
         else
         {
@@ -528,7 +528,7 @@ int main(int argc, char* argv[])
         VSIUnlink(pszDataset);
         CPLPopErrorHandler();
     }
-    
+
     if( bMigrate )
     {
         psLock = CPLCreateLock(LOCK_SPIN);

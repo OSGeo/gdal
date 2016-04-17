@@ -15,27 +15,27 @@ namespace
   {
     switch(tr.result)
     {
-      case tut::test_result::ok: 
-      os << '.'; 
+      case tut::test_result::ok:
+      os << '.';
       break;
 
-      case tut::test_result::fail: 
+      case tut::test_result::fail:
       os << '[' << tr.test << "=F]";
       break;
 
-      case tut::test_result::ex_ctor: 
+      case tut::test_result::ex_ctor:
       os << '[' << tr.test << "=C]";
       break;
 
-      case tut::test_result::ex: 
+      case tut::test_result::ex:
       os << '[' << tr.test << "=X]";
       break;
 
-      case tut::test_result::warn: 
+      case tut::test_result::warn:
       os << '[' << tr.test << "=W]";
       break;
 
-      case tut::test_result::term: 
+      case tut::test_result::term:
       os << '[' << tr.test << "=T]";
       break;
     }
@@ -131,31 +131,31 @@ namespace tut
 
            os << std::endl;
 
-           os << "---> " << "group: " << tr.group 
-           	<< ", test: test<" << tr.test << ">" 
+           os << "---> " << "group: " << tr.group
+           	<< ", test: test<" << tr.test << ">"
            	<< (!tr.name.empty() ? (std::string(" : ") + tr.name) : "")
            	<< std::endl;
 
            os << "     problem: ";
            switch(tr.result)
            {
-             case test_result::fail: 
-               os << "assertion failed" << std::endl; 
+             case test_result::fail:
+               os << "assertion failed" << std::endl;
                break;
-             case test_result::ex: 
-             case test_result::ex_ctor: 
+             case test_result::ex:
+             case test_result::ex_ctor:
                os << "unexpected exception" << std::endl;
                if( tr.exception_typeid != "" )
-               { 
-                 os << "     exception typeid: " 
+               {
+                 os << "     exception typeid: "
                     << tr.exception_typeid << std::endl;
                }
                break;
-             case test_result::term: 
-               os << "would be terminated" << std::endl; 
+             case test_result::term:
+               os << "would be terminated" << std::endl;
                break;
-             case test_result::warn: 
-               os << "test passed, but cleanup code (destructor) raised an exception" << std::endl; 
+             case test_result::warn:
+               os << "test passed, but cleanup code (destructor) raised an exception" << std::endl;
                break;
              default: break;
            }
@@ -200,13 +200,13 @@ namespace tut
     {
       ok_count = 0;
       ok_group_count = 0;
-      exceptions_count = 0;  
+      exceptions_count = 0;
       failures_count = 0;
       terminations_count = 0;
       warnings_count = 0;
 
       not_passed.clear();
-    }    
+    }
   };
 };
 

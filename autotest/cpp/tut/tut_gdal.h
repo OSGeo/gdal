@@ -4,20 +4,20 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  TUT: C++ Unit Test Framework extensions for GDAL Test Suite
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -108,7 +108,7 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
         ensure("Field schema is NULL", NULL != fldDefn);
 
         read_feature_attribute(feat, fldIndex, attrVal);
-        
+
         OGR_F_Destroy(feat);
 
         // Test attribute against expected value

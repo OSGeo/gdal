@@ -45,7 +45,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-    
+
 namespace tut
 {
 
@@ -168,7 +168,7 @@ namespace tut
 
         OGRSpatialReferenceH srs = NULL;
         srs = OGR_G_GetSpatialReference(geom);
-        
+
         char* wktSrs = NULL;
         err_ = OSRExportToPrettyWkt(srs, &wktSrs, FALSE);
         ensure("Exported SRS to WKT is NULL", NULL != wktSrs);

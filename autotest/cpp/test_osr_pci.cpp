@@ -82,7 +82,7 @@ namespace tut
         ensure("SRS handle is NULL", NULL != srs_);
 
         const int size = 17;
-        double params[size] = { 
+        double params[size] = {
             0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         };
