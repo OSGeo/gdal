@@ -106,11 +106,64 @@ public:
     virtual gma_class_t get_class() {return gma_band;};
     virtual GDALDataType gdal_datatype() {};
     virtual gma_number_t *new_number(int value) {};
+
     virtual void print() {};
     virtual void rand() {};
+    virtual void abs() {};
+    virtual void exp() {};
+    virtual void log() {};
+    virtual void log10() {};
+    virtual void sqrt() {};
+    virtual void sin() {};
+    virtual void cos() {};
+    virtual void tan() {};
+    virtual void ceil() {};
+    virtual void floor() {};
+
+    virtual void assign(int value) {};
+    virtual void assign_all(int value) {};
     virtual void add(int summand) {};
+    virtual void subtract(int) {};
+    virtual void multiply(int) {};
+    virtual void divide(int) {};
     virtual void modulus(int divisor) {};
-    virtual void add(gma_band_t *summand) {};
-    virtual gma_pair_t *get_range() {};
+    
+    virtual void assign(double value) {};
+    virtual void assign_all(double value) {};
+    virtual void add(double summand) {};
+    virtual void subtract(double) {};
+    virtual void multiply(double) {};
+    virtual void divide(double) {};
+
+    virtual void classify(gma_classifier_t*) {};
+    virtual void cell_callback(gma_cell_callback_t*) {};
+
+    // arg = NULL, pair:(n,pair:(min,max)), or bins; returns histogram
     virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) {};
+    // returns hash of a hashes, keys are zone numbers
+    virtual gma_hash_t *zonal_neighbors() {};
+    virtual gma_number_t *get_min() {};
+    virtual gma_number_t *get_max() {};
+    // returns a pair of numbers
+    virtual gma_pair_t *get_range() {};
+    virtual std::vector<gma_cell_t*> *gma_method_get_cells() {};
+
+    virtual void assign(gma_band_t *) {};
+    virtual void add(gma_band_t *summand) {};
+    virtual void subtract(gma_band_t *) {};
+    virtual void multiply(gma_band_t *) {};
+    virtual void divide(gma_band_t *) {};
+    virtual void modulus(gma_band_t *) {};
+
+    virtual gma_hash_t *zonal_min(gma_band_t *zones) {};
+    virtual gma_hash_t *zonal_max(gma_band_t *zones) {};
+
+    virtual void rim_by8(gma_band_t *areas) {};
+
+    virtual void fill_depressions(gma_band_t *dem) {};
+    virtual void D8(gma_band_t *dem) {};
+    virtual void route_flats(gma_band_t *dem) {};
+    virtual void upstream_area(gma_band_t *) {};
+    virtual void catchment(gma_band_t *, gma_cell_t *) {};
+
 };

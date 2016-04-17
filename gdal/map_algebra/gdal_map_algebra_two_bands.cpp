@@ -318,23 +318,6 @@ int gma_D8(gma_band_p<fd_t> *band_fd, gma_block<fd_t> *block_fd, gma_band_p<dem_
     return 2;
 }
 
-class gma_band_iterator_t : public gma_object_t {
-public:
-    long count_in_this_loop_of_band;
-    long total_count;
-    gma_band_iterator_t() {
-        count_in_this_loop_of_band = 0;
-        total_count = 0;
-    }
-    void new_loop() {
-        count_in_this_loop_of_band = 0;
-    }
-    void add() {
-        count_in_this_loop_of_band++;
-        total_count++;
-    }
-};
-
 // drain flat cells (10) to neighboring non-flat cells which are at same or lower elevation
 // this leaves low lying flat areas undrained
 template<typename fd_t, typename dem_t>
