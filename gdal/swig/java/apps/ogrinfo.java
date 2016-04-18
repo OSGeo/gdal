@@ -79,6 +79,10 @@ public class ogrinfo
                 bReadOnly = true;
             else if (args[i].equals("-q"))
                 bVerbose = false;
+            else if (args[i].equals("-fid") && i + 1 < args.length)
+            {
+                nFetchFID = new Integer(args[++i]).intValue();
+            }
             else if (args[i].equals("-spat") && i + 4 < args.length)
             {
                 Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
