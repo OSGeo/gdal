@@ -423,7 +423,7 @@ def test_gdal_translate_lib_102():
     ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[approx_min, approx_max]], outputType = gdal.GDT_Byte)
     expected_stats = ds2.GetRasterBand(1).ComputeStatistics(False)
 
-    # Implicit source statics use approximate source min/max
+    # Implicit source statistics use approximate source min/max
     ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[]], outputType = gdal.GDT_Byte)
     stats = ds2.GetRasterBand(1).ComputeStatistics(False)
     for i in range(4):
