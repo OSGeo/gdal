@@ -576,6 +576,9 @@ GPKG driver:
  * as GPKG 1.1 uses a different application_id, emit a more specific warning if the application id starts with GPxx (but is not GP10). Add GPKG_WARN_UNRECOGNIZED_APPLICATION_ID config option to avoid the warning
  * correct scope of gpkg_geom_XXXXX extensions to be read-write, and allow reading geometry types CURVE or SURFACE
  * avoid trying to insert a gpkg_geom_XXXX extension if already done (#6402)
+ * writer: implement strategy to flush partial_tiles temporary database when it becomes too big (#6462)
+ * writer: when writing to GoogleMapsCompatible tiling scheme, better deal with source rasters in EPSG:4326 with latitude = +/-90 (#6463)
+ * fix generation of files with 1-band paletted input dataset. Also improve the logic to retrieve color palette when forcing BAND_COUNT=1 on opening (#6450)
 
 GPX driver:
  * fix crash when parsing a 'time' extension element at route/track level (2.0 regression, #6237)
