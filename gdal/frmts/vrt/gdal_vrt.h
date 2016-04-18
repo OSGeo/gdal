@@ -37,9 +37,9 @@
  */
 
 #include "gdal.h"
-#include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+#include "cpl_port.h"
 
 #define VRT_NODATA_UNSET -1234.56
 
@@ -54,22 +54,22 @@ typedef CPLErr
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various VRT dataset classes.     */
 /* -------------------------------------------------------------------- */
-typedef void *VRTDriverH;
-typedef void *VRTSourceH;
-typedef void *VRTSimpleSourceH;
 typedef void *VRTAveragedSourceH;
-typedef void *VRTComplexSourceH;
-typedef void *VRTFilteredSourceH;
-typedef void *VRTKernelFilteredSourceH;
 typedef void *VRTAverageFilteredSourceH;
-typedef void *VRTFuncSourceH;
+typedef void *VRTComplexSourceH;
 typedef void *VRTDatasetH;
-typedef void *VRTWarpedDatasetH;
-typedef void *VRTRasterBandH;
-typedef void *VRTSourcedRasterBandH;
-typedef void *VRTWarpedRasterBandH;
 typedef void *VRTDerivedRasterBandH;
+typedef void *VRTDriverH;
+typedef void *VRTFilteredSourceH;
+typedef void *VRTFuncSourceH;
+typedef void *VRTKernelFilteredSourceH;
+typedef void *VRTRasterBandH;
 typedef void *VRTRawRasterBandH;
+typedef void *VRTSimpleSourceH;
+typedef void *VRTSourceH;
+typedef void *VRTSourcedRasterBandH;
+typedef void *VRTWarpedDatasetH;
+typedef void *VRTWarpedRasterBandH;
 
 /* ==================================================================== */
 /*      VRTDataset class.                                               */
