@@ -147,7 +147,7 @@ CPLErr GDALMRFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 #endif
 
 /*
- *\brief Format specifc RasterIO, may be bypassed by BlockBasedRasterIO by setting
+ *\brief Format specific RasterIO, may be bypassed by BlockBasedRasterIO by setting
  * GDAL_FORCE_CACHING to Yes, in which case the band ReadBlock and WriteBLock are called
  * directly
  *
