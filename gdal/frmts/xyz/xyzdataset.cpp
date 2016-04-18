@@ -39,6 +39,8 @@ CPL_C_START
 void    GDALRegister_XYZ(void);
 CPL_C_END
 
+static const double RELATIVE_ERROR = 1e-3;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              XYZDataset                              */
@@ -311,7 +313,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 }
                 else
                 {
-                    if( fabs(dfY - dfExpectedY) > 1e-8 )
+                    if( fabs( (dfY - dfExpectedY) / poGDS->adfGeoTransform[5] ) > RELATIVE_ERROR )
                     {
                         if( idx < 0 )
                         {
@@ -716,6 +718,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     int bSameNumberOfValuesPerLine = TRUE;
     char chDecimalSep = '\0';
     int bStepYSign = 0;
+    GIntBig nCountStepX = 0;
+    GIntBig nCountStepY = 0;
     while((pszLine = CPLReadLine2L(fp, 100, NULL)) != NULL)
     {
         nLineNum ++;
@@ -858,12 +862,30 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     std::vector<double>::iterator oIter = adfStepX.begin();
                     while( oIter != adfStepX.end() )
                     {
-                        if( dfStepX < *oIter && fmod( *oIter, dfStepX ) < 1e-8 )
+                        if( fabs(( dfStepX - *oIter ) / dfStepX ) < RELATIVE_ERROR )
                         {
+                            if( nCountStepX > 0 )
+                            {
+                                // Update mean step
+                                /* n * mean(n) = (n-1) * mean(n-1) + val(n)
+                                mean(n) = mean(n-1) + (val(n) - mean(n-1)) / n */
+                                nCountStepX ++;
+                                *oIter += ( dfStepX - *oIter ) / nCountStepX;
+                            }
+
+                            bAddNewValue = FALSE;
+                            break;
+                        }
+                        else if( dfStepX < *oIter &&
+                                 fabs(*oIter - static_cast<int>(*oIter / dfStepX + 0.5) * dfStepX) / dfStepX < RELATIVE_ERROR )
+                        {
+                            nCountStepX = -1; // disable update of mean
                             adfStepX.erase(oIter);
                         }
-                        else if( dfStepX > *oIter && fmod( dfStepX, *oIter ) < 1e-8 )
+                        else if( dfStepX > *oIter &&
+                                 fabs(dfStepX - static_cast<int>(dfStepX / *oIter + 0.5) * (*oIter)) / dfStepX < RELATIVE_ERROR )
                         {
+                            nCountStepX = -1; // disable update of mean
                             bAddNewValue = FALSE;
                             break;
                         }
@@ -874,8 +896,17 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                     if( bAddNewValue )
                     {
+                        CPLDebug("XYZ", "New stepX=%.15f", dfStepX);
                         adfStepX.push_back(dfStepX);
-                        if( adfStepX.size() == 10 )
+                        if( adfStepX.size() == 1 && nCountStepX == 0)
+                        {
+                            nCountStepX ++;
+                        }
+                        else if( adfStepX.size() == 2 )
+                        {
+                            nCountStepX = -1; // disable update of mean
+                        }
+                        else if( adfStepX.size() == 10 )
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                 "Ungridded dataset: too many stepX values");
@@ -899,14 +930,20 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     return NULL;
                 }
                 if( bNewStepYSign < 0 ) dfStepY = -dfStepY;
+                nCountStepY ++;
                 if( adfStepY.size() == 0 )
                     adfStepY.push_back(dfStepY);
-                else if( adfStepY[0] != dfStepY )
+                else if( fabs( (adfStepY[0] - dfStepY) / dfStepY ) > RELATIVE_ERROR )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                         "Ungridded dataset: At line %d, too many stepY values", nLineNum);
                     VSIFCloseL(fp);
                     return NULL;
+                }
+                else
+                {
+                    // Update mean step
+                    adfStepY[0] += ( dfStepY - adfStepY[0] ) / nCountStepY;
                 }
             }
 
@@ -934,13 +971,18 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    double dfStepX = adfStepX[0];
-    double dfStepY = adfStepY[0] * bStepYSign;
-    int nXSize = 1 + int((dfMaxX - dfMinX) / dfStepX + 0.5);
-    int nYSize = 1 + int((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
-
-    //CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
-    //CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
+    const double dfXSize = 1 + ((dfMaxX - dfMinX) / adfStepX[0] + 0.5);
+    const double dfYSize = 1 + ((dfMaxY - dfMinY) / adfStepY[0] + 0.5);
+    if( dfXSize <= 0 || dfXSize > INT_MAX || dfYSize <= 0 || dfYSize > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions");
+        VSIFCloseL(fp);
+        return NULL;
+    }
+    const int nXSize = static_cast<int>(dfXSize);
+    const int nYSize = static_cast<int>(dfYSize);
+    const double dfStepX = (dfMaxX - dfMinX) / (nXSize - 1);
+    const double dfStepY = (dfMaxY - dfMinY) / (nYSize - 1)* bStepYSign;
 
     if (nDataLineNum != nXSize * nYSize)
     {

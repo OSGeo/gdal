@@ -109,6 +109,7 @@ def xyz_3():
 
 ###############################################################################
 # Test regularly spaced XYZ but with missing values at beginning and/or end of lines
+# and missing value in the middle. And a not so exact spacing
 
 def xyz_4_checkline(ds, i, expected_bytes):
     buf = ds.ReadRaster(0,i,ds.RasterXSize,1)
@@ -120,19 +121,28 @@ def xyz_4_checkline(ds, i, expected_bytes):
 def xyz_4():
 
     content = """
-440750 3751290 1
-440810 3751290 2
+440750.001 3751290 1
+440809.999 3751290 2
 
-440690 3751230 3
-440750 3751230 4
-440810 3751230 5
-440870 3751230 6
+440690 3751170.001 3
+440750.001 3751170.001 4
+440870 3751170.001 6
 
-440810 3751170 7"""
+440810 3751050 7"""
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
-    expected = [ ( 0, 1, 2, 0 ), ( 3, 4, 5, 6 ), (0, 0, 7, 0) ]
+    expected = [ ( 0, 1, 2, 0 ), ( 3, 4, 0, 6 ), (0, 0, 7, 0) ]
 
     ds = gdal.Open('/vsimem/grid.xyz')
+
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
+    for i in range(6):
+        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            print(expected_gt)
+            return 'fail'
+
     if ds.GetRasterBand(1).GetMinimum() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -216,6 +226,56 @@ def xyz_6():
     
     return 'success'
 
+
+###############################################################################
+# Test XYZ with not completely equal stepX and stepY (#6461)
+
+def xyz_7():
+
+    content = """y x z
+   51.500000  354.483333     54.721
+   51.500000  354.516667     54.714
+   51.500000  354.550000     54.705
+   51.475000  354.483333     54.694
+   51.475000  354.516667     54.687
+   51.475000  354.550000     54.678
+   51.450000  354.483333     54.671
+   51.450000  354.516667     54.663
+   51.450000  354.550000     54.654
+   51.425000  354.483333     54.652
+   51.425000  354.516667     54.642
+   51.425000  354.550000     54.632
+   51.400000  354.483333     54.636
+   51.400000  354.516667     54.625
+   51.400000  354.550000     54.614
+"""
+    gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
+
+    ds = gdal.Open('/vsimem/grid.xyz')
+    if ds.RasterXSize != 3 or ds.RasterYSize != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (354.46666625, 0.0333335, 0.0, 51.5125, 0.0, -0.025)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.Unlink('/vsimem/grid.xyz')
+
+    for i in range(6):
+        if abs(got_gt[i]-expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            print(expected_gt)
+            return 'fail'
+
+    if cs != 146:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # Cleanup
 
@@ -231,6 +291,7 @@ gdaltest_list = [
     xyz_4,
     xyz_5,
     xyz_6,
+    xyz_7,
     xyz_cleanup ]
 
 if __name__ == '__main__':
