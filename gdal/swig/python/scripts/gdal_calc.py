@@ -42,7 +42,7 @@
 # gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 ################################################################
 
-from optparse import OptionParser
+from optparse import OptionParser, Values
 import os
 import sys
 
@@ -85,31 +85,34 @@ def doit(opts, args):
     DimensionsCheck=None
 
     # loop through input files - checking dimensions
-    for i,myI in enumerate(AlphaList[0:len(sys.argv)-1]):
-        myF = eval("opts.%s" %(myI))
-        myBand = eval("opts.%s_band" %(myI))
-        if myF:
-            myFiles.append(gdal.Open(myF, gdal.GA_ReadOnly))
+    for myI, myF in opts.input_files.items():
+        if not myI.endswith("_band"):
             # check if we have asked for a specific band...
-            if myBand:
-                myBands.append(myBand)
+            if "%s_band" % myI in opts.input_files:
+                myBand = opts.input_files["%s_band" % myI]
             else:
-                myBands.append(1)
+                myBand = 1
+
+            myFile = gdal.Open(myF, gdal.GA_ReadOnly)
+            if not myFile:
+                raise IOError("No such file or directory: '%s'" % myF)
+
+            myFiles.append(myFile)
+            myBands.append(myBand)
             myAlphaList.append(myI)
-            myDataType.append(gdal.GetDataTypeName(myFiles[i].GetRasterBand(myBands[i]).DataType))
-            myDataTypeNum.append(myFiles[i].GetRasterBand(myBands[i]).DataType)
-            myNDV.append(myFiles[i].GetRasterBand(myBands[i]).GetNoDataValue())
+            myDataType.append(gdal.GetDataTypeName(myFile.GetRasterBand(myBand).DataType))
+            myDataTypeNum.append(myFile.GetRasterBand(myBand).DataType)
+            myNDV.append(myFile.GetRasterBand(myBand).GetNoDataValue())
             # check that the dimensions of each layer are the same
             if DimensionsCheck:
-                if DimensionsCheck!=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]:
-                    print("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" % \
-                            (myF,myFiles[i].RasterXSize, myFiles[i].RasterYSize,DimensionsCheck[0],DimensionsCheck[1]))
-                    return
+                if DimensionsCheck != [myFile.RasterXSize, myFile.RasterYSize]:
+                    raise Exception("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" % \
+                            (myF, myFile.RasterXSize, myFile.RasterYSize, DimensionsCheck[0], DimensionsCheck[1]))
             else:
-                DimensionsCheck=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]
+                DimensionsCheck = [myFile.RasterXSize, myFile.RasterYSize]
 
             if opts.debug:
-                print("file %s: %s, dimensions: %s, %s, type: %s" %(myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[i]))
+                print("file %s: %s, dimensions: %s, %s, type: %s" %(myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[-1]))
 
     # process allBands option
     allBandsIndex=None
@@ -118,8 +121,7 @@ def doit(opts, args):
         try:
             allBandsIndex=myAlphaList.index(opts.allBands)
         except ValueError:
-            print("Error! allBands option was given but Band %s not found.  Cannot proceed" % (opts.allBands))
-            return
+            raise Exception("Error! allBands option was given but Band %s not found.  Cannot proceed" % (opts.allBands))
         allBandsCount=myFiles[allBandsIndex].RasterCount
         if allBandsCount <= 1:
             allBandsIndex=None
@@ -131,14 +133,12 @@ def doit(opts, args):
     # open output file exists
     if os.path.isfile(opts.outF) and not opts.overwrite:
         if allBandsIndex is not None:
-            print("Error! allBands option was given but Output file exists, must use --overwrite option!")
-            return
+            raise Exception("Error! allBands option was given but Output file exists, must use --overwrite option!")
         if opts.debug:
             print("Output file %s exists - filling in results into file" %(opts.outF))
         myOut=gdal.Open(opts.outF, gdal.GA_Update)
         if [myOut.RasterXSize,myOut.RasterYSize] != DimensionsCheck:
-            print("Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file")
-            return
+            raise Exception("Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file")
         myOutB=myOut.GetRasterBand(1)
         myOutNDV=myOutB.GetNoDataValue()
         myOutType=gdal.GetDataTypeName(myOutB.DataType)
@@ -233,7 +233,7 @@ def doit(opts, args):
             # loop through Y lines
             for Y in range(0,nYBlocks):
                 ProgressCt+=1
-                if 10*ProgressCt/ProgressEnd%10!=ProgressMk:
+                if 10*ProgressCt/ProgressEnd%10!=ProgressMk and not opts.quiet:
                     ProgressMk=10*ProgressCt/ProgressEnd%10
                     from sys import version_info
                     if version_info >= (3,0,0):
@@ -253,7 +253,7 @@ def doit(opts, args):
                 myNDVs=numpy.zeros(myBufSize)
                 myNDVs.shape=(nYValid,nXValid)
 
-                # modules available to calculation
+                # make local namespace for calculation
                 local_namespace = {}
 
                 # fetch data for each input layer
@@ -291,22 +291,62 @@ def doit(opts, args):
                 myOutB=myOut.GetRasterBand(bandNo)
                 gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
 
-    print("100 - Done")
+    if not opts.quiet:
+        print("100 - Done")
     #print("Finished - Results written to %s" %opts.outF)
 
     return
 
 ################################################################
+def Calc(calc, outfile, NoDataValue=None, type=None, format='GTiff', creation_options=[], allBands='', overwrite=False, debug=False, quiet=False, **input_files):
+    """ Perform raster calculations with numpy syntax.
+    Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical
+    operators such as >. Note that all files must have the same dimensions, but no projection checking is performed.
+
+    Keyword arguments:
+        [A-Z]: input files
+        [A_band - Z_band]: band to use for respective input file
+
+    Examples:
+    add two files together:
+        Calc("A+B", A="input1.tif", B="input2.tif", outfile="result.tif")
+
+    average of two layers:
+        Calc(calc="(A+B)/2", A="input1.tif", B="input2.tif", outfile="result.tif")
+
+    set values of zero and below to null:
+        Calc(calc="A*(A>0)", A="input.tif", A_Band=2, outfile="result.tif", NoDataValue=0)
+    """
+    opts = Values()
+    opts.input_files = input_files
+    opts.calc = calc
+    opts.outF = outfile
+    opts.NoDataValue = NoDataValue
+    opts.type = type
+    opts.format = format
+    opts.creation_options = creation_options
+    opts.allBands = allBands
+    opts.overwrite = overwrite
+    opts.debug = debug
+    opts.quiet = quiet
+
+    doit(opts, None)
+
+def store_input_file(option, opt_str, value, parser):
+    if not hasattr(parser.values, 'input_files'):
+        parser.values.input_files = {}
+    parser.values.input_files[opt_str.lstrip('-')] = value
+
 def main():
-    usage = "usage: %prog [-A <filename>] [--A_band] [-B...-Z filename] [other_options]"
+    usage = "usage: %prog [-A <filename>] [--A_band=n] [-B...-Z filename] [other_options]"
     parser = OptionParser(usage)
 
     # define options
     parser.add_option("--calc", dest="calc", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. logical_and())")
-    # hack to limit the number of input file options close to required number
-    for myAlpha in AlphaList[0:len(sys.argv)-1]:
-        eval('parser.add_option("-%s", dest="%s", help="input gdal raster file, note you can use any letter A-Z")' %(myAlpha, myAlpha))
-        eval('parser.add_option("--%s_band", dest="%s_band", default=1, type=int, help="number of raster band for file %s (default 1)")' %(myAlpha, myAlpha, myAlpha))
+    # limit the input file options to the ones in the argument list
+    for myAlpha in [a[1] for a in sys.argv if a[1:2] in AlphaList]:
+        parser.add_option("-%s" % myAlpha, action="callback", callback=store_input_file, type=str, help="input gdal raster file, note you can use any letter A-Z")
+        parser.add_option("--%s_band" % myAlpha, action="callback", callback=store_input_file, type=int, help="number of raster band for file %s (default 1)" % myAlpha)
 
     parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodata value (Defaults to datatype specific value)")
@@ -320,8 +360,11 @@ def main():
     parser.add_option("--allBands", dest="allBands", default="", help="process all bands of given raster (A-Z)")
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
+    parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
 
     (opts, args) = parser.parse_args()
+    if not hasattr(opts, "input_files"):
+        opts.input_files = {}
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -329,7 +372,12 @@ def main():
         print("No calculation provided.  Nothing to do!")
         parser.print_help()
     else:
-        doit(opts, args)
+        try:
+            doit(opts, args)
+        except IOError as e:
+            print(e)
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
