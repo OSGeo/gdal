@@ -87,6 +87,7 @@ test:
 	${JAVA_RUN} gdalinfo -checksum tmp_test/byte.tif
 	${JAVA_RUN} ogr2ogr tmp_test/out.shp test_data/poly.shp -progress -overwrite
 	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp
+	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp -fid 1
 	${JAVA_RUN} OSRTransform
 	${JAVA_RUN} gdalmajorobject
 	${JAVA_RUN} GDALTestIO
