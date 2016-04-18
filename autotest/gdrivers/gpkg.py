@@ -2505,7 +2505,7 @@ def gpkg_26():
         os.remove('tmp/tmp.gpkg')
 
     tests =  [ ('GoogleCRS84Quad', [42255, 47336, 24963, 35707], None),
-               ('GoogleMapsCompatible', [31480, 34797, 7941, 60492], None) ]
+               ('GoogleMapsCompatible', [35429, 36787, 20035, 17849], None) ]
 
     for (scheme, expected_cs, other_options) in tests:
 
@@ -2925,7 +2925,7 @@ def gpkg_36():
     out_ds = None
     src_ds = None
 
-    expected_cs = [ 65245, 56985, 54768, 60492 ]
+    expected_cs = [ 993, 50461, 64354, 17849 ]
     out_ds = gdal.Open('/vsimem/gpkg_36.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
