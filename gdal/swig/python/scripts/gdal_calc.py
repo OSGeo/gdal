@@ -9,6 +9,7 @@
 #******************************************************************************
 #  Copyright (c) 2010, Chris Yesson <chris.yesson@ioz.ac.uk>
 #  Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2016, Piers Titus van der Torren <pierstitus@gmail.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -66,6 +67,11 @@ def doit(opts, args):
 
     if opts.debug:
         print("gdal_calc.py starting calculation %s" %(opts.calc))
+
+    if not opts.calc:
+        raise Exception("No calculation provided.")
+    elif not opts.outF:
+        raise Exception("No output file provided.")
 
     # set up global namespace for eval with all functions of gdalnumeric
     global_namespace = dict([(key, getattr(gdalnumeric, key))
@@ -338,26 +344,28 @@ def store_input_file(option, opt_str, value, parser):
     parser.values.input_files[opt_str.lstrip('-')] = value
 
 def main():
-    usage = "usage: %prog [-A <filename>] [--A_band=n] [-B...-Z filename] [other_options]"
+    usage = """usage: %prog --calc=expression --outfile=out_filename [-A filename]
+                    [--A_band=n] [-B...-Z filename] [other_options]"""
     parser = OptionParser(usage)
 
     # define options
-    parser.add_option("--calc", dest="calc", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. logical_and())")
+    parser.add_option("--calc", dest="calc", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10())", metavar="expression")
     # limit the input file options to the ones in the argument list
-    for myAlpha in [a[1] for a in sys.argv if a[1:2] in AlphaList]:
-        parser.add_option("-%s" % myAlpha, action="callback", callback=store_input_file, type=str, help="input gdal raster file, note you can use any letter A-Z")
-        parser.add_option("--%s_band" % myAlpha, action="callback", callback=store_input_file, type=int, help="number of raster band for file %s (default 1)" % myAlpha)
+    given_args = set([a[1] for a in sys.argv if a[1:2] in AlphaList] + ['A'])
+    for myAlpha in given_args:
+        parser.add_option("-%s" % myAlpha, action="callback", callback=store_input_file, type=str, help="input gdal raster file, you can use any letter (A-Z)", metavar='filename')
+        parser.add_option("--%s_band" % myAlpha, action="callback", callback=store_input_file, type=int, help="number of raster band for file %s (default 1)" % myAlpha, metavar='n')
 
-    parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill")
-    parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodata value (Defaults to datatype specific value)")
-    parser.add_option("--type", dest="type", help="output datatype, must be one of %s" % list(DefaultNDVLookup.keys()))
-    parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')")
+    parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
+    parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="output nodata value (default datatype specific value)", metavar="value")
+    parser.add_option("--type", dest="type", help="output datatype, must be one of %s" % list(DefaultNDVLookup.keys()), metavar="datatype")
+    parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')", metavar="gdal_format")
     parser.add_option(
         "--creation-option", "--co", dest="creation_options", default=[], action="append",
         help="Passes a creation option to the output format driver. Multiple "
         "options may be listed. See format specific documentation for legal "
-        "creation options for each format.")
-    parser.add_option("--allBands", dest="allBands", default="", help="process all bands of given raster (A-Z)")
+        "creation options for each format.", metavar="option")
+    parser.add_option("--allBands", dest="allBands", default="", help="process all bands of given raster (A-Z)", metavar="[A-Z]")
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
     parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
@@ -368,9 +376,15 @@ def main():
 
     if len(sys.argv) == 1:
         parser.print_help()
+        sys.exit(1)
     elif not opts.calc:
-        print("No calculation provided.  Nothing to do!")
+        print("No calculation provided. Nothing to do!")
         parser.print_help()
+        sys.exit(1)
+    elif not opts.outF:
+        print("No output file provided. Cannot proceed.")
+        parser.print_help()
+        sys.exit(1)
     else:
         try:
             doit(opts, args)
