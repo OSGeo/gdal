@@ -111,6 +111,11 @@ fi
 if test ! -d "man"; then
     echo " make man failed"
 fi
+
+if test -f "doxygen_sqlite3.db"; then
+    rm -f doxygen_sqlite3.db
+fi
+
 cd ${CWD}
 
 #
