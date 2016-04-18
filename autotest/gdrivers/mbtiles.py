@@ -352,7 +352,7 @@ def mbtiles_7():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
-    expected_ovr_cs = [ 22294, 25695, 6779, 63629 ]
+    expected_ovr_cs = [ 21179, 22577, 11996 ]
     got_ovr_cs = [ ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(ds.RasterCount) ]
     if expected_ovr_cs != got_ovr_cs:
         gdaltest.post_reason('fail')
@@ -399,7 +399,7 @@ def mbtiles_8():
     out_ds = None
     src_ds = None
 
-    expected_cs = [ 65245, 56985, 54768 ] # , 60492 
+    expected_cs = [ 993, 50461, 64354 ]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:

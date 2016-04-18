@@ -932,6 +932,15 @@ CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
             maxx = 180.0;
         }
 
+        // Clamp latitude so that when transformed back to EPSG:3857, we don't
+        // have too big northings
+        double tmpx = 0, ok_maxy = MAX_GM;
+        SphericalMercatorToLongLat(&tmpx, &ok_maxy);
+        if( maxy > ok_maxy)
+            maxy = ok_maxy;
+        if( miny < -ok_maxy)
+            miny = -ok_maxy;
+
         char* pszSQL = sqlite3_mprintf(
             "INSERT INTO metadata (name, value) VALUES ('bounds', '%.18g,%.18g,%.18g,%.18g')",
             minx, miny, maxx, maxy );
@@ -1415,6 +1424,12 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
                     maxY = CPLAtof(papszTokens[3]);
                     LongLatToSphericalMercator(&minX, &minY);
                     LongLatToSphericalMercator(&maxX, &maxY);
+
+                    // Clamp northings
+                    if( maxY > MAX_GM)
+                        maxY = MAX_GM;
+                    if( minY < -MAX_GM)
+                        minY = -MAX_GM;
 
                     bHasBounds = true;
                 }
@@ -2219,6 +2234,44 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
 
     GDALDestroyGenImgProjTransformer( hTransformArg );
     hTransformArg = NULL;
+
+    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when 
+    // reprojection latitude = +/- 90 to EPSG:3857
+    double adfSrcGeoTransform[6];
+    if( poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
+    {
+        const char* pszSrcWKT = poSrcDS->GetProjectionRef();
+        if( pszSrcWKT != NULL && pszSrcWKT[0] != '\0' )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
+                oSRS.IsGeographic() )
+            {
+                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxNorthing = adfGeoTransform[3];
+                double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+                bool bChanged = false;
+                if( maxLat > 89.9999999 )
+                {
+                    bChanged = true;
+                    maxNorthing = MAX_GM;
+                }
+                if( minLat <= -89.9999999 )
+                {
+                    bChanged = true;
+                    minNorthing = -MAX_GM;
+                }
+                if( bChanged )
+                {
+                    adfGeoTransform[3] = maxNorthing;
+                    nYSize = int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
+                    adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+                    adfExtent[3] = maxNorthing;
+                }
+            }
+        }
+    }
 
     int nZoomLevel;
     double dfComputedRes = adfGeoTransform[1];
