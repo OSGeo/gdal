@@ -3166,7 +3166,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
-    psWO->papszWarpOptions = NULL;
+    psWO->papszWarpOptions = CSLSetNameValue(NULL, "OPTIMIZE_SIZE", "YES");
     psWO->eWorkingDataType = GDT_Byte;
     psWO->eResampleAlg = eResampleAlg;
 
