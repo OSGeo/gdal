@@ -693,6 +693,7 @@ All bindings:
  * add SpatialReference.GetAngularUnitsName() (#6445)
 
 Java bindings:
+ * Fix typemap for input parameter of type GIntBig (fixes GetFeature(long), DeleteFeature(long), etc...) (#6464)
  * Bump minimal java version to 1.5 in case SWIG generates anotations (#6433, patch by Bas Couwenberg)
  * GNUmakefile: add -f in rm commands
  * GNUmakefile: add support for all hardening buildflags
