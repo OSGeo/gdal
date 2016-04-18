@@ -695,8 +695,6 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
 class VRTDriver : public GDALDriver
 {
-    void        *m_pDeserializerData;
-
   public:
                  VRTDriver();
     virtual ~VRTDriver();

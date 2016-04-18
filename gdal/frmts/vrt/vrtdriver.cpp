@@ -42,7 +42,6 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 VRTDriver::VRTDriver() :
-    m_pDeserializerData(NULL),
     papszSourceParsers(NULL)
 {
 #if 0
