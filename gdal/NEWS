@@ -92,7 +92,7 @@ Build(Unix):
  * Removed --without-ogr configure flag (#6117).  Always build with OGR.
 
 Build(Windows):
- * Add support for Visual Studio 2015 (a.k.a MSVC_VER=1900 or VC 13)
+ * Add support for Visual Studio 2015 (a.k.a MSVC_VER=1900 or VC 14)
  * Add KAKFLAGS to nmake.opt with KDU_{MAJOR,MINOR,PATCH}_VERSION define-s.
  * nmake.opt: make it less error prone to define SETARGV when paths include spaces (#6032)
  * nmake.opt: add CL.EXE compiler option /FC to display full path of source code file in diagnostics
