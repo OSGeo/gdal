@@ -1614,7 +1614,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GIntBig
  ***************************************************/
 
-
+%typemap(in) (GIntBig) "$1 = $input;"
 %typemap(out) (GIntBig)
 {
     /* %typemap(out) (GIntBig) */
