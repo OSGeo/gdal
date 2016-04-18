@@ -448,6 +448,34 @@ def mbtiles_9():
     return 'success'
 
 ###############################################################################
+# Test compaction of temporary database
+
+def mbtiles_10():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION')
+    gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', 'YES')
+    with gdaltest.SetCacheMax(0):
+        gdal.Translate('/vsimem/mbtiles_10.mbtiles', '../gcore/data/byte.tif', options = '-of MBTILES -outsize 512 512')
+    gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', old_val_GPKG_FORCE_TEMPDB_COMPACTION)
+
+    ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 29925:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -467,6 +495,7 @@ gdaltest_list = [
     mbtiles_7,
     mbtiles_8,
     mbtiles_9,
+    mbtiles_10,
     mbtiles_cleanup ]
 
 #gdaltest_list = [ mbtiles_1, mbtiles_9 ]
