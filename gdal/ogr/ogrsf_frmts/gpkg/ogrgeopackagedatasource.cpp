@@ -3030,6 +3030,46 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     GDALDestroyGenImgProjTransformer( hTransformArg );
     hTransformArg = NULL;
 
+    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when 
+    // reprojection latitude = +/- 90 to EPSG:3857
+    double adfSrcGeoTransform[6];
+    if( nEPSGCode == 3857 && poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
+    {
+        const char* pszSrcWKT = poSrcDS->GetProjectionRef();
+        if( pszSrcWKT != NULL && pszSrcWKT[0] != '\0' )
+        {
+            OGRSpatialReference oSrcSRS;
+            if( oSrcSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
+                oSrcSRS.IsGeographic() )
+            {
+                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxNorthing = adfGeoTransform[3];
+                double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+                bool bChanged = false;
+#define SPHERICAL_RADIUS        6378137.0
+#define MAX_GM                  (SPHERICAL_RADIUS * M_PI)               // 20037508.342789244
+                if( maxLat > 89.9999999 )
+                {
+                    bChanged = true;
+                    maxNorthing = MAX_GM;
+                }
+                if( minLat <= -89.9999999 )
+                {
+                    bChanged = true;
+                    minNorthing = -MAX_GM;
+                }
+                if( bChanged )
+                {
+                    adfGeoTransform[3] = maxNorthing;
+                    nYSize = int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
+                    adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+                    adfExtent[3] = maxNorthing;
+                }
+            }
+        }
+    }
+
     int nZoomLevel;
     double dfComputedRes = adfGeoTransform[1];
     double dfPrevRes = 0, dfRes = 0;
@@ -3166,7 +3206,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
-    psWO->papszWarpOptions = NULL;
+    psWO->papszWarpOptions = CSLSetNameValue(NULL, "OPTIMIZE_SIZE", "YES");
     psWO->eWorkingDataType = GDT_Byte;
     psWO->eResampleAlg = eResampleAlg;
 
