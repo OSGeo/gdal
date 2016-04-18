@@ -3038,9 +3038,9 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         const char* pszSrcWKT = poSrcDS->GetProjectionRef();
         if( pszSrcWKT != NULL && pszSrcWKT[0] != '\0' )
         {
-            OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
-                oSRS.IsGeographic() )
+            OGRSpatialReference oSrcSRS;
+            if( oSrcSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
+                oSrcSRS.IsGeographic() )
             {
                 double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
                 double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
