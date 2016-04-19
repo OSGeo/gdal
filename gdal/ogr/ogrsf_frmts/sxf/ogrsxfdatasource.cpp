@@ -76,6 +76,10 @@ static const long aoVCS[] =
 
 #define NUMBER_OF_VERTICALCS    (sizeof(aoVCS)/sizeof(aoVCS[0]))
 
+// EPSG code range http://gis.stackexchange.com/a/18676/9904
+#define MIN_EPSG 1000
+#define MAX_EPSG 3768
+
 /************************************************************************/
 /*                         OGRSXFDataSource()                           */
 /************************************************************************/
@@ -221,7 +225,8 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    if (oSXFPassport.informationFlags.bProjectionDataCompliance == false)
+    if(oSXFPassport.version == 3 && 
+               oSXFPassport.informationFlags.bProjectionDataCompliance == false)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "SXF. Data does not correspond to the projection." );
@@ -271,7 +276,21 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
 
-    //1. Create layers from RSC file or create default set of layers from osm.rsc
+    //1. Create layers from RSC file or create default set of layers from 
+    // gdal_data/default.rsc
+    
+    if(soRSCRileName.empty())
+    {
+        pszRSCRileName = CPLFindFile( "gdal", "default.rsc" );
+        if (NULL != pszRSCRileName)
+        {
+            soRSCRileName = pszRSCRileName;
+        }
+        else
+        {
+            CPLDebug( "OGRSXFDataSource", "Default RSC file not found" );
+        }
+    }
 
     if (soRSCRileName.empty())
     {
@@ -335,7 +354,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
 
         char szName[26] = { 0 };
         memcpy(szName, buff + 8, 24);
-        char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
+        char* pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8);// szName + 2
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
 
@@ -371,7 +390,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
 
         char szName[32] = { 0 };
         memcpy(szName, buff + 12, 32);
-        char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
+        char* pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8); //szName + 2
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
 
@@ -403,12 +422,12 @@ OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXFIn, SXFPassport&
     GByte val[4];
     /* nObjectsRead = */ VSIFReadL(&val, 4, 1, fpSXFIn);
 
-    if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1)))
+    if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1))) // хххххх11
     {
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
-    if (CHECK_BIT(val[0], 2))
+    if (CHECK_BIT(val[0], 2)) // ххххх0xx or xxxxx1xx
     {
         passport.informationFlags.bProjectionDataCompliance = true;
     }
@@ -485,7 +504,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
 
     const int nEPSG = static_cast<int>(aoVCS[iVCS]);
 
-    if (nEPSG == 0)
+    if (nEPSG < MIN_EPSG || nEPSG >= MAX_EPSG)
     {
         CPLError(CE_Warning, CPLE_NotSupported, "SXF. Vertical coordinate system (SXF index %ld) not supported", iVCS);
         return;
@@ -570,7 +589,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         int nEPSG;
         /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXFIn);
 
-        if (nEPSG != 0)
+        if (nEPSG >= MIN_EPSG && nEPSG <= MAX_EPSG) //TODO: check epsg valid range 
         {
             passport.stMapDescription.pSpatRef = new OGRSpatialReference();
             passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
@@ -755,7 +774,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     }
 
     //normalize some coordintatessystems
-    if (iEllips == 1 && iProjSys == 1) // Pulkovo 1942 / Gauss-Kruger
+    if ((iEllips == 1 || iEllips == 0 ) && iProjSys == 1) // Pulkovo 1942 / Gauss-Kruger
     {
         double dfCenterLongEnv = passport.stMapDescription.stGeoCoords[1] + fabs(passport.stMapDescription.stGeoCoords[5] - passport.stMapDescription.stGeoCoords[1]) / 2;
 
@@ -801,10 +820,17 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         SetVertCS(iVCS, passport);
         return eErr;
     }
-   else if (iEllips == 45 && iProjSys == 35) //Mercator 3395 on sphere wgs84
+    else if (iEllips == 45 && iProjSys == 35) //Mercator 3857 on sphere wgs84
     {
-        passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"WGS_1984_Web_Mercator\",GEOGCS[\"GCS_WGS_1984_Major_Auxiliary_Sphere\",DATUM[\"WGS_1984_Major_Auxiliary_Sphere\",SPHEROID[\"WGS_1984_Major_Auxiliary_Sphere\",6378137.0,0.0]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"latitude_of_origin\",0.0],UNIT[\"Meter\",1.0]]");
-        OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3395);
+        passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]");
+        OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3857);
+        SetVertCS(iVCS, passport);
+        return eErr;
+    }
+    else if (iEllips == 9 && iProjSys == 35) //Mercator 3395 on ellips wgs84
+    {
+        passport.stMapDescription.pSpatRef = new OGRSpatialReference();
+        OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(3395);
         SetVertCS(iVCS, passport);
         return eErr;
     }
@@ -920,7 +946,6 @@ void OGRSXFDataSource::FillLayers()
         nOffset += buff[1];
         VSIFSeekL(fpSXF, nOffset, SEEK_SET);
     }
-
     //3. delete empty layers
     for (i = 0; i < nLayers; i++)
     {
@@ -957,8 +982,6 @@ OGRSXFLayer* OGRSXFDataSource::GetLayerById(GByte nID)
 
 void OGRSXFDataSource::CreateLayers()
 {
-    //codes get from OSM.rsc http://gistoolkit.ru/download/classifiers/osm.zip
-
     //default layers set
     papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
     OGRSXFLayer* pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 0, CPLString("SYSTEM"), oSXFPassport.version, oSXFPassport.stMapDescription);
@@ -971,243 +994,6 @@ void OGRSXFDataSource::CreateLayers()
         pLayer->AddClassifyCode(i);
     }
     pLayer->AddClassifyCode(91000000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 1, CPLString("boundary"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(81110000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 2, CPLString("water"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(31410000);
-    pLayer->AddClassifyCode(31120000);
-    pLayer->AddClassifyCode(31710000);
-    pLayer->AddClassifyCode(72310000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 3, CPLString("city"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(41100000);
-    pLayer->AddClassifyCode(91100001);
-    pLayer->AddClassifyCode(91100002);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 4, CPLString("poi"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(123);
-    pLayer->AddClassifyCode(32410000);
-    pLayer->AddClassifyCode(44200000);
-    pLayer->AddClassifyCode(44200010);
-    pLayer->AddClassifyCode(47140000);
-    pLayer->AddClassifyCode(51121000);
-    pLayer->AddClassifyCode(51130000);
-    pLayer->AddClassifyCode(51410000);
-    pLayer->AddClassifyCode(51410001);
-    pLayer->AddClassifyCode(51420000);
-    pLayer->AddClassifyCode(53110000);
-    pLayer->AddClassifyCode(53311400);
-    pLayer->AddClassifyCode(53421000);
-    pLayer->AddClassifyCode(53510000);
-    pLayer->AddClassifyCode(53612000);
-    pLayer->AddClassifyCode(53612100);
-    pLayer->AddClassifyCode(53612101);
-    pLayer->AddClassifyCode(53612102);
-    pLayer->AddClassifyCode(53612103);
-    pLayer->AddClassifyCode(53612104);
-    pLayer->AddClassifyCode(53612105);
-    pLayer->AddClassifyCode(53612106);
-    pLayer->AddClassifyCode(53612107);
-    pLayer->AddClassifyCode(53612200);
-    pLayer->AddClassifyCode(53612201);
-    pLayer->AddClassifyCode(53612202);
-    pLayer->AddClassifyCode(53612203);
-    pLayer->AddClassifyCode(53612204);
-    pLayer->AddClassifyCode(53612205);
-    pLayer->AddClassifyCode(53612211);
-    pLayer->AddClassifyCode(53612300);
-    pLayer->AddClassifyCode(53612301);
-    pLayer->AddClassifyCode(53612302);
-    pLayer->AddClassifyCode(53612303);
-    pLayer->AddClassifyCode(53612304);
-    pLayer->AddClassifyCode(53612400);
-    pLayer->AddClassifyCode(53612401);
-    pLayer->AddClassifyCode(53612402);
-    pLayer->AddClassifyCode(53612403);
-    pLayer->AddClassifyCode(53612404);
-    pLayer->AddClassifyCode(53623000);
-    pLayer->AddClassifyCode(53623100);
-    pLayer->AddClassifyCode(53623110);
-    pLayer->AddClassifyCode(53623200);
-    pLayer->AddClassifyCode(53623300);
-    pLayer->AddClassifyCode(53623400);
-    pLayer->AddClassifyCode(53623500);
-    pLayer->AddClassifyCode(53623600);
-    pLayer->AddClassifyCode(53624000);
-    pLayer->AddClassifyCode(53624001);
-    pLayer->AddClassifyCode(53624002);
-    pLayer->AddClassifyCode(53624003);
-    pLayer->AddClassifyCode(53624004);
-    pLayer->AddClassifyCode(53624005);
-    pLayer->AddClassifyCode(53630000);
-    pLayer->AddClassifyCode(53631000);
-    pLayer->AddClassifyCode(53632101);
-    pLayer->AddClassifyCode(53632102);
-    pLayer->AddClassifyCode(53632103);
-    pLayer->AddClassifyCode(53632104);
-    pLayer->AddClassifyCode(53632105);
-    pLayer->AddClassifyCode(53632106);
-    pLayer->AddClassifyCode(53633001);
-    pLayer->AddClassifyCode(53633101);
-    pLayer->AddClassifyCode(53633102);
-    pLayer->AddClassifyCode(53633112);
-    pLayer->AddClassifyCode(53633114);
-    pLayer->AddClassifyCode(53635000);
-    pLayer->AddClassifyCode(53640000);
-    pLayer->AddClassifyCode(53641000);
-    pLayer->AddClassifyCode(53642000);
-    pLayer->AddClassifyCode(53643000);
-    pLayer->AddClassifyCode(53644000);
-    pLayer->AddClassifyCode(53646011);
-    pLayer->AddClassifyCode(53646013);
-    pLayer->AddClassifyCode(53646014);
-    pLayer->AddClassifyCode(53650000);
-    pLayer->AddClassifyCode(53650001);
-    pLayer->AddClassifyCode(53650002);
-    pLayer->AddClassifyCode(53650003);
-    pLayer->AddClassifyCode(53650004);
-    pLayer->AddClassifyCode(53650006);
-    pLayer->AddClassifyCode(53660000);
-    pLayer->AddClassifyCode(53661001);
-    pLayer->AddClassifyCode(53661002);
-    pLayer->AddClassifyCode(53661003);
-    pLayer->AddClassifyCode(53661004);
-    pLayer->AddClassifyCode(53661005);
-    pLayer->AddClassifyCode(53661006);
-    pLayer->AddClassifyCode(53661007);
-    pLayer->AddClassifyCode(53661008);
-    pLayer->AddClassifyCode(53661009);
-    pLayer->AddClassifyCode(53661010);
-    pLayer->AddClassifyCode(53661021);
-    pLayer->AddClassifyCode(53661100);
-    pLayer->AddClassifyCode(53662001);
-    pLayer->AddClassifyCode(53662002);
-    pLayer->AddClassifyCode(53662003);
-    pLayer->AddClassifyCode(53662004);
-    pLayer->AddClassifyCode(53672600);
-    pLayer->AddClassifyCode(53673300);
-    pLayer->AddClassifyCode(53700000);
-    pLayer->AddClassifyCode(53710000);
-    pLayer->AddClassifyCode(53720100);
-    pLayer->AddClassifyCode(53720200);
-    pLayer->AddClassifyCode(53720300);
-    pLayer->AddClassifyCode(53720301);
-    pLayer->AddClassifyCode(53720400);
-    pLayer->AddClassifyCode(53720500);
-    pLayer->AddClassifyCode(53720510);
-    pLayer->AddClassifyCode(53720520);
-    pLayer->AddClassifyCode(53720970);
-    pLayer->AddClassifyCode(53890000);
-
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 5, CPLString("highway"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(10715);
-    pLayer->AddClassifyCode(11118);
-    pLayer->AddClassifyCode(2000253);
-    pLayer->AddClassifyCode(2000727);
-    pLayer->AddClassifyCode(51133200);
-    pLayer->AddClassifyCode(51220000);
-    pLayer->AddClassifyCode(61230000);
-    pLayer->AddClassifyCode(61230000);
-    pLayer->AddClassifyCode(62132000);
-    pLayer->AddClassifyCode(62213100);
-    pLayer->AddClassifyCode(62213101);
-    pLayer->AddClassifyCode(62213102);
-    pLayer->AddClassifyCode(62223000);
-    pLayer->AddClassifyCode(62331000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 6, CPLString("railway"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(61111000);
-    pLayer->AddClassifyCode(61121100);
-    pLayer->AddClassifyCode(61121200);
-    pLayer->AddClassifyCode(61122000);
-    pLayer->AddClassifyCode(62131000);
-
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 7, CPLString("building"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(44100000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 8, CPLString("landuse"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(97);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 9, CPLString("vegetation"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(71111111);
-    pLayer->AddClassifyCode(71325000);
-    pLayer->AddClassifyCode(53890000);
-    pLayer->AddClassifyCode(22700000);
-    pLayer->AddClassifyCode(32282000);
-    pLayer->AddClassifyCode(71211000);
-    pLayer->AddClassifyCode(72120000);
-    pLayer->AddClassifyCode(71314000);
-    pLayer->AddClassifyCode(71312000);
-
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 10, CPLString("fire"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(96);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 11, CPLString("roaddesign"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(60000000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 13, CPLString("RoadStructure"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(62315000);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 14, CPLString("signature"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
-
-    pLayer->AddClassifyCode(91100000);
-    pLayer->AddClassifyCode(91200000);
 
     papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
     papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, 255, CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription);
@@ -1310,7 +1096,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
     nOffset = stRSCFileHeader.Objects.nOffset;
     _object OBJECT;
 
-    for (unsigned j = 0; j < stRSCFileHeader.Objects.nRecordCount; ++j)
+    for (i = 0; i < stRSCFileHeader.Objects.nRecordCount; ++i)
     {
         VSIFReadL(&OBJECT, sizeof(_object), 1, fpRSC);
 
