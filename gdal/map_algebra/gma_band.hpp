@@ -287,6 +287,18 @@ public:
     ~gma_band_p() {
         delete(mask);
     }
+    virtual void update() {
+        int has_nodata;
+        double nodata = m_band->GetNoDataValue(&has_nodata);
+        m_has_nodata = has_nodata != 0;
+        m_nodata = has_nodata ? (datatype_t)nodata : 0;
+        int mask_flags = m_band->GetMaskFlags();
+        delete(mask);
+        if (mask_flags & GMF_PER_DATASET || mask_flags & GMF_ALPHA) {
+            GDALRasterBand *m = m_band->GetMaskBand();
+            if (m) mask = new gma_band_p<uint8_t>(m);
+        }
+    }
     virtual GDALRasterBand *band() {
         return m_band;
     }
@@ -457,6 +469,9 @@ public:
             return false;
     }
 
+    virtual gma_band_t *new_band(const char *name, GDALDataType datatype) {
+        return gma_new_band(driver()->Create(name, w(), h(), 1, datatype, NULL)->GetRasterBand(1));
+    }
     virtual gma_number_t *new_number() {
         return new gma_number_p<datatype_t>();
     }
@@ -711,6 +726,7 @@ public:
         within_block_loop(cb);
     }
 
+    // fixme: the argument is always number of datatype_t
     int m_assign(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
         gma_cell_index i;
@@ -873,7 +889,7 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 datatype_t a = block->cell(i);
-                if (is_nodata(a))
+                if (!is_nodata(a))
                     block->cell(i) = c->classify(a);
             }
         }
@@ -1108,9 +1124,18 @@ public:
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), dem->datatype()) ;
         tb->D8(this, dem);
     }
-    virtual void route_flats(gma_band_t *) {};
-    virtual void upstream_area(gma_band_t *) {};
-    virtual void catchment(gma_band_t *, gma_cell_t *) {};
+    virtual void route_flats(gma_band_t *dem) {
+        gma_two_bands_t *tb = gma_new_two_bands(datatype(), dem->datatype()) ;
+        tb->route_flats(this, dem);
+    }
+    virtual void upstream_area(gma_band_t *fd) {
+        gma_two_bands_t *tb = gma_new_two_bands(datatype(), fd->datatype()) ;
+        tb->upstream_area(this, fd);
+    }
+    virtual void catchment(gma_band_t *fd, gma_cell_t *cell) {
+        gma_two_bands_t *tb = gma_new_two_bands(datatype(), fd->datatype()) ;
+        tb->catchment(this, fd, cell);
+    }
 };
 
 template <> int gma_band_p<uint8_t>::m_log10(gma_block<uint8_t>*, gma_object_t**, gma_object_t*, int);

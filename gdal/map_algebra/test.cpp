@@ -77,6 +77,7 @@ main() {
     printf("\n");
     
     b2->SetNoDataValue(9);
+    by->update();
     by->print();
     printf("\n");
 

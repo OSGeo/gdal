@@ -26,6 +26,10 @@ gma_band_t *gma_new_band(GDALRasterBand *b) {
     return NULL;
 }
 
+gma_band_t *gma_new_band(const char *name) {
+    return gma_new_band(((GDALDataset*)GDALOpen(name, GA_ReadOnly))->GetRasterBand(1));
+}
+
 // fixme: most of what's below go to methods in band
 gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
     if (klass == gma_integer)

@@ -576,42 +576,42 @@ public:
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_assign;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void add(gma_band_t *summand1, gma_band_t *summand2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)summand1;
         b2 = (gma_band_p<type2>*)summand2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_add;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void subtract(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_subtract;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void multiply(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_multiply;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void divide(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_divide;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void modulus(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_modulus;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, op);
     }
     virtual void decision(gma_band_t *a, gma_band_t *b, gma_band_t *c) {
         b1 = (gma_band_p<type1>*)a;
@@ -626,60 +626,66 @@ public:
         b2 = (gma_band_p<type2>*)zones;
         callback cb;
         cb.fct = &gma_two_bands_p::m_zonal_min;
-        within_block_loop(cb);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval);
+        return (gma_hash_t *)retval;
     }
     virtual gma_hash_t *zonal_max(gma_band_t *band1, gma_band_t *zones) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)zones;
         callback cb;
         cb.fct = &gma_two_bands_p::m_zonal_max;
-        within_block_loop(cb);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval);
+        return (gma_hash_t *)retval;
     }
     virtual void rim_by8(gma_band_t *rims, gma_band_t *zones) {
         b1 = (gma_band_p<type1>*)rims;
         b2 = (gma_band_p<type2>*)zones;
         callback cb;
         cb.fct = &gma_two_bands_p::m_rim_by8;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, NULL, 1);
     }
     virtual void fill_depressions(gma_band_t *filled_dem, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)filled_dem;
         b2 = (gma_band_p<type2>*)dem;
-
         double max_elev = b2->get_max()->value_as_double();
         b1->assign(max_elev);
-
         callback cb;
         cb.fct = &gma_two_bands_p::m_fill_depressions;
-        within_block_loop(cb);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval, NULL, 1);
     }
     virtual void D8(gma_band_t *fd, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)fd;
         b2 = (gma_band_p<type2>*)dem;
         callback cb;
         cb.fct = &gma_two_bands_p::m_D8;
-        within_block_loop(cb);
+        within_block_loop(cb, NULL, NULL, 1);
     }
     virtual void route_flats(gma_band_t *fd, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)fd;
         b2 = (gma_band_p<type2>*)dem;
         callback cb;
         cb.fct = &gma_two_bands_p::m_route_flats;
-        within_block_loop(cb);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval, NULL, 1);
     }
     virtual void upstream_area(gma_band_t *ua, gma_band_t *fd) {
         b1 = (gma_band_p<type1>*)ua;
         b2 = (gma_band_p<type2>*)fd;
         callback cb;
         cb.fct = &gma_two_bands_p::m_upstream_area;
-        within_block_loop(cb);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval, NULL, 1);
     }
     virtual void catchment(gma_band_t *catchment, gma_band_t *fd, gma_cell_t *outlet) {
         b1 = (gma_band_p<type1>*)catchment;
         b2 = (gma_band_p<type2>*)fd;
         callback cb;
         cb.fct = &gma_two_bands_p::m_catchment;
-        within_block_loop(cb, NULL, outlet);
+        gma_object_t *retval = NULL;
+        within_block_loop(cb, &retval, outlet, 1);
     }
 };
 

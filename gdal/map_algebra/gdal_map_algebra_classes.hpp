@@ -108,6 +108,7 @@ public:
 class gma_band_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_band;};
+    virtual void update() {};
     virtual GDALRasterBand *band() {};
     virtual GDALDataset *dataset() {};
     virtual GDALDriver *driver() {};
@@ -115,6 +116,7 @@ public:
     virtual int w() {};
     virtual int h() {};
 
+    virtual gma_band_t *new_band(const char *name, GDALDataType datatype) {};
     virtual gma_number_t *new_number() {};
     virtual gma_number_t *new_int(int value) {};
     virtual gma_pair_t *new_pair() {};
@@ -137,6 +139,7 @@ public:
     virtual void ceil() {};
     virtual void floor() {};
 
+    // below op can be used to make the operation conditional
     virtual void assign(int value) {};
     virtual void assign_all(int value) {};
     virtual void add(int summand) {};
@@ -165,6 +168,8 @@ public:
     virtual gma_pair_t *get_range() {};
     virtual std::vector<gma_cell_t*> *cells() {};
 
+    // below op can be used to make the operation conditional, 
+    // the test is made against the value of the parameter band
     virtual void assign(gma_band_t *, gma_logical_operation_t *op = NULL) {};
     virtual void add(gma_band_t *, gma_logical_operation_t *op = NULL) {};
     virtual void subtract(gma_band_t *, gma_logical_operation_t *op = NULL) {};

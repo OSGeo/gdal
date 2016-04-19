@@ -10,6 +10,7 @@
 
 // a function to create an argument
 gma_band_t *gma_new_band(GDALRasterBand *b);
+gma_band_t *gma_new_band(const char *name);
 
 // a function to create an argument
 gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass);
