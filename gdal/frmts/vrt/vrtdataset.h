@@ -462,9 +462,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     CPLString      m_osLastLocationInfo;
     char         **m_papszSourceList;
 
-    void           Initialize( int nXSize, int nYSize );
-
-    int            CanUseSourcesMinMaxImplementations();
+    bool           CanUseSourcesMinMaxImplementations();
 
   public:
     int            nSources;
