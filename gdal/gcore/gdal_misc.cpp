@@ -1101,7 +1101,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
             oSRS.exportToWkt( ppszWKT );
     }
 
-    size_t nCoordinateCount = 0;
+    int nCoordinateCount = 0;
     // TODO(schwehr): Initialize asGCPs.
     GDAL_GCP asGCPs[30];
 
@@ -1123,7 +1123,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
              && STARTS_WITH_CI(papszTok[0], "Point")
              && !EQUAL(papszTok[2], "")
              && !EQUAL(papszTok[3], "")
-             && nCoordinateCount < CPL_ARRAYSIZE(asGCPs) )
+             && nCoordinateCount <
+             static_cast<int>(CPL_ARRAYSIZE(asGCPs)) )
         {
             bool bReadOk = false;
             double dfLon = 0.0;
@@ -1290,7 +1291,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
     char **papszTok = NULL;
     bool bTypeRasterFound = false;
     bool bInsideTableDef = false;
-    size_t nCoordinateCount = 0;
+    int nCoordinateCount = 0;
     GDAL_GCP asGCPs[256];  // TODO(schwehr): Initialize.
     const int numLines = CSLCount(papszLines);
 
@@ -1326,7 +1327,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
         else if (bTypeRasterFound && bInsideTableDef
                  && CSLCount(papszTok) > 4
                  && EQUAL(papszTok[4], "Label")
-                 && nCoordinateCount < CPL_ARRAYSIZE(asGCPs) )
+                 && nCoordinateCount <
+                 static_cast<int>(CPL_ARRAYSIZE(asGCPs)) )
         {
             GDALInitGCPs( 1, asGCPs + nCoordinateCount );
 
@@ -1540,9 +1542,11 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
 
     double world[6] = { 0.0 };
     // reads the first 6 non-empty lines
-    size_t nLines = 0;
+    int nLines = 0;
     const int nLinesCount = CSLCount(papszLines);
-    for( int i = 0; i < nLinesCount && nLines < CPL_ARRAYSIZE(world); ++i )
+    for( int i = 0;
+         i < nLinesCount && nLines < static_cast<int>(CPL_ARRAYSIZE(world));
+         ++i )
     {
         CPLString line(papszLines[i]);
         if( line.Trim().empty() )
