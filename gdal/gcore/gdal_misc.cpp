@@ -1101,7 +1101,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
             oSRS.exportToWkt( ppszWKT );
     }
 
-    int nCoordinateCount = 0;
+    size_t nCoordinateCount = 0;
     // TODO(schwehr): Initialize asGCPs.
     GDAL_GCP asGCPs[30];
 
@@ -1290,7 +1290,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
     char **papszTok = NULL;
     bool bTypeRasterFound = false;
     bool bInsideTableDef = false;
-    int nCoordinateCount = 0;
+    size_t nCoordinateCount = 0;
     GDAL_GCP asGCPs[256];  // TODO(schwehr): Initialize.
     const int numLines = CSLCount(papszLines);
 
@@ -1540,7 +1540,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
 
     double world[6] = { 0.0 };
     // reads the first 6 non-empty lines
-    int nLines = 0;
+    size_t nLines = 0;
     const int nLinesCount = CSLCount(papszLines);
     for( int i = 0; i < nLinesCount && nLines < CPL_ARRAYSIZE(world); ++i )
     {
