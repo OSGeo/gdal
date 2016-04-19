@@ -422,12 +422,12 @@ OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXFIn, SXFPassport&
     GByte val[4];
     /* nObjectsRead = */ VSIFReadL(&val, 4, 1, fpSXFIn);
 
-    if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1))) // хххххх11
+    if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1))) // xxxxxx11
     {
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
-    if (CHECK_BIT(val[0], 2)) // ххххх0xx or xxxxx1xx
+    if (CHECK_BIT(val[0], 2)) // xxxxx0xx or xxxxx1xx
     {
         passport.informationFlags.bProjectionDataCompliance = true;
     }
@@ -504,7 +504,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
 
     const int nEPSG = static_cast<int>(aoVCS[iVCS]);
 
-    if (nEPSG < MIN_EPSG || nEPSG >= MAX_EPSG)
+    if (nEPSG < MIN_EPSG || nEPSG > MAX_EPSG)
     {
         CPLError(CE_Warning, CPLE_NotSupported, "SXF. Vertical coordinate system (SXF index %ld) not supported", iVCS);
         return;
