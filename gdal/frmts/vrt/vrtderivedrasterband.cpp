@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "vrtdataset.h"
+
 #include <map>
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
@@ -45,7 +46,7 @@ static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
 /*                        VRTDerivedRasterBand()                        */
 /************************************************************************/
 
-VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn) :
+VRTDerivedRasterBand::VRTDerivedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
     VRTSourcedRasterBand( poDSIn, nBandIn ),
     pszFuncName(NULL),
     eSourceTransferType(GDT_Unknown)
@@ -55,9 +56,9 @@ VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn) :
 /*                        VRTDerivedRasterBand()                        */
 /************************************************************************/
 
-VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn,
-					   GDALDataType eType,
-					   int nXSize, int nYSize) :
+VRTDerivedRasterBand::VRTDerivedRasterBand( GDALDataset *poDSIn, int nBandIn,
+                                            GDALDataType eType,
+                                            int nXSize, int nYSize ) :
     VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize),
     pszFuncName(NULL),
     eSourceTransferType(GDT_Unknown)
@@ -93,12 +94,12 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
  *
  * @return CE_None, invalid (NULL) parameters are currently ignored.
  */
-CPLErr CPL_STDCALL GDALAddDerivedBandPixelFunc
-(const char *pszFuncName, GDALDerivedPixelFunc pfnNewFunction)
+CPLErr CPL_STDCALL
+GDALAddDerivedBandPixelFunc( const char *pszFuncName,
+                             GDALDerivedPixelFunc pfnNewFunction )
 {
-    /* ---- Init ---- */
-    if ((pszFuncName == NULL) || (pszFuncName[0] == '\0') ||
-        (pfnNewFunction == NULL))
+    if( pszFuncName == NULL || pszFuncName[0] == '\0' ||
+        pfnNewFunction == NULL )
     {
       return CE_None;
     }
@@ -121,8 +122,9 @@ CPLErr CPL_STDCALL GDALAddDerivedBandPixelFunc
  *
  * @return CE_None, invalid (NULL) parameters are currently ignored.
  */
-CPLErr VRTDerivedRasterBand::AddPixelFunction
-(const char *pszFuncName, GDALDerivedPixelFunc pfnNewFunction)
+CPLErr
+VRTDerivedRasterBand::AddPixelFunction(
+    const char *pszFuncName, GDALDerivedPixelFunc pfnNewFunction )
 {
     return GDALAddDerivedBandPixelFunc(pszFuncName, pfnNewFunction);
 }
@@ -140,11 +142,10 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction
  * @return A derived band pixel function, or NULL if none have been
  * registered for pszFuncName.
  */
-GDALDerivedPixelFunc VRTDerivedRasterBand::GetPixelFunction
-(const char *pszFuncName)
+GDALDerivedPixelFunc
+VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncName )
 {
-    /* ---- Init ---- */
-    if ((pszFuncName == NULL) || (pszFuncName[0] == '\0'))
+    if( pszFuncName == NULL || pszFuncName[0] == '\0' )
     {
         return NULL;
     }
@@ -169,7 +170,7 @@ GDALDerivedPixelFunc VRTDerivedRasterBand::GetPixelFunction
  * @param pszFuncName Name of pixel function to be applied to this derived
  * band.
  */
-void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
+void VRTDerivedRasterBand::SetPixelFunctionName( const char *pszFuncNameIn )
 {
     pszFuncName = CPLStrdup( pszFuncNameIn );
 }
@@ -189,9 +190,9 @@ void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
  * @param eDataType Data type to use to obtain pixel information from
  * the sources to be passed to the derived band pixel function.
  */
-void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataTypeIn)
+void VRTDerivedRasterBand::SetSourceTransferType( GDALDataType eDataTypeIn )
 {
-    this->eSourceTransferType = eDataTypeIn;
+    eSourceTransferType = eDataTypeIn;
 }
 
 /************************************************************************/
@@ -251,13 +252,13 @@ void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataTypeIn)
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  */
-CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
-				       int nXOff, int nYOff, int nXSize,
-				       int nYSize, void * pData, int nBufXSize,
-				       int nBufYSize, GDALDataType eBufType,
-				       GSpacing nPixelSpace,
-                                       GSpacing nLineSpace,
-                                       GDALRasterIOExtraArg* psExtraArg )
+CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                        int nXOff, int nYOff, int nXSize,
+                                        int nYSize, void * pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        GSpacing nPixelSpace,
+                                        GSpacing nLineSpace,
+                                        GDALRasterIOExtraArg* psExtraArg )
 {
     if( eRWFlag == GF_Write )
     {
@@ -267,10 +268,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     }
 
     int typesize = GDALGetDataTypeSizeBytes(eBufType);
-    if (GDALGetDataTypeSize(eBufType) % 8 > 0) typesize++;
+    if( GDALGetDataTypeSize(eBufType) % 8 > 0 ) typesize++;
     GDALDataType eSrcType = eSourceTransferType;
-    if ((eSrcType == GDT_Unknown) || (eSrcType >= GDT_TypeCount)) {
-	eSrcType = eBufType;
+    if( eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount ) {
+        eSrcType = eBufType;
     }
     const int sourcesize = GDALGetDataTypeSizeBytes(eSrcType);
 
@@ -278,11 +279,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if ( nPixelSpace == typesize &&
-         (!m_bNoDataValueSet || m_dfNoDataValue == 0) ) {
-        memset( pData, 0, static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
+    if( nPixelSpace == typesize &&
+        (!m_bNoDataValueSet || m_dfNoDataValue == 0) ) {
+        memset( pData, 0,
+                static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
     }
-    else if ( !bEqualAreas || m_bNoDataValueSet )
+    else if( !bEqualAreas || m_bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )
@@ -304,21 +306,23 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && GetOverviewCount() > 0 )
     {
-        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                              pData, nBufXSize, nBufYSize,
-                              eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
+        if( OverviewRasterIO(
+               eRWFlag, nXOff, nYOff, nXSize, nYSize,
+               pData, nBufXSize, nBufYSize,
+               eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
             return CE_None;
     }
 
     /* ---- Get pixel function for band ---- */
     GDALDerivedPixelFunc pfnPixelFunc
-        = VRTDerivedRasterBand::GetPixelFunction(this->pszFuncName);
-    if (pfnPixelFunc == NULL) {
-	CPLError( CE_Failure, CPLE_IllegalArg,
-		  "VRTDerivedRasterBand::IRasterIO:"
-		  "Derived band pixel function '%s' not registered.\n",
-		  this->pszFuncName);
-	return CE_Failure;
+        = VRTDerivedRasterBand::GetPixelFunction(pszFuncName);
+    if( pfnPixelFunc == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "VRTDerivedRasterBand::IRasterIO:"
+                  "Derived band pixel function '%s' not registered.",
+                  this->pszFuncName) ;
+        return CE_Failure;
     }
 
     /* TODO: It would be nice to use a MallocBlock function for each
@@ -328,13 +332,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
        of freed blocks gets to be too great of a percentage of the size
        of the allocated blocks. */
 
-    /* ---- Get buffers for each source ---- */
+    // Get buffers for each source.
     void **pBuffers
         = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
         pBuffers[iSource] =
             VSI_MALLOC_VERBOSE(sourcesize * nBufXSize * nBufYSize);
-        if (pBuffers[iSource] == NULL)
+        if( pBuffers[iSource] == NULL )
         {
             for (int i = 0; i < iSource; i++) {
                 VSIFree(pBuffers[i]);
@@ -349,39 +353,41 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         /* don't need any special line-by-line handling when a nonzero  */
         /* nodata value is set.                                         */
         /* ------------------------------------------------------------ */
-        if ( !m_bNoDataValueSet || m_dfNoDataValue == 0 )
+        if( !m_bNoDataValueSet || m_dfNoDataValue == 0 )
         {
             memset( pBuffers[iSource], 0, sourcesize * nBufXSize * nBufYSize );
         }
         else
         {
             GDALCopyWords( &m_dfNoDataValue, GDT_Float64, 0,
-                           reinterpret_cast<GByte *>( pBuffers[iSource] ), eSrcType, sourcesize,
-                           nBufXSize * nBufYSize);
+                           reinterpret_cast<GByte *>( pBuffers[iSource] ),
+                           eSrcType, sourcesize,
+                           nBufXSize * nBufYSize );
         }
     }
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    /* ---- Load values for sources into packed buffers ---- */
+    // Load values for sources into packed buffers.
     CPLErr eErr = CE_None;
     for( int iSource = 0; iSource < nSources && eErr == CE_None; iSource++ ) {
         eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
-	    nXOff, nYOff, nXSize, nYSize,
+            nXOff, nYOff, nXSize, nYSize,
             pBuffers[iSource], nBufXSize, nBufYSize,
             eSrcType, GDALGetDataTypeSizeBytes( eSrcType ),
-            GDALGetDataTypeSizeBytes( eSrcType ) * nBufXSize, &sExtraArg);
+            GDALGetDataTypeSizeBytes( eSrcType ) * nBufXSize, &sExtraArg );
     }
 
-    /* ---- Apply pixel function ---- */
-    if (eErr == CE_None) {
+    // Apply pixel function.
+    if( eErr == CE_None ) {
         eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
-			     pData, nBufXSize, nBufYSize,
-			     eSrcType, eBufType, static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace) );
+                             pData, nBufXSize, nBufYSize,
+                             eSrcType, eBufType, static_cast<int>(nPixelSpace),
+                             static_cast<int>(nLineSpace) );
     }
 
-    /* ---- Release buffers ---- */
+    // Release buffers.
     for ( int iSource = 0; iSource < nSources; iSource++ ) {
         VSIFree(pBuffers[iSource]);
     }
@@ -395,20 +401,21 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
-				      const char *pszVRTPath )
+                                      const char *pszVRTPath )
 
 {
-    CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
+    const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
     if( eErr != CE_None )
         return eErr;
 
-    /* ---- Read derived pixel function type ---- */
+    // Read derived pixel function type.
     SetPixelFunctionName( CPLGetXMLValue( psTree, "PixelFunctionType", NULL ) );
 
-    /* ---- Read optional source transfer data type ---- */
+    // Read optional source transfer data type.
     const char *pszTypeName = CPLGetXMLValue(psTree, "SourceTransferType", NULL);
-    if (pszTypeName != NULL) {
-	eSourceTransferType = GDALGetDataTypeByName( pszTypeName );
+    if( pszTypeName != NULL )
+    {
+        eSourceTransferType = GDALGetDataTypeByName( pszTypeName );
     }
 
     return CE_None;
@@ -418,7 +425,7 @@ CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
+CPLXMLNode *VRTDerivedRasterBand::SerializeToXML( const char *pszVRTPath )
 {
     CPLXMLNode *psTree = VRTSourcedRasterBand::SerializeToXML( pszVRTPath );
 
@@ -434,7 +441,7 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
         CPLSetXMLValue( psTree, "PixelFunctionType", pszFuncName );
     if( this->eSourceTransferType != GDT_Unknown)
         CPLSetXMLValue( psTree, "SourceTransferType",
-		        GDALGetDataTypeName( eSourceTransferType ) );
+                        GDALGetDataTypeName( eSourceTransferType ) );
 
     return psTree;
 }
