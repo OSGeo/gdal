@@ -1,5 +1,32 @@
-#include "private.hpp"
+#include "gdal_map_algebra.hpp"
+#include "gma_classes.hpp"
+#include "gma_band.hpp"
+#include "gma_two_bands.hpp"
 
+gma_band_t *gma_new_band(GDALRasterBand *b) {
+    switch (b->GetRasterDataType()) {
+    case GDT_Byte:
+        return new gma_band_p<uint8_t>(b);
+    case GDT_UInt16:
+        return new gma_band_p<uint16_t>(b);
+    case GDT_Int16:
+        return new gma_band_p<int16_t>(b);
+    case GDT_UInt32:
+        return new gma_band_p<uint32_t>(b);
+    case GDT_Int32:
+        return new gma_band_p<int32_t>(b);
+    case GDT_Float32:
+        return new gma_band_p<float>(b);
+    case GDT_Float64:
+        return new gma_band_p<double>(b);
+    default:
+        //goto not_implemented_for_these_datatypes;
+        break;
+    }
+    return NULL;
+}
+
+// fixme: most of what's below go to methods in band
 gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass) {
     if (klass == gma_integer)
         return new gma_number_p<int>;
@@ -206,15 +233,15 @@ template <> const char *gma_band_p<int32_t>::format() { return "%04i "; }
 template <> const char *gma_band_p<float>::format() { return "%04.1f "; }
 template <> const char *gma_band_p<double>::format() { return "%04.2f "; }
 
-template <> int gma_band_p<uint8_t>::m_log10(gma_block<uint8_t>*, gma_object_t**, gma_object_t*) { return 0; }
-template <> int gma_band_p<uint16_t>::m_log10(gma_block<uint16_t>*, gma_object_t**, gma_object_t*) { return 0; }
-template <> int gma_band_p<int16_t>::m_log10(gma_block<int16_t>*, gma_object_t**, gma_object_t*) { return 0; }
-template <> int gma_band_p<uint32_t>::m_log10(gma_block<uint32_t>*, gma_object_t**, gma_object_t*) { return 0; }
-template <> int gma_band_p<int32_t>::m_log10(gma_block<int32_t>*, gma_object_t**, gma_object_t*) { return 0; }
+template <> int gma_band_p<uint8_t>::m_log10(gma_block<uint8_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
+template <> int gma_band_p<uint16_t>::m_log10(gma_block<uint16_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
+template <> int gma_band_p<int16_t>::m_log10(gma_block<int16_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
+template <> int gma_band_p<uint32_t>::m_log10(gma_block<uint32_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
+template <> int gma_band_p<int32_t>::m_log10(gma_block<int32_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 
 
-template <> int gma_band_p<float>::_modulus(gma_block<float>*, gma_object_t**, gma_object_t*) { return 0; }
-template <> int gma_band_p<double>::_modulus(gma_block<double>*, gma_object_t**, gma_object_t*) { return 0; }
+template <> int gma_band_p<float>::m_modulus(gma_block<float>*, gma_object_t**, gma_object_t*, int) { return 0; }
+template <> int gma_band_p<double>::m_modulus(gma_block<double>*, gma_object_t**, gma_object_t*, int) { return 0; }
 
 gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
     switch (type1) {

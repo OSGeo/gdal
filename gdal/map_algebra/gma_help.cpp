@@ -1,4 +1,7 @@
-#include "private.hpp"
+#include "gdal_map_algebra.hpp"
+#include "gma_classes.hpp"
+#include "gma_band.hpp"
+#include "gma_two_bands.hpp"
 
 void print_histogram(gma_histogram_t *hm) {
     if (hm == NULL) {

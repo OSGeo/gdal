@@ -15,86 +15,75 @@ int main() {
 
     if (0) {
 
-        GDALRasterBand *dem = ((GDALDataset*)GDALOpen("L3423G010.tiff", GA_ReadOnly))->GetRasterBand(1);
-        GDALDriver *driver = dem->GetDataset()->GetDriver();
-        int w = dem->GetXSize();
-        int h = dem->GetYSize();
+        // starting point is a DEM
+        gma_band_t *d = gma_new_band(((GDALDataset*)GDALOpen("L3423G010.tiff", GA_ReadOnly))->GetRasterBand(1));
 
-        // create a depressionless dem
-        GDALRasterBand *tmp = driver->Create("dem.tiff", w, h, 1, GDT_UInt16, NULL)->GetRasterBand(1);
-        gma_two_bands(tmp, gma_method_fill_depressions, dem);
-        tmp->FlushCache();
-        dem = tmp;
+        // first we create a depressionless dem
+        gma_band_t *dem = gma_new_band(d->driver()->Create("dem.tiff", d->w(), d->h(), 1, d->datatype(), NULL)->GetRasterBand(1));
 
-        // fd from dem
-        GDALRasterBand *fd = driver->Create("fd.tiff", w, h, 1, GDT_Byte, NULL)->GetRasterBand(1);
-        gma_two_bands(fd, gma_method_D8, dem);
-        gma_two_bands(fd, gma_method_route_flats, dem); // drain drainable flat areas
-        fd->FlushCache();
+        dem->fill_depressions(d); // would be nicer as dem = d->fill_depressions(); or just d->fill..
+
+        // now flow directions are easy
+        gma_band_t *fd = gma_new_band(d->driver()->Create("fd.tiff", d->w(), d->h(), 1, GDT_Byte, NULL)->GetRasterBand(1));
+        fd->D8(dem);
+        fd->route_flats(dem);
 
         // upstream area from the fd
-        GDALRasterBand *ua = driver->Create("ua.tiff", w, h, 1, GDT_UInt32, NULL)->GetRasterBand(1);
-        gma_two_bands(ua, gma_method_upstream_area, fd);
+        gma_band_t *ua = gma_new_band(d->driver()->Create("ua.tiff", d->w(), d->h(), 1, GDT_UInt32, NULL)->GetRasterBand(1));
+        ua->upstream_area(fd);
 
     }
 
     if (1) {
 
-        GDALRasterBand *ua = ((GDALDataset*)GDALOpen("ua.tiff", GA_ReadOnly))->GetRasterBand(1);
-        GDALRasterBand *fd = ((GDALDataset*)GDALOpen("fd.tiff", GA_ReadOnly))->GetRasterBand(1);
-        GDALDriver *driver = ua->GetDataset()->GetDriver();
-        int w = ua->GetXSize();
-        int h = ua->GetYSize();
+        gma_band_t *ua = gma_new_band(((GDALDataset*)GDALOpen("ua.tiff", GA_ReadOnly))->GetRasterBand(1));
+        gma_band_t *fd = gma_new_band(((GDALDataset*)GDALOpen("fd.tiff", GA_ReadOnly))->GetRasterBand(1));
 
         // catchments from the fd
-        GDALRasterBand *c = driver->Create("catchments.tiff", w, h, 1, GDT_UInt32, NULL)->GetRasterBand(1);
+        gma_band_t *c = gma_new_band(fd->driver()->Create("catchments.tiff", fd->w(), fd->h(), 1, GDT_UInt32, NULL)->GetRasterBand(1));
 
         // c = 0 except 1 on the borders
-        gma_cell_callback_t *cb = (gma_cell_callback_t*)gma_new_object(c, gma_cell_callback);
+        gma_cell_callback_t *cb = c->new_cell_callback();
         cb->set_callback(set_border_cells);
-        gma_cell_t *wh = (gma_cell_t*)gma_new_object(c, gma_cell);
-        wh->x() = w;
-        wh->y() = h;
+        gma_cell_t *wh = c->new_cell();
+        wh->x() = c->w();
+        wh->y() = c->h();
         cb->set_user_data(wh);
-        gma_with_arg(c, gma_method_cell_callback, cb);
+        c->cell_callback(cb);
 
         // c *= ua
-        gma_two_bands(c, gma_method_multiply_by_band, ua);
+        c->multiply(ua);
 
         //c *= c > 10000;
-        gma_logical_operation_t *op = (gma_logical_operation_t *)gma_new_object(c, gma_logical_operation);
+        gma_logical_operation_t *op = c->new_logical_operation();
         op->set_operation(gma_gt);
         op->set_value(10000);
-        gma_two_bands(c, gma_method_multiply_by_band, c, op);
+        c->multiply(c, op);
 
         // outlet cells
-        std::vector<gma_cell_t*> *outlets = (std::vector<gma_cell_t*>*)gma_compute_value(c, gma_method_get_cells);
+        std::vector<gma_cell_t*> *outlets = c->cells();
 
         // c = 0
-        gma_number_t *tmp = (gma_number_t*)gma_new_object(c, gma_number);
-        tmp->set_value(0);
-        gma_with_arg(c, gma_method_assign, tmp);
+        c->assign(0);
 
         for (int i = 0; i < outlets->size(); i++) {
             gma_cell_t *cell = outlets->at(i);
             printf("%i %i %i %i\n", cell->x(), cell->y(), cell->value_as_int(), i);
             cell->set_value(i+1);
-            gma_two_bands(c, gma_method_catchment, fd, cell);
+            c->catchment(fd, cell);
             break;
         }
 
     }
 
     if (0) {
-        GDALRasterBand *ua = ((GDALDataset*)GDALOpen("ua.tiff", GA_ReadOnly))->GetRasterBand(1);
-        GDALRasterBand *c = ((GDALDataset*)GDALOpen("catchments.tiff", GA_ReadOnly))->GetRasterBand(1);
-        GDALDriver *driver = ua->GetDataset()->GetDriver();
-        int w = ua->GetXSize();
-        int h = ua->GetYSize();
-        GDALRasterBand *ua2 = driver->Create("ua2.tiff", w, h, 1, GDT_Float32, NULL)->GetRasterBand(1);
-        gma_two_bands(ua2, gma_method_add_band, ua);
-        gma_two_bands(ua2, gma_method_multiply_by_band, c);
-        gma_simple(ua2, gma_method_log);
+        gma_band_t *ua = gma_new_band(((GDALDataset*)GDALOpen("ua.tiff", GA_ReadOnly))->GetRasterBand(1));
+        gma_band_t *c = gma_new_band(((GDALDataset*)GDALOpen("catchments.tiff", GA_ReadOnly))->GetRasterBand(1));
+        
+        gma_band_t *ua2 = gma_new_band(c->driver()->Create("ua2.tiff", c->w(), c->h(), 1, GDT_Float32, NULL)->GetRasterBand(1));
+        ua2->add(ua);
+        ua2->multiply(c);
+        ua2->log();
     }
 
 }

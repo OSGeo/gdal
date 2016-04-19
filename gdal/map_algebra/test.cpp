@@ -24,9 +24,11 @@ main() {
     loc->x() = 5;
     loc->y() = 5;
     cb->set_user_data(loc);
-    gma_with_arg(b, gma_method_cell_callback, cb);
 
-    gma_simple(b, gma_method_print);
+    gma_band_t *bx = (gma_band_t*)gma_new_object(b, gma_band);
+    bx->cell_callback(cb);
+    bx->print();
+    printf("\n");
 
     gma_classifier_t *c = (gma_classifier_t*)gma_new_object(b, gma_classifier);
     // how to define classifier?
@@ -45,23 +47,22 @@ main() {
         y->set_value(6*3.0);
         c->add_class(x, y);
     }
-    gma_with_arg(b, gma_method_classify, c);
-
+    bx->classify(c);
+    bx->print();
     printf("\n");
-    gma_simple(b, gma_method_print);
 
     GDALRasterBand *b2 = d->Create("", w_band, h_band, 1, GDT_Byte, NULL)->GetRasterBand(1);
     gma_logical_operation_t *op = (gma_logical_operation_t*)gma_new_object(b, gma_logical_operation);
     op->set_operation(gma_lt);
     op->set_value(11);
-    gma_two_bands(b2, gma_method_assign_band, b, op);
+    gma_band_t *by = (gma_band_t*)gma_new_object(b2, gma_band);
+    by->assign(bx, op);
 
+    by->print();
     printf("\n");
-    gma_simple(b2, gma_method_print);
 
-    gma_hash_t *z = (gma_hash_t *)gma_compute_value(b2, gma_method_zonal_neighbors);
+    gma_hash_t *z = by->zonal_neighbors();
 
-    printf("\n");
     std::vector<gma_number_t*> *zk = z->keys_sorted();
     for (int i = 0; i < zk->size(); i++) {
         gma_number_t *k = zk->at(i);
@@ -73,9 +74,10 @@ main() {
             printf("%i => %i\n", k1, k2);
         }
     }
-
-    b2->SetNoDataValue(9);
     printf("\n");
-    gma_simple(b2, gma_method_print);
+    
+    b2->SetNoDataValue(9);
+    by->print();
+    printf("\n");
 
 }

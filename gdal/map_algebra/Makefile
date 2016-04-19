@@ -2,47 +2,41 @@ inc = /home/ajolma/usr/include
 
 gdal = -L /home/ajolma/usr/lib -lgdal
 
-objects = gdal_map_algebra_arg.o gdal_map_algebra_compute_value.o gdal_map_algebra_simple.o gdal_map_algebra_two_bands.o gdal_map_algebra_hash.o gdal_map_algebra_help.o
+cpp_objects = gma_classes.o gma_help.o
 
-headers = hash.hpp private.hpp gdal_map_algebra.hpp gdal_map_algebra.h
+c_objects = gma_c_api.o
 
-all: demo d8 histogram test test-c-api
+cpp_headers = gdal_map_algebra_core.h gdal_map_algebra_classes.hpp gdal_map_algebra.hpp gma_classes.hpp gma_band.hpp gma_two_bands.hpp
 
-demo: demo.cpp $(objects)
-	gcc -o demo -I $(inc) demo.cpp $(objects) $(gdal) -g -lstdc++ -lm
+c_headers = gdal_map_algebra_core.h gdal_map_algebra_types.h gdal_map_algebra.h
 
-d8: d8.cpp $(objects)
-	gcc -o d8 -I $(inc) d8.cpp $(objects) $(gdal) -g -lstdc++ -lm
+programs = test demo histogram d8 test-c-api
 
-histogram: histogram.cpp $(objects)
-	gcc -o histogram -I $(inc) histogram.cpp $(objects) $(gdal) -g -lstdc++ -lm
+all: $(programs)
 
-test: test.cpp $(objects)
-	gcc -o test -I $(inc) test.cpp $(objects) $(gdal) -g -lstdc++ -lm
+test: test.cpp $(cpp_objects) $(cpp_headers)
+	gcc -o test -I $(inc) test.cpp $(cpp_objects) $(gdal) -g -lstdc++ -lm
 
-test-c-api: test-c-api.c $(objects) gdal_map_algebra_c_api.o
-	gcc -o test-c-api -I $(inc) test-c-api.c gdal_map_algebra_c_api.o $(objects) $(gdal) -g -lstdc++ -lm
+demo: demo.cpp $(cpp_objects) $(cpp_headers)
+	gcc -o demo -I $(inc) demo.cpp $(cpp_objects) $(gdal) -g -lstdc++ -lm
 
-gdal_map_algebra_arg.o: $(headers) gdal_map_algebra_arg.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_arg.cpp
+histogram: histogram.cpp $(cpp_objects) $(cpp_headers)
+	gcc -o histogram -I $(inc) histogram.cpp $(cpp_objects) $(gdal) -g -lstdc++ -lm
 
-gdal_map_algebra_compute_value.o: $(headers) gdal_map_algebra_compute_value.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_compute_value.cpp
+d8: d8.cpp $(cpp_objects) $(cpp_headers)
+	gcc -o d8 -I $(inc) d8.cpp $(cpp_objects) $(gdal) -g -lstdc++ -lm
 
-gdal_map_algebra_simple.o: $(headers) gdal_map_algebra_simple.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_simple.cpp
+test-c-api: test-c-api.c $(c_objects) $(cpp_objects)
+	gcc -o test-c-api -I $(inc) test-c-api.c $(c_objects) $(cpp_objects) $(gdal) -g -lstdc++ -lm
 
-gdal_map_algebra_two_bands.o: $(headers) gdal_map_algebra_two_bands.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_two_bands.cpp
+gma_classes.o: gma_classes.cpp $(cpp_headers)
+	gcc -c -g -I $(inc) gma_classes.cpp
 
-gdal_map_algebra_hash.o: $(headers) gdal_map_algebra_hash.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_hash.cpp
+gma_help.o: gma_help.cpp $(cpp_headers)
+	gcc -c -g -I $(inc) gma_help.cpp
 
-gdal_map_algebra_help.o: $(headers) gdal_map_algebra_help.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_help.cpp
-
-gdal_map_algebra_c_api.o: $(headers) gdal_map_algebra_c_api.cpp
-	gcc -c -g -I $(inc) gdal_map_algebra_c_api.cpp
+gma_c_api.o: gma_c_api.cpp $(c_headers)
+	gcc -c -g -I $(inc) gma_c_api.cpp $(cpp_objects)
 
 clean:
-	rm -f $(objects) demo d8 histogram test
+	rm -f $(programs) $(cpp_objects) $(c_objects)

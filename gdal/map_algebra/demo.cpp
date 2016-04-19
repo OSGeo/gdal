@@ -48,6 +48,6 @@ int main() {
     arg->set_first(tmp);
     arg->set_second(r);
 
-    hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+    hm = bx->histogram(arg);
     print_histogram(hm);
 }

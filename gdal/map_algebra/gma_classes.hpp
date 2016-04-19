@@ -1,3 +1,5 @@
+#include "gdal_priv.h"
+
 // concrete classes
 
 template <typename type> class gma_number_p : public gma_number_t {

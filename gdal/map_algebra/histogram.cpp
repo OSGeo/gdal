@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     if (argc < 3) return usage();
     GDALDataset *ds = (GDALDataset*)GDALOpen(argv[1], GA_ReadOnly);
     if (!ds) return usage();
-    GDALRasterBand *b = ds->GetRasterBand(1);
+    gma_band_t *b = (gma_band_t*)gma_new_object(ds->GetRasterBand(1), gma_band);
 
     int mode = atoi(argv[2]);
     
@@ -29,19 +29,19 @@ int main(int argc, char *argv[]) {
     switch (mode) {
     case 1: {
         // histogram of all values,  works only for integer bands
-        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, NULL);
+        hm = b->histogram();
         break;
     }
     case 2: {
         if (argc < 4) return usage();
         int n = atoi(argv[3]);
         // histogram in n bins between min and max
-        gma_pair_t *arg = (gma_pair_t *)gma_new_object(b, gma_pair);
-        gma_number_t *tmp = (gma_number_t *)gma_new_object(b, gma_integer);
+        gma_pair_t *arg = b->new_pair();
+        gma_number_t *tmp = b->new_number();
         tmp->set_value(n);
         arg->set_first(tmp);
-        arg->set_second(gma_compute_value(b, gma_method_get_range));
-        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        arg->set_second(b->get_range());
+        hm = b->histogram(arg);
         break;
     }
     case 3: {
@@ -49,26 +49,26 @@ int main(int argc, char *argv[]) {
         int n = atoi(argv[3]);
         double min = atof(argv[4]);
         double max = atof(argv[4]);
-        gma_pair_t *arg = (gma_pair_t *)gma_new_object(b, gma_pair);
-        gma_number_t *tmp = (gma_number_t *)gma_new_object(b, gma_integer);
+        gma_pair_t *arg = b->new_pair();
+        gma_number_t *tmp = b->new_number();
         tmp->set_value(n);
         arg->set_first(tmp);
-        gma_pair_t *tmp2 = (gma_pair_t *)gma_new_object(b, gma_range);
+        gma_pair_t *tmp2 = b->new_range();
         ((gma_number_t*)(tmp2->first()))->set_value(min);
         ((gma_number_t*)(tmp2->second()))->set_value(max);
         arg->set_second(tmp2);
-        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        hm = b->histogram(arg);
         break;
     }
     case 4: {
         if (argc < 4) return usage();
-        gma_bins_t *arg = (gma_bins_t *)gma_new_object(b, gma_bins);
+        gma_bins_t *arg = b->new_bins();
         int i = 3;
         while (i < argc) {
             arg->push(atof(argv[i]));
             i++;
         }
-        hm = (gma_histogram_t*)gma_compute_value(b, gma_method_histogram, arg);
+        hm = b->histogram(arg);
         break;
     }
     default:

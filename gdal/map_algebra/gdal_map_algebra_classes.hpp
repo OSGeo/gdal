@@ -1,5 +1,9 @@
+#ifndef GDAL_MAP_ALGEBRA_CLASSES
+#define GDAL_MAP_ALGEBRA_CLASSES
+
 #include "gdal_map_algebra_core.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 #include <vector>
 
 /*
@@ -104,8 +108,21 @@ public:
 class gma_band_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_band;};
-    virtual GDALDataType gdal_datatype() {};
-    virtual gma_number_t *new_number(int value) {};
+    virtual GDALRasterBand *band() {};
+    virtual GDALDataset *dataset() {};
+    virtual GDALDriver *driver() {};
+    virtual GDALDataType datatype() {};
+    virtual int w() {};
+    virtual int h() {};
+
+    virtual gma_number_t *new_number() {};
+    virtual gma_number_t *new_int(int value) {};
+    virtual gma_pair_t *new_pair() {};
+    virtual gma_pair_t *new_range() {};
+    virtual gma_bins_t *new_bins() {};
+    virtual gma_cell_t *new_cell() {};
+    virtual gma_cell_callback_t *new_cell_callback() {};
+    virtual gma_logical_operation_t *new_logical_operation() {};
 
     virtual void print() {};
     virtual void rand() {};
@@ -146,14 +163,18 @@ public:
     virtual gma_number_t *get_max() {};
     // returns a pair of numbers
     virtual gma_pair_t *get_range() {};
-    virtual std::vector<gma_cell_t*> *gma_method_get_cells() {};
+    virtual std::vector<gma_cell_t*> *cells() {};
 
-    virtual void assign(gma_band_t *) {};
-    virtual void add(gma_band_t *summand) {};
-    virtual void subtract(gma_band_t *) {};
-    virtual void multiply(gma_band_t *) {};
-    virtual void divide(gma_band_t *) {};
-    virtual void modulus(gma_band_t *) {};
+    virtual void assign(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+    virtual void add(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+    virtual void subtract(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+    virtual void multiply(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+    virtual void divide(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+    virtual void modulus(gma_band_t *, gma_logical_operation_t *op = NULL) {};
+
+    // this = value where decision is true
+    // the decision band must be of type uint8_t
+    virtual void decision(gma_band_t *value, gma_band_t *decision) {};
 
     virtual gma_hash_t *zonal_min(gma_band_t *zones) {};
     virtual gma_hash_t *zonal_max(gma_band_t *zones) {};
@@ -167,3 +188,5 @@ public:
     virtual void catchment(gma_band_t *, gma_cell_t *) {};
 
 };
+
+#endif
