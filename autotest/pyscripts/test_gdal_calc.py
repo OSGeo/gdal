@@ -105,9 +105,11 @@ def test_gdal_calc_py_2():
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A+B --overwrite --outfile tmp/test_gdal_calc_py_2_1.tif')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A*B --overwrite --outfile tmp/test_gdal_calc_py_2_2.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 --calc="sqrt(A)" --type=Float32 --overwrite --outfile tmp/test_gdal_calc_py_2_3.tif')
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_2_1.tif')
     ds2 = gdal.Open('tmp/test_gdal_calc_py_2_2.tif')
+    ds3 = gdal.Open('tmp/test_gdal_calc_py_2_3.tif')
 
     if ds1 is None:
         gdaltest.post_reason('ds1 not found')
@@ -115,16 +117,21 @@ def test_gdal_calc_py_2():
     if ds2 is None:
         gdaltest.post_reason('ds2 not found')
         return 'fail'
-
+    if ds3 is None:
+        gdaltest.post_reason('ds3 not found')
+        return 'fail'
     if ds1.GetRasterBand(1).Checksum() != 12368:
         gdaltest.post_reason('ds1 wrong checksum')
         return 'fail'
     if ds2.GetRasterBand(1).Checksum() != 62785:
         gdaltest.post_reason('ds2 wrong checksum')
         return 'fail'
-
+    if ds3.GetRasterBand(1).Checksum() != 47132:
+        gdaltest.post_reason('ds3 wrong checksum')
+        return 'fail'
     ds1 = None
     ds2 = None
+    ds3 = None
 
     return 'success'
 
@@ -228,6 +235,7 @@ def test_gdal_calc_py_cleanup():
             'tmp/test_gdal_calc_py_1_2.tif',
             'tmp/test_gdal_calc_py_2_1.tif',
             'tmp/test_gdal_calc_py_2_2.tif',
+            'tmp/test_gdal_calc_py_2_3.tif',
             'tmp/test_gdal_calc_py_3.tif',
             'tmp/test_gdal_calc_py_4_1.tif',
             'tmp/test_gdal_calc_py_4_2.tif',
