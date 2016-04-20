@@ -6,30 +6,29 @@ Command line raster calculator with numpy syntax
 \section gdal_calc_synopsis SYNOPSIS
 
 \verbatim
-gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
+gdal_calc.py --calc=expression --outfile=out_filename [-A filename]
+             [--A_band=n] [-B...-Z filename] [other_options]
 
 Options:
   -h, --help            show this help message and exit
-  --calc=CALC           calculation in gdalnumeric syntax using +-/* or any
-                        numpy array functions (i.e. logical_and())
-  -A A                  input gdal raster file, note you can use any letter
-                        A-Z
-  --A_band=A_BAND       number of raster band for file A (default 1)
-  --outfile=OUTF        output file to generate or fill
-  --NoDataValue=NODATAVALUE
-                        set output nodata value (Defaults to datatype specific
-                        value)
-  --type=TYPE           output datatype, must be one of ['Int32', 'Int16',
+  --calc=expression     calculation in gdalnumeric syntax using +-/* or any
+                        numpy array functions (i.e. log10())
+  -A filename           input gdal raster file, you can use any letter (A-Z)
+  --A_band=n            number of raster band for file A (default 1)
+  --outfile=filename    output file to generate or fill
+  --NoDataValue=value   output nodata value (default datatype specific value)
+  --type=datatype       output datatype, must be one of ['Int32', 'Int16',
                         'Float64', 'UInt16', 'Byte', 'UInt32', 'Float32']
-  --format=FORMAT       GDAL format for output file (default 'GTiff')
-  --creation-option=CREATION_OPTIONS, --co=CREATION_OPTIONS
+  --format=gdal_format  GDAL format for output file (default 'GTiff')
+  --creation-option=option, --co=option
                         Passes a creation option to the output format driver.
                         Multiple options may be listed. See format specific
                         documentation for legal creation options for each
                         format.
-  --allBands=ALLBANDS   process all bands of given raster (A-Z)
+  --allBands=[A-Z]      process all bands of given raster (A-Z)
   --overwrite           overwrite output file if it already exists
   --debug               print debugging information
+  --quiet               suppress progress messages
 \endverbatim
 
 \section gdal_edit_description DESCRIPTION
