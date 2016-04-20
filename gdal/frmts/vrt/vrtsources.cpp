@@ -268,6 +268,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     }
 
     VSIStatBufL sStat;
+    CPLString osTmp;
     int bRelativeToVRT = FALSE;  // TODO(schwehr): Make this a bool?
     const char *pszRelativePath = NULL;
 
@@ -318,7 +319,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                     pszRelativePath =
                         CPLExtractRelativePath( pszVRTPath, pszLastPart,
                                                 &bRelativeToVRT );
-                    const CPLString osTmp = osPrefixFilename + pszRelativePath;
+                    osTmp = osPrefixFilename + pszRelativePath;
                     pszRelativePath = osTmp.c_str();
                 }
                 else if( STARTS_WITH_CI(pszSyntax + osPrefix.size(),
@@ -340,8 +341,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                         pszRelativePath =
                             CPLExtractRelativePath( pszVRTPath, osFilename,
                                         &bRelativeToVRT );
-                        const CPLString osTmp =
-                            osPrefix + pszRelativePath + osSuffix;
+                        osTmp = osPrefix + pszRelativePath + osSuffix;
                         pszRelativePath = osTmp.c_str();
                     }
                 }
