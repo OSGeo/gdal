@@ -65,6 +65,10 @@ def doit(opts, args):
     if opts.debug:
         print("gdal_calc.py starting calculation %s" %(opts.calc))
 
+    # set up global namespace for eval with all functions of gdalnumeric
+    global_namespace = dict([(key, getattr(gdalnumeric, key))
+        for key in dir(gdalnumeric) if not key.startswith('__')])
+
     ################################################################
     # fetch details of input layers
     ################################################################
@@ -247,6 +251,9 @@ def doit(opts, args):
                 myNDVs=numpy.zeros(myBufSize)
                 myNDVs.shape=(nYValid,nXValid)
 
+                # modules available to calculation
+                local_namespace = {}
+
                 # fetch data for each input layer
                 for i,Alpha in enumerate(myAlphaList):
 
@@ -262,14 +269,14 @@ def doit(opts, args):
                     # fill in nodata values
                     myNDVs=1*numpy.logical_or(myNDVs==1, myval==myNDV[i])
 
-                    # create an array of values for this block
-                    exec("%s=myval" %Alpha)
+                    # add an array of values for this block to the eval namespace
+                    local_namespace[Alpha] = myval
                     myval=None
 
 
                 # try the calculation on the array blocks
                 try:
-                    myResult = eval(opts.calc)
+                    myResult = eval(opts.calc, global_namespace, local_namespace)
                 except:
                     print("evaluation of calculation %s failed" %(opts.calc))
                     raise
