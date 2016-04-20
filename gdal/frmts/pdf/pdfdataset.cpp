@@ -6779,6 +6779,9 @@ void GDALRegister_PDF()
     poDriver->SetMetadataItem( "HAVE_PDFIUM", "YES" );
 #endif // HAVE_PDFIUM
 
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList/>" );
+
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='COMPRESS' type='string-select' description='Compression method for raster data' default='DEFLATE'>\n"
