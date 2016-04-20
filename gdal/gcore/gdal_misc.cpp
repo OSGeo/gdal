@@ -65,8 +65,8 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
     bool bFloating = false;
     int nBits = 0;
 
-    const bool bComplex =
-        GDALDataTypeIsComplex(eType1) | GDALDataTypeIsComplex(eType2);
+    const bool bComplex = CPL_TO_BOOL(
+        GDALDataTypeIsComplex(eType1) | GDALDataTypeIsComplex(eType2) );
 
     switch( eType1 )
     {
