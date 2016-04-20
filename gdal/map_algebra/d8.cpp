@@ -10,10 +10,15 @@ int set_border_cells(gma_cell_t *cell, gma_object_t *band_size) {
     return 2;
 }
 
+int progress(double, const char *message, void *) {
+    printf("%s\n", message);
+    return TRUE;
+}
+
 int main() {
     GDALAllRegister();
 
-    if (0) {
+    if (1) {
 
         // starting point is a DEM
         gma_band_t *d = gma_new_band(((GDALDataset*)GDALOpen("L3423G010.tiff", GA_ReadOnly))->GetRasterBand(1));
@@ -21,7 +26,9 @@ int main() {
         // first we create a depressionless dem
         gma_band_t *dem = d->new_band("dem.tiff", d->datatype());
 
+        dem->set_progress_fct(progress, NULL);
         dem->fill_depressions(d); // would be nicer as dem = d->fill_depressions() or dem->depressionless_dem_from(d);
+        exit(0);
 
         // now flow directions are easy
         gma_band_t *fd = dem->new_band("fd.tiff", GDT_Byte);
@@ -76,7 +83,7 @@ int main() {
 
     }
 
-    if (1) {
+    if (0) {
         gma_band_t *ua = gma_new_band("ua.tiff");
         gma_band_t *c = gma_new_band("catchments.tiff");
         gma_band_t *ua2 = c->new_band("ua2.tiff", GDT_Float32);

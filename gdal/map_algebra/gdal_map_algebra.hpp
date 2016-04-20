@@ -5,18 +5,8 @@
 #include "gdal_map_algebra_classes.hpp"
 #include "gdal_priv.h"
 
-// an attempt at an API for the map algebra
-// goals: no templates, no void pointers
-
-// a function to create an argument
+// a band object factory
 gma_band_t *gma_new_band(GDALRasterBand *b);
 gma_band_t *gma_new_band(const char *name);
-
-// a function to create an argument
-gma_object_t *gma_new_object(GDALRasterBand *b, gma_class_t klass);
-
-// optional helper functions
-
-void print_histogram(gma_histogram_t *hm);
 
 #endif

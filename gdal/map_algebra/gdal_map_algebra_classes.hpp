@@ -55,6 +55,7 @@ public:
     virtual gma_class_t get_class() {return gma_histogram;};
     virtual unsigned int size() {};
     virtual gma_object_t *at(unsigned int i) {};
+    virtual void print() {};
 };
 
 class gma_classifier_t : public gma_object_t {
@@ -113,8 +114,12 @@ public:
     virtual GDALDataset *dataset() {};
     virtual GDALDriver *driver() {};
     virtual GDALDataType datatype() {};
+    virtual bool datatype_is_integer() {};
+    virtual bool datatype_is_float() {};
     virtual int w() {};
     virtual int h() {};
+
+    virtual void set_progress_fct(GDALProgressFunc progress, void * progress_arg) {};
 
     virtual gma_band_t *new_band(const char *name, GDALDataType datatype) {};
     virtual gma_number_t *new_number() {};
@@ -123,6 +128,7 @@ public:
     virtual gma_pair_t *new_range() {};
     virtual gma_bins_t *new_bins() {};
     virtual gma_cell_t *new_cell() {};
+    virtual gma_classifier_t *new_classifier() {};
     virtual gma_cell_callback_t *new_cell_callback() {};
     virtual gma_logical_operation_t *new_logical_operation() {};
 

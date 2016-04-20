@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     if (argc < 3) return usage();
     GDALDataset *ds = (GDALDataset*)GDALOpen(argv[1], GA_ReadOnly);
     if (!ds) return usage();
-    gma_band_t *b = (gma_band_t*)gma_new_object(ds->GetRasterBand(1), gma_band);
+    gma_band_t *b = gma_new_band(ds->GetRasterBand(1));
 
     int mode = atoi(argv[2]);
     
@@ -74,6 +74,6 @@ int main(int argc, char *argv[]) {
     default:
         return usage();
     }
-    print_histogram(hm);
+    hm->print();
     delete hm;
 }

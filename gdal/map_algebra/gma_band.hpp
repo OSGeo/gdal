@@ -2,92 +2,39 @@
 #include <cstdlib>
 #include <cmath>
 
-template <typename T> struct GDALDataTypeTraits
-{
-    static const GDALDataType datatype;
-    static const bool is_integer;
-    static const bool is_float;
-    static const bool is_complex;
-};
-
-template <> struct GDALDataTypeTraits<uint8_t>
-{
-    static const GDALDataType datatype = GDT_Byte;
-    static const bool is_integer = true;
-    static const bool is_float = false;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<uint16_t>
-{
-    static const GDALDataType datatype = GDT_UInt16;
-    static const bool is_integer = true;
-    static const bool is_float = false;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<int16_t>
-{
-    static const GDALDataType datatype = GDT_Int16;
-    static const bool is_integer = true;
-    static const bool is_float = false;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<uint32_t>
-{
-    static const GDALDataType datatype = GDT_UInt32;
-    static const bool is_integer = true;
-    static const bool is_float = false;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<int32_t>
-{
-    static const GDALDataType datatype = GDT_Int32;
-    static const bool is_integer = true;
-    static const bool is_float = false;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<float>
-{
-    static const GDALDataType datatype = GDT_Float32;
-    static const bool is_integer = false;
-    static const bool is_float = true;
-    static const bool is_complex = false;
-};
-
-template <> struct GDALDataTypeTraits<double>
-{
-    static const GDALDataType datatype = GDT_Float64;
-    static const bool is_integer = false;
-    static const bool is_float = true;
-    static const bool is_complex = false;
-};
-
 typedef struct {
     int x;
     int y;
 } gma_block_index; // block coordinates
 
-typedef struct {
+// cell coordinates in block or globally
+class gma_cell_index {
+public:
     int x;
     int y;
-} gma_cell_index; // cell coordinates in block or globally
-
-#define gma_cell_first_neighbor(center_cell) { .x = center_cell.x, .y = center_cell.y-1 }
-
-#define gma_cell_move_to_neighbor(cell, neighbor)       \
-    switch(neighbor) {                                   \
-    case 2: cell.x++; break;                             \
-    case 3: cell.y++; break;                             \
-    case 4: cell.y++; break;                             \
-    case 5: cell.x--; break;                             \
-    case 6: cell.x--; break;                             \
-    case 7: cell.y--; break;                             \
-    case 8: cell.y--; break;                             \
+    inline gma_cell_index() {
+        x = 0;
+        y = 0;
     }
+    inline gma_cell_index(int init_x, int init_y) {
+        x = init_x;
+        y = init_y;
+    }
+    inline gma_cell_index first_neighbor() {
+        return gma_cell_index(x, y-1);
+    }
+    inline void move_to_neighbor(int neighbor) {
+        switch(neighbor) {                                   
+        case 2: x++; break;                             
+        case 3: y++; break;                             
+        case 4: y++; break;                             
+        case 5: x--; break;                             
+        case 6: x--; break;                             
+        case 7: y--; break;                             
+        case 8: y--; break;                             
+        }
+    }
+};
 
 template <typename datatype> class gma_block {
     void *block;
@@ -100,11 +47,10 @@ public:
         m_w = w;
         m_h = h;
         block = CPLMalloc(w_block * h_block * sizeof(datatype));
-        CPLErr e = band->ReadBlock(m_index.x, m_index.y, block);
-        if (e != CE_None) {
-            fprintf(stderr, "ReadBlock error.");
-            exit(1);
-        }
+        if (block)
+            CPLErr e = band->ReadBlock(m_index.x, m_index.y, block);
+        else
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
     }
     ~gma_block() {
         CPLFree(block);
@@ -117,8 +63,8 @@ public:
     inline void cell(gma_cell_index i, datatype value) {
         ((datatype*)block)[i.x+i.y*m_w] = value;
     }
-    CPLErr write(GDALRasterBand *band) {
-        return band->WriteBlock(m_index.x, m_index.y, block);
+    void write(GDALRasterBand *band) {
+        CPLErr e = band->WriteBlock(m_index.x, m_index.y, block);
     }
     int is_border_cell(int border_block, gma_cell_index i) {
         if (!border_block)
@@ -161,6 +107,7 @@ public:
         return m_n;
     }
     void empty() {
+        if (!m_blocks) return;
         if (m_n == 0)
             return;
         for (int i = 0; i < m_n; i++)
@@ -170,8 +117,12 @@ public:
         m_blocks = NULL;
     }
     void remove(int i) {
-        if (i < 0 || i >= m_n) return;
+        if (!m_blocks || i < 0 || i >= m_n) return;
         gma_block<datatype> **blocks = (gma_block<datatype>**)CPLMalloc((m_n-1) * sizeof(gma_block<datatype>*));
+        if (!blocks) {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
+            return;
+        }
         int d = 0;
         for (int j = 0; j < m_n; j++) {
             if (j == i) {
@@ -186,20 +137,26 @@ public:
         m_blocks = blocks;
     }
     gma_block<datatype> *retrieve(gma_block_index index) {
+        if (!m_blocks) return NULL;
         for (int i = 0; i < m_n; i++)
             if (m_blocks[i]->m_index.x == index.x && m_blocks[i]->m_index.y == index.y)
                 return m_blocks[i];
         return NULL;
     }
-    CPLErr add(gma_block<datatype> *block) {
+    void add(gma_block<datatype> *block) {
+        if (!m_blocks && m_n != 0) return;
         m_n++;
         if (m_n == 1)
             m_blocks = (gma_block<datatype>**)CPLMalloc(sizeof(gma_block<datatype>*));
         else
             m_blocks = (gma_block<datatype>**)CPLRealloc(m_blocks, m_n * sizeof(gma_block<datatype>*));
-        m_blocks[m_n-1] = block;
+        if (!m_blocks)
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
+        else
+            m_blocks[m_n-1] = block;
     }
     void remove(gma_block_index i20, gma_block_index i21) {
+        if (!m_blocks) return;
         int i = 0;
         while (i < m_n) {
             if (m_blocks[i]->m_index.x < i20.x || m_blocks[i]->m_index.x > i21.x ||
@@ -216,7 +173,7 @@ public:
 //
 
 #define COMMA ,
-#define gma_retval_init(class, var, arg)        \
+#define GMA_RETVAL_INIT(class, var, arg)        \
     class *var;                                 \
     if (*retval == NULL) {                      \
         var = new class(arg);                   \
@@ -226,6 +183,8 @@ public:
 
 class gma_two_bands_t {
 public:
+    virtual void set_progress_fct(GDALProgressFunc progress, void * progress_arg) {};
+
     virtual void assign(gma_band_t *, gma_band_t *, gma_logical_operation_t *op = NULL) {};
     virtual void add(gma_band_t *, gma_band_t *, gma_logical_operation_t *op = NULL) {};
     virtual void subtract(gma_band_t *, gma_band_t *, gma_logical_operation_t *op = NULL) {};
@@ -260,6 +219,8 @@ template <typename datatype_t> class gma_band_p : public gma_band_t {
     datatype_t m_nodata;
     bool m_has_nodata;
     gma_band_p<uint8_t> *mask;
+    GDALProgressFunc m_progress; 
+    void * m_progress_arg;
 
 public:
     int w_blocks;
@@ -283,6 +244,8 @@ public:
             if (m) mask = new gma_band_p<uint8_t>(m);
         }
         datatype_size = sizeof(datatype_t);
+        m_progress = NULL;
+        m_progress_arg = NULL;
     }
     ~gma_band_p() {
         delete(mask);
@@ -311,11 +274,23 @@ public:
     virtual GDALDataType datatype() {
         return m_gdal_datatype;
     }
+    bool datatype_is_integer() {
+        gma_number_p<datatype_t> n;
+        return n.is_integer();
+    }
+    bool datatype_is_float() {
+        gma_number_p<datatype_t> n;
+        return n.is_float();
+    }
     virtual int w() {
         return m_w;
     }
     virtual int h() {
         return m_h;
+    }
+    virtual void set_progress_fct(GDALProgressFunc progress, void * progress_arg) {
+        m_progress = progress;
+        m_progress_arg = progress_arg;
     }
     int w_block() {
         return m_w_block;
@@ -330,10 +305,11 @@ public:
     gma_block<datatype_t> *get_block(gma_block_index i) {
         return cache.retrieve(i);
     }
-    CPLErr write_block(gma_block<datatype_t> *block) {
-        return block->write(m_band);
+    void write_block(gma_block<datatype_t> *block) {
+        if (!block) return;
+        block->write(m_band);
     }
-    CPLErr add_to_cache(gma_block_index i) {
+    void add_to_cache(gma_block_index i) {
         gma_block<datatype_t> *b = cache.retrieve(i);
         if (!b) {
             int w = ( (i.x+1) * m_w_block > m_w ) ? m_w - i.x * m_w_block : m_w_block;
@@ -341,13 +317,8 @@ public:
             b = new gma_block<datatype_t>(i, w, h, m_band, m_w_block, m_h_block);
             cache.add(b);
         }
-        if (mask) {
-        }
-        // fixme: add here update mask cache
     }
-    template <typename type1> CPLErr update_cache(gma_band_p<type1> *band1, gma_block<type1> *b1, int d) {
-
-        // fixme: add here update mask cache
+    template <typename type1> void update_cache(gma_band_p<type1> *band1, gma_block<type1> *b1, int d) {
 
         // which blocks in this band are needed to cover a block extended with focal distance d in band 1?
         // assuming the raster size is the same
@@ -368,19 +339,16 @@ public:
         i21.x = MIN(x11 / m_w_block, w_blocks-1);
         i21.y = MIN(y11 / m_h_block, h_blocks-1);
 
-        {
-            // add needed blocks
-            gma_block_index i;
-            for (i.y = i20.y; i.y <= i21.y; i.y++) {
-                for (i.x = i20.x; i.x <= i21.x; i.x++) {
-                    add_to_cache(i);
-                }
+        // add needed blocks
+        gma_block_index i;
+        for (i.y = i20.y; i.y <= i21.y; i.y++) {
+            for (i.x = i20.x; i.x <= i21.x; i.x++) {
+                add_to_cache(i);
             }
         }
-        {
-            // remove unneeded blocks
-            cache.remove(i20, i21);
-        }
+        // remove unneeded blocks
+        cache.remove(i20, i21);
+        if (mask) mask->update_cache(band1, b1, d);
     }
     inline gma_cell_index global_cell_index(gma_block<datatype_t> *b, gma_cell_index i) {
         gma_cell_index ret;
@@ -414,13 +382,10 @@ public:
     }
     inline bool cell_is_nodata(gma_block<datatype_t> *b, gma_cell_index i) {
         if (mask) {
-            uint8_t mask_value;
-            if (mask->has_value(this, b, i, &mask_value)) {
-                if (mask_value == 0) return true;
-            } else {
-                fprintf(stderr, "Mask's cache not updated.");
-                exit(1);
-            }
+            // https://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+            uint8_t mask_value = 0;
+            mask->has_value(this, b, i, &mask_value); // we assume mask cache is updated
+            return mask_value == 0; // strict zero means nodata
         }
         return m_has_nodata && b->cell(i) == m_nodata;
     }
@@ -491,6 +456,9 @@ public:
     virtual gma_bins_t *new_bins() {
         return new gma_bins_p<datatype_t>;
     }
+    virtual gma_classifier_t *new_classifier() {
+        return new gma_classifier_p<datatype_t>(true);
+    }
     virtual gma_cell_t *new_cell() {
         return new gma_cell_p<datatype_t>(0, 0, 0);
     }
@@ -512,15 +480,17 @@ public:
             for (i.x = 0; i.x < w_blocks; i.x++) {
                 add_to_cache(i);
                 gma_block<datatype_t> *block = get_block(i);
-                CPLErr e = update_cache(this, block, fd);
+                if (!block) return;
+                update_cache(this, block, fd);
                 int ret = (this->*cb.fct)(block, retval, arg, fd);
                 switch (ret) {
                 case 0: return;
                 case 1: break;
                 case 2: {
-                    CPLErr e = write_block(block);
+                    write_block(block);
                 }
                 }
+                if (CPLGetLastErrorNo() != CPLE_None) return;
             }
         }
     }
@@ -726,9 +696,9 @@ public:
         within_block_loop(cb);
     }
 
-    // fixme: the argument is always number of datatype_t
+
     int m_assign(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -739,7 +709,7 @@ public:
         return 2;
     }
     int m_assign_all(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -760,7 +730,7 @@ public:
         return 2;
     }
     int m_subtract(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -771,7 +741,7 @@ public:
         return 2;
     }
     int m_multiply(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -782,7 +752,7 @@ public:
         return 2;
     }
     int m_divide(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        datatype_t a = (datatype_t)(((gma_number_t*)arg)->value_as_double());
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -793,7 +763,7 @@ public:
         return 2;
     }
     int m_modulus(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
-        int a = ((gma_number_t*)arg)->value_as_int();
+        datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -806,37 +776,37 @@ public:
     virtual void assign(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign;
-        gma_number_p<int> *d = new gma_number_p<int>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void assign_all(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign_all;
-        gma_number_p<int> *d = new gma_number_p<int>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void add(int summand) {
         callback cb;
         cb.fct = &gma_band_p::m_add;
-        gma_number_p<int> *d = new gma_number_p<int>(summand);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(summand);
         within_block_loop(cb, NULL, d);
     }
     virtual void subtract(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_subtract;
-        gma_number_p<int> *d = new gma_number_p<int>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void multiply(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_multiply;
-        gma_number_p<int> *d = new gma_number_p<int>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void divide(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_divide;
-        gma_number_p<int> *d = new gma_number_p<int>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void modulus(int divisor) {
@@ -849,37 +819,37 @@ public:
     virtual void assign(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign;
-        gma_number_p<double> *d = new gma_number_p<double>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void assign_all(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign_all;
-        gma_number_p<double> *d = new gma_number_p<double>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void add(double summand) {
         callback cb;
         cb.fct = &gma_band_p::m_add;
-        gma_number_p<double> *d = new gma_number_p<double>(summand);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(summand);
         within_block_loop(cb, NULL, d);
     }
     virtual void subtract(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_subtract;
-        gma_number_p<double> *d = new gma_number_p<double>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void multiply(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_multiply;
-        gma_number_p<double> *d = new gma_number_p<double>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
     virtual void divide(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_divide;
-        gma_number_p<double> *d = new gma_number_p<double>(value);
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
         within_block_loop(cb, NULL, d);
     }
 
@@ -924,7 +894,7 @@ public:
     }
 
     int m_histogram(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *arg, int) {
-        gma_retval_init(gma_histogram_p<datatype_t>, hm, arg);
+        GMA_RETVAL_INIT(gma_histogram_p<datatype_t>, hm, arg);
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -936,7 +906,7 @@ public:
         return 1;
     }
     int m_zonal_neighbors(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *, int) {
-        gma_retval_init(gma_hash_p<datatype_t COMMA gma_hash_p<datatype_t COMMA gma_number_p<int> > >, zn, );
+        GMA_RETVAL_INIT(gma_hash_p<datatype_t COMMA gma_hash_p<datatype_t COMMA gma_number_p<int> > >, zn, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -949,9 +919,9 @@ public:
                     ns = new gma_hash_p<datatype_t,gma_number_p<int> >;
                     zn->put(me, ns);
                 }
-                gma_cell_index in = gma_cell_first_neighbor(i);
+                gma_cell_index in = i.first_neighbor();
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    gma_cell_move_to_neighbor(in, neighbor); // fixme: this needs focal_distance
+                    in.move_to_neighbor(neighbor);
 
                     if (cell_is_outside(block, in)) {
                         if (!ns->exists(-1))
@@ -971,7 +941,7 @@ public:
         return 1;
     }
     int m_get_min(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *arg, int) {
-        gma_retval_init(gma_number_p<datatype_t>, rv, );
+        GMA_RETVAL_INIT(gma_number_p<datatype_t>, rv, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -984,7 +954,7 @@ public:
         return 1;
     }
     int m_get_max(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_number_p<datatype_t>, rv, );
+        GMA_RETVAL_INIT(gma_number_p<datatype_t>, rv, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -997,7 +967,7 @@ public:
         return 1;
     }
     int m_get_range(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_pair_p<gma_number_p<datatype_t>* COMMA gma_number_p<datatype_t>* >, rv,
+        GMA_RETVAL_INIT(gma_pair_p<gma_number_p<datatype_t>* COMMA gma_number_p<datatype_t>* >, rv,
                         new gma_number_p<datatype_t> COMMA new gma_number_p<datatype_t>);
         gma_number_p<datatype_t>* min = (gma_number_p<datatype_t>*)rv->first();
         gma_number_p<datatype_t>* max = (gma_number_p<datatype_t>*)rv->second();
@@ -1015,7 +985,7 @@ public:
         return 1;
     }
     int m_get_cells(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(std::vector<gma_cell_t*>, cells, );
+        GMA_RETVAL_INIT(std::vector<gma_cell_t*>, cells, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -1029,7 +999,10 @@ public:
     }
 
     virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) {
-        // fixme: error if arg is null and band is not integer type
+        if (!arg && !datatype_is_integer()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Count of values is not supported for non integer bands.");
+            return NULL;
+        }
         gma_object_t *retval = NULL;
         callback cb;
         cb.fct = &gma_band_p::m_histogram;
@@ -1040,7 +1013,7 @@ public:
         gma_object_t *retval = NULL;
         callback cb;
         cb.fct = &gma_band_p::m_zonal_neighbors;
-        within_block_loop(cb, &retval, NULL);
+        within_block_loop(cb, &retval, NULL, 1);
         return (gma_hash_t*)retval;
     }
     virtual gma_number_t *get_min() {
@@ -1074,66 +1047,81 @@ public:
 
     virtual void assign(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->assign(this, b, op);
     }
     virtual void add(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->add(this, b, op);
     }
     virtual void subtract(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->subtract(this, b, op);
     }
     virtual void multiply(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->multiply(this, b, op);
     }
     virtual void divide(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->divide(this, b, op);
+        tb->set_progress_fct(m_progress, m_progress_arg);
     }
     virtual void modulus(gma_band_t *b, gma_logical_operation_t *op = NULL) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->modulus(this, b, op);
     }
 
     virtual void decision(gma_band_t *value, gma_band_t *decision) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), value->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->decision(this, value, decision);
     }
 
     virtual gma_hash_t *zonal_min(gma_band_t *zones) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), zones->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->zonal_min(this, zones);
     }
     virtual gma_hash_t *zonal_max(gma_band_t *zones) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), zones->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->zonal_max(this, zones);
     }
 
     virtual void rim_by8(gma_band_t *areas) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), areas->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->rim_by8(this, areas);
     }
 
     virtual void fill_depressions(gma_band_t *dem) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), dem->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->fill_depressions(this, dem);
     }
     virtual void D8(gma_band_t *dem) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), dem->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->D8(this, dem);
     }
     virtual void route_flats(gma_band_t *dem) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), dem->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->route_flats(this, dem);
     }
     virtual void upstream_area(gma_band_t *fd) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), fd->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->upstream_area(this, fd);
     }
     virtual void catchment(gma_band_t *fd, gma_cell_t *cell) {
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), fd->datatype()) ;
+        tb->set_progress_fct(m_progress, m_progress_arg);
         tb->catchment(this, fd, cell);
     }
 };

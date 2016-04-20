@@ -18,32 +18,31 @@ main() {
     int w_band = 16, h_band = 10;
     GDALRasterBand *b = d->Create("", w_band, h_band, 1, GDT_Float64, NULL)->GetRasterBand(1);
     
-    gma_cell_callback_t *cb = (gma_cell_callback_t*)gma_new_object(b, gma_cell_callback);
+    gma_band_t *bx = gma_new_band(b);
+    gma_cell_callback_t *cb = bx->new_cell_callback();
     cb->set_callback(callback);
-    gma_cell_t *loc = (gma_cell_t*)gma_new_object(b, gma_cell);
+    gma_cell_t *loc = bx->new_cell();
     loc->x() = 5;
     loc->y() = 5;
     cb->set_user_data(loc);
-
-    gma_band_t *bx = (gma_band_t*)gma_new_object(b, gma_band);
     bx->cell_callback(cb);
     bx->print();
     printf("\n");
 
-    gma_classifier_t *c = (gma_classifier_t*)gma_new_object(b, gma_classifier);
+    gma_classifier_t *c = bx->new_classifier();
     // how to define classifier?
     // we have a float raster => currently only bin => value is ok
     for (int i = 0; i < 5; i++) {
-        gma_number_t *x = (gma_number_t*)gma_new_object(b, gma_number);
+        gma_number_t *x = bx->new_number();
         x->set_value((i+1)*3.0);
-        gma_number_t *y = (gma_number_t*)gma_new_object(b, gma_number);
+        gma_number_t *y = bx->new_number();
         y->set_value((i+1)*3.0);
         c->add_class(x, y);
     }
     {
-        gma_number_t *x = (gma_number_t*)gma_new_object(b, gma_number);
+        gma_number_t *x = bx->new_number();
         x->set_inf(1);
-        gma_number_t *y = (gma_number_t*)gma_new_object(b, gma_number);
+        gma_number_t *y = bx->new_number();
         y->set_value(6*3.0);
         c->add_class(x, y);
     }
@@ -52,10 +51,10 @@ main() {
     printf("\n");
 
     GDALRasterBand *b2 = d->Create("", w_band, h_band, 1, GDT_Byte, NULL)->GetRasterBand(1);
-    gma_logical_operation_t *op = (gma_logical_operation_t*)gma_new_object(b, gma_logical_operation);
+    gma_band_t *by = gma_new_band(b2);
+    gma_logical_operation_t *op = by->new_logical_operation();
     op->set_operation(gma_lt);
     op->set_value(11);
-    gma_band_t *by = (gma_band_t*)gma_new_object(b2, gma_band);
     by->assign(bx, op);
 
     by->print();

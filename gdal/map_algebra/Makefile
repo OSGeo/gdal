@@ -2,7 +2,7 @@ inc = /home/ajolma/usr/include
 
 gdal = -L /home/ajolma/usr/lib -lgdal
 
-cpp_objects = gma_classes.o gma_help.o
+cpp_objects = gma_classes.o
 
 c_objects = gma_c_api.o
 
@@ -31,9 +31,6 @@ test-c-api: test-c-api.c $(c_objects) $(cpp_objects)
 
 gma_classes.o: gma_classes.cpp $(cpp_headers)
 	gcc -c -g -I $(inc) gma_classes.cpp
-
-gma_help.o: gma_help.cpp $(cpp_headers)
-	gcc -c -g -I $(inc) gma_help.cpp
 
 gma_c_api.o: gma_c_api.cpp $(c_headers)
 	gcc -c -g -I $(inc) gma_c_api.cpp $(cpp_objects)

@@ -18,13 +18,30 @@ public:
 template <typename type1,typename type2> class gma_two_bands_p : public gma_two_bands_t {
     gma_band_p<type1> *b1;
     gma_band_p<type2> *b2;
-    gma_band_p<uint8_t> *b3; // fixme: set b3 by default to null
+    gma_band_p<uint8_t> *b3;
+    GDALProgressFunc m_progress;
+    void * m_progress_arg;
+public:
+    gma_two_bands_p() {
+        b1 = NULL;
+        b2 = NULL;
+        b3 = NULL;
+        m_progress = NULL;
+        m_progress_arg = NULL;
+    }
+    virtual void set_progress_fct(GDALProgressFunc progress, void * progress_arg) {
+        m_progress = progress;
+        m_progress_arg = progress_arg;
+    }
     struct callback {
         typedef int (gma_two_bands_p<type1,type2>::*type)(gma_block<type1>*, gma_object_t**, gma_object_t*, int);
         type fct;
     };
     void within_block_loop(callback cb, gma_object_t **retval = NULL, gma_object_t *arg = NULL, int focal_distance = 0) {
-        // fixme: check here band sizes are same?
+        if (b1->w() != b2->w() || b1->h() != b2->h() || (b3 && (b1->w() != b3->w() || b1->h() != b3->h()))) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The sizes of the rasters should be the same.");
+            return;
+        }
         gma_block_index i;
         int iterate = 1;
         while (iterate) {
@@ -33,28 +50,25 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                 for (i.x = 0; i.x < b1->w_blocks; i.x++) {
                     b1->add_to_cache(i);
                     gma_block<type1> *block = b1->get_block(i);
-                    CPLErr e = b1->update_cache(b1, block, focal_distance);
-                    e = b2->update_cache(b1, block, focal_distance);
-                    // fixme: if b3, update its cache too
+                    if (!block) return;
+                    b1->update_cache(b1, block, focal_distance);
+                    b2->update_cache(b1, block, focal_distance);
+                    if (b3) b3->update_cache(b1, block, focal_distance);
                     int ret = (this->*cb.fct)(block, retval, arg, focal_distance);
                     switch (ret) {
                     case 0: return;
                     case 1: break;
                     case 2:
-                        e = b1->write_block(block);
+                        b1->write_block(block);
                         break;
                     case 3:
-                        e = b1->write_block(block);
+                        b1->write_block(block);
                         iterate = 1;
                         break;
-                    case 4:
-                        e = b1->write_block(block);
-                        iterate = 2;
-                        break;
                     }
+                    if (CPLGetLastErrorNo() != CPLE_None) return;
                 }
             }
-            // fixme? iteration
         }
         b1->empty_cache();
         b2->empty_cache();
@@ -202,7 +216,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
     }
     // b1 = values, b2 = zones
     int m_zonal_min(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
+        GMA_RETVAL_INIT(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -222,7 +236,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
         return 1;
     }
     int m_zonal_max(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
+        GMA_RETVAL_INIT(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -254,9 +268,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
 
                 type1 my_area = 0;
 
-                gma_cell_index in = gma_cell_first_neighbor(i);
+                gma_cell_index in = i.first_neighbor();
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    gma_cell_move_to_neighbor(in, neighbor);
+                    in.move_to_neighbor(neighbor);
                     type2 n_area;
                     bool has_neighbor = b2->has_value(b1, block, in, &n_area);
                     if (!has_neighbor || (has_neighbor && (n_area != area))) {
@@ -273,7 +287,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
     }
     // b1 = filled_dem, b2 = dem
     int m_fill_depressions(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
         if (block->first_block())
             rv->new_loop();
         int border_block = b1->is_border_block(block);
@@ -292,9 +306,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                     lowest_e_in_nhood = 0;
                 else {
                     int f = 1;
-                    gma_cell_index in = gma_cell_first_neighbor(i);
+                    gma_cell_index in = i.first_neighbor();
                     for (int neighbor = 1; neighbor < 9; neighbor++) {
-                        gma_cell_move_to_neighbor(in, neighbor);
+                        in.move_to_neighbor(neighbor);
                         type1 n_e;
                         b1->has_value(b1, block, in, &n_e);
                         if (f || n_e < lowest_e_in_nhood) {
@@ -315,12 +329,17 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
             }
         }
 
-        if (b1->last_block(block)) {
-            fprintf(stderr, "%ld cells changed\n", rv->count_in_this_loop_of_band);
+        if (b1->last_block(block) && m_progress) {
+            char buffer[30];
+            snprintf(buffer, 100, "%ld cells changed.", rv->count_in_this_loop_of_band);
+            if (!m_progress(0, buffer, m_progress_arg)) {
+                CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated.");
+                return 0;
+            }
         }
 
         if (rv->count_in_this_loop_of_band)
-            return 4;
+            return 3;
         else
             return 2;
     }
@@ -357,9 +376,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                 int dir;
                 int first = 1;
 
-                gma_cell_index i_n = gma_cell_first_neighbor(i);
+                gma_cell_index i_n = i.first_neighbor();
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    gma_cell_move_to_neighbor(i_n, neighbor);
+                    i_n.move_to_neighbor(neighbor);
 
                     type2 tmp;
                     if (!b2->has_value(b1, block, i_n, &tmp))
@@ -392,7 +411,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
     // this leaves low lying flat areas undrained
     // b1 = fd, b2 = dem
     int m_route_flats(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
         if (block->first_block())
             rv->new_loop();
         gma_cell_index i;
@@ -406,9 +425,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                 b2->has_value(b1, block, i, &my_elevation);
 
                 type1 new_dir = 0;
-                gma_cell_index in = gma_cell_first_neighbor(i);
+                gma_cell_index in = i.first_neighbor();
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    gma_cell_move_to_neighbor(in, neighbor);
+                    in.move_to_neighbor(neighbor);
 
                     if (b1->cell_is_outside(block, in))
                         continue;
@@ -438,13 +457,13 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
             fprintf(stderr, "%ld flat cells routed.\n", rv->count_in_this_loop_of_band);
 
         if (rv->count_in_this_loop_of_band)
-            return 4;
+            return 3;
         else
             return 2;
     }
     // b1 = upstream area = 1 + cells upstream, b2 = flow directions
     int m_upstream_area(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        gma_retval_init(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
         if (block->first_block())
             rv->new_loop();
         int border_block = b1->is_border_block(block);
@@ -460,9 +479,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                 int upstream_neighbors = 0;
                 int upstream_area = 0;
 
-                gma_cell_index in = gma_cell_first_neighbor(i);
+                gma_cell_index in = i.first_neighbor();
                 for (int neighbor = 1; neighbor < 9; neighbor++) {
-                    gma_cell_move_to_neighbor(in, neighbor);
+                    in.move_to_neighbor(neighbor);
 
                     gma_cell_index i1;
                     gma_block<type1> *blockn = b1->get_block(b1, block, in, &i1);
@@ -513,13 +532,13 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
             fprintf(stderr, "Upstream area of %ld cells computed.\n", rv->count_in_this_loop_of_band);
 
         if (rv->count_in_this_loop_of_band)
-            return 4;
+            return 3;
         else
             return 2;
     }
     // b1 = catchment, b2 = fd
     int m_catchment(gma_block<type1> *block, gma_object_t **retval, gma_object_t *arg, int) {
-        gma_retval_init(gma_band_iterator_t, rv,  );
+        GMA_RETVAL_INIT(gma_band_iterator_t, rv,  );
         if (block->first_block())
             rv->new_loop();
 
@@ -543,9 +562,9 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
                 type2 my_dir;
                 b2->has_value(b1, block, i, &my_dir);
 
-                gma_cell_index id = gma_cell_first_neighbor(i);
+                gma_cell_index id = i.first_neighbor();
                 for (int neighbor = 1; neighbor <= my_dir; neighbor++) {
-                    gma_cell_move_to_neighbor(id, neighbor);
+                    id.move_to_neighbor(neighbor);
                 }
 
                 type1 my_down;
@@ -564,7 +583,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
             fprintf(stderr, "%ld cells added\n", rv->count_in_this_loop_of_band);
 
         if (rv->count_in_this_loop_of_band)
-            return 4;
+            return 3;
         else
             return 2;
     }
@@ -713,33 +732,3 @@ template <> int gma_two_bands_p<double,uint16_t>::m_modulus(gma_block<double>*, 
 template <> int gma_two_bands_p<double,int16_t>::m_modulus(gma_block<double>*, gma_object_t**, gma_object_t*, int);
 template <> int gma_two_bands_p<double,uint32_t>::m_modulus(gma_block<double>*, gma_object_t**, gma_object_t*, int);
 template <> int gma_two_bands_p<double,int32_t>::m_modulus(gma_block<double>*, gma_object_t**, gma_object_t*, int);
-
-
-template <typename type1,typename type2> CPLErr gma_band_iteration(gma_band_p<type1> **band1, gma_band_p<type2> **band2) {
-    GDALDataset *ds1 = (*band1)->dataset();
-    GDALDriver *d = ds1->GetDriver();
-    char **files = ds1->GetFileList();
-
-    // flush and close band1
-    ds1->FlushCache();
-    delete ds1;
-
-    // rename band1 to files[0]."_tmp"
-    char *newpath = (char*)CPLMalloc(strlen(files[0])+5);
-    strcpy(newpath, files[0]);
-    strcat(newpath, "_tmp");
-    int e = VSIRename(files[0], newpath);
-
-    // reopen old b1 as b2
-    (*band2)->empty_cache();
-    GDALDataset *ds2 = (GDALDataset*)GDALOpen(newpath, GA_ReadOnly);
-    *band2 = new gma_band_p<type2>(ds2->GetRasterBand(1));
-
-    // create new b1
-    (*band1)->empty_cache();
-    ds1 = d->Create(files[0], (*band1)->w(), (*band1)->h(), 1, (*band1)->gdal_datatype(), NULL);
-    *band1 = new gma_band_p<type1>(ds1->GetRasterBand(1));
-
-    CPLFree(newpath);
-    CSLDestroy(files);
-}
