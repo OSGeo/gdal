@@ -3455,6 +3455,59 @@ def ogr_vrt_37():
     return 'success'
 
 ###############################################################################
+# Test reading geometry type
+
+def ogr_vrt_38():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    types = [ [ 'Point', ogr.wkbPoint ],
+              [ 'LineString', ogr.wkbLineString ],
+              [ 'Polygon', ogr.wkbPolygon ],
+              [ 'MultiPoint', ogr.wkbMultiPoint ],
+              [ 'MultiLineString', ogr.wkbMultiLineString ],
+              [ 'MultiPolygon', ogr.wkbMultiPolygon ],
+              [ 'GeometryCollection', ogr.wkbGeometryCollection ],
+              [ 'CircularString', ogr.wkbCircularString ],
+              [ 'CompoundCurve', ogr.wkbCompoundCurve ],
+              [ 'CurvePolygon', ogr.wkbCurvePolygon ],
+              [ 'MultiCurve', ogr.wkbMultiCurve ],
+              [ 'MultiSurface', ogr.wkbMultiSurface ],
+              [ 'Curve', ogr.wkbCurve ],
+              [ 'Surface', ogr.wkbSurface ]
+            ]
+
+    for (type_str, ogr_type) in types:
+      for qualifier in [ '', 'Z', 'M', 'ZM', '25D' ] :
+        if qualifier == 'Z' and ogr_type <= ogr.wkbGeometryCollection:
+            continue
+        if qualifier == '25D' and ogr_type > ogr.wkbGeometryCollection:
+            continue
+        gdal.FileFromMemBuffer('/vsimem/ogr_vrt_38.vrt',
+    """<OGRVRTDataSource>
+        <OGRVRTLayer name="ogr_vrt_38">
+            <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_38.shp</SrcDataSource>
+            <GeometryType>wkb%s%s</GeometryType>
+        </OGRVRTLayer>
+    </OGRVRTDataSource>""" % (type_str, qualifier) )
+
+        expected_geom_type = ogr_type
+        if qualifier == 'Z' or qualifier == 'ZM' or qualifier == '25D':
+          expected_geom_type = ogr.GT_SetZ(expected_geom_type)
+        if qualifier == 'M' or qualifier == 'ZM':
+          expected_geom_type = ogr.GT_SetM(expected_geom_type)
+
+        ds = ogr.Open('/vsimem/ogr_vrt_38.vrt', update = 1)
+        lyr = ds.GetLayer(0)
+        if lyr.GetGeomType() != expected_geom_type:
+            gdaltest.post_reason('failure')
+            print( type_str, qualifier, lyr.GetGeomType() )
+            return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_vrt_38.vrt')
+
+    return 'success'
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3519,6 +3572,7 @@ gdaltest_list = [
     ogr_vrt_35,
     ogr_vrt_36,
     ogr_vrt_37,
+    ogr_vrt_38,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

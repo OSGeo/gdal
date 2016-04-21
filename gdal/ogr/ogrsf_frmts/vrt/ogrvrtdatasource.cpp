@@ -58,7 +58,7 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbCircularString, "wkbCircularString" },
     { wkbCompoundCurve, "wkbCompoundCurve" },
     { wkbCurvePolygon, "wkbCurvePolygon" },
-    { wkbGeometryCollection, "wkbMultiCurve" },
+    { wkbMultiCurve, "wkbMultiCurve" },
     { wkbMultiSurface, "wkbMultiSurface" },
     { wkbCurve, "wkbCurve" },
     { wkbSurface, "wkbSurface" },
@@ -83,7 +83,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
 
             if( strstr(pszGType,"25D") != NULL || strstr(pszGType,"Z") != NULL )
                 eGeomType = wkbSetZ(eGeomType);
-            if( strstr(pszGType,"M") != NULL )
+            if( pszGType[strlen(pszGType)-1] == 'M' || pszGType[strlen(pszGType)-2] == 'M' )
                 eGeomType = wkbSetM(eGeomType);
             break;
         }
