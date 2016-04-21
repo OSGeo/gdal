@@ -2149,7 +2149,7 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
 /* (for VRTSourcedRasterBand::IRasterIO and VRTDerivedRasterBand::IRasterIO*/
 /*  for example)                                                           */
 /* ----------------------------------------------------------------------- */
-  // Let the general translation case do the necessary conversions
+    // Let the general translation case do the necessary conversions
     // on the first destination element.
     GDALCopyWords((void*)pSrcData, eSrcType, 0,
                   pDstData, eDstType, 0,
@@ -3679,7 +3679,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 
     CPLDebug( "GDAL",
               "GDALDatasetCopyWholeRaster(): %d*%d swaths, bInterleave=%d",
-              nSwathCols, nSwathLines, bInterleave );
+              nSwathCols, nSwathLines, static_cast<int>(bInterleave) );
 
     if( nSwathCols == nXSize && poSrcDS->GetDriver() != NULL &&
         EQUAL(poSrcDS->GetDriver()->GetDescription(), "ECW") )
