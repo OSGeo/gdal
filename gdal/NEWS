@@ -212,6 +212,7 @@ Utilities:
  * gdal_rasterize: do on-the-fly reprojection of input vector onto output raster
  * gdal_rasterize: rasterize: always create output with 1/2 cell buffer of input geometry envelope (#6058)
  * gdal_rasterize: add the -dialect option
+ * gdal_rasterize: accept NaN as a valid value for -init / -burn (#6467)
  * gdalwarp: add -doo option to specify open options of (existing) output dataset
  * gdalwarp: if RPC_DEM warping option is specified, use exact transformer by default (#5993)
  * gdalwarp: make it honour nodata value of existing dataset (if -dstNoData isn't explicitly specified)
@@ -237,6 +238,7 @@ Utilities:
  * gdal_merge.py: takes again into account -n flag (#6067)
  * gdalbuildvrt / gdal_translate / VRT: use floating point values for source and destination offsets and sizes (#6127)
  * gdalmove.py: fix to run with GDAL 2.0 gdal.InvGeoTransform() signature
+ * gdal_calc.py: Add * from gdalnumeric to gdal_calc.py eval namespace again, to fix 2.0 regression that made for example 'log10(A)' to no longer work (https://github.com/OSGeo/gdal/pull/121)
 
 Python samples:
  * gdalpythonserver.py: update to protocol 3
@@ -457,6 +459,9 @@ WMS driver:
  * add a IIP (Internet Imaging Protocol) minidriver
  * limit number of zoom levels for ArcGIS MapServer JSon (#6186)
  * determine a resolution that will not result in a number that is larger than the maximum size of an integer.  Any value that exceeds the maximum size of an integer will raise an invalid dataset dimensions error. (https://github.com/OSGeo/gdal/pull/89)
+
+XYZ driver:
+ * be more robust to not exactly equal X and Y spacing (#6461)
 
 == OGR 2.1.0 - Overview of Changes ==
 
