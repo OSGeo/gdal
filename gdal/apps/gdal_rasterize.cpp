@@ -46,7 +46,9 @@ CPL_CVSID("$Id$");
 static int ArgIsNumeric( const char *pszArg )
 
 {
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
+    char* pszEnd = NULL;
+    CPLStrtod(pszArg, &pszEnd);
+    return pszEnd != NULL && pszEnd[0] == '\0';
 }
 
 /************************************************************************/
