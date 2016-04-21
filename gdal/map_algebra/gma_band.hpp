@@ -47,10 +47,7 @@ public:
         m_w = w;
         m_h = h;
         block = CPLMalloc(w_block * h_block * sizeof(datatype));
-        if (block)
-            CPLErr e = band->ReadBlock(m_index.x, m_index.y, block);
-        else
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
+        if (block) CPLErr e = band->ReadBlock(m_index.x, m_index.y, block);
     }
     ~gma_block() {
         CPLFree(block);
@@ -119,10 +116,7 @@ public:
     void remove(int i) {
         if (!m_blocks || i < 0 || i >= m_n) return;
         gma_block<datatype> **blocks = (gma_block<datatype>**)CPLMalloc((m_n-1) * sizeof(gma_block<datatype>*));
-        if (!blocks) {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
-            return;
-        }
+        if (!blocks) return;
         int d = 0;
         for (int j = 0; j < m_n; j++) {
             if (j == i) {
@@ -150,10 +144,7 @@ public:
             m_blocks = (gma_block<datatype>**)CPLMalloc(sizeof(gma_block<datatype>*));
         else
             m_blocks = (gma_block<datatype>**)CPLRealloc(m_blocks, m_n * sizeof(gma_block<datatype>*));
-        if (!m_blocks)
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory.");
-        else
-            m_blocks[m_n-1] = block;
+        if (m_blocks) m_blocks[m_n-1] = block;
     }
     void remove(gma_block_index i20, gma_block_index i21) {
         if (!m_blocks) return;
@@ -486,29 +477,21 @@ public:
                 switch (ret) {
                 case 0: return;
                 case 1: break;
-                case 2: {
-                    write_block(block);
-                }
+                case 2: write_block(block);
                 }
                 if (CPLGetLastErrorNo() != CPLE_None) return;
             }
         }
     }
 
-    const char *space() {
-        return "";
-    }
-    const char *format() {
-        return "%i ";
-    }
     int m_print(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (cell_is_nodata(block, i))
-                    printf("%s", space());
+                    printf("%s", gma_number_p<datatype_t>::space());
                 else
-                    printf(format(), block->cell(i));
+                    printf(gma_number_p<datatype_t>::format(), block->cell(i));
             }
             printf("\n");
         }
@@ -538,6 +521,7 @@ public:
     // fabs for floats
 
     int m_exp(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
+        // fixme: error if not float
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
@@ -776,7 +760,8 @@ public:
     virtual void assign(int value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign;
-        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
+        datatype_t v = MAX(MIN(value, std::numeric_limits<datatype_t>::max()), std::numeric_limits<datatype_t>::min());
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(v);
         within_block_loop(cb, NULL, d);
     }
     virtual void assign_all(int value) {
@@ -819,7 +804,8 @@ public:
     virtual void assign(double value) {
         callback cb;
         cb.fct = &gma_band_p::m_assign;
-        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(value);
+        datatype_t v = MAX(MIN(value, std::numeric_limits<datatype_t>::max()), std::numeric_limits<datatype_t>::min());
+        gma_number_p<datatype_t> *d = new gma_number_p<datatype_t>(v);
         within_block_loop(cb, NULL, d);
     }
     virtual void assign_all(double value) {
@@ -1046,31 +1032,55 @@ public:
     }
 
     virtual void assign(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->set_progress_fct(m_progress, m_progress_arg);
         tb->assign(this, b, op);
     }
     virtual void add(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->set_progress_fct(m_progress, m_progress_arg);
         tb->add(this, b, op);
     }
     virtual void subtract(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->set_progress_fct(m_progress, m_progress_arg);
         tb->subtract(this, b, op);
     }
     virtual void multiply(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->set_progress_fct(m_progress, m_progress_arg);
         tb->multiply(this, b, op);
     }
     virtual void divide(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->divide(this, b, op);
         tb->set_progress_fct(m_progress, m_progress_arg);
     }
     virtual void modulus(gma_band_t *b, gma_logical_operation_t *op = NULL) {
+        if (op && op->datatype() != b->datatype()) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "The operation must have the same datatype as the argument band.");
+            return;
+        }
         gma_two_bands_t *tb = gma_new_two_bands(datatype(), b->datatype()) ;
         tb->set_progress_fct(m_progress, m_progress_arg);
         tb->modulus(this, b, op);

@@ -52,7 +52,7 @@ main() {
 
     GDALRasterBand *b2 = d->Create("", w_band, h_band, 1, GDT_Byte, NULL)->GetRasterBand(1);
     gma_band_t *by = gma_new_band(b2);
-    gma_logical_operation_t *op = by->new_logical_operation();
+    gma_logical_operation_t *op = bx->new_logical_operation();
     op->set_operation(gma_lt);
     op->set_value(11);
     by->assign(bx, op);

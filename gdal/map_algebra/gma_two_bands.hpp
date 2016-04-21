@@ -331,7 +331,7 @@ public:
 
         if (b1->last_block(block) && m_progress) {
             char buffer[30];
-            snprintf(buffer, 100, "%ld cells changed.", rv->count_in_this_loop_of_band);
+            snprintf(buffer, 30, "%ld cells changed.", rv->count_in_this_loop_of_band);
             if (!m_progress(0, buffer, m_progress_arg)) {
                 CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated.");
                 return 0;
@@ -453,9 +453,14 @@ public:
             }
         }
 
-        if (b1->last_block(block))
-            fprintf(stderr, "%ld flat cells routed.\n", rv->count_in_this_loop_of_band);
-
+        if (b1->last_block(block) && m_progress) {
+            char buffer[30];
+            snprintf(buffer, 30, "%ld flat cells routed.", rv->count_in_this_loop_of_band);
+            if (!m_progress(0, buffer, m_progress_arg)) {
+                CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated.");
+                return 0;
+            }
+        }
         if (rv->count_in_this_loop_of_band)
             return 3;
         else
@@ -528,9 +533,14 @@ public:
             }
         }
 
-        if (b1->last_block(block))
-            fprintf(stderr, "Upstream area of %ld cells computed.\n", rv->count_in_this_loop_of_band);
-
+        if (b1->last_block(block) && m_progress) {
+            char buffer[30];
+            snprintf(buffer, 30, "Upstream area of %ld cells computed.", rv->count_in_this_loop_of_band);
+            if (!m_progress(0, buffer, m_progress_arg)) {
+                CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated.");
+                return 0;
+            }
+        }
         if (rv->count_in_this_loop_of_band)
             return 3;
         else
@@ -579,9 +589,14 @@ public:
             }
         }
 
-        if (b1->last_block(block))
-            fprintf(stderr, "%ld cells added\n", rv->count_in_this_loop_of_band);
-
+        if (b1->last_block(block) && m_progress) {
+            char buffer[30];
+            snprintf(buffer, 30, "%ld cells added.", rv->count_in_this_loop_of_band);
+            if (!m_progress(0, buffer, m_progress_arg)) {
+                CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated.");
+                return 0;
+            }
+        }
         if (rv->count_in_this_loop_of_band)
             return 3;
         else

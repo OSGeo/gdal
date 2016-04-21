@@ -30,63 +30,43 @@ gma_band_t *gma_new_band(const char *name) {
     return gma_new_band(((GDALDataset*)GDALOpen(name, GA_ReadOnly))->GetRasterBand(1));
 }
 
-template <> bool gma_number_p<uint8_t>::is_integer() { return true; }
+template <> GDALDataType gma_number_p<uint8_t>::datatype_p() { return GDT_Byte; }
+template <> GDALDataType gma_number_p<uint16_t>::datatype_p() { return GDT_UInt16; }
+template <> GDALDataType gma_number_p<int16_t>::datatype_p() { return GDT_Int16; }
+template <> GDALDataType gma_number_p<uint32_t>::datatype_p() { return GDT_UInt32; }
+template <> GDALDataType gma_number_p<int32_t>::datatype_p() { return GDT_Int32; }
+template <> GDALDataType gma_number_p<float>::datatype_p() { return GDT_Float32; }
+template <> GDALDataType gma_number_p<double>::datatype_p() { return GDT_Float64; }
+
 template <> bool gma_number_p<uint8_t>::is_float() { return false; }
-template <> int gma_number_p<uint8_t>::inf_int(int sign) { return sign < 0 ? 0 : 255; };
-template <> double gma_number_p<uint8_t>::inf_double(int sign) { return sign < 0 ? 0 : 255; };
-
-template <> bool gma_number_p<uint16_t>::is_integer() { return true; }
 template <> bool gma_number_p<uint16_t>::is_float() { return false; }
-template <> int gma_number_p<uint16_t>::inf_int(int sign) { return sign < 0 ? 0 : 65535; };
-template <> double gma_number_p<uint16_t>::inf_double(int sign) { return sign < 0 ? 0 : 65535; };
-
-template <> bool gma_number_p<int16_t>::is_integer() { return true; }
 template <> bool gma_number_p<int16_t>::is_float() { return false; }
-template <> int gma_number_p<int16_t>::inf_int(int sign) { return sign < 0 ? -32768 : 32768; };
-template <> double gma_number_p<int16_t>::inf_double(int sign) { return sign < 0 ? -32768 : 32768; };
-
-template <> bool gma_number_p<uint32_t>::is_integer() { return true; }
 template <> bool gma_number_p<uint32_t>::is_float() { return false; }
-template <> int gma_number_p<uint32_t>::inf_int(int sign) { return sign < 0 ? 0 : 4294967295; };
-template <> double gma_number_p<uint32_t>::inf_double(int sign) { return sign < 0 ? 0 : 4294967295; };
-
-template <> bool gma_number_p<int32_t>::is_integer() { return true; }
 template <> bool gma_number_p<int32_t>::is_float() { return false; }
-template <> int gma_number_p<int32_t>::inf_int(int sign) { return sign < 0 ? -2147483648 : 2147483648; };
-template <> double gma_number_p<int32_t>::inf_double(int sign) { return sign < 0 ? -2147483648 : 2147483648; };
-
-template <> bool gma_number_p<float>::is_integer() { return false; }
 template <> bool gma_number_p<float>::is_float() { return true; }
-template <> int gma_number_p<float>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
-template <> double gma_number_p<float>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
-
-template <> bool gma_number_p<double>::is_integer() { return false; }
 template <> bool gma_number_p<double>::is_float() { return true; }
-template <> int gma_number_p<double>::inf_int(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
-template <> double gma_number_p<double>::inf_double(int sign) { return sign < 0 ? -INFINITY : INFINITY; };
 
-template <> const char *gma_band_p<uint8_t>::space() { return "   "; }
-template <> const char *gma_band_p<uint16_t>::space() { return "   "; }
-template <> const char *gma_band_p<int16_t>::space() { return "   "; }
-template <> const char *gma_band_p<uint32_t>::space() { return "   "; }
-template <> const char *gma_band_p<int32_t>::space() { return "   "; }
-template <> const char *gma_band_p<float>::space() { return "    "; }
-template <> const char *gma_band_p<double>::space() { return "     "; }
+template <> const char *gma_number_p<uint8_t>::format() { return "%3u"; }
+template <> const char *gma_number_p<uint16_t>::format() { return "%5u"; }
+template <> const char *gma_number_p<int16_t>::format() { return "%5i"; }
+template <> const char *gma_number_p<uint32_t>::format() { return "%7u"; }
+template <> const char *gma_number_p<int32_t>::format() { return "%7i"; }
+template <> const char *gma_number_p<float>::format() { return "%6.2f"; }
+template <> const char *gma_number_p<double>::format() { return "%8.3f"; }
 
-template <> const char *gma_band_p<uint8_t>::format() { return "%03i "; }
-template <> const char *gma_band_p<uint16_t>::format() { return "%04i "; }
-template <> const char *gma_band_p<int16_t>::format() { return "%04i "; }
-template <> const char *gma_band_p<uint32_t>::format() { return "%04i "; }
-template <> const char *gma_band_p<int32_t>::format() { return "%04i "; }
-template <> const char *gma_band_p<float>::format() { return "%04.1f "; }
-template <> const char *gma_band_p<double>::format() { return "%04.2f "; }
+template <> const char *gma_number_p<uint8_t>::space() { return "   "; }
+template <> const char *gma_number_p<uint16_t>::space() { return "     "; }
+template <> const char *gma_number_p<int16_t>::space() { return "     "; }
+template <> const char *gma_number_p<uint32_t>::space() { return "       "; }
+template <> const char *gma_number_p<int32_t>::space() { return "       "; }
+template <> const char *gma_number_p<float>::space() { return "       "; }
+template <> const char *gma_number_p<double>::space() { return "         "; }
 
 template <> int gma_band_p<uint8_t>::m_log10(gma_block<uint8_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<uint16_t>::m_log10(gma_block<uint16_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<int16_t>::m_log10(gma_block<int16_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<uint32_t>::m_log10(gma_block<uint32_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<int32_t>::m_log10(gma_block<int32_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
-
 
 template <> int gma_band_p<float>::m_modulus(gma_block<float>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<double>::m_modulus(gma_block<double>*, gma_object_t**, gma_object_t*, int) { return 0; }

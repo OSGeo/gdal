@@ -17,6 +17,7 @@ public:
     virtual ~gma_object_t() {};
     virtual gma_class_t get_class() {return gma_object;};
     virtual gma_object_t *clone() {};
+    virtual GDALDataType datatype() {};
 };
 
 class gma_number_t : public gma_object_t {
@@ -27,6 +28,7 @@ public:
     virtual int value_as_int() {};
     virtual double value_as_double() {};
     virtual gma_number_t *clone() {};
+    virtual bool is_defined() {};
     virtual void set_inf(int inf) {}; // -1 to minus inf, 0 to not inf, 1 to plus inf
     virtual bool is_inf() {};
     virtual bool is_integer() {};
@@ -113,7 +115,6 @@ public:
     virtual GDALRasterBand *band() {};
     virtual GDALDataset *dataset() {};
     virtual GDALDriver *driver() {};
-    virtual GDALDataType datatype() {};
     virtual bool datatype_is_integer() {};
     virtual bool datatype_is_float() {};
     virtual int w() {};

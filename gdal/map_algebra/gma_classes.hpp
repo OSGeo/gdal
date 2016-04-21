@@ -1,4 +1,5 @@
 #include "gdal_priv.h"
+#include <limits>
 
 // concrete classes
 
@@ -28,50 +29,60 @@ public:
     type value() {
         return m_value;
     }
+    void inc() {
+        m_value++;
+    }
     virtual void set_value(double value) {
         m_defined = true;
+        value = MAX(MIN(value, std::numeric_limits<type>::max()), std::numeric_limits<type>::min());
         m_value = (type)value;
     }
     virtual void set_value(int value) {
         m_defined = true;
+        value = MAX(MIN(value, std::numeric_limits<type>::max()), std::numeric_limits<type>::min());
         m_value = (type)value;
     }
     virtual void set_value(unsigned int value) {
         m_defined = true;
+        value = MAX(MIN(value, std::numeric_limits<type>::max()), std::numeric_limits<type>::min());
         m_value = (type)value;
     }
     virtual int value_as_int() {
         if (m_inf < 0)
-            return inf_int(-1);
+            return std::numeric_limits<type>::min();
         else if (m_inf > 0)
-            return inf_int(1);
+            return std::numeric_limits<type>::max();
         else
             return (int)m_value;
     }
     virtual double value_as_double() {
-        if (m_inf < 0)
-            return inf_double(-1);
-        else if (m_inf > 0)
-            return inf_double(1);
+        if (m_inf < 0) {
+            if (std::numeric_limits<type>::has_infinity)
+                return -1*std::numeric_limits<type>::infinity();
+            else
+                return std::numeric_limits<type>::min();
+        } else if (m_inf > 0)
+            if (std::numeric_limits<type>::has_infinity)
+                return std::numeric_limits<type>::infinity();
+            else
+                return std::numeric_limits<type>::max();
         else
             return (double)m_value;
     }
-    void add(type value) {
-        m_value += value;
-    }
+    static const char *space();
+    static const char *format();
     char *as_string() {
-        // use type traits GDALDataTypeTraits<type>::is_integer etc
         char *s = (char*)CPLMalloc(10);
-        snprintf(s, 10, "%i", m_value);
+        snprintf(s, 10, format(), m_value);
         return s;
     }
-    GDALDataType get_datatype();
-    virtual void set_inf(int inf) { m_inf = inf; };
-    virtual bool is_inf() { return m_inf; };
-    virtual bool is_integer();
+    virtual bool is_defined() { return m_defined; }
+    virtual void set_inf(int inf) { m_inf = inf; }
+    virtual bool is_inf() { return m_inf; }
+    virtual bool is_integer() { return std::numeric_limits<type>::is_integer; }
     virtual bool is_float();
-    virtual int inf_int(int sign);
-    virtual double inf_double(int sign);
+    static GDALDataType datatype_p();
+    virtual GDALDataType datatype() { return gma_number_p<type>::datatype_p(); };
 };
 
 // wrap std::pair as concrete type gma_pair_p, 
@@ -101,15 +112,18 @@ public:
     }
 };
 
-template <typename datatype> class gma_cell_p : public gma_cell_t {
+template <typename datatype_t> class gma_cell_p : public gma_cell_t {
     int m_x;
     int m_y;
-    datatype m_value;
+    datatype_t m_value;
 public:
-    gma_cell_p(int x, int y, datatype value) {
+    gma_cell_p(int x, int y, datatype_t value) {
         m_x = x;
         m_y = y;
         m_value = value;
+    }
+    datatype_t& value() {
+        return m_value;
     }
     virtual int& x() {
         return m_x;
@@ -123,25 +137,23 @@ public:
     virtual void set_value(int value) {
         m_value = value;
     }
-    virtual datatype value() {
-        return m_value;
-    }
     virtual int value_as_int() {
         return (int)m_value;
     }
     virtual double value_as_double() {
         return (double)m_value;
     }
+    virtual GDALDataType datatype() { return gma_number_p<datatype_t>::datatype_p(); };
 };
 
-// integer datatype => object
-template <typename datatype, class V> class gma_hash_entry {
+// integer datatype_t => object
+template <typename datatype_t, class V> class gma_hash_entry {
 private:
-    datatype m_key;
-    V *m_value; // '*' to be able to delete values - could we somehow detect if m_value is pointer? std::is_pointer
-    gma_hash_entry<datatype,V> *m_next;
+    datatype_t m_key;
+    V *m_value;
+    gma_hash_entry<datatype_t,V> *m_next;
 public:
-    gma_hash_entry(datatype key, V *value) {
+    gma_hash_entry(datatype_t key, V *value) {
         m_key = key;
         m_value = value;
         m_next = NULL;
@@ -149,7 +161,7 @@ public:
     ~gma_hash_entry() {
         delete m_value;
     }
-    datatype key() {
+    datatype_t key() {
         return m_key;
     }
     V *value() {
@@ -159,59 +171,61 @@ public:
         if (m_value) delete m_value;
         m_value = value;
     }
-    gma_hash_entry<datatype,V> *next() {
+    gma_hash_entry<datatype_t,V> *next() {
         return m_next;
     }
-    void set_next(gma_hash_entry<datatype,V> *next) {
+    void set_next(gma_hash_entry<datatype_t,V> *next) {
         m_next = next;
     }
 };
 
-template <typename datatype> int compare_integers(const void *a, const void *b) {
-  const datatype *da = (const datatype *) a;
-  const datatype *db = (const datatype *) b;
+template <typename datatype_t> int gma_numeric_comparison(const void *a, const void *b) {
+  const datatype_t *da = (const datatype_t *) a;
+  const datatype_t *db = (const datatype_t *) b;
   return (*da > *db) - (*da < *db);
 }
 
-// replace with std::unordered_map?
-// unordered_map is C++11 thing
-// map.. seems to get a bit unnecessarily complicated
-template <typename datatype, class V> class gma_hash_p : public gma_hash_t {
+// replace with std::unordered_map? seems to get a bit unnecessarily complicated
+template <typename datatype_t, class V> class gma_hash_p : public gma_hash_t {
 public:
-    gma_hash_entry<datatype,V> **table;
+    gma_hash_entry<datatype_t,V> **table;
     static const int table_size = 128;
     gma_hash_p() {
-        table = (gma_hash_entry<datatype,V> **)CPLMalloc(sizeof(void*)*table_size);
+        table = (gma_hash_entry<datatype_t,V> **)CPLMalloc(sizeof(void*)*table_size);
+        if (!table) return;
         for (int i = 0; i < table_size; i++)
             table[i] = NULL;
     }
     ~gma_hash_p() {
+        if (!table) return;
         for (int i = 0; i < table_size; i++) {
-            gma_hash_entry<datatype,V> *e = table[i];
+            gma_hash_entry<datatype_t,V> *e = table[i];
             while (e) {
-                gma_hash_entry<datatype,V> *n = e->next();
+                gma_hash_entry<datatype_t,V> *n = e->next();
                 delete e;
                 e = n;
             }
         }
         CPLFree(table);
     }
-    int exists(datatype key) {
+    bool exists(datatype_t key) {
+        if (!table) return false;
         int hash = (abs(key) % table_size);
-        gma_hash_entry<datatype,V> *e = table[hash];
+        gma_hash_entry<datatype_t,V> *e = table[hash];
         while (e && e->key() != key)
             e = e->next();
         return e != NULL;
     }
-    void del(datatype key) {
+    void del(datatype_t key) {
+        if (!table) return;
         int hash = (abs(key) % table_size);
-        gma_hash_entry<datatype,V> *e = table[hash], *p = NULL;
+        gma_hash_entry<datatype_t,V> *e = table[hash], *p = NULL;
         while (e && e->key() != key) {
             p = e;
             e = e->next();
         }
         if (e) {
-            gma_hash_entry<datatype,V> *n = e->next();
+            gma_hash_entry<datatype_t,V> *n = e->next();
             delete e;
             if (p)
                 p->set_next(n);
@@ -219,21 +233,23 @@ public:
                 table[hash] = NULL;
         }
     }
-    V *get(datatype key) {
+    V *get(datatype_t key) {
+        if (!table) return NULL;
         int hash = (abs(key) % table_size);
-        gma_hash_entry<datatype,V> *e = table[hash];
+        gma_hash_entry<datatype_t,V> *e = table[hash];
         while (e && e->key() != key)
             e = e->next();
         if (e)
             return e->value();
     }
     virtual gma_object_t *get(gma_number_t *key) {
-        datatype k = ((gma_number_p<datatype>*)key)->value();
+        datatype_t k = ((gma_number_p<datatype_t>*)key)->value();
         return get(k);
     }
-    void put(datatype key, V *value) {
+    void put(datatype_t key, V *value) {
+        if (!table) return;
         int hash = (abs(key) % table_size);
-        gma_hash_entry<datatype,V> *e = table[hash], *p = NULL;
+        gma_hash_entry<datatype_t,V> *e = table[hash], *p = NULL;
         while (e && e->key() != key) {
             p = e;
             e = e->next();
@@ -241,7 +257,7 @@ public:
         if (e)
             e->set_value(value);
         else {
-            e = new gma_hash_entry<datatype,V>(key, value);
+            e = new gma_hash_entry<datatype_t,V>(key, value);
             if (p)
                 p->set_next(e);
             else
@@ -249,9 +265,10 @@ public:
         }
     }
     virtual int size() {
+        if (!table) return 0;
         int n = 0;
         for (int i = 0; i < table_size; i++) {
-            gma_hash_entry<datatype,V> *e = table[i];
+            gma_hash_entry<datatype_t,V> *e = table[i];
             while (e) {
                 n++;
                 e = e->next();
@@ -259,11 +276,13 @@ public:
         }
         return n;
     }
-    datatype *keys(int size) {
-        datatype *keys = (datatype *)CPLMalloc(size*sizeof(datatype));
+    datatype_t *keys(int size) {
+        if (!table) return NULL;
+        datatype_t *keys = (datatype_t *)CPLMalloc(size*sizeof(datatype_t));
+        if (!keys) return NULL;
         int i = 0;
         for (int j = 0; j < table_size; j++) {
-            gma_hash_entry<datatype,V> *e = table[j];
+            gma_hash_entry<datatype_t,V> *e = table[j];
             while (e) {
                 int32_t key = e->key();
                 keys[i] = (int)key;
@@ -273,41 +292,44 @@ public:
         }
         return keys;
     }
-    datatype *keys_sorted(int size) {
-        datatype *k = keys(size);
-        qsort(k, size, sizeof(datatype), compare_integers<datatype>);
+    datatype_t *keys_sorted(int size) {
+        datatype_t *k = keys(size);
+        if (!k) return NULL;
+        qsort(k, size, sizeof(datatype_t), gma_numeric_comparison<datatype_t>);
         return k;
     }
     virtual std::vector<gma_number_t*> *keys_sorted() {
         std::vector<gma_number_t*> *retval = new std::vector<gma_number_t*>;
         int n = size();
-        datatype *keys = keys_sorted(n);
+        datatype_t *keys = keys_sorted(n);
+        if (!keys) return NULL;
         for (int i = 0; i < n; i++)
-            retval->push_back(new gma_number_p<datatype>(keys[i]));
+            retval->push_back(new gma_number_p<datatype_t>(keys[i]));
         return retval;
     }
+    virtual GDALDataType datatype() { return gma_number_p<datatype_t>::datatype_p(); };
 };
 
 // a class to divide real | integer line into intervals without holes in between
 // -inf ... x(i) .. x(i+1) .. .. +inf
 // each range is (x(i),x(i+1)]
-template <typename datatype> class gma_bins_p : public gma_bins_t {
+template <typename datatype_t> class gma_bins_p : public gma_bins_t {
 public:
-    std::vector<datatype> *m_data;
+    std::vector<datatype_t> *m_data;
     gma_bins_p() {
-        m_data = new std::vector<datatype>;
+        m_data = new std::vector<datatype_t>;
     }
     ~gma_bins_p() {
         delete m_data;
     }
-    int add(datatype x) {
+    int add(datatype_t x) {
         int n = m_data->size();
         if (n == 0) {
             m_data->push_back(x);
             return 0;
         }
         int i = bin(x);
-        datatype tmp = m_data->at(n-1);
+        datatype_t tmp = m_data->at(n-1);
         m_data->push_back(tmp);
         for (int j = n-1; j > i; j--) {
             m_data->at(j) = m_data->at(j-1);
@@ -315,21 +337,20 @@ public:
         m_data->at(i) = x;
         return i;
     }
-    datatype get(int i) {
-        // return pair?
+    datatype_t get(int i) {
         return m_data->at(i);
     }
-    void set(int i, datatype x) {
+    void set(int i, datatype_t x) {
         m_data->at(i) = x;
     }
-    int bin(datatype x) {
+    int bin(datatype_t x) {
         int i = 0;
         while (i < m_data->size() && x > m_data->at(i))
             i++;
         return i;
     }
     virtual gma_object_t *clone() {
-        gma_bins_p<datatype> *c = new gma_bins_p<datatype>;
+        gma_bins_p<datatype_t> *c = new gma_bins_p<datatype_t>;
         for (int i = 0; i < m_data->size(); i++)
             c->m_data->push_back(m_data->at(i));
         return c;
@@ -338,19 +359,20 @@ public:
         return m_data->size()+1;
     }
     virtual void push(int value) {
-        m_data->push_back((datatype)value);
+        m_data->push_back((datatype_t)value);
     }
     virtual void push(double value) {
-        m_data->push_back((datatype)value);
+        m_data->push_back((datatype_t)value);
     }
+    virtual GDALDataType datatype() { return gma_number_p<datatype_t>::datatype_p(); };
 };
 
-template <typename datatype>
+template <typename datatype_t>
 class gma_histogram_p : public gma_histogram_t {
-    datatype *sorted_hash_keys;
+    datatype_t *sorted_hash_keys;
 public:
-    gma_hash_p<datatype,gma_number_p<unsigned int> > *hash;
-    gma_bins_p<datatype> *bins;
+    gma_hash_p<datatype_t,gma_number_p<unsigned int> > *hash;
+    gma_bins_p<datatype_t> *bins;
     std::vector<unsigned int> *counts;
     gma_histogram_p(gma_object_t *arg) {
         hash = NULL;
@@ -358,19 +380,19 @@ public:
         bins = NULL;
         counts = NULL;
         if (arg == NULL)
-            hash = new gma_hash_p<datatype,gma_number_p<unsigned int> >;
+            hash = new gma_hash_p<datatype_t,gma_number_p<unsigned int> >;
         else if (arg->get_class() == gma_pair) { // (n bins, (min, max))
             gma_pair_p<gma_object_t*,gma_object_t* > *a = (gma_pair_p<gma_object_t*,gma_object_t* > *)arg;
             gma_number_p<int> *a1 = (gma_number_p<int> *)a->first();
-            gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>*> *a2 = 
-                (gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>*> *)a->second();
-            gma_number_p<datatype> *a21 = (gma_number_p<datatype> *)a2->first();
-            gma_number_p<datatype> *a22 = (gma_number_p<datatype> *)a2->second();
+            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>*> *a2 = 
+                (gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>*> *)a->second();
+            gma_number_p<datatype_t> *a21 = (gma_number_p<datatype_t> *)a2->first();
+            gma_number_p<datatype_t> *a22 = (gma_number_p<datatype_t> *)a2->second();
             int n = a1->value();
             double min = a21->value();
             double max = a22->value();
             double d = (max-min)/n;
-            bins = new gma_bins_p<datatype>;
+            bins = new gma_bins_p<datatype_t>;
             counts = new std::vector<unsigned int>;
             for (int i = 0; i < n-1; i++) {
                 bins->push(min+d*(i+1));
@@ -379,7 +401,7 @@ public:
                 counts->push_back(0);
             }
         } else if (arg->get_class() == gma_bins) {
-            bins = (gma_bins_p<datatype>*)arg->clone();
+            bins = (gma_bins_p<datatype_t>*)arg->clone();
             counts = new std::vector<unsigned int>;
             for (int i = 0; i < bins->size(); i++)
                 counts->push_back(0);
@@ -389,8 +411,9 @@ public:
     }
     ~gma_histogram_p() {
         delete hash;
+        CPLFree(sorted_hash_keys);
     }
-    void set_size(int size, datatype min, datatype max) {
+    void set_size(int size, datatype_t min, datatype_t max) {
     }
     virtual unsigned int size() {
         if (hash)
@@ -398,55 +421,57 @@ public:
         return bins->size();
     }
     void sort_hash_keys() {
-        sorted_hash_keys = (datatype*)CPLMalloc(hash->size()*sizeof(datatype));
+        sorted_hash_keys = (datatype_t*)CPLMalloc(hash->size()*sizeof(datatype_t));
+        if (!sorted_hash_keys) return;
         int i = 0;
         for (int j = 0; j < hash->table_size; j++) {
-            gma_hash_entry<datatype,gma_number_p<unsigned int> > *e = hash->table[j];
+            gma_hash_entry<datatype_t,gma_number_p<unsigned int> > *e = hash->table[j];
             while (e) {
                 sorted_hash_keys[i] = e->key();
                 i++;
                 e = e->next();
             }
         }
-        qsort(sorted_hash_keys, i, sizeof(datatype), compare_integers<datatype>);
+        qsort(sorted_hash_keys, i, sizeof(datatype_t), gma_numeric_comparison<datatype_t>);
     }
     virtual gma_object_t *at(unsigned int i) {
         if (hash) {
             if (!sorted_hash_keys) sort_hash_keys();
-            datatype key = sorted_hash_keys[i];
+            if (!sorted_hash_keys) return NULL;
+            datatype_t key = sorted_hash_keys[i];
             gma_number_p<unsigned int> *value = (gma_number_p<unsigned int>*)hash->get(key);
             // return gma_pair_t
-            gma_number_p<datatype> *k = new gma_number_p<datatype>(key);
+            gma_number_p<datatype_t> *k = new gma_number_p<datatype_t>(key);
             gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(value->value());
-            gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* > *pair = 
-                new gma_pair_p<gma_number_p<datatype>*,gma_number_p<unsigned int>* >(k,v);
+            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<unsigned int>* > *pair = 
+                new gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<unsigned int>* >(k,v);
             return pair;
         }
-        gma_number_p<datatype> *min;
-        gma_number_p<datatype> *max;
+        gma_number_p<datatype_t> *min;
+        gma_number_p<datatype_t> *max;
         if (i == 0) {
-            min = new gma_number_p<datatype>(0);
+            min = new gma_number_p<datatype_t>(0);
             min->set_inf(-1);
-            max = new gma_number_p<datatype>(bins->get(i));
+            max = new gma_number_p<datatype_t>(bins->get(i));
         } else if (i < bins->size() - 1) {
-            min = new gma_number_p<datatype>(bins->get(i-1));
-            max = new gma_number_p<datatype>(bins->get(i));
+            min = new gma_number_p<datatype_t>(bins->get(i-1));
+            max = new gma_number_p<datatype_t>(bins->get(i));
         } else {
-            min = new gma_number_p<datatype>(bins->get(i-1));
-            max = new gma_number_p<datatype>(0);
+            min = new gma_number_p<datatype_t>(bins->get(i-1));
+            max = new gma_number_p<datatype_t>(0);
             max->set_inf(1);
         }
-        gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* > *k = 
-            new gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >(min,max);
+        gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* > *k = 
+            new gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >(min,max);
         gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(counts->at(i));
-        gma_pair_p<gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >*,gma_number_p<unsigned int>* > *pair = 
-            new gma_pair_p<gma_pair_p<gma_number_p<datatype>*,gma_number_p<datatype>* >*,gma_number_p<unsigned int>* >(k,v);
+        gma_pair_p<gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >*,gma_number_p<unsigned int>* > *pair = 
+            new gma_pair_p<gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >*,gma_number_p<unsigned int>* >(k,v);
         return pair;
     }
-    void increase_count_at(datatype value) {
+    void increase_count_at(datatype_t value) {
         if (hash) {
             if (hash->exists(value))
-                ((gma_number_p<unsigned int>*)hash->get(value))->add(1);
+                ((gma_number_p<unsigned int>*)hash->get(value))->inc();
             else
                 hash->put(value, new gma_number_p<unsigned int>(1));
         } else {
@@ -475,16 +500,17 @@ public:
             }
         }
     }
+    virtual GDALDataType datatype() { return gma_number_p<datatype_t>::datatype_p(); };
 };
 
-template <typename datatype>
+template <typename datatype_t>
 class gma_classifier_p : public gma_classifier_t {
-    gma_hash_p<datatype,gma_number_p<int> > *m_hash;
-    gma_bins_p<datatype> *m_bins;
-    std::vector<datatype> *m_values;
+    gma_hash_p<datatype_t,gma_number_p<int> > *m_hash;
+    gma_bins_p<datatype_t> *m_bins;
+    std::vector<datatype_t> *m_values;
     bool m_hash_ok;
     bool has_default;
-    datatype deflt;
+    datatype_t deflt;
 public:
     gma_classifier_p(bool hash_ok) {
         m_hash_ok = hash_ok;
@@ -500,25 +526,25 @@ public:
     }
     virtual void add_class(gma_number_t *interval_max, gma_number_t *value) {
         if (m_bins == NULL) {
-            m_bins = new gma_bins_p<datatype>;
-            m_values = new std::vector<datatype>;
+            m_bins = new gma_bins_p<datatype_t>;
+            m_values = new std::vector<datatype_t>;
             m_values->push_back(0);
         }
         int i;
         int n = m_bins->size();
         int m = m_values->size();
-        datatype val = ((gma_number_p<datatype>*)value)->value();
+        datatype_t val = ((gma_number_p<datatype_t>*)value)->value();
         if (interval_max->is_inf())
             m_values->at(m-1) = val;
         else {
-            i = m_bins->add(((gma_number_p<datatype>*)interval_max)->value());
+            i = m_bins->add(((gma_number_p<datatype_t>*)interval_max)->value());
             m_values->resize(m+1);
             for (int j = m; j > i; j--)
                 m_values->at(j) = m_values->at(j-1);
             m_values->at(i) = val;
         }
     }
-    datatype classify(datatype value) {
+    datatype_t classify(datatype_t value) {
         if (m_hash && m_hash->exists(value)) {
             return m_hash->get(value)->value();
         } else if (m_bins) {
@@ -528,13 +554,17 @@ public:
         } else
             return value;
     }
+    virtual GDALDataType datatype() { return gma_number_p<datatype_t>::datatype_p(); };
 };
 
-template <typename datatype>
+template <typename datatype_t>
 class gma_logical_operation_p : public gma_logical_operation_t {
 public:
     gma_operator_t m_op;
-    datatype m_value;
+    datatype_t m_value;
+    virtual GDALDataType datatype() {
+        return gma_number_p<datatype_t>::datatype_p();
+    }
     gma_logical_operation_p() {
         m_op = gma_eq;
         m_value = 0;
