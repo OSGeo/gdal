@@ -1794,7 +1794,7 @@ int GDALValidateOptions( const char* pszOptionList,
  * file system machinery, it is possible to give an optional list of files.
  * This is the list of all files at the same level in the file system as the
  * target file, including the target file. The filenames will not include any
- * path components, are an essentially just the output of VSIReadDir() on the
+ * path components, are essentially just the output of VSIReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
  * then the file list should be NULL.
  *
@@ -1802,9 +1802,9 @@ int GDALValidateOptions( const char* pszOptionList,
  * exotic drivers this may not refer to a physical file, but instead contain
  * information for the driver on how to access a dataset.
  *
- * @param papszFileList an array of strings, whose last element is the NULL pointer.
- * These strings are filenames that are auxiliary to the main filename. The passed
- * value may be NULL.
+ * @param papszFileList an array of strings, whose last element is the NULL
+ * pointer.  These strings are filenames that are auxiliary to the main
+ * filename. The passed value may be NULL.
  *
  * @return A GDALDriverH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDriver *.
