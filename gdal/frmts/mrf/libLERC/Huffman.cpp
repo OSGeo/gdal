@@ -231,7 +231,7 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
   numBitsLUT = min(maxLen, m_maxNumBitsLUT);
 
   m_decodeLUT.clear();
-  m_decodeLUT.assign(1 << numBitsLUT, pair<short, short>((short)-1, (short)-1));
+  m_decodeLUT.assign(static_cast<size_t>(1 << numBitsLUT), pair<short, short>((short)-1, (short)-1));
 
   for (int i = i0; i < i1; i++)
   {
