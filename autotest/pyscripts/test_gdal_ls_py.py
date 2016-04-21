@@ -214,6 +214,11 @@ def test_gdal_ls_py_6():
 
 def test_gdal_ls_py_7():
 
+    # Super slow on AppVeyor since a few weeks (Apr 2016)
+    if gdal.GetConfigOption('APPVEYOR') is not None:
+        print('Slow on AppVeyor')
+        return 'skip'
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
