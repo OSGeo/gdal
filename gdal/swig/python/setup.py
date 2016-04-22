@@ -249,7 +249,7 @@ py_modules = ['gdal',
 if os.path.exists('setup_vars.ini'):
     with open('setup_vars.ini') as f:
         lines = f.readlines()
-        if 'GNM_ENABLED=yes' or 'GNM_ENABLED=yes\n' in lines:
+        if 'GNM_ENABLED=yes' in lines or 'GNM_ENABLED=yes\n' in lines:
             GNM_ENABLED = True
 
 if GNM_ENABLED:
