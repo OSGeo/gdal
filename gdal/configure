@@ -29162,11 +29162,77 @@ fi
         if test -f /usr/include/qhull/libqhull.h; then
             EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
         else
-            EXTRA_INCLUDES="-I/usr/include/local/qhull $EXTRA_INCLUDES"
+            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
         fi
         LIBS="-lqhull $LIBS"
     fi
   fi
+  for ac_header in libqhull/libqhull.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "libqhull/libqhull.h" "ac_cv_header_libqhull_libqhull_h" "$ac_includes_default"
+if test "x$ac_cv_header_libqhull_libqhull_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBQHULL_LIBQHULL_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_libqhull_libqhull_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for qh_new_qhull in -lqhull" >&5
+$as_echo_n "checking for qh_new_qhull in -lqhull... " >&6; }
+if ${ac_cv_lib_qhull_qh_new_qhull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lqhull  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char qh_new_qhull ();
+int
+main ()
+{
+return qh_new_qhull ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_qhull_qh_new_qhull=yes
+else
+  ac_cv_lib_qhull_qh_new_qhull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_qhull_qh_new_qhull" >&5
+$as_echo "$ac_cv_lib_qhull_qh_new_qhull" >&6; }
+if test "x$ac_cv_lib_qhull_qh_new_qhull" = xyes; then :
+  QHULL_SETTING=yes
+else
+  QHULL_SETTING=no
+fi
+
+    if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        if test -f /usr/include/libqhull/libqhull.h; then
+            EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
+        else
+            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
+        fi
+        LIBS="-lqhull $LIBS"
+    fi
+  fi
+
   if test "$QHULL_SETTING" = "no" ; then
     if test "$with_qhull" = "yes"; then
         as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
