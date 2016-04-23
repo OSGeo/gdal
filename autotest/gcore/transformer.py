@@ -826,11 +826,19 @@ def transformer_15():
         print(pnt)
         return 'fail'
 
-    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
+    (success,pnt_forward) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
     if not success \
-       or abs(pnt[0]-0) > 0.1 \
-       or abs(pnt[1]-0) > 0.1:
-        print(success, pnt)
+       or abs(pnt_forward[0]-0) > 0.1 \
+       or abs(pnt_forward[1]-0) > 0.1:
+        print(success, pnt_forward)
+        gdaltest.post_reason( 'got wrong reverse transform result.' )
+        return 'fail'
+
+    (success,pnt_forward) = tr.TransformPoint( 1, pnt[0] - 360, pnt[1], 0 )
+    if not success \
+       or abs(pnt_forward[0]-0) > 0.1 \
+       or abs(pnt_forward[1]-0) > 0.1:
+        print(success, pnt_forward)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -846,11 +854,19 @@ def transformer_15():
         print(pnt)
         return 'fail'
 
-    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
+    (success,pnt_forward) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
     if not success \
-       or abs(pnt[0]-6600) > 0.1 \
-       or abs(pnt[1]-4400) > 0.1:
-        print(success, pnt)
+       or abs(pnt_forward[0]-6600) > 0.1 \
+       or abs(pnt_forward[1]-4400) > 0.1:
+        print(success, pnt_forward)
+        gdaltest.post_reason( 'got wrong reverse transform result.' )
+        return 'fail'
+
+    (success,pnt_forward) = tr.TransformPoint( 1, pnt[0] + 360, pnt[1], 0 )
+    if not success \
+       or abs(pnt_forward[0]-6600) > 0.1 \
+       or abs(pnt_forward[1]-4400) > 0.1:
+        print(success, pnt_forward)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
