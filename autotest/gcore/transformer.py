@@ -781,6 +781,85 @@ def transformer_14():
 
     return 'success'
 
+###############################################################################
+# Test inverse RPC transform with DEM in [-180,180] but guessed longitude going
+# beyond
+
+def transformer_15():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
+    rpc = [
+      "HEIGHT_OFF=50",
+      "HEIGHT_SCALE=10",
+      "LAT_OFF=0",
+      "LAT_SCALE=-0.105215174097221",
+      "LINE_DEN_COEFF=1 0.000113241782375585 -7.43522609681362e-05 3.71535308900828e-08 0.000338102551252493 4.57912749279076e-07 -7.00823537484445e-08 9.01275640119332e-05 -0.000209723741981335 4.74972505083506e-09 7.2855438070338e-10 -3.16688523275456e-05 -4.49211037453489e-05 8.29706981496464e-12 7.58128162744879e-06 6.82536481272507e-07 2.58661007069147e-11 -3.9697791887986e-08 -5.06502821928986e-08 4.66978771069271e-11 ",
+      "LINE_NUM_COEFF=0.00673418095252569 -1.38985626744028 -0.645141238074041 1.4661564574111e-05 0.00022202101663831 -4.32910472926433e-06 -1.90048143949724e-06 -0.00374486341484218 -0.00041396053769863 1.14148334846788e-09 -1.20458144309064e-07 -0.00618122456017927 -0.00783023711720404 1.32704635552568e-09 -0.0032532225011433 -0.00355239507036451 6.20315160857432e-10 -4.75170167074672e-07 1.37652348819162e-07 9.53393990126859e-12 ",
+      "LINE_OFF=2191.17012189569",
+      "LINE_SCALE=2197.23749680132",
+      "LONG_OFF=179.9",
+      "LONG_SCALE=0.124705315627701",
+      "SAMP_DEN_COEFF=1 2.1759243891474e-05 -5.96367842636917e-06 6.03714873685079e-09 -0.000109764869260479 4.67786228725161e-07 -4.22013004308237e-07 0.000110379633112327 -0.00011679427405351 9.30515192365439e-09 1.09243100743555e-09 -3.29956656106618e-05 -4.1918167733603e-05 2.78076356769406e-11 -4.57011012884097e-06 -1.01453844685279e-05 2.60244039950836e-11 -3.52960090220746e-08 -4.49975439524006e-08 1.80641651820794e-11 ",
+      "SAMP_NUM_COEFF=-0.000776008179693209 -0.380692820465227 1.0647540743599 1.72660888229082e-06 0.0028311896140173 -1.0466632896253e-06 3.17728359468736e-06 -0.000150466834838251 0.000566231304705376 -7.34786296240808e-11 5.90340934437437e-07 -0.00169917056998316 -0.00231193494979752 -2.71280972480264e-09 0.00482224415396017 0.00596164573794891 7.58464598771136e-09 -1.46075167736497e-07 -4.64652272450397e-07 -5.59268858101854e-13 ",
+      "SAMP_OFF=3300.0420831968",
+      "SAMP_SCALE=3295.90302088781",
+      ]
+    ds.SetMetadata(rpc, 'RPC')
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    demE179 = gdal.GetDriverByName('GTiff').Create('/vsimem/demE179.tif', 10, 10)
+    demE179.SetProjection(sr.ExportToWkt())
+    demE179.SetGeoTransform([179,0.1,0,0.5,0,-0.1])
+    demE179.GetRasterBand(1).Fill(50)
+    demW180 = gdal.GetDriverByName('GTiff').Create('/vsimem/demW180.tif', 10, 10)
+    demW180.SetProjection(sr.ExportToWkt())
+    demW180.SetGeoTransform([-180,0.1,0,0.5,0,-0.1])
+    demW180.GetRasterBand(1).Fill(50)
+    gdal.BuildVRT('/vsimem/transformer_15_dem.vrt', [demE179, demW180])
+    demE179 = None
+    demW180 = None
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt' ] )
+    (success,pnt) = tr.TransformPoint( 0, 0, 0 )
+    if not success or abs(pnt[0] - 180.02280735469199) > 1e-7 or abs(pnt[1] - 0.061069145746997976) > 1e-7:
+        print(pnt)
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
+    if not success \
+       or abs(pnt[0]-0) > 0.1 \
+       or abs(pnt[1]-0) > 0.1:
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.' )
+        return 'fail'
+
+    # Now test around -180
+    ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
+    rpc.remove('LONG_OFF=179.9')
+    rpc += [ 'LONG_OFF=-179.9' ]
+    ds.SetMetadata(rpc, 'RPC')
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt' ] )
+    (success,pnt) = tr.TransformPoint( 0, 6600, 4400 )
+    if not success or abs(pnt[0] - -180.02313813793387) > 1e-7 or abs(pnt[1] - -0.061398913932229765) > 1e-7:
+        print(pnt)
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], 0 )
+    if not success \
+       or abs(pnt[0]-6600) > 0.1 \
+       or abs(pnt[1]-4400) > 0.1:
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.' )
+        return 'fail'
+
+    gdal.Unlink('/vsimem/demE179.tif')
+    gdal.Unlink('/vsimem/demW180.tif')
+    gdal.Unlink('/vsimem/transformer_15_dem.tif')
+
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -795,7 +874,8 @@ gdaltest_list = [
     transformer_11,
     transformer_12,
     transformer_13,
-    transformer_14
+    transformer_14,
+    transformer_15
     ]
 
 disabled_gdaltest_list = [
