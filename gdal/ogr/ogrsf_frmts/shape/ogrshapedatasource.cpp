@@ -471,7 +471,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Figure out what type of layer we need.                          */
 /* -------------------------------------------------------------------- */
-    if( eType == wkbUnknown || eType == wkbLineString )
+    if( wkbFlatten(eType) == wkbUnknown || eType == wkbLineString )
         nShapeType = SHPT_ARC;
     else if( eType == wkbPoint )
         nShapeType = SHPT_POINT;
