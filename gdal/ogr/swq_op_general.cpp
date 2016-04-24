@@ -1212,6 +1212,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
         {
             poRetNode = new swq_expr_node( 0 );
             poRetNode->is_null = poSrcNode->is_null;
+            poRetNode->field_type = SWQ_INTEGER64;
 
             switch( poSrcNode->field_type )
             {
