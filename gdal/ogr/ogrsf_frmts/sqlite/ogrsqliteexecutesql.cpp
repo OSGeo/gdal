@@ -589,7 +589,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
             osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
                         "f_geometry_column, geometry_type, coord_dimension, "
                         "srid, spatial_index_enabled) "
-                        "VALUES ('%s',Lower('%s'),%d ,%d ,%d, %d)",
+                        "VALUES (Lower('%s'),Lower('%s'),%d ,%d ,%d, %d)",
                         pszLayerNameEscaped,
                         pszGeomColEscaped, nGeomType,
                         nCoordDimension,
@@ -612,7 +612,13 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         }
     }
 #endif // HAVE_SPATIALITE
-    rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+    char* pszErrMsg = NULL;
+    rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, &pszErrMsg );
+    if( pszErrMsg != NULL )
+    {
+        CPLDebug("SQLITE", "%s -> %s", osSQL.c_str(), pszErrMsg);
+        sqlite3_free(pszErrMsg);
+    }
 
 #ifdef HAVE_SPATIALITE
 /* -------------------------------------------------------------------- */
