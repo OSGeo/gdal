@@ -825,6 +825,7 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Figure out what should be used as an FID.                       */
 /* -------------------------------------------------------------------- */
+     bAttrFilterPassThrough = TRUE;
      pszSrcFIDFieldName = CPLGetXMLValue( psLTree, "FID", NULL );
 
      if( pszSrcFIDFieldName != NULL )
@@ -842,6 +843,9 @@ try_again:
          // User facing FID column name. If not defined we will report the
          // source FID column name only if it is exposed as a field too (#4637)
          osFIDFieldName = CPLGetXMLValue( psLTree, "FID.name", "" );
+
+         if( !EQUAL(pszSrcFIDFieldName, poSrcLayer->GetFIDColumn()) )
+             bAttrFilterPassThrough = FALSE;
      }
 
 /* -------------------------------------------------------------------- */
@@ -860,12 +864,14 @@ try_again:
                        pszStyleFieldName );
              goto error;
          }
+
+         if( !EQUAL(pszStyleFieldName, "OGR_STYLE") )
+             bAttrFilterPassThrough = FALSE;
      }
 
 /* ==================================================================== */
 /*      Search for schema definitions in the VRT.                       */
 /* ==================================================================== */
-     bAttrFilterPassThrough = TRUE;
      for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
      {
          if( psChild->eType == CXT_Element && EQUAL(psChild->pszValue,"Field") )
