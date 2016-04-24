@@ -1104,7 +1104,7 @@ def ogr_rfc28_43():
     feat.SetField(0, 100000000000)
     lyr.CreateFeature(feat)
 
-    lyr = ds.ExecuteSQL( "SELECT 1000000000000, myint64, CAST(1 AS bigint), CAST(1 AS numeric(15,0)) FROM test WHERE myint64 < -9999999999 or myint64 > 9999999999" )
+    lyr = ds.ExecuteSQL( "SELECT 1000000000000, myint64, CAST(1 AS bigint), CAST(100000000000 AS bigint), CAST(1 AS numeric(15,0)) FROM test WHERE myint64 < -9999999999 or myint64 > 9999999999" )
     f = lyr.GetNextFeature()
     if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTInteger64:
         gdaltest.post_reason('fail')
@@ -1112,7 +1112,7 @@ def ogr_rfc28_43():
     if lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTInteger64:
         gdaltest.post_reason('fail')
         return 'fail'
-    if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000:
+    if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000 or f.GetField(2) != 1 or f.GetField(3) != 100000000000 or f.GetField(4) != 1.0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
