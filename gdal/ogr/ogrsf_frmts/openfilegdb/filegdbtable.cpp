@@ -1807,6 +1807,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         case SHPT_POINTZM:
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
@@ -1904,6 +1905,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
         case SHPT_POINTZM:
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
@@ -2407,6 +2409,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             // CPL_FALLTHROUGH
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
             if( nGeomType == SHPT_POINTM || nGeomType == SHPT_POINTZM )
                 bHasM = true;
@@ -2875,7 +2878,6 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             CPLDebug("OpenFileGDB", "Unhandled geometry type = %d", (int)nGeomType);
             break;
 /*
-#define SHPT_GENERALPOINT       52
 #define SHPT_GENERALMULTIPOINT  53
 */
     }
