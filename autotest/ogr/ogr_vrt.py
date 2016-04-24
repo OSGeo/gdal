@@ -3448,6 +3448,49 @@ def ogr_vrt_35():
     return 'success'
 
 ###############################################################################
+# Test that attribute filtering works with <FID>
+
+def ogr_vrt_39():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.csv',
+"""my_fid,val
+30,1
+25,2
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.csvt',
+"""Integer,Integer
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.vrt',
+"""<OGRVRTDataSource>
+    <OGRVRTLayer name="ogr_vrt_39">
+        <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_39.csv</SrcDataSource>
+        <GeometryType>wkbNone</GeometryType>
+        <FID>my_fid</FID>
+        <Field name="val" type="Integer" src="val"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    ds = ogr.Open('/vsimem/ogr_vrt_39.vrt')
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter('fid = 25')
+    f = lyr.GetNextFeature()
+    if f['val'] != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_vrt_39.csv')
+    gdal.Unlink('/vsimem/ogr_vrt_39.csvt')
+    gdal.Unlink('/vsimem/ogr_vrt_39.vrt')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -3511,6 +3554,7 @@ gdaltest_list = [
     ogr_vrt_33,
     ogr_vrt_34,
     ogr_vrt_35,
+    ogr_vrt_39,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
