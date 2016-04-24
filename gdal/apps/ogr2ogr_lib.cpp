@@ -2622,8 +2622,9 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         if( !m_poDstDS->TestCapability( ODsCCreateLayer ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-              "Layer %s not found, and CreateLayer not supported by driver.",
-                     pszNewLayerName );
+                      "Layer '%s' does not already exist in the output dataset, and "
+                      "cannot be created by the output driver.",
+                      pszNewLayerName );
             return NULL;
         }
 
