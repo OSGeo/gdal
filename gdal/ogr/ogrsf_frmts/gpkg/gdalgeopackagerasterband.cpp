@@ -1958,6 +1958,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
             return CE_Failure;
         }
         SQLCommand(m_hTempDB, "PRAGMA synchronous = OFF");
+        /* coverity[tainted_string] */
         SQLCommand(m_hTempDB, (CPLString("PRAGMA journal_mode = ") + CPLGetConfigOption("PARTIAL_TILES_JOURNAL_MODE", "OFF")).c_str());
         SQLCommand(m_hTempDB, "CREATE TABLE partial_tiles("
                                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
