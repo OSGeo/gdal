@@ -623,8 +623,10 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
 /* -------------------------------------------------------------------- */
-    double dfRow0Min, dfBinSize;
-    json_object *poRow0Min, *poBinSize;
+    double dfRow0Min = 0.0;
+    double dfBinSize = 0.0;
+    json_object *poRow0Min = NULL;
+    json_object *poBinSize = NULL;
 
     if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
     {
@@ -909,7 +911,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
         if( nEntryCount < 0 )
             return NULL;
 
-        // restrict our number of entries to something vaguely sensible
+        // Restrict our number of entries to something vaguely sensible.
         nEntryCount = MIN(65535, nEntryCount);
     }
 
@@ -981,7 +983,7 @@ void GDALRasterAttributeTable::DumpReadable( FILE * fp )
 
 {
     CPLXMLNode *psTree = Serialize();
-    char *pszXMLText = CPLSerializeXMLTree( psTree );
+    char * const pszXMLText = CPLSerializeXMLTree( psTree );
 
     CPLDestroyXMLNode( psTree );
 
@@ -1882,9 +1884,10 @@ int GDALDefaultRasterAttributeTable::GetLinearBinning(
 /*                            CreateColumn()                            */
 /************************************************************************/
 
-CPLErr GDALDefaultRasterAttributeTable::CreateColumn( const char *pszFieldName,
-                                               GDALRATFieldType eFieldType,
-                                               GDALRATFieldUsage eFieldUsage )
+CPLErr GDALDefaultRasterAttributeTable::CreateColumn(
+    const char *pszFieldName,
+    GDALRATFieldType eFieldType,
+    GDALRATFieldUsage eFieldUsage )
 
 {
     const size_t iNewField = aoFields.size();
