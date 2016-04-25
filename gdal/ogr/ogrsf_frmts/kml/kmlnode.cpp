@@ -337,6 +337,7 @@ void KMLNode::eliminateEmpty(KML* poKML)
            && (poKML->isContainer((*pvpoChildren_)[z]->sName_)
                || poKML->isFeatureContainer((*pvpoChildren_)[z]->sName_)))
         {
+            poKML->unregisterLayerIfMatchingThisNode((*pvpoChildren_)[z]);
             delete (*pvpoChildren_)[z];
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
             z--;

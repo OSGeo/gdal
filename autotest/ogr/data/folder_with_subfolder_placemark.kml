@@ -1,0 +1,7 @@
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Folder>
+    <name>MainFolder</name>
+    <Folder/>
+    <Placemark/>
+</Folder>
+</kml>

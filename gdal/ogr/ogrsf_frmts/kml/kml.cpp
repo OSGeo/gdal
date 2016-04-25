@@ -622,3 +622,21 @@ Feature* KML::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 
     return poCurrent_->getFeature(nNum, nLastAsked, nLastCount);
 }
+
+void KML::unregisterLayerIfMatchingThisNode(KMLNode* poNode)
+{
+    for(int i=0;i<nNumLayers_;)
+    {
+        if( papoLayers_[i] == poNode )
+        {
+            if( i < nNumLayers_ - 1 )
+            {
+                memcpy( papoLayers_ + i, papoLayers_ + i + 1,
+                        (nNumLayers_ - 1 - i) * sizeof(KMLNode*) );
+            }
+            nNumLayers_ --;
+            continue;
+        }
+        i++;
+    }
+}
