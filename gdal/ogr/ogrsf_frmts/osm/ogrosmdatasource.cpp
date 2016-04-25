@@ -4328,3 +4328,4 @@ int OGROSMDataSource::IsInterleavedReading()
     }
     return bInterleavedReading;
 }
+
