@@ -1014,7 +1014,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
     poFeature->SetFID( OGRNullFID );
 
     if( nTotalShapeCount == 0
-        && eRequestedGeomType == wkbUnknown
+        && wkbFlatten(eRequestedGeomType) == wkbUnknown
         && poFeature->GetGeometryRef() != NULL )
     {
         OGRGeometry     *poGeom = poFeature->GetGeometryRef();
