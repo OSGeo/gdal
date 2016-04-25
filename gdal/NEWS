@@ -189,6 +189,7 @@ Algorithms:
  * RPC DEM: take into account vertical datum of the DEM when present to convert DEM elevations to ellipsoidal heights (#6084)
  * RPC DEM: do fallback cubic -> bilinear and bilinear -> near on DEM edges
  * RPC DEM: improve inverse transformer to validate error threshold and improve convergence (#6162, #6377)
+ * RPC: fix issues with dateline (#6472)
  * TPS solver: discard duplicated GCP to avoid avoidable error, warning when 2 GCPs have same (pixel,line) but different (X,Y) or the reverse
  * Warper: rework multithreaded computations to use a thread pool rather than forking threads each time
  * Warper: avoid really excessive processing time for some warping with target areas completely off the source raster (especially when involving RPC) (#6182)
@@ -258,6 +259,7 @@ ECRG driver:
 
 ECW driver:
  * use wide char Open API on Windows when GDAL_FILENAME_IS_UTF8=YES (https://github.com/OSGeo/gdal/pull/70)
+ * fix reading of ECW in /vsi file systems (with SDK >= 4) (#6482)
 
 GeoRaster driver:
  * fix deflate read error depending on endianness (#6252)
@@ -474,6 +476,8 @@ Core:
  * OGRFeature::SetGeometry()/SetGeometryDirectly(): make it work when passed geometry is the currently installed geometry (#6312)
  * OGR SQL: do not silently skip NULL values in the first records when evaluating a SELECT DISTINCT (#6020)
  * OGR SQL: correctly sort NULL values in first positions (#6155)
+ * OGR SQL: fix CAST(x AS bigint) to return an evaluated int64 node, and not int32 (#6479)
+ * OGR SQL: handle 'fid' as Integer64 in where clause, and allow CAST(fid AS bigint) in selected columns (#6484)
  * Add OGRUpdateFieldType()
  * Decorate a few functions/methods of the OGR layer API with CPL_WARN_UNUSED_RESULT
  * WKT export: use 15 significant figures, instead of 15 figures after decimal point (#6145)
@@ -598,6 +602,7 @@ JML driver:
  * remove arbitrary limitation preventing from reading geometries with <gml:coordinates> larger than 10 MB (#6338)
 
 KML driver:
+ * fix crash on KML files without content but with nested folders (#6486)
 
 LIBKML driver:
  * for documents without folder, use document name when available as name of layer (#6409)
@@ -630,10 +635,12 @@ OpenFileGDB driver:
  * do not emit warning if SDC/CDF table detected and that FileGDB driver is present
  * fix min/max on columns without indices (#6150)
  * build correct geometry for a multi-part wkbMultiLineStringZ (#6332)
+ * add support for reading SHPT_GENERALPOINT (#6478)
 
 OSM driver:
  * correct fields ids for the (non frequently used) Node message
  * do not override 'our' osm_id (the node, way or relation id) with a tag named 'osm_id' (#6347)
+ * properly deal with polygons in other_relations geometrycollection (#6475)
 
 PG driver:
  * Add PRELUDE_STATEMENTS and CLOSING_STATEMENTS open option to be for example able to specify options, like statement_timeout, with pg_bouncer
@@ -659,6 +666,7 @@ Shapefile driver:
  * accept opening standalone .dbf files whose header length is not a multiple of 32 bytes (#6035)
  * fix REPACK crash on shapefile without .dbf (#6274)
  * add capability to restore/build a missing .shx file when defining SHAPE_RESTORE_SHX to TRUE (#5035)
+ * avoid CreateLayer() to error out when passed wkbUnknown | wkb25D (#6473)
 
 SQLite/Spatialite driver:
  * support file:xxx URI syntax (derived from patch by joker99, #6150)
@@ -1577,6 +1585,7 @@ SQLite/Spatialite driver:
  * make GetFIDColumn() work when run as first method call (#5781)
  * emit warning when reading text values in a integer/real field (possible since SQLite has no strong typing)
  * support reading date/datetime from Julian day floating point representation
+ * SQLite dialect: fix insertion in geometry_columns of table names that are not in upper-case (#6483)
 
 SUA driver:
  * tweak detection logic to read beyond first 10KB bytes when needed (#5975)
@@ -1602,6 +1611,7 @@ VRT driver:
  * do not propagate ignoring of x and y cols of a PointFromColumns to the source layer (#5777)
  * add an optional 'name' attribute on FID element, so as to be able to force the report of a FID column name even if it is not exposed as a regular field (related to #5845)
  * handle optional <OpenOptions><OOI key='key'>value</OOI></OpenOptions> to specify open options
+ * do not enable passthrough filtering if redefining <FID> (#6480)
 
 Tiger driver:
  * Fix potential buffer underflow when providing /vsistdin/ to Tiger driver (#5567)
