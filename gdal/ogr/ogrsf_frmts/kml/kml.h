@@ -89,6 +89,8 @@ public:
     int getNumFeatures();
     Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
 
+    void unregisterLayerIfMatchingThisNode(KMLNode* poNode);
+
 protected:
 	void checkValidity();
 
