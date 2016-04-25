@@ -849,6 +849,27 @@ def ogr_kml_cleanup():
     return 'success'
 
 ###############################################################################
+# Test reading KML with folder with empty subfolder and placemark
+
+def ogr_kml_read_folder_with_subfolder_placemark():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/folder_with_subfolder_placemark.kml')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    if ds.GetLayer(0).GetFeatureCount() != 0:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayer(0).GetFeatureCount())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [ 
@@ -872,6 +893,7 @@ gdaltest_list = [
     ogr_kml_write_schema,
     ogr_kml_empty_layer,
     ogr_kml_two_layers,
+    ogr_kml_read_folder_with_subfolder_placemark,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
