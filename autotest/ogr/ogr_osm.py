@@ -699,7 +699,7 @@ def ogr_osm_test_uncompressed_dense_false_pbf():
 # "our" osm_id field. But put it in other_fields (#6347)
 def ogr_osm_13():
 
-    if ogrtest.osm_drv is None:
+    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_13.osm',
@@ -722,6 +722,51 @@ def ogr_osm_13():
 
     return 'success'
 
+###############################################################################
+# Test that we handle polygons in other_relations (#6475)
+
+def ogr_osm_14():
+
+    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_14.osm',
+"""<osm>
+  <node id="1" lat="2" lon="49"/>
+  <node id="2" lat="2.1" lon="49"/>
+  <node id="3" lat="2.1" lon="49.1"/>
+  <way id="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+    <nd ref="1"/>
+    <tag k="area" v="yes"/>
+    <tag k="bus" v="yes"/>
+  </way>
+  <relation id="1">
+    <member type="way" ref="1" role=""/>
+    <tag k="route" v="bus"/>
+  </relation>
+</osm>""")
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_osm_14.osm')
+    if ds is None:
+        gdal.Unlink('/vsimem/ogr_osm_14.osm')
+        return 'skip'
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM other_relations')
+    f = sql_lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((49 2,49.0 2.1,49.1 2.1,49 2)))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_osm_14.osm')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -740,6 +785,7 @@ gdaltest_list = [
     ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
     ogr_osm_test_uncompressed_dense_false_pbf,
     ogr_osm_13,
+    ogr_osm_14,
     ]
 
 if __name__ == '__main__':
