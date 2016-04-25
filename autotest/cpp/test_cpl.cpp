@@ -34,6 +34,13 @@
 #include "cpl_hash_set.h"
 #include "cpl_string.h"
 #include "cpl_sha256.h"
+#include "cpl_error.h"
+
+static bool gbGotError = false;
+static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
+{
+    gbGotError = true;
+}
 
 namespace tut
 {
@@ -868,6 +875,46 @@ namespace tut
         ensure_equals( CPLsscanf("1 2", "%lf %lf %lf", &a, &b, &c), 2 );
         ensure_equals( a, 1.0 );
         ensure_equals( b, 2.0 );
+    }
+
+    template<>
+    template<>
+    void object::test<15>()
+    {
+        CPLString oldVal = CPLGetConfigOption("CPL_DEBUG", "");
+        CPLSetConfigOption("CPL_DEBUG", "TEST");
+
+        CPLErrorHandler oldHandler = CPLSetErrorHandler(myErrorHandler);
+        gbGotError = false;
+        CPLDebug("TEST", "Test");
+        ensure_equals( gbGotError, true );
+        gbGotError = false;
+        CPLSetErrorHandler(oldHandler);
+
+        CPLPushErrorHandler(myErrorHandler);
+        gbGotError = false;
+        CPLDebug("TEST", "Test");
+        ensure_equals( gbGotError, true );
+        gbGotError = false;
+        CPLPopErrorHandler();
+
+        oldHandler = CPLSetErrorHandler(myErrorHandler);
+        CPLSetCurrentErrorHandlerCatchDebug( FALSE );
+        gbGotError = false;
+        CPLDebug("TEST", "Test");
+        ensure_equals( gbGotError, false );
+        gbGotError = false;
+        CPLSetErrorHandler(oldHandler);
+
+        CPLPushErrorHandler(myErrorHandler);
+        CPLSetCurrentErrorHandlerCatchDebug( FALSE );
+        gbGotError = false;
+        CPLDebug("TEST", "Test");
+        ensure_equals( gbGotError, false );
+        gbGotError = false;
+        CPLPopErrorHandler();
+
+        CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : NULL);
     }
 
 } // namespace tut
