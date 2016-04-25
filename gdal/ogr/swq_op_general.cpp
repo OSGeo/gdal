@@ -1368,7 +1368,17 @@ swq_field_type SWQCastChecker( swq_expr_node *poNode,
     else if( EQUAL(pszTypeName,"integer") )
         eType = SWQ_INTEGER;
     else if( EQUAL(pszTypeName,"bigint") )
+    {
+        // Handle CAST(fid AS bigint) by changing the field_type of fid to Integer64
+        // A bit of a hack
+        if( poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            poNode->papoSubExpr[0]->field_type == SWQ_INTEGER &&
+            strcmp(poNode->papoSubExpr[0]->string_value, "fid") == 0 )
+        {
+            poNode->papoSubExpr[0]->field_type = SWQ_INTEGER64;
+        }
         eType = SWQ_INTEGER64;
+    }
     else if( EQUAL(pszTypeName,"smallint") )
         eType = SWQ_INTEGER;
     else if( EQUAL(pszTypeName,"float") )

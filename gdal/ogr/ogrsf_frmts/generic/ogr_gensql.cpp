@@ -304,6 +304,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
                 oFDefn.SetType( OFTString );
                 break;
             }
+            if( psColDef->field_index-iFIDFieldIndex == SPF_FID &&
+                poSrcLayer->GetMetadataItem(OLMD_FID64) != NULL &&
+                EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") )
+            {
+                oFDefn.SetType( OFTInteger64 );
+            }
         }
         else
         {
@@ -1448,8 +1454,6 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
-                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
-                break;
               case SWQ_INTEGER64:
                 poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger64(psColDef->field_index) );
                 break;
@@ -1816,9 +1820,6 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                     switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
                     {
                       case SWQ_INTEGER:
-                        psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
-                        break;
-
                       case SWQ_INTEGER64:
                         psDstField->Integer64 = poSrcFeat->GetFieldAsInteger64(psKeyDef->field_index);
                         break;
@@ -2074,11 +2075,6 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
             switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
-                if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
-                    nResult = -1;
-                else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
-                    nResult = 1;
-                break;
               case SWQ_INTEGER64:
                 if( pasFirstTuple[iKey].Integer64 < pasSecondTuple[iKey].Integer64 )
                     nResult = -1;
