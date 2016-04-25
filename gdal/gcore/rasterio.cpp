@@ -3424,12 +3424,16 @@ static void GDALCopyWholeRasterGetSwathSize(
         nTargetSwathSize = 1000000;
 
     /* But let's check that  */
-    if (bDstIsCompressed && bInterleave && nTargetSwathSize > GDALGetCacheMax64())
+    if( bDstIsCompressed && bInterleave &&
+        nTargetSwathSize > GDALGetCacheMax64() )
     {
         CPLError(
             CE_Warning, CPLE_AppDefined,
-            "When translating into a compressed interleave format, the block cache size (" CPL_FRMT_GIB ") "
-            "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
+            "When translating into a compressed interleave format, "
+            "the block cache size (" CPL_FRMT_GIB ") "
+            "should be at least the size of the swath (%d) "
+            "(GDAL_SWATH_SIZE config. option)",
+            GDALGetCacheMax64(), nTargetSwathSize);
     }
 
 #define IS_DIVIDER_OF(x,y) ((y)%(x) == 0)
@@ -3457,7 +3461,7 @@ static void GDALCopyWholeRasterGetSwathSize(
             nSwathLines = nMaxBlockYSize;
 
             if (((GIntBig)nSwathCols) * nSwathLines * nPixelSize >
-                                                    (GIntBig)nTargetSwathSize)
+                (GIntBig)nTargetSwathSize)
             {
                 nSwathCols  = nXSize;
                 nSwathLines = nBlockYSize;
@@ -3479,9 +3483,12 @@ static void GDALCopyWholeRasterGetSwathSize(
 
         CPLDebug(
             "GDAL",
-              "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
-              "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
-              nSwathLines, (GIntBig)nBlockYSize * nMemoryPerCol, nTargetSwathSize);
+            "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
+            "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath "
+            "size (%d bytes) (GDAL_SWATH_SIZE config. option)",
+            nSwathLines,
+            static_cast<GIntBig>(nBlockYSize) * nMemoryPerCol,
+            nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
@@ -3492,7 +3499,8 @@ static void GDALCopyWholeRasterGetSwathSize(
         nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerCol));
 
         /* If possible try to align to source and target block height */
-        if ((nSwathLines % nMaxBlockYSize) != 0 && nSwathLines > nMaxBlockYSize &&
+        if ((nSwathLines % nMaxBlockYSize) != 0 &&
+            nSwathLines > nMaxBlockYSize &&
             IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
             IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
             nSwathLines = ROUND_TO(nSwathLines, nMaxBlockYSize);
@@ -3707,7 +3715,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 
     CPLDebug( "GDAL",
               "GDALDatasetCopyWholeRaster(): %d*%d swaths, bInterleave=%d",
-              nSwathCols, nSwathLines, bInterleave );
+              nSwathCols, nSwathLines, static_cast<int>(bInterleave) );
 
     if( nSwathCols == nXSize && poSrcDS->GetDriver() != NULL &&
         EQUAL(poSrcDS->GetDriver()->GetDescription(), "ECW") )
@@ -3743,7 +3751,9 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                 if( iY + nThisLines > nYSize )
                     nThisLines = nYSize - iY;
 
-                for( int iX = 0; iX < nXSize && eErr == CE_None; iX += nSwathCols )
+                for( int iX = 0;
+                     iX < nXSize && eErr == CE_None;
+                     iX += nSwathCols )
                 {
                     int nThisCols = nSwathCols;
 
@@ -3772,7 +3782,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                     if( eErr == CE_None )
                         eErr = poDstDS->RasterIO( GF_Write,
                                                   iX, iY, nThisCols, nThisLines,
-                                                  pSwathBuf, nThisCols, nThisLines,
+                                                  pSwathBuf, nThisCols,
+                                                  nThisLines,
                                                   eDT, 1, &nBand,
                                                   0, 0, 0, NULL );
                     nBlocksDone++;
