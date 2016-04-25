@@ -1236,8 +1236,7 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         if( m_nOverviewCount != nSrcDSOvrCount )
         {
             const size_t nLen = m_nOverviewCount * 8 + 10;
-            char *pszOverviewList = static_cast<char *>(
-                CPLMalloc( nLen ) );
+            char *pszOverviewList = static_cast<char *>( CPLMalloc( nLen ) );
             pszOverviewList[0] = '\0';
             for( int iOverview = 0; iOverview < m_nOverviewCount; iOverview++ )
             {
@@ -1653,7 +1652,8 @@ CPLXMLNode *VRTWarpedRasterBand::SerializeToXML( const char *pszVRTPathIn )
 int VRTWarpedRasterBand::GetOverviewCount()
 
 {
-    VRTWarpedDataset * const poWDS = reinterpret_cast<VRTWarpedDataset *>( poDS );
+    VRTWarpedDataset * const poWDS =
+        reinterpret_cast<VRTWarpedDataset *>( poDS );
 
     poWDS->CreateImplicitOverviews();
 
@@ -1667,7 +1667,8 @@ int VRTWarpedRasterBand::GetOverviewCount()
 GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
 
 {
-    VRTWarpedDataset * const poWDS = reinterpret_cast<VRTWarpedDataset *>( poDS );
+    VRTWarpedDataset * const poWDS =
+        reinterpret_cast<VRTWarpedDataset *>( poDS );
 
     if( iOverview < 0 || iOverview >= GetOverviewCount() )
         return NULL;
