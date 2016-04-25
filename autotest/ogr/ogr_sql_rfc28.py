@@ -1246,6 +1246,59 @@ def ogr_rfc28_45():
     return 'success'
 
 ###############################################################################
+# Test fid special column and 64 bit
+
+def ogr_rfc28_46():
+
+    json = """{ "type": "FeatureCollection", "features" : [
+{ "type": "Feature", "properties": { "id": 3000000000, "val": 1 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": 2500000000, "val": 2 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": 2200000000, "val": 3 }, "geometry": null }
+]}"""
+    ds = ogr.Open(json)
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter('fid >= 2500000000')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+    lyr.SetAttributeFilter(None)
+
+    # Explicit cast of fid to bigint needed in SELECT columns
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(fid AS bigint) AS outfid, val FROM OGRGeoJSON WHERE fid >= 2500000000 ORDER BY fid')
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 3000000000 or f['outfid'] != 3000000000 or f['val'] != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Explicit cast of fid to bigint no longer needed if the layer is declared OLMD_FID64=YES
+    lyr.SetMetadataItem('OLMD_FID64', 'YES')
+    sql_lyr = ds.ExecuteSQL('SELECT fid AS outfid, val FROM OGRGeoJSON WHERE fid >= 2500000000 ORDER BY fid')
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1304,6 +1357,7 @@ gdaltest_list = [
     ogr_rfc28_43,
     ogr_rfc28_44,
     ogr_rfc28_45,
+    ogr_rfc28_46,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
