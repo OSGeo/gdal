@@ -2884,9 +2884,6 @@ int GDALDatasetGetBestOverviewLevel( GDALDataset* poDS,
                                      int nBufXSize, int nBufYSize,
                                      int nBandCount, int *panBandMap )
 {
-    if (nBandCount == 0)
-        return -1;
-
     int nOverviewCount = 0;
     GDALRasterBand *poFirstBand = NULL;
 
@@ -2897,6 +2894,8 @@ int GDALDatasetGetBestOverviewLevel( GDALDataset* poDS,
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poBand = poDS->GetRasterBand( panBandMap[iBand] );
+        if ( poBand == NULL )
+            return -1;
         if (iBand == 0)
         {
             poFirstBand = poBand;
@@ -2950,6 +2949,8 @@ int GDALDatasetGetBestOverviewLevel( GDALDataset* poDS,
             }
         }
     }
+    if( poFirstBand == NULL )
+        return -1;
 
     return GDALBandGetBestOverviewLevel2( poFirstBand,
                                           nXOff, nYOff, nXSize, nYSize,
