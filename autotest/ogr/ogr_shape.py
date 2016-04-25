@@ -4513,6 +4513,46 @@ def ogr_shape_98():
 
     return 'success'
 
+###############################################################################
+# Import TOWGS84 from EPSG when possible (#6485)
+
+def ogr_shape_99():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_99.shp')
+    lyr = ds.CreateLayer('ogr_shape_99')
+    ds = None
+    gdal.FileFromMemBuffer('/vsimem/ogr_shape_99.prj', """PROJCS["CH1903_LV03",GEOGCS["GCS_CH1903",DATUM["D_CH1903",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",600000.0],PARAMETER["False_Northing",200000.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",7.439583333333333],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0],AUTHORITY["EPSG",21781]]""")
+    ds = ogr.Open('/vsimem/ogr_shape_99.shp')
+    lyr = ds.GetLayer(0)
+    got_wkt = lyr.GetSpatialRef().ExportToPrettyWkt()
+    expected_wkt = """PROJCS["CH1903_LV03",
+    GEOGCS["GCS_CH1903",
+        DATUM["CH1903",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128],
+            TOWGS84[674.4,15.1,405.3,0,0,0,0]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
+    PARAMETER["False_Easting",600000.0],
+    PARAMETER["False_Northing",200000.0],
+    PARAMETER["Scale_Factor",1.0],
+    PARAMETER["Azimuth",90.0],
+    PARAMETER["Longitude_Of_Center",7.439583333333333],
+    PARAMETER["Latitude_Of_Center",46.95240555555556],
+    PARAMETER["rectified_grid_angle",90],
+    UNIT["Meter",1.0],
+    AUTHORITY["EPSG","21781"]]"""
+    ds = None
+
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason( 'Projections differ' )
+        print(got_wkt)
+        return 'fail'
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_99.shp')
+
+    return 'success'
+
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4652,9 +4692,10 @@ gdaltest_list = [
     ogr_shape_96,
     ogr_shape_97,
     ogr_shape_98,
+    ogr_shape_99,
     ogr_shape_cleanup ]
 
-#gdaltest_list = [ ogr_shape_98 ]
+#gdaltest_list = [ ogr_shape_99 ]
 
 if __name__ == '__main__':
 
