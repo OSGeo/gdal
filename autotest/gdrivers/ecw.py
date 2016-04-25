@@ -2015,6 +2015,42 @@ def ecw_45():
     return 'success'
 
 ###############################################################################
+# /vsi reading with ECW (#6482)
+
+def ecw_47():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    if gdaltest.ecw_drv.major_version == 3:
+        return 'skip'
+
+    data = open('data/jrc.ecw', 'rb').read()
+    gdal.FileFromMemBuffer('/vsimem/ecw_47.ecw', data)
+
+    ds = gdal.Open('/vsimem/ecw_47.ecw')
+    if ds is None:
+        gdaltest.post_reason( 'fail')
+        return 'fail'
+
+    mean_tolerance = 0.5
+
+    if gdaltest.ecw_drv.major_version == 5:
+        (exp_mean, exp_stddev) = (141.606,67.2919)
+    else:
+        (exp_mean, exp_stddev) = (140.332, 67.611)
+
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+
+    if abs(mean-exp_mean) > mean_tolerance or abs(stddev-exp_stddev) > 0.5:
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ecw_47.ecw')
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2104,6 +2140,10 @@ def ecw_online_4():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
+    if gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2:
+        print('This test hangs on Linux in a mutex in the SDK 5.2.1')
+        return 'skip'
+
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
         return 'skip'
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
@@ -2191,7 +2231,7 @@ def ecw_online_6():
         dods_drv.Register()
 
     if ds is None:
-        # The ECW driver doesn't manage to open in /vsimem, thus fallbacks
+        # The ECW driver (3.3) doesn't manage to open in /vsimem, thus fallbacks
         # to writing to /tmp, which doesn't work on Windows
         if sys.platform == 'win32':    
             return 'skip'
@@ -2341,6 +2381,7 @@ gdaltest_list = [
     ecw_44,
     ecw_45,
     ecw_46,
+    ecw_47,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 

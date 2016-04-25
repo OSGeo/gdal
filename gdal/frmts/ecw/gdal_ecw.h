@@ -275,6 +275,10 @@ class VSIIOStream : public CNCSJPCIOStream
     }
     
     virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) {
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "ECW", "VSIIOStream::Seek(" CPL_FRMT_GIB ",%d)",
+                  static_cast<GIntBig>(offset), (int) origin );
+#endif
         bool success = false;
         switch(origin) {
             case START:
@@ -309,12 +313,34 @@ class VSIIOStream : public CNCSJPCIOStream
             Seek( 0, END );
             size = Tell();
             Seek( curPos, START );
-
+#ifdef DEBUG_VERBOSE
+            CPLDebug( "ECW", "VSIIOStream::Size()=" CPL_FRMT_GIB, static_cast<GIntBig>(size) );
+#endif
             return size;
         }
     }
 
+#if ECWSDK_VERSION >= 40
+    /* New, and needed, in ECW SDK 4 */
+    virtual bool Read(INT64 offset, void* buffer, UINT32 count)
+    {
+#ifdef DEBUG_VERBOSE
+      CPLDebug( "ECW", "VSIIOStream::Read(" CPL_FRMT_GIB ",%u)", static_cast<GIntBig>(offset), count );
+#endif
+      /* SDK 4.3 doc says it is not supposed to update the file pointer. */
+      /* Later versions have no comment... */
+      INT64 curPos = Tell();
+      Seek( offset, START );
+      bool ret = Read(buffer, count);
+      Seek( curPos, START );
+      return ret;
+    }
+#endif
+
     virtual bool NCS_FASTCALL Read(void* buffer, UINT32 count) {
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "ECW", "VSIIOStream::Read(%u)", count );
+#endif
         if( count == 0 )
             return true;
 
