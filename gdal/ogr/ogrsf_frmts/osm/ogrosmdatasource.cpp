@@ -2376,13 +2376,11 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
             LonLat* pasCoords = reinterpret_cast<LonLat *>(pasLonLatCache);
-            unsigned int nTags = 0;
-            OSMTag pasTags[MAX_COUNT_FOR_TAGS_IN_WAY];
             bool bIsArea = false;
             const int nPoints = UncompressWay(
                 oGeom.first,
                 reinterpret_cast<GByte *>(oGeom.second),
-                &bIsArea, pasCoords, &nTags, pasTags, NULL );
+                &bIsArea, pasCoords, NULL, NULL, NULL );
             OGRLineString* poLS;
             if( bIsArea )
             {
