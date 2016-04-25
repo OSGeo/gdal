@@ -310,8 +310,19 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
     // Make sure padfTerms is aligned on a 16-byte boundary for SSE2 aligned loads
     double* padfTerms = adfTermsWithMargin + (((size_t)adfTermsWithMargin) % 16) / 8;
 
+    // Avoid dateline issues
+    double diffLong = dfLong - psRPCTransformInfo->sRPC.dfLONG_OFF;
+    if( diffLong < -270 )
+    {
+        diffLong += 360;
+    }
+    else if( diffLong > 270 )
+    {
+        diffLong -= 360;
+    }
+
     const double dfNormalizedLong =
-      (dfLong   - psRPCTransformInfo->sRPC.dfLONG_OFF) / psRPCTransformInfo->sRPC.dfLONG_SCALE;
+      diffLong / psRPCTransformInfo->sRPC.dfLONG_SCALE;
     const double dfNormalizedLat =
       (dfLat    - psRPCTransformInfo->sRPC.dfLAT_OFF) / psRPCTransformInfo->sRPC.dfLAT_SCALE;
     const double dfNormalizedHeight =
@@ -481,6 +492,8 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
                 dfVDatumShift = -dfZ;
         }
 
+        bool bRetried = false;
+retry:
         GDALApplyGeoTransform( (double*)(psTransform->adfDEMReverseGeoTransform),
                                 dfXTemp, dfYTemp, &dfX, &dfY );
         if( pdfDEMPixel )
@@ -490,6 +503,31 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
 
         if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
         {
+            // Try to handle the case where the DEM is in LL WGS84 and spans over [-180,180],
+            // (or very close to it ), presumably with much hole in the middle if using VRT,
+            // and the longitude goes beyond that interval
+            if( !bRetried && psTransform->poCT == NULL && (dfXIn >= 180 || dfXIn <= -180) )
+            {
+                int nRasterXSize = psTransform->poDS->GetRasterXSize();
+                double dfMinDEMLong = psTransform->adfDEMGeoTransform[0];
+                double dfMaxDEMLong = psTransform->adfDEMGeoTransform[0] + nRasterXSize * psTransform->adfDEMGeoTransform[1];
+                if( fabs( dfMinDEMLong - -180 ) < 0.1 && fabs( dfMaxDEMLong - 180 ) < 0.1 )
+                {
+                    if( dfXIn >= 180 )
+                    {
+                        dfXTemp = dfXIn - 360;
+                        dfYTemp = dfYIn;
+                    }
+                    else
+                    {
+                        dfXTemp = dfXIn + 360;
+                        dfYTemp = dfYIn;
+                    }
+                    bRetried = true;
+                    goto retry;
+                }
+            }
+
             if( psTransform->bHasDEMMissingValue )
                 dfDEMH = psTransform->dfDEMMissingValue;
             else

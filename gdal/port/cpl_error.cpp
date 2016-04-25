@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 static CPLMutex *hErrorMutex = NULL;
 static void *pErrorHandlerUserData = NULL;
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
-static bool gbCatchDebug = false;
+static bool gbCatchDebug = true;
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)

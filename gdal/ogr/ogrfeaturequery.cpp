@@ -150,7 +150,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     while (iField < SPECIAL_FIELD_COUNT)
     {
         papszFieldNames[poDefn->GetFieldCount() + iField] = (char *) SpecialFieldNames[iField];
-        paeFieldTypes[poDefn->GetFieldCount() + iField] = SpecialFieldTypes[iField];
+        paeFieldTypes[poDefn->GetFieldCount() + iField] = (iField == SPF_FID) ? SWQ_INTEGER64 : SpecialFieldTypes[iField];
         ++iField;
     }
 
