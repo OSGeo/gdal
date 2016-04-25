@@ -391,12 +391,12 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 bNeedsToSaveWayInfo;
 
-    int                 CompressWay (unsigned int nTags, IndexedKVP* pasTags,
+    int                 CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
                                      OSMInfo* psInfo,
                                      GByte* pabyCompressedWay);
     int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
-                                       LonLat* pasCoords,
+                                       bool *pbIsArea, LonLat* pasCoords,
                                        unsigned int* pnTags, OSMTag* pasTags,
                                        OSMInfo* psInfo );
 
@@ -414,7 +414,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 FlushCurrentSectorNonCompressedCase();
     int                 IndexPointCustom(OSMNode* psNode);
 
-    void                IndexWay(GIntBig nWayID,
+    void                IndexWay(GIntBig nWayID, bool bIsArea,
                                  unsigned int nTags, IndexedKVP* pasTags,
                                  LonLat* pasLonLatPairs, int nPairs,
                                  OSMInfo* psInfo);
@@ -448,6 +448,7 @@ class OGROSMDataSource : public OGRDataSource
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);
+    bool                IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSMTag* pasTags );
 
   public:
                         OGROSMDataSource();
