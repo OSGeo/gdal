@@ -5534,7 +5534,6 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
     psParseInfo->sFieldList.ids = (int *)
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
 
-    bool bIsFID64 = false;
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
@@ -5610,12 +5609,6 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
                     GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcLayer->GetLayerDefn(), iField);
             }
         }
-
-        if( iTable == 0 && poSrcLayer->GetMetadataItem(OLMD_FID64) != NULL &&
-            EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") )
-        {
-            bIsFID64 = true;
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -5633,7 +5626,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
     for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
         psParseInfo->sFieldList.names[psParseInfo->sFieldList.count] = (char*) SpecialFieldNames[iField];
-        psParseInfo->sFieldList.types[psParseInfo->sFieldList.count] = (iField == SPF_FID && bIsFID64) ? SWQ_INTEGER64: SpecialFieldTypes[iField];
+        psParseInfo->sFieldList.types[psParseInfo->sFieldList.count] = SpecialFieldTypes[iField];
         psParseInfo->sFieldList.table_ids[psParseInfo->sFieldList.count] = 0;
         psParseInfo->sFieldList.ids[psParseInfo->sFieldList.count] = nFIDIndex + iField;
         psParseInfo->sFieldList.count++;
