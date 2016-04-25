@@ -577,7 +577,7 @@ class CPL_DLL GDALRasterBlock
 
     GDALDataType        eType;
 
-    int                 bDirty;
+    bool                bDirty;
     volatile int        nLockCount;
 
     int                 nXOff;
@@ -593,7 +593,7 @@ class CPL_DLL GDALRasterBlock
     GDALRasterBlock     *poNext;
     GDALRasterBlock     *poPrevious;
 
-    int                  bMustDetach;
+    bool                 bMustDetach;
 
     void        Detach_unlocked( void );
     void        Touch_unlocked( void );
