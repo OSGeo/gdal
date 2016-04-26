@@ -39,8 +39,8 @@
 #include "geotiff.h"
 
 CPL_C_START
-char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
+char CPL_DLL *GTIFGetOGISDefn( GTIF *, GTIFDefn * );
+int  CPL_DLL GTIFSetFromOGISDefn( GTIF *, const char * );
 
 typedef enum
 {
