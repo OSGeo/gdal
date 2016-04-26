@@ -37,8 +37,8 @@
 #define tmsize_t tsize_t
 #endif
 
-/* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
-/* useful for debugging purposes */
+// Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly
+// useful for debugging purposes.
 
 CPL_CVSID("$Id$");
 
@@ -48,12 +48,11 @@ CPL_CVSID("$Id$");
 /*                      GetUnderlyingDataset()                          */
 /************************************************************************/
 
-static GDALDataset* GetUnderlyingDataset(GDALDataset* poSrcDS)
+static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
 {
-    /* Test if we can directly copy original JPEG content */
-    /* if available */
-    if (poSrcDS->GetDriver() != NULL &&
-        poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
+    // Test if we can directly copy original JPEG content if available.
+    if( poSrcDS->GetDriver() != NULL &&
+        poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
     {
         VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
         poSrcDS = poVRTDS->GetSingleSimpleSource();
@@ -71,45 +70,48 @@ static GDALDataset* GetUnderlyingDataset(GDALDataset* poSrcDS)
 /*                        IsBaselineDCTJPEG()                           */
 /************************************************************************/
 
-static int IsBaselineDCTJPEG(VSILFILE* fp)
+static bool IsBaselineDCTJPEG(VSILFILE* fp)
 {
-    GByte abyBuf[4];
+    GByte abyBuf[4] = { 0 };
 
-    if (VSIFReadL(abyBuf, 1, 2, fp) != 2 ||
+    if( VSIFReadL(abyBuf, 1, 2, fp) != 2 ||
         abyBuf[0] != 0xff || abyBuf[1] != 0xd8 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Not a valid JPEG file");
-        return FALSE;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Not a valid JPEG file" );
+        return false;
     }
 
     int nOffset = 2;
     while( true )
     {
         VSIFSeekL(fp, nOffset, SEEK_SET);
-        if (VSIFReadL(abyBuf, 1, 4, fp) != 4 ||
-            abyBuf[0] != 0xFF)
+        if( VSIFReadL(abyBuf, 1, 4, fp) != 4 ||
+            abyBuf[0] != 0xFF )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                 "Not a valid JPEG file");
-            return FALSE;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Not a valid JPEG file" );
+            return false;
         }
 
-        int nMarker = abyBuf[1];
+        const int nMarker = abyBuf[1];
 
-        if (nMarker == 0xC0 /* Start of Frame 0 = Baseline DCT */)
-            return TRUE;
+        // Start of Frame 0 = Baseline DCT.
+        if( nMarker == 0xC0 )
+            return true;
 
-        if (nMarker == 0xD9)
-            return FALSE;
+        if( nMarker == 0xD9 )
+            return false;
 
-        if (nMarker == 0xF7 /* JPEG Extension 7, JPEG-LS */ ||
-            nMarker == 0xF8 /* JPEG Extension 8, JPEG-LS Extension */ ||
-            (nMarker >= 0xC1 && nMarker <= 0xCF) /* Other Start of Frames that we don't want to support */)
+        if( nMarker == 0xF7 ||  // JPEG Extension 7, JPEG-LS
+            nMarker == 0xF8 ||  // JPEG Extension 8, JPEG-LS Extension.
+            // Other Start of Frames that we don't want to support.
+            (nMarker >= 0xC1 && nMarker <= 0xCF) )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unsupported type of JPEG file for JPEG_DIRECT_COPY mode");
-            return FALSE;
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Unsupported type of JPEG file for JPEG_DIRECT_COPY mode" );
+            return false;
         }
 
         nOffset += 2 + abyBuf[2] * 256 + abyBuf[3];
@@ -120,54 +122,66 @@ static int IsBaselineDCTJPEG(VSILFILE* fp)
 /*                    GTIFF_CanDirectCopyFromJPEG()                     */
 /************************************************************************/
 
-int GTIFF_CanDirectCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
+int GTIFF_CanDirectCopyFromJPEG( GDALDataset* poSrcDS,
+                                 char** &papszCreateOptions )
 {
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poSrcDS == NULL)
+    if( poSrcDS == NULL )
         return FALSE;
-    if (poSrcDS->GetDriver() == NULL)
+    if( poSrcDS->GetDriver() == NULL )
         return FALSE;
-    if (!EQUAL(GDALGetDriverShortName(poSrcDS->GetDriver()), "JPEG"))
+    if( !EQUAL(GDALGetDriverShortName(poSrcDS->GetDriver()), "JPEG") )
         return FALSE;
 
     const char* pszCompress = CSLFetchNameValue(papszCreateOptions, "COMPRESS");
-    if (pszCompress != NULL && !EQUAL(pszCompress, "JPEG"))
+    if(pszCompress != NULL && !EQUAL(pszCompress, "JPEG") )
         return FALSE;
 
-    const char* pszSrcColorSpace = poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
-    if (pszSrcColorSpace != NULL &&
-        (EQUAL(pszSrcColorSpace, "CMYK") || EQUAL(pszSrcColorSpace, "YCbCrK")))
+    const char* pszSrcColorSpace =
+        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    if( pszSrcColorSpace != NULL &&
+        (EQUAL(pszSrcColorSpace, "CMYK") || EQUAL(pszSrcColorSpace, "YCbCrK")) )
         return FALSE;
 
-    int bJPEGDirectCopy = FALSE;
+    bool bJPEGDirectCopy = false;
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if (fpJPEG && IsBaselineDCTJPEG(fpJPEG))
+    if( fpJPEG && IsBaselineDCTJPEG(fpJPEG) )
     {
-        bJPEGDirectCopy = TRUE;
+        bJPEGDirectCopy = true;
 
-        if (pszCompress == NULL)
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "COMPRESS", "JPEG");
+        if(pszCompress == NULL )
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "COMPRESS", "JPEG");
 
-        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "BLOCKXSIZE", NULL);
-        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "BLOCKYSIZE",
-                                                CPLSPrintf("%d", poSrcDS->GetRasterYSize()));
+        papszCreateOptions =
+            CSLSetNameValue(papszCreateOptions, "BLOCKXSIZE", NULL);
+        papszCreateOptions =
+            CSLSetNameValue(papszCreateOptions, "BLOCKYSIZE",
+                             CPLSPrintf("%d", poSrcDS->GetRasterYSize()));
 
-        if (pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr"))
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");
+        if( pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr") )
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");
         else
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", NULL);
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", NULL);
 
-        if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "NBITS", "12");
+        if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte )
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "NBITS", "12");
         else
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "NBITS", NULL);
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "NBITS", NULL);
 
         papszCreateOptions = CSLSetNameValue(papszCreateOptions, "TILED", NULL);
-        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "JPEG_QUALITY", NULL);
+        papszCreateOptions =
+            CSLSetNameValue(papszCreateOptions, "JPEG_QUALITY", NULL);
     }
-    if (fpJPEG)
+    if( fpJPEG )
+    {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
+    }
 
     return bJPEGDirectCopy;
 }
@@ -176,40 +190,42 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions
 /*                     GTIFF_DirectCopyFromJPEG()                       */
 /************************************************************************/
 
-CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
-                                GDALProgressFunc pfnProgress, void * pProgressData,
-                                int& bShouldFallbackToNormalCopyIfFail)
+CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
+                                 GDALProgressFunc pfnProgress,
+                                 void * pProgressData,
+                                 int& bShouldFallbackToNormalCopyIfFail )
 {
     bShouldFallbackToNormalCopyIfFail = TRUE;
 
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poSrcDS == NULL)
+    if( poSrcDS == NULL )
         return CE_Failure;
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if (fpJPEG == NULL)
+    if( fpJPEG == NULL )
         return CE_Failure;
 
     CPLErr eErr = CE_None;
 
     VSIFSeekL(fpJPEG, 0, SEEK_END);
-    tmsize_t nSize = (tmsize_t) VSIFTellL(fpJPEG);
+    tmsize_t nSize = static_cast<tmsize_t>( VSIFTellL(fpJPEG) );
     VSIFSeekL(fpJPEG, 0, SEEK_SET);
 
     void* pabyJPEGData = VSIMalloc(nSize);
-    if (pabyJPEGData == NULL)
+    if( pabyJPEGData == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         return CE_Failure;
     }
 
-    if (pabyJPEGData != NULL &&
-        (tmsize_t)VSIFReadL(pabyJPEGData, 1, nSize, fpJPEG) == nSize)
+    if( pabyJPEGData != NULL &&
+        static_cast<tmsize_t>( VSIFReadL(pabyJPEGData, 1, nSize, fpJPEG) ) ==
+        nSize )
     {
         bShouldFallbackToNormalCopyIfFail = FALSE;
 
         TIFF* hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
-        if (TIFFWriteRawStrip(hTIFF, 0, pabyJPEGData, nSize) != nSize)
+        if( TIFFWriteRawStrip(hTIFF, 0, pabyJPEGData, nSize) != nSize )
             eErr = CE_Failure;
 
         if( !pfnProgress( 1.0, NULL, pProgressData ) )
@@ -250,76 +266,88 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /*                      GTIFF_CanCopyFromJPEG()                         */
 /************************************************************************/
 
-int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
+int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
 {
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poSrcDS == NULL)
+    if( poSrcDS == NULL )
         return FALSE;
-    if (poSrcDS->GetDriver() == NULL)
+    if( poSrcDS->GetDriver() == NULL )
         return FALSE;
-    if (!EQUAL(GDALGetDriverShortName(poSrcDS->GetDriver()), "JPEG"))
+    if( !EQUAL(GDALGetDriverShortName(poSrcDS->GetDriver()), "JPEG") )
         return FALSE;
 
     const char* pszCompress = CSLFetchNameValue(papszCreateOptions, "COMPRESS");
-    if (pszCompress == NULL || !EQUAL(pszCompress, "JPEG"))
+    if( pszCompress == NULL || !EQUAL(pszCompress, "JPEG") )
         return FALSE;
 
-    int nBlockXSize = atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKXSIZE", "0"));
-    int nBlockYSize = atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKYSIZE", "0"));
+    const int nBlockXSize =
+        atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKXSIZE", "0"));
+    const int nBlockYSize =
+        atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKYSIZE", "0"));
     int nMCUSize = 8;
     const char* pszSrcColorSpace =
         poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
-    if (pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr"))
+    if( pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr") )
         nMCUSize = 16;
 
-    int     nXSize = poSrcDS->GetRasterXSize();
-    int     nYSize = poSrcDS->GetRasterYSize();
-    int     nBands = poSrcDS->GetRasterCount();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
 
-    const char* pszPhotometric = CSLFetchNameValue(papszCreateOptions, "PHOTOMETRIC");
-    int bCompatiblePhotometric = (
-            pszPhotometric == NULL ||
-            (nMCUSize == 16 && EQUAL(pszPhotometric, "YCbCr")) ||
-            (nMCUSize == 8 && nBands == 4 &&
-             poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
-             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_MagentaBand &&
-             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_YellowBand &&
-             poSrcDS->GetRasterBand(4)->GetColorInterpretation() == GCI_BlackBand) ||
-            (nMCUSize == 8 && EQUAL(pszPhotometric, "RGB") && nBands == 3) ||
-            (nMCUSize == 8 && EQUAL(pszPhotometric, "MINISBLACK") && nBands == 1) );
-    if (!bCompatiblePhotometric)
+    const char* pszPhotometric =
+        CSLFetchNameValue(papszCreateOptions, "PHOTOMETRIC");
+
+    const bool bCompatiblePhotometric =
+        pszPhotometric == NULL ||
+        (nMCUSize == 16 && EQUAL(pszPhotometric, "YCbCr")) ||
+        (nMCUSize == 8 && nBands == 4 &&
+         poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
+         poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
+         GCI_MagentaBand &&
+         poSrcDS->GetRasterBand(3)->GetColorInterpretation() ==
+         GCI_YellowBand &&
+         poSrcDS->GetRasterBand(4)->GetColorInterpretation() ==
+         GCI_BlackBand) ||
+        (nMCUSize == 8 && EQUAL(pszPhotometric, "RGB") && nBands == 3) ||
+        (nMCUSize == 8 && EQUAL(pszPhotometric, "MINISBLACK") && nBands == 1);
+    if( !bCompatiblePhotometric )
         return FALSE;
 
-    if ( nBands == 4 && pszPhotometric == NULL &&
+    if( nBands == 4 && pszPhotometric == NULL &&
          poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
-         poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_MagentaBand &&
-         poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_YellowBand &&
+         poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
+         GCI_MagentaBand &&
+         poSrcDS->GetRasterBand(3)->GetColorInterpretation() ==
+         GCI_YellowBand &&
          poSrcDS->GetRasterBand(4)->GetColorInterpretation() == GCI_BlackBand )
     {
-        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "CMYK");
+        papszCreateOptions =
+            CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "CMYK");
     }
 
-    const char* pszInterleave = CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
-    int bCompatibleInterleave = ( pszInterleave == NULL ||
-                                  (nBands > 1 && EQUAL(pszInterleave, "PIXEL")) ||
-                                  nBands == 1 );
+    const char* pszInterleave =
+        CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
+
+    const bool bCompatibleInterleave =
+        pszInterleave == NULL ||
+        (nBands > 1 && EQUAL(pszInterleave, "PIXEL")) ||
+        nBands == 1;
     if( !bCompatibleInterleave )
         return FALSE;
 
-    if ( (nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
+    if( (nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
          (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
          poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
          CSLFetchNameValue(papszCreateOptions, "NBITS") == NULL &&
          CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == NULL )
     {
-        if (nMCUSize == 16 && pszPhotometric == NULL)
-            papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");
+        if( nMCUSize == 16 && pszPhotometric == NULL )
+            papszCreateOptions =
+                CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");
         return TRUE;
     }
-    else
-    {
-        return FALSE;
-    }
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -329,15 +357,15 @@ int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
 static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
 {
     jmp_buf *setjmp_buffer = (jmp_buf *) cinfo->client_data;
-    char buffer[JMSG_LENGTH_MAX];
+    char buffer[JMSG_LENGTH_MAX] = { '\0' };
 
-    /* Create the message */
+    // Create the message.
     (*cinfo->err->format_message) (cinfo, buffer);
 
     CPLError( CE_Failure, CPLE_AppDefined,
               "libjpeg: %s", buffer );
 
-    /* Return control to the setjmp point */
+    // Return control to the setjmp point.
     longjmp(*setjmp_buffer, 1);
 }
 
@@ -350,28 +378,26 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
                                   jpeg_decompress_struct& sDInfo,
                                   jpeg_compress_struct& sCInfo)
 {
-    char szTmpFilename[128];
+    char szTmpFilename[128] = { '\0' };
     snprintf(szTmpFilename, sizeof(szTmpFilename), "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
 
-    uint16  nPhotometric;
+    uint16 nPhotometric = 0;
     TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &nPhotometric );
 
     jpeg_vsiio_dest( &sCInfo, fpTABLES );
 
-    // Avoid unnecessary tables to be emitted
+    // Avoid unnecessary tables to be emitted.
     if( nPhotometric != PHOTOMETRIC_YCBCR )
     {
-        JQUANT_TBL* qtbl;
-        JHUFF_TBL* htbl;
-        qtbl = sCInfo.quant_tbl_ptrs[1];
-        if (qtbl != NULL)
+        JQUANT_TBL* qtbl = sCInfo.quant_tbl_ptrs[1];
+        if( qtbl != NULL )
             qtbl->sent_table = TRUE;
-        htbl = sCInfo.dc_huff_tbl_ptrs[1];
-        if (htbl != NULL)
+        JHUFF_TBL* htbl = sCInfo.dc_huff_tbl_ptrs[1];
+        if( htbl != NULL )
             htbl->sent_table = TRUE;
         htbl = sCInfo.ac_huff_tbl_ptrs[1];
-        if (htbl != NULL)
+        if( htbl != NULL )
             htbl->sent_table = TRUE;
     }
     jpeg_write_tables( &sCInfo );
@@ -379,8 +405,11 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpTABLES));
 
     vsi_l_offset nSizeTables = 0;
-    GByte* pabyJPEGTablesData = VSIGetMemFileBuffer(szTmpFilename, &nSizeTables, FALSE);
-    TIFFSetField(hTIFF, TIFFTAG_JPEGTABLES, (int)nSizeTables, pabyJPEGTablesData);
+    GByte* pabyJPEGTablesData =
+        VSIGetMemFileBuffer(szTmpFilename, &nSizeTables, FALSE);
+    TIFFSetField( hTIFF, TIFFTAG_JPEGTABLES,
+                  static_cast<int>(nSizeTables),
+                  pabyJPEGTablesData );
 
     VSIUnlink(szTmpFilename);
 }
@@ -389,11 +418,11 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
 /*             GTIFF_CopyFromJPEG_WriteAdditionalTags()                 */
 /************************************************************************/
 
-CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
-                                              GDALDataset* poSrcDS)
+CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
+                                               GDALDataset* poSrcDS )
 {
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poSrcDS == NULL)
+    if( poSrcDS == NULL )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -401,13 +430,13 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
 /* -------------------------------------------------------------------- */
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if (fpJPEG == NULL)
+    if( fpJPEG == NULL )
         return CE_Failure;
 
     struct jpeg_error_mgr sJErr;
     struct jpeg_decompress_struct sDInfo;
     jmp_buf setjmp_buffer;
-    if (setjmp(setjmp_buffer))
+    if( setjmp(setjmp_buffer) )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         return CE_Failure;
@@ -438,35 +467,33 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
 /*      Write TIFFTAG_REFERENCEBLACKWHITE if needed.                    */
 /* -------------------------------------------------------------------- */
 
-    uint16 nPhotometric;
+    uint16 nPhotometric = 0;
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    uint16 nBitsPerSample;
+    uint16 nBitsPerSample = 0;
     if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(nBitsPerSample)) )
         nBitsPerSample = 1;
 
-    if ( nPhotometric == PHOTOMETRIC_YCBCR )
+    if( nPhotometric == PHOTOMETRIC_YCBCR )
     {
         /*
          * A ReferenceBlackWhite field *must* be present since the
          * default value is inappropriate for YCbCr.  Fill in the
          * proper value if application didn't set it.
          */
-        float *ref;
-        if (!TIFFGetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE,
-                    &ref))
+        float *ref = NULL;
+        if( !TIFFGetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
         {
-            float refbw[6];
             long top = 1L << nBitsPerSample;
-            refbw[0] = 0;
+            float refbw[6] = { 0.0 };
             refbw[1] = (float)(top-1L);
             refbw[2] = (float)(top>>1);
             refbw[3] = refbw[1];
             refbw[4] = refbw[2];
             refbw[5] = refbw[1];
-            TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE,
-                        refbw);
+            TIFFSetField( hTIFF, TIFFTAG_REFERENCEBLACKWHITE,
+                          refbw );
         }
     }
 
@@ -474,14 +501,16 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
 /*      Write TIFFTAG_YCBCRSUBSAMPLING if needed.                       */
 /* -------------------------------------------------------------------- */
 
-    if ( nPhotometric == PHOTOMETRIC_YCBCR && sDInfo.num_components == 3 )
+    if( nPhotometric == PHOTOMETRIC_YCBCR && sDInfo.num_components == 3 )
     {
-        if ((sDInfo.comp_info[0].h_samp_factor == 1 || sDInfo.comp_info[0].h_samp_factor == 2) &&
-            (sDInfo.comp_info[0].v_samp_factor == 1 || sDInfo.comp_info[0].v_samp_factor == 2) &&
+        if( (sDInfo.comp_info[0].h_samp_factor == 1 ||
+             sDInfo.comp_info[0].h_samp_factor == 2) &&
+            (sDInfo.comp_info[0].v_samp_factor == 1 ||
+             sDInfo.comp_info[0].v_samp_factor == 2) &&
             sDInfo.comp_info[1].h_samp_factor == 1 &&
             sDInfo.comp_info[1].v_samp_factor == 1 &&
             sDInfo.comp_info[2].h_samp_factor == 1 &&
-            sDInfo.comp_info[2].v_samp_factor == 1)
+            sDInfo.comp_info[2].v_samp_factor == 1 )
         {
             TIFFSetField(hTIFF, TIFFTAG_YCBCRSUBSAMPLING,
                          sDInfo.comp_info[0].h_samp_factor,
@@ -489,7 +518,10 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
         }
         else
         {
-            CPLDebug("GTiff", "Unusual sampling factors. TIFFTAG_YCBCRSUBSAMPLING not written.");
+            CPLDebug(
+                "GTiff",
+                "Unusual sampling factors. "
+                "TIFFTAG_YCBCRSUBSAMPLING not written." );
         }
     }
 
@@ -526,7 +558,7 @@ typedef struct
     jvirt_barray_ptr *pSrcCoeffs;
 } GTIFF_CopyBlockFromJPEGArgs;
 
-static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
+static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
 {
     CPLString osTmpFilename(CPLSPrintf("/vsimem/%p", psArgs->psDInfo));
     VSILFILE* fpMEM = VSIFOpenL(osTmpFilename, "wb+");
@@ -535,7 +567,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
 /*      Initialization of the compressor                                */
 /* -------------------------------------------------------------------- */
     jmp_buf setjmp_buffer;
-    if (setjmp(setjmp_buffer))
+    if( setjmp(setjmp_buffer) )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpMEM));
         VSIUnlink(osTmpFilename);
@@ -561,34 +593,30 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
     sJErr.error_exit = GTIFF_ErrorExitJPEG;
     sCInfo.client_data = (void *) &setjmp_buffer;
 
-    /* Initialize destination compression parameters from source values */
+    // Initialize destination compression parameters from source values.
     jpeg_create_compress(&sCInfo);
     jpeg_copy_critical_parameters(psDInfo, &sCInfo);
 
-    /* ensure libjpeg won't write any extraneous markers */
+    // ensure libjpeg won't write any extraneous markers.
     sCInfo.write_JFIF_header = FALSE;
     sCInfo.write_Adobe_marker = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Allocated destination coefficient array                         */
 /* -------------------------------------------------------------------- */
-    int bIsTiled = TIFFIsTiled(hTIFF);
+    const bool bIsTiled = CPL_TO_BOOL(TIFFIsTiled(hTIFF));
 
-    int nJPEGWidth, nJPEGHeight;
-    if (bIsTiled)
-    {
-        nJPEGWidth = nBlockXSize;
-        nJPEGHeight = nBlockYSize;
-    }
-    else
+    int nJPEGWidth = nBlockXSize;
+    int nJPEGHeight = nBlockYSize;
+    if( !bIsTiled )
     {
         nJPEGWidth = MIN(nBlockXSize, nXSize - iX * nBlockXSize);
         nJPEGHeight = MIN(nBlockYSize, nYSize - iY * nBlockYSize);
     }
 
-    /* Code partially derived from libjpeg transupp.c */
+    // Code partially derived from libjpeg transupp.c.
 
-    /* Correct the destination's image dimensions as necessary */
+    // Correct the destination's image dimensions as necessary.
     #if JPEG_LIB_VERSION >= 70
     sCInfo.jpeg_width = nJPEGWidth;
     sCInfo.jpeg_height = nJPEGHeight;
@@ -597,22 +625,21 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
     sCInfo.image_height = nJPEGHeight;
     #endif
 
-    /* Save x/y offsets measured in iMCUs */
-    int x_crop_offset = (iX * nBlockXSize) / iMCU_sample_width;
-    int y_crop_offset = (iY * nBlockYSize) / iMCU_sample_height;
+    // Save x/y offsets measured in iMCUs.
+    const int x_crop_offset = (iX * nBlockXSize) / iMCU_sample_width;
+    const int y_crop_offset = (iY * nBlockYSize) / iMCU_sample_height;
 
     jvirt_barray_ptr* pDstCoeffs = (jvirt_barray_ptr *)
         (*sCInfo.mem->alloc_small) ((j_common_ptr) &sCInfo, JPOOL_IMAGE,
                                     sizeof(jvirt_barray_ptr) * sCInfo.num_components);
-    int ci;
 
-    for (ci = 0; ci < sCInfo.num_components; ci++)
+    for( int ci = 0; ci < sCInfo.num_components; ci++ )
     {
         jpeg_component_info *compptr = sCInfo.comp_info + ci;
         int h_samp_factor, v_samp_factor;
-        if (sCInfo.num_components == 1)
+        if( sCInfo.num_components == 1 )
         {
-            /* we're going to force samp factors to 1x1 in this case */
+            // Force samp factors to 1x1 in this case.
             h_samp_factor = v_samp_factor = 1;
         }
         else
@@ -626,90 +653,95 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
                 (nJPEGHeight + iMCU_sample_height - 1) / iMCU_sample_height;
         int nWidth_in_blocks = width_in_iMCUs * h_samp_factor;
         int nHeight_in_blocks = height_in_iMCUs * v_samp_factor;
-        pDstCoeffs[ci] = (*sCInfo.mem->request_virt_barray)
-                ((j_common_ptr) &sCInfo, JPOOL_IMAGE, FALSE,
-                nWidth_in_blocks, nHeight_in_blocks, (JDIMENSION) v_samp_factor);
+        pDstCoeffs[ci] = (*sCInfo.mem->request_virt_barray)(
+            (j_common_ptr) &sCInfo, JPOOL_IMAGE, FALSE,
+            nWidth_in_blocks, nHeight_in_blocks,
+            (JDIMENSION) v_samp_factor );
     }
 
     jpeg_vsiio_dest( &sCInfo, fpMEM );
 
-    /* Start compressor (note no image data is actually written here) */
+    // Start compressor (note no image data is actually written here).
     jpeg_write_coefficients(&sCInfo, pDstCoeffs);
 
     jpeg_suppress_tables( &sCInfo, TRUE );
 
-    /* We simply have to copy the right amount of data (the destination's
-    * image size) starting at the given X and Y offsets in the source.
-    */
-    for (ci = 0; ci < sCInfo.num_components; ci++)
+    // Must copy the right amount of data (the destination's image size)
+    // starting at the given X and Y offsets in the source.
+    for( int ci = 0; ci < sCInfo.num_components; ci++ )
     {
         jpeg_component_info *compptr = sCInfo.comp_info + ci;
-        int x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
-        int y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
-        JDIMENSION nSrcWidthInBlocks = psDInfo->comp_info[ci].width_in_blocks;
-        JDIMENSION nSrcHeightInBlocks = psDInfo->comp_info[ci].height_in_blocks;
+        const int x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
+        const int y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
+        const JDIMENSION nSrcWidthInBlocks =
+            psDInfo->comp_info[ci].width_in_blocks;
+        const JDIMENSION nSrcHeightInBlocks =
+            psDInfo->comp_info[ci].height_in_blocks;
 
         JDIMENSION nXBlocksToCopy = compptr->width_in_blocks;
-        if (x_crop_blocks + compptr->width_in_blocks > nSrcWidthInBlocks)
+        if( x_crop_blocks + compptr->width_in_blocks > nSrcWidthInBlocks )
             nXBlocksToCopy = nSrcWidthInBlocks - x_crop_blocks;
 
-        for (JDIMENSION dst_blk_y = 0;
-                        dst_blk_y < compptr->height_in_blocks;
-                        dst_blk_y += compptr->v_samp_factor)
+        for( JDIMENSION dst_blk_y = 0;
+             dst_blk_y < compptr->height_in_blocks;
+             dst_blk_y += compptr->v_samp_factor )
         {
-            JBLOCKARRAY dst_buffer = (*psDInfo->mem->access_virt_barray)
-                            ((j_common_ptr) psDInfo, pDstCoeffs[ci],
-                                dst_blk_y,
-                                (JDIMENSION) compptr->v_samp_factor, TRUE);
+            JBLOCKARRAY dst_buffer = (*psDInfo->mem->access_virt_barray)(
+                (j_common_ptr) psDInfo, pDstCoeffs[ci],
+                dst_blk_y,
+                (JDIMENSION) compptr->v_samp_factor, TRUE );
 
             int offset_y = 0;
             if( bIsTiled &&
                 dst_blk_y + y_crop_blocks + compptr->v_samp_factor >
-                                                        nSrcHeightInBlocks)
+                                                        nSrcHeightInBlocks )
             {
-                int nYBlocks = nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
-                if (nYBlocks > 0)
+                const int nYBlocks =
+                    nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
+                if( nYBlocks > 0 )
                 {
-                    JBLOCKARRAY src_buffer = (*psDInfo->mem->access_virt_barray)
-                                ((j_common_ptr) psDInfo, pSrcCoeffs[ci],
-                                dst_blk_y + y_crop_blocks,
-                                    (JDIMENSION) 1, FALSE);
-                    for (; offset_y < nYBlocks; offset_y++)
+                    JBLOCKARRAY src_buffer =
+                        (*psDInfo->mem->access_virt_barray)(
+                            (j_common_ptr) psDInfo, pSrcCoeffs[ci],
+                            dst_blk_y + y_crop_blocks,
+                            (JDIMENSION) 1, FALSE );
+                    for( ; offset_y < nYBlocks; offset_y++ )
                     {
-                        memcpy(dst_buffer[offset_y],
-                               src_buffer[offset_y] + x_crop_blocks,
-                               nXBlocksToCopy * (DCTSIZE2 * sizeof(JCOEF)));
-                        if (nXBlocksToCopy < compptr->width_in_blocks)
+                        memcpy( dst_buffer[offset_y],
+                                src_buffer[offset_y] + x_crop_blocks,
+                                nXBlocksToCopy * (DCTSIZE2 * sizeof(JCOEF)));
+                        if( nXBlocksToCopy < compptr->width_in_blocks )
                         {
                             memset(dst_buffer[offset_y]  + nXBlocksToCopy, 0,
                                    (compptr->width_in_blocks - nXBlocksToCopy) *
-                                                    (DCTSIZE2 * sizeof(JCOEF)));
+                                   (DCTSIZE2 * sizeof(JCOEF)));
                         }
                     }
                 }
 
-                for (; offset_y < compptr->v_samp_factor; offset_y++)
+                for( ; offset_y < compptr->v_samp_factor; offset_y++ )
                 {
-                    memset(dst_buffer[offset_y], 0,
-                           compptr->width_in_blocks * (DCTSIZE2 * sizeof(JCOEF)));
+                    memset(
+                        dst_buffer[offset_y], 0,
+                        compptr->width_in_blocks * DCTSIZE2 * sizeof(JCOEF) );
                 }
             }
             else
             {
-                JBLOCKARRAY src_buffer = (*psDInfo->mem->access_virt_barray)
-                                ((j_common_ptr) psDInfo, pSrcCoeffs[ci],
-                                dst_blk_y + y_crop_blocks,
-                                (JDIMENSION) compptr->v_samp_factor, FALSE);
-                for (; offset_y < compptr->v_samp_factor; offset_y++)
+                JBLOCKARRAY src_buffer = (*psDInfo->mem->access_virt_barray)(
+                    (j_common_ptr) psDInfo, pSrcCoeffs[ci],
+                    dst_blk_y + y_crop_blocks,
+                    (JDIMENSION) compptr->v_samp_factor, FALSE );
+                for( ; offset_y < compptr->v_samp_factor; offset_y++ )
                 {
                     memcpy(dst_buffer[offset_y],
                            src_buffer[offset_y] + x_crop_blocks,
                            nXBlocksToCopy * (DCTSIZE2 * sizeof(JCOEF)));
-                    if (nXBlocksToCopy < compptr->width_in_blocks)
+                    if( nXBlocksToCopy < compptr->width_in_blocks )
                     {
                         memset(dst_buffer[offset_y] + nXBlocksToCopy, 0,
                                (compptr->width_in_blocks - nXBlocksToCopy) *
-                                                   (DCTSIZE2 * sizeof(JCOEF)));
+                               (DCTSIZE2 * sizeof(JCOEF)));
                     }
                 }
             }
@@ -729,16 +761,21 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
 
     CPLErr eErr = CE_None;
 
-    if ( bIsTiled )
+    if( bIsTiled )
     {
-        if ((vsi_l_offset)TIFFWriteRawTile(hTIFF, iX + iY * nXBlocks,
-                                           pabyJPEGData, static_cast<tmsize_t>(nSize)) != nSize)
+        if( static_cast<vsi_l_offset>(
+               TIFFWriteRawTile(
+                   hTIFF, iX + iY * nXBlocks,
+                   pabyJPEGData,
+                   static_cast<tmsize_t>(nSize) ) )  != nSize )
             eErr = CE_Failure;
     }
     else
     {
-        if ((vsi_l_offset)TIFFWriteRawStrip(hTIFF, iX + iY * nXBlocks,
-                                            pabyJPEGData, static_cast<tmsize_t>(nSize)) != nSize)
+        if( static_cast<vsi_l_offset>(
+               TIFFWriteRawStrip(
+                   hTIFF, iX + iY * nXBlocks,
+                   pabyJPEGData, static_cast<tmsize_t>(nSize) ) ) != nSize )
             eErr = CE_Failure;
     }
 
@@ -758,11 +795,11 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     bShouldFallbackToNormalCopyIfFail = TRUE;
 
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poSrcDS == NULL)
+    if( poSrcDS == NULL )
         return CE_Failure;
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if (fpJPEG == NULL)
+    if( fpJPEG == NULL )
         return CE_Failure;
 
     CPLErr eErr = CE_None;
@@ -774,7 +811,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     struct jpeg_decompress_struct sDInfo;
     memset(&sDInfo, 0, sizeof(sDInfo));
     jmp_buf setjmp_buffer;
-    if (setjmp(setjmp_buffer))
+    if( setjmp(setjmp_buffer) )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         jpeg_destroy_decompress(&sDInfo);
@@ -787,11 +824,11 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
     jpeg_create_decompress(&sDInfo);
 
-    /* This is to address bug related in ticket #1795 */
-    if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+    // This is to address bug related in ticket #1795.
+    if( CPLGetConfigOption("JPEGMEM", NULL) == NULL )
     {
-        /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
-        /* that at least 500 MB will be used before creating the temporary file */
+        // If the user doesn't provide a value for JPEGMEM, be sure that at
+        // least 500 MB will be used before creating the temporary file.
         sDInfo.mem->max_memory_to_use =
                 MAX(sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
     }
@@ -804,13 +841,9 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Compute MCU dimensions                                          */
 /* -------------------------------------------------------------------- */
-    int iMCU_sample_width, iMCU_sample_height;
-    if (sDInfo.num_components == 1)
-    {
-        iMCU_sample_width = 8;
-        iMCU_sample_height = 8;
-    }
-    else
+    int iMCU_sample_width = 8;
+    int iMCU_sample_height = 8;
+    if( sDInfo.num_components != 1 )
     {
         iMCU_sample_width = sDInfo.max_h_samp_factor * 8;
         iMCU_sample_height = sDInfo.max_v_samp_factor * 8;
@@ -819,18 +852,18 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Get raster and block dimensions                                 */
 /* -------------------------------------------------------------------- */
-    int nXSize, nYSize /* , nBands */;
-    int nBlockXSize, nBlockYSize;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
 
-    nXSize = poDS->GetRasterXSize();
-    nYSize = poDS->GetRasterYSize();
-    /* nBands = poDS->GetRasterCount(); */
+    const int nXSize = poDS->GetRasterXSize();
+    const int nYSize = poDS->GetRasterYSize();
+    // nBands = poDS->GetRasterCount();
 
-    /* We don't use the GDAL block dimensions because of the split-band */
-    /* mechanism that can expose a pseudo one-line-strip whereas the */
-    /* real layout is a single big strip */
+    // Don't use the GDAL block dimensions because of the split-band
+    // mechanism that can expose a pseudo one-line-strip whereas the
+    // real layout is a single big strip.
 
-    TIFF* hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
+    TIFF* hTIFF = static_cast<TIFF*>( poDS->GetInternalHandle(NULL) );
     if( TIFFIsTiled(hTIFF) )
     {
         TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize) );
@@ -843,22 +876,22 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
                         &(nRowsPerStrip) ) )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                    "RowsPerStrip not defined ... assuming all one strip." );
-            nRowsPerStrip = nYSize; /* dummy value */
+                      "RowsPerStrip not defined ... assuming all one strip." );
+            nRowsPerStrip = nYSize;  // Dummy value.
         }
 
         // If the rows per strip is larger than the file we will get
         // confused.  libtiff internally will treat the rowsperstrip as
         // the image height and it is best if we do too. (#4468)
-        if (nRowsPerStrip > (uint32)nYSize)
+        if( nRowsPerStrip > static_cast<uint32>(nYSize) )
             nRowsPerStrip = nYSize;
 
         nBlockXSize = nXSize;
         nBlockYSize = nRowsPerStrip;
     }
 
-    int nXBlocks = (nXSize + nBlockXSize - 1) / nBlockXSize;
-    int nYBlocks = (nYSize + nBlockYSize - 1) / nBlockYSize;
+    const int nXBlocks = (nXSize + nBlockXSize - 1) / nBlockXSize;
+    const int nYBlocks = (nYSize + nBlockYSize - 1) / nBlockYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Copy blocks.                                                    */
@@ -866,9 +899,9 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
     bShouldFallbackToNormalCopyIfFail = FALSE;
 
-    for(int iY=0;iY<nYBlocks && eErr == CE_None;iY++)
+    for( int iY = 0; iY < nYBlocks && eErr == CE_None; iY++ )
     {
-        for(int iX=0;iX<nXBlocks && eErr == CE_None;iX++)
+        for( int iX = 0; iX < nXBlocks && eErr == CE_None; iX++ )
         {
             GTIFF_CopyBlockFromJPEGArgs sArgs;
             sArgs.hTIFF = hTIFF;
@@ -886,7 +919,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
             eErr = GTIFF_CopyBlockFromJPEG( &sArgs );
 
-            if (!pfnProgress((iY * nXBlocks + iX + 1) * 1.0 /
+            if( !pfnProgress((iY * nXBlocks + iX + 1) * 1.0 /
                                 (nXBlocks * nYBlocks),
                              NULL, pProgressData ) )
                 eErr = CE_Failure;
@@ -906,4 +939,4 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     return eErr;
 }
 
-#endif // HAVE_LIBJPEG
+#endif  // HAVE_LIBJPEG
