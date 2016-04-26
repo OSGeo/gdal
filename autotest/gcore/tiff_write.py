@@ -6442,6 +6442,65 @@ def tiff_write_144():
     return 'success'
 
 ###############################################################################
+# Test various warnings / errors of Create()
+
+def tiff_write_145():
+  
+    options_list = [ { 'bands': 65536, 'expected_failure': True },
+                     { 'creation_options': [ 'INTERLEAVE=foo' ], 'expected_failure': True },
+                     { 'creation_options': [ 'COMPRESS=foo' ], 'expected_failure': False },
+                     { 'creation_options': [ 'STREAMABLE_OUTPUT=YES', 'SPARSE_OK=YES' ], 'expected_failure': True },
+                     { 'creation_options': [ 'STREAMABLE_OUTPUT=YES', 'COPY_SRC_OVERVIEWS=YES' ], 'expected_failure': True },
+                     { 'use_tmp': True, 'xsize': 100000, 'ysize': 100000, 'creation_options': [ 'BIGTIFF=NO' ], 'expected_failure': True },
+                     { 'creation_options': [ 'ENDIANNESS=foo' ], 'expected_failure': False },
+                     { 'creation_options': [ 'NBITS=9' ], 'expected_failure': False },
+                     { 'datatype' : gdal.GDT_Float32, 'creation_options': [ 'NBITS=8' ], 'expected_failure': False },
+                     { 'datatype' : gdal.GDT_UInt16, 'creation_options': [ 'NBITS=8' ], 'expected_failure': False },
+                     { 'datatype' : gdal.GDT_UInt16, 'creation_options': [ 'NBITS=17' ], 'expected_failure': False },
+                     { 'datatype' : gdal.GDT_UInt32, 'creation_options': [ 'NBITS=16' ], 'expected_failure': False },
+                     { 'datatype' : gdal.GDT_UInt32, 'creation_options': [ 'NBITS=33' ], 'expected_failure': False },
+                     { 'bands' : 3, 'creation_options': [ 'PHOTOMETRIC=YCBCR' ], 'expected_failure': True },
+                     { 'bands' : 3, 'creation_options': [ 'PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG', 'INTERLEAVE=BAND' ], 'expected_failure': True },
+                     { 'bands' : 1, 'creation_options': [ 'PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG' ], 'expected_failure': True },
+                     { 'creation_options': [ 'PHOTOMETRIC=foo' ], 'expected_failure': False },
+                     { 'creation_options': [ 'PHOTOMETRIC=RGB' ], 'expected_failure': False },
+                     { 'creation_options': [ 'TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1' ], 'expected_failure': True },
+                   ]
+
+    for options in options_list:
+        xsize = options.get('xsize', 1)
+        ysize = options.get('ysize', 1)
+        bands = options.get('bands', 1)
+        datatype = options.get('datatype', gdal.GDT_Byte)
+        use_tmp = options.get('use_tmp', False)
+        if use_tmp:
+            filename = 'tmp/tiff_write_145.tif'
+        else:
+            filename = '/vsimem/tiff_write_145.tif'
+        creation_options = options.get('creation_options', [])
+        gdal.Unlink(filename)
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            ds = gdaltest.tiff_drv.Create(filename, xsize, ysize, bands, datatype, options = creation_options)
+        if ds is not None and options.get('expected_failure', False):
+            gdaltest.post_reason( 'expected failure, but did not get it' )
+            print(options)
+            return 'fail'
+        elif ds is None and not options.get('expected_failure', False):
+            gdaltest.post_reason( 'got failure, but did not expect it' )
+            print(options)
+            return 'fail'
+        ds = None
+        #print(gdal.GetLastErrorMsg())
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason( 'did not get any warning/error' )
+            print(options)
+            return 'fail'
+        gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6615,12 +6674,11 @@ gdaltest_list = [
     tiff_write_142,
     tiff_write_143,
     tiff_write_144,
+    tiff_write_145,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-disabled_gdaltest_list = [
-    tiff_write_1,
-    tiff_write_140 ]
+#gdaltest_list = [ tiff_write_1, tiff_write_145 ]
 
 if __name__ == '__main__':
 
