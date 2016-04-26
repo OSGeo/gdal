@@ -1346,6 +1346,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
     {
         WKTMassageDatum( papszTokens + 1 );
 
+        CPLAssert(papszTokens[1] != NULL);  // Silence clang static analyzer.
         if( EQUAL(papszTokens[1], pszOGCName) )
             nReturn = atoi(papszTokens[0]);
 
