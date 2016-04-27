@@ -1171,6 +1171,21 @@ def tiff_read_huge4GB():
 
     return 'success'
 
+###############################################################################
+# Test that we can read a one-trip TIFF without StripByteCounts tag
+
+def tiff_read_one_strip_no_bytecount():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/one_strip_nobytecount.tif')
+    gdal.PopErrorHandler()
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason( 'fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1222,6 +1237,7 @@ gdaltest_list.append( (tiff_jpeg_rgba_band_interleaved) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_huge4GB) )
+gdaltest_list.append( (tiff_read_one_strip_no_bytecount) )
 
 if __name__ == '__main__':
 
