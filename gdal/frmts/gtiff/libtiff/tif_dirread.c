@@ -166,6 +166,8 @@ static int TIFFFetchSubjectDistance(TIFF*, TIFFDirEntry*);
 static void ChopUpSingleUncompressedStrip(TIFF*);
 static uint64 TIFFReadUInt64(const uint8 *value);
 
+static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount );
+
 typedef union _UInt64Aligned_t
 {
         double d;
@@ -4295,8 +4297,9 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
 
-    if( !_TIFFFillStriles( tif ) )
-        return -1;
+    /* Do not try to load stripbytecount as we will compute it */
+        if( !_TIFFFillStrilesInternal( tif, 0 ) )
+            return -1;
 
 	if (td->td_stripbytecount)
 		_TIFFfree(td->td_stripbytecount);
@@ -5584,6 +5587,11 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 
 int _TIFFFillStriles( TIFF *tif )
 {
+    return _TIFFFillStrilesInternal( tif, 1 );
+}
+
+static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount )
+{
 #if defined(DEFER_STRILE_LOAD)
         register TIFFDirectory *td = &tif->tif_dir;
         int return_value = 1;
@@ -5600,7 +5608,8 @@ int _TIFFFillStriles( TIFF *tif )
                 return_value = 0;
         }
 
-        if (!TIFFFetchStripThing(tif,&(td->td_stripbytecount_entry),
+        if (loadStripByteCount &&
+            !TIFFFetchStripThing(tif,&(td->td_stripbytecount_entry),
                                  td->td_nstrips,&td->td_stripbytecount))
         {
                 return_value = 0;
@@ -5625,6 +5634,7 @@ int _TIFFFillStriles( TIFF *tif )
         return return_value;
 #else /* !defined(DEFER_STRILE_LOAD) */
         (void) tif;
+        (void) loadStripByteCount;
         return 1;
 #endif 
 }

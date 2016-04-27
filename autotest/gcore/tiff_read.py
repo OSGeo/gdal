@@ -2137,6 +2137,21 @@ def tiff_read_empty_nodata_tag():
 
     return 'success'
 
+###############################################################################
+# Test that we can read a one-trip TIFF without StripByteCounts tag
+
+def tiff_read_one_strip_no_bytecount():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/one_strip_nobytecount.tif')
+    gdal.PopErrorHandler()
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason( 'fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -2191,6 +2206,7 @@ gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 gdaltest_list.append( (tiff_read_empty_nodata_tag) )
+gdaltest_list.append( (tiff_read_one_strip_no_bytecount) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
