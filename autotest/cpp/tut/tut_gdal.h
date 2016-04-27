@@ -129,7 +129,7 @@ void ensure_approx_equals(T const& a, T const& b)
 {
     std::ostringstream os;
     os << "Approx. equality failed: " << a << " != " << b;
-    ensure(os.str(), fabs(1.0 * b / a - 1.0) <= .00000000001);
+    ensure(os.str(), (a == 0.0 || b == 0.0) ? fabs(a-b) <= .00000000001 : fabs(1.0 * b / a - 1.0) <= .00000000001);
 }
 
 } // namespace tut
