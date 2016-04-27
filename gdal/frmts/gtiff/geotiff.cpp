@@ -15918,13 +15918,13 @@ CPLErr GTiffRasterBand::CreateMaskBand( int nFlagsIn )
 static char *PrepareTIFFErrorFormat( const char *module, const char *fmt )
 
 {
-    const int nModuleSize = strlen(module);
-    const int nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
+    const size_t nModuleSize = strlen(module);
+    const size_t nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
     char *pszModFmt = static_cast<char *>( CPLMalloc( nModFmtSize ) );
 
-    int iOut = 0;  // Used after for.
+    size_t iOut = 0;  // Used after for.
 
-    for( int iIn = 0; iIn < nModuleSize;  iIn++ )
+    for( size_t iIn = 0; iIn < nModuleSize;  ++iIn )
     {
         if( module[iIn] == '%' )
         {
