@@ -171,6 +171,11 @@ GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
     GDALContourGenerator *poCG = new GDALContourGenerator( nWidth, nHeight,
                                                            pfnWriter, pCBData );
 
+    if( !poCG->Init() )
+    {
+        delete poCG;
+        return NULL;
+    }
     if( bNoDataSet )
         poCG->SetNoData( dfNoDataValue );
 
