@@ -2437,6 +2437,21 @@ def tiff_read_wrong_number_extrasamples():
     return 'success'
 
 ###############################################################################
+# Test that we can read a one-trip TIFF without StripByteCounts tag
+
+def tiff_read_one_strip_no_bytecount():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/one_strip_nobytecount.tif')
+    gdal.PopErrorHandler()
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason( 'fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2497,6 +2512,7 @@ gdaltest_list.append( (tiff_read_colortable_as_rgba) )
 gdaltest_list.append( (tiff_read_logl_as_rgba) )
 gdaltest_list.append( (tiff_read_scanline_more_than_2GB) )
 gdaltest_list.append( (tiff_read_wrong_number_extrasamples) )
+gdaltest_list.append( (tiff_read_one_strip_no_bytecount) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
