@@ -46,6 +46,7 @@ INCLUDE_DIR = \
 
 OBJ = \
     test_cpl.obj \
+    test_alg.obj \
     test_gdal.obj \
     test_gdal_aaigrid.obj \
     test_gdal_dted.obj \
