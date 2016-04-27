@@ -1,10 +1,13 @@
-class gma_band_iterator_t : public gma_object_t {
+class gma_band_iterator_p : public gma_object_t {
 public:
     long count_in_this_loop_of_band;
     long total_count;
-    gma_band_iterator_t() {
+    gma_band_iterator_p() {
         count_in_this_loop_of_band = 0;
         total_count = 0;
+    }
+    virtual gma_class_t get_class() {
+        return gma_iterator;
     }
     void new_loop() {
         count_in_this_loop_of_band = 0;
@@ -20,7 +23,7 @@ template <typename type1,typename type2> class gma_two_bands_p : public gma_two_
     gma_band_p<type2> *b2;
     gma_band_p<uint8_t> *b3;
     GDALProgressFunc m_progress;
-    void * m_progress_arg;
+    void *m_progress_arg;
 public:
     gma_two_bands_p() {
         b1 = NULL;
@@ -29,7 +32,7 @@ public:
         m_progress = NULL;
         m_progress_arg = NULL;
     }
-    virtual void set_progress_fct(GDALProgressFunc progress, void * progress_arg) {
+    virtual void set_progress_fct(GDALProgressFunc progress, void *progress_arg) {
         m_progress = progress;
         m_progress_arg = progress_arg;
     }
@@ -37,7 +40,7 @@ public:
         typedef int (gma_two_bands_p<type1,type2>::*type)(gma_block<type1>*, gma_object_t**, gma_object_t*, int);
         type fct;
     };
-    void within_block_loop(callback cb, gma_object_t **retval = NULL, gma_object_t *arg = NULL, int focal_distance = 0) {
+    void block_loop(callback cb, gma_object_t **retval = NULL, gma_object_t *arg = NULL, int focal_distance = 0) {
         if (b1->w() != b2->w() || b1->h() != b2->h() || (b3 && (b1->w() != b3->w() || b1->h() != b3->h()))) {
             CPLError(CE_Failure, CPLE_IllegalArg, "The sizes of the rasters should be the same.");
             return;
@@ -94,19 +97,17 @@ public:
         case gma_not:
             return not value;
         }
+        return false;
     }
     int m_assign(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block, i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) = value;
-                    } else
-                        block->cell(i) = value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg)
+                        block->cell(i) = MAX(MIN(a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
                 }
             }
         }
@@ -117,13 +118,10 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block, i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) += value;
-                    } else
-                        block->cell(i) += value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg)
+                        block->cell(i) = MAX(MIN(block->cell(i) + a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
                 }
             }
         }
@@ -134,13 +132,10 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block,i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) -= value;
-                    } else
-                        block->cell(i) -= value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg)
+                        block->cell(i) = MAX(MIN(block->cell(i) - a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
                 }
             }
         }
@@ -151,13 +146,10 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block,i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) *= value;
-                    } else
-                        block->cell(i) *= value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg)
+                        block->cell(i) = MAX(MIN(block->cell(i) * a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
                 }
             }
         }
@@ -168,13 +160,14 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block,i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) /= value;
-                    } else
-                        block->cell(i) /= value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg) {
+                        if (a == 0)
+                            block->cell(i) = std::numeric_limits<type1>::quiet_NaN();
+                        else
+                            block->cell(i) = MAX(MIN(block->cell(i) / a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
+                    }
                 }
             }
         }
@@ -185,13 +178,14 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block,i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
-                    if (arg) {
-                        if (test_operator((gma_logical_operation_p<type2> *)arg, value))
-                            block->cell(i) %= value;
-                    } else
-                        block->cell(i) %= value;
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
+                    if ((arg && test_operator((gma_logical_operation_p<type2> *)arg, a)) || !arg) {
+                        if (a == 0)
+                            block->cell(i) = std::numeric_limits<type1>::quiet_NaN();
+                        else
+                            block->cell(i) %= a;
+                    }
                 }
             }
         }
@@ -202,12 +196,12 @@ public:
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
                 if (b1->cell_is_nodata(block,i)) continue;
-                type2 value;
-                if (b2->has_value(b1, block, i, &value)) {
+                type2 a;
+                if (b2->has_value(b1, block, i, &a)) {
                     uint8_t decision;
                     if (b3->has_value(b1, block, i, &decision)) {
                         if (decision)
-                            block->cell(i) = value;
+                            block->cell(i) = MAX(MIN(a, std::numeric_limits<type1>::max()), std::numeric_limits<type1>::min());
                     }
                 }
             }
@@ -287,7 +281,7 @@ public:
     }
     // b1 = filled_dem, b2 = dem
     int m_fill_depressions(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_p, rv, );
         if (block->first_block())
             rv->new_loop();
         int border_block = b1->is_border_block(block);
@@ -411,7 +405,7 @@ public:
     // this leaves low lying flat areas undrained
     // b1 = fd, b2 = dem
     int m_route_flats(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_p, rv, );
         if (block->first_block())
             rv->new_loop();
         gma_cell_index i;
@@ -468,14 +462,14 @@ public:
     }
     // b1 = upstream area = 1 + cells upstream, b2 = flow directions
     int m_upstream_area(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
-        GMA_RETVAL_INIT(gma_band_iterator_t, rv, );
+        GMA_RETVAL_INIT(gma_band_iterator_p, rv, );
         if (block->first_block())
             rv->new_loop();
-        int border_block = b1->is_border_block(block);
+        //int border_block = b1->is_border_block(block);
         gma_cell_index i;
         for (i.y = 0; i.y < block->h(); i.y++) {
             for (i.x = 0; i.x < block->w(); i.x++) {
-                int border_cell = block->is_border_cell(border_block, i);
+                //int border_cell = block->is_border_cell(border_block, i);
 
                 // upstream area is already computed
                 if (block->cell(i) > 0)
@@ -548,7 +542,7 @@ public:
     }
     // b1 = catchment, b2 = fd
     int m_catchment(gma_block<type1> *block, gma_object_t **retval, gma_object_t *arg, int) {
-        GMA_RETVAL_INIT(gma_band_iterator_t, rv,  );
+        GMA_RETVAL_INIT(gma_band_iterator_p, rv,  );
         if (block->first_block())
             rv->new_loop();
 
@@ -610,42 +604,42 @@ public:
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_assign;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void add(gma_band_t *summand1, gma_band_t *summand2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)summand1;
         b2 = (gma_band_p<type2>*)summand2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_add;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void subtract(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_subtract;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void multiply(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_multiply;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void divide(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_divide;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void modulus(gma_band_t *band1, gma_band_t *band2, gma_logical_operation_t *op = NULL) {
         b1 = (gma_band_p<type1>*)band1;
         b2 = (gma_band_p<type2>*)band2;
         callback cb;
         cb.fct = &gma_two_bands_p::m_modulus;
-        within_block_loop(cb, NULL, op);
+        block_loop(cb, NULL, op);
     }
     virtual void decision(gma_band_t *a, gma_band_t *b, gma_band_t *c) {
         b1 = (gma_band_p<type1>*)a;
@@ -653,7 +647,7 @@ public:
         b3 = (gma_band_p<uint8_t>*)c;
         callback cb;
         cb.fct = &gma_two_bands_p::m_decision;
-        within_block_loop(cb);
+        block_loop(cb);
     }
     virtual gma_hash_t *zonal_min(gma_band_t *band1, gma_band_t *zones) {
         b1 = (gma_band_p<type1>*)band1;
@@ -661,7 +655,7 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_zonal_min;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval);
+        block_loop(cb, &retval);
         return (gma_hash_t *)retval;
     }
     virtual gma_hash_t *zonal_max(gma_band_t *band1, gma_band_t *zones) {
@@ -670,7 +664,7 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_zonal_max;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval);
+        block_loop(cb, &retval);
         return (gma_hash_t *)retval;
     }
     virtual void rim_by8(gma_band_t *rims, gma_band_t *zones) {
@@ -678,7 +672,7 @@ public:
         b2 = (gma_band_p<type2>*)zones;
         callback cb;
         cb.fct = &gma_two_bands_p::m_rim_by8;
-        within_block_loop(cb, NULL, NULL, 1);
+        block_loop(cb, NULL, NULL, 1);
     }
     virtual void fill_depressions(gma_band_t *filled_dem, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)filled_dem;
@@ -688,14 +682,14 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_fill_depressions;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval, NULL, 1);
+        block_loop(cb, &retval, NULL, 1);
     }
     virtual void D8(gma_band_t *fd, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)fd;
         b2 = (gma_band_p<type2>*)dem;
         callback cb;
         cb.fct = &gma_two_bands_p::m_D8;
-        within_block_loop(cb, NULL, NULL, 1);
+        block_loop(cb, NULL, NULL, 1);
     }
     virtual void route_flats(gma_band_t *fd, gma_band_t *dem) {
         b1 = (gma_band_p<type1>*)fd;
@@ -703,7 +697,7 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_route_flats;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval, NULL, 1);
+        block_loop(cb, &retval, NULL, 1);
     }
     virtual void upstream_area(gma_band_t *ua, gma_band_t *fd) {
         b1 = (gma_band_p<type1>*)ua;
@@ -711,7 +705,7 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_upstream_area;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval, NULL, 1);
+        block_loop(cb, &retval, NULL, 1);
     }
     virtual void catchment(gma_band_t *catchment, gma_band_t *fd, gma_cell_t *outlet) {
         b1 = (gma_band_p<type1>*)catchment;
@@ -719,7 +713,7 @@ public:
         callback cb;
         cb.fct = &gma_two_bands_p::m_catchment;
         gma_object_t *retval = NULL;
-        within_block_loop(cb, &retval, outlet, 1);
+        block_loop(cb, &retval, outlet, 1);
     }
 };
 

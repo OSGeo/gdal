@@ -6,7 +6,7 @@ int main() {
     srand(time(NULL));
     GDALDriver *d = GetGDALDriverManager()->GetDriverByName("MEM");
     int w_band = 16, h_band = 10;
-    GDALDataset *ds = d->Create("", w_band, h_band, 2, GDT_Int32, NULL);
+    GDALDataset *ds = d->Create("", w_band, h_band, 2, GDT_Byte, NULL);
     GDALRasterBand *b = ds->GetRasterBand(1);
 
     gma_band_t *bx = gma_new_band(b);
@@ -30,6 +30,10 @@ int main() {
 
     bx->add(by);
     bx->print();
+    printf("\n");
+
+    by->add(250);
+    by->print();
     printf("\n");
 
     gma_histogram_t *hm = bx->histogram();

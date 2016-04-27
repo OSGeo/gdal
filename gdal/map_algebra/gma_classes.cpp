@@ -46,21 +46,13 @@ template <> bool gma_number_p<int32_t>::is_float() { return false; }
 template <> bool gma_number_p<float>::is_float() { return true; }
 template <> bool gma_number_p<double>::is_float() { return true; }
 
-template <> const char *gma_number_p<uint8_t>::format() { return "%3u"; }
-template <> const char *gma_number_p<uint16_t>::format() { return "%5u"; }
-template <> const char *gma_number_p<int16_t>::format() { return "%5i"; }
-template <> const char *gma_number_p<uint32_t>::format() { return "%7u"; }
-template <> const char *gma_number_p<int32_t>::format() { return "%7i"; }
-template <> const char *gma_number_p<float>::format() { return "%6.2f"; }
-template <> const char *gma_number_p<double>::format() { return "%8.3f"; }
-
-template <> const char *gma_number_p<uint8_t>::space() { return "   "; }
-template <> const char *gma_number_p<uint16_t>::space() { return "     "; }
-template <> const char *gma_number_p<int16_t>::space() { return "     "; }
-template <> const char *gma_number_p<uint32_t>::space() { return "       "; }
-template <> const char *gma_number_p<int32_t>::space() { return "       "; }
-template <> const char *gma_number_p<float>::space() { return "       "; }
-template <> const char *gma_number_p<double>::space() { return "         "; }
+template <> const char *gma_number_p<uint8_t>::format() { return "%u"; }
+template <> const char *gma_number_p<uint16_t>::format() { return "%u"; }
+template <> const char *gma_number_p<int16_t>::format() { return "%i"; }
+template <> const char *gma_number_p<uint32_t>::format() { return "%u"; }
+template <> const char *gma_number_p<int32_t>::format() { return "%i"; }
+template <> const char *gma_number_p<float>::format() { return "%.2f"; }
+template <> const char *gma_number_p<double>::format() { return "%.3f"; }
 
 template <> int gma_band_p<uint8_t>::m_log10(gma_block<uint8_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
 template <> int gma_band_p<uint16_t>::m_log10(gma_block<uint16_t>*, gma_object_t**, gma_object_t*, int) { return 0; }
@@ -89,6 +81,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<uint8_t,float>;
         case GDT_Float64:
             return new gma_two_bands_p<uint8_t,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_UInt16: {
@@ -107,6 +102,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<uint16_t,float>;
         case GDT_Float64:
             return new gma_two_bands_p<uint16_t,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_Int16: {
@@ -125,6 +123,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<int16_t,float>;
         case GDT_Float64:
             return new gma_two_bands_p<int16_t,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_UInt32: {
@@ -143,6 +144,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<uint32_t,float>;
         case GDT_Float64:
             return new gma_two_bands_p<uint32_t,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_Int32: {
@@ -161,6 +165,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<int32_t,float>;
         case GDT_Float64:
             return new gma_two_bands_p<int32_t,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_Float32: {
@@ -179,6 +186,9 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<float,float>;
         case GDT_Float64:
             return new gma_two_bands_p<float,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
     case GDT_Float64: {
@@ -197,8 +207,14 @@ gma_two_bands_t *gma_new_two_bands(GDALDataType type1, GDALDataType type2) {
             return new gma_two_bands_p<double,float>;
         case GDT_Float64:
             return new gma_two_bands_p<double,double>;
+        default:
+            // fixme: call error
+            return NULL;
         }
     }
+    default:
+        // fixme: call error
+        return NULL;
     }
 }
 

@@ -18,16 +18,15 @@ typedef enum {
     gma_object,
     gma_band,
     gma_number,
-    gma_integer, /* not a real class, a number, which is integer */
     gma_pair,
-    gma_range,  /* not a real class, a pair of two numbers of band datatype */
     gma_bins,
     gma_histogram,
     gma_classifier,
     gma_cell,
     gma_logical_operation, /* logical operator and a number */
     gma_cell_callback,
-    gma_hash
+    gma_hash,
+    gma_iterator
 } gma_class_t;
 
 /* logical operators */

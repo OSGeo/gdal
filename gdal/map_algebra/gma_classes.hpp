@@ -27,7 +27,20 @@ public:
         return m_defined;
     }
     type value() {
-        return m_value;
+        if (!m_defined)
+            return std::numeric_limits<type>::quiet_NaN();
+        if (m_inf < 0) {
+            if (std::numeric_limits<type>::has_infinity)
+                return -1*std::numeric_limits<type>::infinity();
+            else
+                return std::numeric_limits<type>::min();
+        } else if (m_inf > 0)
+            if (std::numeric_limits<type>::has_infinity)
+                return std::numeric_limits<type>::infinity();
+            else
+                return std::numeric_limits<type>::max();
+        else
+            return (double)m_value;
     }
     void inc() {
         m_value++;
@@ -48,6 +61,8 @@ public:
         m_value = (type)value;
     }
     virtual int value_as_int() {
+        if (!m_defined)
+            return std::numeric_limits<type>::quiet_NaN();
         if (m_inf < 0)
             return std::numeric_limits<type>::min();
         else if (m_inf > 0)
@@ -56,6 +71,8 @@ public:
             return (int)m_value;
     }
     virtual double value_as_double() {
+        if (!m_defined)
+            return std::numeric_limits<type>::quiet_NaN();
         if (m_inf < 0) {
             if (std::numeric_limits<type>::has_infinity)
                 return -1*std::numeric_limits<type>::infinity();
@@ -69,11 +86,23 @@ public:
         else
             return (double)m_value;
     }
-    static const char *space();
     static const char *format();
     char *as_string() {
-        char *s = (char*)CPLMalloc(10);
-        snprintf(s, 10, format(), m_value);
+        char *s = (char*)CPLMalloc(20);
+        if (!m_defined)
+            snprintf(s, 20, "NaN");
+        else if (m_inf < 0) {
+            if (std::numeric_limits<type>::is_integer)
+                snprintf(s, 20, format(), std::numeric_limits<type>::min());
+            else
+                snprintf(s, 20, "-inf");
+        } else if (m_inf > 0)
+            if (std::numeric_limits<type>::is_integer)
+                snprintf(s, 20, format(), std::numeric_limits<type>::max());
+            else
+                snprintf(s, 20, "+inf");
+        else
+            snprintf(s, 20, format(), m_value);
         return s;
     }
     virtual bool is_defined() { return m_defined; }
@@ -85,7 +114,7 @@ public:
     virtual GDALDataType datatype() { return gma_number_p<type>::datatype_p(); };
 };
 
-// wrap std::pair as concrete type gma_pair_p, 
+// wrap std::pair as concrete type gma_pair_p,
 // K and V must be subclasses of gma_object_t
 template<class K, class V>class gma_pair_p : public gma_pair_t {
 public:
@@ -125,11 +154,17 @@ public:
     datatype_t& value() {
         return m_value;
     }
-    virtual int& x() {
+    virtual int x() {
         return m_x;
     }
-    virtual int& y() {
+    virtual int y() {
         return m_y;
+    }
+    virtual void set_x(int x) {
+        m_x = x;
+    }
+    virtual void set_y(int y) {
+        m_y = y;
     }
     virtual void set_value(double value) {
         m_value = value;
@@ -241,6 +276,8 @@ public:
             e = e->next();
         if (e)
             return e->value();
+        else
+            return NULL;
     }
     virtual gma_object_t *get(gma_number_t *key) {
         datatype_t k = ((gma_number_p<datatype_t>*)key)->value();
@@ -349,7 +386,7 @@ public:
             i++;
         return i;
     }
-    virtual gma_object_t *clone() {
+    gma_bins_p<datatype_t> *clone_p() {
         gma_bins_p<datatype_t> *c = new gma_bins_p<datatype_t>;
         for (int i = 0; i < m_data->size(); i++)
             c->m_data->push_back(m_data->at(i));
@@ -384,7 +421,7 @@ public:
         else if (arg->get_class() == gma_pair) { // (n bins, (min, max))
             gma_pair_p<gma_object_t*,gma_object_t* > *a = (gma_pair_p<gma_object_t*,gma_object_t* > *)arg;
             gma_number_p<int> *a1 = (gma_number_p<int> *)a->first();
-            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>*> *a2 = 
+            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>*> *a2 =
                 (gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>*> *)a->second();
             gma_number_p<datatype_t> *a21 = (gma_number_p<datatype_t> *)a2->first();
             gma_number_p<datatype_t> *a22 = (gma_number_p<datatype_t> *)a2->second();
@@ -401,7 +438,7 @@ public:
                 counts->push_back(0);
             }
         } else if (arg->get_class() == gma_bins) {
-            bins = (gma_bins_p<datatype_t>*)arg->clone();
+            bins = ((gma_bins_p<datatype_t>*)arg)->clone_p();
             counts = new std::vector<unsigned int>;
             for (int i = 0; i < bins->size(); i++)
                 counts->push_back(0);
@@ -443,7 +480,7 @@ public:
             // return gma_pair_t
             gma_number_p<datatype_t> *k = new gma_number_p<datatype_t>(key);
             gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(value->value());
-            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<unsigned int>* > *pair = 
+            gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<unsigned int>* > *pair =
                 new gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<unsigned int>* >(k,v);
             return pair;
         }
@@ -461,10 +498,10 @@ public:
             max = new gma_number_p<datatype_t>(0);
             max->set_inf(1);
         }
-        gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* > *k = 
+        gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* > *k =
             new gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >(min,max);
         gma_number_p<unsigned int> *v = new gma_number_p<unsigned int>(counts->at(i));
-        gma_pair_p<gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >*,gma_number_p<unsigned int>* > *pair = 
+        gma_pair_p<gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >*,gma_number_p<unsigned int>* > *pair =
             new gma_pair_p<gma_pair_p<gma_number_p<datatype_t>*,gma_number_p<datatype_t>* >*,gma_number_p<unsigned int>* >(k,v);
         return pair;
     }
@@ -485,18 +522,14 @@ public:
             // kv is an interval=>number or number=>number
             if (kv->first()->get_class() == gma_pair) {
                 gma_pair_t *key = (gma_pair_t*)kv->first();
-                gma_number_t *min = (gma_number_t*)key->first();
-                gma_number_t *max = (gma_number_t*)key->second();
-                gma_number_t *val = (gma_number_t*)kv->second();
-                if (min->is_integer()) {
-                    printf("(%i..%i] => %i\n", min->value_as_int(), max->value_as_int(), val->value_as_int());
-                } else {
-                    printf("(%f..%f] => %i\n", min->value_as_double(), max->value_as_double(), val->value_as_int());
-                }
+                gma_number_p<datatype_t> *min = (gma_number_p<datatype_t>*)key->first();
+                gma_number_p<datatype_t> *max = (gma_number_p<datatype_t>*)key->second();
+                gma_number_p<unsigned int> *val = (gma_number_p<unsigned int>*)kv->second();
+                printf("(%s .. %s] => %s\n", min->as_string(), max->as_string(), val->as_string());
             } else {
-                gma_number_t *key = (gma_number_t*)kv->first();
-                gma_number_t *val = (gma_number_t*)kv->second();
-                printf("%i => %i\n", key->value_as_int(), val->value_as_int());
+                gma_number_p<datatype_t> *key = (gma_number_p<datatype_t>*)kv->first();
+                gma_number_p<unsigned int> *val = (gma_number_p<unsigned int>*)kv->second();
+                printf("%s => %s\n", key->as_string(), val->as_string());
             }
         }
     }
@@ -505,7 +538,7 @@ public:
 
 template <typename datatype_t>
 class gma_classifier_p : public gma_classifier_t {
-    gma_hash_p<datatype_t,gma_number_p<int> > *m_hash;
+    gma_hash_p<datatype_t,gma_number_p<datatype_t> > *m_hash;
     gma_bins_p<datatype_t> *m_bins;
     std::vector<datatype_t> *m_values;
     bool m_hash_ok;
@@ -525,13 +558,18 @@ public:
         delete(m_values);
     }
     virtual void add_class(gma_number_t *interval_max, gma_number_t *value) {
+        if (value->datatype() != datatype()) {
+            // fixme: emit error
+            return;
+        }
+        // fixme: error if hash is not null
         if (m_bins == NULL) {
             m_bins = new gma_bins_p<datatype_t>;
             m_values = new std::vector<datatype_t>;
             m_values->push_back(0);
         }
         int i;
-        int n = m_bins->size();
+        //int n = m_bins->size();
         int m = m_values->size();
         datatype_t val = ((gma_number_p<datatype_t>*)value)->value();
         if (interval_max->is_inf())
@@ -543,6 +581,26 @@ public:
                 m_values->at(j) = m_values->at(j-1);
             m_values->at(i) = val;
         }
+    }
+    virtual void add_value(gma_number_t *old_value, gma_number_t *new_value) {
+        if (old_value->datatype() != datatype() || new_value->datatype() != datatype()) {
+            // fixme: emit error
+            return;
+        }
+        // fixme: error if bins is not null
+        if (m_hash == NULL) {
+            m_hash = new gma_hash_p<datatype_t,gma_number_p<datatype_t> >;
+        }
+        gma_number_p<datatype_t> *old = (gma_number_p<datatype_t>*)old_value;
+        m_hash->put(old->value(), (gma_number_p<datatype_t>*)new_value);
+    }
+    virtual void add_default(gma_number_t *default_value) {
+        if (default_value->datatype() != datatype()) {
+            // fixme: emit error
+            return;
+        }
+        has_default = true;
+        deflt = ((gma_number_p<datatype_t>*)default_value)->value();
     }
     datatype_t classify(datatype_t value) {
         if (m_hash && m_hash->exists(value)) {

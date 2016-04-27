@@ -22,8 +22,8 @@ main() {
     gma_cell_callback_t *cb = bx->new_cell_callback();
     cb->set_callback(callback);
     gma_cell_t *loc = bx->new_cell();
-    loc->x() = 5;
-    loc->y() = 5;
+    loc->set_x(5);
+    loc->set_y(5);
     cb->set_user_data(loc);
     bx->cell_callback(cb);
     bx->print();
@@ -57,6 +57,16 @@ main() {
     op->set_value(11);
     by->assign(bx, op);
 
+    by->print();
+    printf("\n");
+
+    // another type of classifier int => int
+    delete c;
+    c = by->new_classifier();
+    gma_number_t *x = by->new_number(); x->set_value(3);
+    gma_number_t *y = by->new_number(); y->set_value(4);
+    c->add_value(x, y);
+    by->classify(c);
     by->print();
     printf("\n");
 

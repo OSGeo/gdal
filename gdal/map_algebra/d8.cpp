@@ -53,8 +53,8 @@ int main() {
         gma_cell_callback_t *cb = c->new_cell_callback();
         cb->set_callback(set_border_cells);
         gma_cell_t *wh = c->new_cell();
-        wh->x() = c->w();
-        wh->y() = c->h();
+        wh->set_x(c->w());
+        wh->set_y(c->h());
         cb->set_user_data(wh);
         c->cell_callback(cb);
 
