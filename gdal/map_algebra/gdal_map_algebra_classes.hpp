@@ -25,11 +25,13 @@ public:
     virtual void set_value(double value) = 0;
     virtual void set_value(int value) = 0;
     virtual int value_as_int()= 0;
+    virtual unsigned value_as_unsigned()= 0;
     virtual double value_as_double()= 0;
     virtual bool is_defined() = 0;
     virtual void set_inf(int inf) = 0; // -1 to minus inf, 0 to not inf, 1 to plus inf
     virtual bool is_inf() = 0;
     virtual bool is_integer() = 0;
+    virtual bool is_unsigned() = 0;
     virtual bool is_float() = 0;
 };
 
@@ -172,7 +174,9 @@ public:
     virtual void cell_callback(gma_cell_callback_t*) = 0;
 
     // arg = NULL, pair:(n,pair:(min,max)), or bins; returns histogram
-    virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) = 0;
+    virtual gma_histogram_t *histogram() = 0;
+    virtual gma_histogram_t *histogram(gma_pair_t *arg) = 0;
+    virtual gma_histogram_t *histogram(gma_bins_t *arg) = 0;
     // returns hash of a hashes, keys are zone numbers
     virtual gma_hash_t *zonal_neighbors() = 0;
     virtual gma_number_t *get_min() = 0;

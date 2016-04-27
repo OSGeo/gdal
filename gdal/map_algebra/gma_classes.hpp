@@ -70,6 +70,16 @@ public:
         else
             return (int)m_value;
     }
+    virtual unsigned value_as_unsigned() {
+        if (!m_defined)
+            return std::numeric_limits<type>::quiet_NaN();
+        if (m_inf < 0)
+            return std::numeric_limits<type>::min();
+        else if (m_inf > 0)
+            return std::numeric_limits<type>::max();
+        else
+            return (unsigned)m_value;
+    }
     virtual double value_as_double() {
         if (!m_defined)
             return std::numeric_limits<type>::quiet_NaN();
@@ -109,6 +119,7 @@ public:
     virtual void set_inf(int inf) { m_inf = inf; }
     virtual bool is_inf() { return m_inf; }
     virtual bool is_integer() { return std::numeric_limits<type>::is_integer; }
+    virtual bool is_unsigned() { return !std::numeric_limits<type>::is_signed; }
     virtual bool is_float();
     static GDALDataType datatype_p();
     virtual GDALDataType datatype() { return gma_number_p<type>::datatype_p(); };

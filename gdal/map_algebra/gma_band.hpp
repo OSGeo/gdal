@@ -995,11 +995,25 @@ public:
         return 1;
     }
 
-    virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) {
-        if (!arg && !datatype_is_integer()) {
+    virtual gma_histogram_t *histogram() {
+        if (!datatype_is_integer()) {
             CPLError(CE_Failure, CPLE_IllegalArg, "Count of values is not supported for non integer bands.");
             return NULL;
         }
+        gma_object_t *retval = NULL;
+        callback cb;
+        cb.fct = &gma_band_p::m_histogram;
+        block_loop(cb, &retval);
+        return (gma_histogram_t*)retval;
+    }
+    virtual gma_histogram_t *histogram(gma_pair_t *arg) {
+        gma_object_t *retval = NULL;
+        callback cb;
+        cb.fct = &gma_band_p::m_histogram;
+        block_loop(cb, &retval, arg);
+        return (gma_histogram_t*)retval;
+    }
+    virtual gma_histogram_t *histogram(gma_bins_t *arg) {
         gma_object_t *retval = NULL;
         callback cb;
         cb.fct = &gma_band_p::m_histogram;

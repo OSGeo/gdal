@@ -12,6 +12,7 @@ $LIB = " -L. -lgma $LIB -lstdc++";
 WriteMakefile( 
     NAME => 'gma',
     VERSION_FROM => 'gma.pm',
+    OPTIMIZE => '-g',
     LIBS => $LIB,
     INC => $INC,
     OBJECT => 'gma_wrap.o',

@@ -3,6 +3,14 @@
 #include "gdal_map_algebra.hpp"
 %}
 
+%import typemaps.i
+
+%init %{
+    SWIGTYPE_p_GDALRasterBand->clientdata = (void*)"Geo::GDAL::Band";
+    SWIGTYPE_p_GDALDataset->clientdata = (void*)"Geo::GDAL::Dataset";
+    SWIGTYPE_p_GDALDriver->clientdata = (void*)"Geo::GDAL::Driver";
+%}
+
 class gma_band_t {
 public:
     virtual void update() = 0;
@@ -60,7 +68,9 @@ public:
     virtual void cell_callback(gma_cell_callback_t*) = 0;
 
     // arg = NULL, pair:(n,pair:(min,max)), or bins; returns histogram
-    virtual gma_histogram_t *histogram(gma_object_t *arg = NULL) = 0;
+    virtual gma_histogram_t *histogram() = 0;
+    virtual gma_histogram_t *histogram(gma_pair_t *arg) = 0;
+    virtual gma_histogram_t *histogram(gma_bins_t *arg) = 0;
     // returns hash of a hashes, keys are zone numbers
     virtual gma_hash_t *zonal_neighbors() = 0;
     virtual gma_number_t *get_min() = 0;
