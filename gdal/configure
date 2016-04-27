@@ -20327,7 +20327,7 @@ if ${ac_cv_lib_pq_PQconnectdb+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpq -L`$PG_CONFIG --libdir` $LIBS"
+LIBS="-lpq -L`$PG_CONFIG --libdir` `$PG_CONFIG --libs` $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -20365,7 +20365,7 @@ fi
 
 
   if test "${HAVE_PG}" = "yes" ; then
-    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
+    LIBS=-L`$PG_CONFIG --libdir`" `$PG_CONFIG --libs` -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
 
     PG_EXTRA_DEC=""
