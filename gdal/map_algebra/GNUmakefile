@@ -16,7 +16,11 @@ shared_library = libgma.so
 
 programs = test demo histogram d8 test-c-api
 
-all: $(programs)
+swig_interface = gma.i
+
+perl_module = gma.pm
+
+all: $(programs) $(perl_module) perl
 
 test: test.cpp $(cpp_objects) $(cpp_headers) $(shared_library)
 	gcc -o test -I $(inc) test.cpp $(gma) $(gdal) -g -lstdc++ -lm
@@ -42,5 +46,12 @@ $(shared_library): gma_classes.o
 gma_c_api.o: gma_c_api.cpp $(c_headers)
 	gcc -c -g -I $(inc) gma_c_api.cpp $(cpp_objects)
 
+$(perl_module): $(swig_interface)
+	swig -c++ -perl5 $(swig_interface)
+
+perl: $(perl_module)
+	perl Makefile.PL
+	make -f Makefile
+
 clean:
-	rm -f $(programs) $(cpp_objects) $(c_objects) $(shared_library)
+	rm -f $(programs) $(cpp_objects) $(c_objects) $(shared_library) gma.pm gma_wrap.*

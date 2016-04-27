@@ -45,7 +45,7 @@ public:
 class gma_bins_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_bins;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual unsigned int size()= 0;
     virtual void push(int value) = 0;
     virtual void push(double value) = 0;
@@ -54,7 +54,7 @@ public:
 class gma_histogram_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_histogram;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual unsigned int size()= 0;
     virtual gma_object_t *at(unsigned int i) = 0;
     virtual void print() = 0;
@@ -63,7 +63,7 @@ public:
 class gma_classifier_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_classifier;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual void add_class(gma_number_t *interval_max, gma_number_t *value) = 0;
     virtual void add_value(gma_number_t *old_value, gma_number_t *new_value) = 0;
     virtual void add_default(gma_number_t *default_value) = 0;
@@ -72,7 +72,7 @@ public:
 class gma_cell_t  : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_cell;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual int x()= 0;
     virtual int y()= 0;
     virtual void set_x(int) = 0;
@@ -99,7 +99,7 @@ public:
 class gma_logical_operation_t  : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_logical_operation;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual void set_operation(gma_operator_t) = 0;
     virtual void set_value(int value) = 0;
     virtual void set_value(double value) = 0;
@@ -108,7 +108,7 @@ public:
 class gma_hash_t : public gma_object_t {
 public:
     virtual gma_class_t get_class() {return gma_hash;};
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual int size()= 0;
     virtual std::vector<gma_number_t*> *keys_sorted() = 0;
     virtual gma_object_t *get(gma_number_t *key) = 0;
@@ -121,7 +121,7 @@ public:
     virtual GDALRasterBand *band() = 0;
     virtual GDALDataset *dataset() = 0;
     virtual GDALDriver *driver() = 0;
-    virtual GDALDataType datatype() {return GDT_Unknown;};
+    virtual GDALDataType datatype() = 0;
     virtual bool datatype_is_integer() = 0;
     virtual bool datatype_is_float() = 0;
     virtual int w()= 0;
