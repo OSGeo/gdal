@@ -29010,7 +29010,7 @@ $as_echo "$as_me: WARNING: GEOS was found on your system, but geos-config report
 
       HAVE_GEOS="no"
 
-      GEOS_LIBS="`${GEOS_CONFIG} --ldflags` -lgeos_c"
+      GEOS_LIBS="`${GEOS_CONFIG} --ldflags` -lgeos_c -lgeos"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
 
@@ -29045,7 +29045,7 @@ return GEOSversion ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_compile "$LINENO"; then :
   ac_cv_lib_geos_c_GEOSversion=yes
 else
   ac_cv_lib_geos_c_GEOSversion=no
