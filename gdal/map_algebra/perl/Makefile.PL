@@ -7,7 +7,8 @@ my $have_gnm;
 my $config = '/home/ajolma/usr/bin/gdal-config';
 
 my ($INC, $LIB) = get_gdal_inc_lib($config);
-$LIB = " -L. -lgma $LIB -lstdc++";
+$INC = "-I.. $INC";
+$LIB = " -L.. -lgma $LIB -lstdc++";
 
 WriteMakefile( 
     NAME => 'gma',
@@ -15,8 +16,7 @@ WriteMakefile(
     OPTIMIZE => '-g',
     LIBS => $LIB,
     INC => $INC,
-    OBJECT => 'gma_wrap.o',
-    MAKEFILE => 'PerlBindingsMakefile'
+    OBJECT => 'gma_wrap.o'
 );
 
 sub get_gdal_inc_lib {

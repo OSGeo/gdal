@@ -14,17 +14,9 @@ shared_library = libgma.so
 
 programs = test demo histogram d8
 
-swig_interface = gma.i
-
-swig_bindings = $(swig_interface) $(swig_perl_bindings)
-
-swig_perl_bindings = perl/typemaps.i perl/links.i
-
-perl_module = gma.pm
-
-perl_bindings = $(perl_module) gma_wrap.cxx gma_wrap.o gma.bs Makefile pm_to_blib MYMETA.json MYMETA.yml PerlBindingsMakefile -r blib
-
-all: $(programs) $(perl_module) perl
+all: $(programs)
+	cd perl; make all; cd ..
+	cd python; make all; cd ..
 
 test: test.cpp $(cpp_objects) $(cpp_headers) $(shared_library)
 	gcc $(cflags) -o test -I $(inc) test.cpp $(gma) $(gdal) -lstdc++ -lm
@@ -44,18 +36,5 @@ gma_classes.o: gma_classes.cpp $(cpp_headers)
 $(shared_library): gma_classes.o
 	gcc -shared -o $(shared_library) gma_classes.o
 
-$(perl_module): $(swig_bindings)
-	swig -c++ -perl5 -Iperl $(swig_interface)
-
-perl: $(perl_module)
-	perl Makefile.PL
-	make -f PerlBindingsMakefile
-
-perl-install: $(perl_module)
-	make -f PerlBindingsMakefile install
-
-perl-test: $(perl_module)
-	make -f PerlBindingsMakefile test
-
 clean:
-	rm -f $(programs) $(cpp_objects) $(shared_library) $(perl_bindings)
+	rm -f $(programs) $(cpp_objects) $(shared_library)
