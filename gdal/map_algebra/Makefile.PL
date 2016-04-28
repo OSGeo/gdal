@@ -16,6 +16,7 @@ WriteMakefile(
     LIBS => $LIB,
     INC => $INC,
     OBJECT => 'gma_wrap.o',
+    MAKEFILE => 'PerlBindingsMakefile'
 );
 
 sub get_gdal_inc_lib {
