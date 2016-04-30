@@ -5628,13 +5628,21 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             {
                 GUInt32 nInWord = 0;
                 if( eDataType == GDT_Byte )
+                {
                     nInWord = static_cast<GByte *>(pImage)[iPixel++];
+                }
                 else if( eDataType == GDT_UInt16 )
+                {
                     nInWord = static_cast<GUInt16 *>(pImage)[iPixel++];
+                }
                 else if( eDataType == GDT_UInt32 )
+                {
                     nInWord = static_cast<GUInt32 *>(pImage)[iPixel++];
+                }
                 else
+                {
                     CPLAssert(false);
+                }
 
                 if (nInWord > nMaxVal)
                 {
@@ -5791,13 +5799,21 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             {
                 GUInt32 nInWord = 0;
                 if( eDataType == GDT_Byte )
+                {
                     nInWord = static_cast<const GByte *>(pabyThisImage)[iPixel++];
+                }
                 else if( eDataType == GDT_UInt16 )
+                {
                     nInWord = reinterpret_cast<const GUInt16 *>(pabyThisImage)[iPixel++];
+                }
                 else if( eDataType == GDT_UInt32 )
+                {
                     nInWord = reinterpret_cast<const GUInt32 *>(pabyThisImage)[iPixel++];
+                }
                 else
+                {
                     CPLAssert(false);
+                }
 
                 if (nInWord > nMaxVal)
                 {
@@ -6129,15 +6145,23 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 iBitOffset= iBitOffset + iPixelBitSkip - nBitsPerSample;
 
                 if( eDataType == GDT_Byte )
+                {
                     static_cast<GByte *>(pImage)[iPixel++] =
                         static_cast<GByte>(nOutWord);
+                }
                 else if( eDataType == GDT_UInt16 )
+                {
                   static_cast<GUInt16 *>(pImage)[iPixel++] =
                       static_cast<GUInt16>(nOutWord);
+                }
                 else if( eDataType == GDT_UInt32 )
+                {
                   static_cast<GUInt32 *>(pImage)[iPixel++] = nOutWord;
+                }
                 else
+                {
                     CPLAssert(false);
+                }
             }
         }
     }
