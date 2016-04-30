@@ -6501,6 +6501,93 @@ def tiff_write_145():
     return 'success'
 
 ###############################################################################
+# Test implicit JPEG-in-TIFF overviews with RGBA (not completely sure this
+# is a legal formulation since 4 bands should probably be seen as CMYK)
+
+def tiff_write_146():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    tmp_ds = gdal.Translate('', 'data/stefan_full_rgba.tif', format = 'MEM')
+    original_stats = [tmp_ds.GetRasterBand(i+1).ComputeStatistics(True) for i in range(4)]
+    gdal.Translate('/vsimem/tiff_write_146.tif', 'data/stefan_full_rgba.tif', options = '-outsize 1000% 1000% -co COMPRESS=JPEG')
+    out_ds = gdal.Open('/vsimem/tiff_write_146.tif')
+    got_stats = [out_ds.GetRasterBand(i+1).GetOverview(2).ComputeStatistics(True) for i in range(4)]
+    out_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_146.tif')
+    
+    for i in range(4):
+        for j in range(4):
+            if j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
+                gdaltest.post_reason( 'did not get expected statistics' )
+                print(i, j)
+                print(original_stats)
+                print(got_stats)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that we don't use implicit JPEG-in-TIFF overviews with CMYK when converting
+# to RGBA
+
+def tiff_write_147():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
+    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options = '-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
+    out_ds = gdal.Open('/vsimem/tiff_write_147.tif')
+    if out_ds.GetRasterBand(1).GetOverview(0) is not None:
+        gdaltest.post_reason('did not expected overview')
+        return 'fail'
+    out_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_147.tif')
+
+    return 'success'
+
+###############################################################################
+# Test that we can use implicit JPEG-in-TIFF overviews with CMYK in raw mode
+
+def tiff_write_148():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
+    tmp_ds = gdal.Translate('', '../gdrivers/data/rgb_ntf_cmyk.jpg', format = 'MEM')
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
+    original_stats = [tmp_ds.GetRasterBand(i+1).ComputeStatistics(True) for i in range(4)]
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
+    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options = '-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
+    out_ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_148.tif')
+    got_stats = [out_ds.GetRasterBand(i+1).GetOverview(0).ComputeStatistics(True) for i in range(4)]
+    out_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_148.tif')
+    
+    for i in range(4):
+        for j in range(4):
+            if j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
+                gdaltest.post_reason( 'did not get expected statistics' )
+                print(i, j)
+                print(original_stats)
+                print(got_stats)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6675,10 +6762,13 @@ gdaltest_list = [
     tiff_write_143,
     tiff_write_144,
     tiff_write_145,
+    tiff_write_146,
+    tiff_write_147,
+    tiff_write_148,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-#gdaltest_list = [ tiff_write_1, tiff_write_145 ]
+#gdaltest_list = [ tiff_write_1, tiff_write_147, tiff_write_148 ]
 
 if __name__ == '__main__':
 
