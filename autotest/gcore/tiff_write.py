@@ -6520,7 +6520,7 @@ def tiff_write_146():
     
     for i in range(4):
         for j in range(4):
-            if j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
+            if i != 2 and j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
                 gdaltest.post_reason( 'did not get expected statistics' )
                 print(i, j)
                 print(original_stats)
