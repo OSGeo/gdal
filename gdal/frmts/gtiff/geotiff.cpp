@@ -745,6 +745,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         if( poGDS->poJPEGDS == NULL )
         {
             const char* apszDrivers[] = { "JPEG", NULL };
+            
+            CPLString osOldVal;
+            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands == 4 )
+            {
+                osOldVal = CPLGetConfigOption("GDAL_JPEG_TO_RGB", "");
+                CPLSetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "NO");
+            }
+
             poGDS->poJPEGDS = (GDALDataset*) GDALOpenEx(osFileToOpen,
                                                         GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                                                 apszDrivers,
@@ -757,6 +765,11 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
                 CPLSetThreadLocalConfigOption("JPEG_FORCE_INTERNAL_OVERVIEWS", NULL);
 
                 poGDS->nBlockId = nBlockId;
+            }
+            
+            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands == 4 )
+            {
+                CPLSetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", osOldVal.size() ? osOldVal.c_str() : NULL);
             }
         }
         else
@@ -5179,6 +5192,13 @@ int GTiffDataset::GetJPEGOverviewCount()
         GDALGetDriverByName("JPEG") == NULL )
     {
         return 0;
+    }
+    const char* pszSourceColorSpace = oGTiffMDMD.GetMetadataItem( "SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    if( pszSourceColorSpace != NULL && EQUAL(pszSourceColorSpace, "CMYK") )
+    {
+        // We cannot handle implicit overviews on JPEG CMYK datasets converted to RGBA
+        // This would imply doing the conversion in GTiffJPEGOverviewBand
+       return 0;
     }
 
     /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
