@@ -27,14 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_mem.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_mem.h"
 
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRMemDriver()                           */
+/*                          ~OGRMemDriver()                             */
 /************************************************************************/
 
 OGRMemDriver::~OGRMemDriver() {}
