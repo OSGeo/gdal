@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_mem.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_mem.h"
 
 CPL_CVSID("$Id$");
 
@@ -80,8 +80,8 @@ OGRMemDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    papoLayers = (OGRMemLayer **)
-        CPLRealloc( papoLayers,  sizeof(OGRMemLayer *) * (nLayers+1) );
+    papoLayers = static_cast<OGRMemLayer **>(
+        CPLRealloc( papoLayers,  sizeof(OGRMemLayer *) * (nLayers+1) ) );
 
     papoLayers[nLayers++] = poLayer;
 
@@ -99,10 +99,10 @@ OGRErr OGRMemDataSource::DeleteLayer( int iLayer )
     {
         delete papoLayers[iLayer];
 
-        for( int i = iLayer+1; i < nLayers; i++ )
+        for( int i = iLayer+1; i < nLayers; ++i )
             papoLayers[i-1] = papoLayers[i];
 
-        nLayers--;
+        --nLayers;
 
         return OGRERR_NONE;
     }

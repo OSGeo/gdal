@@ -52,7 +52,7 @@ class OGRMemLayer : public OGRLayer
     GIntBig             m_nFeatureCount;
 
     GIntBig             m_iNextReadFID;
-    GIntBig             m_nMaxFeatureCount; // max size of papoFeatures
+    GIntBig             m_nMaxFeatureCount;  // Max size of papoFeatures.
     OGRFeature        **m_papoFeatures;
     bool                m_bHasHoles;
 
@@ -66,14 +66,15 @@ class OGRMemLayer : public OGRLayer
 
     bool                m_bUpdated;
 
-    // only use it in the lifetime of a function where the list of features doesn't change
+    // Only use it in the lifetime of a function where the list of features
+    // doesn't change.
     IOGRMemLayerFeatureIterator* GetIterator();
 
   public:
                         OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eGeomType );
-                        ~OGRMemLayer();
+    virtual            ~OGRMemLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -92,14 +93,18 @@ class OGRMemLayer : public OGRLayer
                                      int bApproxOK = TRUE );
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    virtual OGRErr      AlterFieldDefn( int iField,
+                                        OGRFieldDefn* poNewFieldDefn,
+                                        int nFlags );
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE );
 
     int                 TestCapability( const char * );
 
-    void                SetUpdatable( bool bUpdatableIn ) { m_bUpdatable = bUpdatableIn; }
-    void                SetAdvertizeUTF8( bool bAdvertizeUTF8In ) { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
+    void                SetUpdatable( bool bUpdatableIn )
+        { m_bUpdatable = bUpdatableIn; }
+    void                SetAdvertizeUTF8( bool bAdvertizeUTF8In )
+        { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
 
     bool                HasBeenUpdated() const { return m_bUpdated; }
     void                SetUpdated(bool bUpdated) { m_bUpdated = bUpdated; }
@@ -127,9 +132,9 @@ class OGRMemDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                       OGRSpatialReference * = NULL,
+                                       OGRwkbGeometryType = wkbUnknown,
+                                       char ** = NULL );
     OGRErr              DeleteLayer( int iLayer );
 
     int                 TestCapability( const char * );
@@ -142,7 +147,7 @@ class OGRMemDataSource : public OGRDataSource
 class OGRMemDriver : public OGRSFDriver
 {
   public:
-                ~OGRMemDriver();
+    virtual ~OGRMemDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
@@ -150,8 +155,8 @@ class OGRMemDriver : public OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
 
-    int                 TestCapability( const char * );
+    int TestCapability( const char * );
 };
 
 
-#endif /* ndef OGRMEM_H_INCLUDED */
+#endif  // ndef OGRMEM_H_INCLUDED
