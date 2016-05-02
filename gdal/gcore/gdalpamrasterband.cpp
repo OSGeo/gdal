@@ -495,7 +495,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
                                      int nCloneFlags )
 
 {
-    const bool bOnlyIfMissing = nCloneFlags & GCIF_ONLY_IF_MISSING;
+    const bool bOnlyIfMissing = (nCloneFlags & GCIF_ONLY_IF_MISSING) != 0;
     const int nSavedMOFlags = GetMOFlags();
 
     PamInitialize();
