@@ -13978,7 +13978,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     hTIFF = CreateLL( pszFilename,
                       nXSize, nYSize, nBands,
                       eType, 0, papszParmList, &fpL, osTmpFilename );
-    int bStreaming = (osTmpFilename.size() != 0);
+    const bool bStreaming = !osTmpFilename.empty();
 
     if( hTIFF == NULL )
         return NULL;
@@ -15878,8 +15878,8 @@ void GTiffDataset::LoadEXIFMetadata()
         return;
 
     const bool bLittleEndian = abyHeader[0] == 'I' && abyHeader[1] == 'I';
-    // int bSwabflag = bLittleEndian ^ CPL_IS_LSB;
-    const bool bSwabflag = (bLittleEndian ? 1 : 0) != CPL_IS_LSB;  // != is XOR.
+    const bool bLeastSignificantBit = CPL_IS_LSB != 0;
+    const bool bSwabflag = bLittleEndian != bLeastSignificantBit;  // != is XOR.
 
     char** papszMetadata = NULL;
     toff_t nOffset = 0;  // TODO(b/28199387): Refactor to simplify casting.
