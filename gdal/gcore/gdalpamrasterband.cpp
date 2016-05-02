@@ -94,14 +94,14 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char * /* pszUnused */ )
 
     if( psPam->bNoDataValueSet )
     {
-        if (CPLIsNan(psPam->dfNoDataValue))
+        if( CPLIsNan(psPam->dfNoDataValue) )
             CPLSetXMLValue( psTree, "NoDataValue",  "nan" );
         else
             CPLSetXMLValue( psTree, "NoDataValue",
                             oFmt.Printf( "%.14E", psPam->dfNoDataValue ) );
 
         // Hex encode real floating point values.
-        if( psPam->dfNoDataValue != floor(psPam->dfNoDataValue)
+        if( psPam->dfNoDataValue != floor(psPam->dfNoDataValue )
             || psPam->dfNoDataValue != CPLAtof(oFmt) )
         {
             double dfNoDataLittleEndian = psPam->dfNoDataValue;
@@ -111,7 +111,7 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char * /* pszUnused */ )
                 CPLBinaryToHex(
                     8, reinterpret_cast<GByte *>( &dfNoDataLittleEndian ) );
             CPLSetXMLValue( psTree, "NoDataValue.#le_hex_equiv",
-                            pszHexEncoding);
+                            pszHexEncoding );
             CPLFree( pszHexEncoding );
         }
     }
@@ -460,7 +460,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
         CPLXMLNode *psNext = psHist->psNext;
         psHist->psNext = NULL;
 
-        if (psPam->psSavedHistograms != NULL)
+        if( psPam->psSavedHistograms != NULL )
         {
             CPLDestroyXMLNode (psPam->psSavedHistograms );
             psPam->psSavedHistograms = NULL;
@@ -844,15 +844,15 @@ CPLErr GDALPamRasterBand::SetUnitType( const char *pszNewValue )
 
     if( pszNewValue == NULL || pszNewValue[0] == '\0' )
     {
-        if (psPam->pszUnitType != NULL)
+        if( psPam->pszUnitType != NULL )
             psPam->poParentDS->MarkPamDirty();
         CPLFree( psPam->pszUnitType );
         psPam->pszUnitType = NULL;
     }
     else
     {
-        if (psPam->pszUnitType == NULL ||
-            strcmp(psPam->pszUnitType, pszNewValue) != 0)
+        if( psPam->pszUnitType == NULL ||
+            strcmp(psPam->pszUnitType, pszNewValue) != 0 )
             psPam->poParentDS->MarkPamDirty();
         CPLFree( psPam->pszUnitType );
         psPam->pszUnitType = CPLStrdup(pszNewValue);
@@ -1029,7 +1029,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     if( *ppanHistogram == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Cannot allocate memory for %d buckets", *pnBuckets);
+                  "Cannot allocate memory for %d buckets", *pnBuckets );
         return FALSE;
     }
 
@@ -1071,8 +1071,8 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
         const double dfHistMax =
             CPLAtof(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
 
-        if( !(ARE_REAL_EQUAL(dfHistMin, dfMin))
-            || !(ARE_REAL_EQUAL(dfHistMax, dfMax))
+        if( !(ARE_REAL_EQUAL(dfHistMin, dfMin) )
+            || !(ARE_REAL_EQUAL(dfHistMax, dfMax) )
             || atoi(CPLGetXMLValue( psXMLHist,
                                     "BucketCount","0")) != nBuckets
             || !atoi(CPLGetXMLValue( psXMLHist,
