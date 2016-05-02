@@ -1073,7 +1073,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
             padfSrcNoData = (double *) CPLMalloc(sizeof(double) * nSrcNoDataCount);
             for(i=0;i<nSrcNoDataCount;i++)
             {
-                if( !ArgIsNumeric(papszTokens[i]) )
+                if( !ArgIsNumeric(papszTokens[i]) && !EQUAL(papszTokens[i], "nan")  )
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -srcnodata value");
                     CSLDestroy(papszTokens);
@@ -1098,7 +1098,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
             padfVRTNoData = (double *) CPLMalloc(sizeof(double) * nVRTNoDataCount);
             for(i=0;i<nVRTNoDataCount;i++)
             {
-                if( !ArgIsNumeric(papszTokens[i]) )
+                if( !ArgIsNumeric(papszTokens[i]) && !EQUAL(papszTokens[i], "nan")  )
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -vrtnodata value");
                     CSLDestroy(papszTokens);
