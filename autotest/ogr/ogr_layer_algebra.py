@@ -56,6 +56,15 @@ def recreate_layer_C():
     ds.DeleteLayer( 'C' )
     C = ds.CreateLayer('C')
 
+def print_layer(A):
+    A.ResetReading()
+    while True:
+        f = A.GetNextFeature()
+        if f is None:
+            return
+        g = f.GetGeometryRef()
+        print g.ExportToWkt()
+
 def is_same(A,B):
 
     A.ResetReading()
@@ -240,7 +249,7 @@ def algebra_intersection():
 
     # Intersection with self ; this should return 2 polygons
 
-    err = D1.Intersection( D2, C )
+    err = D1.Intersection( D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'] )
 
     if err != 0:
         gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Intersection' )
@@ -252,6 +261,78 @@ def algebra_intersection():
 
     return 'success'
 
+def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
+    if not ogrtest.have_geos():
+        return 'skip'
+    
+    driver = ogr.GetDriverByName('MEMORY')
+    ds = driver.CreateDataSource('ds')
+    layer1 = ds.CreateLayer('layer1')
+    layer2 = ds.CreateLayer('layer2')
+
+    g1 = "POLYGON (( 140 360, 140 480, 220 480, 220 360, 140 360 ))"
+    geom1 = ogr.CreateGeometryFromWkt(g1)
+    feat1 = ogr.Feature(layer1.GetLayerDefn())
+    feat1.SetGeometry(geom1)
+    layer1.CreateFeature(feat1)
+
+    g2 = "POLYGON (( 220 260, 220 360, 300 360, 300 260, 220 260 ))"
+    geom2 = ogr.CreateGeometryFromWkt(g2)
+    feat2 = ogr.Feature(layer2.GetLayerDefn())
+    feat2.SetGeometry(geom2)
+    layer2.CreateFeature(feat2)
+
+    g1 = "LINESTRING (0 0, 1 0)"
+    geom1 = ogr.CreateGeometryFromWkt(g1)
+    feat1 = ogr.Feature(layer1.GetLayerDefn())
+    feat1.SetGeometry(geom1)
+    layer1.CreateFeature(feat1)
+
+    g2 = "LINESTRING (1 0, 2 0)"
+    geom2 = ogr.CreateGeometryFromWkt(g2)
+    feat2 = ogr.Feature(layer2.GetLayerDefn())
+    feat2.SetGeometry(geom2)
+    layer2.CreateFeature(feat2)
+
+    layer3 = ds.CreateLayer('layer3a')
+    layer1.Intersection(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
+    if layer3.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'Lower dimension geometries not removed in intersection' )
+        return 'fail'
+
+    layer3 = ds.CreateLayer('layer3b')
+    layer1.Intersection(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
+    if layer3.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'Lower dimension geometries not kept in intersection' )
+        return 'fail'
+
+    layer3 = ds.CreateLayer('layer3c')
+    layer1.Union(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
+    if layer3.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'Lower dimension geometries not removed in union' )
+        return 'fail'
+
+
+    layer3 = ds.CreateLayer('layer3d')
+    layer1.Union(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
+    if layer3.GetFeatureCount() != 6:
+        gdaltest.post_reason( 'Lower dimension geometries not kept in union' )
+        return 'fail'
+
+    layer3 = ds.CreateLayer('layer3e')
+    layer1.Identity(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
+    if layer3.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'Lower dimension geometries not removed in identity' )
+        return 'fail'
+
+    layer3 = ds.CreateLayer('layer3f')
+    layer1.Identity(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
+    if layer3.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'Lower dimension geometries not kept in identity' )
+        return 'fail'
+
+    return 'success'
+    
 
 def algebra_union():
     if not ogrtest.have_geos():
@@ -289,7 +370,7 @@ def algebra_union():
 
     # Union with self ; this should return 2 polygons
 
-    err = D1.Union( D2, C )
+    err = D1.Union( D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'] )
 
     if ogrtest.have_geos():
         if err != 0:
@@ -404,7 +485,7 @@ def algebra_identify():
 
     # Identity with self ; this should return 2 polygons
 
-    err = D1.Identity( D2, C )
+    err = D1.Identity( D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'] )
 
     if ogrtest.have_geos():
         if err != 0:
@@ -617,6 +698,7 @@ def algebra_cleanup():
 gdaltest_list = [
     algebra_setup,
     algebra_intersection,
+    algebra_KEEP_LOWER_DIMENSION_GEOMETRIES,
     algebra_union,
     algebra_symdifference,
     algebra_identify,
