@@ -2006,6 +2006,10 @@ static OGRGeometry* promote_to_multi(OGRGeometry* poGeom)
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
  *     cases. Requires that the prepared geometries are in effect.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Intersection().
@@ -2054,6 +2058,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     int bUsePreparedGeometries = CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
     if (bUsePreparedGeometries) bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
     int bPretestContainment = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PRETEST_CONTAINMENT", "NO"));
+    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2071,6 +2076,13 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
     bEnvelopeSet = pLayerMethod->GetExtent(&sEnvelopeMethod, 1) == OGRERR_NONE;
+    if (bKeepLowerDimGeom) {
+        // require that the result layer is of geom type unknown
+        if (pLayerResult->GetGeomType() != wkbUnknown) {
+            CPLDebug("OGR", "Resetting KEEP_LOWER_DIMENSION_GEOMETRIES to NO since the result layer does not allow it.");
+            bKeepLowerDimGeom = FALSE;
+        }
+    }
 
     ResetReading();
     while (OGRFeature *x = GetNextFeature()) {
@@ -2186,9 +2198,9 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                     }
                 }
                 if (z_geom->IsEmpty() ||
-                    (x_geom->getDimension() == 2 &&
-                     y_geom->getDimension() == 2 &&
-                     z_geom->getDimension() < 2))
+                    (!bKeepLowerDimGeom &&
+                     (x_geom->getDimension() == y_geom->getDimension() &&
+                      z_geom->getDimension() < x_geom->getDimension())))
                 {
                     delete z_geom;
                     delete y;
@@ -2274,6 +2286,10 @@ done:
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
  *     cases. Requires that the prepared geometries are in effect.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Intersection().
@@ -2324,13 +2340,13 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * \brief Union of two layers.
  *
  * The result layer contains features whose geometries represent areas
- * that are in either in the input layer or in the method layer. The
- * features in the result layer have attributes from both input and
- * method layers. For features which represent areas that are only in
- * the input or in the method layer the respective attributes have
- * undefined values. The schema of the result layer can be set by the
- * user or, if it is empty, is initialized to contain all fields in
- * the input and method layers.
+ * that are either in the input layer, in the method layer, or in
+ * both. The features in the result layer have attributes from both
+ * input and method layers. For features which represent areas that
+ * are only in the input or in the method layer the respective
+ * attributes have undefined values. The schema of the result layer
+ * can be set by the user or, if it is empty, is initialized to
+ * contain all fields in the input and method layers.
  *
  * \note If the schema of the result is set by user and contains
  * fields that have the same name as a field in input and in method
@@ -2356,6 +2372,10 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Union().
@@ -2402,6 +2422,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
     int bUsePreparedGeometries = CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
     if (bUsePreparedGeometries) bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
+    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2420,6 +2441,13 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
+    if (bKeepLowerDimGeom) {
+        // require that the result layer is of geom type unknown
+        if (pLayerResult->GetGeomType() != wkbUnknown) {
+            CPLDebug("OGR", "Resetting KEEP_LOWER_DIMENSION_GEOMETRIES to NO since the result layer does not allow it.");
+            bKeepLowerDimGeom = FALSE;
+        }
+    }
 
     // add features based on input layer
     ResetReading();
@@ -2507,9 +2535,9 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 }
             }
             if( poIntersection->IsEmpty() ||
-                (x_geom->getDimension() == 2 &&
-                y_geom->getDimension() == 2 &&
-                poIntersection->getDimension() < 2) )
+                (!bKeepLowerDimGeom && 
+                 (x_geom->getDimension() == y_geom->getDimension() &&
+                  poIntersection->getDimension() < x_geom->getDimension())) )
             {
                 delete poIntersection;
                 delete y;
@@ -2703,13 +2731,13 @@ done:
  * \brief Union of two layers.
  *
  * The result layer contains features whose geometries represent areas
- * that are in either in the input layer or in the method layer. The
- * features in the result layer have attributes from both input and
- * method layers. For features which represent areas that are only in
- * the input or in the method layer the respective attributes have
- * undefined values. The schema of the result layer can be set by the
- * user or, if it is empty, is initialized to contain all fields in
- * the input and method layers.
+ * that are in either in the input layer, in the method layer, or in
+ * both. The features in the result layer have attributes from both
+ * input and method layers. For features which represent areas that
+ * are only in the input or in the method layer the respective
+ * attributes have undefined values. The schema of the result layer
+ * can be set by the user or, if it is empty, is initialized to
+ * contain all fields in the input and method layers.
  *
  * \note If the schema of the result is set by user and contains
  * fields that have the same name as a field in input and in method
@@ -2735,6 +2763,10 @@ done:
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
@@ -3186,6 +3218,10 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Identity().
@@ -3231,10 +3267,18 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
     int bUsePreparedGeometries = CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
     if (bUsePreparedGeometries) bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
+    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
         return OGRERR_UNSUPPORTED_OPERATION;
+    }
+    if (bKeepLowerDimGeom) {
+        // require that the result layer is of geom type unknown
+        if (pLayerResult->GetGeomType() != wkbUnknown) {
+            CPLDebug("OGR", "Resetting KEEP_LOWER_DIMENSION_GEOMETRIES to NO since the result layer does not allow it.");
+            bKeepLowerDimGeom = FALSE;
+        }
     }
 
     // get resources
@@ -3334,9 +3378,9 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 }
             }
             else if( poIntersection->IsEmpty() ||
-                (x_geom->getDimension() == 2 &&
-                y_geom->getDimension() == 2 &&
-                poIntersection->getDimension() < 2) )
+                     (!bKeepLowerDimGeom && 
+                      (x_geom->getDimension() == y_geom->getDimension() &&
+                       poIntersection->getDimension() < x_geom->getDimension())) )
             {
                 delete poIntersection;
                 delete y;
@@ -3465,6 +3509,10 @@ done:
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
+ *     result features with lower dimension geometry that would
+ *     otherwise be added to the result layer. The default is to add
+ *     but only if the result layer has an unknown geometry type.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
