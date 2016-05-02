@@ -1332,6 +1332,45 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszGammaLUT) CPLFree(pszGammaLUT);
 
 /* -------------------------------------------------------------------- */
+/*      Collect RPC.                                                   */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRationalFunctions =
+        CPLGetXMLNode( psImageAttributes,
+                       "geographicInformation.rationalFunctions" );
+    if( psRationalFunctions != NULL ) {
+        char** papszRPC = NULL;
+        static const char* const apszXMLToGDALMapping[] = 
+        {
+            "biasError", "ERR_BIAS",
+            "randomError", "ERR_RAND",
+            //"lineFitQuality", "????",
+            //"pixelFitQuality", "????",
+            "lineOffset", "LINE_OFF",
+            "pixelOffset", "SAMP_OFF",
+            "latitudeOffset", "LAT_OFF",
+            "longitudeOffset", "LONG_OFF",
+            "heightOffset", "HEIGHT_OFF",
+            "lineScale", "LINE_SCALE",
+            "pixelScale", "SAMP_SCALE",
+            "latitudeScale", "LAT_SCALE",
+            "longitudeScale", "LONG_SCALE",
+            "heightScale", "HEIGHT_SCALE",
+            "lineNumeratorCoefficients", "LINE_NUM_COEFF",
+            "lineDenominatorCoefficients", "LINE_DEN_COEFF",
+            "pixelNumeratorCoefficients", "SAMP_NUM_COEFF",
+            "pixelDenominatorCoefficients", "SAMP_DEN_COEFF",
+        };
+        for( size_t i = 0; i < CPL_ARRAYSIZE(apszXMLToGDALMapping); i+=2 )
+        {
+            const char* pszValue = CPLGetXMLValue(psRationalFunctions, apszXMLToGDALMapping[i], NULL);
+            if( pszValue )
+                papszRPC = CSLSetNameValue(papszRPC, apszXMLToGDALMapping[i+1], pszValue);
+        }
+        poDS->GDALDataset::SetMetadata(papszRPC, "RPC");
+        CSLDestroy(papszRPC);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     CPLString osDescription;
