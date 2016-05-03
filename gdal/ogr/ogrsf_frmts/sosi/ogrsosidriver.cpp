@@ -97,7 +97,7 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRSOSI() {
-    if( GDALGetDriverByName( "SOSI" ) == NULL )
+    if( GDALGetDriverByName( "SOSI" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
