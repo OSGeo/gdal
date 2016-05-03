@@ -4799,7 +4799,8 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 // TIFFGetField().
 
                 uint16* pasNewExtraSamples =
-                    (uint16*)CPLMalloc( count * sizeof(uint16) );
+                    static_cast<uint16 *>(
+                        CPLMalloc( count * sizeof(uint16) ) );
                 memcpy( pasNewExtraSamples, v, count * sizeof(uint16) );
                 pasNewExtraSamples[nBand - nBaseSamples - 1] =
                     GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
@@ -4919,12 +4920,12 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
     if( eDataType == GDT_Byte )
         nColors = 256;
 
-    unsigned short *panTRed =
-        (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
-    unsigned short *panTGreen =
-        (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
-    unsigned short *panTBlue =
-        (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+    unsigned short *panTRed = static_cast<unsigned short *>(
+        CPLMalloc(sizeof(unsigned short)*nColors) );
+    unsigned short *panTGreen = static_cast<unsigned short *>(
+        CPLMalloc(sizeof(unsigned short)*nColors) );
+    unsigned short *panTBlue = static_cast<unsigned short *>(
+        CPLMalloc(sizeof(unsigned short)*nColors) );
 
     for( int iColor = 0; iColor < nColors; ++iColor )
     {
@@ -4933,13 +4934,15 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
             GDALColorEntry sRGB;
             poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-            panTRed[iColor] = (unsigned short) (257 * sRGB.c1);
-            panTGreen[iColor] = (unsigned short) (257 * sRGB.c2);
-            panTBlue[iColor] = (unsigned short) (257 * sRGB.c3);
+            panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
+            panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
+            panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
         }
         else
         {
-            panTRed[iColor] = panTGreen[iColor] = panTBlue[iColor] = 0;
+            panTRed[iColor] = 0;
+            panTGreen[iColor] = 0;
+            panTBlue[iColor] = 0;
         }
     }
 
@@ -7021,7 +7024,7 @@ bool GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
         if( static_cast<int>( VSIFWriteL(pabyData, 1, cc, fpToWrite) ) != cc )
         {
             CPLError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
-                      cc);
+                      cc );
             return false;
         }
         nLastWrittenBlockId = tile;
@@ -8507,7 +8510,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                       &panExtraSampleValues) )
     {
         uint16* panExtraSampleValuesNew =
-            (uint16*) CPLMalloc(nExtraSamples * sizeof(uint16));
+            static_cast<uint16*>(
+                CPLMalloc(nExtraSamples * sizeof(uint16)) );
         memcpy( panExtraSampleValuesNew, panExtraSampleValues,
                 nExtraSamples * sizeof(uint16));
         panExtraSampleValues = panExtraSampleValuesNew;
@@ -8752,7 +8756,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( nOverviews > 1 )
     {
         double* padfOvrRasterFactor =
-            (double*) CPLMalloc(sizeof(double) * nOverviews);
+            static_cast<double*>( CPLMalloc(sizeof(double) * nOverviews) );
         double dfTotal = 0;
         for( int i = 0; i < nOverviews; ++i )
         {
@@ -8879,7 +8883,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                       &panExtraSampleValues) )
     {
         uint16* panExtraSampleValuesNew =
-            (uint16*) CPLMalloc(nExtraSamples * sizeof(uint16));
+            static_cast<uint16*>( CPLMalloc(nExtraSamples * sizeof(uint16)) );
         memcpy( panExtraSampleValuesNew, panExtraSampleValues,
                 nExtraSamples * sizeof(uint16) );
         panExtraSampleValues = panExtraSampleValuesNew;
@@ -11596,17 +11600,14 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
                 (CSLCount( papszTokensGreen ) == nTransferFunctionLength) &&
                 (CSLCount( papszTokensBlue ) == nTransferFunctionLength))
             {
-                uint16 *pTransferFuncRed;
-                uint16 *pTransferFuncGreen;
-                uint16 *pTransferFuncBlue;
-                pTransferFuncRed =
-                    static_cast<uint16 *>( CPLMalloc(
+                uint16 *pTransferFuncRed =
+                    static_cast<uint16*>( CPLMalloc(
                         sizeof(uint16) * nTransferFunctionLength ) );
-                pTransferFuncGreen =
-                    static_cast<uint16 *>( CPLMalloc(
+                uint16 *pTransferFuncGreen =
+                    static_cast<uint16*>( CPLMalloc(
                         sizeof(uint16) * nTransferFunctionLength ) );
-                pTransferFuncBlue =
-                    static_cast<uint16 *>( CPLMalloc(
+                uint16 *pTransferFuncBlue =
+                    static_cast<uint16*>( CPLMalloc(
                         sizeof(uint16) * nTransferFunctionLength ) );
 
                 // Convert our table in string format into int16 format.
@@ -13191,7 +13192,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     const double dfUncompressedImageSize =
         nXSize * static_cast<double>(nYSize) * nBands *
-        (GDALGetDataTypeSize(eType) / 8)
+        GDALGetDataTypeSizeBytes(eType)
         + dfExtraSpaceForOverviews;
 
     if( nCompression == COMPRESSION_NONE
@@ -13577,10 +13578,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     {
         int nExtraSamples = nBands - nSamplesAccountedFor;
 
-        uint16 *v = (uint16 *) CPLMalloc( sizeof(uint16) * nExtraSamples );
+        uint16 *v = static_cast<uint16 *>(
+            CPLMalloc( sizeof(uint16) * nExtraSamples ) );
 
-        v[0] = GTiffGetAlphaValue(CSLFetchNameValue(papszParmList, "ALPHA"),
-                                  EXTRASAMPLE_UNSPECIFIED);
+        v[0] = GTiffGetAlphaValue( CSLFetchNameValue(papszParmList, "ALPHA"),
+                                   EXTRASAMPLE_UNSPECIFIED );
 
         for( int i = 1; i < nExtraSamples; ++i )
             v[i] = EXTRASAMPLE_UNSPECIFIED;
@@ -13665,26 +13667,26 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         else
             nColors = 65536;
 
-        unsigned short *panTRed, *panTGreen, *panTBlue;
-
-        panTRed = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
-        panTGreen =
-            (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
-        panTBlue = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+        unsigned short *panTRed = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
+        unsigned short *panTGreen = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
+        unsigned short *panTBlue = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
 
         for( int iColor = 0; iColor < nColors; ++iColor )
         {
             if( eType == GDT_Byte )
             {
-                panTRed[iColor] = (unsigned short) (257 * iColor);
-                panTGreen[iColor] = (unsigned short) (257 * iColor);
-                panTBlue[iColor] = (unsigned short) (257 * iColor);
+                panTRed[iColor] = static_cast<unsigned short>(257 * iColor);
+                panTGreen[iColor] = static_cast<unsigned short>(257 * iColor);
+                panTBlue[iColor] = static_cast<unsigned short>(257 * iColor);
             }
             else
             {
-                panTRed[iColor] = (unsigned short) iColor;
-                panTGreen[iColor] = (unsigned short) iColor;
-                panTBlue[iColor] = (unsigned short) iColor;
+                panTRed[iColor] = static_cast<unsigned short>(iColor);
+                panTGreen[iColor] = static_cast<unsigned short>(iColor);
+                panTBlue[iColor] = static_cast<unsigned short>(iColor);
             }
         }
 
@@ -14475,7 +14477,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             count > nNewExtraSamplesCount )
         {
             uint16* pasNewExtraSamples =
-                (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
+                static_cast<uint16*>(
+                    CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) ) );
             memcpy( pasNewExtraSamples, v + count - nNewExtraSamplesCount,
                     nNewExtraSamplesCount * sizeof(uint16) );
 
@@ -14588,17 +14591,14 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL
              && eType == GDT_UInt16 )
     {
-        unsigned short *panTRed, *panTGreen, *panTBlue;
-        GDALColorTable *poCT;
+        unsigned short *panTRed   = static_cast<unsigned short *>(
+            CPLMalloc(65536*sizeof(unsigned short)) );
+        unsigned short *panTGreen = static_cast<unsigned short *>(
+            CPLMalloc(65536*sizeof(unsigned short)) );
+        unsigned short *panTBlue  = static_cast<unsigned short *>(
+            CPLMalloc(65536*sizeof(unsigned short)) );
 
-        panTRed   = static_cast<unsigned short *>(
-            CPLMalloc(65536*sizeof(unsigned short)));
-        panTGreen = static_cast<unsigned short *>(
-            CPLMalloc(65536*sizeof(unsigned short)));
-        panTBlue  = static_cast<unsigned short *>(
-            CPLMalloc(65536*sizeof(unsigned short)));
-
-        poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+        GDALColorTable *poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
 
         for( int iColor = 0; iColor < 65536; ++iColor )
         {
