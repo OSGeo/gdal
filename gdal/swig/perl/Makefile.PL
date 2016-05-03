@@ -274,14 +274,15 @@ line argument --no-downloads or by setting the environment variable
 PERL_GDAL_NO_DOWNLOADS to a true value, or by specifying a good
 gdal-config with --gdal-config or the environment variable
 PERL_GDAL_CONFIG. If the version of the GDAL development files is
-different from what I have (it is $version) I will be back here.
+different from what this module was built against ($version) I will be
+back here.
 end
 
     } else {
         print STDERR <<end;
 
 The GDAL development files you gave or I found have a different
-version ($got_version) than what these bindings were developed for
+version ($got_version) than what this module was built against
 ($version). I am going to try to download and compile GDAL for you.
 You can prevent this happening by pointing me to good GDAL development
 files, with a command line argument --no-downloads or by setting the
@@ -320,13 +321,27 @@ end
             if ($cmd[0] eq 'cd') {
                 $ret = chdir($cmd[1]);
             } else {
-                $ret = system(@cmd);
+                $ret = open(my $cmd, '-|', @cmd);
+                if ($ret) {
+                    my $flush = $|;
+                    $| = 1;
+                    my $i = 0;
+                    while (<$cmd>) {
+                        print $log $_;
+                        print "#" if $i % 50 == 0;
+                        $i++;
+                    }
+                    print "\n";
+                    $| = $flush;
+                    close($cmd);
+                } else {
+                    print STDERR "'@cmd': $!\n";
+                }
             }
         };
-        my ($stdout, $stderr, $exit) = capture($code);
+        my ($stderr, $result) = capture_stderr($code);
         print $err $stderr;
-        print $log $stdout;
-        return $cmd[0] eq 'cd' ? $ret : ($ret == 0);
+        return $ret;
     };
 
     my $gdal = "gdal-$version";
@@ -342,18 +357,21 @@ end
         } 
         elsif (-r "gdal-$version.tar.gz" and -s "gdal-$version.tar.gz") { # fetch leaves a zero sized file even when it fails
             print "Using existing \"$gdal.tar.gz\"\n";
-            $ok = $step->("tar", "zxf", "$gdal.tar.gz");
+            # extract into gdal
+            $ok = $step->("mkdir", "gdal");
+            $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C gdal", "--strip-components=1");
         }
         else {
             print "Attempting to fetch '$uri'\n";
             my $ff = File::Fetch->new(uri => $uri);
             $ok = $ff->fetch() if $ff;
             if ($ok) {
-                $ok = $step->("tar", "zxf", "$gdal.tar.gz");
+                # extract into gdal
+                $ok = $step->("mkdir", "gdal");
+                $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C gdal", "--strip-components=1");
             } else {
                 print "No luck. Maybe this is the development version?\n";
                 $ok = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
-                $gdal = "gdal";
             }
         }
     };
@@ -361,7 +379,7 @@ end
     print $err $stderr;
     print $log $stdout;
     if ($ok) {
-        for my $cmd (["cd", $gdal],
+        for my $cmd (["cd", "gdal"],
                      ["./configure"],
                      [($^O =~ /bsd/i ? "gmake" : "make"), "-j4"],
                      ["cd", ".."]) 
@@ -372,7 +390,7 @@ end
     }
     close $log;
     close $err;
-    return "./$gdal" if $ok;
+    return "./gdal" if $ok;
     chdir($pwd);
     open($err, "<", "gdal-build.err") 
         or die "Can't open gdal-build.err: $!.";
