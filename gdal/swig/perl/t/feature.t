@@ -105,13 +105,13 @@ my $f = Geo::OGR::Feature->new(
 {
     my $b = 123.456;
     my $c = $f->Field(Real => $b);
-    ok("$b" eq "$c", "Set and get real field.");
+    ok($b-$c < 0.001, "Set and get real field.");
 }
 
 {
     my $b = [123.456,2123.4567];
     my $c = $f->Field(RealList => $b);
-    ok("@$b" eq "@$c", "Set and get real list field.");
+    ok(($b->[0]-$c->[0] < 0.001 and $b->[1]-$c->[1] < 0.001), "Set and get real list field.");
 }
 
 {

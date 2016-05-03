@@ -25,15 +25,17 @@ SKIP: {
     my $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
     my $dst = Geo::OSR::SpatialReference->new(EPSG => 2393);
 
-    skip "PROJSO not set", 1 if (!$ENV{PROJSO} and $^O eq 'MSWin32');
+    skip "PROJSO not set", 3 if (!$ENV{PROJSO} and $^O eq 'MSWin32');
     my ($t1, $t2);
     eval {
 	$t1 = Geo::OSR::CoordinateTransformation->new($src, $dst);
 	$t2 = Geo::OSR::CoordinateTransformation->new($dst, $src);
     };
+    skip "Unable to load PROJ.4 library", 3 if $@ =~ /Unable to load/;
+
     ok($t1, "new Geo::OSR::CoordinateTransformation $@");
 
-    skip "new Geo::OSR::CoordinateTransformation failed",1 unless ($t1 and $t2);
+    skip "new Geo::OSR::CoordinateTransformation failed", 2 unless ($t1 and $t2);
 
     my @points = ([2492055.205, 6830493.772],
 		  [2492065.205, 6830483.772],
