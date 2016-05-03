@@ -528,11 +528,12 @@ const char *GDALOverviewDataset::GetMetadataItem( const char * pszName,
 /*                          GDALOverviewBand()                          */
 /************************************************************************/
 
-GDALOverviewBand::GDALOverviewBand( GDALOverviewDataset* poDSIn, int nBandIn )
+GDALOverviewBand::GDALOverviewBand( GDALOverviewDataset* poDSIn, int nBandIn ) :
+    poUnderlyingBand(poDSIn->poMainDS->GetRasterBand(nBandIn)->
+                         GetOverview(poDSIn->nOvrLevel))
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    poUnderlyingBand = poDSIn->poMainDS->GetRasterBand(nBand)->GetOverview(poDSIn->nOvrLevel);
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
     eDataType = poUnderlyingBand->GetRasterDataType();
