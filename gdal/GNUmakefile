@@ -167,6 +167,8 @@ docs:
 man:
 # Generate man pages
 	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+# Remove "Directory reference" file. Not sure if there's a better way of doing it.
+	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
 
 all:	default ogr-all
 
