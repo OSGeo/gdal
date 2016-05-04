@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include <limits>
+#include <vector>
 
 #include "gdal_priv.h"
 #include "gdalwarper.h"
@@ -922,9 +923,9 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 /* So we go here for a paletted or non-paletted byte band */
                 /* The input values are then between 0 and 255 */
-                int     anVals[256], nMaxVal = 0, iMaxInd = -1;
-
-                memset(anVals, 0, 256*sizeof(int));
+                std::vector<int> anVals(256, 0);
+                int nMaxVal = 0;
+                int iMaxInd = -1;
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
