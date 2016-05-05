@@ -221,6 +221,13 @@ typedef struct {
 
     int         bHasTriedOpeningDS;
     GDALDataset *poDS;
+    double     *padfDEMBuffer;
+    int         nDEMExtractions;
+    int         nBufferMaxRadius;
+    int         nBufferX;
+    int         nBufferY;
+    int         nBufferWidth;
+    int         nBufferHeight;
 
     OGRCoordinateTransformation *poCT;
 
@@ -461,10 +468,10 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
 /************************************************************************/
 
 static
-int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
+int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
                          const double dfXIn, const double dfYIn, double* pdfDEMH );
 
-static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
+static bool GDALRPCGetHeightAtLongLat( GDALRPCTransformInfo *psTransform,
                                        const double dfXIn, const double dfYIn,
                                        double* pdfHeight,
                                        double* pdfDEMPixel = NULL, double* pdfDEMLine = NULL)
@@ -886,6 +893,7 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
 
     if(psTransform->poDS)
         GDALClose(psTransform->poDS);
+    CPLFree(psTransform->padfDEMBuffer);
     if(psTransform->poCT)
         OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)psTransform->poCT);
     CPLFree( psTransform->pszRPCInverseLog );
@@ -898,7 +906,7 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
 /************************************************************************/
 
 static bool
-RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
+RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
                           double dfPixel, double dfLine, double dfUserHeight,
                           double *pdfLong, double *pdfLat )
 
@@ -1139,18 +1147,98 @@ double BiCubicKernel(double dfVal)
 }
 
 /************************************************************************/
+/*                        GDALRPCExtractDEMWindow()                     */
+/************************************************************************/
+
+static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
+                                     int nX, int nY, int nWidth, int nHeight,
+                                     double* padfOut )
+{
+    psTransform->nDEMExtractions ++;
+    if( psTransform->padfDEMBuffer == NULL )
+    {
+        // Should only happen in case of failed memory allocation
+        int anBands[] = { 1 };
+        return psTransform->poDS->RasterIO(GF_Read, nX, nY, nWidth, nHeight,
+                                           padfOut, nWidth, nHeight,
+                                           GDT_Float64, 1, anBands, 0, 0, 0,
+                                           NULL) == CE_None;
+    }
+
+    // Instead of reading just nWidth * nHeight pixels (with those being <= 4),
+    // target a larger buffer since small extractions can be costly, particular
+    // with VRT
+    if( !(nX >= psTransform->nBufferX &&
+          nX + nWidth <= psTransform->nBufferX + psTransform->nBufferWidth &&
+          nY >= psTransform->nBufferY &&
+          nY + nHeight <= psTransform->nBufferY + psTransform->nBufferHeight ) )
+    {
+        const int nRasterXSize = psTransform->poDS->GetRasterXSize();
+        const int nRasterYSize = psTransform->poDS->GetRasterYSize();
+        // If we have only queried a few points, no need to extract on a large window
+        // We will progressively extend the window up to its maximum size if we
+        // extract a significant number of points
+        int nRadius = psTransform->nBufferMaxRadius;
+        if( psTransform->nDEMExtractions < psTransform->nBufferMaxRadius * psTransform->nBufferMaxRadius )
+        {
+            nRadius = static_cast<int> (sqrt(psTransform->nDEMExtractions) );
+            CPLAssert( nRadius <= psTransform->nBufferMaxRadius );
+            if( nRadius < nWidth )
+                nRadius = nWidth;
+        }
+        CPLAssert( nRadius >= nWidth && nRadius >= nHeight );
+        psTransform->nBufferX = nX - nRadius;
+        if( psTransform->nBufferX < 0 )
+            psTransform->nBufferX = 0;
+        psTransform->nBufferY = nY - nRadius;
+        if( psTransform->nBufferY < 0 )
+            psTransform->nBufferY = 0;
+        psTransform->nBufferWidth = 2 * nRadius;
+        if( psTransform->nBufferX + psTransform->nBufferWidth > nRasterXSize )
+            psTransform->nBufferWidth = nRasterXSize - psTransform->nBufferX;
+        psTransform->nBufferHeight = 2 * nRadius;
+        if( psTransform->nBufferY + psTransform->nBufferHeight > nRasterYSize )
+            psTransform->nBufferHeight = nRasterYSize - psTransform->nBufferY;
+        int anBands[] = { 1 };
+        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read,
+                        psTransform->nBufferX, psTransform->nBufferY,
+                        psTransform->nBufferWidth, psTransform->nBufferHeight,
+                        psTransform->padfDEMBuffer,
+                        psTransform->nBufferWidth, psTransform->nBufferHeight,
+                        GDT_Float64, 1, anBands, 0, 0, 0, NULL);
+        if( eErr != CE_None )
+        {
+            psTransform->nBufferX = -1;
+            psTransform->nBufferY = -1;
+            psTransform->nBufferWidth = -1;
+            psTransform->nBufferHeight = -1;
+            return false;
+        }
+    }
+
+    for( int i=0; i<nHeight; i++)
+    {
+        memcpy( padfOut + i * nWidth,
+                psTransform->padfDEMBuffer + (nY - psTransform->nBufferY + i) *
+                    psTransform->nBufferWidth + nX - psTransform->nBufferX,
+                nWidth * sizeof(double) );
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                        GDALRPCGetDEMHeight()                         */
 /************************************************************************/
 
 static
-int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
+int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
                          const double dfXIn, const double dfYIn, double* pdfDEMH )
 {
-    int nRasterXSize = psTransform->poDS->GetRasterXSize();
-    int nRasterYSize = psTransform->poDS->GetRasterYSize();
+    const int nRasterXSize = psTransform->poDS->GetRasterXSize();
+    const int nRasterYSize = psTransform->poDS->GetRasterYSize();
     int bGotNoDataValue = FALSE;
     double dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
-    int bands[1] = {1};
 
     if(psTransform->eResampleAlg == DRA_Cubic)
     {
@@ -1170,11 +1258,7 @@ int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
         }
         //cubic interpolation
         double adfElevData[16] = {0};
-        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dXNew, dYNew, 4, 4,
-                                                    &adfElevData, 4, 4,
-                                                    GDT_Float64, 1, bands, 0, 0, 0,
-                                                    NULL);
-        if(eErr != CE_None)
+        if( !GDALRPCExtractDEMWindow( psTransform, dXNew, dYNew, 4, 4, adfElevData ) )
         {
             return FALSE;
         }
@@ -1226,16 +1310,14 @@ bilinear_fallback:
         {
             goto near_fallback;
         }
+
         //bilinear interpolation
         double adfElevData[4] = {0,0,0,0};
-        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 2, 2,
-                                                    &adfElevData, 2, 2,
-                                                    GDT_Float64, 1, bands, 0, 0, 0,
-                                                  NULL);
-        if(eErr != CE_None)
+        if( !GDALRPCExtractDEMWindow( psTransform, dX, dY, 2, 2, adfElevData ) )
         {
             return FALSE;
         }
+
         if( bGotNoDataValue )
         {
             // TODO: we could perhaps use a valid sample if there's one
@@ -1271,11 +1353,7 @@ near_fallback:
             return FALSE;
         }
         double dfDEMH(0);
-        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
-                                                    &dfDEMH, 1, 1,
-                                                    GDT_Float64, 1, bands, 0, 0, 0,
-                                                    NULL);
-        if(eErr != CE_None ||
+        if( !GDALRPCExtractDEMWindow( psTransform, dX, dY, 1, 1, &dfDEMH ) ||
             (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
         {
             return FALSE;
@@ -1514,6 +1592,13 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                                 GDALOpen( psTransform->pszDEMPath, GA_ReadOnly );
         if(psTransform->poDS != NULL && psTransform->poDS->GetRasterCount() >= 1)
         {
+            psTransform->nBufferMaxRadius = 128;
+            psTransform->padfDEMBuffer = static_cast<double*>(VSIMalloc(
+                2 * psTransform->nBufferMaxRadius * 2 * psTransform->nBufferMaxRadius * sizeof(double) ));
+            psTransform->nBufferX = -1;
+            psTransform->nBufferY = -1;
+            psTransform->nBufferWidth = -1;
+            psTransform->nBufferHeight = -1;
             const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
             if (pszSpatialRef != NULL && pszSpatialRef[0] != '\0')
             {
