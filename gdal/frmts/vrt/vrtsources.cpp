@@ -297,7 +297,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         bRelativeToVRT = FALSE;
         for( size_t i = 0;
              i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
-             i ++)
+             ++i )
         {
             const char* const pszSyntax = apszSpecialSyntax[i];
             CPLString osPrefix(pszSyntax);
@@ -472,7 +472,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         bool bDone = false;
         for( size_t i = 0;
              i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
-             i ++ )
+             ++i )
         {
             const char* pszSyntax = apszSpecialSyntax[i];
             CPLString osPrefix(pszSyntax);
@@ -484,10 +484,14 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
                 if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}") )
                 {
                     const char * pszLastPart = strrchr(pszFilename, ':') + 1;
-                    /* CSV:z:/foo.xyz */
-                    if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
-                        pszLastPart - pszFilename >= 3 && pszLastPart[-3] == ':' )
+                    // CSV:z:/foo.xyz
+                    if( ( pszLastPart[0] == '/' ||
+                          pszLastPart[0] == '\\') &&
+                        pszLastPart - pszFilename >= 3 &&
+                        pszLastPart[-3] == ':' )
+                    {
                         pszLastPart -= 2;
+                    }
                     CPLString osPrefixFilename = pszFilename;
                     osPrefixFilename.resize(pszLastPart - pszFilename);
                     pszSrcDSName = CPLStrdup( (osPrefixFilename +
@@ -524,7 +528,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         }
     }
     else
+    {
         pszSrcDSName = CPLStrdup( pszFilename );
+    }
 
     const char* pszSourceBand = CPLGetXMLValue(psSrc,"SourceBand","1");
     int nSrcBand = 0;
@@ -557,6 +563,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     CPLXMLNode* psSrcProperties = CPLGetXMLNode(psSrc,"SourceProperties");
     int nRasterXSize = 0;
     int nRasterYSize = 0;
+    // TODO(schwehr): What is the difference between 0 (GDT_Unknown) and -1?
+    // Does there need to be a GDT_Uninitialized?
     GDALDataType eDataType = static_cast<GDALDataType>(-1);
     int nBlockXSize = 0, nBlockYSize = 0;
     if( psSrcProperties )
@@ -630,10 +638,21 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
             proxyDS->AddSrcBandDescription(eDataType, nBlockXSize, nBlockYSize);
 
         if( bGetMaskBand )
-          reinterpret_cast<GDALProxyPoolRasterBand *>(
-              proxyDS->GetRasterBand(nSrcBand) )->
-                  AddSrcMaskBandDescription( eDataType,
-                                             nBlockXSize, nBlockYSize );
+        {
+          GDALProxyPoolRasterBand *poMaskBand =
+              dynamic_cast<GDALProxyPoolRasterBand *>(
+              proxyDS->GetRasterBand(nSrcBand) );
+          if( poMaskBand == NULL )
+          {
+              CPLError(
+                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
+          }
+          else
+          {
+              poMaskBand->AddSrcMaskBandDescription(
+                  eDataType, nBlockXSize, nBlockYSize );
+          }
+        }
     }
 
     CSLDestroy(papszOpenOptions);
@@ -1087,7 +1106,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
         return FALSE;
 
-        return TRUE;
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1527,7 +1546,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                     int nVal = 0;
                     GDALCopyWords(
                         pabyOut + k * nBandSpace + j * nLineSpace +
-                        i * nPixelSpace,
+                            i * nPixelSpace,
                         eBufType, 0,
                         &nVal, GDT_Int32, 0,
                         1 );
@@ -1538,7 +1557,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                     GDALCopyWords(
                         &nVal, GDT_Int32, 0,
                         pabyOut + k * nBandSpace + j * nLineSpace +
-                        i * nPixelSpace,
+                            i * nPixelSpace,
                         eBufType, 0,
                         1 );
                 }
@@ -1969,6 +1988,9 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
         // Make sure we print with sufficient precision to address really close
         // entries (#6422).
         CPLString osLUT;
+        // TODO(schwehr): How is this not a read past the end of the array if
+        // m_nLUTItemCount is 0 or 1?  Added in
+        // https://trac.osgeo.org/gdal/changeset/33779
         if( m_nLUTItemCount > 0 &&
             CPLString().Printf("%g", m_padfLUTInputs[0]) ==
             CPLString().Printf("%g", m_padfLUTInputs[1]) )
@@ -1989,6 +2011,9 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
                  CPLString().Printf("%g", m_padfLUTInputs[i]) ==
                  CPLString().Printf("%g", m_padfLUTInputs[i+1])) )
             {
+                // TODO(schwehr): An explanation of the 18 would be helpful.
+                // Can someone distill the issue down to a quick comment?
+                // https://trac.osgeo.org/gdal/ticket/6422
                 osLUT += CPLString().Printf(
                     ",%.18g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
             }
@@ -2265,7 +2290,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         RasterIOInternal(
             nReqXOff, nReqYOff, nReqXSize, nReqYSize,
             static_cast<GByte *>(pData) + nPixelSpace * nOutXOff
-            + static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                + static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
             nOutXSize, nOutYSize,
             eBufType,
             nPixelSpace, nLineSpace, psExtraArg );
