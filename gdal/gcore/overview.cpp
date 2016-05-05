@@ -1462,7 +1462,9 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
 /************************************************************************/
 
 // TODO(schwehr): Does bMultipleBands really have to be a part of the template?
-template<class T, bool bMultipleBands> static CPLErr
+
+// class MSVCPedanticBool fails with bMultipleBands being a bool.
+template<class T, EMULATED_BOOL bMultipleBands> static CPLErr
 GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                                    double dfYRatioDstToSrc,
                                    double dfSrcXDelta,
