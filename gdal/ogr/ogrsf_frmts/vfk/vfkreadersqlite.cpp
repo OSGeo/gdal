@@ -54,7 +54,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     const char *pszDbNameConf;
     CPLString   osDbName;
     CPLString   osCommand;
-    VSIStatBufL sStatBufDb, sStatBufVfk;
+    VSIStatBufL sStatBufDb;
 
     /* open tmp SQLite DB (re-use DB file if already exists) */
     pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
@@ -83,6 +83,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 
     m_bNewDb = TRUE;
     if (VSIStatL(osDbName, &sStatBufDb) == 0) {
+        /* Internal DB exists */
 	if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    m_bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
@@ -90,8 +91,8 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	    VSIUnlink(osDbName);
         }
         else {
-            if (VSIStatL(pszFilename, &sStatBufVfk) == 0 &&
-                sStatBufVfk.st_mtime > sStatBufDb.st_mtime) {
+            if (pszDbNameConf == NULL &&
+                m_poFStat->st_mtime > sStatBufDb.st_mtime) {
                 CPLDebug("OGR-VFK",
                          "Found %s but ignoring because it appears\n"
                          "be older than the associated VFK file.",
@@ -104,13 +105,6 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
             }
         }
     }
-
-    /*
-    if (m_bNewDb) {
-      CPLError(CE_Warning, CPLE_AppDefined,
-               "INFO: No internal SQLite DB found. Reading VFK data may take some time...");
-    }
-    */
 
     CPLDebug("OGR-VFK", "New DB: %s Spatial: %s",
 	     m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
@@ -127,7 +121,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 
     if (m_bNewDb) {
         /* new DB, create support metadata tables */
-        osCommand.Printf("CREATE TABLE %s (file_name text, table_name text, num_records integer, "
+        osCommand.Printf("CREATE TABLE %s (file_name text, file_size integer, table_name text, num_records integer, "
                          "num_features integer, num_geometries integer, table_defn text)",
                          VFK_DB_TABLE);
         ExecuteSQL(osCommand.c_str());
@@ -188,14 +182,12 @@ int VFKReaderSQLite::ReadDataBlocks()
         VFKReader::AddDataBlock(poNewDataBlock, NULL);
     }
 
-    if (m_nDataBlockCount == 0) {
-        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", NULL, NULL, NULL));
-        /* CREATE TABLE ... */
-        nDataBlocks = VFKReader::ReadDataBlocks();
-        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", NULL, NULL, NULL));
+    CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", NULL, NULL, NULL));
+    /* Read data from VFK file */
+    nDataBlocks = VFKReader::ReadDataBlocks();
+    CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", NULL, NULL, NULL));
 
-        StoreInfo2DB();
-    }
+    StoreInfo2DB(); /* store header into DB */
 
     return nDataBlocks;
 }
@@ -211,6 +203,7 @@ int VFKReaderSQLite::ReadDataBlocks()
 */
 int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
+    int         bReadDb, bReadVfk;
     int         nDataRecords;
     int         iDataBlock;
     const char *pszName;
@@ -221,6 +214,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     sqlite3_stmt *hStmt;
 
     pszName = NULL;
+    nDataRecords = 0;
+    bReadVfk = TRUE;
+    bReadDb = FALSE;
 
     if (poDataBlock) { /* read records only for selected data block */
         /* table name */
@@ -231,28 +227,39 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
                      "table_name = '%s'",
                      VFK_DB_TABLE, pszName);
         hStmt = PrepareStatement(osSQL.c_str());
-        nDataRecords = -1;
         if (ExecuteSQL(hStmt) == OGRERR_NONE) {
             nDataRecords = sqlite3_column_int(hStmt, 0);
+            if (nDataRecords > 0)
+                bReadDb = TRUE; /* -> read from DB */
+            else
+                nDataRecords = 0;
         }
         sqlite3_finalize(hStmt);
     }
-    else {
-                      /* read all data blocks */
-
+    else {                     /* read all data blocks */
         /* check for existing records (re-use already inserted data) */
-        osSQL.Printf("SELECT COUNT(*) FROM %s WHERE num_records = -1", VFK_DB_TABLE);
+        osSQL.Printf("SELECT COUNT(*) FROM %s WHERE num_records > 0", VFK_DB_TABLE);
         hStmt = PrepareStatement(osSQL.c_str());
         if (ExecuteSQL(hStmt) == OGRERR_NONE &&
-            sqlite3_column_int(hStmt, 0) == 0)
-            nDataRecords = 0;     /* -> read from DB */
-        else
-            nDataRecords = -1;    /* -> read from VFK file */
+            sqlite3_column_int(hStmt, 0) != 0)
+            bReadDb = TRUE;     /* -> read from DB */
+        sqlite3_finalize(hStmt);
 
+        /* check if file is already registered in DB */
+        osSQL.Printf("SELECT COUNT(*) FROM %s WHERE file_name = '%s' AND "
+                     "file_size = %ld AND num_records > 0",
+                     VFK_DB_TABLE, CPLGetFilename(m_pszFilename), m_poFStat->st_size);
+        hStmt = PrepareStatement(osSQL.c_str());
+        if (ExecuteSQL(hStmt) == OGRERR_NONE &&
+            sqlite3_column_int(hStmt, 0) > 0) {
+            /* -> file already registered (filename & size is the same) */
+            CPLDebug("OGR-VFK", "VFK file %s already loaded in DB", m_pszFilename);
+            bReadVfk = FALSE;
+        }
         sqlite3_finalize(hStmt);
     }
-
-    if (nDataRecords > -1) {        /* read records from DB */
+    
+    if (bReadDb) {        /* read records from DB */
         /* read from  DB */
         long iFID;
         int  iRowId;
@@ -302,12 +309,13 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             sqlite3_finalize(hStmt);
         }
     }
-    else {                          /* read from VFK file and insert records into DB */
+
+    if (bReadVfk) {                          /* read from VFK file and insert records into DB */
         /* begin transaction */
         ExecuteSQL("BEGIN");
 
         /* INSERT ... */
-        nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
+        nDataRecords += VFKReader::ReadDataRecords(poDataBlock);
 
         /* update VFK_DB_TABLE table */
         poDataBlockCurrent = NULL;
@@ -405,13 +413,10 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
     const char *pszBlockName;
     const char *pszKey;
     CPLString   osCommand, osColumn;
-    bool        bUnique;
 
     VFKPropertyDefn *poPropertyDefn;
 
     sqlite3_stmt *hStmt;
-
-    bUnique = !CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_IGNORE_DUPLICATES", "NO"));
 
     pszBlockName = poDataBlock->GetName();
 
@@ -424,7 +429,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
     if (ExecuteSQL(hStmt) == OGRERR_NONE &&
         sqlite3_column_int(hStmt, 0) == 0) {
 
-        osCommand.Printf("CREATE TABLE '%s' (", pszBlockName);
+        osCommand.Printf("CREATE TABLE IF NOT EXISTS '%s' (", pszBlockName);
         for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
             poPropertyDefn = poDataBlock->GetProperty(i);
             if (i > 0)
@@ -450,7 +455,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
         if (pszKey) {
             osCommand.Printf("%s_%s", pszBlockName, pszKey);
-            CreateIndex(osCommand.c_str(), pszBlockName, pszKey, bUnique);
+            CreateIndex(osCommand.c_str(), pszBlockName, pszKey, !m_bAmendment);
         }
 
         if (EQUAL(pszBlockName, "SBP")) {
@@ -458,7 +463,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
             CreateIndex("SBP_OB",        pszBlockName, "OB_ID", FALSE);
             CreateIndex("SBP_HP",        pszBlockName, "HP_ID", FALSE);
             CreateIndex("SBP_DPM",       pszBlockName, "DPM_ID", FALSE);
-            CreateIndex("SBP_OB_HP_DPM", pszBlockName, "OB_ID,HP_ID,DPM_ID", bUnique);
+            CreateIndex("SBP_OB_HP_DPM", pszBlockName, "OB_ID,HP_ID,DPM_ID", TRUE);
             CreateIndex("SBP_OB_POR",    pszBlockName, "OB_ID,PORADOVE_CISLO_BODU", FALSE);
             CreateIndex("SBP_HP_POR",    pszBlockName, "HP_ID,PORADOVE_CISLO_BODU", FALSE);
             CreateIndex("SBP_DPM_POR",   pszBlockName, "DPM_ID,PORADOVE_CISLO_BODU", FALSE);
@@ -474,10 +479,11 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         }
 
         /* update VFK_DB_TABLE meta-table */
-        osCommand.Printf("INSERT INTO %s (file_name, table_name, "
+        osCommand.Printf("INSERT INTO %s (file_name, file_size, table_name, "
                          "num_records, num_features, num_geometries, table_defn) VALUES "
-			 "('%s', '%s', -1, 0, 0, '%s')",
-			 VFK_DB_TABLE, m_pszFilename, pszBlockName, pszDefn);
+			 "('%s', %ld, '%s', -1, 0, 0, '%s')",
+			 VFK_DB_TABLE, CPLGetFilename(m_pszFilename), m_poFStat->st_size,
+                         pszBlockName, pszDefn);
 
         ExecuteSQL(osCommand.c_str());
 

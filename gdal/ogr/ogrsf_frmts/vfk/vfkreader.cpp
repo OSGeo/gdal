@@ -30,6 +30,8 @@
  * SOFTWARE.
  ****************************************************************************/
 
+#include <sys/stat.h>
+
 #include "vfkreader.h"
 #include "vfkreaderp.h"
 
@@ -69,11 +71,20 @@ VFKReader::VFKReader(const char *pszFilename)
 {
     m_nDataBlockCount = 0;
     m_papoDataBlock   = NULL;
-    m_bLatin2         = TRUE; /* encoding ISO-8859-2 or WINDOWS-1250 */
+    m_bLatin2         = TRUE;    /* encoding ISO-8859-2 or WINDOWS-1250 */
+    m_bAmendment      = FALSE;   /* VFK are provided in two forms - stative and amendment data */
 
     /* open VFK file for reading */
     CPLAssert(NULL != pszFilename);
     m_pszFilename = CPLStrdup(pszFilename);
+
+    m_poFStat = (VSIStatBuf*) CPLMalloc(sizeof(VSIStatBuf));
+    if (CPLStat(pszFilename, m_poFStat) != 0 ||
+        !VSI_ISREG(m_poFStat->st_mode)) {
+      CPLError(CE_Failure, CPLE_OpenFailed,
+               "%s is not a regular file.", m_pszFilename);
+    }
+
     m_poFD = VSIFOpen(m_pszFilename, "rb");
     if (m_poFD == NULL) {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -90,6 +101,7 @@ VFKReader::~VFKReader()
 
     if (m_poFD)
         VSIFClose(m_poFD);
+    CPLFree(m_poFStat);
 
     /* clear data blocks */
     for (int i = 0; i < m_nDataBlockCount; i++)
@@ -179,13 +191,22 @@ int VFKReader::ReadDataBlocks()
                 CPLFree(pszLine);
                 return -1;
             }
-            poNewDataBlock = (IVFKDataBlock *) CreateDataBlock(pszBlockName);
+
+            /* skip duplicated data blocks (when reading multiple files into single DB)  */
+            if (!GetDataBlock(pszBlockName)) {
+                poNewDataBlock = (IVFKDataBlock *) CreateDataBlock(pszBlockName);
+                poNewDataBlock->SetGeometryType();
+                poNewDataBlock->SetProperties(pszLine); /* TODO: check consistency on property level */
+                AddDataBlock(poNewDataBlock, pszLine);
+            }
             CPLFree(pszBlockName);
-            poNewDataBlock->SetGeometryType();
-            poNewDataBlock->SetProperties(pszLine);
-            AddDataBlock(poNewDataBlock, pszLine);
         }
         else if (pszLine[1] == 'H') {
+            /* check for amendment file */
+            if (EQUAL(pszLine, "&HZMENY;1")) {
+                m_bAmendment = TRUE;
+            }
+
             /* header - metadata */
             AddInfo(pszLine);
         }
@@ -222,13 +243,15 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     if (poDataBlock) {  /* read only given data block */
         poDataBlockCurrent = poDataBlock;
-        poDataBlockCurrent->SetFeatureCount(0);
+        if (poDataBlockCurrent->GetFeatureCount(FALSE) < 0)
+            poDataBlockCurrent->SetFeatureCount(0);
         pszName = poDataBlockCurrent->GetName();
     }
     else {              /* read all data blocks */
         for (int iDataBlock = 0; iDataBlock < GetDataBlockCount(); iDataBlock++) {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
-            poDataBlockCurrent->SetFeatureCount(0);
+            if (poDataBlockCurrent->GetFeatureCount(FALSE) < 0)
+                poDataBlockCurrent->SetFeatureCount(0);
         }
         poDataBlockCurrent = NULL;
     }

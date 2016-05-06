@@ -355,7 +355,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     poDataBlockLines = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
     if (NULL == poDataBlockLines) {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Data block %s not found", m_pszName);
+                 "Data block %s not found.", m_pszName);
         return nInvalid;
     }
 
@@ -463,9 +463,16 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         poDataBlockLines2 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
         bIsPar = FALSE;
     }
-    if (NULL == poDataBlockLines1 || NULL == poDataBlockLines2) {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Data block %s not found", m_pszName);
+    if (NULL == poDataBlockLines1) {
+        CPLError(CE_Warning, CPLE_FileIO,
+                 "Data block %s not found. Unable to build geometry for %s.", 
+                 bIsPar ? "HP" : "OB", m_pszName);
+        return -1;
+    }
+    if (NULL == poDataBlockLines2) {
+        CPLError(CE_Warning, CPLE_FileIO,
+                 "Data block %s not found. Unable to build geometry for %s.",
+                 "SBP", m_pszName);
         return -1;
     }
 
