@@ -782,7 +782,9 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             (nTotalB + nTotalWeight / 2) / nTotalWeight;
                         pafDstScanline[iDstPixel - nDstXOff] =
                             static_cast<float>( GDALFindBestEntry(
-                                    nEntryCount, aEntries, nR, nG, nB, bHasNoData ? (int)fNoDataValue : -1) );
+                                nEntryCount, aEntries, nR, nG, nB,
+                                bHasNoData ?
+                                static_cast<int>(fNoDataValue) : -1) );
                     }
                 }
             }
