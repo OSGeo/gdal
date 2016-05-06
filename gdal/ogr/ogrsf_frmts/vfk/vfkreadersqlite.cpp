@@ -247,8 +247,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
         /* check if file is already registered in DB */
         osSQL.Printf("SELECT COUNT(*) FROM %s WHERE file_name = '%s' AND "
-                     "file_size = %ld AND num_records > 0",
-                     VFK_DB_TABLE, CPLGetFilename(m_pszFilename), m_poFStat->st_size);
+                     "file_size = " CPL_FRMT_GUIB " AND num_records > 0",
+                     VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
+                     (GUIntBig) m_poFStat->st_size);
         hStmt = PrepareStatement(osSQL.c_str());
         if (ExecuteSQL(hStmt) == OGRERR_NONE &&
             sqlite3_column_int(hStmt, 0) > 0) {
@@ -481,8 +482,9 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         /* update VFK_DB_TABLE meta-table */
         osCommand.Printf("INSERT INTO %s (file_name, file_size, table_name, "
                          "num_records, num_features, num_geometries, table_defn) VALUES "
-			 "('%s', %ld, '%s', -1, 0, 0, '%s')",
-			 VFK_DB_TABLE, CPLGetFilename(m_pszFilename), m_poFStat->st_size,
+			 "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
+			 VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
+                         (GUIntBig) m_poFStat->st_size,
                          pszBlockName, pszDefn);
 
         ExecuteSQL(osCommand.c_str());
