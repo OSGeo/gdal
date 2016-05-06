@@ -84,11 +84,11 @@ double CPL_DLL GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int*
 */
 typedef enum
 {
-	GARIO_PENDING = 0,
-	GARIO_UPDATE = 1,
-	GARIO_ERROR = 2,
-	GARIO_COMPLETE = 3,
-	GARIO_TypeCount = 4
+    GARIO_PENDING = 0,
+    GARIO_UPDATE = 1,
+    GARIO_ERROR = 2,
+    GARIO_COMPLETE = 3,
+    GARIO_TypeCount = 4
 } GDALAsyncStatusType;
 
 const char CPL_DLL * CPL_STDCALL GDALGetAsyncStatusTypeName( GDALAsyncStatusType );
@@ -686,8 +686,8 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 
 typedef CPLErr
 (*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
-			int nBufXSize, int nBufYSize,
-			GDALDataType eSrcType, GDALDataType eBufType,
+                        int nBufXSize, int nBufYSize,
+                        GDALDataType eSrcType, GDALDataType eBufType,
                         int nPixelSpace, int nLineSpace);
 
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
@@ -908,10 +908,10 @@ typedef struct {
     double      adfSAMP_NUM_COEFF[20];
     double      adfSAMP_DEN_COEFF[20];
 
-    double	dfMIN_LONG;
+    double      dfMIN_LONG;
     double      dfMIN_LAT;
     double      dfMAX_LONG;
-    double	dfMAX_LAT;
+    double      dfMAX_LAT;
 
 } GDALRPCInfo;
 
@@ -950,12 +950,12 @@ void CPL_DLL CPL_STDCALL GDALCreateColorRamp( GDALColorTableH hTable,
             int nEndIndex, const GDALColorEntry *psEndColor );
 
 /* ==================================================================== */
-/*      Raster Attribute Table						*/
+/*      Raster Attribute Table                                          */
 /* ==================================================================== */
 
 /** Field type of raster attribute table */
 typedef enum {
-    /*! Integer field */	   	   GFT_Integer,
+    /*! Integer field */                   GFT_Integer,
     /*! Floating point (double) field */   GFT_Real,
     /*! String field */                    GFT_String
 } GDALRATFieldType;

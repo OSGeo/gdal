@@ -2182,7 +2182,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
 /* -------------------------------------------------------------------- */
 /* In the general case, do a least squares error approximation by       */
-/* solving the equation Sum[(A - B*x + C*y - Lon)^2] = minimum		*/
+/* solving the equation Sum[(A - B*x + C*y - Lon)^2] = minimum          */
 /* -------------------------------------------------------------------- */
 
     double sum_x = 0.0;

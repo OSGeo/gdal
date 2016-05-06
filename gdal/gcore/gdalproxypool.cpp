@@ -180,8 +180,8 @@ void GDALDatasetPool::CheckLinks()
     {
         CPLAssert(cur == firstEntry || cur->prev->next == cur);
         CPLAssert(cur == lastEntry || cur->next->prev == cur);
-        i++;
-	CPLAssert(cur->next != NULL || cur == lastEntry);
+        ++i;
+        CPLAssert(cur->next != NULL || cur == lastEntry);
         cur = cur->next;
     }
     CPLAssert(i == currentSize);
