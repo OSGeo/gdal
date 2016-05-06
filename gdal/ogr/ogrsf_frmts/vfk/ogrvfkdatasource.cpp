@@ -111,6 +111,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 
     pszName = CPLStrdup(pszNewName);
 
+    /* create VFK reader */
     poReader = CreateVFKReader(pszNewName);
     if (poReader == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -126,15 +127,22 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     /* get list of layers */
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());
 
+    /* create layers from VFK blocks */
     for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
         papoLayers[iLayer] = CreateLayerFromBlock(poReader->GetDataBlock(iLayer));
         nLayers++;
     }
 
-    /* read data records if required */
-    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES"))) {
+        /* read data records if requested */
         poReader->ReadDataRecords();
-
+        
+        for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
+            /* load geometry */
+            poReader->GetDataBlock(iLayer)->LoadGeometry();
+        }
+    }
+    
     return TRUE;
 }
 

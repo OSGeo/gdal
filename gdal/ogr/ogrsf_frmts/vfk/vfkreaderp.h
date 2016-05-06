@@ -57,6 +57,8 @@ private:
 
 protected:
     char           *m_pszFilename;
+    VSIStatBuf     *m_poFStat;
+    bool            m_bAmendment;
     int             m_nDataBlockCount;
     IVFKDataBlock **m_papoDataBlock;
 

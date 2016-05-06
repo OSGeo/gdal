@@ -262,7 +262,7 @@ public:
     void               SetProperties(const char *);
     int                GetPropertyIndex(const char *) const;
 
-    GIntBig            GetFeatureCount();
+    GIntBig            GetFeatureCount(bool = TRUE);
     void               SetFeatureCount(int, bool = FALSE);
     IVFKFeature       *GetFeatureByIndex(int) const;
     IVFKFeature       *GetFeature(GIntBig);

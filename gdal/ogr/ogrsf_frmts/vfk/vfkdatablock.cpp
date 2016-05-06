@@ -183,11 +183,13 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 /*!
   \brief Get number of features for given data block
 
+  \param bForce TRUE to force reading VFK data blocks if needed
+
   \return number of features
 */
-GIntBig IVFKDataBlock::GetFeatureCount()
+GIntBig IVFKDataBlock::GetFeatureCount(bool bForce)
 {
-    if (m_nFeatureCount < 0) {
+    if (bForce && m_nFeatureCount == -1) {
         m_poReader->ReadDataRecords(this); /* read VFK data records */
         if (m_bGeometryPerBlock && !m_bGeometry) {
             LoadGeometry(); /* get real number of features */
