@@ -261,7 +261,7 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
 GDALColorTable *GDALColorTable::Clone() const
 
 {
-	return new GDALColorTable(*this);
+    return new GDALColorTable(*this);
 }
 
 /************************************************************************/

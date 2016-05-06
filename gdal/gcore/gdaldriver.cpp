@@ -1816,7 +1816,7 @@ GDALIdentifyDriver( const char * pszFilename,
                     char **papszFileList )
 
 {
-    int         	iDriver;
+    int                 iDriver;
     GDALDriverManager  *poDM = GetGDALDriverManager();
     GDALOpenInfo        oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
     //CPLLocaleC          oLocaleForcer;
