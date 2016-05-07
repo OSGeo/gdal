@@ -72,21 +72,21 @@ static xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoader = NULL;
 /* replace "a/b/../c" pattern by "a/c" */
 static void CPLFixPath(char* pszPath)
 {
-    for(int i=0;pszPath[i] != '\0';i++)
+    for( int i = 0; pszPath[i] != '\0'; ++i )
     {
         if (pszPath[i] == '\\')
             pszPath[i] = '/';
     }
 
-    while(true)
+    while( true )
     {
         char* pszSlashDotDot = strstr(pszPath, "/../");
         if (pszSlashDotDot == NULL || pszSlashDotDot == pszPath)
             return;
-        char* pszSlashBefore = pszSlashDotDot-1;
+        char* pszSlashBefore = pszSlashDotDot - 1;
         while(pszSlashBefore > pszPath && *pszSlashBefore != '/')
             pszSlashBefore --;
-        if (pszSlashBefore == pszPath)
+        if( pszSlashBefore == pszPath )
             return;
         memmove(pszSlashBefore + 1, pszSlashDotDot + 4,
                 strlen(pszSlashDotDot + 4) + 1);
@@ -99,10 +99,9 @@ static void CPLFixPath(char* pszPath)
 /*                  CPLHasLibXMLBugWarningCallback()                    */
 /************************************************************************/
 
-static void CPLHasLibXMLBugWarningCallback (void * /*ctx*/,
-                                            const char* /*msg*/, ...)
-{
-}
+static void CPLHasLibXMLBugWarningCallback ( void * /*ctx*/,
+                                             const char* /*msg*/, ... )
+{}
 
 /************************************************************************/
 /*                          CPLHasLibXMLBug()                           */
@@ -113,41 +112,41 @@ static bool CPLHasLibXMLBug()
     static bool bHasLibXMLBug = false;
     static bool bLibXMLBugChecked = false;
 
-    if( bibXMLBugChecked )
+    if( bXMLBugChecked )
         return bHasLibXMLBug;
 
     bLibXMLBugChecked = true;
 
     static const char szLibXMLBugTester[] =
-    "<schema targetNamespace=\"http://foo\" xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
-    "<simpleType name=\"t1\">"
-    "<list itemType=\"double\"/>"
-    "</simpleType>"
-    "<complexType name=\"t2\">"
-    "<simpleContent>"
-    "<extension base=\"foo:t1\"/>"
-    "</simpleContent>"
-    "</complexType>"
-    "<complexType name=\"t3\">"
-    "<simpleContent>"
-    "<restriction base=\"foo:t2\">"
-    "<length value=\"2\"/>"
-    "</restriction>"
-    "</simpleContent>"
-    "</complexType>"
-    "</schema>";
+        "<schema targetNamespace=\"http://foo\" "
+        "xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
+        "<simpleType name=\"t1\">"
+        "<list itemType=\"double\"/>"
+        "</simpleType>"
+        "<complexType name=\"t2\">"
+        "<simpleContent>"
+        "<extension base=\"foo:t1\"/>"
+        "</simpleContent>"
+        "</complexType>"
+        "<complexType name=\"t3\">"
+        "<simpleContent>"
+        "<restriction base=\"foo:t2\">"
+        "<length value=\"2\"/>"
+        "</restriction>"
+        "</simpleContent>"
+        "</complexType>"
+        "</schema>";
 
-    xmlSchemaParserCtxtPtr pSchemaParserCtxt;
-    xmlSchemaPtr pSchema;
 
-    pSchemaParserCtxt = xmlSchemaNewMemParserCtxt(szLibXMLBugTester, strlen(szLibXMLBugTester));
+    xmlSchemaParserCtxtPtr pSchemaParserCtxt =
+        xmlSchemaNewMemParserCtxt(szLibXMLBugTester, strlen(szLibXMLBugTester));
 
     xmlSchemaSetParserErrors(pSchemaParserCtxt,
                              CPLHasLibXMLBugWarningCallback,
                              CPLHasLibXMLBugWarningCallback,
                              NULL);
 
-    pSchema = xmlSchemaParse(pSchemaParserCtxt);
+    xmlSchemaPtr pSchema = xmlSchemaParse(pSchemaParserCtxt);
     xmlSchemaFreeParserCtxt(pSchemaParserCtxt);
 
     bHasLibXMLBug = pSchema == NULL;
@@ -157,9 +156,11 @@ static bool CPLHasLibXMLBug()
 
     if( bHasLibXMLBug )
     {
-        CPLDebug("CPL",
-                 "LibXML bug found (cf https://bugzilla.gnome.org/show_bug.cgi?id=630130). "
-                 "Will try to workaround for GML schemas.");
+        CPLDebug(
+            "CPL",
+            "LibXML bug found "
+            "(cf https://bugzilla.gnome.org/show_bug.cgi?id=630130). "
+            "Will try to workaround for GML schemas." );
     }
 
     return bHasLibXMLBug;
