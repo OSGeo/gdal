@@ -95,8 +95,6 @@ static void CPLFixPath(char* pszPath)
 
 #ifdef HAS_VALIDATION_BUG
 
-static int bHasLibXMLBug = -1;
-
 /************************************************************************/
 /*                  CPLHasLibXMLBugWarningCallback()                    */
 /************************************************************************/
@@ -112,8 +110,13 @@ static void CPLHasLibXMLBugWarningCallback (void * /*ctx*/,
 
 static bool CPLHasLibXMLBug()
 {
-    if (bHasLibXMLBug >= 0)
-        return CPL_TO_BOOL(bHasLibXMLBug);
+    static bool bHasLibXMLBug = false;
+    static bool bLibXMLBugChecked = false;
+
+    if( bibXMLBugChecked )
+        return bHasLibXMLBug;
+
+    bLibXMLBugChecked = true;
 
     static const char szLibXMLBugTester[] =
     "<schema targetNamespace=\"http://foo\" xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
@@ -147,19 +150,19 @@ static bool CPLHasLibXMLBug()
     pSchema = xmlSchemaParse(pSchemaParserCtxt);
     xmlSchemaFreeParserCtxt(pSchemaParserCtxt);
 
-    bHasLibXMLBug = (pSchema == NULL);
+    bHasLibXMLBug = pSchema == NULL;
 
     if (pSchema)
         xmlSchemaFree(pSchema);
 
-    if (bHasLibXMLBug)
+    if( bHasLibXMLBug )
     {
         CPLDebug("CPL",
                  "LibXML bug found (cf https://bugzilla.gnome.org/show_bug.cgi?id=630130). "
                  "Will try to workaround for GML schemas.");
     }
 
-    return CPL_TO_BOOL(bHasLibXMLBug);
+    return bHasLibXMLBug;
 }
 
 #endif
