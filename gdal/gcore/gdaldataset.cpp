@@ -308,7 +308,7 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster bands if they exist.                         */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nBands && papoBands != NULL; i++ )
+    for( int i = 0; i < nBands && papoBands != NULL; ++i )
     {
         if( papoBands[i] != NULL )
             delete papoBands[i];
@@ -379,7 +379,7 @@ void GDALDataset::FlushCache()
 
     if( papoBands != NULL )
     {
-        for( int i = 0; i < nBands; i++ )
+        for( int i = 0; i < nBands; ++i )
         {
             if( papoBands[i] != NULL )
                 papoBands[i]->FlushCache();
@@ -391,7 +391,7 @@ void GDALDataset::FlushCache()
     {
         GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
         CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
-        for( int i = 0; i < nLayers ; i++ )
+        for( int i = 0; i < nLayers ; ++i )
         {
             OGRLayer *poLayer = GetLayer(i);
 
@@ -448,7 +448,7 @@ void GDALDataset::BlockBasedFlushCache()
 /* -------------------------------------------------------------------- */
 /*      Verify that all bands match.                                    */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 1; iBand < nBands; iBand++ )
+    for( int iBand = 1; iBand < nBands; ++iBand )
     {
         GDALRasterBand *poBand = GetRasterBand( iBand+1 );
 
@@ -464,11 +464,11 @@ void GDALDataset::BlockBasedFlushCache()
 /* -------------------------------------------------------------------- */
 /*      Now flush writable data.                                        */
 /* -------------------------------------------------------------------- */
-    for( int iY = 0; iY < poBand1->nBlocksPerColumn; iY++ )
+    for( int iY = 0; iY < poBand1->nBlocksPerColumn; ++iY )
     {
-        for( int iX = 0; iX < poBand1->nBlocksPerRow; iX++ )
+        for( int iX = 0; iX < poBand1->nBlocksPerRow; ++iX )
         {
-            for( int iBand = 0; iBand < nBands; iBand++ )
+            for( int iBand = 0; iBand < nBands; ++iBand )
             {
                 GDALRasterBand *poBand = GetRasterBand( iBand+1 );
 
@@ -583,7 +583,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         }
         papoBands = papoNewBands;
 
-        for( int i = nBands; i < nNewBand; i++ )
+        for( int i = nBands; i < nNewBand; ++i )
             papoBands[i] = NULL;
 
         nBands = MAX(nBands,nNewBand);
@@ -1426,7 +1426,7 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     {
         nListBands = GetRasterCount();
         panAllBandList = (int *) CPLMalloc(sizeof(int) * nListBands);
-        for( int i = 0; i < nListBands; i++ )
+        for( int i = 0; i < nListBands; ++i )
             panAllBandList[i] = i+1;
 
         panBandList = panAllBandList;
@@ -1542,7 +1542,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         int nFirstMaskFlags = 0;
         GDALRasterBand* poFirstMaskBand = NULL;
         int nOKBands = 0;
-        for(int i=0;i<nBandCount;i++)
+        for( int i = 0; i < nBandCount; ++i )
         {
             GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
             if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
@@ -1588,7 +1588,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
-            nOKBands ++;
+            ++nOKBands;
         }
 
         GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
@@ -1680,7 +1680,7 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
 
     for( iBandIndex = 0;
          iBandIndex < nBandCount && eErr == CE_None;
-         iBandIndex++ )
+         ++iBandIndex )
     {
         GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
         GByte *pabyBandData;
@@ -1771,7 +1771,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
         eErr = CE_Failure;
     }
 
-    for( int i = 0; i < nBandCount && eErr == CE_None; i++ )
+    for( int i = 0; i < nBandCount && eErr == CE_None; ++i )
     {
         int iBand = (panBandMap != NULL) ? panBandMap[i] : i + 1;
         if( iBand < 1 || iBand > GetRasterCount() )
@@ -1964,7 +1964,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                 return CE_Failure;
             }
 
-            for( i = 0; i < nBandCount; i++ )
+            for( i = 0; i < nBandCount; ++i )
                 panBandMap[i] = i+1;
 
             bNeedToFreeBandMap = true;
@@ -2105,7 +2105,7 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
         *pnCount = static_cast<int>(poAllDatasetMap->size());
         ppDatasets = (GDALDataset**) CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset*));
         std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
-        for(; oIter != poAllDatasetMap->end(); ++oIter, i++ )
+        for( ; oIter != poAllDatasetMap->end(); ++oIter, ++i )
             ppDatasets[i] = oIter->first;
         return ppDatasets;
     }
@@ -2235,7 +2235,7 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     if( eErr != CE_None || bStopProcessing )
         return eErr;
 
-    for( iBand = 0; iBand < nBandCount; iBand++ )
+    for( iBand = 0; iBand < nBandCount; ++iBand )
     {
         GDALRasterBand *poBand;
 
@@ -2341,7 +2341,7 @@ char **GDALDataset::GetFileList()
         {
             if( CSLFindString( papszList, *papszIter ) < 0 )
                 papszList = CSLAddString( papszList, *papszIter );
-            papszIter ++;
+            ++papszIter;
         }
         CSLDestroy( papszMskList );
     }
@@ -2438,8 +2438,7 @@ CPLErr GDALDataset::CreateMaskBand( int nFlagsIn )
             return eErr;
 
         /* Invalidate existing raster band masks */
-        int i;
-        for(i=0;i<nBands;i++)
+        for( int i = 0; i < nBands; ++i )
         {
             GDALRasterBand* poBand = papoBands[i];
             if (poBand->bOwnMask)
@@ -2708,7 +2707,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
-    for( iDriver = -1; iDriver < poDM->GetDriverCount(); iDriver++ )
+    for( iDriver = -1; iDriver < poDM->GetDriverCount(); ++iDriver )
     {
         GDALDriver      *poDriver;
         GDALDataset     *poDS;
@@ -3929,10 +3928,9 @@ int GDALDataset::GetSummaryRefCount() const
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
     CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
     int nSummaryCount = nRefCount;
-    int iLayer;
     GDALDataset *poUseThis = (GDALDataset *) this;
 
-    for( iLayer=0; iLayer < poUseThis->GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; iLayer < poUseThis->GetLayerCount(); ++iLayer )
         nSummaryCount += poUseThis->GetLayer( iLayer )->GetRefCount();
 
     return nSummaryCount;
@@ -4066,11 +4064,11 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
     int         nSrcFieldCount = poSrcDefn->GetFieldCount();
     int         nDstFieldCount = 0;
-    int         iField, *panMap;
+    int         *panMap;
 
     // Initialize the index-to-index map to -1's
     panMap = (int *) CPLMalloc( sizeof(int) * nSrcFieldCount );
-    for( iField=0; iField < nSrcFieldCount; iField++)
+    for( int iField=0; iField < nSrcFieldCount; ++iField )
         panMap[iField] = -1;
 
     /* Caution : at the time of writing, the MapInfo driver */
@@ -4078,7 +4076,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     OGRFeatureDefn* poDstFDefn = poDstLayer->GetLayerDefn();
     if (poDstFDefn)
         nDstFieldCount = poDstFDefn->GetFieldCount();
-    for( iField = 0; iField < nSrcFieldCount; iField++ )
+    for( int iField = 0; iField < nSrcFieldCount; ++iField )
     {
         OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
         OGRFieldDefn oFieldDefn( poSrcFieldDefn );
@@ -4108,7 +4106,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             else
             {
                 panMap[iField] = nDstFieldCount;
-                nDstFieldCount ++;
+                ++nDstFieldCount;
             }
         }
     }
@@ -4137,7 +4135,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
     {
 
-        for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+        for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
         {
             if(NULL == pszSRSWKT)
         {
@@ -4196,7 +4194,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
         if(NULL != poCT)
         {
-            for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+            for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
             {
                 OGRGeometry* pGeom = poDstFeature->GetGeomFieldRef(iField);
                 if(NULL != pGeom)
@@ -4249,7 +4247,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
 /*      Fill the array with features                                    */
 /* -------------------------------------------------------------------- */
-        for( nFeatCount = 0; nFeatCount < nGroupTransactions; nFeatCount++ )
+        for( nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount )
         {
             poFeature = poSrcLayer->GetNextFeature();
 
@@ -4276,7 +4274,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
             if(NULL != poCT)
             {
-                for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+                for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
                 {
                     OGRGeometry* pGeom = papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
                     if(NULL != pGeom)
@@ -4313,7 +4311,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             bStopTransaction = true;
             if( poDstLayer->StartTransaction() != OGRERR_NONE )
                 break;
-            for( int i = 0; i < nFeaturesToAdd; i++ )
+            for( int i = 0; i < nFeaturesToAdd; ++i )
             {
                 if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
                 {
@@ -4331,7 +4329,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 poDstLayer->RollbackTransaction();
         }
 
-        for( int i = 0; i < nFeatCount; i++ )
+        for( int i = 0; i < nFeatCount; ++i )
             OGRFeature::DestroyFeature( papoDstFeature[i] );
       }
       CPLFree(papoDstFeature);
@@ -4405,10 +4403,8 @@ OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
     if ( ! pszName )
         return NULL;
 
-    int  i;
-
     /* first a case sensitive check */
-    for( i = 0; i < GetLayerCount(); i++ )
+    for( int i = 0; i < GetLayerCount(); ++i )
     {
         OGRLayer *poLayer = GetLayer(i);
 
@@ -4417,7 +4413,7 @@ OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
     }
 
     /* then case insensitive */
-    for( i = 0; i < GetLayerCount(); i++ )
+    for( int i = 0; i < GetLayerCount(); ++i )
     {
         OGRLayer *poLayer = GetLayer(i);
 
@@ -4463,14 +4459,13 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
-    int  i;
     OGRLayer *poLayer = NULL;
 
     {
         GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
         CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
 
-        for( i = 0; i < GetLayerCount(); i++ )
+        for( int i = 0; i < GetLayerCount(); ++i )
         {
             poLayer = GetLayer(i);
 
@@ -4503,7 +4498,8 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named field.                                           */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    int i = 0;  // Used after for.
+    for( ; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
     {
         if( EQUAL(papszTokens[5],
                   poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
@@ -4573,14 +4569,13 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
-    int  i;
     OGRLayer *poLayer=NULL;
 
     {
         GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
         CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
 
-        for( i = 0; i < GetLayerCount(); i++ )
+        for( int i = 0; i < GetLayerCount(); ++i )
         {
             poLayer = GetLayer(i);
 
@@ -4617,7 +4612,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 
     if( CSLCount(papszTokens) == 4 )
     {
-        for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+        for( int i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
         {
             OGRAttrIndex *poAttrIndex;
 
@@ -4640,7 +4635,8 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named field.                                           */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    int i = 0;  // Used after for.
+    for( ; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
     {
         if( EQUAL(papszTokens[5],
                   poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
@@ -4698,10 +4694,10 @@ OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
-    int  i;
     OGRLayer *poLayer=NULL;
 
-    for( i = 0; i < GetLayerCount(); i++ )
+    int i = 0;  // Used after for.
+    for( ; i < GetLayerCount(); ++i )
     {
         poLayer = GetLayer(i);
 
@@ -4843,7 +4839,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
 /*      with spaces                                                     */
 /* -------------------------------------------------------------------- */
     CPLString osType;
-    for(int i=iTypeIndex;i<nTokens;i++)
+    for( int i = iTypeIndex; i < nTokens; ++i )
     {
         osType += papszTokens[i];
         CPLFree(papszTokens[i]);
@@ -5119,7 +5115,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
 /*      with spaces                                                     */
 /* -------------------------------------------------------------------- */
     CPLString osType;
-    for(int i=iTypeIndex;i<nTokens;i++)
+    for( int i = iTypeIndex; i < nTokens; ++i )
     {
         osType += papszTokens[i];
         CPLFree(papszTokens[i]);
@@ -5363,7 +5359,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         if( poLayer == NULL )
         {
             /* Each source layer owns an independent select info. */
-            for(int i=0;i<nSrcLayers;i++)
+            for( int i = 0; i < nSrcLayers; ++i )
                 delete papoSrcLayers[i];
             CPLFree(papoSrcLayers);
 
@@ -5377,7 +5373,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
             papoSrcLayers = (OGRLayer**) CPLRealloc(papoSrcLayers,
                                 sizeof(OGRLayer*) * (nSrcLayers + 1));
             papoSrcLayers[nSrcLayers] = poLayer;
-            nSrcLayers ++;
+            ++nSrcLayers;
 
             psSelectInfo = psNextSelectInfo;
         }
@@ -5444,7 +5440,7 @@ void GDALDataset::DestroyParseInfo(GDALSQLParseInfo* psParseInfo )
         /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
         /* has taken a reference on them, which it will release in its */
         /* destructor */
-        for(int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; iEDS++)
+        for( int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; ++iEDS )
             GDALClose( (GDALDatasetH)psParseInfo->papoExtraDS[iEDS] );
         CPLFree(psParseInfo->papoExtraDS);
 
