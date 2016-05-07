@@ -119,12 +119,12 @@
         <field name="L_LINES" length="5" type="integer" minval="1" maxval="99999"/>
         <field name="LAYOVER_ANGLE" length="3" type="integer" minval="0" maxval="359" unit="degrees"/>
         <field name="SHADOW_ANGLE" length="3" type="integer" minval="0" maxval="359" unit="degrees"/>
-        <field length="16"/>
+        <field length="16" fixed_value="                "/>
         <field name="FRLC_LOC" length="21"/>
         <field name="LRLC_LOC" length="21"/>
         <field name="LRFC_LOC" length="21"/>
         <field name="FRFC_LOC" length="21"/>
-        <field length="5"/>
+        <field length="5" fixed_value="010.0"/>
     </tre>
 
     <tre name="BNDPLB" minlength="124" maxlength="99964" location="image">
@@ -447,6 +447,33 @@
         <field name="C_AL_DC" length="9" type="real" minval="-1.0" maxval="1.0"/>
         <field name="TOTAL_TILES_COLS" length="3" type="integer" minval="1" maxval="999"/>
         <field name="TOTAL_TILES_ROWS" length="5" type="integer" minval="1" maxval="99999"/>
+    </tre>
+
+    <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Section 3.10 and Table E-19 -->
+    <tre name="MTIRPB" minlength="119" maxlength="42035">
+        <field name="MTI_DP" length="2" type="string"/>
+        <field name="MTI_PACKET_ID" length="3" minval="1" maxval="999" type="integer"/>
+        <field name="PATCH_NO" length="4" minval="1" maxval="999" type="integer"/>
+        <field name="WAMTI_FRAME_NO" length="5" type="string"/>
+        <field name="WAMTI_BAR_NO" length="1" type="string"/>
+        <field name="DATIME" length="14" type="string"/>
+        <field name="ACFT_LOC" length="21" type="string"/>
+        <field name="ACFT_ALT" length="6" minval="0" maxval="999999" type="integer"/>
+        <field name="ACFT_ALT_UNIT" length="1" type="string"/>
+        <field name="ACFT_HEADING" length="3" minval="0" maxval="359" type="integer"/>
+        <field name="MTI_LR" length="1" type="string"/>
+        <field name="SQUINT_ANGLE" length="6" minval="-60.0" maxval="85.00" type="real"/>
+        <field name="COSGRZ" length="7" minval="0" maxval="9.99999" type="real"/>
+        <field name="NO_VALID_TARGETS" length="3" minval="1" maxval="999" type="integer"/>
+        <loop counter="NO_VALID_TARGETS" md_prefix="TGT_%03d_" name="TARGETS">
+            <field name="TGT_LOC" length="23" type="string"/>
+            <field name="TGT_LOC_ACCY" length="6" min_val="0" max_val="999.99" type="real"/>
+            <field name="TGT_VEL_R" length="4" min_val="-200" max_val="200" type="string"/>
+            <field name="TGT_SPEED" length="3" min_val="0" max_val="200" type="string"/>
+            <field name="TGT_HEADING" length="3" min_val="0" maxval="359" type="string"/>
+            <field name="TGT_AMPLITUDE" length="2" min_val="0" maxval="15" type="string"/>
+            <field name="TGT_CAT" length="1" type="string"/>
+        </loop>
     </tre>
 
     <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Table E-21 -->
