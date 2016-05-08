@@ -34,15 +34,15 @@ CPL_CVSID("$Id$");
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
 #if defined(LIBXML_VERSION) && LIBXML_VERSION >= 20622
-/* We need at least 2.6.20 for xmlSchemaValidateDoc */
-/* and xmlParseDoc to accept a const xmlChar* */
-/* We could workaround it, but likely not worth the effort for now. */
-/* Actually, we need at least 2.6.22, at runtime, to be */
-/* able to parse the OGC GML schemas */
+// We need at least 2.6.20 for xmlSchemaValidateDoc
+// and xmlParseDoc to accept a const xmlChar*
+// We could workaround it, but likely not worth the effort for now.
+// Actually, we need at least 2.6.22, at runtime, to be
+// able to parse the OGC GML schemas
 #define HAVE_RECENT_LIBXML2
 
-/* libxml2 before 2.8.0 had a bug to parse the OGC GML schemas */
-/* We have a workaround for that for versions >= 2.6.20 and < 2.8.0 */
+// libxml2 before 2.8.0 had a bug to parse the OGC GML schemas
+// We have a workaround for that for versions >= 2.6.20 and < 2.8.0.
 #if defined(LIBXML_VERSION) && LIBXML_VERSION < 20800
 #define HAS_VALIDATION_BUG
 #endif
@@ -68,23 +68,23 @@ static xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoader = NULL;
 /*                            CPLFixPath()                              */
 /************************************************************************/
 
-/* Replace \ by / to make libxml2 happy on Windows and */
-/* replace "a/b/../c" pattern by "a/c" */
+// Replace \ by / to make libxml2 happy on Windows and
+// replace "a/b/../c" pattern by "a/c".
 static void CPLFixPath(char* pszPath)
 {
     for( int i = 0; pszPath[i] != '\0'; ++i )
     {
-        if (pszPath[i] == '\\')
+        if( pszPath[i] == '\\' )
             pszPath[i] = '/';
     }
 
     while( true )
     {
         char* pszSlashDotDot = strstr(pszPath, "/../");
-        if (pszSlashDotDot == NULL || pszSlashDotDot == pszPath)
+        if( pszSlashDotDot == NULL || pszSlashDotDot == pszPath )
             return;
         char* pszSlashBefore = pszSlashDotDot - 1;
-        while(pszSlashBefore > pszPath && *pszSlashBefore != '/')
+        while( pszSlashBefore > pszPath && *pszSlashBefore != '/' )
             pszSlashBefore --;
         if( pszSlashBefore == pszPath )
             return;
@@ -151,7 +151,7 @@ static bool CPLHasLibXMLBug()
 
     bHasLibXMLBug = pSchema == NULL;
 
-    if (pSchema)
+    if( pSchema )
         xmlSchemaFree(pSchema);
 
     if( bHasLibXMLBug )
@@ -172,9 +172,11 @@ static bool CPLHasLibXMLBug()
 /*                         CPLExtractSubSchema()                        */
 /************************************************************************/
 
-static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainSchema)
+static CPLXMLNode* CPLExtractSubSchema( CPLXMLNode* psSubXML,
+                                        CPLXMLNode* psMainSchema )
 {
-    if (psSubXML->eType == CXT_Element && strcmp(psSubXML->pszValue, "?xml") == 0)
+    if( psSubXML->eType == CXT_Element &&
+        strcmp(psSubXML->pszValue, "?xml") == 0 )
     {
         CPLXMLNode* psNext = psSubXML->psNext;
         psSubXML->psNext = NULL;
@@ -182,7 +184,7 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
         psSubXML = psNext;
     }
 
-    if (psSubXML != NULL && psSubXML->eType == CXT_Comment)
+    if( psSubXML != NULL && psSubXML->eType == CXT_Comment )
     {
         CPLXMLNode* psNext = psSubXML->psNext;
         psSubXML->psNext = NULL;
@@ -190,22 +192,23 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
         psSubXML = psNext;
     }
 
-    if (psSubXML != NULL && psSubXML->eType == CXT_Element &&
+    if( psSubXML != NULL && psSubXML->eType == CXT_Element &&
         (strcmp(psSubXML->pszValue, "schema") == 0 ||
          strcmp(psSubXML->pszValue, "xs:schema") == 0 ||
          strcmp(psSubXML->pszValue, "xsd:schema") == 0) &&
-        psSubXML->psNext == NULL)
+        psSubXML->psNext == NULL )
     {
         CPLXMLNode* psNext = psSubXML->psChild;
-        while(psNext != NULL && psNext->eType != CXT_Element &&
-              psNext->psNext != NULL && psNext->psNext->eType != CXT_Element)
+        while( psNext != NULL && psNext->eType != CXT_Element &&
+               psNext->psNext != NULL && psNext->psNext->eType != CXT_Element )
         {
-            /* Add xmlns: from subschema to main schema if missing */
-            if (psNext->eType == CXT_Attribute &&
+            // Add xmlns: from subschema to main schema if missing.
+            if( psNext->eType == CXT_Attribute &&
                 STARTS_WITH(psNext->pszValue, "xmlns:") &&
-                CPLGetXMLValue(psMainSchema, psNext->pszValue, NULL) == NULL)
+                CPLGetXMLValue(psMainSchema, psNext->pszValue, NULL) == NULL )
             {
-                CPLXMLNode* psAttr = CPLCreateXMLNode(NULL, CXT_Attribute, psNext->pszValue);
+                CPLXMLNode* psAttr =
+                    CPLCreateXMLNode(NULL, CXT_Attribute, psNext->pszValue);
                 CPLCreateXMLNode(psAttr, CXT_Text, psNext->psChild->pszValue);
 
                 psAttr->psNext = psMainSchema->psChild;
@@ -214,8 +217,8 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
             psNext = psNext->psNext;
         }
 
-        if (psNext != NULL && psNext->eType != CXT_Element &&
-            psNext->psNext != NULL && psNext->psNext->eType == CXT_Element)
+        if( psNext != NULL && psNext->eType != CXT_Element &&
+            psNext->psNext != NULL && psNext->psNext->eType == CXT_Element )
         {
             CPLXMLNode* psNext2 = psNext->psNext;
             psNext->psNext = NULL;
@@ -232,69 +235,89 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
 /*                        CPLWorkaroundLibXMLBug()                      */
 /************************************************************************/
 
-/* Return TRUE if the current node must be destroyed */
-static bool CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
+// Return TRUE if the current node must be destroyed.
+static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
 {
-    if (psIter->eType == CXT_Element &&
+    if( psIter->eType == CXT_Element &&
         strcmp(psIter->pszValue, "element") == 0 &&
         strcmp(CPLGetXMLValue(psIter, "name", ""), "QuantityExtent") == 0 &&
-        strcmp(CPLGetXMLValue(psIter, "type", ""), "gml:QuantityExtentType") == 0)
+        strcmp(CPLGetXMLValue(psIter, "type", ""),
+               "gml:QuantityExtentType") == 0 )
     {
         CPLXMLNode* psIter2 = psIter->psChild;
-        while(psIter2)
+        while( psIter2 )
         {
-            if (psIter2->eType == CXT_Attribute && strcmp(psIter2->pszValue, "type") == 0)
+            if( psIter2->eType == CXT_Attribute &&
+                strcmp(psIter2->pszValue, "type") == 0 )
             {
                 CPLFree(psIter2->psChild->pszValue);
-                if (strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractValue") == 0)
-                    psIter2->psChild->pszValue = CPLStrdup("gml:MeasureOrNilReasonListType"); /* GML 3.2.1 */
+                if( strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""),
+                           "gml:AbstractValue") == 0 )
+                     // GML 3.2.1.
+                    psIter2->psChild->pszValue =
+                        CPLStrdup("gml:MeasureOrNilReasonListType");
                 else
-                    psIter2->psChild->pszValue = CPLStrdup("gml:MeasureOrNullListType");
+                    psIter2->psChild->pszValue =
+                        CPLStrdup("gml:MeasureOrNullListType");
             }
             psIter2 = psIter2->psNext;
         }
     }
 
-    else if (psIter->eType == CXT_Element &&
-        strcmp(psIter->pszValue, "element") == 0 &&
-        strcmp(CPLGetXMLValue(psIter, "name", ""), "CategoryExtent") == 0 &&
-        strcmp(CPLGetXMLValue(psIter, "type", ""), "gml:CategoryExtentType") == 0)
+    else if( psIter->eType == CXT_Element &&
+             strcmp(psIter->pszValue, "element") == 0 &&
+             strcmp(CPLGetXMLValue(psIter, "name", ""),
+                    "CategoryExtent") == 0 &&
+             strcmp(CPLGetXMLValue(psIter, "type", ""),
+                    "gml:CategoryExtentType") == 0 )
     {
         CPLXMLNode* psIter2 = psIter->psChild;
         while(psIter2)
         {
-            if (psIter2->eType == CXT_Attribute && strcmp(psIter2->pszValue, "type") == 0)
+            if( psIter2->eType == CXT_Attribute &&
+                strcmp(psIter2->pszValue, "type") == 0 )
             {
                 CPLFree(psIter2->psChild->pszValue);
-                if (strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractValue") == 0)
-                    psIter2->psChild->pszValue = CPLStrdup("gml:CodeOrNilReasonListType"); /* GML 3.2.1 */
+                if( strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""),
+                           "gml:AbstractValue") == 0 )
+                    // GML 3.2.1
+                    psIter2->psChild->pszValue =
+                        CPLStrdup("gml:CodeOrNilReasonListType");
                 else
-                    psIter2->psChild->pszValue = CPLStrdup("gml:CodeOrNullListType");
+                    psIter2->psChild->pszValue =
+                        CPLStrdup("gml:CodeOrNullListType");
             }
             psIter2 = psIter2->psNext;
         }
     }
 
-    else if (bHasLibXMLBug && psIter->eType == CXT_Element &&
+    else if( bHasLibXMLBug && psIter->eType == CXT_Element &&
              strcmp(psIter->pszValue, "complexType") == 0 &&
-             (strcmp(CPLGetXMLValue(psIter, "name", ""), "QuantityExtentType") == 0 ||
-              strcmp(CPLGetXMLValue(psIter, "name", ""), "CategoryExtentType") == 0))
+             (strcmp(CPLGetXMLValue(psIter, "name", ""),
+                     "QuantityExtentType") == 0 ||
+              strcmp(CPLGetXMLValue(psIter, "name", ""),
+                     "CategoryExtentType") == 0) )
     {
-        /* Destroy this element */
+        // Destroy this element.
         return true;
     }
 
-    /* For GML 3.2.1 */
-    else if (psIter->eType == CXT_Element &&
+    // For GML 3.2.1
+    else if( psIter->eType == CXT_Element &&
              strcmp(psIter->pszValue, "complexType") == 0 &&
-             strcmp(CPLGetXMLValue(psIter, "name", ""), "VectorType") == 0)
+             strcmp(CPLGetXMLValue(psIter, "name", ""), "VectorType") == 0 )
     {
-        CPLXMLNode* psSimpleContent = CPLCreateXMLNode(NULL, CXT_Element, "simpleContent");
-        CPLXMLNode* psExtension = CPLCreateXMLNode(psSimpleContent, CXT_Element, "extension");
-        CPLXMLNode* psExtensionBase = CPLCreateXMLNode(psExtension, CXT_Attribute, "base");
+        CPLXMLNode* psSimpleContent =
+            CPLCreateXMLNode(NULL, CXT_Element, "simpleContent");
+        CPLXMLNode* psExtension =
+            CPLCreateXMLNode(psSimpleContent, CXT_Element, "extension");
+        CPLXMLNode* psExtensionBase =
+            CPLCreateXMLNode(psExtension, CXT_Attribute, "base");
         CPLCreateXMLNode(psExtensionBase, CXT_Text, "gml:doubleList");
-        CPLXMLNode* psAttributeGroup = CPLCreateXMLNode(psExtension, CXT_Element, "attributeGroup");
-        CPLXMLNode* psAttributeGroupRef = CPLCreateXMLNode(psAttributeGroup, CXT_Attribute, "ref");
+        CPLXMLNode* psAttributeGroup =
+            CPLCreateXMLNode(psExtension, CXT_Element, "attributeGroup");
+        CPLXMLNode* psAttributeGroupRef =
+            CPLCreateXMLNode(psAttributeGroup, CXT_Attribute, "ref");
         CPLCreateXMLNode(psAttributeGroupRef, CXT_Text, "gml:SRSReferenceGroup");
 
         CPLXMLNode* psName = CPLCreateXMLNode(NULL, CXT_Attribute, "name");
@@ -305,20 +328,28 @@ static bool CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
         psIter->psChild->psNext = psSimpleContent;
     }
 
-    else if (psIter->eType == CXT_Element &&
+    else if( psIter->eType == CXT_Element &&
              strcmp(psIter->pszValue, "element") == 0 &&
-             (strcmp(CPLGetXMLValue(psIter, "name", ""), "domainOfValidity") == 0 ||
-              strcmp(CPLGetXMLValue(psIter, "name", ""), "coordinateOperationAccuracy") == 0 ||
-              strcmp(CPLGetXMLValue(psIter, "name", ""), "formulaCitation") == 0))
+             (strcmp(CPLGetXMLValue(psIter, "name", ""),
+                     "domainOfValidity") == 0 ||
+              strcmp(CPLGetXMLValue(psIter, "name", ""),
+                     "coordinateOperationAccuracy") == 0 ||
+              strcmp(CPLGetXMLValue(psIter, "name", ""),
+                     "formulaCitation") == 0) )
     {
-        CPLXMLNode* psComplexType = CPLCreateXMLNode(NULL, CXT_Element, "complexType");
-        CPLXMLNode* psSequence = CPLCreateXMLNode(psComplexType, CXT_Element, "sequence");
-        CPLXMLNode* psSequenceMinOccurs = CPLCreateXMLNode(psSequence, CXT_Attribute, "minOccurs");
+        CPLXMLNode* psComplexType =
+            CPLCreateXMLNode(NULL, CXT_Element, "complexType");
+        CPLXMLNode* psSequence =
+            CPLCreateXMLNode(psComplexType, CXT_Element, "sequence");
+        CPLXMLNode* psSequenceMinOccurs =
+            CPLCreateXMLNode(psSequence, CXT_Attribute, "minOccurs");
         CPLCreateXMLNode(psSequenceMinOccurs, CXT_Text, "0");
         CPLXMLNode* psAny = CPLCreateXMLNode(psSequence, CXT_Element, "any");
-        CPLXMLNode* psAnyMinOccurs = CPLCreateXMLNode(psAny, CXT_Attribute, "minOccurs");
+        CPLXMLNode* psAnyMinOccurs =
+            CPLCreateXMLNode(psAny, CXT_Attribute, "minOccurs");
         CPLCreateXMLNode(psAnyMinOccurs, CXT_Text, "0");
-        CPLXMLNode* psAnyProcessContents = CPLCreateXMLNode(psAny, CXT_Attribute, " processContents");
+        CPLXMLNode* psAnyProcessContents =
+            CPLCreateXMLNode(psAny, CXT_Attribute, " processContents");
         CPLCreateXMLNode(psAnyProcessContents, CXT_Text, "lax");
 
         CPLXMLNode* psName = CPLCreateXMLNode(NULL, CXT_Attribute, "name");
@@ -338,10 +369,10 @@ static bool CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
 /************************************************************************/
 
 static
-CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
-                                     const char* pszFile)
+CPLXMLNode* CPLLoadSchemaStrInternal( CPLHashSet* hSetSchemas,
+                                      const char* pszFile )
 {
-    if (CPLHashSetLookup(hSetSchemas, pszFile))
+    if( CPLHashSetLookup(hSetSchemas, pszFile) )
         return NULL;
 
     CPLHashSetInsert(hSetSchemas, CPLStrdup(pszFile));
@@ -349,7 +380,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
     CPLDebug("CPL", "Parsing %s", pszFile);
 
     CPLXMLNode* psXML = CPLParseXMLFile(pszFile);
-    if (psXML == NULL)
+    if( psXML == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot open %s", pszFile);
@@ -357,11 +388,15 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
     }
 
     CPLXMLNode* psSchema = CPLGetXMLNode(psXML, "=schema");
-    if (psSchema == NULL)
+    if( psSchema == NULL )
+    {
         psSchema = CPLGetXMLNode(psXML, "=xs:schema");
-    if (psSchema == NULL)
+    }
+    if( psSchema == NULL )
+    {
         psSchema = CPLGetXMLNode(psXML, "=xsd:schema");
-    if (psSchema == NULL)
+    }
+    if( psSchema == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find schema node in %s", pszFile);
@@ -371,37 +406,38 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
 
     CPLXMLNode* psPrev = NULL;
     CPLXMLNode* psIter = psSchema->psChild;
-    while(psIter)
+    while( psIter )
     {
         bool bDestroyCurrentNode = false;
 
 #ifdef HAS_VALIDATION_BUG
-        if (bHasLibXMLBug)
+        if( bHasLibXMLBug )
             bDestroyCurrentNode = CPLWorkaroundLibXMLBug(psIter);
 #endif
 
-        /* Load the referenced schemas, and integrate them in the main schema */
-        if (psIter->eType == CXT_Element &&
+        // Load the referenced schemas, and integrate them in the main schema.
+        if( psIter->eType == CXT_Element &&
             (strcmp(psIter->pszValue, "include") == 0 ||
              strcmp(psIter->pszValue, "xs:include") == 0||
              strcmp(psIter->pszValue, "xsd:include") == 0) &&
             psIter->psChild != NULL &&
             psIter->psChild->eType == CXT_Attribute &&
-            strcmp(psIter->psChild->pszValue, "schemaLocation") == 0)
+            strcmp(psIter->psChild->pszValue, "schemaLocation") == 0 )
         {
             const char* pszIncludeSchema = psIter->psChild->psChild->pszValue;
             char* pszFullFilename = CPLStrdup(
-                CPLFormFilename(CPLGetPath(pszFile), pszIncludeSchema, NULL));
+                CPLFormFilename(CPLGetPath(pszFile), pszIncludeSchema, NULL) );
 
             CPLFixPath(pszFullFilename);
 
             CPLXMLNode* psSubXML = NULL;
 
-            /* If we haven't yet loaded that schema, do it now */
-            if (!CPLHashSetLookup(hSetSchemas, pszFullFilename))
+            // If we haven't yet loaded that schema, do it now.
+            if( !CPLHashSetLookup(hSetSchemas, pszFullFilename) )
             {
-                psSubXML = CPLLoadSchemaStrInternal(hSetSchemas, pszFullFilename);
-                if (psSubXML == NULL)
+                psSubXML =
+                    CPLLoadSchemaStrInternal(hSetSchemas, pszFullFilename);
+                if( psSubXML == NULL )
                 {
                     CPLFree(pszFullFilename);
                     CPLDestroyXMLNode(psXML);
@@ -411,24 +447,24 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
             CPLFree(pszFullFilename);
             pszFullFilename = NULL;
 
-            if (psSubXML)
+            if( psSubXML )
             {
                 CPLXMLNode* psNext = psIter->psNext;
 
                 psSubXML = CPLExtractSubSchema(psSubXML, psSchema);
-                if (psSubXML == NULL)
+                if( psSubXML == NULL )
                 {
                     CPLDestroyXMLNode(psXML);
                     return NULL;
                 }
 
-                /* Replace <include/> node by the subXML */
+                // Replace <include/> node by the subXML.
                 CPLXMLNode* psIter2 = psSubXML;
-                while(psIter2->psNext)
+                while( psIter2->psNext )
                     psIter2 = psIter2->psNext;
                 psIter2->psNext = psNext;
 
-                if (psPrev == NULL)
+                if( psPrev == NULL )
                     psSchema->psChild = psSubXML;
                 else
                     psPrev->psNext = psSubXML;
@@ -442,31 +478,34 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
             }
             else
             {
-                /* We have already included that file, */
-                /* so just remove the <include/> node */
+                // We have already included that file,
+                // so just remove the <include/> node
                 bDestroyCurrentNode = true;
             }
         }
 
-        /* Patch the schemaLocation of <import/> */
-        else if (psIter->eType == CXT_Element &&
-                    (strcmp(psIter->pszValue, "import") == 0 ||
-                     strcmp(psIter->pszValue, "xs:import") == 0||
-                     strcmp(psIter->pszValue, "xsd:import") == 0))
+        // Patch the schemaLocation of <import/>.
+        else if( psIter->eType == CXT_Element &&
+                 (strcmp(psIter->pszValue, "import") == 0 ||
+                  strcmp(psIter->pszValue, "xs:import") == 0||
+                  strcmp(psIter->pszValue, "xsd:import") == 0) )
         {
             CPLXMLNode* psIter2 = psIter->psChild;
-            while(psIter2)
+            while( psIter2 )
             {
-                if (psIter2->eType == CXT_Attribute &&
+                if( psIter2->eType == CXT_Attribute &&
                     strcmp(psIter2->pszValue, "schemaLocation") == 0 &&
                     psIter2->psChild != NULL &&
                     !STARTS_WITH(psIter2->psChild->pszValue, "http://") &&
                     !STARTS_WITH(psIter2->psChild->pszValue, "ftp://") &&
-                    /* If the top file is our warping file, don't alter the path of the import */
+                    // If the top file is our warping file, don't alter the path
+                    // of the import.
                     strstr(pszFile, "/vsimem/CPLValidateXML_") == NULL )
                 {
-                    char* pszFullFilename = CPLStrdup(CPLFormFilename(
-                                      CPLGetPath(pszFile), psIter2->psChild->pszValue, NULL));
+                    char* pszFullFilename =
+                        CPLStrdup(CPLFormFilename(
+                            CPLGetPath(pszFile),
+                            psIter2->psChild->pszValue, NULL ));
                     CPLFixPath(pszFullFilename);
                     CPLFree(psIter2->psChild->pszValue);
                     psIter2->psChild->pszValue = pszFullFilename;
@@ -475,10 +514,10 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
             }
         }
 
-        if (bDestroyCurrentNode)
+        if( bDestroyCurrentNode )
         {
             CPLXMLNode* psNext = psIter->psNext;
-            if (psPrev == NULL)
+            if( psPrev == NULL )
                 psSchema->psChild = psNext;
             else
                 psPrev->psNext = psNext;
@@ -502,26 +541,26 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
 /************************************************************************/
 
 static
-void CPLMoveImportAtBeginning(CPLXMLNode* psXML)
+void CPLMoveImportAtBeginning( CPLXMLNode* psXML )
 {
     CPLXMLNode* psSchema = CPLGetXMLNode(psXML, "=schema");
-    if (psSchema == NULL)
+    if( psSchema == NULL )
         psSchema = CPLGetXMLNode(psXML, "=xs:schema");
-    if (psSchema == NULL)
+    if( psSchema == NULL )
         psSchema = CPLGetXMLNode(psXML, "=xsd:schema");
-    if (psSchema == NULL)
+    if( psSchema == NULL )
         return;
 
     CPLXMLNode* psPrev = NULL;
     CPLXMLNode* psIter = psSchema->psChild;
-    while(psIter)
+    while( psIter )
     {
-        if (psPrev != NULL && psIter->eType == CXT_Element &&
+        if( psPrev != NULL && psIter->eType == CXT_Element &&
             (strcmp(psIter->pszValue, "import") == 0 ||
              strcmp(psIter->pszValue, "xs:import") == 0 ||
-             strcmp(psIter->pszValue, "xsd:import") == 0))
+             strcmp(psIter->pszValue, "xsd:import") == 0) )
         {
-            /* Reorder at the beginning */
+            // Reorder at the beginning.
             CPLXMLNode* psNext = psIter->psNext;
 
             psPrev->psNext = psNext;
@@ -544,7 +583,7 @@ void CPLMoveImportAtBeginning(CPLXMLNode* psXML)
 /************************************************************************/
 
 static
-char* CPLLoadSchemaStr(const char* pszXSDFilename)
+char* CPLLoadSchemaStr( const char* pszXSDFilename )
 {
 #ifdef HAS_VALIDATION_BUG
     CPLHasLibXMLBug();
@@ -556,7 +595,7 @@ char* CPLLoadSchemaStr(const char* pszXSDFilename)
         CPLLoadSchemaStrInternal(hSetSchemas, pszXSDFilename);
 
     char* pszStr = NULL;
-    if (psSchema)
+    if( psSchema )
     {
         CPLMoveImportAtBeginning(psSchema);
         pszStr = CPLSerializeXMLTree(psSchema);
@@ -570,7 +609,7 @@ char* CPLLoadSchemaStr(const char* pszXSDFilename)
 /*                     CPLLibXMLInputStreamCPLFree()                    */
 /************************************************************************/
 
-static void CPLLibXMLInputStreamCPLFree(xmlChar* pszBuffer)
+static void CPLLibXMLInputStreamCPLFree( xmlChar* pszBuffer )
 {
     CPLFree(pszBuffer);
 }
@@ -579,15 +618,15 @@ static void CPLLibXMLInputStreamCPLFree(xmlChar* pszBuffer)
 /*                           CPLFindLocalXSD()                          */
 /************************************************************************/
 
-static CPLString CPLFindLocalXSD(const char* pszXSDFilename)
+static CPLString CPLFindLocalXSD( const char* pszXSDFilename )
 {
     CPLString osTmp;
-    const char *pszSchemasOpenGIS
-        = CPLGetConfigOption("GDAL_OPENGIS_SCHEMAS", NULL);
-    if (pszSchemasOpenGIS != NULL)
+    const char *pszSchemasOpenGIS =
+        CPLGetConfigOption("GDAL_OPENGIS_SCHEMAS", NULL);
+    if( pszSchemasOpenGIS != NULL )
     {
-        int nLen = (int)strlen(pszSchemasOpenGIS);
-        if (nLen > 0 && pszSchemasOpenGIS[nLen-1] == '/')
+        int nLen = static_cast<int>(strlen(pszSchemasOpenGIS));
+        if( nLen > 0 && pszSchemasOpenGIS[nLen-1] == '/' )
         {
             osTmp = pszSchemasOpenGIS;
             osTmp += pszXSDFilename;
@@ -599,7 +638,8 @@ static CPLString CPLFindLocalXSD(const char* pszXSDFilename)
             osTmp += pszXSDFilename;
         }
     }
-    else if ((pszSchemasOpenGIS = CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET" )) != NULL)
+    else if( (pszSchemasOpenGIS = CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET" ))
+             != NULL )
     {
         osTmp = pszSchemasOpenGIS;
         osTmp += "/";
@@ -616,94 +656,105 @@ static CPLString CPLFindLocalXSD(const char* pszXSDFilename)
 /*                      CPLExternalEntityLoader()                       */
 /************************************************************************/
 
-static const char szXML_XSD[] = "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/XML/1998/namespace\">"
-"<attribute name=\"lang\">"
-"<simpleType>"
-"<union memberTypes=\"language\">"
-"<simpleType>"
-"<restriction base=\"string\">"
-"<enumeration value=\"\"/>"
-"</restriction>"
-"</simpleType>"
-"</union>"
-"</simpleType>"
-"</attribute>"
-"<attribute name=\"space\">"
-"<simpleType>"
-"<restriction base=\"NCName\">"
-"<enumeration value=\"default\"/>"
-"<enumeration value=\"preserve\"/>"
-"</restriction>"
-"</simpleType>"
-"</attribute>"
-"<attribute name=\"base\" type=\"anyURI\"/>"
-"<attribute name=\"id\" type=\"ID\"/>"
-"<attributeGroup name=\"specialAttrs\">"
-"<attribute ref=\"xml:base\"/>"
-"<attribute ref=\"xml:lang\"/>"
-"<attribute ref=\"xml:space\"/>"
-"<attribute ref=\"xml:id\"/>"
-"</attributeGroup>"
-"</schema>";
+static const char szXML_XSD[] =
+    "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" "
+    "targetNamespace=\"http://www.w3.org/XML/1998/namespace\">"
+    "<attribute name=\"lang\">"
+    "<simpleType>"
+    "<union memberTypes=\"language\">"
+    "<simpleType>"
+    "<restriction base=\"string\">"
+    "<enumeration value=\"\"/>"
+    "</restriction>"
+    "</simpleType>"
+    "</union>"
+    "</simpleType>"
+    "</attribute>"
+    "<attribute name=\"space\">"
+    "<simpleType>"
+    "<restriction base=\"NCName\">"
+    "<enumeration value=\"default\"/>"
+    "<enumeration value=\"preserve\"/>"
+    "</restriction>"
+    "</simpleType>"
+    "</attribute>"
+    "<attribute name=\"base\" type=\"anyURI\"/>"
+    "<attribute name=\"id\" type=\"ID\"/>"
+    "<attributeGroup name=\"specialAttrs\">"
+    "<attribute ref=\"xml:base\"/>"
+    "<attribute ref=\"xml:lang\"/>"
+    "<attribute ref=\"xml:space\"/>"
+    "<attribute ref=\"xml:id\"/>"
+    "</attributeGroup>"
+    "</schema>";
 
-/* Simplified (and truncated) version of http://www.w3.org/1999/xlink.xsd (sufficient for GML schemas) */
-static const char szXLINK_XSD[] = "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/1999/xlink\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
-"<attribute name=\"type\" type=\"string\"/>"
-"<attribute name=\"href\" type=\"anyURI\"/>"
-"<attribute name=\"role\" type=\"anyURI\"/>"
-"<attribute name=\"arcrole\" type=\"anyURI\"/>"
-"<attribute name=\"title\" type=\"string\"/>"
-"<attribute name=\"show\" type=\"string\"/>"
-"<attribute name=\"actuate\" type=\"string\"/>"
-"<attribute name=\"label\" type=\"NCName\"/>"
-"<attribute name=\"from\" type=\"NCName\"/>"
-"<attribute name=\"to\" type=\"NCName\"/>"
-"<attributeGroup name=\"simpleAttrs\">"
-"<attribute ref=\"xlink:type\" fixed=\"simple\"/>"
-"<attribute ref=\"xlink:href\"/>"
-"<attribute ref=\"xlink:role\"/>"
-"<attribute ref=\"xlink:arcrole\"/>"
-"<attribute ref=\"xlink:title\"/>"
-"<attribute ref=\"xlink:show\"/>"
-"<attribute ref=\"xlink:actuate\"/>"
-"</attributeGroup>"
-"</schema>";
+// Simplified (and truncated) version of http://www.w3.org/1999/xlink.xsd
+// (sufficient for GML schemas).
+static const char szXLINK_XSD[] =
+    "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" "
+    "targetNamespace=\"http://www.w3.org/1999/xlink\" "
+    "xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
+    "<attribute name=\"type\" type=\"string\"/>"
+    "<attribute name=\"href\" type=\"anyURI\"/>"
+    "<attribute name=\"role\" type=\"anyURI\"/>"
+    "<attribute name=\"arcrole\" type=\"anyURI\"/>"
+    "<attribute name=\"title\" type=\"string\"/>"
+    "<attribute name=\"show\" type=\"string\"/>"
+    "<attribute name=\"actuate\" type=\"string\"/>"
+    "<attribute name=\"label\" type=\"NCName\"/>"
+    "<attribute name=\"from\" type=\"NCName\"/>"
+    "<attribute name=\"to\" type=\"NCName\"/>"
+    "<attributeGroup name=\"simpleAttrs\">"
+    "<attribute ref=\"xlink:type\" fixed=\"simple\"/>"
+    "<attribute ref=\"xlink:href\"/>"
+    "<attribute ref=\"xlink:role\"/>"
+    "<attribute ref=\"xlink:arcrole\"/>"
+    "<attribute ref=\"xlink:title\"/>"
+    "<attribute ref=\"xlink:show\"/>"
+    "<attribute ref=\"xlink:actuate\"/>"
+    "</attributeGroup>"
+    "</schema>";
 
 static
-xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
+xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
                                            const char * ID,
-                                           xmlParserCtxtPtr context)
+                                           xmlParserCtxtPtr context )
 {
-    //CPLDebug("CPL", "CPLExternalEntityLoader(%s)", URL);
+#if DEBUG_VERBOSE
+    CPLDebug("CPL", "CPLExternalEntityLoader(%s)", URL);
+#endif
+    // Use libxml2 catalog mechanism to resolve the URL to something else.
+    // xmlChar* pszResolved = xmlCatalogResolveSystem((const xmlChar*)URL);
+    xmlChar* pszResolved =
+        xmlCatalogResolveSystem(reinterpret_cast<const xmlChar *>(URL));
+    if( pszResolved == NULL )
+        pszResolved =
+            xmlCatalogResolveURI(reinterpret_cast<const xmlChar *>(URL));
     CPLString osURL;
-
-    /* Use libxml2 catalog mechanism to resolve the URL to something else */
-    xmlChar* pszResolved = xmlCatalogResolveSystem((const xmlChar*)URL);
-    if (pszResolved == NULL)
-        pszResolved = xmlCatalogResolveURI((const xmlChar*)URL);
-    if (pszResolved)
+    if( pszResolved )
     {
-        CPLDebug("CPL", "Resolving %s in %s", URL, (const char*)pszResolved );
-        osURL = (const char*)pszResolved;
+        CPLDebug( "CPL", "Resolving %s in %s", URL,
+                  reinterpret_cast<const char *>(pszResolved) );
+        osURL = reinterpret_cast<const char *>(pszResolved);
         URL = osURL.c_str();
         xmlFree(pszResolved);
         pszResolved = NULL;
     }
 
-    if (STARTS_WITH(URL, "http://"))
+    if( STARTS_WITH(URL, "http://") )
     {
-        /* Make sure to use http://schemas.opengis.net/ */
-        /* when gml/2 or gml/3 is detected */
+        // Make sure to use http://schemas.opengis.net/
+        // when gml/2 or gml/3 is detected.
         const char* pszGML = strstr(URL, "gml/2");
-        if (pszGML == NULL)
+        if( pszGML == NULL )
             pszGML = strstr(URL, "gml/3");
-        if (pszGML != NULL)
+        if( pszGML != NULL )
         {
             osURL = "http://schemas.opengis.net/";
             osURL += pszGML;
             URL = osURL.c_str();
         }
-        else if (strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0)
+        else if( strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xml.xsd");
             if( osTmp.size() != 0 )
@@ -713,11 +764,15 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
             }
             else
             {
-                CPLDebug("CPL", "Resolving %s to local definition", "http://www.w3.org/2001/xml.xsd");
-                return xmlNewStringInputStream(context, (const xmlChar*) szXML_XSD);
+                CPLDebug(
+                    "CPL",
+                    "Resolving %s to local definition",
+                    "http://www.w3.org/2001/xml.xsd" );
+                return xmlNewStringInputStream(
+                    context, reinterpret_cast<const xmlChar*>(szXML_XSD) );
             }
         }
-        else if (strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0)
+        else if( strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
             if( osTmp.size() != 0 )
@@ -727,54 +782,62 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
             }
             else
             {
-                CPLDebug("CPL", "Resolving %s to local definition", "http://www.w3.org/1999/xlink.xsd");
-                return xmlNewStringInputStream(context, (const xmlChar*) szXLINK_XSD);
+                CPLDebug(
+                    "CPL",
+                    "Resolving %s to local definition",
+                    "http://www.w3.org/1999/xlink.xsd" );
+                return xmlNewStringInputStream(
+                    context, reinterpret_cast<const xmlChar *>( szXLINK_XSD) );
             }
         }
-        else if (!STARTS_WITH(URL, "http://schemas.opengis.net/"))        {
+        else if( !STARTS_WITH(URL, "http://schemas.opengis.net/") )
+        {
             CPLDebug("CPL", "Loading %s", URL);
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
         }
     }
-    else if (STARTS_WITH(URL, "ftp://"))
+    else if( STARTS_WITH(URL, "ftp://") )
     {
         return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
     }
-    else if (STARTS_WITH(URL, "file://"))
+    else if( STARTS_WITH(URL, "file://") )
     {
-        /* Parse file:// URI so as to be able to open them with VSI*L API */
-        if (STARTS_WITH(URL, "file://localhost/"))
+        // Parse file:// URI so as to be able to open them with VSI*L API.
+        if( STARTS_WITH(URL, "file://localhost/") )
             URL += 16;
         else
             URL += 7;
-        if (URL[0] == '/' && URL[1] != '\0' && URL[2] == ':' && URL[3] == '/') /* Windows */
-            URL ++;
-        else if (URL[0] == '/') /* Unix */
+        if( URL[0] == '/' && URL[1] != '\0' && URL[2] == ':' && URL[3] == '/' )
+            // Windows.
+            ++URL;
+        else if( URL[0] == '/' )  // Unix.
             ;
         else
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
     }
 
     CPLString osModURL;
-    if (STARTS_WITH(URL, "/vsizip/vsicurl/http%3A//"))    {
+    if( STARTS_WITH(URL, "/vsizip/vsicurl/http%3A//") )
+    {
         osModURL = "/vsizip/vsicurl/http://";
         osModURL += URL + strlen("/vsizip/vsicurl/http%3A//");
     }
-    else if (STARTS_WITH(URL, "/vsicurl/http%3A//"))    {
+    else if( STARTS_WITH(URL, "/vsicurl/http%3A//") )
+    {
         osModURL = "vsicurl/http://";
         osModURL += URL + strlen("/vsicurl/http%3A//");
     }
-    else if (STARTS_WITH(URL, "http://schemas.opengis.net/"))    {
+    else if( STARTS_WITH(URL, "http://schemas.opengis.net/") )
+    {
         const char *pszAfterOpenGIS =
                 URL + strlen("http://schemas.opengis.net/");
 
-        const char *pszSchemasOpenGIS;
-
-        pszSchemasOpenGIS = CPLGetConfigOption("GDAL_OPENGIS_SCHEMAS", NULL);
-        if (pszSchemasOpenGIS != NULL)
+        const char *pszSchemasOpenGIS =
+            CPLGetConfigOption("GDAL_OPENGIS_SCHEMAS", NULL);
+        if( pszSchemasOpenGIS != NULL )
         {
-            int nLen = (int)strlen(pszSchemasOpenGIS);
-            if (nLen > 0 && pszSchemasOpenGIS[nLen-1] == '/')
+            const int nLen = static_cast<int>(strlen(pszSchemasOpenGIS));
+            if( nLen > 0 && pszSchemasOpenGIS[nLen-1] == '/' )
             {
                 osModURL = pszSchemasOpenGIS;
                 osModURL += pszAfterOpenGIS;
@@ -786,13 +849,16 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
                 osModURL += pszAfterOpenGIS;
             }
         }
-        else if ((pszSchemasOpenGIS = CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET" )) != NULL)
+        else if( (pszSchemasOpenGIS =
+                      CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET" )) != NULL )
         {
             osModURL = pszSchemasOpenGIS;
             osModURL += "/";
             osModURL += pszAfterOpenGIS;
         }
-        else if ((pszSchemasOpenGIS = CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET.zip" )) != NULL)
+        else if( (pszSchemasOpenGIS =
+                      CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET.zip" ))
+                 != NULL )
         {
             osModURL = "/vsizip/";
             osModURL += pszSchemasOpenGIS;
@@ -801,7 +867,9 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
         }
         else
         {
-            osModURL = "/vsizip/vsicurl/http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip/";
+            osModURL =
+                "/vsizip/vsicurl/"
+                "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip/";
             osModURL += pszAfterOpenGIS;
         }
     }
@@ -810,12 +878,14 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
         osModURL = URL;
     }
 
-    xmlChar* pszBuffer = (xmlChar*)CPLLoadSchemaStr(osModURL);
-    if (pszBuffer == NULL)
+    xmlChar* pszBuffer =
+        reinterpret_cast<xmlChar *>(CPLLoadSchemaStr(osModURL));
+    if( pszBuffer == NULL )
         return NULL;
 
-    xmlParserInputPtr poInputStream = xmlNewStringInputStream(context, pszBuffer);
-    if (poInputStream != NULL)
+    xmlParserInputPtr poInputStream =
+        xmlNewStringInputStream(context, pszBuffer);
+    if( poInputStream != NULL )
         poInputStream->free = CPLLibXMLInputStreamCPLFree;
     return poInputStream;
 }
@@ -824,20 +894,20 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
 /*                    CPLLibXMLWarningErrorCallback()                   */
 /************************************************************************/
 
-static void CPLLibXMLWarningErrorCallback (void * ctx, const char * msg, ...)
+static void CPLLibXMLWarningErrorCallback ( void * ctx, const char * msg, ... )
 {
     va_list varg;
     va_start(varg, msg);
 
-    char *pszStr = (char *)va_arg( varg, char *);
+    char *pszStr = reinterpret_cast<char *>(va_arg( varg, char *));
 
-    if (strstr(pszStr, "since this namespace was already imported") == NULL)
+    if( strstr(pszStr, "since this namespace was already imported") == NULL )
     {
         xmlErrorPtr pErrorPtr = xmlGetLastError();
-        const char* pszFilename = (const char*)ctx;
+        const char* pszFilename = static_cast<char *>(ctx);
         char* pszStrDup = CPLStrdup(pszStr);
-        int nLen = (int)strlen(pszStrDup);
-        if (nLen > 0 && pszStrDup[nLen-1] == '\n')
+        int nLen = static_cast<int>(strlen(pszStrDup));
+        if( nLen > 0 && pszStrDup[nLen-1] == '\n' )
             pszStrDup[nLen-1] = '\0';
         if( pszFilename != NULL && pszFilename[0] != '<' )
         {
@@ -860,36 +930,38 @@ static void CPLLibXMLWarningErrorCallback (void * ctx, const char * msg, ...)
 /************************************************************************/
 
 static
-char* CPLLoadContentFromFile(const char* pszFilename)
+char* CPLLoadContentFromFile( const char* pszFilename )
 {
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if( fp == NULL )
         return NULL;
-    vsi_l_offset nSize;
     if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
-    nSize = VSIFTellL(fp);
+    vsi_l_offset nSize = VSIFTellL(fp);
     if( VSIFSeekL(fp, 0, SEEK_SET) != 0 )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
-    if ((vsi_l_offset)(int)nSize != nSize ||
+    if( static_cast<vsi_l_offset>(static_cast<int>(nSize)) != nSize ||
         nSize > INT_MAX - 1 )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
-    char* pszBuffer = (char*)VSIMalloc((size_t)nSize + 1);
-    if (pszBuffer == NULL)
+    char* pszBuffer =
+        static_cast<char *>(VSIMalloc(static_cast<size_t>(nSize) + 1));
+    if( pszBuffer == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
-    if( (size_t)VSIFReadL(pszBuffer, 1, (size_t)nSize, fp) != (size_t)nSize )
+    if( static_cast<size_t>(VSIFReadL(pszBuffer, 1,
+                                      static_cast<size_t>(nSize), fp))
+        != static_cast<size_t>(nSize) )
     {
         VSIFree(pszBuffer);
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -918,10 +990,10 @@ typedef void* CPLXMLSchemaPtr;
  */
 
 static
-CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
+CPLXMLSchemaPtr CPLLoadXMLSchema( const char* pszXSDFilename )
 {
     char* pszStr = CPLLoadSchemaStr(pszXSDFilename);
-    if (pszStr == NULL)
+    if( pszStr == NULL )
         return NULL;
 
     xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoaderLocal = NULL;
@@ -930,7 +1002,7 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
     xmlSetExternalEntityLoader(CPLExternalEntityLoader);
 
     xmlSchemaParserCtxtPtr pSchemaParserCtxt =
-                            xmlSchemaNewMemParserCtxt(pszStr, static_cast<int>(strlen(pszStr)));
+        xmlSchemaNewMemParserCtxt(pszStr, static_cast<int>(strlen(pszStr)));
 
     xmlSchemaSetParserErrors(pSchemaParserCtxt,
                              CPLLibXMLWarningErrorCallback,
@@ -944,7 +1016,7 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
 
     CPLFree(pszStr);
 
-    return (CPLXMLSchemaPtr) pSchema;
+    return static_cast<CPLXMLSchemaPtr>( pSchema );
 }
 
 /************************************************************************/
@@ -960,10 +1032,10 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
  */
 
 static
-void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
+void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 {
-    if (pSchema)
-        xmlSchemaFree((xmlSchemaPtr)pSchema);
+    if( pSchema )
+        xmlSchemaFree(static_cast<xmlSchemaPtr>(pSchema));
 }
 
 /************************************************************************/
@@ -981,11 +1053,11 @@ void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
  * @since GDAL 1.10.0
  */
 
-int CPLValidateXML(const char* pszXMLFilename,
-                   const char* pszXSDFilename,
-                   CPL_UNUSED char** papszOptions)
+int CPLValidateXML( const char* pszXMLFilename,
+                    const char* pszXSDFilename,
+                    char** /* papszOptions */ )
 {
-    char szHeader[2048];
+    char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;
 
     if( pszXMLFilename[0] == '<' )
@@ -996,84 +1068,108 @@ int CPLValidateXML(const char* pszXMLFilename,
     else
     {
         VSILFILE* fpXML = VSIFOpenL(pszXMLFilename, "rb");
-        if (fpXML == NULL)
+        if( fpXML == NULL )
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                    "Cannot open %s", pszXMLFilename);
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Cannot open %s", pszXMLFilename );
             return FALSE;
         }
-        int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXML);
+        const vsi_l_offset nRead =
+            VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fpXML);
         szHeader[nRead] = '\0';
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpXML));
     }
 
-    /* Workaround following bug : "element FeatureCollection: Schemas validity error : Element '{http://www.opengis.net/wfs}FeatureCollection': No matching global declaration available for the validation root" */
-    /* We create a wrapping XSD that imports the WFS .xsd (and possibly the GML .xsd too) and the application schema */
-    /* This is a known libxml2 limitation */
-    if (strstr(szHeader, "<wfs:FeatureCollection") ||
-        (strstr(szHeader, "<FeatureCollection") && strstr(szHeader, "xmlns:wfs=\"http://www.opengis.net/wfs\"")))
+    // Workaround following bug:
+    //
+    // "element FeatureCollection: Schemas validity error : Element
+    // '{http://www.opengis.net/wfs}FeatureCollection': No matching global
+    // declaration available for the validation root"
+    //
+    // We create a wrapping XSD that imports the WFS .xsd (and possibly the GML
+    // .xsd too) and the application schema.  This is a known libxml2
+    // limitation.
+    if( strstr(szHeader, "<wfs:FeatureCollection") ||
+        (strstr(szHeader, "<FeatureCollection") &&
+         strstr(szHeader, "xmlns:wfs=\"http://www.opengis.net/wfs\"")) )
     {
         const char* pszWFSSchemaNamespace = "http://www.opengis.net/wfs";
         const char* pszWFSSchemaLocation = NULL;
         const char* pszGMLSchemaLocation = NULL;
-        if (strstr(szHeader, "wfs/1.0.0/WFS-basic.xsd"))
+        if( strstr(szHeader, "wfs/1.0.0/WFS-basic.xsd") )
         {
-            pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd";
+            pszWFSSchemaLocation =
+                "http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd";
         }
-        else if (strstr(szHeader, "wfs/1.1.0/wfs.xsd"))
+        else if( strstr(szHeader, "wfs/1.1.0/wfs.xsd") )
         {
-            pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/1.1.0/wfs.xsd";
+            pszWFSSchemaLocation =
+                "http://schemas.opengis.net/wfs/1.1.0/wfs.xsd";
         }
-        else if (strstr(szHeader, "wfs/2.0/wfs.xsd"))
+        else if( strstr(szHeader, "wfs/2.0/wfs.xsd") )
         {
             pszWFSSchemaNamespace = "http://www.opengis.net/wfs/2.0";
             pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/2.0/wfs.xsd";
         }
 
         VSILFILE* fpXSD = VSIFOpenL(pszXSDFilename, "rb");
-        if (fpXSD == NULL)
+        if( fpXSD == NULL )
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                     "Cannot open %s", pszXSDFilename);
             return FALSE;
         }
-        int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXSD);
+        const vsi_l_offset nRead =
+            VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fpXSD);
         szHeader[nRead] = '\0';
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpXSD));
 
-        if (strstr(szHeader, "gml/3.1.1") != NULL &&
-            strstr(szHeader, "gml/3.1.1/base/gml.xsd") == NULL)
+        if( strstr(szHeader, "gml/3.1.1") != NULL &&
+            strstr(szHeader, "gml/3.1.1/base/gml.xsd") == NULL )
         {
-            pszGMLSchemaLocation = "http://schemas.opengis.net/gml/3.1.1/base/gml.xsd";
+            pszGMLSchemaLocation =
+                "http://schemas.opengis.net/gml/3.1.1/base/gml.xsd";
         }
 
-        if (pszWFSSchemaLocation != NULL)
+        if( pszWFSSchemaLocation != NULL )
         {
-            osTmpXSDFilename = CPLSPrintf("/vsimem/CPLValidateXML_%p_%p.xsd", pszXMLFilename, pszXSDFilename);
-            char* pszEscapedXSDFilename = CPLEscapeString(pszXSDFilename, -1, CPLES_XML);
-            VSILFILE* fpMEM = VSIFOpenL(osTmpXSDFilename, "wb");
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n"));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n", pszWFSSchemaNamespace, pszWFSSchemaLocation));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename));
-            if (pszGMLSchemaLocation)
-                CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation));
+            osTmpXSDFilename = CPLSPrintf(
+                "/vsimem/CPLValidateXML_%p_%p.xsd",
+                pszXMLFilename, pszXSDFilename );
+            char * const pszEscapedXSDFilename =
+                CPLEscapeString(pszXSDFilename, -1, CPLES_XML);
+            VSILFILE * const fpMEM = VSIFOpenL(osTmpXSDFilename, "wb");
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(
+                fpMEM,
+                "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n"));
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(
+                fpMEM,
+                "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n",
+                pszWFSSchemaNamespace, pszWFSSchemaLocation));
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(
+                fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename));
+            if( pszGMLSchemaLocation )
+                CPL_IGNORE_RET_VAL(VSIFPrintfL(
+                    fpMEM,
+                    "   <xs:import namespace=\"http://www.opengis.net/gml\" "
+                    "schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation));
             CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "</xs:schema>\n"));
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpMEM));
             CPLFree(pszEscapedXSDFilename);
         }
     }
 
-    CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
-    if (osTmpXSDFilename.size())
+    CPLXMLSchemaPtr pSchema =
+        CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
+    if( osTmpXSDFilename.size() )
         VSIUnlink(osTmpXSDFilename);
-    if (pSchema == NULL)
+    if( pSchema == NULL )
         return FALSE;
 
-    xmlSchemaValidCtxtPtr pSchemaValidCtxt;
+    xmlSchemaValidCtxtPtr pSchemaValidCtxt =
+        xmlSchemaNewValidCtxt((xmlSchemaPtr)pSchema);
 
-    pSchemaValidCtxt = xmlSchemaNewValidCtxt((xmlSchemaPtr)pSchema);
-
-    if (pSchemaValidCtxt == NULL)
+    if( pSchemaValidCtxt == NULL )
     {
         CPLFreeXMLSchema(pSchema);
         return FALSE;
@@ -1082,19 +1178,20 @@ int CPLValidateXML(const char* pszXMLFilename,
     xmlSchemaSetValidErrors(pSchemaValidCtxt,
                             CPLLibXMLWarningErrorCallback,
                             CPLLibXMLWarningErrorCallback,
-                            (void*) pszXMLFilename);
+                            const_cast<char *>(pszXMLFilename) );
 
     bool bValid = false;
     if( pszXMLFilename[0] == '<' )
     {
-        xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)pszXMLFilename);
-        if (pDoc != NULL)
+        xmlDocPtr pDoc =
+            xmlParseDoc(reinterpret_cast<const xmlChar *>(pszXMLFilename));
+        if( pDoc != NULL )
         {
             bValid = xmlSchemaValidateDoc(pSchemaValidCtxt, pDoc) == 0;
         }
         xmlFreeDoc(pDoc);
     }
-    else if (!STARTS_WITH(pszXMLFilename, "/vsi"))
+    else if( !STARTS_WITH(pszXMLFilename, "/vsi") )
     {
         bValid =
             xmlSchemaValidateFile(pSchemaValidCtxt, pszXMLFilename, 0) == 0;
@@ -1102,10 +1199,11 @@ int CPLValidateXML(const char* pszXMLFilename,
     else
     {
         char* pszXML = CPLLoadContentFromFile(pszXMLFilename);
-        if (pszXML != NULL)
+        if( pszXML != NULL )
         {
-            xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)pszXML);
-            if (pDoc != NULL)
+            xmlDocPtr pDoc =
+                xmlParseDoc(reinterpret_cast<const xmlChar *>(pszXML));
+            if( pDoc != NULL )
             {
                 bValid = xmlSchemaValidateDoc(pSchemaValidCtxt, pDoc) == 0;
             }
@@ -1119,20 +1217,20 @@ int CPLValidateXML(const char* pszXMLFilename,
     return bValid;
 }
 
-#else // HAVE_RECENT_LIBXML2
+#else  // HAVE_RECENT_LIBXML2
 
 /************************************************************************/
 /*                          CPLValidateXML()                            */
 /************************************************************************/
 
-int CPLValidateXML(CPL_UNUSED const char* pszXMLFilename,
-                   CPL_UNUSED const char* pszXSDFilename,
-                   CPL_UNUSED char** papszOptions)
+int CPLValidateXML( const char* /* pszXMLFilename */,
+                    const char* /* pszXSDFilename */,
+                    char** /* papszOptions */ )
 {
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "%s not implemented due to missing libxml2 support",
-             "CPLValidateXML()");
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "%s not implemented due to missing libxml2 support",
+              "CPLValidateXML()" );
     return FALSE;
 }
 
-#endif // HAVE_RECENT_LIBXML2
+#endif  // HAVE_RECENT_LIBXML2
