@@ -115,8 +115,6 @@ static bool CPLHasLibXMLBug()
     if( bXMLBugChecked )
         return bHasLibXMLBug;
 
-    bLibXMLBugChecked = true;
-
     static const char szLibXMLBugTester[] =
         "<schema targetNamespace=\"http://foo\" "
         "xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
@@ -150,6 +148,7 @@ static bool CPLHasLibXMLBug()
     xmlSchemaFreeParserCtxt(pSchemaParserCtxt);
 
     bHasLibXMLBug = pSchema == NULL;
+    bLibXMLBugChecked = true;
 
     if( pSchema )
         xmlSchemaFree(pSchema);
@@ -318,7 +317,8 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
             CPLCreateXMLNode(psExtension, CXT_Element, "attributeGroup");
         CPLXMLNode* psAttributeGroupRef =
             CPLCreateXMLNode(psAttributeGroup, CXT_Attribute, "ref");
-        CPLCreateXMLNode(psAttributeGroupRef, CXT_Text, "gml:SRSReferenceGroup");
+        CPLCreateXMLNode(psAttributeGroupRef, CXT_Text,
+                         "gml:SRSReferenceGroup");
 
         CPLXMLNode* psName = CPLCreateXMLNode(NULL, CXT_Attribute, "name");
         CPLCreateXMLNode(psName, CXT_Text, "VectorType");
