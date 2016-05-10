@@ -2271,8 +2271,18 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         {
             bDensify = ( OGRGeometryFactory::haveGEOS() && !bWasValidInitialy );
         }
+        else if( CSLFetchNameValue( *ppapszWarpOptions, "CUTLINE_BLEND_DIST" ) != NULL &&
+                 CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", NULL) == NULL )
+        {
+            // TODO: we should only emit this message if a transform/reprojection will be actually done
+            CPLDebug("WARP", "Densification of cutline could perhaps be useful but as "
+                     "CUTLINE_BLEND_DIST is used, this could be very slow. So disabled "
+                     "unless GDALWARP_DENSIFY_CUTLINE=YES is explicitly specified as configuration option");
+        }
         else
+        {
             bDensify = CPLTestBool(pszDensifyCutline);
+        }
     }
     if( bDensify )
     {
