@@ -1094,8 +1094,9 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
     std::vector<char> achMskFilename;
     achMskFilename.resize(osMskFilename.size() + 1);
     memcpy(&(achMskFilename[0]), osMskFilename.c_str(), osMskFilename.size() + 1);
-    int bExists = CPLCheckForFile( &achMskFilename[0],
-                                   papszSiblingFiles );
+    bool bExists = CPL_TO_BOOL(
+        CPLCheckForFile( &achMskFilename[0],
+                         papszSiblingFiles ) );
     osMskFilename = &achMskFilename[0];
 
 #if !defined(WIN32)
@@ -1103,8 +1104,9 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
     {
         osMskFilename.Printf( "%s.MSK", pszBasename );
         memcpy(&(achMskFilename[0]), osMskFilename.c_str(), osMskFilename.size() + 1);
-        bExists = CPLCheckForFile( &achMskFilename[0],
-                                   papszSiblingFiles );
+        bExists = CPL_TO_BOOL(
+            CPLCheckForFile( &achMskFilename[0],
+                             papszSiblingFiles ) );
         osMskFilename = &achMskFilename[0];
     }
 #endif
