@@ -1423,7 +1423,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
         GDALValidateOptions( pszOptionList,
                              (const char* const* )papszOptionsToValidate,
                              "creation option",
-                             osDriver );
+                             osDriver ) );
     CSLDestroy(papszOptionsToFree);
     return bRet;
 }
