@@ -74,6 +74,7 @@ class OGRVRTGeomFieldProps
         int                 iGeomXField;
         int                 iGeomYField;
         int                 iGeomZField;
+        int                 iGeomMField;
         int                 bReportSrcColumn;
         int                 bUseSpatialSubquery;
 
