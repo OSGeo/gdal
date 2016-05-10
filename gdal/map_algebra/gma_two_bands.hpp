@@ -13,8 +13,8 @@ public:
         count_in_this_loop_of_band = 0;
     }
     void add() {
-        count_in_this_loop_of_band++;
-        total_count++;
+        ++count_in_this_loop_of_band;
+        ++total_count;
     }
 };
 
@@ -49,8 +49,8 @@ public:
         int iterate = 1;
         while (iterate) {
             iterate = 0;
-            for (i.y = 0; i.y < b1->h_blocks; i.y++) {
-                for (i.x = 0; i.x < b1->w_blocks; i.x++) {
+            for (i.y = 0; i.y < b1->h_blocks; ++i.y) {
+                for (i.x = 0; i.x < b1->w_blocks; ++i.x) {
                     b1->add_to_cache(i);
                     gma_block<type1> *block = b1->get_block(i);
                     if (!block) return;
@@ -101,8 +101,8 @@ public:
     }
     int m_assign(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block, i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -115,8 +115,8 @@ public:
     }
     int m_add(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block, i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -129,8 +129,8 @@ public:
     }
     int m_subtract(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -143,8 +143,8 @@ public:
     }
     int m_multiply(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -157,8 +157,8 @@ public:
     }
     int m_divide(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -175,8 +175,8 @@ public:
     }
     int m_modulus(gma_block<type1> *block, gma_object_t**, gma_object_t *arg, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -193,8 +193,8 @@ public:
     }
     int m_decision(gma_block<type1> *block, gma_object_t**, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type2 a;
                 if (b2->has_value(b1, block, i, &a)) {
@@ -212,8 +212,8 @@ public:
     int m_zonal_min(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
         GMA_RETVAL_INIT(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type1 value = block->cell(i);
                 type2 zone;
@@ -232,8 +232,8 @@ public:
     int m_zonal_max(gma_block<type1> *block, gma_object_t **retval, gma_object_t*, int) {
         GMA_RETVAL_INIT(gma_hash_p<type2 COMMA gma_number_p<type1> >, rv, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (b1->cell_is_nodata(block,i)) continue;
                 type1 value = block->cell(i);
                 type2 zone;
@@ -252,8 +252,8 @@ public:
     // b1 = rims, b2 = areas
     int m_rim_by8(gma_block<type1> *block, gma_object_t**, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
 
                 // if the 8-neighborhood in areas is all of the same area, then set rims = 0, otherwise from area
 
@@ -263,7 +263,7 @@ public:
                 type1 my_area = 0;
 
                 gma_cell_index in = i.first_neighbor();
-                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                for (int neighbor = 1; neighbor < 9; ++neighbor) {
                     in.move_to_neighbor(neighbor);
                     type2 n_area;
                     bool has_neighbor = b2->has_value(b1, block, in, &n_area);
@@ -286,8 +286,8 @@ public:
             rv->new_loop();
         int border_block = b1->is_border_block(block);
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 int border_cell = block->is_border_cell(border_block, i);
                 type2 dem_e;
                 b2->has_value(b1, block, i, &dem_e);
@@ -301,7 +301,7 @@ public:
                 else {
                     int f = 1;
                     gma_cell_index in = i.first_neighbor();
-                    for (int neighbor = 1; neighbor < 9; neighbor++) {
+                    for (int neighbor = 1; neighbor < 9; ++neighbor) {
                         in.move_to_neighbor(neighbor);
                         type1 n_e;
                         b1->has_value(b1, block, in, &n_e);
@@ -359,8 +359,8 @@ public:
     int m_D8(gma_block<type1> *block, gma_object_t**, gma_object_t*, int) {
         int border_block = b1->is_border_block(block);
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 int border_cell = block->is_border_cell(border_block, i);
 
                 type2 my_elevation;
@@ -371,7 +371,7 @@ public:
                 int first = 1;
 
                 gma_cell_index i_n = i.first_neighbor();
-                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                for (int neighbor = 1; neighbor < 9; ++neighbor) {
                     i_n.move_to_neighbor(neighbor);
 
                     type2 tmp;
@@ -409,8 +409,8 @@ public:
         if (block->first_block())
             rv->new_loop();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
 
                 // if not flat cell, nothing to do
                 if (block->cell(i) != 10) continue;
@@ -420,7 +420,7 @@ public:
 
                 type1 new_dir = 0;
                 gma_cell_index in = i.first_neighbor();
-                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                for (int neighbor = 1; neighbor < 9; ++neighbor) {
                     in.move_to_neighbor(neighbor);
 
                     if (b1->cell_is_outside(block, in))
@@ -467,8 +467,8 @@ public:
             rv->new_loop();
         //int border_block = b1->is_border_block(block);
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 //int border_cell = block->is_border_cell(border_block, i);
 
                 // upstream area is already computed
@@ -479,7 +479,7 @@ public:
                 int upstream_area = 0;
 
                 gma_cell_index in = i.first_neighbor();
-                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                for (int neighbor = 1; neighbor < 9; ++neighbor) {
                     in.move_to_neighbor(neighbor);
 
                     gma_cell_index i1;
@@ -500,7 +500,7 @@ public:
                     if (abs(tmp2 - neighbor) != 4)
                         continue;
 
-                    upstream_neighbors++;
+                    ++upstream_neighbors;
 
                     type1 tmp1 = blockn->cell(i1);
                     // if the neighbor's upstream area is not computed, then we're done
@@ -549,8 +549,8 @@ public:
         gma_cell_index i;
         gma_cell_p<type1> *cell = (gma_cell_p<type1> *)arg; // check?
 
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
 
                 if (block->cell(i) == cell->value()) continue;
 
@@ -567,7 +567,7 @@ public:
                 b2->has_value(b1, block, i, &my_dir);
 
                 gma_cell_index id = i.first_neighbor();
-                for (int neighbor = 1; neighbor <= my_dir; neighbor++) {
+                for (int neighbor = 1; neighbor <= my_dir; ++neighbor) {
                     id.move_to_neighbor(neighbor);
                 }
 

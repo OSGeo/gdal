@@ -32,7 +32,7 @@ main() {
     gma_classifier_t *c = bx->new_classifier();
     // how to define classifier?
     // we have a float raster => currently only bin => value is ok
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; ++i) {
         gma_number_t *x = bx->new_number();
         x->set_value((i+1)*3.0);
         gma_number_t *y = bx->new_number();
@@ -72,14 +72,14 @@ main() {
 
     gma_hash_t *z = by->zonal_neighbors();
 
-    std::vector<gma_number_t*> *zk = z->keys_sorted();
-    for (int i = 0; i < zk->size(); i++) {
-        gma_number_t *k = zk->at(i);
+    std::vector<gma_number_t*> zk = z->keys_sorted();
+    for (int i = 0; i < zk.size(); ++i) {
+        gma_number_t *k = zk[i];
         int k1 = k->value_as_int();
         gma_hash_t *zn = (gma_hash_t*)z->get(k);
-        std::vector<gma_number_t*> *znk = zn->keys_sorted();
-        for (int j = 0; j < znk->size(); j++) {
-            int k2 = znk->at(j)->value_as_int();
+        std::vector<gma_number_t*> znk = zn->keys_sorted();
+        for (int j = 0; j < znk.size(); ++j) {
+            int k2 = znk[j]->value_as_int();
             printf("%i => %i\n", k1, k2);
         }
     }
@@ -89,5 +89,11 @@ main() {
     by->update();
     by->print();
     printf("\n");
+
+    std::vector<gma_cell_t*> cells = by->cells();
+    for (int i = 0; i < cells.size(); ++i) {
+        gma_cell_t *cell = cells[i];
+        printf("%i %i %i\n", cell->x(), cell->y(), cell->value_as_int());
+    }
 
 }

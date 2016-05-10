@@ -21,14 +21,14 @@ int main() {
     if (1) {
 
         // starting point is a DEM
-        gma_band_t *d = gma_new_band(((GDALDataset*)GDALOpen("L3423G010.tiff", GA_ReadOnly))->GetRasterBand(1));
+        gma_band_t *d = gma_new_band(((GDALDataset*)GDALOpen("data/L3423G010.tiff", GA_ReadOnly))->GetRasterBand(1));
 
         // first we create a depressionless dem
-        gma_band_t *dem = d->new_band("dem.tiff", d->datatype());
+        gma_band_t *dem = d->new_band("data/dem.tiff", d->datatype());
 
         dem->set_progress_fct(progress, NULL);
         dem->fill_depressions(d); // would be nicer as dem = d->fill_depressions() or dem->depressionless_dem_from(d);
-        exit(0);
+        exit(1);
 
         // now flow directions are easy
         gma_band_t *fd = dem->new_band("fd.tiff", GDT_Byte);
@@ -68,13 +68,13 @@ int main() {
         c->subtract(c, op);
 
         // outlet cells
-        std::vector<gma_cell_t*> *outlets = c->cells();
+        std::vector<gma_cell_t*> outlets = c->cells();
 
         // c = 0
         c->assign(0);
 
-        for (int i = 0; i < outlets->size(); i++) {
-            gma_cell_t *cell = outlets->at(i);
+        for (int i = 0; i < outlets.size(); ++i) {
+            gma_cell_t *cell = outlets[i];
             printf("%i %i %i %i\n", cell->x(), cell->y(), cell->value_as_int(), i+1);
             cell->set_value(i+1);
             c->catchment(fd, cell);

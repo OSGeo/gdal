@@ -112,7 +112,7 @@ public:
     virtual gma_class_t get_class() {return gma_hash;};
     virtual GDALDataType datatype() = 0;
     virtual int size()= 0;
-    virtual std::vector<gma_number_t*> *keys_sorted() = 0;
+    virtual std::vector<gma_number_t*> keys_sorted() = 0;
     virtual gma_object_t *get(gma_number_t *key) = 0;
 };
 
@@ -183,7 +183,7 @@ public:
     virtual gma_number_t *get_max() = 0;
     // returns a pair of numbers
     virtual gma_pair_t *get_range() = 0;
-    virtual std::vector<gma_cell_t*> *cells() = 0;
+    virtual std::vector<gma_cell_t*> cells() = 0;
 
     // op can be used to make the operation conditional, 
     // the test is made against the value of the parameter band

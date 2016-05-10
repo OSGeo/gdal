@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         int i = 3;
         while (i < argc) {
             arg->push(atof(argv[i]));
-            i++;
+            ++i;
         }
         hm = b->histogram(arg);
         break;

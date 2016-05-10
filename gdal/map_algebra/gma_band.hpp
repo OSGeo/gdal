@@ -25,13 +25,13 @@ public:
     }
     inline void move_to_neighbor(int neighbor) {
         switch(neighbor) {
-        case 2: x++; break;
-        case 3: y++; break;
-        case 4: y++; break;
-        case 5: x--; break;
-        case 6: x--; break;
-        case 7: y--; break;
-        case 8: y--; break;
+        case 2: ++x; break;
+        case 3: ++y; break;
+        case 4: ++y; break;
+        case 5: --x; break;
+        case 6: --x; break;
+        case 7: --y; break;
+        case 8: --y; break;
         }
     }
 };
@@ -48,7 +48,7 @@ public:
         m_h = h;
         block = CPLMalloc(w_block * h_block * sizeof(datatype));
         if (block) {
-            // constructor can't return a value and ReadBlock calls CPLError ice error
+            // constructor can't return a value and ReadBlock calls CPLError in case of error
             if (band->ReadBlock(m_index.x, m_index.y, block) != CE_None);
         }
     }
@@ -64,7 +64,7 @@ public:
         ((datatype*)block)[i.x+i.y*m_w] = value;
     }
     void write(GDALRasterBand *band) {
-        if (band->WriteBlock(m_index.x, m_index.y, block) != CE_None); // WriteBlock calls CPLError ice error
+        if (band->WriteBlock(m_index.x, m_index.y, block) != CE_None); // WriteBlock calls CPLError in case of error
     }
     int is_border_cell(int border_block, gma_cell_index i) {
         if (!border_block)
@@ -109,7 +109,7 @@ public:
         if (!m_blocks) return;
         if (m_n == 0)
             return;
-        for (int i = 0; i < m_n; i++)
+        for (int i = 0; i < m_n; ++i)
             delete m_blocks[i];
         CPLFree(m_blocks);
         m_n = 0;
@@ -120,7 +120,7 @@ public:
         gma_block<datatype> **blocks = (gma_block<datatype>**)CPLMalloc((m_n-1) * sizeof(gma_block<datatype>*));
         if (!blocks) return;
         int d = 0;
-        for (int j = 0; j < m_n; j++) {
+        for (int j = 0; j < m_n; ++j) {
             if (j == i) {
                 delete m_blocks[j];
                 d = 1;
@@ -129,19 +129,19 @@ public:
             }
         }
         CPLFree(m_blocks);
-        m_n--;
+        --m_n;
         m_blocks = blocks;
     }
     gma_block<datatype> *retrieve(gma_block_index index) {
         if (!m_blocks) return NULL;
-        for (int i = 0; i < m_n; i++)
+        for (int i = 0; i < m_n; ++i)
             if (m_blocks[i]->m_index.x == index.x && m_blocks[i]->m_index.y == index.y)
                 return m_blocks[i];
         return NULL;
     }
     void add(gma_block<datatype> *block) {
         if (!m_blocks && m_n != 0) return;
-        m_n++;
+        ++m_n;
         if (m_n == 1)
             m_blocks = (gma_block<datatype>**)CPLMalloc(sizeof(gma_block<datatype>*));
         else
@@ -156,7 +156,7 @@ public:
                 m_blocks[i]->m_index.y < i20.y || m_blocks[i]->m_index.y > i21.y)
                 remove(i);
             else
-                i++;
+                ++i;
         }
     }
 };
@@ -241,7 +241,7 @@ public:
         m_progress_arg = NULL;
     }
     ~gma_band_p() {
-        delete(mask);
+        delete mask;
     }
     virtual void update() {
         int has_nodata;
@@ -249,7 +249,7 @@ public:
         m_has_nodata = has_nodata != 0;
         m_nodata = has_nodata ? (datatype_t)nodata : 0;
         int mask_flags = m_band->GetMaskFlags();
-        delete(mask);
+        delete mask;
         if (mask_flags & GMF_PER_DATASET || mask_flags & GMF_ALPHA) {
             GDALRasterBand *m = m_band->GetMaskBand();
             if (m) mask = new gma_band_p<uint8_t>(m);
@@ -334,8 +334,8 @@ public:
 
         // add needed blocks
         gma_block_index i;
-        for (i.y = i20.y; i.y <= i21.y; i.y++) {
-            for (i.x = i20.x; i.x <= i21.x; i.x++) {
+        for (i.y = i20.y; i.y <= i21.y; ++i.y) {
+            for (i.x = i20.x; i.x <= i21.x; ++i.x) {
                 add_to_cache(i);
             }
         }
@@ -469,8 +469,8 @@ public:
 
     void block_loop(callback cb, gma_object_t **retval = NULL, gma_object_t *arg = NULL, int fd = 0) {
         gma_block_index i;
-        for (i.y = 0; i.y < h_blocks; i.y++) {
-            for (i.x = 0; i.x < w_blocks; i.x++) {
+        for (i.y = 0; i.y < h_blocks; ++i.y) {
+            for (i.x = 0; i.x < w_blocks; ++i.x) {
                 add_to_cache(i);
                 gma_block<datatype_t> *block = get_block(i);
                 if (!block) return;
@@ -488,8 +488,8 @@ public:
 
     int m_print(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i))
                     printf("x");
                 else
@@ -503,8 +503,8 @@ public:
 
     int m_rand(gma_block<datatype_t>* block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 // fixme: datatype specific value
                 block->cell(i) = std::rand();
             }
@@ -514,8 +514,8 @@ public:
 
     int m_abs(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::abs(block->cell(i));
             }
@@ -527,8 +527,8 @@ public:
     int m_exp(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         // fixme: error if not float
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::exp(block->cell(i));
             }
@@ -538,8 +538,8 @@ public:
 
     int m_log(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::log(block->cell(i));
             }
@@ -549,8 +549,8 @@ public:
 
     int m_log10(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::log10(block->cell(i));
             }
@@ -560,8 +560,8 @@ public:
 
     int m_sqrt(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::sqrt(block->cell(i));
             }
@@ -571,8 +571,8 @@ public:
 
     int m_sin(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::sin(block->cell(i));
             }
@@ -582,8 +582,8 @@ public:
 
     int m_cos(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::cos(block->cell(i));
             }
@@ -593,8 +593,8 @@ public:
 
     int m_tan(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::tan(block->cell(i));
             }
@@ -604,8 +604,8 @@ public:
 
     int m_ceil(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::ceil(block->cell(i));
             }
@@ -615,8 +615,8 @@ public:
 
     int m_floor(gma_block<datatype_t> *block, gma_object_t **, gma_object_t*, int) {
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = std::floor(block->cell(i));
             }
@@ -688,8 +688,8 @@ public:
     int m_assign(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = a;
             }
@@ -699,8 +699,8 @@ public:
     int m_assign_all(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 block->cell(i) = a;
             }
         }
@@ -709,8 +709,8 @@ public:
     int m_add(gma_block<datatype_t>* block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (!cell_is_nodata(block, i))
                     block->cell(i) = MAX(MIN(block->cell(i) + a, std::numeric_limits<datatype_t>::max()), std::numeric_limits<datatype_t>::min());
             }
@@ -720,8 +720,8 @@ public:
     int m_subtract(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = MAX(MIN(block->cell(i) - a, std::numeric_limits<datatype_t>::max()), std::numeric_limits<datatype_t>::min());
             }
@@ -731,8 +731,8 @@ public:
     int m_multiply(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 block->cell(i) = MAX(MIN(block->cell(i) * a, std::numeric_limits<datatype_t>::max()), std::numeric_limits<datatype_t>::min());
             }
@@ -742,8 +742,8 @@ public:
     int m_divide(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 if (a == 0)
                     block->cell(i) = std::numeric_limits<datatype_t>::quiet_NaN();
@@ -756,8 +756,8 @@ public:
     int m_modulus(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         datatype_t a = ((gma_number_p<datatype_t>*)arg)->value();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 if (cell_is_nodata(block, i)) continue;
                 if (a == 0)
                     block->cell(i) = std::numeric_limits<datatype_t>::quiet_NaN();
@@ -852,8 +852,8 @@ public:
     int m_classify(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         gma_classifier_p<datatype_t> *c = (gma_classifier_p<datatype_t> *)arg;
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t a = block->cell(i);
                 // fixme: it should be possible to classify nodata => value and value => nodata
                 if (!is_nodata(a))
@@ -865,8 +865,8 @@ public:
     int m_cell_callback(gma_block<datatype_t> *block, gma_object_t **, gma_object_t *arg, int) {
         gma_cell_index i;
         int retval;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t a = block->cell(i);
                 if (is_nodata(a)) continue;
                 gma_cell_index gi = global_cell_index(block, i);
@@ -893,8 +893,8 @@ public:
     int m_histogram(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *arg, int) {
         GMA_RETVAL_INIT(gma_histogram_p<datatype_t>, hm, arg);
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t value = block->cell(i);
                 if (is_nodata(value)) continue;
                 hm->increase_count_at(value);
@@ -905,8 +905,8 @@ public:
     int m_zonal_neighbors(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *, int) {
         GMA_RETVAL_INIT(gma_hash_p<datatype_t COMMA gma_hash_p<datatype_t COMMA gma_number_p<int> > >, zn, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t me = block->cell(i);
                 if (is_nodata(me)) continue;
                 gma_hash_p<datatype_t,gma_number_p<int> > *ns;
@@ -917,7 +917,7 @@ public:
                     zn->put(me, ns);
                 }
                 gma_cell_index in = i.first_neighbor();
-                for (int neighbor = 1; neighbor < 9; neighbor++) {
+                for (int neighbor = 1; neighbor < 9; ++neighbor) {
                     in.move_to_neighbor(neighbor);
 
                     if (cell_is_outside(block, in)) {
@@ -940,8 +940,8 @@ public:
     int m_get_min(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t *arg, int) {
         GMA_RETVAL_INIT(gma_number_p<datatype_t>, rv, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t x = block->cell(i);
                 if (is_nodata(x)) continue;
                 if (!rv->defined() || x < rv->value())
@@ -953,8 +953,8 @@ public:
     int m_get_max(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t*, int) {
         GMA_RETVAL_INIT(gma_number_p<datatype_t>, rv, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t x = block->cell(i);
                 if (is_nodata(x)) continue;
                 if (!rv->defined() || x > rv->value())
@@ -969,8 +969,8 @@ public:
         gma_number_p<datatype_t>* min = (gma_number_p<datatype_t>*)rv->first();
         gma_number_p<datatype_t>* max = (gma_number_p<datatype_t>*)rv->second();
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t x = block->cell(i);
                 if (is_nodata(x)) continue;
                 if (!min->defined() || x < min->value())
@@ -984,8 +984,8 @@ public:
     int m_get_cells(gma_block<datatype_t> *block, gma_object_t **retval, gma_object_t*, int) {
         GMA_RETVAL_INIT(std::vector<gma_cell_t*>, cells, );
         gma_cell_index i;
-        for (i.y = 0; i.y < block->h(); i.y++) {
-            for (i.x = 0; i.x < block->w(); i.x++) {
+        for (i.y = 0; i.y < block->h(); ++i.y) {
+            for (i.x = 0; i.x < block->w(); ++i.x) {
                 datatype_t me = block->cell(i);
                 if (is_nodata(me)) continue;
                 gma_cell_index gi = global_cell_index(block, i);
@@ -1048,12 +1048,13 @@ public:
         block_loop(cb, &retval, NULL);
         return (gma_pair_t*)retval;
     }
-    virtual std::vector<gma_cell_t*> *cells() {
-        gma_object_t *retval = NULL;
+    virtual std::vector<gma_cell_t*> cells() {
+        std::vector<gma_cell_t*> rv;
+        gma_object_t *retval = (gma_object_t*)&rv;
         callback cb;
         cb.fct = &gma_band_p::m_get_cells;
         block_loop(cb, &retval, NULL);
-        return (std::vector<gma_cell_t*> *)retval;
+        return rv;
     }
 
     virtual void assign(gma_band_t *b, gma_logical_operation_t *op = NULL) {
