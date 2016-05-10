@@ -338,6 +338,12 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         nBands = 1;
         eInterleave = PIXEL;
     }
+    else if ( strcmp( pszExtension, "flg" ) == 0 )
+    {
+        eDataType = GDT_Byte;
+        nBands = 1;
+        eInterleave = PIXEL;
+    }
     else { /* Eeek */
         delete poDS;
         CSLDestroy( papszRsc );
@@ -519,7 +525,8 @@ int ROIPACDataset::Identify( GDALOpenInfo *poOpenInfo )
                                || strcmp( pszExtension, "unw" ) == 0
                                || strcmp( pszExtension, "msk" ) == 0
                                || strcmp( pszExtension, "trans" ) == 0
-                               || strcmp( pszExtension, "dem" ) == 0;
+                               || strcmp( pszExtension, "dem" ) == 0
+                               || strcmp( pszExtension, "flg" ) == 0;
     if ( !bExtensionIsValid )
     {
         return false;
@@ -595,6 +602,17 @@ GDALDataset *ROIPACDataset::Create( const char *pszFilename,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to create ROI_PAC %s dataset with an illegal\n"
                           "number of bands (%d) and/or data type (%s).\n",
+                      pszExtension, nBands, GDALGetDataTypeName(eType) );
+            return NULL;
+        }
+    }
+    else if ( strcmp( pszExtension, "flg" ) == 0 )
+    {
+        if ( nBands != 1 || eType != GDT_Byte )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to create ROI_PAC %s dataset with an illegal "
+                      "number of bands (%d) and/or data type (%s).",
                       pszExtension, nBands, GDALGetDataTypeName(eType) );
             return NULL;
         }
