@@ -6588,6 +6588,69 @@ def tiff_write_148():
     return 'success'
 
 ###############################################################################
+# Test filling missing blocks with nodata
+
+def tiff_write_149():
+
+    # Power-of-two bit depth
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue( 127 )
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_149.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != 1:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
+
+    # Test implicit blocks
+    expected_cs = 13626
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    ds.GetRasterBand(1).SetNoDataValue( 127 )
+    ds.GetRasterBand(2).SetNoDataValue( 127 )
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_149.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
+
+    # NBITS=12, SEPARATE. Checksum must be the same as in the implicit blocks case
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
+    ds.GetRasterBand(1).SetNoDataValue( 127 )
+    ds.GetRasterBand(2).SetNoDataValue( 127 )
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_149.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
+
+    # NBITS=12, CONTIG. Checksum must be the same as in the implicit blocks case
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=PIXEL'])
+    ds.GetRasterBand(1).SetNoDataValue( 127 )
+    ds.GetRasterBand(2).SetNoDataValue( 127 )
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_149.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6765,10 +6828,11 @@ gdaltest_list = [
     tiff_write_146,
     tiff_write_147,
     tiff_write_148,
+    tiff_write_149,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-#gdaltest_list = [ tiff_write_1, tiff_write_147, tiff_write_148 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_149 ]
 
 if __name__ == '__main__':
 
