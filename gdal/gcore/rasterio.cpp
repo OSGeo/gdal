@@ -3905,7 +3905,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
  */
 
 CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
-    GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand, char **papszOptions,
+    GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand,
+    const char * const * const papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData )
 
 {
@@ -3951,7 +3952,7 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
     // (JPEG compression for example).
     bool bDstIsCompressed = false;
     const char* pszDstCompressed =
-        CSLFetchNameValue( papszOptions, "COMPRESSED" );
+        CSLFetchNameValue( const_cast<char **>(papszOptions), "COMPRESSED" );
     if (pszDstCompressed != NULL && CPLTestBool(pszDstCompressed))
         bDstIsCompressed = true;
 

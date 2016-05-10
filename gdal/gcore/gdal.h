@@ -622,7 +622,8 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetCopyWholeRaster(
     GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALRasterBandCopyWholeRaster(
-    GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand, char **papszOptions,
+    GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand,
+    const char * const * constpapszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL

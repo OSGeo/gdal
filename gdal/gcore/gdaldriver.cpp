@@ -315,7 +315,7 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
                     eErr = GDALRasterBandCopyWholeRaster(
                         poSrcBand->GetMaskBand(),
                         poDstBand->GetMaskBand(),
-                        (char**)papszOptions,
+                        papszOptions,
                         GDALDummyProgress, NULL);
                 }
                 else if( !bStrict )
@@ -338,7 +338,7 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
             eErr = GDALRasterBandCopyWholeRaster(
                 poSrcDS->GetRasterBand(1)->GetMaskBand(),
                 poDstDS->GetRasterBand(1)->GetMaskBand(),
-                (char**)papszOptions,
+                papszOptions,
                 GDALDummyProgress, NULL);
         }
         else if( !bStrict )
