@@ -102,12 +102,23 @@ def roipac_5():
 
     return 'success'
 
+###############################################################################
+# Test .flg
+
+def roipac_6():
+
+    tst = gdaltest.GDALTest( 'roi_pac', 'byte.tif', 1, 4672 )
+    with gdaltest.error_handler():
+        ret = tst.testCreateCopy( check_gt = 1, new_filename = 'byte.flg', vsimem = 1 )
+    return ret
+
 gdaltest_list = [
     roipac_1,
     roipac_2,
     roipac_3,
     roipac_4,
     roipac_5,
+    roipac_6,
     ]
 
 
