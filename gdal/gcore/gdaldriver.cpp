@@ -41,22 +41,20 @@ CPL_C_END
 /*                             GDALDriver()                             */
 /************************************************************************/
 
-GDALDriver::GDALDriver()
-
-{
-    pfnOpen = NULL;
-    pfnCreate = NULL;
-    pfnDelete = NULL;
-    pfnCreateCopy = NULL;
-    pfnUnloadDriver = NULL;
-    pDriverData = NULL;
-    pfnIdentify = NULL;
-    pfnRename = NULL;
-    pfnCopyFiles = NULL;
-    pfnOpenWithDriverArg = NULL;
-    pfnCreateVectorOnly = NULL;
-    pfnDeleteDataSource = NULL;
-}
+GDALDriver::GDALDriver() :
+    pfnOpen(NULL),
+    pfnCreate(NULL),
+    pfnDelete(NULL),
+    pfnCreateCopy(NULL),
+    pDriverData(NULL),
+    pfnUnloadDriver(NULL),
+    pfnIdentify(NULL),
+    pfnRename(NULL),
+    pfnCopyFiles(NULL),
+    pfnOpenWithDriverArg(NULL),
+    pfnCreateVectorOnly(NULL),
+    pfnDeleteDataSource(NULL)
+{}
 
 /************************************************************************/
 /*                            ~GDALDriver()                             */
