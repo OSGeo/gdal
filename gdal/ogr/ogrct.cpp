@@ -93,9 +93,9 @@ static bool      bProjLocaleSafe = false;
 // build) it can be named either way, so use PROJSO environment variable to
 // specify the right library name. By default assume that in Cygwin/MinGW all
 // components were built in the same way.
-#  define LIBNAME      "libproj-0.dll"
+#  define LIBNAME      "libproj-9.dll"
 #elif defined(__CYGWIN__)
-#  define LIBNAME      "cygproj-0.dll"
+#  define LIBNAME      "cygproj-9.dll"
 #elif defined(__APPLE__)
 #  define LIBNAME      "libproj.dylib"
 #else
