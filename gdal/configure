@@ -22211,30 +22211,49 @@ if test -z "$with_sosi" -o "$with_sosi" = "no" ; then
 
   echo "SOSI support disabled."
 
-elif test "$with_sosi" = "yes" -o "$with_sosi" = "" ; then
+elif test "$with_sosi" = "yes" ; then
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba" >&5
+$as_echo_n "checking for libfyba... " >&6; }
+
+    rm -f testfyba.*
+    rm -f testfyba
+    echo "#include <fyba.h>" > testfyba.cpp
+    echo "int main() { LC_Init(); return 0; }" >> testfyba.cpp
+    if test  -r /usr/include/fyba -a -z "`${CXX} ${CPPFLAGS} -I/usr/include/fyba -DLINUX testfyba.cpp -lfyba -lfygm -lfyut -o testfyba 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+        SOSI_ENABLED=yes
+        SOSI_LIB="-lfyba -lfygm -lfyut"
+        SOSI_INC="-I/usr/include/fyba"
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib" >&5
 $as_echo_n "checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib... " >&6; }
-    if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+        if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
-        SOSI_ENABLED=yes
-        SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
-    else
-        as_fn_error $? "not found." "$LINENO" 5
-    fi
+            SOSI_ENABLED=yes
+            SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
+        else
+            as_fn_error $? "not found." "$LINENO" 5
+        fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba" >&5
 $as_echo_n "checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba... " >&6; }
-    if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+        if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
-        SOSI_ENABLED=yes
-        SOSI_INC="-I/usr/local/include/fyba"
-    else
-        as_fn_error $? "not found." "$LINENO" 5
+            SOSI_ENABLED=yes
+            SOSI_INC="-I/usr/local/include/fyba"
+        else
+            as_fn_error $? "not found." "$LINENO" 5
+        fi
     fi
 
+    rm -f testfyba.*
+    rm -f testfyba
 else
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in $with_sosi/lib" >&5
