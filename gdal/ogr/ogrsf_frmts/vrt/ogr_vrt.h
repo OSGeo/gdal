@@ -70,7 +70,7 @@ class OGRVRTGeomFieldProps
         int                 iGeomField;
 
                             // VGS_PointFromColumn
-        int                 iGeomXField, iGeomYField, iGeomZField;
+        int                 iGeomXField, iGeomYField, iGeomZField, iGeomMField;
         int                 bReportSrcColumn;
         int                 bUseSpatialSubquery;
 

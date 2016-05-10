@@ -53,6 +53,7 @@ OGRVRTGeomFieldProps::OGRVRTGeomFieldProps() :
     iGeomXField(-1),
     iGeomYField(-1),
     iGeomZField(-1),
+    iGeomMField(-1),
     bReportSrcColumn(TRUE),
     bUseSpatialSubquery(FALSE),
     bNullable(TRUE)
@@ -329,6 +330,8 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
             CPLGetXMLValue( psNode, "y", "missing" ) );
         poProps->iGeomZField = GetSrcLayerDefn()->GetFieldIndex(
             CPLGetXMLValue( psNode, "z", "missing" ) );
+        poProps->iGeomMField = GetSrcLayerDefn()->GetFieldIndex(
+            CPLGetXMLValue( psNode, "m", "missing" ) );
 
         if( poProps->iGeomXField == -1 || poProps->iGeomYField == -1 )
         {
@@ -339,10 +342,11 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
 
         if( pszGType == NULL )
         {
+            poProps->eGeomType = wkbPoint;
             if( poProps->iGeomZField != -1 )
-                poProps->eGeomType = wkbPoint25D;
-            else
-                poProps->eGeomType = wkbPoint;
+                poProps->eGeomType = OGR_GT_SetZ(poProps->eGeomType);
+            if( poProps->iGeomMField != -1 )
+                poProps->eGeomType = OGR_GT_SetM(poProps->eGeomType);
         }
     }
     else
@@ -1033,6 +1037,7 @@ try_again:
                     (iSrcField == apoGeomFieldProps[iGF]->iGeomXField ||
                      iSrcField == apoGeomFieldProps[iGF]->iGeomYField ||
                      iSrcField == apoGeomFieldProps[iGF]->iGeomZField ||
+                     iSrcField == apoGeomFieldProps[iGF]->iGeomMField ||
                      (apoGeomFieldProps[iGF]->eGeometryStyle != VGS_Direct &&
                       iSrcField == apoGeomFieldProps[iGF]->iGeomField)) )
                 {
@@ -1533,15 +1538,23 @@ retry:
         }
         else if( eGeometryStyle == VGS_PointFromColumns )
         {
+            OGRPoint* poPoint;
             if( apoGeomFieldProps[i]->iGeomZField != -1 )
-                poDstFeat->SetGeomFieldDirectly( i,
-                    new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
+            {
+                poPoint = new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
                                 poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ),
-                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomZField ) ) );
+                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomZField ) );
+            }
             else
-                poDstFeat->SetGeomFieldDirectly( i,
-                    new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
-                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ) ) );
+            {
+                poPoint = new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
+                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ) );
+            }
+            if( apoGeomFieldProps[i]->iGeomMField >= 0 )
+            {
+                poPoint->setM( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomMField ) );
+            }
+            poDstFeat->SetGeomFieldDirectly( i, poPoint );
         }
         else
         {
@@ -1793,6 +1806,11 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
                         poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomZField,
                                              ((OGRPoint*)poGeom)->getZ() );
                     }
+                    if( apoGeomFieldProps[i]->iGeomMField != -1 )
+                    {
+                        poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomMField,
+                                             ((OGRPoint*)poGeom)->getM() );
+                    }
                 }
             }
         }
@@ -1822,7 +1840,8 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
                  anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomField) ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomXField ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomYField ||
-                anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomZField)
+                anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomZField ||
+                anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomMField)
             {
                 bSkip = TRUE;
                 break;
@@ -2343,7 +2362,8 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
                     {
                         if( (iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomXField ||
                              iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomYField ||
-                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomZField) )
+                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomZField ||
+                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomMField) )
                         {
                             bOKToIgnore = FALSE;
                             break;
@@ -2400,6 +2420,9 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
             if (iSrcField >= 0)
                 panSrcFieldsUsed[iSrcField] = TRUE;
             iSrcField = apoGeomFieldProps[iVRTField]->iGeomZField;
+            if (iSrcField >= 0)
+                panSrcFieldsUsed[iSrcField] = TRUE;
+            iSrcField = apoGeomFieldProps[iVRTField]->iGeomMField;
             if (iSrcField >= 0)
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }

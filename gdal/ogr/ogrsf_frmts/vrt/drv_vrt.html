@@ -138,12 +138,11 @@ The type of geometry encoding is indicated with the <b>encoding</b> attribute wh
 value "WKT", "WKB" or "PointFromColumns".<br>
 If the encoding is "WKT" or "WKB" then the <b>field</b> attribute will have
 the name of the field containing the WKT or WKB geometry.<br>
-If the encoding is "PointFromColumns" then the <b>x</b>, <b>y</b> and <b>z</b> attributes
-will have the names of the columns to be used for the X, Y and Z coordinates.
-The <b>z</b> attribute is optional.<br>
-Starting with GDAL 1.7.0, the optional <b>reportSrcColumn</b> attribute can be used to specify
-whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>, <b>x</b>
-or <b>z</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
+If the encoding is "PointFromColumns" then the <b>x</b>, <b>y</b>, <b>z</b> and <b>m</b> attributes
+will have the names of the columns to be used for the X, Y, Z and M coordinates.
+The <b>z</b> and <b>m</b> attributes are optional (m only supported since OGR 2.1.1).<br>
+The optional <b>reportSrcColumn</b> attribute can be used to specify
+whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>, <b>y</b>, <b>z</b>, <b>m</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
 If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.</li>
 <p>
 Starting with OGR 1.11, the GeometryField element can be repeated as many times
