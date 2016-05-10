@@ -1419,10 +1419,11 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
         papszOptionsToValidate = papszOptionsToFree =
             CSLSetNameValue(CSLDuplicate(papszCreationOptions), "APPEND_SUBDATASET", NULL);
     }
-    int bRet = GDALValidateOptions( pszOptionList,
-                                (const char* const* )papszOptionsToValidate,
-                                "creation option",
-                                osDriver);
+    const bool bRet = CPL_TO_BOOL(
+        GDALValidateOptions( pszOptionList,
+                             (const char* const* )papszOptionsToValidate,
+                             "creation option",
+                             osDriver );
     CSLDestroy(papszOptionsToFree);
     return bRet;
 }
