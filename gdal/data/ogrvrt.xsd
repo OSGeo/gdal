@@ -350,6 +350,11 @@
                 <xs:documentation>Only used if encoding = "PointFromColumns"</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="m" type="nonEmptyStringType">
+            <xs:annotation>
+                <xs:documentation>Only used if encoding = "PointFromColumns"</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="useSpatialSubquery" type="OGRBooleanType">
             <xs:annotation>
                 <xs:documentation>Only used if encoding = "PointFromColumns". Defaults to TRUE.</xs:documentation>

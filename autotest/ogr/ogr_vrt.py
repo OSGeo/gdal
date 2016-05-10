@@ -3552,6 +3552,46 @@ def ogr_vrt_39():
     return 'success'
 
 ###############################################################################
+# Test PointZM support with encoding="PointFromColumns"
+
+def ogr_vrt_40():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_40.csv',
+"""id,x,y,z,m
+1,1,2,3,4
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_40.vrt',
+"""<OGRVRTDataSource>
+  <OGRVRTLayer name="ogr_vrt_40">
+    <SrcDataSource relativeToVRT="1">ogr_vrt_40.csv</SrcDataSource>
+    <SrcLayer>ogr_vrt_40</SrcLayer>
+    <GeometryField encoding="PointFromColumns" x="x" y="y" z="z" m="m"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+
+    ds = ogr.Open('/vsimem/ogr_vrt_40.vrt')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPointZM:
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_vrt_40.csv')
+    gdal.Unlink('/vsimem/ogr_vrt_40.vrt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3618,6 +3658,7 @@ gdaltest_list = [
     ogr_vrt_37,
     ogr_vrt_38,
     ogr_vrt_39,
+    ogr_vrt_40,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
