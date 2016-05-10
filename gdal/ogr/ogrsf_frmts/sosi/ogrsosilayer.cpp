@@ -64,6 +64,7 @@ OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() {
     return poFeatureDefn;
 }
 
+#ifdef WRITE_SUPPORT
 /************************************************************************/
 /*                           CreateField()                              */
 /************************************************************************/
@@ -117,6 +118,7 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     LC_WsGr(poFileadm); /* Writing the header here! */
     return OGRERR_NONE;
 }
+#endif
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -168,6 +170,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             long nRefNr;
             unsigned char nRefStatus;
             long nRefCount;
+            bool correct = true;
             LC_GRF_STATUS oGrfStat;
 
             // Iterate through all objects that constitute this area.
@@ -176,33 +179,71 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             while (nRefCount > 0) {
                 if (poParent->papoBuiltGeometries[nRefNr] == NULL) {
                     // This should not happen under normal operation.
-                    CPLError( CE_Fatal, CPLE_AppDefined,
-                              "Feature %li referenced by %li, but it was not "
-                              "initialized.", nRefNr, oNextSerial.lNr);
-                    return NULL;
+                    CPLError( CE_Warning, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized. Geometry may be broken.", nRefNr, oNextSerial.lNr);
+                    correct = false;
+                    //return NULL;
+                    break;
                 }
-                OGRLineString *poCurve
-                    = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
-                if (nRefStatus == LC_MED_DIG) {         /* clockwise */
+                OGRGeometry *geom = poParent->papoBuiltGeometries[nRefNr];
+                if (geom->getGeometryType() == wkbLineString) {
+                  OGRLineString *poCurve = (OGRLineString*)geom;
+                  if (nRefStatus == LC_MED_DIG) {         /* clockwise */
                     poOuter->addSubLineString(poCurve);
-                } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
-                    poOuter->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
+                  } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
+                      poOuter->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
+                  } else {
+                      CPLError( CE_Failure, CPLE_OpenFailed, "Internal error: GRF_*_OY encountered.");
+                      return NULL;
+                  }
                 } else {
-                    CPLError( CE_Failure, CPLE_OpenFailed,
-                              "Island (OEY) encountered, "
-                              "but not yet supported.");
-                    delete poOuter;
-                    return NULL;
+                    CPLError( CE_Warning, CPLE_AppDefined, "Element %li composed of non-linestrings (REF %li of type %i). Ignored.", oNextSerial.lNr, nRefNr, geom->getGeometryType());
                 }
                 nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
             }
 
-            OGRPolygon *poLy = new OGRPolygon();
-            poLy->addRingDirectly(poOuter);
-            poGeom = poLy;
+            if (correct) {
+              OGRPolygon *poLy = new OGRPolygon();
+              poOuter->closeRings();
+              poLy->addRingDirectly(poOuter);
+
+              OGRLinearRing *poInner = 0;
+              nRefCount = LC_GetRefFlate(&oGrfStat, GRF_INDRE, &nRefNr, &nRefStatus, 1);
+              while (nRefCount > 0) {
+                  if (nRefNr == -1) {
+                    if (poInner && (poInner->getNumPoints()>2)) {   /* If this is not the first polygon, terminate and add the last */
+                          poInner->closeRings();
+                          poLy->addRingDirectly(poInner);
+                    }
+                    poInner = new OGRLinearRing();  /* Initialize a new closed polygon */
+                  } else {
+                    if (poParent->papoBuiltGeometries[nRefNr] == NULL) { /* this shouldn't happen under normal operation */
+                        CPLError( CE_Fatal, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
+                        return NULL;
+                    }
+                    OGRGeometry *geom = poParent->papoBuiltGeometries[nRefNr];
+                    if (geom->getGeometryType() == wkbLineString) {
+                      OGRLineString *poCurve = (OGRLineString*)geom;
+                      if (nRefStatus == LC_MED_DIG) {         /* clockwise */
+                        poInner->addSubLineString(poCurve);
+                      } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
+                          poInner->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
+                      } else {
+                          CPLError( CE_Failure, CPLE_OpenFailed, "Internal error: GRF_*_OY encountered.");
+                          return NULL;
+                      }
+                    } else {
+                        CPLError( CE_Warning, CPLE_AppDefined, "Element %li composed of non-linestrings (REF %li of type %i). Ignored.", oNextSerial.lNr, nRefNr, geom->getGeometryType());
+                    }
+                  }
+                  nRefCount = LC_GetRefFlate(&oGrfStat, GRF_INDRE, &nRefNr, &nRefStatus, 1);
+              }
+              poGeom = poLy;
+            }
             break;
         }
-        case L_KURVE: {  /* curve */
+        case L_KURVE:    /* curve */
+        case L_LINJE:    /* curve, not simplifyable */
+        case L_BUEP:  {  /* curve, interpolated from circular arc */
             oGType = wkbLineString;
 
             OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
@@ -223,6 +264,9 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             }
             poGeom = poMP->clone();
             break;
+        }
+        case L_SYMBOL: {
+            //CPLError( CE_Warning, CPLE_OpenFailed, "Geometry of type SYMBOL treated as point (PUNKT).");
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
@@ -254,22 +298,61 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
 
         /* set all headers found in this group - we export everything, just in case */
         for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); iHeaders++) {
+            OGRSOSIDataType *poType = SOSIGetType(iHeaders->first);
+            OGRSOSISimpleDataType *poElements = poType->getElements();
+
             const char *pszLine = iHeaders->second.c_str();
-            int iHNr = poHeaderDefn->find(iHeaders->first)->second;
-            if (iHNr == -1) {
-				CPLError( CE_Warning, CPLE_AppDefined, "Could not find field definition for %s.", iHeaders->first.c_str());
-                continue;
-			}
-            if ((pszLine[0] == '\'')||(pszLine[0] == '\"')) { /* If the value is quoted, ignore these */
-                int nLen = static_cast<int>(strlen(pszLine));
-                char *pszNline = (char*)CPLMalloc(nLen-1);
-                strncpy(pszNline, pszLine+1, nLen-2);
-                pszNline[nLen-2] = '\0';
-                poFeature->SetField( iHNr, pszNline);
-                CPLFree(pszNline);
-            } else {
-                poFeature->SetField( iHNr, pszLine);
-            }
+            char** tokens = CSLTokenizeString(iHeaders->second.c_str());
+
+            for (int k=0; k<poType->getElementCount(); k++) {
+                if (tokens[k] == 0) break;
+
+                if (strcmp(poElements[k].GetName(),"")==0) continue;
+                int iHNr = poHeaderDefn->find(poElements[k].GetName())->second;
+                if (iHNr == -1) {
+	    			CPLError( CE_Warning, CPLE_AppDefined, "Could not find field definition for %s.", poElements[k].GetName());
+                    continue;
+    			}
+                OGRFieldType nType = poElements[k].GetType();
+                switch (nType) {
+                  case OFTInteger: {
+                    poFeature->SetField( iHNr, SOSITypeToInt(tokens[k]));
+                    break;
+                  }
+                  case OFTDate: {
+                    int date[3];
+                    SOSITypeToDate(tokens[k], date);
+                    poFeature->SetField( iHNr, date[0], date[1], date[2]);
+                    break;
+                  }
+                  case OFTDateTime: {
+                    int date[6];
+                    SOSITypeToDateTime(tokens[k], date);
+                    if (date[0]>0) 
+                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], date[5], 1);
+                    break;
+                  }
+                  case OFTReal: {
+                    poFeature->SetField( iHNr, SOSITypeToReal(tokens[k]));
+                    break;
+                  }
+                  default: { 
+                    if ((k==0)&&((pszLine[0] == '\'')||(pszLine[0] == '\"'))) { /* If the value is quoted, ignore these */
+                        int nLen = strlen(pszLine);
+                        char *pszNline = (char*)CPLMalloc(nLen-1);
+                        strncpy(pszNline, pszLine+1, nLen-2);
+                        pszNline[nLen-2] = '\0';
+                        poFeature->SetField( iHNr, pszNline);
+                        CPLFree(pszNline);
+                    } else {
+                        poFeature->SetField( iHNr, tokens[k]);
+                    }
+                    break;
+                  }
+                }
+          }
+
+          CSLDestroy(tokens);
         }
 
         if( poGeom != NULL )
@@ -305,8 +388,10 @@ int OGRSOSILayer::TestCapability( const char * pszCap ) {
 
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
+#if 0
     if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
     else
+#endif
         return FALSE;
 }
