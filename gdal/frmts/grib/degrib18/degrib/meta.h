@@ -487,7 +487,13 @@ typedef enum {
    Prt_F, Prt_FS, Prt_E, Prt_ES, Prt_G, Prt_GS, Prt_SS, Prt_NULL
 } Prt_TYPE;
 
-char *Print(const char *label, const char *varName, Prt_TYPE fmt, ...);
+/* Note that fmt was Prt_TYPE, but there is no way to tell C89/C++03 to
+   use an integer sized enum, so it must be an int to avoid undefined
+   behavior.
+
+   http://stackoverflow.com/questions/9853633/how-to-change-the-integer-type-used-by-an-enum-c
+ */
+char *Print(const char *label, const char *varName, int fmt, ...);
 
 void MetaInit (grib_MetaData *meta);
 
