@@ -1702,26 +1702,42 @@ if test -z "$with_sosi" -o "$with_sosi" = "no" ; then
 
   echo "SOSI support disabled."
 
-elif test "$with_sosi" = "yes" -o "$with_sosi" = "" ; then
+elif test "$with_sosi" = "yes" ; then
 
-    AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib])
-    if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
+    AC_MSG_CHECKING([for libfyba])
+
+    rm -f testfyba.*
+    rm -f testfyba
+    echo "#include <fyba.h>" > testfyba.cpp
+    echo "int main() { LC_Init(); return 0; }" >> testfyba.cpp
+    if test  -r /usr/include/fyba -a -z "`${CXX} ${CPPFLAGS} -I/usr/include/fyba -DLINUX testfyba.cpp -lfyba -lfygm -lfyut -o testfyba 2>&1`" ; then
         AC_MSG_RESULT([found])
         SOSI_ENABLED=yes
-        SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
+        SOSI_LIB="-lfyba -lfygm -lfyut"
+        SOSI_INC="-I/usr/include/fyba"
     else
-        AC_MSG_ERROR([not found.])
+        AC_MSG_RESULT([not found])
+        AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib])
+        if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
+            AC_MSG_RESULT([found])
+            SOSI_ENABLED=yes
+            SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
+        else
+            AC_MSG_ERROR([not found.])
+        fi
+
+        AC_MSG_CHECKING([for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba])
+        if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
+            AC_MSG_RESULT([found])
+            SOSI_ENABLED=yes
+            SOSI_INC="-I/usr/local/include/fyba"
+        else
+            AC_MSG_ERROR([not found.])
+        fi
     fi
 
-    AC_MSG_CHECKING([for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba])
-    if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
-        AC_MSG_RESULT([found])
-        SOSI_ENABLED=yes
-        SOSI_INC="-I/usr/local/include/fyba"
-    else
-        AC_MSG_ERROR([not found.])
-    fi
-
+    rm -f testfyba.*
+    rm -f testfyba
 else
 
   AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in $with_sosi/lib])
