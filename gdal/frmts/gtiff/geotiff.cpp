@@ -6898,6 +6898,72 @@ void GTiffDataset::FillEmptyTiles()
     }
 
 /* -------------------------------------------------------------------- */
+/*      If set, fill data buffer with no data value.                    */
+/* -------------------------------------------------------------------- */
+    if( bNoDataSet && dfNoDataValue != 0.0 )
+    {
+        const GDALDataType eDataType = GetRasterBand( 1 )->GetRasterDataType();
+        const int nDataTypeSize = GDALGetDataTypeSizeBytes( eDataType );
+        if( nDataTypeSize && nDataTypeSize * 8 == static_cast<int>(nBitsPerSample) )
+        {
+            GDALCopyWords( &dfNoDataValue, GDT_Float64, 0,
+                           pabyData, eDataType,
+                           nDataTypeSize,
+                           nBlockBytes / nDataTypeSize );
+        }
+        else if( nDataTypeSize )
+        {
+            // handle non power-of-two depths
+            // Ideally we would make a packed buffer, but this is a bit tedious
+            // so let's use the normal I/O interfaces
+
+            CPLFree( pabyData );
+
+            pabyData = static_cast<GByte *>( VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize, nDataTypeSize) );
+            if( pabyData == NULL )
+                return;
+            GDALCopyWords( &dfNoDataValue, GDT_Float64, 0,
+                           pabyData, eDataType,
+                           nDataTypeSize,
+                           nBlockXSize * nBlockYSize );
+            const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+            for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+            {
+                if( panByteCounts[iBlock] == 0 )
+                {
+                    if( nPlanarConfig == PLANARCONFIG_SEPARATE || nBands == 1 )
+                    {
+                        CPL_IGNORE_RET_VAL( GetRasterBand( 1 + iBlock / nBlocksPerBand )->WriteBlock(
+                            (iBlock % nBlocksPerBand) % nBlocksPerRow,
+                            (iBlock % nBlocksPerBand) / nBlocksPerRow,
+                            pabyData ) );
+                    }
+                    else
+                    {
+                        // In contig case, we don't want to directly call WriteBlock(), since
+                        // it could cause useless decompression-recompression
+                        int nXOff = (iBlock % nBlocksPerRow) * nBlockXSize;
+                        int nYOff = (iBlock / nBlocksPerRow) * nBlockYSize;
+                        int nXSize = (nXOff + static_cast<int>(nBlockXSize) <= nRasterXSize) ?
+                            static_cast<int>(nBlockXSize) : nRasterXSize - nXOff;
+                        int nYSize = (nYOff + static_cast<int>(nBlockYSize) <= nRasterYSize) ?
+                            static_cast<int>(nBlockYSize) : nRasterYSize - nYOff;
+                        for( int iBand=1; iBand<=nBands; iBand++ )
+                        {
+                            CPL_IGNORE_RET_VAL( GetRasterBand( iBand )->RasterIO(
+                                GF_Write, nXOff, nYOff, nXSize, nYSize,
+                                pabyData, nXSize, nYSize,
+                                eDataType, 0, 0, NULL ) );
+                        }
+                    }
+                }
+            }
+            CPLFree( pabyData );
+            return;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check all blocks, writing out data for uninitialized blocks.    */
 /* -------------------------------------------------------------------- */
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
