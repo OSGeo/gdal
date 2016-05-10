@@ -2749,8 +2749,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             papszTmpOpenOptionsToValidate = papszOptionsToValidate;
         }
 
-        int bIdentifyRes =
-            ( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 );
+        const bool bIdentifyRes =
+            poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0;
         if( bIdentifyRes )
         {
             GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
