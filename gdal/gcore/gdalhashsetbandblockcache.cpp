@@ -45,8 +45,8 @@ class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     CPLLock        *hLock;
 
     public:
-            GDALHashSetBandBlockCache(GDALRasterBand* poBand);
-           ~GDALHashSetBandBlockCache();
+           GDALHashSetBandBlockCache( GDALRasterBand* poBand );
+           virtual ~GDALHashSetBandBlockCache();
 
            virtual bool             Init();
            virtual bool             IsInitOK();
