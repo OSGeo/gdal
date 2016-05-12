@@ -177,7 +177,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
             CPLDestroyXMLNode(psXMLNode);
         }
         else
+        {
             CPLErrorReset();
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -338,8 +340,11 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             {
                 psFC = psChild;
             }
+
             if( psFC == NULL && osGMLTmpFile.size() == 0 )
+            {
                 continue;
+            }
 
             if( psFC != NULL )
             {
