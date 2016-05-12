@@ -61,7 +61,7 @@ my $f = Geo::OGR::Feature->new(
     eval {
         $f->{10} = 'x';
     };
-    ok ($@ ne '', "Set field using hashref syntax and field index does not work.");
+    ok ($@ eq '', "Set field using hashref syntax and field index works.");
     eval {
         $f->{No} = 'x';
     };

@@ -1288,6 +1288,7 @@ public:
     return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, id);
   }
 
+#ifndef SWIGPERL
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1296,6 +1297,7 @@ public:
           return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
       return NULL;
   }
+#endif
   /* ------------------------------------------- */
 
   int GetGeomFieldCount() {
@@ -1307,6 +1309,7 @@ public:
       return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
   }
 
+#ifndef SWIGPERL
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(const char* name) {
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
@@ -1315,6 +1318,7 @@ public:
           return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
   }
+#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsString --------------------- */
@@ -1323,6 +1327,7 @@ public:
     return (const char *) OGR_F_GetFieldAsString(self, id);
   }
 
+#ifndef SWIGPERL
   const char* GetFieldAsString(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1331,6 +1336,7 @@ public:
 	  return (const char *) OGR_F_GetFieldAsString(self, i);
       return NULL;
   }
+#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger -------------------- */
@@ -1339,6 +1345,7 @@ public:
     return OGR_F_GetFieldAsInteger(self, id);
   }
 
+#ifndef SWIGPERL
   int GetFieldAsInteger(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1347,6 +1354,7 @@ public:
 	  return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
+#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger64 ------------------ */
@@ -1355,6 +1363,7 @@ public:
     return OGR_F_GetFieldAsInteger64(self, id);
   }
 
+#ifndef SWIGPERL
   GIntBig GetFieldAsInteger64(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1363,6 +1372,7 @@ public:
           return OGR_F_GetFieldAsInteger64(self, i);
       return 0;
   }
+#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsDouble --------------------- */
@@ -1371,6 +1381,7 @@ public:
     return OGR_F_GetFieldAsDouble(self, id);
   }
 
+#ifndef SWIGPERL
   double GetFieldAsDouble(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1379,6 +1390,7 @@ public:
           return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
+#endif
   /* ------------------------------------------- */
 
   %apply (int *OUTPUT) {(int *)};
@@ -1390,6 +1402,7 @@ public:
 			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
+#ifndef SWIGPERL
   void GetFieldAsDateTime(const char* name, int *pnYear, int *pnMonth, int *pnDay,
 			  int *pnHour, int *pnMinute, float *pfSecond,
 			  int *pnTZFlag) {
@@ -1401,6 +1414,7 @@ public:
 			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
+#endif
   %clear (int *);
   %clear (float *);
 
@@ -1422,6 +1436,7 @@ public:
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
 
+#ifndef SWIGPERL
   void GetFieldAsIntegerList(const char* name, int *nLen, const int **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
@@ -1430,21 +1445,12 @@ public:
           *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
 #endif
+#endif
 
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
-
-#if defined(SWIGPERL)
-  void GetFieldAsInteger64List(const char* name, int *nLen, const GIntBig **pList) {
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
-  }
-#endif
 #endif
 
 #if defined(SWIGJAVA)
@@ -1465,6 +1471,7 @@ public:
       *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
 
+#ifndef SWIGPERL
   void GetFieldAsDoubleList(const char* name, int *nLen, const double **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
@@ -1472,6 +1479,7 @@ public:
       else
           *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
+#endif
 #endif
 
 #if defined(SWIGJAVA)
@@ -1491,6 +1499,7 @@ public:
       *pList = OGR_F_GetFieldAsStringList(self, id);
   }
 
+#ifndef SWIGPERL
   void GetFieldAsStringList(const char* name, char ***pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
@@ -1498,6 +1507,7 @@ public:
       else
           *pList = OGR_F_GetFieldAsStringList(self, id);
   }
+#endif
 #endif
 
 #ifndef SWIGCSHARP
@@ -1534,6 +1544,7 @@ public:
     return OGRERR_NONE;
   }
 
+#ifndef SWIGPERL
   OGRErr GetFieldAsBinary(const char* name, int *nLen, char **pBuf) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
@@ -1549,6 +1560,7 @@ public:
         return OGRERR_NONE;
       }
   }
+#endif
 #endif /* SWIGJAVA */
 
 #endif /* SWIGCSHARP */
@@ -1558,6 +1570,7 @@ public:
     return (OGR_F_IsFieldSet(self, id) > 0);
   }
 
+#ifndef SWIGPERL
   bool IsFieldSet(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1566,47 +1579,18 @@ public:
 	  return (OGR_F_IsFieldSet(self, i) > 0);
       return false;
   }
+#endif
   /* ------------------------------------------- */
 
-#ifdef SWIGPERL
-  int GetFieldIndex(int i) {
-      if (i < 0 || i >= OGR_F_GetFieldCount(self))
-          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      return i;
-  }
-  int GetFieldIndex(const char* name) {
-      // Perl bindings let Swig handle overloaded methods. Thus they need to behave similarly.
-      int i = OGR_F_GetFieldIndex(self, name);
-      if (i < 0)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return i;
-  }
-#else
   int GetFieldIndex(const char* name) {
       // Do not issue an error if the field doesn't exist. It is intended to be silent
       return OGR_F_GetFieldIndex(self, name);
   }
-#endif
 
-#ifdef SWIGPERL
-  int GetGeomFieldIndex(int i) {
-      if (i < 0 || i >= OGR_F_GetGeomFieldCount(self))
-          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      return i;
-  }
-  int GetGeomFieldIndex(const char* name) {
-      // Perl bindings let Swig handle overloaded methods. Thus they need to behave similarly.
-      int i = OGR_F_GetGeomFieldIndex(self, name);
-      if (i < 0)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return i;
-  }
-#else
   int GetGeomFieldIndex(const char* name) {
       // Do not issue an error if the field doesn't exist. It is intended to be silent
       return OGR_F_GetGeomFieldIndex(self, name);
   }
-#endif
 
   GIntBig GetFID() {
     return OGR_F_GetFID(self);
@@ -1624,6 +1608,7 @@ public:
     OGR_F_UnsetField(self, id);
   }
 
+#ifndef SWIGPERL
   void UnsetField(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1631,6 +1616,7 @@ public:
       else
           OGR_F_UnsetField(self, i);
   }
+#endif
 
   /* ---- SetField ----------------------------- */
 #ifndef SWIGCSHARP
@@ -1642,6 +1628,7 @@ public:
     OGR_F_SetFieldString(self, id, value);
   }
 
+#ifndef SWIGPERL
   void SetField(const char* name, const char* value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1649,6 +1636,7 @@ public:
       else
           OGR_F_SetFieldString(self, i, value);
   }
+#endif
   %clear (const char* value );
 
   void SetFieldInteger64(int id, GIntBig value) {
@@ -1660,6 +1648,7 @@ public:
     OGR_F_SetFieldInteger(self, id, value);
   }
 
+#ifndef SWIGPERL
   void SetField(const char* name, int value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1667,12 +1656,14 @@ public:
       else
 	  OGR_F_SetFieldInteger(self, i, value);
   }
+#endif
 #endif /* SWIGPYTHON */
 
   void SetField(int id, double value) {
     OGR_F_SetFieldDouble(self, id, value);
   }
 
+#ifndef SWIGPERL
   void SetField(const char* name, double value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -1680,6 +1671,7 @@ public:
       else
 	  OGR_F_SetFieldDouble(self, i, value);
   }
+#endif
 
   void SetField( int id, int year, int month, int day,
                              int hour, int minute, float second,
@@ -1689,6 +1681,7 @@ public:
                              tzflag);
   }
 
+#ifndef SWIGPERL
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, float second,
                              int tzflag ) {
@@ -1700,78 +1693,32 @@ public:
 				 hour, minute, second,
 				 tzflag);
   }
+#endif
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
-
-#if defined(SWIGPERL)
-  void SetFieldIntegerList(const char* name, int nList, int *pList) {
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-       	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
-  }
-#endif
 
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
 
-#if defined(SWIGPERL)
-  void SetFieldInteger64List(const char* name, int nList, GIntBig *pList) {
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          OGR_F_SetFieldInteger64List(self, id, nList, pList);
-  }
-#endif
 #endif
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
       OGR_F_SetFieldDoubleList(self, id, nList, pList);
   }
 
-#if defined(SWIGPERL)
-  void SetFieldDoubleList(const char* name, int nList, double *pList) {
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          OGR_F_SetFieldDoubleList(self, id, nList, pList);
-  }
-#endif
-
 %apply (char **options) {char **pList};
   void SetFieldStringList(int id, char **pList) {
       OGR_F_SetFieldStringList(self, id, pList);
   }
-
-#if defined(SWIGPERL)
-  void SetFieldStringList(const char* name, char **pList) {
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          OGR_F_SetFieldStringList(self, id, pList);
-  }
-#endif
 %clear char**pList;
 
 #if defined(SWIGPERL)
   void SetFieldBinary(int i, int nBytes, GByte* pabyBuf) {
       OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
-  }
-
-  void SetFieldBinary(const char* name, int nBytes, GByte* pabyBuf) {
-      int i = OGR_F_GetFieldIndex(self, name);
-      if (i == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
   }
 #endif
 
@@ -1783,6 +1730,7 @@ public:
      CPLFree(pabyBuf);
   }
 
+#ifndef SWIGPERL
   void SetFieldBinaryFromHexString(const char* name, const char* pszValue)
   {
       int i = OGR_F_GetFieldIndex(self, name);
@@ -1796,6 +1744,7 @@ public:
           CPLFree(pabyBuf);
       }
   }
+#endif
 
   /* ------------------------------------------- */
 
@@ -1837,6 +1786,7 @@ public:
           return (OGRFieldType)0;
   }
 
+#ifndef SWIGPERL
   OGRFieldType GetFieldType(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1) {
@@ -1845,6 +1795,7 @@ public:
       } else
           return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, i ) );
   }
+#endif
   /* ------------------------------------------- */
 
   int Validate( int flags = OGR_F_VAL_ALL, int bEmitError = TRUE ) {
@@ -1978,14 +1929,6 @@ public:
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
 
-#ifdef SWIGPERL
-  int GetFieldIndex(int i) {
-      if (i < 0 || i >= OGR_FD_GetFieldCount(self))
-          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      return i;
-  }
-#endif
-
   int GetFieldIndex(const char* name) {
       // Do not issue an error if the field doesn't exist. It is intended to be silent
       return OGR_FD_GetFieldIndex(self, name);
@@ -2006,23 +1949,6 @@ public:
   OGRGeomFieldDefnShadow* GetGeomFieldDefn(int i){
     return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, i);
   }
-
-#ifdef SWIGPERL
-  OGRGeomFieldDefnShadow* GetGeomFieldDefn(const char* name) {
-      int iField = OGR_FD_GetGeomFieldIndex(self, name);
-      if (iField == -1)
-          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, iField);
-      return NULL;
-  }
-
-  int GetGeomFieldIndex(int i) {
-      if (i < 0 || i >= OGR_FD_GetGeomFieldCount(self))
-          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      return i;
-  }
-#endif
 
   int GetGeomFieldIndex(const char* name) {
       // Do not issue an error if the field doesn't exist. It is intended to be silent
