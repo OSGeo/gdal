@@ -275,11 +275,15 @@
 
 ## @ignore FindFieldIndex
 
-## @method %GetFieldDefn($name)
+## @method $GetFieldDefn($name)
 # Get the definition of a field.
 # @param name the name of the field.
-# @return the field definition object, either Geo::OGR::FieldDefn or
-# Geo::OGR::GeomFieldDefn.
+# @return a Geo::OGR::FieldDefn object.
+
+## @method $GetGeomFieldDefn($name)
+# Get the definition of a spatial field.
+# @param name the name of the spatial field.
+# @return a Geo::OGR::GeomFieldDefn object.
 
 ## @ignore CreateGeomField
 
@@ -577,11 +581,15 @@
 ## @ignore GetFieldType
 ## @ignore GetGeomFieldDefnRef
 
-## @method Geo::OGR::FieldDefn GetFieldDefn($name)
-# @note A.k.a GetFieldDefnRef
+## @method $GetFieldDefn($name)
+# Get the definition of a field.
 # @param name the name of the field.
-# @return a new Geo::OGR::FieldDefn object that represents the field
-# in question.
+# @return a Geo::OGR::FieldDefn object.
+
+## @method $GetGeomFieldDefn($name)
+# Get the definition of a spatial field.
+# @param name the name of the spatial field.
+# @return a Geo::OGR::GeomFieldDefn object.
 
 ## @method Geo::OGR::Feature Clone()
 # @return a new Geo::OGR::Feature object
@@ -762,12 +770,16 @@
 
 ## @ignore GeometryIgnored
 ## @ignore GeometryType
-## @ignore GetGeomFieldDefn
 
-## @method object GetFieldDefn($name)
+## @method $GetFieldDefn($name)
+# Get the definition of a field.
 # @param name the name of the field.
-# @return either a Geo::OGR::FieldDefn or Geo::OGR::GeomFieldDefn
-# object that represents the field in question.
+# @return a Geo::OGR::FieldDefn object.
+
+## @method $GetGeomFieldDefn($name)
+# Get the definition of a spatial field.
+# @param name the name of the spatial field.
+# @return a Geo::OGR::GeomFieldDefn object.
 
 ## @ignore AddFieldDefn
 ## @ignore AddGeomFieldDefn

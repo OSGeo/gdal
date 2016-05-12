@@ -100,6 +100,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 }
 
+%rename (_GetFieldIndex) GetFieldIndex;
+%rename (_GetGeomFieldIndex) GetGeomFieldIndex;
+
+%rename (_GetFieldDefn) GetFieldDefn;
+%rename (_GetGeomFieldDefn) GetGeomFieldDefn;
+
 /* wrapped layer methods: */
 %rename (_TestCapability) TestCapability;
 %rename (_ReleaseResultSet) ReleaseResultSet;
@@ -309,26 +315,25 @@ sub CreateField {
 
 sub AlterFieldDefn {
     my $self = shift;
-    my $field = shift;
-    my $index = $self->GetLayerDefn->GetFieldIndex($field);
-    if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FieldDefn')) {
+    my $index = $self->GetLayerDefn->GetFieldIndex(shift // 0);
+    my $param = @_ % 2 == 0 ? {@_} : shift;
+    if (blessed($param) and $param->isa('Geo::OGR::FieldDefn')) {
         _AlterFieldDefn($self, $index, @_);
     } else {
-        my $params = @_ % 2 == 0 ? {@_} : shift;
-        my $definition = Geo::OGR::FieldDefn->new($params);
+        my $definition = Geo::OGR::FieldDefn->new($param);
         my $flags = 0;
-        $flags |= 1 if exists $params->{Name};
-        $flags |= 2 if exists $params->{Type};
-        $flags |= 4 if exists $params->{Width} or exists $params->{Precision};
-        $flags |= 8 if exists $params->{Nullable};
-        $flags |= 16 if exists $params->{Default};
+        $flags |= 1 if exists $param->{Name};
+        $flags |= 2 if exists $param->{Type};
+        $flags |= 4 if exists $param->{Width} or exists $param->{Precision};
+        $flags |= 8 if exists $param->{Nullable};
+        $flags |= 16 if exists $param->{Default};
         _AlterFieldDefn($self, $index, $definition, $flags);
     }
 }
 
 sub DeleteField {
-    my($self, $field) = @_;
-    my $index = $self->GetLayerDefn->GetFieldIndex($field);
+    my ($self, $field) = @_;
+    my $index = $self->GetLayerDefn->GetFieldIndex($field // 0);
     _DeleteField($self, $index);
 }
 
@@ -457,37 +462,33 @@ sub GetFieldNames {
 }
 
 sub GetFieldDefn {
-    my ($self, $name) = @_;
+    my $self = shift;
     my $d = $self->GetDefn;
-    for (my $i = 0; $i < $d->GetFieldCount; $i++) {
-        my $fd = $d->GetFieldDefn($i);
-        return $fd if $fd->Name eq $name;
-    }
-    for (my $i = 0; $i < $d->GetGeomFieldCount; $i++) {
-        my $fd = $d->GetGeomFieldDefn($i);
-        return $fd if $fd->Name eq $name;
-    }
-    Geo::GDAL::error(2, $name, 'Field');
+    my $field = $d->GetFieldIndex(shift // 0);
+    return $d->_GetFieldDefn($field);
+}
+
+sub GetGeomFieldDefn {
+    my $self = shift;
+    my $d = $self->GetDefn;
+    my $field = $d->GetGeomFieldIndex(shift // 0);
+    return $d->_GetGeomFieldDefn($field);
 }
 
 sub GeometryType {
     my $self = shift;
-    my $field = shift;
-    $field //= 0;
-    my $fd = $self->GetDefn->GetGeomFieldDefn($field);
+    my $d = $self->GetDefn;
+    my $field = $d->GetGeomFieldIndex(shift // 0);
+    my $fd = $d->_GetGeomFieldDefn($field);
     return $fd->Type if $fd;
 }
 
 sub SpatialReference {
-    my($self, $field, $sr) = @_;
+    my $self = shift;
     my $d = $self->GetDefn;
-    my $i;
-    if (not defined $field or (blessed($field) and $field->isa('Geo::OSR::SpatialReference'))) {
-        $i = 0;
-    } else {
-        $i = $d->GetGeomFieldIndex($field);
-    }
-    my $d2 = $d->GetGeomFieldDefn($i);
+    my $field = @_ == 2 ? $d->GetGeomFieldIndex(shift // 0) : 0;
+    my $sr = shift;
+    my $d2 = $d->_GetGeomFieldDefn($field);
     $d2->SpatialReference($sr) if defined $sr;
     return $d2->SpatialReference() if defined wantarray;
 }
@@ -563,6 +564,29 @@ sub new {
 %}
 
 %perlcode %{
+
+sub GetFieldIndex {
+    my ($self, $name) = @_;
+    my $index = $self->_GetFieldIndex($name);
+    if ($index < 0 and $name =~ /^\d+$/) {
+        # the name is allowed to be an index
+        $index = $name if $name >= 0 && $name < $self->GetFieldCount();
+    }
+    Geo::GDAL::error("'$name' is not a non-spatial field.") if $index < 0;
+    return $index;
+}
+
+sub GetGeomFieldIndex {
+    my ($self, $name) = @_;
+    my $index = $self->_GetGeomFieldIndex($name);
+    if ($index < 0 and $name =~ /^\d+$/) {
+        # the name is allowed to be an index
+        $index = $name if $name >= 0 && $name < $self->GetGeomFieldCount();
+    }
+    Geo::GDAL::error("'$name' is not a spatial field.") if $index < 0;
+    return $index;
+}
+
 *Name = *GetName;
 
 sub GetSchema {
@@ -581,11 +605,11 @@ sub GetSchema {
     $schema{StyleIgnored} = $self->StyleIgnored();
     $schema{Fields} = [];
     for my $i (0..$self->GetFieldCount-1) {
-        my $s = $self->GetFieldDefn($i)->Schema;
+        my $s = $self->_GetFieldDefn($i)->Schema;
         push @{$schema{Fields}}, $s;
     }
     for my $i (0..$self->GetGeomFieldCount-1) {
-        my $s = $self->GetGeomFieldDefn($i)->Schema;
+        my $s = $self->_GetGeomFieldDefn($i)->Schema;
         push @{$schema{Fields}}, $s;
     }
     return wantarray ? %schema : \%schema;
@@ -616,10 +640,10 @@ sub DeleteField {
     my ($self, $name) = @_;
     Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
     for my $i (0..$self->GetFieldCount-1) {
-        Geo::GDAL::error("Non-geometry fields cannot be deleted.") if $self->GetFieldDefn($i)->Name eq $name;
+        Geo::GDAL::error("Non-spatial fields cannot be deleted.") if $self->_GetFieldDefn($i)->Name eq $name;
     }
     for my $i (0..$self->GetGeomFieldCount-1) {
-        $self->DeleteGeomFieldDefn($i) if $self->GetGeomFieldDefn($i)->Name eq $name;
+        $self->DeleteGeomFieldDefn($i) if $self->_GetGeomFieldDefn($i)->Name eq $name;
     }
     Geo::GDAL::error(2, $name, 'Field');
 }
@@ -628,25 +652,24 @@ sub GetFieldNames {
     my $self = shift;
     my @names = ();
     for my $i (0..$self->GetFieldCount-1) {
-        push @names, $self->GetFieldDefn($i)->Name;
+        push @names, $self->_GetFieldDefn($i)->Name;
     }
     for my $i (0..$self->GetGeomFieldCount-1) {
-        push @names, $self->GetGeomFieldDefn($i)->Name;
+        push @names, $self->_GetGeomFieldDefn($i)->Name;
     }
     return @names;
 }
 
 sub GetFieldDefn {
-    my ($self, $name) = @_;
-    for my $i (0..$self->GetFieldCount-1) {
-        my $fd = $self->GetFieldDefn($i);
-        return $fd if $fd->Name eq $name;
-    }
-    for my $i (0..$self->GetGeomFieldCount-1) {
-        my $fd = $self->GetGeomFieldDefn($i);
-        return $fd if $fd->Name eq $name;
-    }
-    Geo::GDAL::error(2, $name, 'Field');
+    my $self = shift;
+    my $field = $self->GetFieldIndex(shift);
+    return $self->_GetFieldDefn($field);
+}
+
+sub GetGeomFieldDefn {
+    my $self = shift;
+    my $field = $self->GetGeomFieldIndex(shift);
+    return $self->_GetGeomFieldDefn($field);
 }
 
 sub GeomType {
@@ -714,23 +737,21 @@ sub Layer {
 }
 
 sub FETCH {
-    my($self, $index) = @_;
-    my $i;
-    eval {$i = $self->GetFieldIndex($index)};
-    return $self->GetField($i) unless $@;
-    Geo::GDAL::error("'$index' is not a non-spatial field and it is not safe to retrieve geometries from a feature this way.");
+    my $self = shift;
+    my $field = shift;
+    eval {my $i = $self->GetFieldIndex($field)};
+    return $self->GetField($field) unless $@;
+    Geo::GDAL::error("'$field' is not a non-spatial field and it is not safe to retrieve geometries from a feature this way.");
 }
 
 sub STORE {
     my $self = shift;
-    my $index = shift;
-    my $i;
-    eval {$i = $self->GetFieldIndex($index)};
+    my $field = shift;
+    eval {my $i = $self->GetFieldIndex($field)};
     unless ($@) {
-      $self->SetField($i, @_);
+        $self->SetField($field, @_);
     } else {
-      $i = $self->GetGeomFieldIndex($index);
-      $self->Geometry($i, @_);
+        $self->Geometry($field, @_);
     }
 }
 
@@ -739,6 +760,40 @@ sub FID {
     $self->SetFID($_[0]) if @_;
     return unless defined wantarray;
     $self->GetFID;
+}
+
+sub GetFieldIndex {
+    my ($self, $name) = @_;
+    my $index = $self->_GetFieldIndex($name);
+    if ($index < 0 and $name =~ /^\d+$/) {
+        # the name is allowed to be an index
+        $index = $name if $name >= 0 && $name < $self->GetFieldCount();
+    }
+    Geo::GDAL::error("'$name' is not a non-spatial field.") if $index < 0;
+    return $index;
+}
+
+sub GetGeomFieldIndex {
+    my ($self, $name) = @_;
+    my $index = $self->_GetGeomFieldIndex($name);
+    if ($index < 0 and $name =~ /^\d+$/) {
+        # the name is allowed to be an index
+        $index = $name if $name >= 0 && $name < $self->GetGeomFieldCount();
+    }
+    Geo::GDAL::error("'$name' is not a spatial field.") if $index < 0;
+    return $index;
+}
+
+sub GetFieldDefn {
+    my $self = shift;
+    my $field = $self->GetFieldIndex(shift);
+    return $self->GetFieldDefnRef($field);
+}
+
+sub GetGeomFieldDefn {
+    my $self = shift;
+    my $field = $self->GetGeomFieldIndex(shift);
+    return $self->GetGeomFieldDefnRef($field);
 }
 
 sub StyleString {
@@ -861,13 +916,11 @@ sub GetDefn {
     return $defn;
 }
 
-*GetGeomFieldDefn = *GetGeomFieldDefnRef;
-
 *GetFieldNames = *Geo::OGR::Layer::GetFieldNames;
-*GetFieldDefn = *Geo::OGR::Layer::GetFieldDefn;
 
 sub GetField {
-    my($self, $field) = @_;
+    my ($self, $field) = @_;
+    $field = $self->GetFieldIndex($field);
     return unless IsFieldSet($self, $field);
     my $type = GetFieldType($self, $field);
     if ($type == $Geo::OGR::OFTInteger) {
@@ -918,13 +971,14 @@ sub GetField {
 }
 
 sub UnsetField {
-    my($self, $field) = @_;
+    my ($self, $field) = @_;
+    $field = $self->GetFieldIndex($field);
     _UnsetField($self, $field);
 }
 
 sub SetField {
     my $self = shift;
-    my $field = shift;
+    my $field = $self->GetFieldIndex(shift);
     my $arg = $_[0];
     if (@_ == 0 or !defined($arg)) {
         _UnsetField($self, $field);
@@ -957,21 +1011,32 @@ sub SetField {
             _SetField($self, $field, @$arg[0..6]);
         }
         else {
-            _SetField($self, $field, @$arg);
+            $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
+            Geo::GDAL::error("Expected one non-reference argument for this field of type '$type'.");
         }
     } else {
         if ($type == $Geo::OGR::OFTBinary) {
             #$arg = unpack('H*', $arg); # remove when SetFieldBinary is available
             $self->SetFieldBinary($field, $arg);
-        } else {
+        } 
+        elsif ($type == $Geo::OGR::OFTInteger64) 
+        {
+            SetFieldInteger64($self, $field, $arg);
+        }
+        elsif ($type == $Geo::OGR::OFTInteger or $type == $Geo::OGR::OFTReal or $type == $Geo::OGR::OFTString) 
+        {
             _SetField($self, $field, $arg);
+        } 
+        else {
+            $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
+            Geo::GDAL::error("Expected more than one argument or a reference argument for this field of type '$type'.");
         }
     }
 }
 
 sub Field {
     my $self = shift;
-    my $field = shift;
+    my $field = $self->GetFieldIndex(shift // 0);
     $self->SetField($field, @_) if @_;
     $self->GetField($field) if defined wantarray;
 }
@@ -979,6 +1044,7 @@ sub Field {
 sub Geometry {
     my $self = shift;
     my $field = ((@_ > 0 and ref($_[0]) eq '') or (@_ > 2 and @_ % 2 == 1)) ? shift : 0;
+    $field = $self->GetGeomFieldIndex($field);
     my $geometry;
     if (@_ and @_ % 2 == 0) {
         %$geometry = @_;
