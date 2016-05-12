@@ -113,9 +113,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     if (oJP2Geo.pszXMPMetadata)
     {
-        char *apszMDList[2];
-        apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-        apszMDList[1] = NULL;
+        char *apszMDList[2] = { oJP2Geo.pszXMPMetadata, NULL };
         GDALDataset::SetMetadata(apszMDList, "xml:XMP");
     }
 
@@ -124,23 +122,19 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /*      domain metadata? (Note: the GDAL multidomain metadata XML box   */
 /*      has been excluded and is dealt a few lines below.               */
 /* -------------------------------------------------------------------- */
-    int iBox;
 
-    for( iBox = 0;
-            oJP2Geo.papszGMLMetadata
-                && oJP2Geo.papszGMLMetadata[iBox] != NULL;
-            iBox++ )
+    for( int iBox = 0;
+         oJP2Geo.papszGMLMetadata
+             && oJP2Geo.papszGMLMetadata[iBox] != NULL;
+         ++iBox )
     {
         char *pszName = NULL;
         const char *pszXML =
             CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox],
                                 &pszName );
         CPLString osDomain;
-        char *apszMDList[2];
-
         osDomain.Printf( "xml:%s", pszName );
-        apszMDList[0] = (char *) pszXML;
-        apszMDList[1] = NULL;
+        char *apszMDList[2] = { const_cast<char *>(pszXML), NULL };
 
         GDALDataset::SetMetadata( apszMDList, osDomain );
 
@@ -200,8 +194,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     if( oJP2Geo.pszXMLIPR != NULL )
     {
-        char* apszMD[2] = { NULL, NULL };
-        apszMD[0] = oJP2Geo.pszXMLIPR;
+        char* apszMD[2] = { oJP2Geo.pszXMLIPR, NULL };
         GDALDataset::SetMetadata( apszMD, "xml:IPR" );
     }
 
@@ -301,7 +294,6 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             CPLXMLNode* psFC = NULL;
             int bFreeFC = FALSE;
-            CPLString osGMLTmpFile;
 
             CPLXMLNode* psChild = psGCorGMLJP2FeaturesChildIter->psChild;
             if( psChild->eType == CXT_Attribute &&
@@ -322,6 +314,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                              psChild->psChild->pszValue);
                 }
             }
+
+            CPLString osGMLTmpFile;
             if( psChild->eType == CXT_Attribute &&
                 strcmp(psChild->pszValue, "xlink:href") == 0 &&
                 (STARTS_WITH(psChild->psChild->pszValue, "http://") ||
@@ -407,9 +401,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
             if( hDrv != NULL && hDrv == hGMLDrv )
             {
-                char* apszOpenOptions[2];
-                apszOpenOptions[0] = (char*) "FORCE_SRS_DETECTION=YES";
-                apszOpenOptions[1] = NULL;
+                char* apszOpenOptions[2] = {
+                    const_cast<char *>( "FORCE_SRS_DETECTION=YES" ), NULL };
                 GDALDataset* poTmpDS = (GDALDataset*)GDALOpenEx( osGMLTmpFile,
                                         GDAL_OF_VECTOR, NULL, apszOpenOptions, NULL );
                 if( poTmpDS )
