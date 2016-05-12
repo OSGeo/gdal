@@ -208,7 +208,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
     for(size_t i=0;i<apoBlocks.size();i++)
     {
-        GDALRasterBlock* poBlock = apoBlocks[i];
+        GDALRasterBlock* const poBlock = apoBlocks[i];
 
         if( poBlock->DropLockForRemovalFromStorage() )
         {
