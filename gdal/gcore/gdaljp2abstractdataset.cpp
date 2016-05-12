@@ -29,10 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_mdreader.h"
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
-#include "gdal_mdreader.h"
 
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
