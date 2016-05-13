@@ -2020,8 +2020,7 @@ public:
   int GetGeomFieldIndex(int i) {
       if (i < 0 || i >= OGR_FD_GetGeomFieldCount(self))
           CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      else
-          return i;
+      return i;
   }
 #endif
 
