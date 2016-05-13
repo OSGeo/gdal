@@ -147,7 +147,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
                          "Creating SQLite DB failed: %s",
                          sqlite3_errmsg(m_poDB));
             }
-            CPLDebug("OGR-VFK", "Internal DB (%s) too old - will be re-created",
+            CPLDebug("OGR-VFK", "Internal DB (%s) is invalid - will be re-created",
                      m_pszDBname);
 
             m_bNewDb = TRUE;
