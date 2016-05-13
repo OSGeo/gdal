@@ -141,9 +141,9 @@ private:
 public:
     char  **papszGMLMetadata;
 
-    int     bHaveGeoTransform;
+    bool    bHaveGeoTransform;
     double  adfGeoTransform[6];
-    int     bPixelIsPoint;
+    bool    bPixelIsPoint;
 
     char   *pszProjection;
 
