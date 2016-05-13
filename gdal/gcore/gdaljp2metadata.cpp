@@ -73,6 +73,9 @@ GDALJP2Metadata::GDALJP2Metadata() :
     pabyMSIGData(NULL),
     papszGMLMetadata(NULL),
     bHaveGeoTransform (FALSE),
+#if HAVE_CXX11
+    adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
+#endif
     bPixelIsPoint(FALSE),
     pszProjection(NULL),
     nGCPCount(0),
@@ -83,12 +86,14 @@ GDALJP2Metadata::GDALJP2Metadata() :
     pszGDALMultiDomainMetadata(NULL),
     pszXMLIPR(NULL)
 {
+#if !HAVE_CXX11
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+#endif
 }
 
 /************************************************************************/
