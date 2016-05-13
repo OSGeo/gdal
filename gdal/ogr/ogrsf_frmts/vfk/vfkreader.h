@@ -357,6 +357,7 @@ public:
     virtual bool           IsLatin2() const = 0;
     virtual bool           IsSpatial() const = 0;
     virtual bool           IsPreProcessed() const = 0;
+    virtual bool           IsValid() const = 0;
     virtual int            ReadDataBlocks() = 0;
     virtual int            ReadDataRecords(IVFKDataBlock * = NULL) = 0;
     virtual int            LoadGeometry() = 0;

@@ -76,6 +76,7 @@ public:
     bool           IsLatin2() const { return m_bLatin2; }
     bool           IsSpatial() const { return FALSE; }
     bool           IsPreProcessed() const { return FALSE; }
+    bool           IsValid() const { return TRUE; }
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock * = NULL);
     int            LoadGeometry();
@@ -98,6 +99,7 @@ private:
     sqlite3       *m_poDB;
     bool           m_bSpatial;
     bool           m_bNewDb;
+    bool           m_bDbSource;
 
     IVFKDataBlock *CreateDataBlock(const char *);
     void           AddDataBlock(IVFKDataBlock *, const char *);
@@ -114,6 +116,7 @@ public:
 
     bool          IsSpatial() const { return m_bSpatial; }
     bool          IsPreProcessed() const { return !m_bNewDb; }
+    bool          IsValid() const { return (bool)m_poDB; }
     int           ReadDataBlocks();
     int           ReadDataRecords(IVFKDataBlock * = NULL);
 

@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, 2013 Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2013-2016 Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -67,57 +67,49 @@ OGRVFKDataSource::~OGRVFKDataSource()
 /*!
   \brief Open VFK datasource
 
-  \param pszNewName datasource name
+  \param pszFileName datasource name
   \param bTestOpen True to test if datasource is possible to open
 
   \return TRUE on success or FALSE on failure
 */
-int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
+int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
 {
-    FILE * fp;
-    char   szHeader[1000];
+    GDALOpenInfo *poOpenInfo;
 
-    /* open the source file */
-    fp = VSIFOpen(pszNewName, "r");
-    if (fp == NULL) {
+    poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
+   
+    if (poOpenInfo->fpL == NULL) {
         if (!bTestOpen)
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to open VFK file `%s'",
-                     pszNewName);
-
+                     pszFileName);
+        delete poOpenInfo;
         return FALSE;
     }
-
-   /* If we aren't sure it is VFK, load a header chunk and check
-      for signs it is VFK */
+    
+    /* load a header chunk and check for signs it is VFK data
+       source */
     if (bTestOpen) {
-        size_t nRead = VSIFRead(szHeader, 1, sizeof(szHeader), fp);
-        if (nRead <= 0) {
-            VSIFClose(fp);
-            return FALSE;
-        }
-        szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
-
-        // TODO: improve check
-        if (!STARTS_WITH(szHeader, "&H")) {
-            VSIFClose(fp);
+        if (poOpenInfo->nHeaderBytes < 16 ||
+            (!STARTS_WITH((const char*)poOpenInfo->pabyHeader, "&H") &&
+             !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3"))) {
+            delete poOpenInfo;
             return FALSE;
         }
     }
-
-    /* We assume now that it is VFK. Close and instantiate a
-       VFKReader on it. */
-    VSIFClose(fp);
-
-    pszName = CPLStrdup(pszNewName);
-
+    delete poOpenInfo;
+    
+    pszName = CPLStrdup(pszFileName);
+    
     /* create VFK reader */
-    poReader = CreateVFKReader(pszNewName);
-    if (poReader == NULL) {
+    poReader = CreateVFKReader(pszFileName);
+    if (poReader == NULL || !poReader->IsValid()) {
+        /*
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s appears to be VFK but the VFK reader can't"
                  "be instantiated",
-                 pszNewName);
+                     pszFileName);
+        */
         return FALSE;
     }
 
