@@ -3037,7 +3037,7 @@ def jp2openjpeg_46():
 }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
-"""<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}} {{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
+"""<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/source.xml",
 """<A><B>my_value</B></A>""")
@@ -3057,7 +3057,7 @@ def jp2openjpeg_46():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>1 str true
+    if gmljp2.find("""<gmljp2:metadata>1 str trueX
         <B>my_value</B>
 yeah: """) < 0:
         gdaltest.post_reason('fail')
