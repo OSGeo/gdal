@@ -49,30 +49,49 @@
 /*!
   \brief VFKReaderSQLite constructor
 */
-VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilename)
+VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileName)
 {
     const char *pszDbNameConf;
+    size_t      nLen;
     CPLString   osDbName;
     CPLString   osCommand;
     VSIStatBufL sStatBufDb;
+    GDALOpenInfo *poOpenInfo;
 
-    /* open tmp SQLite DB (re-use DB file if already exists) */
-    pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
-    if (pszDbNameConf) {
-	osDbName = pszDbNameConf;
+    poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly);
+    m_bDbSource = poOpenInfo->nHeaderBytes >= 16 &&
+      STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
+    delete poOpenInfo;
+
+    if (!m_bDbSource) {
+        m_bNewDb = TRUE;
+        
+        /* open tmp SQLite DB (re-use DB file if already exists) */
+        pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
+        if (pszDbNameConf) {
+            osDbName = pszDbNameConf;
+        }
+        else {
+            osDbName = CPLResetExtension(m_pszFilename, "db");
+        }
+        nLen = osDbName.length();
+        if( nLen > 2048 )
+        {
+            nLen = 2048;
+            osDbName.resize(nLen);
+        }
     }
     else {
-	osDbName = CPLResetExtension(m_pszFilename, "db");
+        m_bNewDb = FALSE;
+
+        nLen = strlen(pszFileName);
+        osDbName = pszFileName;
     }
-    size_t nLen = osDbName.length();
-    if( nLen > 2048 )
-    {
-        nLen = 2048;
-        osDbName.resize(nLen);
-    }
+     
     m_pszDBname = new char [nLen+1];
     std::strncpy(m_pszDBname, osDbName.c_str(), nLen);
     m_pszDBname[nLen] = 0;
+
     CPLDebug("OGR-VFK", "Using internal DB: %s",
              m_pszDBname);
 
@@ -81,8 +100,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     else
 	m_bSpatial = FALSE;   /* store also geometry in DB */
 
-    m_bNewDb = TRUE;
-    if (VSIStatL(osDbName, &sStatBufDb) == 0) {
+    if (!m_bDbSource && VSIStatL(osDbName, &sStatBufDb) == 0) {
         /* Internal DB exists */
 	if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    m_bNewDb = TRUE;     /* overwrite existing DB */
@@ -116,10 +134,32 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
                  sqlite3_errmsg(m_poDB));
     }
 
+    char** papszResult;
+    int nRowCount, nColCount;
+    if (m_bDbSource) {
+        /* check if it's really VFK DB datasource */
+        pszErrMsg = NULL;
+        papszResult = NULL;
+        nRowCount = nColCount = 0;
+
+        osCommand.Printf("SELECT * FROM sqlite_master WHERE type='table' AND name='%s'",
+                         VFK_DB_TABLE);
+        sqlite3_get_table(m_poDB,
+                          osCommand.c_str(),
+                          &papszResult,
+                          &nRowCount, &nColCount, &pszErrMsg);
+        sqlite3_free_table(papszResult);
+        sqlite3_free(pszErrMsg);
+
+        if (nRowCount != 1) {
+            /* DB is not valid VFK datasource */
+            sqlite3_close(m_poDB);
+            m_poDB = NULL;
+            return;
+        }
+    }
+
     if (!m_bNewDb) {
-        char** papszResult;
-        int nRowCount, nColCount;
-        
         /* check if DB is up-to-date datasource */
         pszErrMsg = NULL;
         papszResult = NULL;
@@ -131,11 +171,15 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
                           &nRowCount, &nColCount, &pszErrMsg);
         sqlite3_free_table(papszResult);
         sqlite3_free(pszErrMsg);
-        pszErrMsg = NULL;
         
         if (nColCount != 7) {
             /* it seems that DB is outdated, let's create new DB from
              * scratch */
+            if (m_bDbSource) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid VFK DB datasource");
+            }
+            
             if (SQLITE_OK != sqlite3_close(m_poDB)) {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Closing SQLite DB failed: %s",
@@ -227,8 +271,6 @@ int VFKReaderSQLite::ReadDataBlocks()
     nDataBlocks = VFKReader::ReadDataBlocks();
     CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", NULL, NULL, NULL));
 
-    StoreInfo2DB(); /* store header into DB */
-
     return nDataBlocks;
 }
 
@@ -255,7 +297,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     pszName = NULL;
     nDataRecords = 0;
-    bReadVfk = TRUE;
+    bReadVfk = !m_bDbSource;
     bReadDb = FALSE;
 
     if (poDataBlock) { /* read records only for selected data block */
@@ -355,7 +397,10 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         /* begin transaction */
         ExecuteSQL("BEGIN");
 
-        /* INSERT ... */
+        /* Store VFK header to DB */
+        StoreInfo2DB();
+        
+        /* Insert VFK data records into DB */
         nDataRecords += VFKReader::ReadDataRecords(poDataBlock);
 
         /* update VFK_DB_TABLE table */

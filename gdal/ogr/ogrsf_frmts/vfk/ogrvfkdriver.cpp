@@ -37,9 +37,20 @@ CPL_CVSID("$Id$");
 
 static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
-    return ( poOpenInfo->fpL != NULL &&
-             poOpenInfo->nHeaderBytes >= 2 &&
-             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "&H") );
+    if( poOpenInfo->fpL == NULL )
+        return FALSE;
+
+    if( poOpenInfo->nHeaderBytes >= 2 &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "&H") )
+        return TRUE;
+
+    /* valid datasource can be also SQLite DB previously created by
+       VFK driver, the real check is done by VFKReaderSQLite */
+    if ( poOpenInfo->nHeaderBytes >= 15 &&
+         STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+        return GDAL_IDENTIFY_UNKNOWN;
+
+    return FALSE;
 }
 
 /*
