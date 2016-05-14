@@ -34,8 +34,8 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_LIBXML2
 
-#include <libxml/tree.h>
 #include <libxml/parser.h>
+#include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
@@ -50,62 +50,55 @@ typedef enum
     GDALGMLJP2Expr_STRING_LITERAL,
 } GDALGMLJP2ExprType;
 
-// {{{IF(EQ(XPATH(), '5'), '', '')}}}
-
 class GDALGMLJP2Expr
 {
-        static void             SkipSpaces(const char*& pszStr);
+    static void SkipSpaces( const char*& pszStr );
 
-    public:
-        GDALGMLJP2ExprType           eType;
-        CPLString                    osValue;
+  public:
+    GDALGMLJP2ExprType           eType;
+    CPLString                    osValue;
 
-                                GDALGMLJP2Expr(): eType(GDALGMLJP2Expr_Unknown) {}
-                                GDALGMLJP2Expr(const char* pszVal): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
-                                GDALGMLJP2Expr(CPLString osVal): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
-                               ~GDALGMLJP2Expr();
+    GDALGMLJP2Expr() : eType(GDALGMLJP2Expr_Unknown) {}
+    GDALGMLJP2Expr( const char* pszVal ) :
+        eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
+    GDALGMLJP2Expr( CPLString osVal ) :
+        eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
+    ~GDALGMLJP2Expr() {};
 
-        GDALGMLJP2Expr          Evaluate(xmlXPathContextPtr pXPathCtx,
-                                         xmlDocPtr pDoc);
+    GDALGMLJP2Expr          Evaluate( xmlXPathContextPtr pXPathCtx,
+                                      xmlDocPtr pDoc );
 
-        static GDALGMLJP2Expr*  Build(const char* pszOriStr,
-                                      const char*& pszStr);
-        static void             ReportError(const char* pszOriStr,
-                                            const char* pszStr,
-                                            const char* pszIntroMessage = "Parsing error at:\n");
+    static GDALGMLJP2Expr* Build( const char* pszOriStr,
+                                  const char*& pszStr );
+    static void ReportError( const char* pszOriStr,
+                             const char* pszStr,
+                             const char* pszIntroMessage =
+                                 "Parsing error at:\n" );
 };
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                         ReportError()                                */
 /************************************************************************/
 
-GDALGMLJP2Expr::~GDALGMLJP2Expr()
+void GDALGMLJP2Expr::ReportError( const char* pszOriStr,
+                                  const char* pszStr,
+                                  const char* pszIntroMessage )
 {
-}
-
-/************************************************************************/
-/*                             Build()                                  */
-/************************************************************************/
-
-void GDALGMLJP2Expr::ReportError(const char* pszOriStr,
-                                 const char* pszStr,
-                                 const char* pszIntroMessage)
-{
-    size_t nDist = (size_t)(pszStr - pszOriStr);
+    size_t nDist = static_cast<size_t>(pszStr - pszOriStr);
     if( nDist > 40 )
         nDist = 40;
     CPLString osErrMsg(pszIntroMessage);
     CPLString osInvalidExpr = CPLString(pszStr - nDist).substr(0, nDist + 20);
-    for(int i=(int)nDist-1;i>=0;i--)
+    for( int i = static_cast<int>(nDist) - 1; i >= 0; --i )
     {
         if( osInvalidExpr[i] == '\n' )
         {
             osInvalidExpr = osInvalidExpr.substr(i+1);
-            nDist -= i+1;
+            nDist -= i + 1;
             break;
         }
     }
-    for(size_t i=nDist;i<osInvalidExpr.size();i++)
+    for( size_t i = nDist; i < osInvalidExpr.size(); ++i )
     {
         if( osInvalidExpr[i] == '\n' )
         {
@@ -115,28 +108,29 @@ void GDALGMLJP2Expr::ReportError(const char* pszOriStr,
     }
     osErrMsg += osInvalidExpr;
     osErrMsg += "\n";
-    for(size_t i=0;i<nDist;i++)
+    for( size_t i = 0; i < nDist; ++i )
         osErrMsg += " ";
     osErrMsg += "^";
     CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrMsg.c_str());
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                        SkipSpaces()                                  */
 /************************************************************************/
 
-void GDALGMLJP2Expr::SkipSpaces(const char*& pszStr)
+void GDALGMLJP2Expr::SkipSpaces( const char*& pszStr )
 {
-    while( *pszStr == ' ' || *pszStr == '\t' || *pszStr == '\r' || *pszStr ==  '\n' )
-        pszStr ++;
+    while( *pszStr == ' ' || *pszStr == '\t' ||
+           *pszStr == '\r' || *pszStr ==  '\n' )
+        ++pszStr;
 }
 
 /************************************************************************/
 /*                             Build()                                  */
 /************************************************************************/
 
-GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
-                                      const char*& pszStr)
+GDALGMLJP2Expr* GDALGMLJP2Expr::Build( const char* pszOriStr,
+                                       const char*& pszStr )
 {
     if( STARTS_WITH_CI(pszStr, "{{{") )
     {
@@ -164,7 +158,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
             ReportError(pszOriStr, pszStr);
             return NULL;
         }
-        pszStr ++;
+        ++pszStr;
         SkipSpaces(pszStr);
         CPLString l_osValue;
         int nParenthesisIndent = 0;
@@ -176,19 +170,19 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                 if( *pszStr == chLiteralQuote )
                     chLiteralQuote = '\0';
                 l_osValue += *pszStr;
-                pszStr++;
+                ++pszStr;
             }
             else if( *pszStr == '\'' || *pszStr == '"' )
             {
                 chLiteralQuote = *pszStr;
                 l_osValue += *pszStr;
-                pszStr++;
+                ++pszStr;
             }
             else if( *pszStr == '(' )
             {
-                nParenthesisIndent ++;
+                ++nParenthesisIndent;
                 l_osValue += *pszStr;
-                pszStr++;
+                ++pszStr;
             }
             else if( *pszStr == ')' )
             {
@@ -199,11 +193,14 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                     GDALGMLJP2Expr* poExpr = new GDALGMLJP2Expr();
                     poExpr->eType = GDALGMLJP2Expr_XPATH;
                     poExpr->osValue = l_osValue;
-                    //CPLDebug("GMLJP2", "XPath expression '%s'", l_osValue.c_str());
+#if DEBUG_VERBOSE
+                    CPLDebug("GMLJP2", "XPath expression '%s'",
+                             l_osValue.c_str());
+#endif
                     return poExpr;
                 }
                 l_osValue += *pszStr;
-                pszStr++;
+                ++pszStr;
             }
             else
             {
@@ -225,7 +222,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
 /*                       GDALGMLJP2HexFormatter()                       */
 /************************************************************************/
 
-static const char* GDALGMLJP2HexFormatter(GByte nVal)
+static const char* GDALGMLJP2HexFormatter( GByte nVal )
 {
     return CPLSPrintf("%02X", nVal);
 }
@@ -234,14 +231,14 @@ static const char* GDALGMLJP2HexFormatter(GByte nVal)
 /*                            Evaluate()                                */
 /************************************************************************/
 
-static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
-                                    xmlXPathContextPtr pXPathCtx,
-                                    xmlDocPtr pDoc);
+static CPLString GDALGMLJP2EvalExpr( const CPLString& osTemplate,
+                                     xmlXPathContextPtr pXPathCtx,
+                                     xmlDocPtr pDoc );
 
 GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
                                    xmlDocPtr pDoc)
 {
-    switch(eType)
+    switch( eType )
     {
         case GDALGMLJP2Expr_XPATH:
         {
@@ -250,7 +247,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             if( pXPathObj == NULL )
                 return GDALGMLJP2Expr("");
 
-            // Add result of the evaluation
+            // Add result of the evaluation.
             CPLString osXMLRes;
             if( pXPathObj->type == XPATH_STRING )
                 osXMLRes = (const char*)pXPathObj->stringval;
@@ -294,16 +291,16 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
     size_t nPos = 0;
     while( true )
     {
-        // Get next expression
+        // Get next expression.
         size_t nStartPos = osTemplate.find("{{{", nPos);
         if( nStartPos == std::string::npos)
         {
-            // Add terminating portion of the template
+            // Add terminating portion of the template.
             osXMLRes += osTemplate.substr(nPos);
             break;
         }
 
-        // Add portion of template before the expression
+        // Add portion of template before the expression.
         osXMLRes += osTemplate.substr(nPos, nStartPos - nPos);
 
         const char* pszExpr = osTemplate.c_str() + nStartPos;
@@ -402,60 +399,58 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 
     CPLString osRet;
     static int nCounter = 0;
-    srand((unsigned int)time(NULL) + nCounter);
-    nCounter ++;
+    srand(static_cast<unsigned int>(time(NULL)) + nCounter);
+    ++nCounter;
     for( int i=0; i<4; i ++ )
         osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += "-";
     osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += "-";
-    osRet += GDALGMLJP2HexFormatter((rand() & 0x0F) | 0x40); // set the version number bits (4 == random)
+    // Set the version number bits (4 == random).
+    osRet += GDALGMLJP2HexFormatter((rand() & 0x0F) | 0x40);
     osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += "-";
-    osRet += GDALGMLJP2HexFormatter((rand() & 0x3F) | 0x80); // set the variant bits
+    // Set the variant bits.
+    osRet += GDALGMLJP2HexFormatter((rand() & 0x3F) | 0x80);
     osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += "-";
-    for( int i=0; i<6; i ++ )
+    for( int i = 0; i < 6; ++i )
     {
-        /* coverity[dont_call] */
+        // coverity[dont_call]
         osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     }
 
-    valuePush(ctxt, xmlXPathNewString((const xmlChar*)osRet.c_str()));
+    valuePush(ctxt,
+              xmlXPathNewString(
+                  reinterpret_cast<const xmlChar *>(osRet.c_str())));
 }
 
-#endif /* defined(LIBXML2) */
+#endif  // LIBXML2
 
 /************************************************************************/
 /*                      GDALGMLJP2GenerateMetadata()                    */
 /************************************************************************/
 
-CPLXMLNode* GDALGMLJP2GenerateMetadata(
 #ifdef HAVE_LIBXML2
+CPLXMLNode* GDALGMLJP2GenerateMetadata(
     const CPLString& osTemplateFile,
     const CPLString& osSourceFile
-#else
-    const CPLString& /* osTemplateFile */,
-    const CPLString& /* osSourceFile */
-#endif
 )
 {
-#ifndef HAVE_LIBXML2
-    return NULL;
-#else
     GByte* pabyStr = NULL;
     if( !VSIIngestFile( NULL, osTemplateFile, &pabyStr, NULL, -1 ) )
         return NULL;
-    CPLString osTemplate((const char*)pabyStr);
+    CPLString osTemplate(reinterpret_cast<char *>(pabyStr));
     CPLFree(pabyStr);
 
     if( !VSIIngestFile( NULL, osSourceFile, &pabyStr, NULL, -1 ) )
         return NULL;
-    CPLString osSource((const char*)pabyStr);
+    CPLString osSource(reinterpret_cast<char *>(pabyStr));
     CPLFree(pabyStr);
 
-    xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)osSource.c_str());
+    xmlDocPtr pDoc = xmlParseDoc(
+        reinterpret_cast<const xmlChar *>(osSource.c_str()));
     if( pDoc == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse %s",
@@ -470,8 +465,10 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
         return NULL;
     }
 
-    xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"if", GDALGMLJP2XPathIf);
-    xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"uuid", GDALGMLJP2XPathUUID);
+    xmlXPathRegisterFunc(pXPathCtx, reinterpret_cast<const xmlChar *>("if"),
+                         GDALGMLJP2XPathIf);
+    xmlXPathRegisterFunc(pXPathCtx, reinterpret_cast<const xmlChar *>("uuid"),
+                         GDALGMLJP2XPathUUID);
 
     pXPathCtx->error = GDALGMLJP2XPathErrorHandler;
 
@@ -483,5 +480,13 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     xmlFreeDoc(pDoc);
 
     return CPLParseXMLString(osXMLRes);
-#endif
 }
+#else  // !HAVE_LIBXML2
+CPLXMLNode* GDALGMLJP2GenerateMetadata(
+    const CPLString&  /* osTemplateFile */,
+    const CPLString&  /* osSourceFile */
+)
+{
+    return NULL;
+}
+#endif  // HAVE_LIBXML2
