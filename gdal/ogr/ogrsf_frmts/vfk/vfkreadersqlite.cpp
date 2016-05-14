@@ -63,11 +63,12 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
       STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
     delete poOpenInfo;
 
+    pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
+
     if (!m_bDbSource) {
         m_bNewDb = TRUE;
         
         /* open tmp SQLite DB (re-use DB file if already exists) */
-        pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
         if (pszDbNameConf) {
             osDbName = pszDbNameConf;
         }
