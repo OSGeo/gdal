@@ -1181,7 +1181,8 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
         int nRadius = psTransform->nBufferMaxRadius;
         if( psTransform->nDEMExtractions < psTransform->nBufferMaxRadius * psTransform->nBufferMaxRadius )
         {
-            nRadius = static_cast<int> (sqrt(psTransform->nDEMExtractions) );
+            nRadius = static_cast<int> (
+                  sqrt(static_cast<double>(psTransform->nDEMExtractions)) );
             CPLAssert( nRadius <= psTransform->nBufferMaxRadius );
             if( nRadius < nWidth )
                 nRadius = nWidth;
