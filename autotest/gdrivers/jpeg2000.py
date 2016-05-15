@@ -35,6 +35,31 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+gdaltest.buggy_jasper = None
+
+def is_buggy_jasper():
+  
+    if gdaltest.buggy_jasper is not None:
+        return gdaltest.buggy_jasper
+  
+    gdaltest.buggy_jasper = False
+    if gdal.GetDriverByName( 'JPEG2000' ) is None:
+        return False
+
+    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
+    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
+    # Recent Debian/Ubuntu have the appropriate patch.
+    # So we try to run in a subprocess first
+    import test_cli_utilities
+    if test_cli_utilities.get_gdalinfo_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK JP2OpenJPEG" data/3_13bit_and_1bit.jp2')
+        if ret.find('Band 1') == -1:
+            gdaltest.post_reason('Jasper library would need patches')
+            gdaltest.buggy_jasper = True
+            return True
+          
+    return False
+
 ###############################################################################
 # Verify we have the driver.
 
@@ -172,19 +197,8 @@ def jpeg2000_7():
 
 def jpeg2000_8():
 
-    if gdaltest.jpeg2000_drv is None:
+    if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
         return 'skip'
-
-    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
-    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
-    # Recent Debian/Ubuntu have the appropriate patch.
-    # So we try to run in a subprocess first
-    import test_cli_utilities
-    if test_cli_utilities.get_gdalinfo_path() is not None:
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK" data/3_13bit_and_1bit.jp2')
-        if ret.find('Band 1') == -1:
-            gdaltest.post_reason('Jasper library would need patches')
-            return 'fail'
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
@@ -263,7 +277,7 @@ def jpeg2000_10():
 
 def jpeg2000_11():
 
-    if gdaltest.jpeg2000_drv is None:
+    if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
         return 'skip'
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
