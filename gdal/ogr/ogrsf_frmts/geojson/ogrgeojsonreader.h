@@ -117,6 +117,7 @@ private:
     char chNestedAttributeSeparator_;
     bool bStoreNativeData_;
     bool bArrayAsString_;
+    std::set<int> aoSetUndeterminedTypeFields_;
 
     // bFlatten... is a tri-state boolean with -1 being unset.
     int bFlattenGeocouchSpatiallistFormat;
@@ -157,7 +158,8 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
                                       json_object* poVal,
                                       bool bFlattenNestedAttributes,
                                       char chNestedAttributeSeparator,
-                                      bool bArrayAsString = false);
+                                      bool bArrayAsString,
+                                      std::set<int>& aoSetUndeterminedTypeFields);
 
 /************************************************************************/
 /*                 GeoJSON Parsing Utilities                            */
