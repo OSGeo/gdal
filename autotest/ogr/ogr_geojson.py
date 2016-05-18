@@ -2618,6 +2618,56 @@ def ogr_geojson_cleanup():
 
     return 'success'
 
+###############################################################################
+# Test NULL type detection when first value is null
+
+def ogr_geojson_54():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{
+   "type": "FeatureCollection",
+
+  "features": [
+      { "type": "Feature", "properties": { "int": null, "string": null, "double": null, "dt" : null, "boolean": null, "null": null }, "geometry": null },
+      { "type": "Feature", "properties": { "int": 168, "string": "string", "double": 1.23, "dt" : "2016-05-18T12:34:56Z", "boolean": true }, "geometry": null }
+  ]
+}
+""")
+    lyr = ds.GetLayer(0)
+
+    fld = lyr.GetLayerDefn().GetFieldDefn(0)
+    if fld.GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(1)
+    if fld.GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(2)
+    if fld.GetType() != ogr.OFTReal:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(3)
+    if fld.GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(4)
+    if fld.GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if fld.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if fld.GetWidth() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(5)
+    if fld.GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -2672,6 +2722,7 @@ gdaltest_list = [
     ogr_geojson_51,
     ogr_geojson_52,
     ogr_geojson_53,
+    ogr_geojson_54,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
