@@ -116,7 +116,7 @@ public:
 
     bool          IsSpatial() const { return m_bSpatial; }
     bool          IsPreProcessed() const { return !m_bNewDb; }
-    bool          IsValid() const { return (bool)m_poDB; }
+    bool          IsValid() const { return m_poDB != NULL; }
     int           ReadDataBlocks();
     int           ReadDataRecords(IVFKDataBlock * = NULL);
 
