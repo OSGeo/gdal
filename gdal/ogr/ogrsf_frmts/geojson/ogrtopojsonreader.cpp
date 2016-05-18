@@ -385,7 +385,8 @@ static void ParseObject(const char* pszId,
 /************************************************************************/
 
 static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
-                               json_object* poObj)
+                               json_object* poObj,
+                               std::set<int>& aoSetUndeterminedTypeFields)
 {
     json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
     if( NULL != poObjProps &&
@@ -395,9 +396,11 @@ static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
+        
         json_object_object_foreachC( poObjProps, it )
         {
-            OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val, false, 0);
+            OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
+                                             false, 0, false, aoSetUndeterminedTypeFields);
         }
     }
 }
@@ -411,7 +414,8 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                              OGRGeoJSONLayer **ppoMainLayer,
                              json_object* poArcs,
                              ScalingParams* psParams,
-                             int nPassNumber )
+                             int nPassNumber,
+                             std::set<int>& aoSetUndeterminedTypeFields)
 {
     bool bNeedSecondPass = false;
 
@@ -456,7 +460,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         if( poGeom != NULL &&
                             json_type_object == json_object_get_type( poGeom ) )
                         {
-                            EstablishLayerDefn(poDefn, poGeom);
+                            EstablishLayerDefn(poDefn, poGeom, aoSetUndeterminedTypeFields);
                         }
                     }
 
@@ -494,7 +498,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         }
                     }
                     OGRFeatureDefn* poDefn = (*ppoMainLayer)->GetLayerDefn();
-                    EstablishLayerDefn(poDefn, poObj);
+                    EstablishLayerDefn(poDefn, poObj, aoSetUndeterminedTypeFields);
                     bNeedSecondPass = true;
                 }
                 else
@@ -573,6 +577,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( poObjects == NULL )
         return;
 
+    std::set<int> aoSetUndeterminedTypeFields;
     if( json_type_object == json_object_get_type( poObjects ) )
     {
         json_object_iter it;
@@ -585,7 +590,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
             json_object* poObj = it.val;
             bNeedSecondPass |= ParseObjectMain( it.key, poObj, poDS,
                                                 &poMainLayer, poArcs, &sParams,
-                                                1);
+                                                1, aoSetUndeterminedTypeFields);
         }
         if( bNeedSecondPass )
         {
@@ -595,7 +600,8 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
             json_object_object_foreachC( poObjects, it )
             {
                 json_object* poObj = it.val;
-                ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs, &sParams, 2);
+                ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs,
+                                &sParams, 2, aoSetUndeterminedTypeFields);
             }
         }
     }
@@ -606,14 +612,16 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         for(int i=0; i<nObjects; i++)
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
-            bNeedSecondPass |= ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs, &sParams, 1);
+            bNeedSecondPass |= ParseObjectMain(NULL, poObj, poDS, &poMainLayer,
+                                               poArcs, &sParams, 1, aoSetUndeterminedTypeFields);
         }
         if( bNeedSecondPass )
         {
             for(int i=0; i<nObjects; i++)
             {
                 json_object* poObj = json_object_array_get_idx(poObjects, i);
-                ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs, &sParams, 2);
+                ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs,
+                                &sParams, 2, aoSetUndeterminedTypeFields);
             }
         }
     }
