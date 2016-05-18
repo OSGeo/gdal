@@ -34,6 +34,7 @@
 #include "cpl_string.h"
 #include "ogrsf_frmts.h"
 #include <json.h> // JSON-C
+#include <set>
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
