@@ -118,6 +118,6 @@ static swq_field_type SWQColumnFuncChecker(
             swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Column Summary Function '%s' found in an inappropriate context.",
-              poOp == NULL ? poOp->pszName : "" );
+              poOp != NULL ? poOp->pszName : "" );
     return SWQ_ERROR;
 }
