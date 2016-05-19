@@ -1203,9 +1203,12 @@ void kml2field (
         /***** timestamp *****/
 
         if ( poKmlTimePrimitive->IsA ( kmldom::Type_TimeStamp ) ) {
+            // probably a libkml bug: AsTimeStamp should really return not NULL on a gx:TimeStamp
             TimeStampPtr poKmlTimeStamp = AsTimeStamp ( poKmlTimePrimitive );
+            if( poKmlTimeStamp == NULL )
+                poKmlTimeStamp = AsGxTimeStamp ( poKmlTimePrimitive );
 
-            if ( poKmlTimeStamp->has_when (  ) ) {
+            if ( poKmlTimeStamp && poKmlTimeStamp->has_when (  ) ) {
                 const std::string oKmlWhen = poKmlTimeStamp->get_when (  );
                 kmldatetime2ogr(poOgrFeat, oFC.tsfield, oKmlWhen );
             }
@@ -1214,18 +1217,21 @@ void kml2field (
         /***** timespan *****/
 
         if ( poKmlTimePrimitive->IsA ( kmldom::Type_TimeSpan ) ) {
+            // probably a libkml bug: AsTimeSpan should really return not NULL on a gx:TimeSpan
             TimeSpanPtr poKmlTimeSpan = AsTimeSpan ( poKmlTimePrimitive );
+            if( poKmlTimeSpan == NULL )
+                poKmlTimeSpan = AsGxTimeSpan ( poKmlTimePrimitive );
 
             /***** begin *****/
 
-            if ( poKmlTimeSpan->has_begin (  ) ) {
+            if ( poKmlTimeSpan && poKmlTimeSpan->has_begin (  ) ) {
                 const std::string oKmlWhen = poKmlTimeSpan->get_begin (  );
                 kmldatetime2ogr(poOgrFeat, oFC.beginfield, oKmlWhen );
             }
 
             /***** end *****/
 
-            if ( poKmlTimeSpan->has_end (  ) ) {
+            if ( poKmlTimeSpan && poKmlTimeSpan->has_end (  ) ) {
                 const std::string oKmlWhen = poKmlTimeSpan->get_end (  );
                 kmldatetime2ogr(poOgrFeat, oFC.endfield, oKmlWhen );
             }
