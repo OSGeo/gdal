@@ -1,0 +1,7 @@
+osr
+gdalconst
+ogr
+gdalnumeric
+osgeo
+gdal
+gnm
