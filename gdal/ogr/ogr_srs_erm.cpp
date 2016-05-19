@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_spatialref.h"
 #include "cpl_conv.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -99,14 +99,9 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr;
-
-    if( EQUAL(pszProj,"GEODETIC") )
+    if( !EQUAL(pszProj,"GEODETIC") )
     {
-    }
-    else
-    {
-        eErr = importFromDict( "ecw_cs.wkt", pszProj );
+        const OGRErr eErr = importFromDict( "ecw_cs.wkt", pszProj );
         if( eErr != OGRERR_NONE )
             return eErr;
 
@@ -121,7 +116,7 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oGeogCS;
 
-    eErr = oGeogCS.importFromDict( "ecw_cs.wkt", pszDatum );
+    const OGRErr eErr = oGeogCS.importFromDict( "ecw_cs.wkt", pszDatum );
     if( eErr != OGRERR_NONE )
     {
         Clear();
@@ -283,7 +278,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Is this a UTM projection?                                       */
 /* -------------------------------------------------------------------- */
-    int bNorth, nZone;
+    int bNorth = FALSE;
+    int nZone = 0;
 
     nZone = GetUTMZone( &bNorth );
     if( nZone > 0 )
@@ -330,7 +326,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Handle the units.                                               */
 /* -------------------------------------------------------------------- */
-    double dfUnits = GetLinearUnits();
+    const double dfUnits = GetLinearUnits();
 
     if( fabs(dfUnits-0.3048) < 0.0001 )
         strcpy( pszUnits, "FEET" );
@@ -339,6 +335,6 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 
     if( EQUAL(pszProj,"RAW") )
         return OGRERR_UNSUPPORTED_SRS;
-    else
-        return OGRERR_NONE;
+
+    return OGRERR_NONE;
 }
