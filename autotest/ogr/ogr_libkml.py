@@ -2016,6 +2016,29 @@ def ogr_libkml_write_container_properties():
     return 'success'
 
 ###############################################################################
+# Test reading gx:TimeStamp and gx:TimeSpan
+
+def ogr_libkml_read_gx_timestamp():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/gxtimestamp.kml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['timestamp'] != '2016/02/13 12:34:56+00':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['begin'] != '2016/02/13 00:00:00+00' or f['end'] != '2016/02/14 00:00:00+00':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -2114,6 +2137,7 @@ gdaltest_list = [
     ogr_libkml_read_write_data,
     ogr_libkml_write_folder,
     ogr_libkml_write_container_properties,
+    ogr_libkml_read_gx_timestamp,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
