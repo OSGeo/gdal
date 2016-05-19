@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+<Document>
+<Placemark>
+    <name>foo</name>
+    <description>foo</description>
+    <gx:TimeStamp>
+        <when>2016-02-13T12:34:56Z</when>
+    </gx:TimeStamp>
+</Placemark>
+<Placemark>
+    <name>foo</name>
+    <description>foo</description>
+    <gx:TimeSpan>
+        <begin>2016-02-13T00:00:00Z</begin>
+        <end>2016-02-14T00:00:00Z</end>
+    </gx:TimeSpan>
+</Placemark>
+</Document>
+</kml>
