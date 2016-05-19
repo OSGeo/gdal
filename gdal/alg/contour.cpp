@@ -120,11 +120,14 @@ class GDALContourGenerator
     double  dfContourInterval;
     double  dfContourOffset;
 
+
     CPLErr AddSegment( double dfLevel,
                        double dfXStart, double dfYStart,
                        double dfXEnd, double dfYEnd, int bLeftHigh );
 
-    CPLErr ProcessPixel( int iPixel );
+    template<EMULATED_BOOL bNoDataIsNan> inline bool IsNoData(double dfVal) const;
+
+    template<EMULATED_BOOL bNoDataIsNan> CPLErr ProcessPixel( int iPixel );
     CPLErr ProcessRect( double, double, double,
                         double, double, double,
                         double, double, double,
@@ -157,6 +160,17 @@ public:
     CPLErr              EjectContours( int bOnlyUnused = FALSE );
 
 };
+
+template<> inline bool GDALContourGenerator::IsNoData<true>(double dfVal) const
+{
+    return CPL_TO_BOOL(CPLIsNan(dfVal));
+}
+
+template<> inline bool GDALContourGenerator::IsNoData<false>(double dfVal) const
+{
+    return dfVal == dfNoDataValue;
+}
+
 
 /************************************************************************/
 /*                           GDAL_CG_Create()                           */
@@ -296,7 +310,7 @@ void GDALContourGenerator::SetNoData( double dfNewValue )
 /*                            ProcessPixel()                            */
 /************************************************************************/
 
-CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
+template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
 {
     double  dfUpLeft, dfUpRight, dfLoLeft, dfLoRight;
@@ -317,11 +331,13 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /*      Check if we have any nodata values.                             */
 /* -------------------------------------------------------------------- */
     if( bNoDataActive
-        && ( dfUpLeft == dfNoDataValue
-             || dfLoLeft == dfNoDataValue
-             || dfLoRight == dfNoDataValue
-             || dfUpRight == dfNoDataValue ) )
+        && ( IsNoData<bNoDataIsNan>(dfUpLeft)
+            || IsNoData<bNoDataIsNan>(dfLoLeft)
+            || IsNoData<bNoDataIsNan>(dfLoRight)
+            || IsNoData<bNoDataIsNan>(dfUpRight) ) )
+    {
         bSubdivide = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check if we have any nodata, if so, go to a special case of     */
@@ -343,25 +359,25 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
     double dfASum = 0.0;
     double dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
 
-    if( dfUpLeft != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfUpLeft) )
     {
         dfASum += dfUpLeft;
         nGoodCount++;
     }
 
-    if( dfLoLeft != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfLoLeft) )
     {
         dfASum += dfLoLeft;
         nGoodCount++;
     }
 
-    if( dfLoRight != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfLoRight) )
     {
         dfASum += dfLoRight;
         nGoodCount++;
     }
 
-    if( dfUpRight != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfUpRight) )
     {
         dfASum += dfUpRight;
         nGoodCount++;
@@ -372,14 +388,14 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
     double dfCenter = dfASum / nGoodCount;
 
-    if( dfUpLeft != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfUpLeft) )
     {
-        if( dfUpRight != dfNoDataValue )
+        if( !IsNoData<bNoDataIsNan>(dfUpRight) )
             dfTop = (dfUpLeft + dfUpRight) / 2.0;
         else
             dfTop = dfUpLeft;
 
-        if( dfLoLeft != dfNoDataValue )
+        if( !IsNoData<bNoDataIsNan>(dfLoLeft) )
             dfLeft = (dfUpLeft + dfLoLeft) / 2.0;
         else
             dfLeft = dfUpLeft;
@@ -390,14 +406,14 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
         dfLeft = dfLoLeft;
     }
 
-    if( dfLoRight != dfNoDataValue )
+    if( !IsNoData<bNoDataIsNan>(dfLoRight) )
     {
-        if( dfUpRight != dfNoDataValue )
+        if( !IsNoData<bNoDataIsNan>(dfUpRight) )
             dfRight = (dfLoRight + dfUpRight) / 2.0;
         else
             dfRight = dfLoRight;
 
-        if( dfLoLeft != dfNoDataValue )
+        if( !IsNoData<bNoDataIsNan>(dfLoLeft) )
             dfBottom = (dfLoRight + dfLoLeft) / 2.0;
         else
             dfBottom = dfLoRight;
@@ -413,7 +429,7 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
 
-    if( dfUpLeft != dfNoDataValue && iPixel > 0 && iLine > 0 )
+    if( !IsNoData<bNoDataIsNan>(dfUpLeft) && iPixel > 0 && iLine > 0 )
     {
         eErr = ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5,
                             dfLeft, iPixel - 0.5, iLine,
@@ -421,7 +437,7 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
                             dfTop, iPixel, iLine - 0.5 );
     }
 
-    if( dfLoLeft != dfNoDataValue && eErr == CE_None
+    if( !IsNoData<bNoDataIsNan>(dfLoLeft) && eErr == CE_None
         && iPixel > 0 && iLine < nHeight )
     {
         eErr = ProcessRect( dfLeft, iPixel - 0.5, iLine,
@@ -430,7 +446,7 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
                             dfCenter, iPixel, iLine );
     }
 
-    if( dfLoRight != dfNoDataValue && iPixel < nWidth && iLine < nHeight )
+    if( !IsNoData<bNoDataIsNan>(dfLoRight) && iPixel < nWidth && iLine < nHeight )
     {
         eErr = ProcessRect( dfCenter, iPixel, iLine,
                             dfBottom, iPixel, iLine + 0.5,
@@ -438,7 +454,7 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
                             dfRight, iPixel + 0.5, iLine );
     }
 
-    if( dfUpRight != dfNoDataValue && iPixel < nWidth && iLine > 0 )
+    if( !IsNoData<bNoDataIsNan>(dfUpRight) && iPixel < nWidth && iLine > 0 )
     {
         eErr = ProcessRect( dfTop, iPixel, iLine - 0.5,
                             dfCenter, iPixel, iLine,
@@ -802,9 +818,11 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 /* -------------------------------------------------------------------- */
 /*      Process each pixel.                                             */
 /* -------------------------------------------------------------------- */
+    const bool bNoDataIsNan = CPL_TO_BOOL(CPLIsNan(dfNoDataValue));
     for( iPixel = 0; iPixel < nWidth+1; iPixel++ )
     {
-        CPLErr eErr = ProcessPixel( iPixel );
+        CPLErr eErr = bNoDataIsNan ? ProcessPixel<true>( iPixel ) :
+                                     ProcessPixel<false>( iPixel );
         if( eErr != CE_None )
             return eErr;
     }
