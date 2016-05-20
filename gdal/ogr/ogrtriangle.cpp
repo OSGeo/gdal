@@ -8,6 +8,16 @@ OGRTriangle::OGRTriangle()
 }
 
 /************************************************************************/
+/*                          getGeometryName()                           */
+/************************************************************************/
+
+const char * OGRTriangle::getGeometryName() const
+
+{
+    return "TRIANGLE";
+}
+
+/************************************************************************/
 /*                           importFromWkb()                            */
 /*      Initialize from serialized stream in well known binary          */
 /*      format.                                                         */
@@ -59,21 +69,21 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
                         {
                             delete oCC.papoCurves[iRing];
                             oCC.nCurveCount = iRing;
-                            return eErr;
+                            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                         }
                     }
                     else
                     {
                         delete oCC.papoCurves[iRing];
                         oCC.nCurveCount = iRing;
-                        return eErr;
+                        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                     }
                 }
                 else
                 {
                     delete oCC.papoCurves[iRing];
                     oCC.nCurveCount = iRing;
-                    return eErr;
+                    return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
             }
 
@@ -89,21 +99,21 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
                         {
                             delete oCC.papoCurves[iRing];
                             oCC.nCurveCount = iRing;
-                            return eErr;
+                            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                         }
                     }
                     else
                     {
                         delete oCC.papoCurves[iRing];
                         oCC.nCurveCount = iRing;
-                        return eErr;
+                        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                     }
                 }
                 else
                 {
                     delete oCC.papoCurves[iRing];
                     oCC.nCurveCount = iRing;
-                    return eErr;
+                    return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
             }
 
@@ -114,7 +124,7 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
             {
                 delete oCC.papoCurves[iRing];
                 oCC.nCurveCount = iRing;
-                return eErr;
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
             }
 
             // one point is XYM or XYZM, other is XYZ or XY
@@ -124,7 +134,7 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
             {
                 delete oCC.papoCurves[iRing];
                 oCC.nCurveCount = iRing;
-                return eErr;
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
             }
 
             // both points are XY
@@ -137,14 +147,14 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
                     {
                         delete oCC.papoCurves[iRing];
                         oCC.nCurveCount = iRing;
-                        return eErr;
+                        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                     }
                 }
                 else
                 {
                     delete oCC.papoCurves[iRing];
                     oCC.nCurveCount = iRing;
-                    return eErr;
+                    return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
             }
         }
@@ -155,7 +165,7 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
         {
             delete oCC.papoCurves[iRing];
             oCC.nCurveCount = iRing;
-            return eErr;
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
         if (nSize != -1)
@@ -232,4 +242,171 @@ OGRErr OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           importFromWkt()                            */
+/*      Instantiate from well known text format. Currently this is      */
+/*      of the form 'TRIANGLE ((x y, x y, x y, x y))' or other          */
+/*      varieties of the same (including Z and/or M)                    */
+/************************************************************************/
+
+OGRErr OGRTriangle::importFromWkt( char ** ppszInput )
+
+{
+    int bHasZ = FALSE, bHasM = FALSE;
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    flags = 0;
+    if( eErr != OGRERR_NONE )
+        return eErr;
+    if( bHasZ )
+        flags |= OGR_G_3D;
+    if( bHasM )
+        flags |= OGR_G_MEASURED;
+    if( bIsEmpty )
+        return OGRERR_NONE;
+
+    OGRRawPoint *paoPoints = NULL;
+    int          nMaxPoints = 0;
+    double      *padfZ = NULL;
+
+    eErr = importFromWKTListOnly(ppszInput, bHasZ, bHasM, paoPoints, nMaxPoints, padfZ);
+
+    if (nMaxPoints != 4)
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    CPLFree(paoPoints);
+    CPLFree(padfZ);
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/*            Translate this structure into it's WKT format             */
+/************************************************************************/
+
+OGRErr OGRTriangle::exportToWkt( char ** ppszDstText,
+                                OGRwkbVariant eWkbVariant ) const
+
+{
+    OGRErr      eErr;
+    bool        bMustWriteComma = false;
+
+    // If there is no LinearRing, then the Triangle is empty
+    if (getExteriorRing() == NULL || getExteriorRing()->IsEmpty() )
+    {
+        if( eWkbVariant == wkbVariantIso )
+        {
+            if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+                *ppszDstText = CPLStrdup("TRIANGLE ZM EMPTY");
+            else if( flags & OGR_G_MEASURED )
+                *ppszDstText = CPLStrdup("TRIANGLE M EMPTY");
+            else if( flags & OGR_G_3D )
+                *ppszDstText = CPLStrdup("TRIANGLE Z EMPTY");
+            else
+                *ppszDstText = CPLStrdup("TRIANGLE EMPTY");
+        }
+        else
+            *ppszDstText = CPLStrdup("TRIANGLE EMPTY");
+        return OGRERR_NONE;
+    }
+
+    // Build a list of strings containing the stuff for the ring.
+    char **papszRings = (char **) CPLCalloc(sizeof(char *),oCC.nCurveCount);
+    size_t nCumulativeLength = 0;
+    size_t nNonEmptyRings = 0;
+    size_t *pnRingBeginning = (size_t *) CPLCalloc(sizeof(size_t),oCC.nCurveCount);
+
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    {
+        OGRLinearRing* poLR = (OGRLinearRing*) oCC.papoCurves[iRing];
+        //poLR->setFlags( getFlags() );
+        poLR->set3D(Is3D());
+        poLR->setMeasured(IsMeasured());
+        if( poLR->getNumPoints() == 0 )
+        {
+            papszRings[iRing] = NULL;
+            continue;
+        }
+
+        eErr = poLR->exportToWkt( &(papszRings[iRing]), eWkbVariant );
+        if( eErr != OGRERR_NONE )
+            goto error;
+
+        if( STARTS_WITH_CI(papszRings[iRing], "LINEARRING ZM (") )
+            pnRingBeginning[iRing] = 14;
+        else if( STARTS_WITH_CI(papszRings[iRing], "LINEARRING M (") )
+            pnRingBeginning[iRing] = 13;
+        else if( STARTS_WITH_CI(papszRings[iRing], "LINEARRING Z (") )
+            pnRingBeginning[iRing] = 13;
+        else if( STARTS_WITH_CI(papszRings[iRing], "LINEARRING (") )
+            pnRingBeginning[iRing] = 11;
+        else
+        {
+            CPLAssert( 0 );
+        }
+
+        nCumulativeLength += strlen(papszRings[iRing] + pnRingBeginning[iRing]);
+
+        nNonEmptyRings++;
+    }
+
+    // allocate space for the ring
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nNonEmptyRings + 16);
+
+    if( *ppszDstText == NULL )
+    {
+        eErr = OGRERR_NOT_ENOUGH_MEMORY;
+        goto error;
+    }
+
+    // construct the string
+    if( eWkbVariant == wkbVariantIso )
+    {
+        if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+            strcpy( *ppszDstText, "TRIANGLE ZM (" );
+        else if( flags & OGR_G_MEASURED )
+            strcpy( *ppszDstText, "TRIANGLE M (" );
+        else if( flags & OGR_G_3D )
+            strcpy( *ppszDstText, "TRIANGLE Z (" );
+        else
+            strcpy( *ppszDstText, "TRIANGLE (" );
+    }
+    else
+        strcpy( *ppszDstText, "TRIANGLE (" );
+    nCumulativeLength = strlen(*ppszDstText);
+
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    {
+        if( papszRings[iRing] == NULL )
+        {
+            CPLDebug( "OGR", "OGRTriangle::exportToWkt() - skipping empty ring.");
+            continue;
+        }
+
+        if( bMustWriteComma )
+            (*ppszDstText)[nCumulativeLength++] = ',';
+        bMustWriteComma = true;
+
+        size_t nRingLen = strlen(papszRings[iRing] + pnRingBeginning[iRing]);
+        memcpy( *ppszDstText + nCumulativeLength, papszRings[iRing] + pnRingBeginning[iRing], nRingLen );
+        nCumulativeLength += nRingLen;
+        VSIFree( papszRings[iRing] );
+    }
+
+    (*ppszDstText)[nCumulativeLength++] = ')';
+    (*ppszDstText)[nCumulativeLength] = '\0';
+
+    CPLFree( papszRings );
+    CPLFree( pnRingBeginning );
+
+    return OGRERR_NONE;
+
+error:
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+        CPLFree(papszRings[iRing]);
+    CPLFree(papszRings);
+    return eErr;
 }
