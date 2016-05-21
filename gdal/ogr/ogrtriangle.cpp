@@ -1,3 +1,9 @@
+#include "ogr_sfcgal.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+
+// TODO - write getGeometryType()
+
 /************************************************************************/
 /*                             OGRTriangle()                            */
 /************************************************************************/
@@ -188,7 +194,7 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 
 OGRErr OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
                                  unsigned char * pabyData,
-                                 OGRwkbVariant eWkbVariant ) const
+                                 OGRwkbVariant eWkbVariant = wkbVariantOldOgc) const
 
 {
 
@@ -410,3 +416,92 @@ error:
     CPLFree(papszRings);
     return eErr;
 }
+
+/************************************************************************/
+/*                          createGEOSContext()                         */
+/************************************************************************/
+
+GEOSContextHandle_t OGRTriangle::createGEOSContext()
+{
+    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
+    return NULL;
+}
+
+/************************************************************************/
+/*                          freeGEOSContext()                           */
+/************************************************************************/
+
+void OGRTriangle::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
+{ }
+
+/************************************************************************/
+/*                            exportToGEOS()                            */
+/************************************************************************/
+
+GEOSGeom OGRTriangle::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
+{
+    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
+    return NULL;
+}
+
+/************************************************************************/
+/*                              WkbSize()                               */
+/*                                                                      */
+/*      Return the size of this object in well known binary             */
+/*      representation including the byte order, and type information.  */
+/************************************************************************/
+
+int OGRTriangle::WkbSize() const
+{
+    return 9+((OGRLinearRing*)oCC.papoCurves[0])->_WkbSize( flags );
+}
+
+#ifdef HAVE_SFCGAL
+
+/************************************************************************/
+/*                          exportToSFCGAL()                            */
+/*              The converted SFCGAL geometry is returned               */
+/*             eErr checks if there are errors encountered              */
+/************************************************************************/
+
+virtual SFCGAL::Geometry* OGRTriangle::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT
+{
+    char *_ogr_wkb = (unsigned char *) CPLMalloc(WkbSize());
+
+    // get the existing WKB of the current OGRTriangle
+    eErr = exportToWkb(wkbXDR, ogr_wkb);
+
+    // if there is an error encountered, terminate ASAP
+    if (eErr != OGRERR_NONE)
+        return NULL;
+
+    const char *ogr_wkb = _ogr_wkb;
+    std::string bin_geom = ogr_wkb;
+
+    // free _ogr_wkb, no need for it now
+    CPLFree(_ogr_wkb);
+
+    // get the returned SFCGAL::Geometry using the WKB derived above
+    std::auto_ptr<SFCGAL::Geometry> geom_ret = SFCGAL::io::readBinaryGeometry(bin_geom);
+
+    // std::auto_ptr is deprecated; release the pointer contents to a normal SFCGAL::Geometry pointer
+    // release() also destroys the std::auto_ptr it is used on
+    SFCGAL::Geometry *pabyGeom = geom_ret.release();
+
+    // check that the geometry type is indeed OGRTriangle
+    // if it is not, return a NULL pointer
+    if (!EQUAL(pabyGeom->geometryType(),"Triangle"))
+    {
+        eRR = OGRERR_FAILURE;
+        return NULL;
+    }
+
+    // everything fine, report: no error and return the SFCGAL::Geometry pointer obtained
+    else
+    {
+        eErr = OGRERR_NONE;
+        return pabyGeom;
+    }
+}
+
+#endif
