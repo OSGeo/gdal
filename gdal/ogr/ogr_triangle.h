@@ -1,7 +1,3 @@
-#include "ogr_geometry.h"
-#include "ogr_sfcgal.h"
-#include "ogr_p.h"
-
 // TO BE INCORPORATED IN ogr_geometry.h
 // Included in an external file for the sake of readability
 
@@ -32,14 +28,17 @@ class CPL_DLL OGROGRTriangle : public OGRPolygon
     virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
 
     // SFCGAL interface methods
-    // The interface mechanism is handled through WKT. An OGR WKT is passed as a parameter to
-    // Geometry *SFCGAL::detail::io::WktReader::readGeometry() and a corresponding SFCGAL::Geometry is derived.
+    // The interface mechanism is handled through WKT. An OGR WKB is passed as a parameter to
+    // SFCGAL::Geometry* SFCGAL::io::writeBinaryGeometry(SFCGAL::Geometry) and a corresponding SFCGAL::Geometry is derived.
     // This is used in all the algorithms which act as a wrapper for SFCGAL.
-    // If the resultant geometry is modified in any way, get the WKT of the geometry by using the method
-    // std::string SFCGAL::Geometry::asText	(const int& numDecimals = -1) within the calling function.
-    // To convert back to OGR, the WKT of the SFCGAL::Geometry is passed as a parameter to
-    // virtual OGRErr importFromWkt(char **)  and an OGRGeometry is returned
-    virtual OGRErr exportToSFCGAL (char **, void*) const CPL_WARN_UNUSED_RESULT;
+    // If the resultant geometry is modified in any way, get the WKB of the geometry by using the method
+    // std::string SFCGAL::io::writeBinaryGeometry(const SFCGAL::Geometry &) within the calling function.
+    // To convert back to OGR, the WKB of the SFCGAL::Geometry is passed as a parameter to
+    // virtual OGRErr importFromWkb(char *)  and an OGRGeometry is returned
+    // NOTE - Only done if SFCGAL has been built in the system
+    #ifdef HAVE_SFCGAL
+        virtual SFCGAL::Geometry* OGRTriangle::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT;
+    #endif
 
     // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
     static GEOSContextHandle_t createGEOSContext();
