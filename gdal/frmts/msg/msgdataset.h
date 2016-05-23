@@ -96,5 +96,7 @@ class MSGDataset : public GDALDataset
     static const double rVc[12];
     static const double rA[12];
     static const double rB[12];
+    static const int iCentralPixelVIS_IR;
+    static const int iCentralPixelHRV;
 };
 
