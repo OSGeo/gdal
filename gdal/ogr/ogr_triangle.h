@@ -27,31 +27,16 @@ class CPL_DLL OGROGRTriangle : public OGRPolygon
     virtual void getEnvelope(OGREnvelope * psEnvelope) const = 0;
     virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
 
-    // SFCGAL interface methods
-    // The interface mechanism is handled through WKT. An OGR WKB is passed as a parameter to
-    // SFCGAL::Geometry* SFCGAL::io::writeBinaryGeometry(SFCGAL::Geometry) and a corresponding SFCGAL::Geometry is derived.
-    // This is used in all the algorithms which act as a wrapper for SFCGAL.
-    // If the resultant geometry is modified in any way, get the WKB of the geometry by using the method
-    // std::string SFCGAL::io::writeBinaryGeometry(const SFCGAL::Geometry &) within the calling function.
-    // To convert back to OGR, the WKB of the SFCGAL::Geometry is passed as a parameter to
-    // virtual OGRErr importFromWkb(char *)  and an OGRGeometry is returned
-    // NOTE - Only done if SFCGAL has been built in the system
-    #ifdef HAVE_SFCGAL
-        virtual SFCGAL::Geometry* OGRTriangle::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT;
-    #endif
-
     // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
-    static GEOSContextHandle_t createGEOSContext();
-    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
+    virtual static GEOSContextHandle_t createGEOSContext();
+    virtual static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
     virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;
 
     // New methods interfaced through SFCGAL
     virtual OGRGeometry *Boundary();
-    OGRGeometry* clone();
     virtual double Distance(const OGRGeometry *poOtherGeom) const;
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
     void Reverse();
-    virtual OGRBoolean IsEmpty() const;
 
     // Methods inherited from OGRPolygon which need to be re-written in the implementation of OGRTriangle.
     // Another reason for such a bloated API is that most of the OGRPolygon functions are implemented directly

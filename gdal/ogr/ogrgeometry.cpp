@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// TODO - check out WKB of virtual SFCGAL::Geometry* exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT;
+
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
@@ -5995,4 +5997,65 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
              "%s found. Conversion impossible", poGeom->getGeometryName());
     delete poGeom;
     return NULL;
+}
+
+/************************************************************************/
+/*                          exportToSFCGAL()                            */
+/*              The converted SFCGAL geometry is returned               */
+/*             eErr checks if there are errors encountered              */
+/************************************************************************/
+
+SFCGAL::Geometry* OGRGeometry::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT
+{
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    char *_ogr_wkb = (unsigned char *) CPLMalloc(WkbSize());
+
+    // get the existing WKB of the current OGR geometry
+    // TODO - need to check this out
+    eErr = this->exportToWkb(wkbXDR, ogr_wkb);
+
+    // if there is an error encountered, terminate ASAP
+    if (eErr != OGRERR_NONE)
+        return NULL;
+
+    const char *ogr_wkb = _ogr_wkb;
+    std::string bin_geom = ogr_wkb;
+
+    // free _ogr_wkb, no need for it now
+    CPLFree(_ogr_wkb);
+
+    // get the returned SFCGAL::Geometry using the WKB derived above
+    std::auto_ptr<SFCGAL::Geometry> geom_ret = SFCGAL::io::readBinaryGeometry(bin_geom);
+
+    // std::auto_ptr is deprecated; release the pointer contents to a normal SFCGAL::Geometry pointer
+    // release() also destroys the std::auto_ptr it is used on
+    SFCGAL::Geometry* pabyGeom = geom_ret.release();
+
+    // check that the geometry type is indeed the correct geometry
+    // if it is not, return a NULL pointer
+    std::string geomType(this->getGeometryType());
+    std::transform(geomType.begin(), geomType.end(), geomType.begin(), ::tolower);
+    std::string s_geomType = pabyGeom->geometryType();
+    std::transform(s_geomType.begin(), s_geomType.end(), s_geomType.begin(), ::tolower);
+
+    if (s_geomType != geomType)
+    {
+        eRR = OGRERR_FAILURE;
+        return NULL;
+    }
+
+    // everything fine, report: no error and return the SFCGAL::Geometry pointer obtained
+    else
+    {
+        eErr = OGRERR_NONE;
+        return pabyGeom;
+    }
+#endif
 }
