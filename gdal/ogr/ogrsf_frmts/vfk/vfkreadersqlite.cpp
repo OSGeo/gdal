@@ -113,18 +113,58 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     */
 
     CPLDebug("OGR-VFK", "New DB: %s Spatial: %s",
-	     m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
+             m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
 
+    char* pszErrMsg;
     if (SQLITE_OK != sqlite3_open(osDbName, &m_poDB)) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Creating SQLite DB failed");
-    }
-    else {
-        char* pszErrMsg = NULL;
-        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg));
-        sqlite3_free(pszErrMsg);
+                 "Creating SQLite DB failed: %s",
+                 sqlite3_errmsg(m_poDB));
     }
 
+    if (!m_bNewDb) {
+        char** papszResult;
+        int nRowCount, nColCount;
+        
+        /* check if DB is up-to-date datasource */
+        pszErrMsg = NULL;
+        papszResult = NULL;
+        nRowCount = nColCount = 0;
+        osCommand.Printf("SELECT * FROM %s LIMIT 1", VFK_DB_TABLE);
+        sqlite3_get_table(m_poDB,
+                          osCommand.c_str(),
+                          &papszResult,
+                          &nRowCount, &nColCount, &pszErrMsg);
+        sqlite3_free_table(papszResult);
+        sqlite3_free(pszErrMsg);
+        pszErrMsg = NULL;
+        
+        if (nColCount != 6) {
+            /* it seems that DB is outdated, let's create new DB from
+             * scratch */
+            if (SQLITE_OK != sqlite3_close(m_poDB)) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Closing SQLite DB failed: %s",
+                         sqlite3_errmsg(m_poDB));
+            }
+            VSIUnlink(osDbName);
+            if (SQLITE_OK != sqlite3_open(osDbName, &m_poDB)) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Creating SQLite DB failed: %s",
+                         sqlite3_errmsg(m_poDB));
+            }
+            CPLDebug("OGR-VFK", "Internal DB (%s) is invalid - will be re-created",
+                     m_pszDBname);
+
+            m_bNewDb = TRUE;
+        }
+    }
+
+    pszErrMsg = NULL;
+    CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF",
+                                    NULL, NULL, &pszErrMsg));
+    sqlite3_free(pszErrMsg);
+    
     if (m_bNewDb) {
         /* new DB, create support metadata tables */
         osCommand.Printf("CREATE TABLE %s (file_name text, table_name text, num_records integer, "
@@ -146,7 +186,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
     /* close tmp SQLite DB */
     if (SQLITE_OK != sqlite3_close(m_poDB)) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Closing SQLite DB failed\n  %s",
+                 "Closing SQLite DB failed: %s",
                  sqlite3_errmsg(m_poDB));
     }
     CPLDebug("OGR-VFK", "Internal DB (%s) closed",
