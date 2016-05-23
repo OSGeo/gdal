@@ -29246,7 +29246,7 @@ fi
         if test -f /usr/include/libqhull/libqhull.h; then
             EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
         else
-            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
+            EXTRA_INCLUDES="-I/usr/local/include/libqhull $EXTRA_INCLUDES"
         fi
         LIBS="-lqhull $LIBS"
     fi
