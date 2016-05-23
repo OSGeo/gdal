@@ -1440,6 +1440,8 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * rather than the default 'tmerc'. This will give better accuracy (at the
  * expense of computational speed) when reprojection occurs near the edges
  * of the validity area for the projection.
+ * Starting with GDAL &gt;= 2.2, setting OSR_USE_ETMERC to NO will expand to the
+ * 'tmerc' projection method (useful with PROJ &gt;= 4.9.3, where utm uses etmerc)
  *
  * This method is the equivalent of the C function OSRExportToProj4().
  *
@@ -1557,10 +1559,21 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         int bNorth;
         const int nZone = GetUTMZone( &bNorth );
 
-        if( CPLTestBool(CPLGetConfigOption("OSR_USE_ETMERC", "FALSE")) )
+        const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", NULL);
+        if( pszUseETMERC && CPLTestBool(pszUseETMERC) )
         {
             CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=etmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        }
+        else if( pszUseETMERC && !CPLTestBool(pszUseETMERC) )
+        {
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
+                     "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
