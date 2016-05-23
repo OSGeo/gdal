@@ -1,8 +1,12 @@
+#include <algorithm>
+#include <string>
 #include "ogr_sfcgal.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
 // TODO - write getGeometryType()
+// TODO - add SFCGAL interfacing method to OGRGeometry
+// TODO - check the different library versions of SFCGAL and add it to OGRGeometryFactory?
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -446,7 +450,6 @@ GEOSGeom OGRTriangle::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
 
 /************************************************************************/
 /*                              WkbSize()                               */
-/*                                                                      */
 /*      Return the size of this object in well known binary             */
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
@@ -456,52 +459,135 @@ int OGRTriangle::WkbSize() const
     return 9+((OGRLinearRing*)oCC.papoCurves[0])->_WkbSize( flags );
 }
 
-#ifdef HAVE_SFCGAL
-
 /************************************************************************/
-/*                          exportToSFCGAL()                            */
-/*              The converted SFCGAL geometry is returned               */
-/*             eErr checks if there are errors encountered              */
+/*                              Boundary()                              */
+/*                Returns the boundary of the geometry                  */
 /************************************************************************/
 
-virtual SFCGAL::Geometry* OGRTriangle::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT
+OGRGeometry* OGRTriangle::Boundary()
 {
-    char *_ogr_wkb = (unsigned char *) CPLMalloc(WkbSize());
+#ifndef HAVE_SFCGAL
 
-    // get the existing WKB of the current OGRTriangle
-    eErr = exportToWkb(wkbXDR, ogr_wkb);
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
 
-    // if there is an error encountered, terminate ASAP
-    if (eErr != OGRERR_NONE)
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
         return NULL;
 
-    const char *ogr_wkb = _ogr_wkb;
-    std::string bin_geom = ogr_wkb;
+    std::auto_ptr <SFCGAL::Geometry> hSfcgalProd = hSfcgalGeom->boundary();
 
-    // free _ogr_wkb, no need for it now
-    CPLFree(_ogr_wkb);
-
-    // get the returned SFCGAL::Geometry using the WKB derived above
-    std::auto_ptr<SFCGAL::Geometry> geom_ret = SFCGAL::io::readBinaryGeometry(bin_geom);
-
-    // std::auto_ptr is deprecated; release the pointer contents to a normal SFCGAL::Geometry pointer
-    // release() also destroys the std::auto_ptr it is used on
-    SFCGAL::Geometry *pabyGeom = geom_ret.release();
-
-    // check that the geometry type is indeed OGRTriangle
-    // if it is not, return a NULL pointer
-    if (!EQUAL(pabyGeom->geometryType(),"Triangle"))
-    {
-        eRR = OGRERR_FAILURE;
+    if (hSfcgalProd == NULL)
         return NULL;
-    }
 
-    // everything fine, report: no error and return the SFCGAL::Geometry pointer obtained
-    else
-    {
-        eErr = OGRERR_NONE;
-        return pabyGeom;
-    }
-}
+    // get rid of the deprecated std::auto_ptr
+    hSfcgalGeom = hSfcgalProd.release();
+    std::string wkb_hSfcgalGeom = SFCGAL::io::writeBinaryGeometry(*hSfcgalGeom);
+
+    const unsigned char* wkb_hOGRGeom = wkb_hSfcgalGeom.c_str();
+    OGRGeometry *h_prodGeom = new OGRGeometry();
+    if (h_prodGeom->importFromWkb(wkb_hOGRGeom) != OGRERR_NONE)
+        return NULL;
+
+    if (h_prodGeom != NULL && getSpatialReference() != NULL)
+        h_prodGeom->assignSpatialReference(getSpatialReference());
+
+    h_prodGeom = OGRGeometryRebuildCurves(this, NULL, h_prodGeom);
+
+    return h_prodGeom;
 
 #endif
+}
+
+/************************************************************************/
+/*                              Distance()                              */
+/*    Returns the shortest distance between the two geometries. The     */
+/*    distance is expressed into the same unit as the coordinates of    */
+/*    the geometries.                                                   */
+/************************************************************************/
+
+double OGRTriangle::Distance(const OGRGeometry *poOtherGeom)
+{
+    if (poOtherGeom == NULL)
+    {
+        CPLDebug( "OGR", "OGRGeometry::Distance called with NULL geometry pointer" );
+        return -1.0;
+    }
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return -1.0;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *poThis = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return -1.0;
+
+    SFCGAL::Geometry *poOther = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poOther == NULL)
+        return -1.0;
+
+    double _distance = poThis->distance(poOther);
+
+    free(poThis);
+    free(poOther);
+
+    if(_distance > 0)
+        return _distance;
+
+#endif
+}
+
+/************************************************************************/
+/*                             Distance3D()                             */
+/*       Returns the 3D distance between the two geometries. The        */
+/*    distance is expressed into the same unit as the coordinates of    */
+/*    the geometries.                                                   */
+/************************************************************************/
+
+double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom)
+{
+    if (poOtherGeom == NULL)
+    {
+        CPLDebug( "OGR", "OGRTriangle::Distance called with NULL geometry pointer" );
+        return -1.0;
+    }
+
+    if (!(poOtherGeom->Is3D() && this->Is3D()))
+    {
+        CPLDebug( "OGR", "OGRGeometry::Distance3D called with two dimensional geometry(geometries)" );
+        return -1.0;
+    }
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return -1.0;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *poThis = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return -1.0;
+
+    SFCGAL::Geometry *poOther = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poOther == NULL)
+        return -1.0;
+
+    double _distance = poThis->distance(poOther);
+
+    free(poThis);
+    free(poOther);
+
+    if(_distance > 0)
+        return _distance;
+
+#endif
+}
