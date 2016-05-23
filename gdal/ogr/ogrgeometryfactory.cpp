@@ -459,6 +459,15 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       case wkbMultiSurface:
           return new (std::nothrow) OGRMultiSurface();
 
+      case wkbTriangle:
+          return new (std::nothrow) OGRTriangle();
+
+      case wkbPolyhedralSurface:
+          return new (std::nothrow) OGRPolyhedralSurface();
+
+      case wkbTIN:
+          return new (std::nothrow) OGRTIN();
+
       default:
           return NULL;
     }
