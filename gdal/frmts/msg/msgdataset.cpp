@@ -49,6 +49,8 @@ const double MSGDataset::rCentralWvl[12] = {0.635, 0.810, 1.640, 3.900, 6.250, 7
 const double MSGDataset::rVc[12] = {-1, -1, -1, 2569.094, 1598.566, 1362.142, 1149.083, 1034.345, 930.659, 839.661, 752.381, -1};
 const double MSGDataset::rA[12] = {-1, -1, -1, 0.9959, 0.9963, 0.9991, 0.9996, 0.9999, 0.9983, 0.9988, 0.9981, -1};
 const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060, 0.627, 0.397, 0.576, -1};
+const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
+const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
 int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
 
 #define MAX_SATELLITES 4
@@ -226,15 +228,17 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridHRV->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridHRV->LineDirGridStep;
-      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines / 2.0);
+      // The MSG Level 1.5 Image Data Format Description (page 22f) defines the center of pixel (5566,5566) from SE as sub satellite point for the HRV channel (0°,0° for operational MSG).
+      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - iCentralPixelHRV + 0.5);
+      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines - iCentralPixelHRV + 0.5); //scan direction south -> north
     }
     else
     {
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridVIS_IR->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridVIS_IR->LineDirGridStep;
-      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridVIS_IR->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridVIS_IR->NumberOfLines / 2.0);
+      // The MSG Level 1.5 Image Data Format Description (page 22f) defines the center of pixel (1856,1856) from SE as sub satellite point for the VIS_IR channels (0°,0° for operational MSG).
+      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridVIS_IR->NumberOfColumns  - iCentralPixelVIS_IR + 0.5);
+      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridVIS_IR->NumberOfLines - iCentralPixelVIS_IR + 0.5); // The y scan direction is always south -> north
     }
     poDS->adfGeoTransform[0] = rMinX;
     poDS->adfGeoTransform[3] = rMaxY;
