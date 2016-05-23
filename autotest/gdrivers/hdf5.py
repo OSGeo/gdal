@@ -425,11 +425,14 @@ def hdf5_12():
 
     got_gt = ds.GetGeoTransform()
     expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)
-    for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            gdaltest.post_reason('fail')
-            return 'fail'
+    # Proj 4.9.3
+    expected_gt2 = (-240889.94573659054, 1001.7178235672992, 0.0, 239638.28570609915, 0.0, -1000.3794089534567)
+
+    if max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) > 1e-5 and \
+       max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) > 1e-5:
+        print(got_gt)
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 

@@ -1318,7 +1318,8 @@ def warp_37():
 
     # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(32640)
+    # Use inline definition instead of EPSG:32640 so that we don't use etmerc on proj 4.9.3
+    sr.SetFromUserInput('+proj=tmerc +lat_0=0 +lon_0=57 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs +wktext')
     dst_wkt = sr.ExportToWkt()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
