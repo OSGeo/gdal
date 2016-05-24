@@ -273,6 +273,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 SHP_CVSID("$Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $")
 
@@ -426,7 +427,11 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
     if( psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 0 ) != 0
         || psSHP->sHooks.FWrite( abyHeader, 100, 1, psSHP->fpSHP ) != 1 )
     {
-        psSHP->sHooks.Error( "Failure writing .shp header" );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Failure writing .shp header: %s", strerror(errno) );
+        psSHP->sHooks.Error( szError );
         return;
     }
 
@@ -440,7 +445,12 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
     if( psSHP->sHooks.FSeek( psSHP->fpSHX, 0, 0 ) != 0
         || psSHP->sHooks.FWrite( abyHeader, 100, 1, psSHP->fpSHX ) != 1 )
     {
-        psSHP->sHooks.Error( "Failure writing .shx header" );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Failure writing .shx header: %s", strerror(errno) );
+        psSHP->sHooks.Error( szError );
+
         return;
     }
 
@@ -465,7 +475,11 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
     if( (int)psSHP->sHooks.FWrite( panSHX, sizeof(int32)*2, psSHP->nRecords, psSHP->fpSHX )
         != psSHP->nRecords )
     {
-        psSHP->sHooks.Error( "Failure writing .shx contents" );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Failure writing .shx contents: %s", strerror(errno) );
+        psSHP->sHooks.Error( szError );
     }
 
     free( panSHX );
@@ -772,8 +786,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         char szError[200];
 
         snprintf( szError, sizeof(szError),
-                 "Failed to read all values for %d records in .shx file.",
-                 psSHP->nRecords );
+                 "Failed to read all values for %d records in .shx file: %s.",
+                 psSHP->nRecords, strerror(errno) );
         psSHP->sHooks.Error( szError );
 
         /* SHX is short or unreadable for some reason. */
@@ -1276,7 +1290,12 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     if( psHooks->FWrite( abyHeader, 100, 1, fpSHP ) != 1 )
     {
-        psHooks->Error( "Failed to write .shp header." );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Failed to write .shp header: %s", strerror(errno) );
+        psHooks->Error( szError );
+
         goto error;
     }
 
@@ -1289,7 +1308,12 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 
     if( psHooks->FWrite( abyHeader, 100, 1, fpSHX ) != 1 )
     {
-        psHooks->Error( "Failed to write .shx header." );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Failure writing .shx header: %s", strerror(errno) );
+        psHooks->Error( szError );
+
         goto error;
     }
 
@@ -1852,13 +1876,25 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
     if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
     {
-        psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() while writing object to .shp file." );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Error in psSHP->sHooks.FSeek() while writing object to .shp file: %s",
+                  strerror(errno) );
+        psSHP->sHooks.Error( szError );
+
         free( pabyRec );
         return -1;
     }
     if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
     {
-        psSHP->sHooks.Error( "Error in psSHP->sHooks.Fwrite() while writing object to .shp file." );
+        char szError[200];
+
+        snprintf( szError, sizeof(szError),
+                 "Error in psSHP->sHooks.FWrite() while writing object of %d bytes to .shp file: %s",
+                  nRecordSize, strerror(errno) );
+        psSHP->sHooks.Error( szError );
+
         free( pabyRec );
         return -1;
     }
