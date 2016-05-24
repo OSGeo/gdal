@@ -1385,7 +1385,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             return OGRERR_FAILURE;
 
         /* Initialize the bulk copy */
-        if (Failed2( bcp_init(hDBCBCP, pszTableName, NULL, NULL, DB_IN) ))
+        if (Failed2( bcp_init(hDBCBCP, CPLSPrintf("[%s].[%s]", pszSchemaName, pszTableName), NULL, NULL, DB_IN) ))
         {
             CloseBCP();
             return OGRERR_FAILURE;
