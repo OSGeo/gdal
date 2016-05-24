@@ -781,8 +781,9 @@
 # filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format. For a list the options are given as for
-# the command line utility. See <a
+# } to set the output format and ['-tr', 10, 10] to set the target
+# resolution. For a list the options are given as for the command line
+# utility. See <a
 # href="http://www.gdal.org/gdal_translate.html">gdal_translate</a>
 # and <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> for all
 # options.
@@ -809,39 +810,43 @@
 # filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format. For a list the options are given as for
-# the command line utility. See <a
-# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for
-# all options.
+# } to set the output format and ['-tr', 10, 10] to set the target
+# resolution. For a list the options are given as for the command line
+# utility. See <a
+# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for all
+# options.
 # @note This method can be run as a package subroutine with a list of
 # datasets as the first argument to mosaic several datasets.
 
 ## @method Geo::GDAL::Dataset Grid($Dest, $Options)
 # Creates a regular raster grid from this data source.
 # This is equivalent to the gdal_grid utility.
-# @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a
-# hash the keys are without the prefix '-'. For example give { of =>
-# 'PNG' } to set the output format. You must specify at least layer
-# name (key = l) or SQL to create a layer (key = sql). For a list the
-# options are given as for the command line utility. See 
-# <a href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
+# @param Dest Destination raster dataset definition string (typically
+# filename) or an object, which implements write and close.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format and ['-txe', 10, 10] to set the
+# georeferenced X extents. You must specify at least layer name (key =
+# l) or SQL to create a layer (key = sql). For a list the options are
+# given as for the command line utility. See <a
+# href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
 # complete list of options.
-#
 
 ## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, coderef progress, $progress_data)
 # Render data from this data source into a raster.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset, or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash the keys
-# are without the prefix '-' and the values must be strings. For
-# example give { of => 'PNG' } to set the output format. You must
-# specify at least layer name (key = l) or SQL to create a layer (key
-# = sql). To create a new raster, you need to specify either target
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-' and the values must be
+# strings. For example give { of => 'PNG' } to set the output format
+# and ['-tr', 10, 10] to set the target resolution. You must specify
+# at least layer name (key = l) or SQL to create a layer (key =
+# sql). To create a new raster, you need to specify either target
 # resolution (tr => xres,yres) or target file size (ts =>
 # width,height). For a list the options are given as for the command
-# line utility.See <a href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a> for a
-# complete list of options.
+# line utility.See <a
+# href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a>
+# for a complete list of options.
 # @return Dataset if destination dataset definition string was given,
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
@@ -856,8 +861,8 @@
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-' and the values must be
 # strings. For example give { r => 'cubic' } to select a resampling
-# algorithm. For a list the options are given as for the command line
-# utility. See <a
+# algorithm and ['-tr', 10, 10] to set the target resolution. For a
+# list the options are given as for the command line utility. See <a
 # href="http://www.gdal.org/gdalbuildvrt.html">gdalbuildvrt</a> for a
 # complete list of options.
 # @return Dataset object
