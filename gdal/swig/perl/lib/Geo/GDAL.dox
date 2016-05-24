@@ -813,6 +813,8 @@
 # the command line utility. See <a
 # href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for
 # all options.
+# @note This method can be run as a package subroutine with a list of
+# datasets as the first argument to mosaic several datasets.
 
 ## @method Geo::GDAL::Dataset Grid($Dest, $Options)
 # Creates a regular raster grid from this data source.
