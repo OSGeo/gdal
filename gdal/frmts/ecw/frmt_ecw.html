@@ -126,6 +126,18 @@ in an error.<p>
 
 </ul>
 
+The GDAL-specific options:
+
+<ul>
+<li> <b>ECW_ALWAYS_UPWARD=TRUE/FALSE</b>: If TRUE, the driver sets negative
+Y-resolution and assumes an image always has the "Upward" orientation
+(Y coordinates increase upward). This may be set to FALSE to let the driver
+rely on the actual image orientation, using Y-resolution value (sign) of an image,
+to allow correct processing of rare images with "Downward" orientation (Y coordinates
+increase "Downward" and Y-resolution is positive). Defaults to TRUE.</p>
+
+</ul>
+
 <h3>ECW Version 3 Files</h3>
 (Starting with GDAL 1.10.0)<p>
 
