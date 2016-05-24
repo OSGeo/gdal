@@ -11756,9 +11756,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                  bool bReadGeoTransform )
 
 {
-    bool bTreatAsBitmap = false;
-    bool bTreatAsOdd = false;
-
     eAccess = eAccessIn;
 
     hTIFF = hTIFFIn;
@@ -11774,7 +11771,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    uint32 nXSize, nYSize;
+    uint32 nXSize = 0;
+    uint32 nYSize = 0;
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
     nRasterXSize = nXSize;
@@ -11862,6 +11860,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */
 /* -------------------------------------------------------------------- */
+    bool bTreatAsBitmap = false;
+
     if( nBitsPerSample == 1 && nBands == 1 )
     {
         bTreatAsBitmap = true;
@@ -11894,7 +11894,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             ( nPhotometric == PHOTOMETRIC_YCBCR
               && nCompression != COMPRESSION_JPEG ))) )
     {
-        char szMessage[1024];
+        char szMessage[1024] = {};
 
         if( TIFFRGBAImageOK( hTIFF, szMessage ) == 1 )
         {
@@ -11950,7 +11950,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         && nBlockYSize == nYSize
         && nYSize > 2000
         && !bTreatAsRGBA
-        && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
+        && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")) )
     {
         // libtiff 3.9.2 (20091104) and older, libtiff 4.0.0beta5 (also
         // 20091104) and older will crash when trying to open a
@@ -11975,6 +11975,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the odd bits interface?                */
 /* -------------------------------------------------------------------- */
+    bool bTreatAsOdd = false;
     if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
     {
         if( nBitsPerSample == 16 || nBitsPerSample == 24 )
@@ -11995,7 +11996,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /*      can.                                                            */
 /* -------------------------------------------------------------------- */
 #if defined(BIGTIFF_SUPPORT)
-    tmsize_t nChunkSize;
+    tmsize_t nChunkSize = 0;
     if( bTreatAsRGBA )
     {
         nChunkSize = 4 * static_cast<tmsize_t>(nBlockXSize) * nBlockYSize;
@@ -12019,12 +12020,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
 #endif
 
-    bool bMinIsWhite = nPhotometric == PHOTOMETRIC_MINISWHITE;
+    const bool bMinIsWhite = nPhotometric == PHOTOMETRIC_MINISWHITE;
 
 /* -------------------------------------------------------------------- */
 /*      Check for NODATA                                                */
 /* -------------------------------------------------------------------- */
-    char    *pszText;
+    char *pszText = NULL;
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) &&
         !EQUAL(pszText, "") )
     {
@@ -12035,7 +12036,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Capture the color table if there is one.                        */
 /* -------------------------------------------------------------------- */
-    unsigned short *panRed, *panGreen, *panBlue;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( bTreatAsRGBA || nBitsPerSample > 16
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP,
@@ -12043,10 +12046,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         // Build inverted palette if we have inverted photometric.
         // Pixel values remains unchanged.  Avoid doing this for *deep*
-            // data types (per #1882)
+        // data types (per #1882)
         if( nBitsPerSample <= 16 && nPhotometric == PHOTOMETRIC_MINISWHITE )
         {
-            GDALColorEntry  oEntry;
+            GDALColorEntry oEntry;
 
             poColorTable = new GDALColorTable();
             const int nColorCount = 1 << nBitsPerSample;
@@ -12145,11 +12148,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
-    char szWorkMDI[200];
-    uint16  nShort;
+    char szWorkMDI[200] = {};
+    uint16  nShort = 0;
 
     for( size_t iTag = 0;
-         iTag<sizeof(asTIFFTags) / sizeof(asTIFFTags[0]); ++iTag)
+         iTag < sizeof(asTIFFTags) / sizeof(asTIFFTags[0]);
+         ++iTag )
     {
         if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING )
         {
@@ -12193,8 +12197,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         oGTiffMDMD.SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
     }
 
-    int nTagSize;
-    void* pData;
+    int nTagSize = 0;
+    void* pData = NULL;
     if( TIFFGetField( hTIFF, TIFFTAG_XMLPACKET, &nTagSize, &pData ) )
     {
         char* pszXMP =
@@ -12314,8 +12318,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     else
     {
         CPLString oComp;
-        oGTiffMDMD.SetMetadataItem( "COMPRESSION",
-                         (const char *) oComp.Printf( "%d", nCompression));
+        oComp.Printf( "%d", nCompression);
+        oGTiffMDMD.SetMetadataItem( "COMPRESSION", oComp.c_str());
     }
 
     if( nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1 )
