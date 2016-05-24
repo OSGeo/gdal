@@ -239,7 +239,7 @@ GDALOverviewDataset::~GDALOverviewDataset()
 
 int GDALOverviewDataset::CloseDependentDatasets()
 {
-    int bRet = FALSE;
+    bool bRet = false;
 
     if( bOwnDS )
     {
@@ -251,14 +251,14 @@ int GDALOverviewDataset::CloseDependentDatasets()
             {
                 CPLError( CE_Fatal, CPLE_AppDefined,
                           "OverviewBand cast fail." );
-                return FALSE;
+                return false;
             }
             band->poUnderlyingBand = NULL;
         }
         GDALClose( poMainDS );
         poMainDS = NULL;
         bOwnDS = FALSE;
-        bRet = TRUE;
+        bRet = true;
     }
 
     return bRet;
@@ -355,7 +355,7 @@ const char *GDALOverviewDataset::GetProjectionRef()
 CPLErr GDALOverviewDataset::GetGeoTransform( double * padfTransform )
 
 {
-    double adfGeoTransform[6] = { 0.0 };
+    double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
     if( poMainDS->GetGeoTransform(adfGeoTransform) != CE_None )
         return CE_Failure;
 
@@ -596,7 +596,7 @@ int GDALOverviewBand::GetOverviewCount()
 /*                           GetOverview()                              */
 /************************************************************************/
 
-GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
+GDALRasterBand *GDALOverviewBand::GetOverview( int iOvr )
 {
     if( iOvr < 0 || iOvr >= GetOverviewCount() )
         return NULL;
