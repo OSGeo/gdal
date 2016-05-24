@@ -2996,7 +2996,7 @@ void ECWDataset::ECW2WKTProjection()
         /* value (sign) of an image. This allows to correctly process   */
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
-        if( CPLTestBool( CPLGetConfigOption("ECW_ALWAYS_UPWARD","TRUE") ) )
+        if( CSLTestBoolean( CPLGetConfigOption("ECW_ALWAYS_UPWARD","TRUE") ) )
             adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
         else
             adfGeoTransform[5] = psFileInfo->fCellIncrementY;
