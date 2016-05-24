@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use v5.10;
 use Scalar::Util 'blessed';
-use Test::More tests => 7;
+use Test::More tests => 9;
 BEGIN { use_ok('Geo::GDAL') };
 
 {
@@ -79,4 +79,26 @@ BEGIN { use_ok('Geo::GDAL') };
     my $b2 = $b->Distance(Options => {Type => 'Byte'});
     $d = $b2->ReadTile;
     ok($d->[0][0] == 13, "Distance raster");
+}
+
+{
+    my $d = Geo::GDAL::Driver('MEM')->Create(Width => 20, Height => 20, Type => 'Byte');
+    my $dest = '/vsimem/tmp';
+    my $result;
+    eval {
+        $result = $d->Warp($dest, {to => 'SRC_METHOD=NO_GEOTRANSFORM'});
+        $result = blessed($result);
+    };
+    ok($@ eq '' && $result && $result eq 'Geo::GDAL::Dataset', "Warp dataset ($result) $@");
+}
+
+{
+    my $d = Geo::GDAL::Driver('MEM')->Create(Width => 20, Height => 20, Type => 'Byte');
+    my $dest = '/vsimem/tmp';
+    my $result;
+    eval {
+        $result = Geo::GDAL::Dataset::Warp([$d], $dest, {to => 'SRC_METHOD=NO_GEOTRANSFORM'});
+        $result = blessed($result);
+    };
+    ok($@ eq '' && $result && $result eq 'Geo::GDAL::Dataset', "Warp datasets ($result) $@");
 }
