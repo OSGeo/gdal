@@ -2076,6 +2076,52 @@ def ecw_47():
     return 'success'
 
 ###############################################################################
+# Test "Upward" orientation is forced by default
+def ecw_48():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ecw_upward = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
+    if ecw_upward != 'TRUE' and ecw_upward != 'ON':
+        gdaltest.post_reason( 'ECW_ALWAYS_UPWARD default value must be TRUE.' )
+        return 'fail'
+
+    ds = gdal.Open( 'data/spif83_downward.ecw' )
+    gt = ds.GetGeoTransform()
+
+    # expect Y resolution negative
+    expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, -198.32414964918371)
+    if gt != expected_gt:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test "Upward" orientation can be overridden with ECW_ALWAYS_UPWARD=FALSE
+def ecw_49():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ecw_upward_old = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
+    gdal.SetConfigOption('ECW_ALWAYS_UPWARD', 'FALSE')
+    ds = gdal.Open( 'data/spif83_downward.ecw' )
+    gt = ds.GetGeoTransform()
+    gdal.SetConfigOption('ECW_ALWAYS_UPWARD', ecw_upward_old)
+
+    # expect Y resolution positive
+    expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, 198.32414964918371)
+    if gt != expected_gt:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2429,6 +2475,8 @@ gdaltest_list = [
     ecw_45,
     ecw_46,
     ecw_47,
+    ecw_48,
+    ecw_49,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3,
