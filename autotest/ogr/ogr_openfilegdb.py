@@ -1428,6 +1428,20 @@ def ogr_openfilegdb_16():
     return 'success'
 
 ###############################################################################
+# Read a MULTILINESTRING ZM with a dummy M array (#6528)
+
+def ogr_openfilegdb_17():
+
+    ds = ogr.Open('data/multilinestringzm_with_dummy_m_array.gdb.zip')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1474,6 +1488,7 @@ gdaltest_list = [
     ogr_openfilegdb_14,
     ogr_openfilegdb_15,
     ogr_openfilegdb_16,
+    ogr_openfilegdb_17,
     ogr_openfilegdb_cleanup,
     ]
 
