@@ -240,7 +240,11 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
         json_object* poObjLength = OGRGeoJSONFindMemberByName( poObj, "length" );
         if (poObjLength != NULL && json_object_get_type(poObjLength) == json_type_int )
         {
-            fldDefn.SetWidth(json_object_get_int(poObjLength));
+            int nWidth = json_object_get_int(poObjLength);
+            // A dummy with of 2147483647 seems to indicate no known field with
+            // which in the OGR world is better modelled as 0 field width. (#6529)
+            if( nWidth != INT_MAX )
+                fldDefn.SetWidth(nWidth);
         }
 
         poDefn->AddFieldDefn( &fldDefn );
