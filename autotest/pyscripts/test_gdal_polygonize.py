@@ -145,9 +145,43 @@ def test_gdal_polygonize_2():
     else:
         return 'fail'
 
+def test_gdal_polygonize_3():
+
+    script_path = test_py_scripts.get_py_script('gdal_polygonize')
+    if script_path is None:
+        return 'skip'
+
+    shp_drv = ogr.GetDriverByName( 'GPKG' )
+    try:
+        os.stat('tmp/out.gpkg')
+        shp_drv.DeleteDataSource( 'tmp/out.gpkg' )
+    except:
+        pass
+
+    # run the algorithm.
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask ../alg/data/polygonize_in.grd tmp/out.gpkg' )
+
+    # Confirm we get the set of expected features in the output layer.
+    gpkg_ds = ogr.Open( 'tmp/out.gpkg' )
+    gpkg_lyr = gpkg_ds.GetLayerByName('out')
+    geom_type = gpkg_lyr.GetGeomType()
+    geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
+
+    gpkg_ds.Destroy()
+    # Reload drv because of side effects of run_py_script()
+    shp_drv = ogr.GetDriverByName( 'GPKG' )
+    shp_drv.DeleteDataSource( 'tmp/out.gpkg' )
+
+    if geom_is_polygon:
+        return 'success'
+    else:
+        gdaltest.post_reason( 'GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon ))
+        return 'fail'
+
 gdaltest_list = [
     test_gdal_polygonize_1,
     test_gdal_polygonize_2,
+    test_gdal_polygonize_3
     ]
 
 if __name__ == '__main__':
