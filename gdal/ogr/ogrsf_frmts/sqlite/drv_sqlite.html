@@ -12,7 +12,11 @@ database files.  SQLite is a "light weight" single file based RDBMS engine
 with fairly complete SQL semantics and respectable performance.</p>
 
 <p>The driver can handle "regular" SQLite databases, as well as Spatialite
-databases (spatial enabled SQLite databases).</p>
+databases (spatial enabled SQLite databases). The type of an existing database
+can be checked from the SQLITE debug info value "OGR style SQLite DB found/
+SpatiaLite DB found/SpatiaLite v4 DB found" obtained by running 
+<strong>"ogrinfo db.sqlite --debug on"</strong>
+</p>
 
 <p>The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
