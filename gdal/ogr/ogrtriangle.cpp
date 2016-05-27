@@ -492,7 +492,9 @@ OGRGeometry* OGRTriangle::Boundary()
     if (h_prodGeom->importFromWkb(wkb_hOGRGeom) != OGRERR_NONE)
         return NULL;
 
-    if (h_prodGeom != NULL && getSpatialReference() != NULL)
+    if (h_prodGeom != NULL && getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
         h_prodGeom->assignSpatialReference(getSpatialReference());
 
     h_prodGeom = OGRGeometryRebuildCurves(this, NULL, h_prodGeom);
@@ -509,7 +511,7 @@ OGRGeometry* OGRTriangle::Boundary()
 /*    the geometries.                                                   */
 /************************************************************************/
 
-double OGRTriangle::Distance(const OGRGeometry *poOtherGeom)
+double OGRTriangle::Distance(const OGRGeometry *poOtherGeom) const
 {
     if (poOtherGeom == NULL)
     {
@@ -551,11 +553,11 @@ double OGRTriangle::Distance(const OGRGeometry *poOtherGeom)
 /*    the geometries.                                                   */
 /************************************************************************/
 
-double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom)
+double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom) const
 {
     if (poOtherGeom == NULL)
     {
-        CPLDebug( "OGR", "OGRTriangle::Distance called with NULL geometry pointer" );
+        CPLDebug( "OGR", "OGRTriangle::Distance3D called with NULL geometry pointer" );
         return -1.0;
     }
 
@@ -586,8 +588,350 @@ double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom)
     free(poThis);
     free(poOther);
 
-    if(_distance > 0)
-        return _distance;
+    (_distance > 0)? return _distance: return -1;
+
+#endif
+}
+
+/************************************************************************/
+/*                               addRing()                              */
+/*    Checks if it is a valid ring (same start and end point; number    */
+/*    of points should be four). If there is already a ring, then it    */
+/*    doesn't add the new ring. The old ring must be deleted first.     */
+/************************************************************************/
+
+OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
+{
+    OGRCurve* poNewRingCloned = (OGRCurve* )poNewRing->clone();
+    if( poNewRingCloned == NULL )
+        return OGRERR_FAILURE;
+
+    // check if the number of rings existing is 0
+    if (occ.nCurveCount > 0)
+    {
+        CPLDebug( "OGR", "OGRTriangle already contains a ring");
+        return OGRERR_FAILURE;
+    }
+
+    // check if the ring to be added is valid
+    OGRPoint *poStart = new OGRPoint();
+    OGRPoint *poEnd = new OGRPoint();
+
+    poNewRingCloned->StartPoint(poStart);
+    poNewRingCloned->EndPoint(poEnd);
+
+    if (poStart != poEnd || poNewRingCloned->getNumPoints() != 4)
+    {
+        // condition fails; cannot add this ring as it is not valid
+        CPLDebug( "OGR", "Not a valid ring to add to a Triangle");
+        return OGRERR_FAILURE;
+    }
+
+    // free poStart and poEnd as we don't need them
+    CPLFree(poStart);
+    CPLFree(poEnd);
+
+    OGRErr eErr = addRingDirectly(poNewRingCloned);
+
+    if( eErr != OGRERR_NONE )
+        delete poNewRingCloned;
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                           addRingDirectly()                          */
+/*   Not recommended for users. Adds a ring without checking previous   */
+/* conditions that make it a legit tringle. Can result in corrupt data. */
+/************************************************************************/
+
+OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
+{
+    return addRingDirectlyInternal(poNewRing,TRUE);
+}
+
+/************************************************************************/
+/*                        addRingDirectlyInternal()                     */
+/*                              Private method                          */
+/************************************************************************/
+
+OGRErr OGRTriangle::addRingDirectlyInternal( OGRCurve* poNewRing,
+                                             int bNeedRealloc )
+{
+    if( !checkRing(poNewRing) )
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    return oCC.addCurveDirectly(this, poNewRing, bNeedRealloc);
+}
+
+/************************************************************************/
+/*                               Crosses()                              */
+/*         This method checks if the two geometries intersect.          */
+/************************************************************************/
+
+OGRBoolean OGRTriangle::Crosses(const OGRGeometry *poOtherGeom) const
+{
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return FALSE;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *poThis = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return FALSE;
+
+    SFCGAL::Geometry *poOther = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poOther == NULL)
+        return FALSE;
+
+    // WARNING - it is assumed that type checking is done and the geometries are valid
+    OGRBoolean isCrossing = SFCGAL::algorithm::intersects3D(*poThis, *poOther);
+
+    // free both the geometries
+    free(poThis);
+    free(poOther);
+
+    return isCrossing;
+
+#endif
+}
+
+/************************************************************************/
+/*                              ConvexHull()                            */
+/*  Compute convex hull. A new geometry object is created and returned  */
+/*  containing the convex hull of the geometry on which the method is   */
+/*  invoked. Returns a new geometry.                                    */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::ConvexHull() const
+
+{
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
+        return NULL;
+
+    std::auto_ptr <SFCGAL::Geometry> hSfcgalProd = SFCGAL::algorithm::convexHull3D(*hSfcgalGeom);
+
+    if (hSfcgalProd == NULL)
+        return NULL;
+
+    // get rid of the deprecated std::auto_ptr
+    hSfcgalGeom = hSfcgalProd.release();
+    std::string wkb_hSfcgalGeom = SFCGAL::io::writeBinaryGeometry(*hSfcgalGeom);
+
+    const unsigned char* wkb_hOGRGeom = wkb_hSfcgalGeom.c_str();
+    OGRGeometry *h_prodGeom = new OGRGeometry();
+    if (h_prodGeom->importFromWkb(wkb_hOGRGeom) != OGRERR_NONE)
+        return NULL;
+
+    if (h_prodGeom != NULL && getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
+        h_prodGeom->assignSpatialReference(getSpatialReference());
+
+    h_prodGeom = OGRGeometryRebuildCurves(this, NULL, h_prodGeom);
+
+    return h_prodGeom;
+
+#endif
+}
+
+/************************************************************************/
+/*                       DelaunayTriangulation()                        */
+/*      Doesn't make sense for 3 points in a plane, overridden          */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::DelaunayTriangulation(double dfTolerance, int bOnlyEdges)
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "DelaunayTriangulation invalid for a triangle" );
+    return NULL;
+}
+
+/************************************************************************/
+/*                              Difference()                            */
+/*  Generates a new geometry which is the region of this geometry with  */
+/*  the region of the second geometry removed.                          */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::Difference(const OGRGeometry *poOtherGeom) const
+
+{
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
+        return NULL;
+
+    SFCGAL::Geometry *hSfcgalOther = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return NULL;
+
+    std::auto_ptr <SFCGAL::Geometry> hSfcgalProd = SFCGAL::algorithm::difference3D(*hSfcgalGeom, *hSfcgalOther);
+
+    if (hSfcgalProd == NULL)
+        return NULL;
+
+    // get rid of the deprecated std::auto_ptr
+    hSfcgalGeom = hSfcgalProd.release();
+    std::string wkb_hSfcgalGeom = SFCGAL::io::writeBinaryGeometry(*hSfcgalGeom);
+
+    const unsigned char* wkb_hOGRGeom = wkb_hSfcgalGeom.c_str();
+    OGRGeometry *h_prodGeom = new OGRGeometry();
+
+    if (h_prodGeom->importFromWkb(wkb_hOGRGeom) != OGRERR_NONE)
+        return NULL;
+
+    if (h_prodGeom != NULL && getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
+        h_prodGeom->assignSpatialReference(getSpatialReference());
+
+    h_prodGeom = OGRGeometryRebuildCurves(this, NULL, h_prodGeom);
+
+    return h_prodGeom;
+
+#endif
+}
+
+/************************************************************************/
+/*                               Disjoint()                             */
+/* Check if the geometry passed into this is different from OGRTriangle */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::Disjoint(const OGRGeometry *poOtherGeom) const
+{
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    return !this->Crosses(poOtherGeom);
+
+#endif
+}
+
+/************************************************************************/
+/*                           Intersection()                             */
+/* Generates a new geometry which is the region of intersection of the  */
+/* two geometries operated on.  The Intersects() method can be used to  */
+/* test if the two geometries intersect.                                */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::Intersection( const OGRGeometry *poOtherGeom)
+{
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
+        return NULL;
+
+    SFCGAL::Geometry *hSfcgalOther = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return NULL;
+
+    std::auto_ptr <SFCGAL::Geometry> hSfcgalProd = SFCGAL::algorithm::intersection3D(*hSfcgalGeom, *hSfcgalOther);
+
+    if (hSfcgalProd == NULL)
+        return NULL;
+
+    // get rid of the deprecated std::auto_ptr
+    hSfcgalGeom = hSfcgalProd.release();
+    std::string wkb_hSfcgalGeom = SFCGAL::io::writeBinaryGeometry(*hSfcgalGeom);
+
+    const unsigned char* wkb_hOGRGeom = wkb_hSfcgalGeom.c_str();
+    OGRGeometry *h_prodGeom = new OGRGeometry();
+
+    if (h_prodGeom->importFromWkb(wkb_hOGRGeom) != OGRERR_NONE)
+        return NULL;
+
+    if (h_prodGeom != NULL && getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference() != NULL
+        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
+        h_prodGeom->assignSpatialReference(getSpatialReference());
+
+    h_prodGeom = OGRGeometryRebuildCurves(this, NULL, h_prodGeom);
+
+    return h_prodGeom;
+#endif
+}
+
+/************************************************************************/
+/*                              IsValid()                               */
+/*          Checks if the geometry type is valid or not                 */
+/************************************************************************/
+
+OGRBoolean OGRTriangle::IsValid()
+{
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
+        return FALSE;
+
+    return (OGRBoolean)hSfcgalGeom->hasValidityFlag();
+
+#endif
+}
+
+/************************************************************************/
+/*                              Overlaps()                              */
+/*           Checks if the geometry type overlaps or not                */
+/*           If there is an error, then FALSE is returned               */
+/************************************************************************/
+
+OGRBoolean OGRTriangle::Overlaps(const OGRGeometry *poOtherGeom)
+{
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
+
+#else
+
+    OGRErr eErr = OGRERR_NONE;
+    SFCGAL::Geometry *hSfcgalGeom = poOtherGeom->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || hSfcgalGeom == NULL)
+        return FALSE;
+
+    SFCGAL::Geometry *hSfcgalOther = this->exportToSFCGAL(eErr);
+    if (eErr != OGRERR_NONE || poThis == NULL)
+        return FALSE;
+
+    return (OGRBoolean)SFCGAL::detail::algorithm::coversPoints3D(*hSfcgalGeom, *hSfcgalOther);
 
 #endif
 }
