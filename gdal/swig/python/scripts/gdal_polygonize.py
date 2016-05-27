@@ -182,7 +182,7 @@ if dst_layer is None:
         srs = osr.SpatialReference()
         srs.ImportFromWkt( src_ds.GetProjectionRef() )
 
-    dst_layer = dst_ds.CreateLayer(dst_layername, srs = srs )
+    dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs = srs )
 
     if dst_fieldname is None:
         dst_fieldname = 'DN'
