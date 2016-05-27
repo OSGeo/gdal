@@ -6062,7 +6062,7 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
 /*             eErr checks if there are errors encountered              */
 /************************************************************************/
 
-SFCGAL::Geometry* OGRGeometry::exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT
+SFCGAL::Geometry* OGRGeometry::exportToSFCGAL (OGRErr &eErr) const
 {
 
 #ifndef HAVE_SFCGAL

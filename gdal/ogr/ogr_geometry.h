@@ -1024,8 +1024,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual void set3D( OGRBoolean bIs3D );
     virtual void setMeasured( OGRBoolean bIsMeasured );
 
-    OGRErr        addRing( OGRCurve * );
-    OGRErr        addRingDirectly( OGRCurve * );
+    virtual OGRErr addRing( OGRCurve * );
+    virtual OGRErr addRingDirectly( OGRCurve * );
 
     OGRCurve *getExteriorRingCurve();
     const OGRCurve *getExteriorRingCurve() const;
