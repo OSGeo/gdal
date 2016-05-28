@@ -151,10 +151,12 @@ def test_gdal_polygonize_3():
     if script_path is None:
         return 'skip'
 
-    shp_drv = ogr.GetDriverByName( 'GPKG' )
+    drv = ogr.GetDriverByName( 'GPKG' )
+    if drv is None:
+        return 'skip'
     try:
         os.stat('tmp/out.gpkg')
-        shp_drv.DeleteDataSource( 'tmp/out.gpkg' )
+        drv.DeleteDataSource( 'tmp/out.gpkg' )
     except:
         pass
 
@@ -169,8 +171,8 @@ def test_gdal_polygonize_3():
 
     gpkg_ds.Destroy()
     # Reload drv because of side effects of run_py_script()
-    shp_drv = ogr.GetDriverByName( 'GPKG' )
-    shp_drv.DeleteDataSource( 'tmp/out.gpkg' )
+    drv = ogr.GetDriverByName( 'GPKG' )
+    drv.DeleteDataSource( 'tmp/out.gpkg' )
 
     if geom_is_polygon:
         return 'success'
