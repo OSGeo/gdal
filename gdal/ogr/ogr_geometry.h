@@ -250,7 +250,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *SymDifference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;
-    OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT;
 
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;

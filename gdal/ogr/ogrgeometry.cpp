@@ -6076,7 +6076,7 @@ SFCGAL::Geometry* OGRGeometry::exportToSFCGAL (OGRErr &eErr) const
 
     // get the existing WKB of the current OGR geometry
     // TODO - need to check this out
-    eErr = this->exportToWkb(wkbXDR, ogr_wkb);
+    eErr = this->exportToWkb(wkbXDR, _ogr_wkb);
 
     // if there is an error encountered, terminate ASAP
     if (eErr != OGRERR_NONE)
