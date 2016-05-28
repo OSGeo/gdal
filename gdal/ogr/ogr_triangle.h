@@ -26,7 +26,6 @@ class CPL_DLL OGROGRTriangle : public OGRPolygon
     virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
 
     virtual void empty() = 0;
-    virtual OGRGeometry *clone(); // done
     virtual void getEnvelope(OGREnvelope * psEnvelope) const = 0;
     virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
 
@@ -57,17 +56,14 @@ class CPL_DLL OGROGRTriangle : public OGRPolygon
     virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT; // done
     virtual OGRBoolean  IsValid() const;    // done
     virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;  // done
-    OGRErr PointOnSurface	(OGRPoint *poPoint) const;
-    OGRGeometry *Polygonize () const;
-    OGRGeometry *Simplify (double dTolerance)	const;
-    OGRGeometry *SimplifyPreserveTopology (double dTolerance) const;
-    OGRGeometry *SymDifference	(const OGRGeometry *poOtherGeom) const;
-    OGRBoolean Touches (const OGRGeometry *poOtherGeom)	const;
-    OGRGeometry *Union (const OGRGeometry *poOtherGeom) const;
-    OGRGeometry *UnionCascaded	() const;
-    virtual double get_Area() const;
-    virtual OGRGeometry* getCurveGeometry(const char *const *papszOptions=NULL) const;
-    const char* getGeometryName();
-    OGRLinearRing* stealExteriorRing();
-    OGRCurve* stealExteriorRingCurve();
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0; // done
+    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
+    virtual OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
+    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRBoolean  Touches( const OGRGeometry * ) const;   // done
+    virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;  // done
+    virtual double      get_Area() const;   // done
+    const char* getGeometryName();  // done
 };
