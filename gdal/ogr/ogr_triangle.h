@@ -1,9 +1,10 @@
 // TO BE INCORPORATED IN ogr_geometry.h
 // Included in an external file for the sake of readability
 
-class CPL_DLL OGROGRTriangle : public OGRPolygon
+class CPL_DLL OGRTriangle : public OGRPolygon
 {
   private:
+    int nCurrentCount;
     virtual int checkRing( OGRCurve * poNewRing ) const;            // done
     OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
 
@@ -12,11 +13,11 @@ class CPL_DLL OGROGRTriangle : public OGRPolygon
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
 
   public:
-    OGROGRTriangle();
-    OGROGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r);
-    OGRTriangle(const OGROGRTriangle &other);
-    OGROGRTriangle& operator=(const OGROGRTriangle& other);
-    virtual ~OGRTriangle();
+    OGRTriangle();   // done
+    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // make a linear ring and add it to curve collection
+    OGRTriangle(const OGRTriangle &other);  // get the linear ring of other and add it to curve collection
+    OGRTriangle& operator=(const OGRTriangle& other); // done
+    virtual ~OGRTriangle(); // done
 
     // IWks Interface
     virtual int WkbSize() const;    // done

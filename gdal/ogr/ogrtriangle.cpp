@@ -14,17 +14,43 @@
 /*                             OGRTriangle()                            */
 /************************************************************************/
 
-OGRTriangle::OGRTriangle()
+OGRTriangle::OGRTriangle():
+    oCC.nCurveCount(0),
+    nCurrentCount(0)
+{ }
+
+/************************************************************************/
+/*                             ~OGRTriangle()                            */
+/************************************************************************/
+
+OGRTriangle::~OGRTriangle()
 {
-    oCC.nCurveCount = 1;        // only 1 linear ring at all times for a triangle
+    if (oCC.nCurveCount > 0)
+    {
+        for (int iRing = 0; iRing < occ.nCurveCount; iRing++)
+            delete oCC.papoCurves[iRing];
+    }
+}
+
+/************************************************************************/
+/*                    operator=( const OGRGeometry&)                    */
+/*                         Assignment operator                          */
+/************************************************************************/
+
+OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
+{
+    if( this != &other)
+    {
+        OGRPolygon::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRTriangle::getGeometryName() const
-
+const char* OGRTriangle::getGeometryName() const
 {
     return "TRIANGLE";
 }
