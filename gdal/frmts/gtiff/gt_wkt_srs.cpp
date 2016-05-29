@@ -1196,9 +1196,14 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         if( verticalDatum > 0 && verticalDatum != KvUserDefined )
         {
-            pszFilename = CSVFilename( "datum.csv" );
-            if( EQUAL(pszFilename,"datum.csv") )
-                pszFilename = CSVFilename( "gdal_datum.csv" );
+            pszFilename = CSVFilename( "gdal_datum.csv" );
+            if( EQUAL(pszFilename,"gdal_datum.csv") )
+            {
+                // Fallback to see if libgeotiff datum.csv is available.
+                // TODO(schwehr): Can we drop searching for datum.csv?
+                // See #6531.
+                pszFilename = CSVFilename( "datum.csv" );
+            }
 
             snprintf( szSearchKey, sizeof(szSearchKey), "%d", verticalDatum );
 
