@@ -851,7 +851,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * - SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
  * is no corresponding input data.  This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
- * careful.  Mostly useful to short circuit a lot of extra work in mosaicing
+ * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
  * situations.
  *
  * - UNIFIED_SRC_NODATA=YES/[NO]: By default nodata masking values considered
