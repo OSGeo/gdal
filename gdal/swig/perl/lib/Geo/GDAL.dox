@@ -1,7 +1,6 @@
 ## @class Geo::GDAL
 # @brief GDAL utility functions and a root class for raster classes.
-#
-# Geo::GDAL wraps many GDAL utility functions and is as a root class
+# @details Geo::GDAL wraps many GDAL utility functions and is as a root class
 # for all GDAL raster classes. A "raster" is an object, whose core is
 # a rectagular grid of cells, called a "band" in GDAL. Each cell
 # contains a numeric value of a specific data type.
@@ -116,7 +115,7 @@
 ## @ignore SerializeXMLTree
 
 
-## @sub UseExceptions 
+## @sub UseExceptions
 # Use the Perl exception mechanism for GDAL messages (failures are
 # confessed and warnings are warned) and collect the messages
 # into \@Geo::GDAL::error. This is the default.
@@ -324,6 +323,7 @@
 
 ## @class Geo::GDAL::XML
 # @brief A simple XML parser
+# @details
 
 ## @method new($string)
 # @param string String containing XML.
@@ -339,15 +339,15 @@
 
 ## @class Geo::GDAL::AsyncReader
 # @brief Enable asynchronous requests.
+# @details This class is not yet documented nor tested in the GDAL Perl wrappers
 # @isa (Geo::GDAL)
 # @todo Test and document.
-#
-# This class is not yet documented nor tested in the GDAL Perl wrappers
 
 
 
 ## @class Geo::GDAL::MajorObject
 # @brief An object, which holds meta data.
+# @details 
 # @isa (Geo::GDAL)
 
 ## @sub Domains
@@ -388,6 +388,7 @@
 
 ## @class Geo::GDAL::Driver
 # @brief A driver for a specific dataset format.
+# @details 
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @method Open
@@ -492,6 +493,7 @@
 
 ## @class Geo::GDAL::GCP
 # @brief A ground control point for georeferencing rasters.
+# @details 
 # @isa (Geo::GDAL)
 
 ## @cmethod $new($x = 0.0, $y = 0.0, $z = 0.0, $column = 0.0, $row = 0.0, $info = "", $id = "")
@@ -530,6 +532,7 @@
 
 ## @class Geo::GDAL::Dataset
 # @brief A set of associated raster bands or vector layer source.
+# @details 
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @sub Geo::GDAL::Dataset Open
@@ -915,6 +918,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::Band
 # @brief A raster band.
+# @details 
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @sub ColorInterpretations
@@ -1361,6 +1365,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::ColorTable
 # @brief A color table from a raster band or a color table, which can be used for a band.
+# @details 
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = 'RGB')
@@ -1417,6 +1422,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::RasterAttributeTable
 # @brief An attribute table in a raster band.
+# @details 
 # @isa = ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @cmethod Geo::GDAL::RasterAttributeTable new()
@@ -1523,8 +1529,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::Transformer
 # @brief
-#
-# This class is not yet documented for the GDAL Perl bindings.
+# @details This class is not yet documented for the GDAL Perl bindings.
 # @todo Test and document.
 
 
@@ -1532,6 +1537,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::VSIF
 # @brief A GDAL virtual file system.
+# @details 
 # @isa = ( Geo::GDAL )
 
 ## @sub Geo::GDAL::VSIF Open($filename, $mode)
@@ -1594,8 +1600,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @class Geo::GDAL::GeoTransform
 # @brief An array of affine transformation coefficients.
-#
-# The geo transformation has the form
+# @details The geo transformation has the form
 # \code
 # x = a + column * b + row * c
 # y = d + column * e + row * f

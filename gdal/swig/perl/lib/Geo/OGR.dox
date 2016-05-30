@@ -1,7 +1,6 @@
 ## @class Geo::OGR
 # @brief OGR utility functions.
-#
-# A wrapper for many OGR utility functions and a root class for all
+# @details A wrapper for many OGR utility functions and a root class for all
 # OGR classes.
 
 ## @ignore TermProgress
@@ -90,7 +89,8 @@
 
 
 ## @class Geo::OGR::Driver
-# @brief A vector format driver. This is a legacy class which
+# @brief A vector format driver.
+# @details This is a legacy class which
 # should not be used in new code. Use Geo::GDAL::Driver.
 
 ## @method Open
@@ -114,7 +114,8 @@
 
 
 ## @class Geo::OGR::DataSource
-# @brief A vector dataset. This is a legacy class which should not be
+# @brief A vector dataset.
+# @details This is a legacy class which should not be
 # used in new code. Use Geo::GDAL::Dataset.
 
 ## @sub Geo::GDAL::Dataset Open
@@ -128,8 +129,7 @@
 
 ## @class Geo::OGR::Layer
 # @brief A collection of similar features.
-#
-# A layer object is typically obtained with a data source object. A
+# @details A layer object is typically obtained with a data source object. A
 # layer has a data model (a schema), which is maintained in a
 # definition object, and a set of features, which contain data
 # according to the data model. The schema is typically set when the
@@ -140,11 +140,10 @@
 # read, inserted and deleted. Reading can be filtered. Layers can be
 # compared to each other with methods Clip, Erase, Identity,
 # Intersection, SymDifference, Union, and Update.
-# @isa (Geo::OGR)
-#
 # A layer may have metadata OLMD_FID64 => 'YES' if it holds features
 # with 64 bit FIDs. The metadata of a layer can be obtained with
 # GetMetadata method.
+# @isa (Geo::OGR)
 
 ## @method @Capabilities()
 # Both a package subroutine and an object method.
@@ -496,8 +495,7 @@
 
 ## @class Geo::OGR::Feature
 # @brief A collection of non-spatial and spatial attributes.
-#
-# A feature is a collection of non-spatial and spatial attributes and
+# @details A feature is a collection of non-spatial and spatial attributes and
 # an id, which is a special attribute, and data records according to
 # this data model. Attributes are called fields and some fields are
 # spatial, i.e., their value is a geometry. Fields have at least a
@@ -719,8 +717,7 @@
 
 ## @class Geo::OGR::FeatureDefn
 # @brief The schema of a feature or a layer.
-#
-# A FeatureDefn object is a collection of field definition objects. A
+# @details A FeatureDefn object is a collection of field definition objects. A
 # read-only FeatureDefn object can be obtained from a layer
 # (Geo::OGR::Layer::GetDefn()) or a feature
 # (Geo::OGR::Feature::GetDefn()).
@@ -846,6 +843,7 @@
 
 ## @class Geo::OGR::FieldDefn
 # @brief A definition of a non-spatial attribute.
+# @details 
 # @isa (Geo::OGR)
 
 ## @sub list Types
@@ -967,6 +965,7 @@
 
 ## @class Geo::OGR::GeomFieldDefn
 # @brief A definition of a spatial attribute.
+# @details 
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::GeomFieldDefn new(%params)
@@ -1032,16 +1031,15 @@
 
 
 ## @class Geo::OGR::Geometry
-# @isa (Geo::OGR)
 # @brief Spatial data.
-#
-# A geometry is spatial data (coordinate values, and a reference to a
+# @details A geometry is spatial data (coordinate values, and a reference to a
 # spatial reference system) organized into one of the geometry
 # types. Geometries can be created from several type of data including
 # a Perl data structure. There are several methods, which modify,
 # compare, test, or compute values from geometries.
 # @note Most spatial analysis methods require <a
 # href="http://geos.osgeo.org/doxygen/">GEOS</a> to work rigorously.
+# @isa (Geo::OGR)
 
 ## @sub @GeometryTypes()
 # Same as Geo::OGR::GeometryTypes
