@@ -346,12 +346,10 @@ my $geom = $feature->{geom}; # will lead to memory error!
 
 This documentation is generated from files within the GDAL
 distribution (directory swig/perl) with Doxygen using a Perl module <a
-href="http://search.cpan.org/~jordan/Doxygen-Filter-Perl/">Doxygen::Filter::Perl</a>
-(see also <a
-href="https://rt.cpan.org/Public/Dist/Display.html?Name=Doxygen-Filter-Perl">the
-Doxygen::Filter::Perl bug reports</a>). A tailor made preprocessor in
-the GDAL distribution is used to process and put all Perl code and
-documentation into a single file (all.pm) for Doxygen.
+href="http://search.cpan.org/~jordan/Doxygen-Filter-Perl/">Doxygen::Filter::Perl</a>.
+A tailor made preprocessor in the GDAL distribution is used to process
+and put all Perl code and documentation into a single file (all.pm)
+for Doxygen-Filter-Perl and Doxygen.
 
 Many methods are just interfaces to non-Perl code in the bindings or
 GDAL and thus their code show as blank on these pages. The bindings

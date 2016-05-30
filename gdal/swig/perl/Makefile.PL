@@ -339,7 +339,7 @@ end
                     $| = $flush;
                     close($cmd);
                 } else {
-                    print STDERR "'@cmd': $!\n";
+                    print STDERR "'@cmd' returned $ret\n";
                 }
             }
         };
@@ -363,7 +363,7 @@ end
             print "Using existing \"$gdal.tar.gz\"\n";
             # extract into gdal
             $ok = $step->("mkdir", "gdal");
-            $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C gdal", "--strip-components=1");
+            $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C", "gdal", "--strip-components=1");
         }
         else {
             print "Attempting to fetch '$uri'\n";
@@ -372,10 +372,11 @@ end
             if ($ok) {
                 # extract into gdal
                 $ok = $step->("mkdir", "gdal");
-                $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C gdal", "--strip-components=1");
+                $ok = $step->("tar", "zxf", "$gdal.tar.gz", "-C", "gdal", "--strip-components=1");
             } else {
                 print "No luck. Maybe this is the development version?\n";
                 $ok = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
+                $gdal = "gdal";
             }
         }
     };
