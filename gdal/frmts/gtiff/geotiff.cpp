@@ -12149,7 +12149,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
     char szWorkMDI[200] = {};
-    uint16  nShort = 0;
+    uint16 nShort = 0;
 
     for( size_t iTag = 0;
          iTag < sizeof(asTIFFTags) / sizeof(asTIFFTags[0]);
@@ -12163,7 +12163,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
         else if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_FLOAT )
         {
-            float   fVal;
+            float fVal = 0.0;
             if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ) )
             {
                 CPLsnprintf( szWorkMDI, sizeof(szWorkMDI), "%.8g", fVal );
@@ -12998,7 +12998,7 @@ static int GTiffGetZLevel(char** papszOptions)
     if( pszValue  != NULL )
     {
         nZLevel =  atoi( pszValue );
-        if( !(nZLevel >= 1 && nZLevel <= 9) )
+        if( nZLevel < 1 || nZLevel > 9 )
         {
             CPLError( CE_Warning, CPLE_IllegalArg,
                       "ZLEVEL=%s value not recognised, ignoring.",
@@ -13016,7 +13016,7 @@ static int GTiffGetJpegQuality(char** papszOptions)
     if( pszValue  != NULL )
     {
         nJpegQuality = atoi( pszValue );
-        if( !(nJpegQuality >= 1 && nJpegQuality <= 100) )
+        if( nJpegQuality < 1 || nJpegQuality > 100 )
         {
             CPLError( CE_Warning, CPLE_IllegalArg,
                       "JPEG_QUALITY=%s value not recognised, ignoring.",
@@ -13710,11 +13710,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( nCompression == COMPRESSION_LZW ||
          nCompression == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
-    if( nCompression == COMPRESSION_ADOBE_DEFLATE
-        && nZLevel != -1 )
+    if( nCompression == COMPRESSION_ADOBE_DEFLATE && nZLevel != -1 )
         TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
-    else if( nCompression == COMPRESSION_JPEG
-        && nJpegQuality != -1 )
+    else if( nCompression == COMPRESSION_JPEG && nJpegQuality != -1 )
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
     else if( nCompression == COMPRESSION_LZMA && nLZMAPreset != -1)
         TIFFSetField( hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset );
@@ -14375,9 +14373,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             char const *pszMD =
                 CSLFetchNameValue(papszOptions, pszOptionsMD[i]);
             if( pszMD == NULL )
-                pszMD =
-                    poSrcDS->GetMetadataItem( pszOptionsMD[i],
-                                              "COLOR_PROFILE" );
+                pszMD = poSrcDS->GetMetadataItem( pszOptionsMD[i],
+                                                  "COLOR_PROFILE" );
 
             if( (pszMD != NULL) && !EQUAL(pszMD, "") )
             {
@@ -15574,8 +15571,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 
     if( GetAccess() == GA_Update )
     {
-        if(
-            padfTransform[0] == 0.0 &&
+        if( padfTransform[0] == 0.0 &&
             padfTransform[1] == 1.0 &&
             padfTransform[2] == 0.0 &&
             padfTransform[3] == 0.0 &&
