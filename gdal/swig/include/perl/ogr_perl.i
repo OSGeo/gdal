@@ -1010,6 +1010,10 @@ sub SetField {
             $arg->[6] //= 0;
             _SetField($self, $field, @$arg[0..6]);
         }
+        elsif ($type == $Geo::OGR::OFTInteger64) 
+        {
+            SetFieldInteger64($self, $field, $arg);
+        }
         else {
             $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
             Geo::GDAL::error("Expected one non-reference argument for this field of type '$type'.");
