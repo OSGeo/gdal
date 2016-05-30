@@ -188,6 +188,7 @@ for my $package (sort keys %package) {
         }
     }
     print "#** \@class $package\n";
+    # package may have brief, details, todo, isa
     for my $l (@{$package{$package}{package_dox}}) {
         print "# $l\n";
     }

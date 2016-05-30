@@ -120,8 +120,12 @@ if ($gdal_config) {
 }
 
 if (!$config && $downloads_are_ok) {
-    $source_tree = download_and_compile_gdal($my_gdal_version);
+    $source_tree = "./gdal";
     $config = "$source_tree/apps/gdal-config";
+    unless (-e $config) {
+        $source_tree = download_and_compile_gdal($my_gdal_version);
+        $config = "$source_tree/apps/gdal-config";
+    }
 }
 
 my $uri = gdal_source_location($my_gdal_version);
