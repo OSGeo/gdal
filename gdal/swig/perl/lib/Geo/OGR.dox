@@ -641,6 +641,8 @@
 # @note Non-scalar fields (for example Date) can be set either from a
 # scalar, which is then assumed to be a string and parsed, or from a
 # list of values (for example year, month, day for Date).
+# @note Setting and getting Integer64 fields requires 'use bigint' if
+# \$Config{ivsize} is smaller than 8, i.e., in a 32 bit machine.
 # @return in non-void context the value of the field, which may be a
 # scalar or a list, depending on the field type. For unset fields the
 # undef value is returned.

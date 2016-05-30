@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use bytes;
 use v5.10;
+use Config;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
@@ -127,15 +128,29 @@ my $f = Geo::OGR::Feature->new(
 }
 
 {
-    my $b = 9223372036854775806;
-    my $c = $f->Field(Integer64 => $b);
-    ok($b eq $c, "Set and get integer64 field.");
+    if ($Config{ivsize} < 8) {
+        use bigint;
+        my $b = 9223372036854775806;
+        my $c = $f->Field(Integer64 => $b);
+        ok($b eq $c, "Set and get integer64 field (with 'use bigint').");
+    } else {
+        my $b = 9223372036854775806;
+        my $c = $f->Field(Integer64 => $b);
+        ok($b eq $c, "Set and get integer64 field.");
+    }
 }
 
 {
-    my $b = [9223372036854775806,12];
-    my $c = $f->Field(Integer64List => $b);
-    ok("@$b" eq "@$c", "Set and get integer64 list field.");
+    if ($Config{ivsize} < 8) {
+        use bigint;
+        my $b = [9223372036854775806,12];
+        my $c = $f->Field(Integer64List => $b);
+        ok("@$b" eq "@$c", "Set and get integer64 list field (with 'use bigint').");
+    } else {
+        my $b = [9223372036854775806,12];
+        my $c = $f->Field(Integer64List => $b);
+        ok("@$b" eq "@$c", "Set and get integer64 list field (with 'use bigint').");
+    }
 }
 
 {
