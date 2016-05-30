@@ -14,8 +14,8 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
   public:
     OGRTriangle();   // done
-    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // make a linear ring and add it to curve collection
-    OGRTriangle(const OGRTriangle &other);  // get the linear ring of other and add it to curve collection
+    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // done
+    OGRTriangle(const OGRTriangle &other);  // done
     OGRTriangle& operator=(const OGRTriangle& other); // done
     virtual ~OGRTriangle(); // done
 
@@ -25,10 +25,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const;     // done
     virtual OGRErr importFromWkt(char **);  // done
     virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
-
-    virtual void empty() = 0;
-    virtual void getEnvelope(OGREnvelope * psEnvelope) const = 0;
-    virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
 
     // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
     virtual static GEOSContextHandle_t createGEOSContext(); // done

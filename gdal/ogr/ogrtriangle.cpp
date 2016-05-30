@@ -4,7 +4,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-// TODO - write getGeometryType()
 // TODO - add SFCGAL interfacing method to OGRGeometry
 // TODO - check the different library versions of SFCGAL and add it to OGRGeometryFactory?
 // TODO - write a PointOnSurface(), Simplify() and SimplifyPreserveTopology() method?
@@ -20,6 +19,32 @@ OGRTriangle::OGRTriangle():
 { }
 
 /************************************************************************/
+/*                             OGRTriangle()                            */
+/************************************************************************/
+
+OGRTriangle::OGRTriangle(const OGRTriangle& other) :
+    OGRPolygon(other)
+{ }
+
+/************************************************************************/
+/*                             OGRTriangle()                            */
+/************************************************************************/
+
+OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r)
+{
+    OGRSimpleCurve *poCurve = new OGRSimpleCurve();
+    poCurve->setNumPoints(4,TRUE);
+    poCurve->addPoint((OGRPoint *)p);
+    poCurve->addPoint((OGRPoint *)q);
+    poCurve->addPoint((OGRPoint *)r);
+    poCurve->addPoint((OGRPoint *)p);
+
+    // cast the OGRSimpleCurve to OGRLinearRing and add it to oCC.papoCurves
+    oCC.papoCurves[0] = (OGRLinearRing *)poCurve;
+    oCC.nCurveCount = 1;
+}
+
+/************************************************************************/
 /*                             ~OGRTriangle()                            */
 /************************************************************************/
 
@@ -29,6 +54,7 @@ OGRTriangle::~OGRTriangle()
     {
         for (int iRing = 0; iRing < occ.nCurveCount; iRing++)
             delete oCC.papoCurves[iRing];
+        nCurveCount = 0;
     }
 }
 
@@ -53,6 +79,22 @@ OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
 const char* OGRTriangle::getGeometryName() const
 {
     return "TRIANGLE";
+}
+
+/************************************************************************/
+/*                          getGeometryType()                           */
+/************************************************************************/
+
+OGRwkbGeometryType OGRTriangle::getGeometryType() const
+{
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbTriangleZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbTriangleM;
+    else if( flags & OGR_G_3D )
+        return wkbTriangleZ;
+    else
+        return wkbTriangle;
 }
 
 /************************************************************************/
@@ -464,7 +506,10 @@ GEOSContextHandle_t OGRTriangle::createGEOSContext()
 /************************************************************************/
 
 void OGRTriangle::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
-{ }
+{
+    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
+    return;
+}
 
 /************************************************************************/
 /*                            exportToGEOS()                            */
