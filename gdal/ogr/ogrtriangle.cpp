@@ -613,8 +613,7 @@ double OGRTriangle::Distance(const OGRGeometry *poOtherGeom) const
     free(poThis);
     free(poOther);
 
-    if(_distance > 0)
-        return _distance;
+    (_distance > 0)? return _distance: return -1;
 
 #endif
 }
