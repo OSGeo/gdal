@@ -610,10 +610,10 @@ double OGRTriangle::Distance(const OGRGeometry *poOtherGeom) const
 
     double _distance = poThis->distance(poOther);
 
-    free(poThis);
-    free(poOther);
+    delete poThis;
+    delete poOther;
 
-    (_distance > 0)? return _distance: return -1;
+    return (_distance > 0)? _distance: -1;
 
 #endif
 }
@@ -657,10 +657,10 @@ double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom) const
 
     double _distance = poThis->distance(poOther);
 
-    free(poThis);
-    free(poOther);
+    delete poThis;
+    delete poOther;
 
-    (_distance > 0)? return _distance: return -1;
+    return (_distance > 0)? _distance: -1;
 
 #endif
 }
@@ -764,8 +764,8 @@ OGRBoolean OGRTriangle::Crosses(const OGRGeometry *poOtherGeom) const
     OGRBoolean isCrossing = SFCGAL::algorithm::intersects3D(*poThis, *poOther);
 
     // free both the geometries
-    free(poThis);
-    free(poOther);
+    delete poThis;
+    delete poOther;
 
     return isCrossing;
 
@@ -1058,8 +1058,8 @@ OGRGeometry *OGRTriangle::Polygonize()
     std::string wkb_hSfcgalGeom = SFCGAL::io::writeBinaryGeometry(*poPolygon);
 
     // get rid of memory that is now unneeded
-    free(poPolygon);
-    free(pabyGeom);
+    delete poPolygon;
+    delete pabyGeom;
 
     const unsigned char* wkb_hOGRGeom = wkb_hSfcgalGeom.c_str();
     OGRGeometry *h_prodGeom = new OGRGeometry();
