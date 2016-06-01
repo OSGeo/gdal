@@ -201,8 +201,8 @@ class CPL_DLL OGRGeometry
     virtual char * exportToKML() const;
     virtual char * exportToJson() const;
 
-    virtual static GEOSContextHandle_t createGEOSContext();
-    virtual static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
+    static GEOSContextHandle_t createGEOSContext();
+    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
     virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const CPL_WARN_UNUSED_RESULT;
