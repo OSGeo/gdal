@@ -109,6 +109,18 @@ reading mode where the following reading pattern must be used:
 Note : the ogr2ogr application has been modified to use that OGR_INTERLEAVED_READING mode without any
 particular user action.<p>
 
+<h3>Spatial filtering</h3>
+
+<p>Due to way .osm or .pbf files are structured and the parsing of the file is done,
+for efficiency reasons, a spatial filter applied on the points layer will also affect other layers.
+This may result in lines or polygons that have missing vertices.</p>
+
+<p>To improve this, a possibility is using a larger spatial filter with some buffer
+for the points layer, and then post-process the output to apply the desired filter.
+This would not work however if a polygon has vertices very far away from the interest
+area. In which case full conversion of the file to another format, and filtering of
+the resulting lines or polygons layers would be needed.</p>
+
 <h3>Reading .osm.bz2 files and/or online files</h3>
 
 .osm.bz2 are not natively recognized, however you can process them (on Unix), with the following command :
