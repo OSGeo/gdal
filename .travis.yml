@@ -17,6 +17,8 @@ before_install:
   - sudo apt-get install python-lxml
   - sudo apt-get install python-pip
   - sudo apt-get install libogdi3.2-dev
+  - sudo apt-get install libgmp-dev
+  - sudo apt-get install libmpfr-dev
 # Boost for Mongo
   - sudo apt-get install libboost-regex-dev libboost-system-dev libboost-thread-dev
   - sudo pip install pyflakes
@@ -154,4 +156,7 @@ notifications:
     channels:
       - "irc.freenode.org#gdal"
     use_notice: true
+<<<<<<< HEAD
     on_success: change
+=======
+>>>>>>> checks

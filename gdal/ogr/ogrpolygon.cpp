@@ -29,6 +29,7 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogr_sfcgal.h"
 #include "ogr_geos.h"
 #include "ogr_api.h"
 
