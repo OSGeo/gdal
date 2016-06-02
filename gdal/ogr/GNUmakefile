@@ -1,24 +1,11 @@
 
 include ../GDALmake.opt
 
-OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
-		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
-		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o gdal_tps.o \
-		thinplatespline.o llrasterize.o gdalrasterize.o gdalgeoloc.o \
-		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o \
-		gdalrasterpolygonenumerator.o \
-		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
-		contour.o gdaltransformgeolocs.o \
-		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
-		gdalpansharpen.o
+include ./file.lst
 
-ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)
-endif
-
-ifeq ($(HAVE_SSE_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_SSE_AT_COMPILE_TIME $(CPPFLAGS)
-endif
+INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
+		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
+		ogr_featurestyle.h ogr_api.h ogr_geocoding.h
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
@@ -28,34 +15,54 @@ ifeq ($(HAVE_SFCGAL),yes)
 CPPFLAGS 	:=	-DHAVE_SFCGAL=1 $(SFCGAL_CFLAGS) $(CPPFLAGS)
 endif
 
-ifeq ($(HAVE_ARMADILLO),yes)
-CPPFLAGS 	:=	-DHAVE_ARMADILLO $(CPPFLAGS)
+CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
+
+ifeq ($(HAVE_EXPAT),yes)
+CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
 endif
 
-ifeq ($(QHULL_SETTING),external)
-CPPFLAGS 	:=	-DEXTERNAL_QHULL $(CPPFLAGS)
+ifeq ($(LIBZ_SETTING),internal)
+ZLIB_XTRA_OPT =      -I../frmts/zlib
+else
+ZLIB_XTRA_OPT =
 endif
-ifeq ($(QHULL_SETTING),internal)
-CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
-endif
 
-CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
+CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
-default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT) gdalgridsse.$(OBJ_EXT)
+default:	lib
 
-# We use CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT to avoid the whole library to be compiled with -mavx
-# if -mavx is not the default
-gdalgridavx.$(OBJ_EXT):   gdalgridavx.cpp
-	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
-
-gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
-	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(SSEFLAGS) $(CPPFLAGS) -c -o $@ $<
+all:	lib
 
 clean:
-	$(RM) *.o $(O_OBJ)
+	rm -f html/*
+	(cd ogrsf_frmts; $(MAKE) clean)
+	$(RM) *.o
+
+very-clean: clean
+	rm -rf html rtf
+
+lib:	sublibs $(OBJ:.o=.$(OBJ_EXT))
+
+$(OBJ): ogr_feature.h ogr_geometry.h swq.h
+
+obj:	$(OBJ)
+
+sublibs:
+	(cd ogrsf_frmts; $(MAKE))
 
 docs:
-	(cd ..; $(MAKE) docs)
+	echo "This target does not exist anymore. Use top-level"
+
+install-docs:
+	echo "This target does not exist anymore. Use top-level"
+
+gdalso:	$(GDAL_SLIB)
+
+$(GDAL_SLIB):
+	(cd ..; $(MAKE) check-lib)
+
+web-update:	docs
+	echo "This target does not exist anymore. Use top-level"
 
 install:
 	for f in $(INST_H_FILES) ; \
@@ -70,7 +77,7 @@ install:
 # that it helps gcc 4.1 generating correct code here...
 parser:
 	bison -p swq -d -oswq_parser.cpp swq_parser.y
-	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" | sed "s/            \/\* Fall through\.  \*\//            CPL_FALLTHROUGH/" > swq_parser.cpp.tmp
+	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" > swq_parser.cpp.tmp
 	mv swq_parser.cpp.tmp swq_parser.cpp
 
 # The sed hack is to please MSVC
@@ -84,7 +91,3 @@ osr_cs_wkt_parser.$(OBJ_EXT):   osr_cs_wkt_parser.c
 
 swq_parser.$(OBJ_EXT):   swq_parser.cpp
 	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(CPPFLAGS) $(NO_LOGICAL_OP_FLAG) -c -o $@ $<
-	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
-
-lib:	$(OBJ:.o=.$(OBJ_EXT))
-	(cd .. ; $(MAKE) force-lib)
