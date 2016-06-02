@@ -301,36 +301,28 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
     switch ( iNumType )
     {
         case DFNT_INT8:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<char *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<char *>(pData));
         case DFNT_UINT8:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<unsigned char *>( pData ) );
+            return static_cast<double>
+                (*reinterpret_cast<unsigned char *>(pData));
         case DFNT_INT16:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<short *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<short *>(pData));
         case DFNT_UINT16:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<unsigned short *>( pData ) );
+            return static_cast<double>
+                (*reinterpret_cast<unsigned short *>(pData));
         case DFNT_INT32:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<int *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<int *>(pData));
         case DFNT_UINT32:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<unsigned int *>( pData ) );
+            return static_cast<double>
+                (*reinterpret_cast<unsigned int *>(pData));
         case DFNT_INT64:
-            // Highly suspicious! Should be GIntBig. But cannot verify.
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<char *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<GIntBig *>(pData));
         case DFNT_UINT64:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<GIntBig *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<GIntBig *>(pData));
         case DFNT_FLOAT32:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<float *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<float *>(pData));
         case DFNT_FLOAT64:
-            return *reinterpret_cast<double *>(
-                reinterpret_cast<double *>( pData ) );
+            return static_cast<double>(*reinterpret_cast<double *>(pData));
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
