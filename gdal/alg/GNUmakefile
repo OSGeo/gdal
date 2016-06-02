@@ -24,6 +24,10 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
+ifeq ($(HAVE_SFCGAL),yes)
+CPPFLAGS 	:=	-DHAVE_SFCGAL=1 $(SFCGAL_CFLAGS) $(CPPFLAGS)
+endif
+
 ifeq ($(HAVE_ARMADILLO),yes)
 CPPFLAGS 	:=	-DHAVE_ARMADILLO $(CPPFLAGS)
 endif
@@ -50,7 +54,7 @@ gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
 clean:
 	$(RM) *.o $(O_OBJ)
 
-docs:	
+docs:
 	(cd ..; $(MAKE) docs)
 
 install:

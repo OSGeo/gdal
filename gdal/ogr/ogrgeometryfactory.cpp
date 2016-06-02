@@ -32,6 +32,7 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ogr_sfcgal.h"
 #include "ogr_geos.h"
 #include <new>
 
@@ -460,14 +461,14 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       case wkbMultiSurface:
           return new (std::nothrow) OGRMultiSurface();
 
-      case wkbTriangle:
-          return new (std::nothrow) OGRTriangle();
-
-      case wkbPolyhedralSurface:
-          return new (std::nothrow) OGRPolyhedralSurface();
-
-      case wkbTIN:
-          return new (std::nothrow) OGRTIN();
+    //   case wkbTriangle:
+    //       return new (std::nothrow) OGRTriangle();
+      //
+    //   case wkbPolyhedralSurface:
+    //       return new (std::nothrow) OGRPolyhedralSurface();
+      //
+    //   case wkbTIN:
+    //       return new (std::nothrow) OGRTIN();
 
       default:
           return NULL;
@@ -1937,7 +1938,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
     OGRGeometry *poGeom = NULL;
     int          nTupleSize = 0;
     GInt32       nGDim = 0;
-
+    
     // TODO: Why is this a switch?
     switch( nGType )
     {

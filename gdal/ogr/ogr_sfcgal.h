@@ -1,19 +1,18 @@
 #ifdef HAVE_SFCGAL
 
 // Broad API
-#include <Geometry.h>
-
-// API for SFCGAL::TriangulatedSurface
-#include <TriangulatedGeometry.h>
-
-// API for SFCGAL::PolyhedralSurface
-#include <PolyhedralSurface.h>
-
-// API for SFCGAL::Triangle
-#include <Triangle.h>
-
-// API for SFCGAL::Polygon
-#include <Polygon.h>
+#include <SFCGAL/LineString.h>
+#include <SFCGAL/MultiLineString.h>
+#include <SFCGAL/MultiPoint.h>
+#include <SFCGAL/MultiPolygon.h>
+#include <SFCGAL/MultiSolid.h>
+#include <SFCGAL/Point.h>
+#include <SFCGAL/Polygon.h>
+#include <SFCGAL/PolyhedralSurface.h>
+#include <SFCGAL/Solid.h>
+#include <SFCGAL/Surface.h>
+#include <SFCGAL/Triangle.h>
+#include <SFCGAL/TriangulatedSurface.h>
 
 // API for SFCGAL::io::writeBinaryGeometry()
 #include <SFCGAL/detail/io/Serialization.h>

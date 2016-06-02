@@ -70,6 +70,13 @@
  * @return new geometry.
  */
 
+/************************************************************************/
+/*                              Destructor                              */
+/************************************************************************/
+
+OGRSurface::~OGRSurface()
+{ }
+
 OGRPolygon* OGRSurface::CastToPolygon( OGRSurface* poSurface )
 {
     OGRSurfaceCasterToPolygon pfn = poSurface->GetCasterToPolygon();
