@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "cpl_multiproc.h"
 #include <assert.h>
 
