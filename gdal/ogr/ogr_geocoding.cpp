@@ -598,7 +598,7 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char* pszContent)
 
 static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
                                                CPL_UNUSED const char* pszContent,
-                                               int bAddRawFeature)
+                                               bool bAddRawFeature)
 {
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbUnknown );
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
@@ -732,7 +732,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
 
 static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeocode,
                                                       const char* pszContent,
-                                                      int bAddRawFeature)
+                                                      bool bAddRawFeature)
 {
     CPLXMLNode* psResult = CPLGetXMLNode(psReverseGeocode, "result");
     CPLXMLNode* psAddressParts = CPLGetXMLNode(psReverseGeocode, "addressparts");
@@ -862,7 +862,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
 
 static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
                                            CPL_UNUSED const char* pszContent,
-                                           int bAddRawFeature)
+                                           bool bAddRawFeature)
 {
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbPoint );
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
@@ -993,7 +993,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
 
 static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
                                            CPL_UNUSED const char* pszContent,
-                                           int bAddRawFeature)
+                                           bool bAddRawFeature)
 {
     CPLXMLNode* psResources = CPLGetXMLNode(psResponse, "ResourceSets.ResourceSet.Resources");
     if( psResources == NULL )
@@ -1150,7 +1150,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent,
-                                      int bAddRawFeature)
+                                      bool bAddRawFeature)
 {
     OGRLayerH hLayer = NULL;
     CPLXMLNode* psRoot = CPLParseXMLString( pszContent );
@@ -1242,7 +1242,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
         CPLFree(pszEscaped);
     }
 
-    int bAddRawFeature =
+    const bool bAddRawFeature =
         CPLTestBool(OGRGeocodeGetParameter(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
