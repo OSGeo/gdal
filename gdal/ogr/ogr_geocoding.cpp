@@ -142,10 +142,10 @@ const char* OGRGeocodeGetParameter(char** papszOptions, const char* pszKey,
 
 /* Checks that pszQueryTemplate has one and only one occurrence of %s in it. */
 static
-int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
+bool OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
 {
     const char* pszIter = pszQueryTemplate;
-    int bValidFormat = TRUE;
+    bool bValidFormat = true;
     bool bFoundPctS = false;
     while( *pszIter != '\0' )
     {
@@ -159,21 +159,21 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
             {
                 if( bFoundPctS )
                 {
-                    bValidFormat = FALSE;
+                    bValidFormat = false;
                     break;
                 }
                 bFoundPctS = true;
             }
             else
             {
-                bValidFormat = FALSE;
+                bValidFormat = false;
                 break;
             }
         }
         pszIter ++;
     }
     if( !bFoundPctS )
-        bValidFormat = FALSE;
+        bValidFormat = false;
     return bValidFormat;
 }
 
