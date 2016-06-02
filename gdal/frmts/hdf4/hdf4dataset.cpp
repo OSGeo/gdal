@@ -298,23 +298,21 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
 
 double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
 {
+    CPL_STATIC_ASSERT(sizeof(GIntBig) == 8);
     switch ( iNumType )
     {
         case DFNT_INT8:
             return static_cast<double>(*reinterpret_cast<char *>(pData));
         case DFNT_UINT8:
-            return static_cast<double>
-                (*reinterpret_cast<unsigned char *>(pData));
+            return static_cast<double>(*reinterpret_cast<GByte *>(pData));
         case DFNT_INT16:
-            return static_cast<double>(*reinterpret_cast<short *>(pData));
+            return static_cast<double>(*reinterpret_cast<GInt16 *>(pData));
         case DFNT_UINT16:
-            return static_cast<double>
-                (*reinterpret_cast<unsigned short *>(pData));
+            return static_cast<double>(*reinterpret_cast<GUInt16 *>(pData));
         case DFNT_INT32:
-            return static_cast<double>(*reinterpret_cast<int *>(pData));
+            return static_cast<double>(*reinterpret_cast<GInt32 *>(pData));
         case DFNT_UINT32:
-            return static_cast<double>
-                (*reinterpret_cast<unsigned int *>(pData));
+            return static_cast<double>(*reinterpret_cast<GUInt32 *>(pData));
         case DFNT_INT64:
             return static_cast<double>(*reinterpret_cast<GIntBig *>(pData));
         case DFNT_UINT64:
