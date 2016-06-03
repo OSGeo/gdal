@@ -462,8 +462,8 @@ This number is specified with the -gt option. For example, for SQLite, explicitl
 populating some table containing many hundredth thousand or million rows. However, note that
 if there are failed insertions, the scope of -skipfailures is a whole transaction.
 
-For PostgreSQL, the PG_USE_COPY config option can be set to YES for significantly insertion
-performance boot. See the PG driver documentation page.
+For PostgreSQL, the PG_USE_COPY config option can be set to YES for a significant insertion
+performance boost. See the PG driver documentation page.
 
 More generally, consult the documentation page of the input and output drivers for performance hints.
 
