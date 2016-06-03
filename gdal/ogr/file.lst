@@ -4,6 +4,7 @@ OBJ =	ogrgeometryfactory.o \
 	ogrlinestring.o \
 	ogrlinearring.o \
 	ogrpolygon.o \
+	ogrtriangle.o \
 	ogrutils.o \
 	ogrgeometry.o \
 	ogrgeometrycollection.o \

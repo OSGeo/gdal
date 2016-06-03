@@ -67,6 +67,34 @@ class OGRRawPoint
 typedef struct GEOSGeom_t *GEOSGeom;
 /** GEOS context handle type */
 typedef struct GEOSContextHandle_HS *GEOSContextHandle_t;
+typedef void sfcgal_geometry_t;
+
+#ifndef HAVE_SFCGAL
+typedef enum {
+    //     TYPE_GEOMETRY            = 0, //abstract
+    SFCGAL_TYPE_POINT               = 1,
+    SFCGAL_TYPE_LINESTRING          = 2,
+    SFCGAL_TYPE_POLYGON             = 3,
+    SFCGAL_TYPE_MULTIPOINT          = 4,
+    SFCGAL_TYPE_MULTILINESTRING     = 5,
+    SFCGAL_TYPE_MULTIPOLYGON        = 6,
+    SFCGAL_TYPE_GEOMETRYCOLLECTION  = 7,
+    //     TYPE_CIRCULARSTRING      = 8,
+    //     TYPE_COMPOUNDCURVE       = 9,
+    //     TYPE_CURVEPOLYGON        = 10,
+    //     TYPE_MULTICURVE          = 11, //abstract
+    //     TYPE_MULTISURFACE        = 12, //abstract
+    //     TYPE_CURVE               = 13, //abstract
+    //     TYPE_SURFACE             = 14, //abstract
+    SFCGAL_TYPE_POLYHEDRALSURFACE   = 15,
+    SFCGAL_TYPE_TRIANGULATEDSURFACE = 16,
+
+    //-- not official codes
+    SFCGAL_TYPE_TRIANGLE            = 100, //17 in Wikipedia???
+    SFCGAL_TYPE_SOLID               = 101,
+    SFCGAL_TYPE_MULTISOLID          = 102
+} sfcgal_geometry_type_t ;
+#endif
 
 class OGRPoint;
 class OGRCurve;
@@ -211,7 +239,8 @@ class CPL_DLL OGRGeometry
                                              const char* const* papszOptions = NULL) const CPL_WARN_UNUSED_RESULT;
 
     // SFCGAL interfacing methods
-    virtual SFCGAL::Geometry* exportToSFCGAL (OGRErr &eErr) const CPL_WARN_UNUSED_RESULT;
+    static sfcgal_geometry_t* OGRexportToSFCGAL(OGRGeometry *poGeom);
+    static OGRGeometry* SFCGALexportToOGR(sfcgal_geometry_t* _geometry);
 
     virtual void closeRings();
 
@@ -968,6 +997,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRPolygon;
+    friend class OGRTriangle;
     OGRCurveCollection oCC;
 
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
@@ -1110,6 +1140,74 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();
+};
+
+/************************************************************************/
+/*                              OGRTriangle                             */
+/************************************************************************/
+
+class CPL_DLL OGRTriangle : public OGRPolygon
+{
+  private:
+    int nCurrentCount;
+    virtual int checkRing( OGRCurve * poNewRing ) const;            // done
+    OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
+
+  protected:
+    virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
+
+  public:
+    OGRTriangle();   // done
+    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // done
+    OGRTriangle(const OGRTriangle &other);  // done
+    OGRTriangle& operator=(const OGRTriangle& other); // done
+    virtual ~OGRTriangle(); // done
+
+    // IWks Interface
+    virtual int WkbSize() const;    // done
+    virtual OGRErr importFromWkb(unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc);    // done
+    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const;     // done
+    virtual OGRErr importFromWkt(char **);  // done
+    virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
+
+    // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
+    static GEOSContextHandle_t createGEOSContext(); // done
+    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);  // done
+    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;  // done
+
+    // New methods interfaced through SFCGAL
+    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
+    virtual double Distance(const OGRGeometry *poOtherGeom) const;  // done
+    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;    // done
+    void Reverse();
+
+    // Methods inherited from OGRPolygon which need to be re-written in the implementation of OGRTriangle.
+    // Another reason for such a bloated API is that most of the OGRPolygon functions are implemented directly
+    // on top of GEOS; and since GEOS also doesn't provide support for Triangle API, most of the methods need to be
+    // modified to ensure against any type mismatches. The following are modified due to GEOS incompatibility or a
+    // re-write of methods inherited by OGRPolygon.
+    // Of these, the functions which are not virtual in OGRPolygon will be made virtual
+    virtual OGRErr addRing	(OGRCurve *poNewRing); // done
+    virtual OGRErr addRingDirectly	(OGRCurve *poNewRing); // done
+    virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;   // done
+    virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;   // done
+    virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRGeometry *Difference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
+    OGRBoolean Disjoint	(const OGRGeometry *poOtherGeom) const; // done
+    virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRBoolean  IsValid() const;    // done
+    virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;  // done
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0; // done
+    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
+    virtual OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
+    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRBoolean  Touches( const OGRGeometry * ) const;   // done
+    virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
+    virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;  // done
+    virtual double      get_Area() const;   // done
+    virtual const char *getGeometryName() const;
+    OGRwkbGeometryType getGeometryType() const;
 };
 
 /************************************************************************/
@@ -1377,74 +1475,6 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
 
     static OGRMultiCurve* CastToMultiCurve(OGRMultiLineString* poMLS);
-};
-
-/************************************************************************/
-/*                              OGRTriangle                             */
-/************************************************************************/
-
-class CPL_DLL OGRTriangle : public OGRPolygon
-{
-  private:
-    int nCurrentCount;
-    virtual int checkRing( OGRCurve * poNewRing ) const;            // done
-    OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
-
-  protected:
-    friend class OGRCurveCollection;
-    virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
-
-  public:
-    OGRTriangle();   // done
-    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // done
-    OGRTriangle(const OGRTriangle &other);  // done
-    OGRTriangle& operator=(const OGRTriangle& other); // done
-    virtual ~OGRTriangle(); // done
-
-    // IWks Interface
-    virtual int WkbSize() const;    // done
-    virtual OGRErr importFromWkb(unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc);    // done
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const;     // done
-    virtual OGRErr importFromWkt(char **);  // done
-    virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
-
-    // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
-    static GEOSContextHandle_t createGEOSContext(); // done
-    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);  // done
-    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;  // done
-
-    // New methods interfaced through SFCGAL
-    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
-    virtual double Distance(const OGRGeometry *poOtherGeom) const;  // done
-    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;    // done
-    void Reverse();
-
-    // Methods inherited from OGRPolygon which need to be re-written in the implementation of OGRTriangle.
-    // Another reason for such a bloated API is that most of the OGRPolygon functions are implemented directly
-    // on top of GEOS; and since GEOS also doesn't provide support for Triangle API, most of the methods need to be
-    // modified to ensure against any type mismatches. The following are modified due to GEOS incompatibility or a
-    // re-write of methods inherited by OGRPolygon.
-    // Of these, the functions which are not virtual in OGRPolygon will be made virtual
-    virtual OGRErr addRing	(OGRCurve *poNewRing); // done
-    virtual OGRErr addRingDirectly	(OGRCurve *poNewRing); // done
-    virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;   // done
-    virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;   // done
-    virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT; // done
-    virtual OGRGeometry *Difference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
-    OGRBoolean Disjoint	(const OGRGeometry *poOtherGeom) const; // done
-    virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT; // done
-    virtual OGRBoolean  IsValid() const;    // done
-    virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;  // done
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0; // done
-    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // done
-    virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
-    virtual OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
-    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // done
-    virtual OGRBoolean  Touches( const OGRGeometry * ) const;   // done
-    virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
-    virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;  // done
-    virtual double      get_Area() const;   // done
-    virtual const char *getGeometryName() const;
 };
 
 /************************************************************************/

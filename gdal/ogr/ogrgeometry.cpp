@@ -6058,62 +6058,113 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                          exportToSFCGAL()                            */
-/*              The converted SFCGAL geometry is returned               */
-/*             eErr checks if there are errors encountered              */
+/*                          OGRexportToSFCGAL()                         */
 /************************************************************************/
 
-SFCGAL::Geometry* OGRGeometry::exportToSFCGAL (OGRErr &eErr) const
+sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(OGRGeometry *poGeom)
 {
+#ifdef HAVE_SFCGAL
+    sfcgal_init();
+    char *buffer;
+    size_t length;
 
-#ifndef HAVE_SFCGAL
-
+    // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
+    if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
+    {
+        // cast it to LineString and get the WKT
+        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
+        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        {
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            return _geometry;
+        }
+        else
+            return NULL;
+    }
+    else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING"))
+    {
+        // cast it to LineString and get the WKT
+        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
+        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        {
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            return _geometry;
+        }
+        else
+            return NULL;
+    }
+    else if (EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
+    {
+        // TODO - later
+        return NULL;
+    }
+    else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
+    {
+        // TODO - later
+        return NULL;
+    }
+    else if (poGeom->exportToWkt(&buffer) != OGRERR_NONE)
+    {
+        sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+        return _geometry;
+    }
+    else
+        return NULL;
+#else
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
     return NULL;
+#endif
+}
 
+/************************************************************************/
+/*                          SFCGALexportToOGR()                         */
+/************************************************************************/
+
+OGRGeometry* OGRGeometry::SFCGALexportToOGR(sfcgal_geometry_t* _geometry)
+{
+#ifdef HAVE_SFCGAL
+    sfcgal_init();
+    char *buffer;
+    size_t length;
+    sfcgal_geometry_as_text (_geometry,&buffer,&length);
+    sfcgal_geometry_type_t _geom_type = sfcgal_geometry_type_id (_geometry);
+    OGRGeometry *poGeom;
+    switch (_geom_type)
+    {
+        case SFCGAL_TYPE_POINT                   :  poGeom = new OGRPoint();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_LINESTRING              :  poGeom = new OGRLineString();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_POLYGON 	             :  poGeom = new OGRPolygon();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_MULTIPOINT 	         :  poGeom = new OGRMultiPoint();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_MULTILINESTRING         :  poGeom = new OGRMultiLineString();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_MULTIPOLYGON 	         :  poGeom = new OGRMultiPolygon();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        case SFCGAL_TYPE_GEOMETRYCOLLECTION 	 :  poGeom = new OGRGeometryCollection();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
+        // case SFCGAL_TYPE_POLYHEDRALSURFACE 	     :  poGeom = new OGRPolyhedralSurface();
+        //                                             if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+        //                                                 return poGeom;
+        // case SFCGAL_TYPE_TRIANGULATEDSURFACE  	 :  poGeom = new OGRTIN();
+        //                                             if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+        //                                                 return poGeom;
+        // case SFCGAL_TYPE_TRIANGLE 	             :  poGeom = new OGRTriangle();
+        //                                             if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+        //                                                 return poGeom;
+        default                                  :  return NULL;
+    }
 #else
-
-    char *_ogr_wkb = (unsigned char *) CPLMalloc(WkbSize());
-
-    // get the existing WKB of the current OGR geometry
-    // TODO - need to check this out
-    eErr = this->exportToWkb(wkbXDR, _ogr_wkb);
-
-    // if there is an error encountered, terminate ASAP
-    if (eErr != OGRERR_NONE)
-        return NULL;
-
-    const char *ogr_wkb = _ogr_wkb;
-    std::string bin_geom = ogr_wkb;
-
-    // free _ogr_wkb, no need for it now
-    CPLFree(_ogr_wkb);
-
-    // get the returned SFCGAL::Geometry using the WKB derived above
-    std::auto_ptr<SFCGAL::Geometry> geom_ret = SFCGAL::io::readBinaryGeometry(bin_geom);
-
-    // std::auto_ptr is deprecated; release the pointer contents to a normal SFCGAL::Geometry pointer
-    // release() also destroys the std::auto_ptr it is used on
-    SFCGAL::Geometry* pabyGeom = geom_ret.release();
-
-    // check that the geometry type is indeed the correct geometry
-    // if it is not, return a NULL pointer
-    std::string geomType(this->getGeometryType());
-    std::transform(geomType.begin(), geomType.end(), geomType.begin(), ::tolower);
-    std::string s_geomType = pabyGeom->geometryType();
-    std::transform(s_geomType.begin(), s_geomType.end(), s_geomType.begin(), ::tolower);
-
-    if (s_geomType != geomType)
-    {
-        eRR = OGRERR_FAILURE;
-        return NULL;
-    }
-
-    // everything fine, report: no error and return the SFCGAL::Geometry pointer obtained
-    else
-    {
-        eErr = OGRERR_NONE;
-        return pabyGeom;
-    }
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return NULL;
 #endif
 }
