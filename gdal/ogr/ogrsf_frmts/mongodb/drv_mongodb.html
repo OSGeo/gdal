@@ -10,7 +10,9 @@
 (GDAL/OGR &gt;= 2.1.0)<p>
 
 This driver can connect to the a MongoDB service.<p>
-The driver supports read, creation, update and delete operations.<p>
+The driver supports read, creation, update and delete operations of documents/features
+and collections/layers. The MongoDB database must exist before operating on it
+with OGR.<p>
 
 <h2>MongoDB vs OGR concepts</h2>
 
@@ -164,7 +166,7 @@ ogrinfo -ro mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest -wh
 <li>
 Creating and populating a collection from a shapefile:
 <pre>
-ogr2ogr -f mongodb mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
+ogr2ogr -update mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
 </pre>
 <p>
 
