@@ -6072,7 +6072,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 #ifdef HAVE_SFCGAL
     sfcgal_init();
     char *buffer;
-    size_t length;
+    size_t length = 0;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
     if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
@@ -6129,7 +6129,7 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
 #ifdef HAVE_SFCGAL
     sfcgal_init();
     char *buffer;
-    size_t length;
+    size_t length = 0;
     sfcgal_geometry_as_text (_geometry,&buffer,&length);
     sfcgal_geometry_type_t _geom_type = sfcgal_geometry_type_id (_geometry);
     OGRGeometry *poGeom;
