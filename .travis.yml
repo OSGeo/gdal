@@ -20,7 +20,7 @@ before_install:
   - sudo apt-get install libgmp-dev
   - sudo apt-get install libmpfr-dev
 # Boost for Mongo
-  - sudo apt-get install libboost-regex-dev libboost-system-dev libboost-thread-dev
+  - sudo apt-get install libboost-all-dev
   - sudo pip install pyflakes
   - sudo apt-get install doxygen texlive-latex-base
   - pyflakes autotest
@@ -64,6 +64,19 @@ before_install:
   - cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF
   - make -j4
   - sudo make install
+  # Build CGAL
+  - wget https://gforge.inria.fr/frs/download.php/file/34400/CGAL-4.5.1.tar.gz
+  - tar xf CGAL-4.5.1.tar.gz
+  - cd CGAL-4.5.1
+  - cmake . && make && sudo make install
+  - cd ../
+  - rm -rf CGAL-4.5.1 CGAL-4.5.1.tar.gz
+  # Build SFCGAL
+  - wget https://codeload.github.com/Oslandia/SFCGAL/tar.gz/v1.3.0 -O SFCGAL1.3.0.tar.gz
+  - tar xf SFCGAL1.3.0.tar.gz
+  - cd SFCGAL-1.3.0/
+  - cmake . && make && sudo make install
+  - cd ../
   - cd ../..
   - sudo ldconfig
 
