@@ -1151,7 +1151,6 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
   private:
-    int nCurrentCount;
     OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
 
   public:
