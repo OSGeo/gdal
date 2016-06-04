@@ -6095,12 +6095,10 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(OGRGeometry *poGeom)
     }
     else if (EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
     {
-        // TODO - later
         return NULL;
     }
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
-        // TODO - later
         return NULL;
     }
     else if (poGeom->exportToWkt(&buffer) != OGRERR_NONE)

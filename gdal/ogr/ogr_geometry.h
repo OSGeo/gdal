@@ -1164,16 +1164,16 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRwkbGeometryType getGeometryType() const;
 
     // IWks Interface
-    virtual int WkbSize() const;    // done
-    virtual OGRErr importFromWkb(unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc);    // done
-    virtual OGRErr exportToWkb( OGRwkbByteOrder eByteOrder, unsigned char * pabyData, OGRwkbVariant eWkbVariant);
-    virtual OGRErr importFromWkt(char **);  // done
-    virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
+    virtual int WkbSize() const;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
 
     // Need to throw an error if these are interfaced via OGRPolyhedralSurface + make them virtual in OGRGeometry
-    static GEOSContextHandle_t createGEOSContext(); // done
-    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);  // done
-    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;  // done
+    static GEOSContextHandle_t createGEOSContext();
+    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
+    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;
 
     // New methods interfaced through SFCGAL
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
