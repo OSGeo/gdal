@@ -43,6 +43,12 @@
 #define UNUSED_IF_NO_GEOS
 #endif
 
+#ifndef HAVE_SFCGAL
+#define UNUSED_IF_NO_SFCGAL CPL_UNUSED
+#else
+#define UNUSED_IF_NO_SFCGAL
+#endif
+
 CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
@@ -6061,7 +6067,7 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
 /*                          OGRexportToSFCGAL()                         */
 /************************************************************************/
 
-sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(OGRGeometry *poGeom)
+sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometry *poGeom)
 {
 #ifdef HAVE_SFCGAL
     sfcgal_init();
@@ -6118,7 +6124,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(OGRGeometry *poGeom)
 /*                          SFCGALexportToOGR()                         */
 /************************************************************************/
 
-OGRGeometry* OGRGeometry::SFCGALexportToOGR(sfcgal_geometry_t* _geometry)
+OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* _geometry)
 {
 #ifdef HAVE_SFCGAL
     sfcgal_init();
