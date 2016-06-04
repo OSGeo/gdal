@@ -6,6 +6,12 @@
 #include "ogr_geos.h"
 #include "ogr_api.h"
 
+#ifndef HAVE_GEOS
+#define UNUSED_IF_NO_GEOS CPL_UNUSED
+#else
+#define UNUSED_IF_NO_GEOS
+#endif
+
 // TODO - add SFCGAL interfacing method to OGRGeometry
 // TODO - check the different library versions of SFCGAL and add it to OGRGeometryFactory?
 // TODO - write a PointOnSurface(), Simplify() and SimplifyPreserveTopology() method?
@@ -266,9 +272,9 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
                                  unsigned char * pabyData,
-                                 OGRwkbVariant eWkbVariant = wkbVariantOldOgc)
+                                 OGRwkbVariant eWkbVariant ) const
 
 {
 
@@ -505,7 +511,7 @@ GEOSContextHandle_t OGRTriangle::createGEOSContext()
 /*                          freeGEOSContext()                           */
 /************************************************************************/
 
-void OGRTriangle::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
+void OGRTriangle::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
 {
     CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
     return;
@@ -515,7 +521,7 @@ void OGRTriangle::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
 /*                            exportToGEOS()                            */
 /************************************************************************/
 
-GEOSGeom OGRTriangle::exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const
+GEOSGeom OGRTriangle::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
 {
     CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
     return NULL;
@@ -927,7 +933,7 @@ OGRBoolean OGRTriangle::Overlaps(const OGRGeometry *poOtherGeom) const
 OGRErr OGRTriangle::PointOnSurface( OGRPoint * poPoint ) const
 {
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::PointOnSurface." );
-    return NULL;
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
