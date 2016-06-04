@@ -517,7 +517,7 @@ GEOSContextHandle_t OGRTriangle::createGEOSContext()
 /*                          freeGEOSContext()                           */
 /************************************************************************/
 
-void OGRTriangle::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
+void OGRTriangle::freeGEOSContext(CPL_UNUSED GEOSContextHandle_t hGEOSCtxt)
 {
     CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
     return;
@@ -527,7 +527,7 @@ void OGRTriangle::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtx
 /*                            exportToGEOS()                            */
 /************************************************************************/
 
-GEOSGeom OGRTriangle::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
+GEOSGeom OGRTriangle::exportToGEOS(CPL_UNUSED GEOSContextHandle_t hGEOSCtxt) const
 {
     CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
     return NULL;
@@ -783,7 +783,7 @@ OGRGeometry *OGRTriangle::ConvexHull() const
 /*         Will return the same OGRTriangle only in this case           */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
+OGRGeometry *OGRTriangle::DelaunayTriangulation(CPL_UNUSED double dfTolerance, CPL_UNUSED int bOnlyEdges) const
 {
     return (OGRTriangle *)this;
 }
@@ -837,7 +837,7 @@ OGRBoolean OGRTriangle::Disjoint(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherG
 #ifndef HAVE_SFCGAL
 
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
+    return FALSE;
 
 #else
 
@@ -936,7 +936,7 @@ OGRBoolean OGRTriangle::Overlaps(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherG
 /*           Corresponding method doesn't exist for SFCGAL              */
 /************************************************************************/
 
-OGRErr OGRTriangle::PointOnSurface( OGRPoint * poPoint ) const
+OGRErr OGRTriangle::PointOnSurface(CPL_UNUSED OGRPoint * poPoint ) const
 {
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::PointOnSurface." );
     return OGRERR_FAILURE;
@@ -958,7 +958,7 @@ OGRGeometry *OGRTriangle::Polygonize() const
 /*           Corresponding method doesn't exist for SFCGAL              */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::Simplify(double dTolerance) const
+OGRGeometry *OGRTriangle::Simplify(CPL_UNUSED double dTolerance) const
 {
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Simplify" );
     return NULL;
@@ -969,7 +969,7 @@ OGRGeometry *OGRTriangle::Simplify(double dTolerance) const
 /*           Corresponding method doesn't exist for SFCGAL              */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::SimplifyPreserveTopology(double dTolerance) const
+OGRGeometry *OGRTriangle::SimplifyPreserveTopology(CPL_UNUSED double dTolerance) const
 {
     CPLError( CE_Failure, CPLE_NotSupported,
             "SFCGAL support not enabled for OGRTriangle::SimplifyPreserveTopology" );
@@ -1066,7 +1066,7 @@ double OGRTriangle::get_Area() const
 #ifndef HAVE_SFCGAL
 
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
+    return -1.0;
 
 #else
 
