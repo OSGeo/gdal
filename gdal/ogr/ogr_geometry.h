@@ -662,6 +662,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRPolygon;
+    friend class OGRTriangle;
 
     // These are not IWks compatible ... just a convenience for OGRPolygon.
     virtual int _WkbSize( int _flags ) const;
@@ -787,6 +788,7 @@ class CPL_DLL OGRCurveCollection
     friend class OGRCompoundCurve;
     friend class OGRCurvePolygon;
     friend class OGRPolygon;
+    friend class OGRTriangle;
 
     int         nCurveCount;
     OGRCurve  **papoCurves;
@@ -1150,11 +1152,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 {
   private:
     int nCurrentCount;
-    virtual int checkRing( OGRCurve * poNewRing ) const;            // done
     OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
-
-  protected:
-    virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
 
   public:
     OGRTriangle();   // done
@@ -1162,11 +1160,13 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     OGRTriangle(const OGRTriangle &other);  // done
     OGRTriangle& operator=(const OGRTriangle& other); // done
     virtual ~OGRTriangle(); // done
+    const char *getGeometryName() const; // done
+    virtual OGRwkbGeometryType getGeometryType() const;
 
     // IWks Interface
     virtual int WkbSize() const;    // done
     virtual OGRErr importFromWkb(unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc);    // done
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const;     // done
+    virtual OGRErr exportToWkb( OGRwkbByteOrder eByteOrder, unsigned char * pabyData, OGRwkbVariant eWkbVariant);
     virtual OGRErr importFromWkt(char **);  // done
     virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;  // done
 
@@ -1179,7 +1179,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
     virtual double Distance(const OGRGeometry *poOtherGeom) const;  // done
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;    // done
-    void Reverse();
 
     // Methods inherited from OGRPolygon which need to be re-written in the implementation of OGRTriangle.
     // Another reason for such a bloated API is that most of the OGRPolygon functions are implemented directly
@@ -1206,8 +1205,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT; // done
     virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;  // done
     virtual double      get_Area() const;   // done
-    virtual const char *getGeometryName() const;
-    OGRwkbGeometryType getGeometryType() const;
 };
 
 /************************************************************************/
