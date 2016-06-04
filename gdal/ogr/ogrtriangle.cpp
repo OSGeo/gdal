@@ -12,6 +12,12 @@
 #define UNUSED_IF_NO_GEOS
 #endif
 
+#ifndef HAVE_SFCGAL
+#define UNUSED_IF_NO_SFCGAL CPL_UNUSED
+#else
+#define UNUSED_IF_NO_SFCGAL
+#endif
+
 // TODO - add SFCGAL interfacing method to OGRGeometry
 // TODO - check the different library versions of SFCGAL and add it to OGRGeometryFactory?
 // TODO - write a PointOnSurface(), Simplify() and SimplifyPreserveTopology() method?
@@ -205,8 +211,8 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 
             // one point is XYZ or XYZM, other is XY or XYM
             // returns an error
-            else if ((start_point->Is3D() & end_point->Is3D() == 0) &&
-                     (start_point->Is3D() | end_point->Is3D() == 1))
+            else if (((start_point->Is3D() & end_point->Is3D()) == 0) &&
+                     ((start_point->Is3D() | end_point->Is3D()) == 1))
             {
                 delete oCC.papoCurves[iRing];
                 oCC.nCurveCount = iRing;
@@ -215,8 +221,8 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 
             // one point is XYM or XYZM, other is XYZ or XY
             // returns an error
-            else if ((start_point->IsMeasured() & end_point->IsMeasured() == 0) &&
-                     (start_point->IsMeasured() | end_point->IsMeasured() == 1))
+            else if (((start_point->IsMeasured() & end_point->IsMeasured()) == 0) &&
+                     ((start_point->IsMeasured() | end_point->IsMeasured()) == 1))
             {
                 delete oCC.papoCurves[iRing];
                 oCC.nCurveCount = iRing;
@@ -556,7 +562,7 @@ OGRGeometry* OGRTriangle::Boundary() const
 /*    the geometries.                                                   */
 /************************************************************************/
 
-double OGRTriangle::Distance(const OGRGeometry *poOtherGeom) const
+double OGRTriangle::Distance(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
     if (poOtherGeom == NULL)
     {
@@ -596,7 +602,7 @@ double OGRTriangle::Distance(const OGRGeometry *poOtherGeom) const
 /*    the geometries.                                                   */
 /************************************************************************/
 
-double OGRTriangle::Distance3D(const OGRGeometry *poOtherGeom) const
+double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
     if (poOtherGeom == NULL)
     {
@@ -711,7 +717,7 @@ OGRErr OGRTriangle::addRingDirectlyInternal( OGRCurve* poNewRing,
 /*         This method checks if the two geometries intersect.          */
 /************************************************************************/
 
-OGRBoolean OGRTriangle::Crosses(const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRTriangle::Crosses(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
 
 #ifndef HAVE_SFCGAL
@@ -788,7 +794,7 @@ OGRGeometry *OGRTriangle::DelaunayTriangulation(double dfTolerance, int bOnlyEdg
 /*  the region of the second geometry removed.                          */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::Difference(const OGRGeometry *poOtherGeom) const
+OGRGeometry *OGRTriangle::Difference(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 
 {
 #ifndef HAVE_SFCGAL
@@ -800,11 +806,11 @@ OGRGeometry *OGRTriangle::Difference(const OGRGeometry *poOtherGeom) const
 
     sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
     if (poThis == NULL)
-        return FALSE;
+        return NULL;
 
     sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
     if (poThis == NULL)
-        return FALSE;
+        return NULL;
 
     sfcgal_geometry_t *poRes = sfcgal_geometry_difference_3d(poThis, poOther);
     OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
@@ -826,7 +832,7 @@ OGRGeometry *OGRTriangle::Difference(const OGRGeometry *poOtherGeom) const
 /*      Check if the geometry doesn't intersect with OGRTriangle        */
 /************************************************************************/
 
-OGRBoolean OGRTriangle::Disjoint(const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRTriangle::Disjoint(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
 #ifndef HAVE_SFCGAL
 
@@ -847,7 +853,7 @@ OGRBoolean OGRTriangle::Disjoint(const OGRGeometry *poOtherGeom) const
 /* test if the two geometries intersect.                                */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::Intersection( const OGRGeometry *poOtherGeom) const
+OGRGeometry *OGRTriangle::Intersection(UNUSED_IF_NO_SFCGAL  const OGRGeometry *poOtherGeom) const
 {
 #ifndef HAVE_SFCGAL
 
@@ -890,7 +896,7 @@ OGRBoolean OGRTriangle::IsValid() const
 #ifndef HAVE_SFCGAL
 
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
+    return FALSE;
 
 #else
 
@@ -910,13 +916,13 @@ OGRBoolean OGRTriangle::IsValid() const
 /*           If there is an error, then FALSE is returned               */
 /************************************************************************/
 
-OGRBoolean OGRTriangle::Overlaps(const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRTriangle::Overlaps(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
 
 #ifndef HAVE_SFCGAL
 
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
+    return FALSE;
 
 #else
 
@@ -986,7 +992,7 @@ OGRBoolean  OGRTriangle::Touches( const OGRGeometry *poOtherGeom ) const
 /*    two geometries operated on.                                       */
 /************************************************************************/
 
-OGRGeometry *OGRTriangle::Union( const OGRGeometry *poOtherGeom) const
+OGRGeometry *OGRTriangle::Union(UNUSED_IF_NO_SFCGAL  const OGRGeometry *poOtherGeom) const
 {
 #ifndef HAVE_SFCGAL
 
