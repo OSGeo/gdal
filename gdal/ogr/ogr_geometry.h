@@ -1150,8 +1150,6 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
-  private:
-    OGRErr addRingDirectlyInternal( OGRCurve* poCurve, int bNeedRealloc );  //done
 
   public:
     OGRTriangle();   // done
@@ -1186,7 +1184,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     // re-write of methods inherited by OGRPolygon.
     // Of these, the functions which are not virtual in OGRPolygon will be made virtual
     virtual OGRErr addRing	(OGRCurve *poNewRing); // done
-    virtual OGRErr addRingDirectly	(OGRCurve *poNewRing); // done
     virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;   // done
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;   // done
     virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT; // done
