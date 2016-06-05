@@ -586,8 +586,8 @@ double OGRTriangle::Distance(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom)
 
     double _distance = sfcgal_geometry_distance(poThis, poOther);
 
-    CPLFree(poThis);
-    CPLFree(poOther);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
 
     return (_distance > 0)? _distance: -1;
 
@@ -632,8 +632,8 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
 
     double _distance = sfcgal_geometry_distance_3d(poThis, poOther);
 
-    CPLFree(poThis);
-    CPLFree(poOther);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
 
     return (_distance > 0)? _distance: -1;
 
@@ -687,31 +687,6 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 }
 
 /************************************************************************/
-/*                           addRingDirectly()                          */
-/*   Not recommended for users. Adds a ring without checking previous   */
-/* conditions that make it a legit tringle. Can result in corrupt data. */
-/************************************************************************/
-
-OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
-{
-    return addRingDirectlyInternal(poNewRing,TRUE);
-}
-
-/************************************************************************/
-/*                        addRingDirectlyInternal()                     */
-/*                              Private method                          */
-/************************************************************************/
-
-OGRErr OGRTriangle::addRingDirectlyInternal( OGRCurve* poNewRing,
-                                             int bNeedRealloc )
-{
-    if( !checkRing(poNewRing) )
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-
-    return oCC.addCurveDirectly(this, poNewRing, bNeedRealloc);
-}
-
-/************************************************************************/
 /*                               Crosses()                              */
 /*         This method checks if the two geometries intersect.          */
 /************************************************************************/
@@ -736,8 +711,8 @@ OGRBoolean OGRTriangle::Crosses(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGe
 
     int res = sfcgal_geometry_intersects_3d(poThis, poOther);
 
-    CPLFree(poThis);
-    CPLFree(poOther);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
 
     return (res == 1)? TRUE: FALSE;
 
@@ -770,7 +745,8 @@ OGRGeometry *OGRTriangle::ConvexHull() const
 
     h_prodGeom->assignSpatialReference(getSpatialReference());
 
-    CPLFree(poThis);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poRes);
 
     return h_prodGeom;
 
@@ -819,7 +795,9 @@ OGRGeometry *OGRTriangle::Difference(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOt
         && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
         h_prodGeom->assignSpatialReference(getSpatialReference());
 
-    CPLFree(poThis);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
+    sfcgal_geometry_delete(poRes);
 
     return h_prodGeom;
 
@@ -877,7 +855,9 @@ OGRGeometry *OGRTriangle::Intersection(UNUSED_IF_NO_SFCGAL  const OGRGeometry *p
         && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
         h_prodGeom->assignSpatialReference(getSpatialReference());
 
-    CPLFree(poThis);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
+    sfcgal_geometry_delete(poRes);
 
     return h_prodGeom;
 
@@ -1016,8 +996,8 @@ OGRGeometry *OGRTriangle::Union(UNUSED_IF_NO_SFCGAL  const OGRGeometry *poOtherG
         && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
         h_prodGeom->assignSpatialReference(getSpatialReference());
 
-    CPLFree(poThis);
-    CPLFree(poOther);
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
 
     return h_prodGeom;
 
