@@ -156,7 +156,7 @@ int OGRCurve::get_IsClosed() const
     else
     {
         // XY type
-        if( oStartPoint.getX() == oEndPoint.getX()&& oStartPoint.getY() == oEndPoint.getY() )
+        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY() )
             return TRUE;
         else
             return FALSE;
