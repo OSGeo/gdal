@@ -1192,7 +1192,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT; // done
     virtual OGRBoolean  IsValid() const;    // done
     virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;  // done
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0; // done
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const; // done
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // done
     virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
     virtual OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;  // done
