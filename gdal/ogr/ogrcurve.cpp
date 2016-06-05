@@ -140,15 +140,15 @@ int OGRCurve::get_IsClosed() const
     }
 
     // one of the points is 3D
-    else if (((start_point->Is3D() & end_point->Is3D()) == 0) &&
-             ((start_point->Is3D() | end_point->Is3D()) == 1))
+    else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
+             ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
     {
         return FALSE;
     }
 
     // one of the points is Measured
-    else if (((start_point->IsMeasured() & end_point->IsMeasured()) == 0) &&
-             ((start_point->IsMeasured() | end_point->IsMeasured()) == 1))
+    else if (((oStartPoint.IsMeasured() & oEndPoint.IsMeasured()) == 0) &&
+             ((oStartPoint.IsMeasured() | oEndPoint.IsMeasured()) == 1))
     {
         return FALSE;
     }
