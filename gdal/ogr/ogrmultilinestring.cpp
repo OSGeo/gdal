@@ -41,9 +41,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi line string collection.
  */
 
-OGRMultiLineString::OGRMultiLineString()
-{
-}
+OGRMultiLineString::OGRMultiLineString() {}
 
 /************************************************************************/
 /*           OGRMultiLineString( const OGRMultiLineString& )            */
@@ -60,16 +58,13 @@ OGRMultiLineString::OGRMultiLineString()
 
 OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& other ) :
     OGRMultiCurve(other)
-{
-}
+{}
 
 /************************************************************************/
 /*                       ~OGRMultiLineString()                          */
 /************************************************************************/
 
-OGRMultiLineString::~OGRMultiLineString()
-{
-}
+OGRMultiLineString::~OGRMultiLineString() {}
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -86,7 +81,7 @@ OGRMultiLineString::~OGRMultiLineString()
 
 OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& other )
 {
-    if( this != &other)
+    if( this != &other )
     {
         OGRMultiCurve::operator=( other );
     }
@@ -145,9 +140,10 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRMultiLineString::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+OGRBoolean OGRMultiLineString::hasCurveGeometry(
+    int /* bLookForNonLinear */ ) const
 {
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -157,7 +153,7 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear
 /**
  * \brief Cast to multicurve.
  *
- * The passed in geometry is consumed and a new one returned .
+ * The passed in geometry is consumed and a new one returned.
  *
  * @param poMLS the input geometry - ownership is passed to the method.
  * @return new geometry.
