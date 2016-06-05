@@ -6162,9 +6162,9 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         // case SFCGAL_TYPE_TRIANGULATEDSURFACE  	 :  poGeom = new OGRTIN();
         //                                             if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
         //                                                 return poGeom;
-        // case SFCGAL_TYPE_TRIANGLE 	             :  poGeom = new OGRTriangle();
-        //                                             if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
-        //                                                 return poGeom;
+        case SFCGAL_TYPE_TRIANGLE 	             :  poGeom = new OGRTriangle();
+                                                    if (poGeom->importFromWkt(&buffer) != OGRERR_NONE)
+                                                        return poGeom;
         default                                  :  return NULL;
     }
 #else
