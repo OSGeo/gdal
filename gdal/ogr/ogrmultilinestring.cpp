@@ -163,7 +163,16 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear
  * @return new geometry.
  */
 
-OGRMultiCurve* OGRMultiLineString::CastToMultiCurve(OGRMultiLineString* poMLS)
+OGRMultiCurve* OGRMultiLineString::CastToMultiCurve( OGRMultiLineString* poMLS )
 {
-    return (OGRMultiCurve*) TransferMembersAndDestroy(poMLS, new OGRMultiCurve());
+    OGRMultiCurve *poMultiCurve = dynamic_cast<OGRMultiCurve *>(
+        TransferMembersAndDestroy(poMLS, new OGRMultiCurve()) );
+    if( poMultiCurve == NULL )
+    {
+        CPLError( CE_Fatal, CPLE_AppDefined,
+                  "OGRMultiCurve dynamic_cast failed." );
+        return NULL;
+    }
+
+    return poMultiCurve;
 }
