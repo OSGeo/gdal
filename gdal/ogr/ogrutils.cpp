@@ -1792,10 +1792,10 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
 
     // ISO SQL/MM style types are between 1-16, 1001-1016, 2001-2016, and
     // 3001-3016.
-    if( !((iRawType > 0 && iRawType <= 16) ||
-           (iRawType > 1000 && iRawType <= 1016) ||
-           (iRawType > 2000 && iRawType <= 2016) ||
-           (iRawType > 3000 && iRawType <= 3016)) )
+    if( !((iRawType > 0 && iRawType <= 17) ||
+           (iRawType > 1000 && iRawType <= 1017) ||
+           (iRawType > 2000 && iRawType <= 2017) ||
+           (iRawType > 3000 && iRawType <= 3017)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported WKB type %d", iRawType);

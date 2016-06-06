@@ -1188,6 +1188,8 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRBoolean  Contains( const OGRGeometry * ) const;
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const CPL_WARN_UNUSED_RESULT;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
+    virtual OGRBoolean  IsSimple() const;
+    virtual OGRBoolean  IsRing() const;
     virtual OGRErr addRing	(OGRCurve *poNewRing); // done
     virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;   // done
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;   // done

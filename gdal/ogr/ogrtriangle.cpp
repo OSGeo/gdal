@@ -1111,3 +1111,23 @@ OGRErr OGRTriangle::Centroid( OGRPoint * poPoint ) const
     OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
     return poPolygon->Centroid(poPoint);
 }
+
+/************************************************************************/
+/*                              IsSimple()                              */
+/*      The only self intersection points are the boundary points.      */
+/*      Hence it is a simple geometry.                                  */
+/************************************************************************/
+
+OGRBoolean  OGRTriangle::IsSimple() const
+{
+    return TRUE;
+}
+
+/************************************************************************/
+/*                               IsRing()                               */
+/************************************************************************/
+
+OGRBoolean  OGRTriangle::IsRing() const
+{
+    return TRUE;
+}
