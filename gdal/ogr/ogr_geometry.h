@@ -1176,6 +1176,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
     virtual double Distance(const OGRGeometry *poOtherGeom) const;  // done
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;    // done
+    virtual void segmentize(double dfMaxLength);
 
     // Methods inherited from OGRPolygon which need to be re-written in the implementation of OGRTriangle.
     // Another reason for such a bloated API is that most of the OGRPolygon functions are implemented directly
@@ -1183,6 +1184,10 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     // modified to ensure against any type mismatches. The following are modified due to GEOS incompatibility or a
     // re-write of methods inherited by OGRPolygon.
     // Of these, the functions which are not virtual in OGRPolygon will be made virtual
+    virtual OGRBoolean  Within( const OGRGeometry * ) const;
+    virtual OGRBoolean  Contains( const OGRGeometry * ) const;
+    virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRErr addRing	(OGRCurve *poNewRing); // done
     virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;   // done
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;   // done

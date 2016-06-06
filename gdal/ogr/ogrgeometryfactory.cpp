@@ -283,6 +283,11 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
         poGeom = new OGRPolygon();
     }
 
+    else if( STARTS_WITH_CI(szToken,"TRIANGLE") )
+    {
+        poGeom = new OGRTriangle();
+    }
+
     else if( STARTS_WITH_CI(szToken,"GEOMETRYCOLLECTION") )
     {
         poGeom = new OGRGeometryCollection();
@@ -460,8 +465,8 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       case wkbMultiSurface:
           return new (std::nothrow) OGRMultiSurface();
 
-    //   case wkbTriangle:
-    //       return new (std::nothrow) OGRTriangle();
+      case wkbTriangle:
+          return new (std::nothrow) OGRTriangle();
       //
     //   case wkbPolyhedralSurface:
     //       return new (std::nothrow) OGRPolyhedralSurface();
@@ -1979,7 +1984,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
     OGRGeometry *poGeom = NULL;
     int          nTupleSize = 0;
     GInt32       nGDim = 0;
-    
+
     // TODO: Why is this a switch?
     switch( nGType )
     {
