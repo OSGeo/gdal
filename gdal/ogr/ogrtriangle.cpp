@@ -112,7 +112,7 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRTriangle::segmentize(double dfMaxLength)
+void OGRTriangle::segmentize(CPL_UNUSED double dfMaxLength)
 {
     CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
 }
