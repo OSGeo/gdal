@@ -109,6 +109,15 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 }
 
 /************************************************************************/
+/*                              segmentize()                            */
+/************************************************************************/
+
+void OGRTriangle::segmentize(double dfMaxLength)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+}
+
+/************************************************************************/
 /*                           importFromWkb()                            */
 /*      Initialize from serialized stream in well known binary          */
 /*      format.                                                         */
@@ -551,9 +560,28 @@ int OGRTriangle::WkbSize() const
 
 OGRGeometry* OGRTriangle::Boundary() const
 {
-    return (OGRTriangle *)this;
+    return oCC.papoCurves[0];
 }
 
+/************************************************************************/
+/*                               Within()                               */
+/************************************************************************/
+
+OGRBoolean  OGRTriangle::Within( CPL_UNUSED const OGRGeometry *poOtherGeom) const
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Within." );
+    return FALSE;
+}
+
+/************************************************************************/
+/*                               Buffer()                               */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::Buffer( CPL_UNUSED double dfDist, CPL_UNUSED int nQuadSegs) const
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Buffer." );
+    return FALSE;
+}
 /************************************************************************/
 /*                              Distance()                              */
 /*    Returns the shortest distance between the two geometries. The     */
@@ -638,6 +666,16 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
     return (_distance > 0)? _distance: -1;
 
 #endif
+}
+
+/************************************************************************/
+/*                               Contains()                             */
+/************************************************************************/
+
+OGRBoolean  OGRTriangle::Contains( CPL_UNUSED const OGRGeometry * ) const
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Contains." );
+    return FALSE;
 }
 
 /************************************************************************/
@@ -1060,4 +1098,16 @@ double OGRTriangle::get_Area() const
     return sfcgal_geometry_area_3d(poGeom);
 
 #endif
+}
+
+/************************************************************************/
+/*                              Centroid()                              */
+/************************************************************************/
+
+OGRErr OGRTriangle::Centroid( OGRPoint * poPoint ) const
+{
+    // Since SFCGAL doesn't have its own method to deal with centroid, we are casting Triangle to Polygon
+    // and using OGRPolygon::Centroid().
+    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
+    return poPolygon->Centroid(poPoint);
 }
