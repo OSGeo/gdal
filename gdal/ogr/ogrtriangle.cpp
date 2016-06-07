@@ -606,7 +606,7 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
 {
     // cast the triangle as a polygon and use the GEOS method on it
-    OGRPolygon *poPolygon = new OGRPolygon(*(*(OGRPolygon *)this));
+    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
     return poPolygon->PointOnSurface(poPoint);
 }
 
@@ -629,8 +629,8 @@ OGRGeometry *OGRTriangle::Polygonize() const
 OGRBoolean  OGRTriangle::Touches( const OGRGeometry *poOtherGeom ) const
 {
     // cast the triangle as a polygon and use the GEOS method on it
-    OGRPolygon *poPolygon = new OGRPolygon(*(*(OGRPolygon *)this));
-    return poPolygon->Touches(poPoint);
+    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
+    return poPolygon->Touches(poOtherGeom);
 }
 
 /************************************************************************/
