@@ -1931,7 +1931,7 @@ OGRBoolean
 OGRGeometry::IsValid(  ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -2717,7 +2717,7 @@ int OGRGetGenerate_DB2_V72_BYTE_ORDER()
  */
 GEOSContextHandle_t OGRGeometry::createGEOSContext()
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
         return NULL;
@@ -2741,10 +2741,10 @@ GEOSContextHandle_t OGRGeometry::createGEOSContext()
  */
 void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-        return NULL;
+        return;
     }
 
 #ifdef HAVE_GEOS
@@ -2767,7 +2767,7 @@ void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtx
 GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
         return NULL;
@@ -2955,7 +2955,7 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
         return -1.0;
     }
 
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3100,7 +3100,7 @@ static OGRGeometry* OGRGeometryRebuildCurves(const OGRGeometry* poGeom,
 OGRGeometry *OGRGeometry::ConvexHull() const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3219,9 +3219,6 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
 OGRGeometry *OGRGeometry::Boundary() const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
-        return oCC.papoCurves[0];
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -3357,7 +3354,7 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
                                   UNUSED_IF_NO_GEOS int nQuadSegs ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Buffer." );
         return NULL;
@@ -3468,7 +3465,7 @@ OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
 OGRGeometry *OGRGeometry::Intersection( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3606,7 +3603,7 @@ OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::Union( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3738,7 +3735,7 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::UnionCascaded() const
 
 {
-    if (EQUAL(getGeometryName, "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                 "SFCGAL support not enabled for OGRTriangle::UnionCascaded" );
@@ -3832,7 +3829,7 @@ OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
 OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -4107,7 +4104,7 @@ OGRBoolean
 OGRGeometry::Disjoint( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         return !this->Crosses(poOtherGeom);
     }
@@ -4280,7 +4277,7 @@ OGRBoolean
 OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -4394,7 +4391,7 @@ OGRBoolean
 OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Within." );
         return FALSE;
@@ -4482,7 +4479,7 @@ OGRBoolean
 OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if(EQUAL(getGeometryName(), "TRIANGLE"))
+    if(EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Contains." );
         return FALSE;
@@ -4571,7 +4568,7 @@ OGRBoolean
 OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         return Crosses(poOtherGeom);
     }
@@ -4963,7 +4960,7 @@ OGRErr OGRGeometry::PointOnSurfaceInternal( OGRPoint * poPoint ) const
 OGRGeometry *OGRGeometry::Simplify(UNUSED_PARAMETER double dTolerance) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Simplify" );
         return NULL;
@@ -5057,7 +5054,7 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
 OGRGeometry *OGRGeometry::SimplifyPreserveTopology(UNUSED_PARAMETER double dTolerance) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                 "SFCGAL support not enabled for OGRTriangle::SimplifyPreserveTopology" );
@@ -5165,7 +5162,7 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double /*dfTolerance*/, int /*bO
 #else
 OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
         return (OGRTriangle *)this;
 
     GEOSGeom hThisGeosGeom = NULL;

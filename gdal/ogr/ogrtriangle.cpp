@@ -710,3 +710,12 @@ OGRBoolean  OGRTriangle::IsRing() const
 {
     return TRUE;
 }
+
+/************************************************************************/
+/*                             Boundary()                               */
+/************************************************************************/
+
+OGRGeometry *OGRTriangle::Boundary() const
+{
+    return oCC.papoCurves[0];
+}
