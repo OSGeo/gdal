@@ -2717,12 +2717,6 @@ int OGRGetGenerate_DB2_V72_BYTE_ORDER()
  */
 GEOSContextHandle_t OGRGeometry::createGEOSContext()
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-        return NULL;
-    }
-
 #ifndef HAVE_GEOS
     CPLError( CE_Failure, CPLE_NotSupported,
               "GEOS support not enabled." );
@@ -2741,12 +2735,6 @@ GEOSContextHandle_t OGRGeometry::createGEOSContext()
  */
 void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-        return;
-    }
-
 #ifdef HAVE_GEOS
     if( hGEOSCtxt != NULL )
     {
