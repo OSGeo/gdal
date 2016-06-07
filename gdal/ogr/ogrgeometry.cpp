@@ -6351,6 +6351,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     size_t length = 0;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
+    
     if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
     {
         // cast it to LineString and get the WKT
@@ -6377,11 +6378,27 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     }
     else if (EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
     {
-        return NULL;
+        // cast it to LineString and get the WKT
+        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
+        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        {
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            return _geometry;
+        }
+        else
+            return NULL;
     }
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
-        return NULL;
+        // cast it to Polygon and get the WKT
+        OGRPolygon *poPolygon = OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
+        if (poPolygon->exportToWkt(&buffer) != OGRERR_NONE)
+        {
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            return _geometry;
+        }
+        else
+            return NULL;
     }
     else if (poGeom->exportToWkt(&buffer) != OGRERR_NONE)
     {
