@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <string>
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_sfcgal.h"
@@ -17,11 +15,6 @@
 #else
 #define UNUSED_IF_NO_SFCGAL
 #endif
-
-// TODO - add SFCGAL interfacing method to OGRGeometry
-// TODO - check the different library versions of SFCGAL and add it to OGRGeometryFactory?
-// TODO - write a PointOnSurface(), Simplify() and SimplifyPreserveTopology() method?
-// TODO - rewrite Touches(), UnionCascaded()?
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -106,15 +99,6 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
         return wkbTriangleZ;
     else
         return wkbTriangle;
-}
-
-/************************************************************************/
-/*                              segmentize()                            */
-/************************************************************************/
-
-void OGRTriangle::segmentize(CPL_UNUSED double dfMaxLength)
-{
-    CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
 }
 
 /************************************************************************/
@@ -512,36 +496,6 @@ error:
 }
 
 /************************************************************************/
-/*                          createGEOSContext()                         */
-/************************************************************************/
-
-GEOSContextHandle_t OGRTriangle::createGEOSContext()
-{
-    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-    return NULL;
-}
-
-/************************************************************************/
-/*                          freeGEOSContext()                           */
-/************************************************************************/
-
-void OGRTriangle::freeGEOSContext(CPL_UNUSED GEOSContextHandle_t hGEOSCtxt)
-{
-    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-    return;
-}
-
-/************************************************************************/
-/*                            exportToGEOS()                            */
-/************************************************************************/
-
-GEOSGeom OGRTriangle::exportToGEOS(CPL_UNUSED GEOSContextHandle_t hGEOSCtxt) const
-{
-    CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-    return NULL;
-}
-
-/************************************************************************/
 /*                              WkbSize()                               */
 /*      Return the size of this object in well known binary             */
 /*      representation including the byte order, and type information.  */
@@ -550,76 +504,6 @@ GEOSGeom OGRTriangle::exportToGEOS(CPL_UNUSED GEOSContextHandle_t hGEOSCtxt) con
 int OGRTriangle::WkbSize() const
 {
     return 9+((OGRLinearRing*)oCC.papoCurves[0])->_WkbSize(flags);
-}
-
-/************************************************************************/
-/*                              Boundary()                              */
-/*                Returns the boundary of the geometry                  */
-/*        In the case of OGRTriangle, it is the triangle itself         */
-/************************************************************************/
-
-OGRGeometry* OGRTriangle::Boundary() const
-{
-    return oCC.papoCurves[0];
-}
-
-/************************************************************************/
-/*                               Within()                               */
-/************************************************************************/
-
-OGRBoolean  OGRTriangle::Within( CPL_UNUSED const OGRGeometry *poOtherGeom) const
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Within." );
-    return FALSE;
-}
-
-/************************************************************************/
-/*                               Buffer()                               */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Buffer( CPL_UNUSED double dfDist, CPL_UNUSED int nQuadSegs) const
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Buffer." );
-    return FALSE;
-}
-/************************************************************************/
-/*                              Distance()                              */
-/*    Returns the shortest distance between the two geometries. The     */
-/*    distance is expressed into the same unit as the coordinates of    */
-/*    the geometries.                                                   */
-/************************************************************************/
-
-double OGRTriangle::Distance(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
-{
-    if (poOtherGeom == NULL)
-    {
-        CPLDebug( "OGR", "OGRGeometry::Distance called with NULL geometry pointer" );
-        return -1.0;
-    }
-
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return -1.0;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return -1.0;
-
-    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-    if (poOther == NULL)
-        return -1.0;
-
-    double _distance = sfcgal_geometry_distance(poThis, poOther);
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poOther);
-
-    return (_distance > 0)? _distance: -1;
-
-#endif
 }
 
 /************************************************************************/
@@ -669,16 +553,6 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
 }
 
 /************************************************************************/
-/*                               Contains()                             */
-/************************************************************************/
-
-OGRBoolean  OGRTriangle::Contains( CPL_UNUSED const OGRGeometry * ) const
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Contains." );
-    return FALSE;
-}
-
-/************************************************************************/
 /*                               addRing()                              */
 /*    Checks if it is a valid ring (same start and end point; number    */
 /*    of points should be four). If there is already a ring, then it    */
@@ -725,238 +599,15 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 }
 
 /************************************************************************/
-/*                               Crosses()                              */
-/*         This method checks if the two geometries intersect.          */
-/************************************************************************/
-
-OGRBoolean OGRTriangle::Crosses(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
-{
-
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return FALSE;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-    if (poOther == NULL)
-        return FALSE;
-
-    int res = sfcgal_geometry_intersects_3d(poThis, poOther);
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poOther);
-
-    return (res == 1)? TRUE: FALSE;
-
-#endif
-}
-
-/************************************************************************/
-/*                              ConvexHull()                            */
-/*  Compute convex hull. A new geometry object is created and returned  */
-/*  containing the convex hull of the geometry on which the method is   */
-/*  invoked. Returns a new geometry.                                    */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::ConvexHull() const
-
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poRes = sfcgal_geometry_convexhull_3d(poThis);
-    OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
-    h_prodGeom->assignSpatialReference(getSpatialReference());
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poRes);
-
-    return h_prodGeom;
-
-#endif
-}
-
-/************************************************************************/
-/*                       DelaunayTriangulation()                        */
-/*         Will return the same OGRTriangle only in this case           */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::DelaunayTriangulation(CPL_UNUSED double dfTolerance, CPL_UNUSED int bOnlyEdges) const
-{
-    return (OGRTriangle *)this;
-}
-
-/************************************************************************/
-/*                              Difference()                            */
-/*  Generates a new geometry which is the region of this geometry with  */
-/*  the region of the second geometry removed.                          */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Difference(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
-
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return NULL;
-
-    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-    if (poThis == NULL)
-        return NULL;
-
-    sfcgal_geometry_t *poRes = sfcgal_geometry_difference_3d(poThis, poOther);
-    OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
-    if (h_prodGeom != NULL && getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
-        h_prodGeom->assignSpatialReference(getSpatialReference());
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poOther);
-    sfcgal_geometry_delete(poRes);
-
-    return h_prodGeom;
-
-#endif
-}
-
-/************************************************************************/
-/*                               Disjoint()                             */
-/*      Check if the geometry doesn't intersect with OGRTriangle        */
-/************************************************************************/
-
-OGRBoolean OGRTriangle::Disjoint(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return FALSE;
-
-#else
-
-    return !this->Crosses(poOtherGeom);
-
-#endif
-}
-
-/************************************************************************/
-/*                           Intersection()                             */
-/* Generates a new geometry which is the region of intersection of the  */
-/* two geometries operated on.  The Intersects() method can be used to  */
-/* test if the two geometries intersect.                                */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Intersection(UNUSED_IF_NO_SFCGAL  const OGRGeometry *poOtherGeom) const
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poRes = sfcgal_geometry_intersection_3d(poThis, poOther);
-    OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
-    if (h_prodGeom != NULL && getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
-        h_prodGeom->assignSpatialReference(getSpatialReference());
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poOther);
-    sfcgal_geometry_delete(poRes);
-
-    return h_prodGeom;
-
-#endif
-}
-
-/************************************************************************/
-/*                              IsValid()                               */
-/*          Checks if the geometry type is valid or not                 */
-/************************************************************************/
-
-OGRBoolean OGRTriangle::IsValid() const
-{
-
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return FALSE;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return FALSE;
-
-    int res = sfcgal_geometry_is_valid(poThis);
-    return (res == 1)? TRUE: FALSE;
-
-#endif
-}
-
-/************************************************************************/
-/*                              Overlaps()                              */
-/*           Checks if the geometry type overlaps or not                */
-/*           If there is an error, then FALSE is returned               */
-/************************************************************************/
-
-OGRBoolean OGRTriangle::Overlaps(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
-{
-
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return FALSE;
-
-#else
-
-    return Crosses(poOtherGeom);
-
-#endif
-}
-
-/************************************************************************/
 /*                          PointOnSurface()                            */
 /*           Corresponding method doesn't exist for SFCGAL              */
 /************************************************************************/
 
-OGRErr OGRTriangle::PointOnSurface(CPL_UNUSED OGRPoint * poPoint ) const
+OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
 {
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::PointOnSurface." );
-    return OGRERR_FAILURE;
+    // cast the triangle as a polygon and use the GEOS method on it
+    OGRPolygon *poPolygon = new OGRPolygon(*(*(OGRPolygon *)this));
+    return poPolygon->PointOnSurface(poPoint);
 }
 
 /************************************************************************/
@@ -971,75 +622,15 @@ OGRGeometry *OGRTriangle::Polygonize() const
 }
 
 /************************************************************************/
-/*                              Simplify()                              */
-/*           Corresponding method doesn't exist for SFCGAL              */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Simplify(CPL_UNUSED double dTolerance) const
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Simplify" );
-    return NULL;
-}
-
-/************************************************************************/
-/*                     SimplifyPreserveTopology()                       */
-/*           Corresponding method doesn't exist for SFCGAL              */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::SimplifyPreserveTopology(CPL_UNUSED double dTolerance) const
-{
-    CPLError( CE_Failure, CPLE_NotSupported,
-            "SFCGAL support not enabled for OGRTriangle::SimplifyPreserveTopology" );
-    return NULL;
-}
-
-/************************************************************************/
 /*                              Touches()                               */
 /*          Returns TRUE if two geometries touch each other             */
 /************************************************************************/
 
 OGRBoolean  OGRTriangle::Touches( const OGRGeometry *poOtherGeom ) const
 {
-    return this->Crosses(poOtherGeom);
-}
-
-/************************************************************************/
-/*                               Union()                                */
-/*    Generates a new geometry which is the region of union of the      */
-/*    two geometries operated on.                                       */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Union(UNUSED_IF_NO_SFCGAL  const OGRGeometry *poOtherGeom) const
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return NULL;
-
-#else
-
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-    if (poThis == NULL)
-        return FALSE;
-
-    sfcgal_geometry_t *poRes = sfcgal_geometry_union_3d(poThis, poOther);
-    OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
-    if (h_prodGeom != NULL && getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference() != NULL
-        && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
-        h_prodGeom->assignSpatialReference(getSpatialReference());
-
-    sfcgal_geometry_delete(poThis);
-    sfcgal_geometry_delete(poOther);
-
-    return h_prodGeom;
-
-#endif
+    // cast the triangle as a polygon and use the GEOS method on it
+    OGRPolygon *poPolygon = new OGRPolygon(*(*(OGRPolygon *)this));
+    return poPolygon->Touches(poPoint);
 }
 
 /************************************************************************/
@@ -1059,18 +650,6 @@ OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
         return NULL;
 
     return this->Union(poOther);
-}
-
-/************************************************************************/
-/*                            UnionCascaded()                           */
-/*           Corresponding method doesn't exist for SFCGAL              */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::UnionCascaded() const
-{
-    CPLError( CE_Failure, CPLE_NotSupported,
-            "SFCGAL support not enabled for OGRTriangle::SimplifyPreserveTopology" );
-    return NULL;
 }
 
 /************************************************************************/

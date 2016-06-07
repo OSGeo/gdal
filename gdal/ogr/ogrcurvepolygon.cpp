@@ -690,6 +690,11 @@ OGRBoolean OGRCurvePolygon::IsEmpty(  ) const
 
 void OGRCurvePolygon::segmentize( double dfMaxLength )
 {
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+        return;
+    }
     oCC.segmentize(dfMaxLength);
 }
 
