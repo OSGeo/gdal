@@ -2918,7 +2918,7 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
         return -1.0;
     }
 
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3426,7 +3426,7 @@ OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
 OGRGeometry *OGRGeometry::Intersection( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3564,7 +3564,7 @@ OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::Union( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -3790,7 +3790,7 @@ OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
 OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -4064,7 +4064,7 @@ OGRBoolean
 OGRGeometry::Disjoint( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
         return !this->Crosses(poOtherGeom);
     }
@@ -4237,7 +4237,7 @@ OGRBoolean
 OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
     #ifndef HAVE_SFCGAL
 
@@ -4351,7 +4351,7 @@ OGRBoolean
 OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Within." );
         return FALSE;
@@ -4439,7 +4439,7 @@ OGRBoolean
 OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if(EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if(EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
         CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Contains." );
         return FALSE;
@@ -4528,7 +4528,7 @@ OGRBoolean
 OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poGeom->getGeometryName(), "TRIANGLE"))
     {
         return Crosses(poOtherGeom);
     }
