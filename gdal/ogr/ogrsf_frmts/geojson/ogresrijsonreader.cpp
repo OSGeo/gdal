@@ -215,36 +215,42 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
     if( NULL != poObjName && NULL != poObjType )
     {
         OGRFieldType eFieldType = OFTString;
-        if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeOID"))
+        if( EQUAL(json_object_get_string(poObjType), "esriFieldTypeOID") )
         {
             eFieldType = OFTInteger;
             poLayer_->SetFIDColumn(json_object_get_string(poObjName));
         }
-        else if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeDouble"))
+        else if( EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeDouble") )
         {
             eFieldType = OFTReal;
         }
-        else if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeSmallInteger") ||
-                 EQUAL(json_object_get_string(poObjType), "esriFieldTypeInteger") )
+        else if( EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeSmallInteger") ||
+                 EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeInteger") )
         {
             eFieldType = OFTInteger;
         }
         OGRFieldDefn fldDefn( json_object_get_string(poObjName),
-                              eFieldType);
+                              eFieldType );
 
-        json_object* poObjLength = OGRGeoJSONFindMemberByName( poObj, "length" );
-        if (poObjLength != NULL && json_object_get_type(poObjLength) == json_type_int )
+        json_object * const poObjLength =
+            OGRGeoJSONFindMemberByName( poObj, "length" );
+        if( poObjLength != NULL &&
+            json_object_get_type(poObjLength) == json_type_int )
         {
-            int nWidth = json_object_get_int(poObjLength);
-            // A dummy with of 2147483647 seems to indicate no known field with
-            // which in the OGR world is better modelled as 0 field width. (#6529)
+            const int nWidth = json_object_get_int(poObjLength);
+            // A dummy width of 2147483647 seems to indicate no known field with
+            // which in the OGR world is better modelled as 0 field width.
+            // (#6529)
             if( nWidth != INT_MAX )
                 fldDefn.SetWidth(nWidth);
         }
 
         poDefn->AddFieldDefn( &fldDefn );
 
-        bSuccess = true; // SUCCESS
+        bSuccess = true;
     }
     return bSuccess;
 }
