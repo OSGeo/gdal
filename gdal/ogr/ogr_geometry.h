@@ -1168,6 +1168,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
 
     // New methods interfaced through SFCGAL
+    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRBoolean  IsSimple() const;
