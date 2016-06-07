@@ -6391,7 +6391,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
         // cast it to Polygon and get the WKT
-        OGRPolygon *poPolygon = OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
+        OGRPolygon *poPolygon = (OGRPolygon *)OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
         if (poPolygon->exportToWkt(&buffer) != OGRERR_NONE)
         {
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
