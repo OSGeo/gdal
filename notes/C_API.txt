@@ -1,10 +1,10 @@
-OGRErr 	OGR_G_CreateFromWkb (unsigned char *, OGRSpatialReferenceH, OGRGeometryH *, int)
- 	Create a geometry object of the appropriate type from it's well known binary representation. More...
+    OGRErr 	OGR_G_CreateFromWkb (unsigned char *, OGRSpatialReferenceH, OGRGeometryH *, int)
+     	Create a geometry object of the appropriate type from it's well known binary representation. More...
 
     OGRErr 	OGR_G_CreateFromWkt (char **, OGRSpatialReferenceH, OGRGeometryH *)
      	Create a geometry object of the appropriate type from it's well known text representation. More...
 
-OGRErr 	OGR_G_CreateFromFgf (unsigned char *, OGRSpatialReferenceH, OGRGeometryH *, int, int *)
+    OGRErr 	OGR_G_CreateFromFgf (unsigned char *, OGRSpatialReferenceH, OGRGeometryH *, int, int *)
 
     void 	OGR_G_DestroyGeometry (OGRGeometryH)
      	Destroy geometry object. More...
