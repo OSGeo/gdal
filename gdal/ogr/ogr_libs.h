@@ -1,3 +1,5 @@
+#ifndef UNUSED_PARAMETER
+
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
 #else
