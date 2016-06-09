@@ -1940,9 +1940,13 @@ OGRGeometry::IsValid(  ) const
 
     #else
 
+        sfcgal_init();
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, "SFCGAL geometry returned is NULL" );
             return FALSE;
+        }
 
         int res = sfcgal_geometry_is_valid(poThis);
         return (res == 1)? TRUE: FALSE;
@@ -3828,14 +3832,27 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
 
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
+        {
+            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for poThis" );
             return NULL;
+        }
+
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-        if (poThis == NULL)
+        if (poOther == NULL)
+        {
+            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for poOther" );
             return NULL;
+        }
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_difference_3d(poThis, poOther);
-        OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
+        OGRGeometry *h_prodGeom = OGRGeometry::SFCGALexportToOGR(poRes);
+
+        if (h_prodGeom == NULL)
+        {
+            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for h_prodGeom" );
+            return NULL;
+        }
 
         if (h_prodGeom != NULL && getSpatialReference() != NULL
             && poOtherGeom->getSpatialReference() != NULL
@@ -6348,7 +6365,6 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 #ifdef HAVE_SFCGAL
     sfcgal_init();
     char *buffer;
-    size_t length = 0;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
 
@@ -6356,8 +6372,11 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
+            size_t length = 0;
+            while(buffer[length++] != '\0');
+            length--;
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
             return _geometry;
         }
@@ -6368,8 +6387,11 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
+            size_t length = 0;
+            while(buffer[length++] != '\0');
+            length--;
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
             return _geometry;
         }
@@ -6380,8 +6402,11 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCompoundCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) != OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
+            size_t length = 0;
+            while(buffer[length++] != '\0');
+            length--;
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
             return _geometry;
         }
@@ -6392,16 +6417,22 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to Polygon and get the WKT
         OGRPolygon *poPolygon = (OGRPolygon *)OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
-        if (poPolygon->exportToWkt(&buffer) != OGRERR_NONE)
+        if (poPolygon->exportToWkt(&buffer) == OGRERR_NONE)
         {
+            size_t length = 0;
+            while(buffer[length++] != '\0');
+            length--;
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
             return _geometry;
         }
         else
             return NULL;
     }
-    else if (poGeom->exportToWkt(&buffer) != OGRERR_NONE)
+    else if (poGeom->exportToWkt(&buffer) == OGRERR_NONE)
     {
+        size_t length = 0;
+        while(buffer[length++] != '\0');
+        length--;
         sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
         return _geometry;
     }
@@ -6420,62 +6451,86 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* _geometry)
 {
 #ifdef HAVE_SFCGAL
+
     sfcgal_init();
     char *buffer;
     size_t length = 0;
-    sfcgal_geometry_as_text (_geometry,&buffer,&length);
+    sfcgal_geometry_as_text_decim (_geometry,5,&buffer,&length);
+
     sfcgal_geometry_type_t _geom_type = sfcgal_geometry_type_id (_geometry);
-    OGRGeometry *poGeom;
-    switch (_geom_type)
+
+    if (_geom_type == SFCGAL_TYPE_POINT)
     {
-        case SFCGAL_TYPE_POINT                   :  poGeom = new OGRPoint();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_LINESTRING              :  poGeom = new OGRLineString();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_POLYGON 	             :  poGeom = new OGRPolygon();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_MULTIPOINT 	         :  poGeom = new OGRMultiPoint();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_MULTILINESTRING         :  poGeom = new OGRMultiLineString();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_MULTIPOLYGON 	         :  poGeom = new OGRMultiPolygon();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        case SFCGAL_TYPE_GEOMETRYCOLLECTION 	 :  poGeom = new OGRGeometryCollection();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        // case SFCGAL_TYPE_POLYHEDRALSURFACE 	     :  poGeom = new OGRPolyhedralSurface();
-        //                                             if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-        //                                                 return poGeom;
-        // case SFCGAL_TYPE_TRIANGULATEDSURFACE  	 :  poGeom = new OGRTIN();
-        //                                             if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-        //                                                 return poGeom;
-        case SFCGAL_TYPE_TRIANGLE 	             :  poGeom = new OGRTriangle();
-                                                    if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
-                                                        return poGeom;
-                                                    else
-                                                        return NULL;
-        default                                  :  return NULL;
+        OGRGeometry *poGeom = new OGRPoint();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
     }
+    else if (_geom_type == SFCGAL_TYPE_LINESTRING)
+    {
+        OGRGeometry *poGeom = new OGRLineString();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_POLYGON)
+    {
+        OGRGeometry *poGeom = new OGRPolygon();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_MULTIPOINT)
+    {
+        OGRGeometry *poGeom = new OGRMultiPoint();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_MULTILINESTRING)
+    {
+        OGRGeometry *poGeom = new OGRMultiLineString();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_MULTIPOLYGON)
+    {
+        OGRGeometry *poGeom = new OGRMultiPolygon();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_GEOMETRYCOLLECTION)
+    {
+        OGRGeometry *poGeom = new OGRGeometryCollection();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+            return NULL;
+    }
+    else if (_geom_type == SFCGAL_TYPE_TRIANGLE)
+    {
+        OGRGeometry *poGeom = new OGRTriangle();
+        if (poGeom->importFromWkt(&buffer) == OGRERR_NONE)
+            return poGeom;
+        else
+        {
+            CPLDebug("OGR", "Returning NULL from triangle");
+            return NULL;
+        }
+    }
+    else
+    {
+        return NULL;
+    }
+
 #else
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
     return NULL;
