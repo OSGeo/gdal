@@ -72,7 +72,7 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
 
 const char* OGRGeoJSONLayer::GetFIDColumn()
 {
-	return sFIDColumn_.c_str();
+    return sFIDColumn_.c_str();
 }
 
 /************************************************************************/
@@ -81,7 +81,7 @@ const char* OGRGeoJSONLayer::GetFIDColumn()
 
 void OGRGeoJSONLayer::SetFIDColumn( const char* pszFIDColumn )
 {
-	sFIDColumn_ = pszFIDColumn;
+    sFIDColumn_ = pszFIDColumn;
 }
 
 /************************************************************************/

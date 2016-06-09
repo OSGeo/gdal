@@ -614,7 +614,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
         if( poObjId && json_object_get_type(poObjId) == json_type_int )
             bFoundFeatureId = true;
     }
-    
+
     // If there's a top-level id of type string, and no properties.id, then
     // declare a id field
     if( poDefn->GetFieldIndex( "id" ) < 0 )
