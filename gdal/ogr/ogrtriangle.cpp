@@ -356,7 +356,7 @@ OGRErr OGRTriangle::importFromWkt( char ** ppszInput )
 
     eErr = importFromWKTListOnly(ppszInput, bHasZ, bHasM, paoPoints, nMaxPoints, padfZ);
 
-    if (nMaxPoints != 4)
+    if (!oCC.papoCurves[0]->get_IsClosed())
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     CPLFree(paoPoints);
