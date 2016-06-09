@@ -71,7 +71,7 @@ OGRErr OGRTopoJSONReader::Parse( const char* pszText )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TopoJSON parsing error: %s (at offset %d)",
-            	      json_tokener_error_desc(jstok->err), jstok->char_offset);
+                      json_tokener_error_desc(jstok->err), jstok->char_offset );
 
             json_tokener_free(jstok);
             return OGRERR_CORRUPT_DATA;
@@ -396,7 +396,7 @@ static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
-        
+
         json_object_object_foreachC( poObjProps, it )
         {
             OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
