@@ -1176,7 +1176,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRErr addRing	(OGRCurve *poNewRing); // tested
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const; // tested
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // tested
-    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // tested
     virtual OGRBoolean  Touches( const OGRGeometry * ) const; // tested
 };
 
