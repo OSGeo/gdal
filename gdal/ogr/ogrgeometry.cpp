@@ -3606,14 +3606,19 @@ OGRGeometry *OGRGeometry::Union( UNUSED_PARAMETER const OGRGeometry *poOtherGeom
 
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
-            return FALSE;
+            return NULL;
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
-        if (poThis == NULL)
-            return FALSE;
+        if (poOther == NULL)
+            return NULL;
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_union_3d(poThis, poOther);
-        OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
+        if (poRes == NULL)
+            return NULL;
+
+        OGRGeometry *h_prodGeom = OGRGeometry::SFCGALexportToOGR(poRes);
+        if (h_prodGeom == NULL)
+            return NULL;
 
         if (h_prodGeom != NULL && getSpatialReference() != NULL
             && poOtherGeom->getSpatialReference() != NULL
@@ -3833,7 +3838,6 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
         {
-            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for poThis" );
             return NULL;
         }
 
@@ -3841,7 +3845,6 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
         if (poOther == NULL)
         {
-            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for poOther" );
             return NULL;
         }
 
@@ -3850,7 +3853,6 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
 
         if (h_prodGeom == NULL)
         {
-            CPLDebug( "OGR", "OGRGeometry::Difference called with NULL geometry pointer for h_prodGeom" );
             return NULL;
         }
 
@@ -6448,16 +6450,16 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 /*                          SFCGALexportToOGR()                         */
 /************************************************************************/
 
-OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* _geometry)
+OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* geometry)
 {
 #ifdef HAVE_SFCGAL
 
     sfcgal_init();
     char *buffer;
     size_t length = 0;
-    sfcgal_geometry_as_text_decim (_geometry,5,&buffer,&length);
+    sfcgal_geometry_as_text_decim (geometry,19,&buffer,&length);
 
-    sfcgal_geometry_type_t _geom_type = sfcgal_geometry_type_id (_geometry);
+    sfcgal_geometry_type_t _geom_type = sfcgal_geometry_type_id (geometry);
 
     if (_geom_type == SFCGAL_TYPE_POINT)
     {
