@@ -1152,33 +1152,32 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 {
 
   public:
-    OGRTriangle();
-    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r);
-    OGRTriangle(const OGRTriangle &other);
-    OGRTriangle& operator=(const OGRTriangle& other);
+    OGRTriangle(); // tested
+    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // tested
+    OGRTriangle(const OGRTriangle &other); // tested
+    OGRTriangle& operator=(const OGRTriangle& other); // tested
     virtual ~OGRTriangle();
-    const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
+    const char *getGeometryName() const; // tested
+    virtual OGRwkbGeometryType getGeometryType() const; // tested
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const; // tested
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ); // tested
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const; // tested
+    virtual OGRErr importFromWkt( char ** ); // tested
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const; // tested
 
     // New methods interfaced through SFCGAL or rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry
-    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
-    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
-    virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
-    virtual OGRBoolean  IsSimple() const;
-    virtual OGRBoolean  IsRing() const;
-    virtual OGRErr addRing	(OGRCurve *poNewRing);
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const;
-    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;   // tested
+    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;  // tested
+    virtual OGRErr       Centroid( OGRPoint * poPoint ) const;  // tested
+    virtual OGRBoolean  IsSimple() const;   // tested
+    virtual OGRBoolean  IsRing() const; // tested
+    virtual OGRErr addRing	(OGRCurve *poNewRing); // tested
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const; // tested
+    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // tested
     virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT;
-    virtual OGRBoolean  Touches( const OGRGeometry * ) const;
-    virtual double      get_Area() const;
+    virtual OGRBoolean  Touches( const OGRGeometry * ) const; // tested
 };
 
 /************************************************************************/
