@@ -38,7 +38,6 @@ OGRTriangle::OGRTriangle(const OGRTriangle& other) :
 OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r)
 {
     OGRLinearRing *poCurve = new OGRLinearRing();
-    poCurve->setNumPoints(4,TRUE);
     OGRPoint *poPoint_1 = new OGRPoint(p);
     OGRPoint *poPoint_2 = new OGRPoint(q);
     OGRPoint *poPoint_3 = new OGRPoint(r);
@@ -534,6 +533,7 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
 
 #else
 
+    sfcgal_init();
     sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
     if (poThis == NULL)
         return -1.0;
@@ -547,7 +547,7 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
     sfcgal_geometry_delete(poThis);
     sfcgal_geometry_delete(poOther);
 
-    return (_distance > 0)? _distance: -1;
+    return (_distance > 0)? _distance: -1.0;
 
 #endif
 }
@@ -579,7 +579,7 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
     poNewRingCloned->StartPoint(poStart);
     poNewRingCloned->EndPoint(poEnd);
 
-    if (poStart != poEnd || poNewRingCloned->getNumPoints() != 4)
+    if (!poNewRingCloned->get_IsClosed() || poNewRingCloned->getNumPoints() != 4)
     {
         // condition fails; cannot add this ring as it is not valid
         CPLDebug( "OGR", "Not a valid ring to add to a Triangle");
@@ -650,33 +650,6 @@ OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
         return NULL;
 
     return this->Union(poOther);
-}
-
-/************************************************************************/
-/*                              get_Area()                              */
-/*      Returns the area of a triangle, -1.0 in case of some error      */
-/************************************************************************/
-
-double OGRTriangle::get_Area() const
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return -1.0;
-
-#else
-
-    sfcgal_geometry_t *poGeom = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-
-    if (poGeom == NULL)
-        return -1.0;
-
-    if (sfcgal_geometry_type_id(poGeom) != SFCGAL_TYPE_TRIANGLE)
-        return -1.0;
-
-    return sfcgal_geometry_area_3d(poGeom);
-
-#endif
 }
 
 /************************************************************************/
