@@ -1872,6 +1872,51 @@ def ogr_geojson_39():
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
+
+    # id and properties.ID (#6538)
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : 1, "properties": { "ID": 2 }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'ID' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1 or feat.GetField('ID') != 2:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # Test handling of duplicated id
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : 1, "properties": { "foo": "bar" }, "geometry": null },
+{ "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
+{ "type": "Feature", "id" : 2, "properties": { "foo": "baw" }, "geometry": null }
+] }""")
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected warning')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1 or feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2 or feat.GetField('foo') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 3 or feat.GetField('foo') != 'baw':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
