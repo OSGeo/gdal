@@ -1,0 +1,123 @@
+These are all the methods of OGRTriangle (inherited + written)
+and the ones that have a tab space are still unimplemented or untested.
+
+addRing(OGRCurve *)	OGRCurvePolygon
+addRingDirectly(OGRCurve *)	OGRCurvePolygon
+assignSpatialReference(OGRSpatialReference *poSR)	OGRGeometry
+bGenerate_DB2_V72_BYTE_ORDER (defined in OGRGeometry)	OGRGeometry	static
+Boundary() const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+Buffer(double dfDist, int nQuadSegs=30) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+CastToCurvePolygon(OGRPolygon *poPoly)	OGRPolygon	protectedstatic
+OGRCurvePolygon::CastToCurvePolygon(OGRSurface *poSurface)	OGRSurface	static
+CastToError(OGRGeometry *poGeom) (defined in OGRGeometry)	OGRGeometry	static
+CastToIdentity(OGRGeometry *poGeom) (defined in OGRGeometry)	OGRGeometry	inlinestatic
+CastToPolygon(OGRCurvePolygon *poCP)	OGRCurvePolygon	protectedstatic
+OGRSurface::CastToPolygon(OGRSurface *poSurface)	OGRSurface	static
+Centroid(OGRPoint *poPoint) const	OGRGeometry	virtual
+checkRing(OGRCurve *poNewRing) const (defined in OGRPolygon)	OGRPolygon	protectedvirtual
+clone() const	OGRCurvePolygon	virtual
+closeRings()	OGRPolygon	virtual
+Contains(const OGRGeometry *) const	OGRCurvePolygon	virtual
+ConvexHull() const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+CoordinateDimension() const	OGRGeometry
+createGEOSContext() (defined in OGRGeometry)	OGRGeometry	static
+Crosses(const OGRGeometry *) const	OGRGeometry	virtual
+CurvePolyToPoly(double dfMaxAngleStepSizeDegrees=0, const char *const *papszOptions=NULL) const	OGRPolygon	virtual
+DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+Difference(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+Disjoint(const OGRGeometry *) const	OGRGeometry	virtual
+Distance(const OGRGeometry *) const	OGRGeometry	virtual
+dumpReadable(FILE *, const char *=NULL, char **papszOptions=NULL) const	OGRGeometry	virtual
+empty()	OGRCurvePolygon	virtual
+Equal(OGRGeometry *) const CPL_WARN_DEPRECATED("Non standard method. Use Equals() instead") (defined in OGRGeometry)	OGRGeometry
+Equals(OGRGeometry *) const	OGRCurvePolygon	virtual
+exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT (defined in OGRGeometry)	OGRGeometry	virtual
+    exportToGML(const char *const *papszOptions=NULL) const	OGRGeometry	virtual
+    exportToJson() const	OGRGeometry	virtual
+    exportToKML() const	OGRGeometry	virtual
+exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const	OGRPolygon	virtual
+exportToWkt(char **ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const	OGRPolygon	virtual
+flags (defined in OGRGeometry)	OGRGeometry	protected
+flattenTo2D()	OGRCurvePolygon	virtual
+freeGEOSContext(GEOSContextHandle_t hGEOSCtxt) (defined in OGRGeometry)	OGRGeometry	static
+get_Area() const	OGRCurvePolygon	virtual
+getBoundary() const CPL_WARN_DEPRECATED("Non standard method. Use Boundary() instead")	OGRGeometry
+GetCasterToCurvePolygon() const (defined in OGRPolygon)	OGRPolygon	protectedvirtual
+GetCasterToPolygon() const (defined in OGRPolygon)	OGRPolygon	protectedvirtual
+getCoordinateDimension() const	OGRGeometry	virtual
+getCurveGeometry(const char *const *papszOptions=NULL) const	OGRPolygon	virtual
+getDimension() const	OGRCurvePolygon	virtual
+getEnvelope(OGREnvelope *psEnvelope) const	OGRCurvePolygon	virtual
+getEnvelope(OGREnvelope3D *psEnvelope) const	OGRCurvePolygon	virtual
+getExteriorRing()	OGRPolygon
+getExteriorRing() const (defined in OGRPolygon)	OGRPolygon
+getExteriorRingCurve()	OGRCurvePolygon
+getExteriorRingCurve() const (defined in OGRCurvePolygon)	OGRCurvePolygon
+getGeometryName() const	OGRPolygon	virtual
+getGeometryType() const	OGRPolygon	virtual
+getInteriorRing(int)	OGRPolygon
+getInteriorRing(int) const (defined in OGRPolygon)	OGRPolygon
+getInteriorRingCurve(int)	OGRCurvePolygon
+getInteriorRingCurve(int) const (defined in OGRCurvePolygon)	OGRCurvePolygon
+getIsoGeometryType() const	OGRGeometry
+getLinearGeometry(double dfMaxAngleStepSizeDegrees=0, const char *const *papszOptions=NULL) const	OGRPolygon	virtual
+getNumInteriorRings() const	OGRCurvePolygon
+getSpatialReference(void) const	OGRGeometry	inline
+hasCurveGeometry(int bLookForNonLinear=FALSE) const	OGRPolygon	virtual
+importCurveCollectionFromWkt(char **ppszInput, int bAllowEmptyComponent, int bAllowLineString, int bAllowCurve, int bAllowCompoundCurve, OGRErr(*pfnAddCurveDirectly)(OGRGeometry *poSelf, OGRCurve *poCurve)) (defined in OGRGeometry)	OGRGeometry	protected
+importFromWkb(unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc)	OGRPolygon	virtual
+importFromWkt(char **)	OGRPolygon	virtual
+importFromWKTListOnly(char **ppszInput, int bHasZ, int bHasM, OGRRawPoint *&paoPoints, int &nMaxPoints, double *&padfZ) (defined in OGRPolygon)	OGRPolygon	protected
+importPreambuleFromWkb(unsigned char *pabyData, int nSize, OGRwkbByteOrder &eByteOrder, OGRwkbVariant eWkbVariant) (defined in OGRGeometry)	OGRGeometry	protected
+importPreambuleFromWkt(char **ppszInput, int *pbHasZ, int *pbHasM, bool *pbIsEmpty) (defined in OGRGeometry)	OGRGeometry	protected
+importPreambuleOfCollectionFromWkb(unsigned char *pabyData, int &nSize, int &nDataOffset, OGRwkbByteOrder &eByteOrder, int nMinSubGeomSize, int &nGeomCount, OGRwkbVariant eWkbVariant) (defined in OGRGeometry)	OGRGeometry	protected
+Intersect(OGRGeometry *) const CPL_WARN_DEPRECATED("Non standard method. Use Intersects() instead") (defined in OGRGeometry)	OGRGeometry
+Intersection(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+Intersects(const OGRGeometry *) const	OGRCurvePolygon	virtual
+Is3D() const (defined in OGRGeometry)	OGRGeometry	inline
+IsEmpty() const	OGRCurvePolygon	virtual
+IsMeasured() const (defined in OGRGeometry)	OGRGeometry	inline
+IsPointOnSurface(const OGRPoint *) const (defined in OGRPolygon)	OGRPolygon
+IsRing() const	OGRGeometry	virtual
+IsSimple() const	OGRGeometry	virtual
+IsValid() const	OGRGeometry	virtual
+oCC (defined in OGRCurvePolygon)	OGRCurvePolygon	protected
+OGR_G_3D (defined in OGRGeometry)	OGRGeometry	static
+OGR_G_MEASURED (defined in OGRGeometry)	OGRGeometry	static
+OGR_G_NOT_EMPTY_POINT (defined in OGRGeometry)	OGRGeometry	static
+OGRCurvePolygon()	OGRCurvePolygon
+OGRCurvePolygon(const OGRCurvePolygon &)	OGRCurvePolygon
+OGRGeometry() (defined in OGRGeometry)	OGRGeometry
+OGRGeometry(const OGRGeometry &other)	OGRGeometry
+OGRMultiSurface (defined in OGRPolygon)	OGRPolygon	friend
+OGRPolygon()	OGRPolygon
+OGRPolygon(const OGRPolygon &other)	OGRPolygon
+operator=(const OGRPolygon &other)	OGRPolygon
+OGRCurvePolygon::operator=(const OGRCurvePolygon &other)	OGRCurvePolygon
+OGRSurface::operator=(const OGRGeometry &other)	OGRGeometry
+Overlaps(const OGRGeometry *) const	OGRGeometry	virtual
+PointOnSurface(OGRPoint *poPoint) const	OGRPolygon	virtual
+PointOnSurfaceInternal(OGRPoint *poPoint) const (defined in OGRGeometry)	OGRGeometry	protected
+Polygonize() const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+segmentize(double dfMaxLength)	OGRCurvePolygon	virtual
+set3D(OGRBoolean bIs3D)	OGRCurvePolygon	virtual
+setCoordinateDimension(int nDimension)	OGRCurvePolygon	virtual
+setMeasured(OGRBoolean bIsMeasured)	OGRCurvePolygon	virtual
+Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT	OGRGeometry
+stealExteriorRing()	OGRPolygon
+stealExteriorRingCurve()	OGRCurvePolygon
+stealInteriorRing(int)	OGRPolygon
+swapXY()	OGRCurvePolygon	virtual
+SymDifference(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+SymmetricDifference(const OGRGeometry *) const CPL_WARN_DEPRECATED("Non standard method. Use SymDifference() instead")	OGRGeometry
+Touches(const OGRGeometry *) const	OGRGeometry	virtual
+transform(OGRCoordinateTransformation *poCT)	OGRCurvePolygon	virtual
+transformTo(OGRSpatialReference *poSR)	OGRGeometry
+Union(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+UnionCascaded() const CPL_WARN_UNUSED_RESULT	OGRGeometry	virtual
+Within(const OGRGeometry *) const	OGRGeometry	virtual
+WkbSize() const	OGRPolygon	virtual
+~OGRCurvePolygon() (defined in OGRCurvePolygon)	OGRCurvePolygon	virtual
+~OGRGeometry() (defined in OGRGeometry)	OGRGeometry	virtual
+~OGRPolygon() (defined in OGRPolygon)	OGRPolygon	virtual

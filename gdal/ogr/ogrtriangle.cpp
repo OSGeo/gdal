@@ -692,3 +692,31 @@ OGRGeometry *OGRTriangle::Boundary() const
 {
     return oCC.papoCurves[0];
 }
+
+/************************************************************************/
+/*                         stealInteriorRing()                          */
+/************************************************************************/
+
+OGRLinearRing *OGRTriangle::stealInteriorRing(CPL_UNUSED int iRing)
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
+    return NULL;
+}
+
+/************************************************************************/
+/*                            getInteriorRing()                         */
+/************************************************************************/
+
+OGRLinearRing *OGRTriangle::getInteriorRing( CPL_UNUSED int iRing )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
+    return NULL;
+}
+
+const OGRLinearRing *OGRTriangle::getInteriorRing( CPL_UNUSED int iRing ) const
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
+    return NULL;
+}
