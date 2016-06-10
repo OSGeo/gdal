@@ -113,6 +113,9 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 {
     GIntBig nFID = poFeature->GetFID();
+    
+    // Detect potential FID duplicates and make sure they are eventually
+    // unique
     if( -1 == nFID )
     {
         nFID = GetFeatureCount(FALSE);
@@ -125,7 +128,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
     }
     else
     {
-        OGRFeature* poTryFeature = GetFeature( nFID );
+        OGRFeature* poTryFeature;
         if( (poTryFeature = GetFeature(nFID) ) != NULL )
         {
             if( !bOriginalIdModified_ )
