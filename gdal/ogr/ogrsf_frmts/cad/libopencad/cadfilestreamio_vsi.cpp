@@ -30,6 +30,8 @@
 *******************************************************************************/
 #include "cadfilestreamio.h"
 
+#include <string>
+
 CADFileStreamIO::CADFileStreamIO(const char* pszFilePath) : CADFileIO(pszFilePath)
 {
 
@@ -48,61 +50,61 @@ const char* CADFileStreamIO::ReadLine()
 
 bool CADFileStreamIO::Eof()
 {
-    return m_oFileStream.eof();
+    return VSIFEof( m_oFileStream ) == 0 ? false : true;
 }
 
 bool CADFileStreamIO::Open(int mode)
 {
-    auto io_mode = std::ios_base::in; // as we use ifstream
+    std::string sOpenMode = "r";
     if(mode & OpenMode::binary)
-        io_mode |= std::ios_base::binary;
+        sOpenMode = "r+b";
 
     if(mode & OpenMode::write)
-        //io_mode |= std::ios_base::out;
+        sOpenMode = "w+b";
         return false;
 
-    m_oFileStream = std::ifstream ( m_pszFilePath, io_mode);
+    m_oFileStream = VSIFOpen( m_pszFilePath, sOpenMode.c_str() );
 
-    if(m_oFileStream.is_open())
+    if( m_oFileStream != NULL )
         m_bIsOpened = true;
-    
+
     return m_bIsOpened;
 }
 
 bool CADFileStreamIO::Close()
 {
-    m_oFileStream.close();
-    return CADFileIO::Close();
+    return VSIFClose( m_oFileStream ) == 0 ? true : false;
 }
 
 int CADFileStreamIO::Seek(long offset, CADFileIO::SeekOrigin origin)
 {
-    std::ios_base::seekdir direction;
+    int nWhence = 0;
     switch (origin) {
     case SeekOrigin::CUR:
-        direction = std::ios_base::cur;
+        nWhence = SEEK_CUR;
         break;
     case SeekOrigin::END:
-        direction = std::ios_base::end;
+        nWhence = SEEK_END;
         break;
     case SeekOrigin::BEG:
-        direction = std::ios_base::beg;
+        nWhence = SEEK_SET;
         break;
     }
 
-    return m_oFileStream.seekg(offset, direction).good() ? 0 : 1;
+    return VSIFSeek( m_oFileStream, offset, nWhence) == 0 ? 0 : 1;
 }
 
 long CADFileStreamIO::Tell()
 {
-    return m_oFileStream.tellg();
+    return VSIFTell( m_oFileStream );
 }
 
 size_t CADFileStreamIO::Read(void* ptr, size_t size)
 {
-    return static_cast<size_t>(m_oFileStream.read(
-                                   static_cast<char*>(ptr),
-                                   static_cast<long>(size)).gcount());
+    return VSIFRead( static_cast<char*>(ptr),
+                     1,
+                     size,
+                     m_oFileStream );
 }
 
 size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
@@ -113,5 +115,5 @@ size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
 
 void CADFileStreamIO::Rewind()
 {
-    m_oFileStream.seekg(0, std::ios_base::beg);
+    VSIRewind ( m_oFileStream );
 }

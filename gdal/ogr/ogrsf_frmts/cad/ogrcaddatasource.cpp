@@ -24,7 +24,14 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    // poCADFile = OpenCADFile( pszFilename, CADFile::OpenOptions::READ_ALL );
+    poCADFile = OpenCADFile( pszFilename, CADFile::OpenOptions::READ_ALL );
+
+    if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "libopencad v%s does not support this version of CAD file.", GetVersionString() );
+        return( FALSE );
+    }
 
     nLayers = 1;
     papoLayers = ( OGRCADLayer ** ) CPLMalloc(sizeof(void*));

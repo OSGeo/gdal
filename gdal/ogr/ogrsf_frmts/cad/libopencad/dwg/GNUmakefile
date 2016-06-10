@@ -7,7 +7,7 @@ OBJ = \
 
 O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 
-CPPFLAGS	:=	-I.. -I../.. $(CPPFLAGS) -std=c++11
+CPPFLAGS	:=	-I. -I.. -I../.. -I../../.. $(CPPFLAGS) -std=c++11
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
@@ -17,5 +17,3 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 	rm -f *~
-
-$(O_OBJ):	dwg.h

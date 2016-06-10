@@ -8,6 +8,7 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
     if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
         return FALSE;
+        
     return EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "dwg" );
 }
 
