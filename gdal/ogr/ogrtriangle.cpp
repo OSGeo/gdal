@@ -47,6 +47,9 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r
     poCurve->addPoint(poPoint_1);
 
     oCC.addCurveDirectly(poCurve, poCurve, TRUE);
+    delete poPoint_1;
+    delete poPoint_2;
+    delete poPoint_3;
 }
 
 /************************************************************************/
@@ -592,15 +595,14 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
         delete poNewRingCloned;
 
     // free poStart and poEnd as we don't need them
-    CPLFree(poStart);
-    CPLFree(poEnd);
+    delete poStart;
+    delete poEnd;
 
     return eErr;
 }
 
 /************************************************************************/
 /*                          PointOnSurface()                            */
-/*           Corresponding method doesn't exist for SFCGAL              */
 /************************************************************************/
 
 OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
@@ -608,29 +610,6 @@ OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
     // cast the triangle as a polygon and use the GEOS method on it
     OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
     return poPolygon->PointOnSurface(poPoint);
-}
-
-/************************************************************************/
-/*                             Polygonize()                             */
-/*    Returns a pointer of type OGRPolygon derived from OGRTriangle     */
-/************************************************************************/
-
-OGRGeometry *OGRTriangle::Polygonize() const
-{
-    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
-    return poPolygon;
-}
-
-/************************************************************************/
-/*                              Touches()                               */
-/*          Returns TRUE if two geometries touch each other             */
-/************************************************************************/
-
-OGRBoolean  OGRTriangle::Touches( const OGRGeometry *poOtherGeom ) const
-{
-    // cast the triangle as a polygon and use the GEOS method on it
-    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
-    return poPolygon->Touches(poOtherGeom);
 }
 
 /************************************************************************/
@@ -650,18 +629,6 @@ OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
         return NULL;
 
     return this->Union(poOther);
-}
-
-/************************************************************************/
-/*                              Centroid()                              */
-/************************************************************************/
-
-OGRErr OGRTriangle::Centroid( OGRPoint * poPoint ) const
-{
-    // Since SFCGAL doesn't have its own method to deal with centroid, we are casting Triangle to Polygon
-    // and using OGRPolygon::Centroid().
-    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
-    return poPolygon->Centroid(poPoint);
 }
 
 /************************************************************************/
@@ -691,32 +658,4 @@ OGRBoolean  OGRTriangle::IsRing() const
 OGRGeometry *OGRTriangle::Boundary() const
 {
     return oCC.papoCurves[0];
-}
-
-/************************************************************************/
-/*                         stealInteriorRing()                          */
-/************************************************************************/
-
-OGRLinearRing *OGRTriangle::stealInteriorRing(CPL_UNUSED int iRing)
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
-    return NULL;
-}
-
-/************************************************************************/
-/*                            getInteriorRing()                         */
-/************************************************************************/
-
-OGRLinearRing *OGRTriangle::getInteriorRing( CPL_UNUSED int iRing )
-
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
-    return NULL;
-}
-
-const OGRLinearRing *OGRTriangle::getInteriorRing( CPL_UNUSED int iRing ) const
-
-{
-    CPLError( CE_Failure, CPLE_NotSupported, "OGRTriangle has no interior rings" );
-    return NULL;
 }
