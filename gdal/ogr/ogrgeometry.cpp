@@ -6386,7 +6386,6 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 #ifdef HAVE_SFCGAL
     sfcgal_init();
     char *buffer;
-    char *pszTmpWKT = buffer;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
 
@@ -6394,7 +6393,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&pszTmpWKT) == OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
             size_t length = 0;
             while(buffer[length++] != '\0');
@@ -6410,7 +6409,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&pszTmpWKT) == OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
             size_t length = 0;
             while(buffer[length++] != '\0');
@@ -6426,7 +6425,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to LineString and get the WKT
         OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCompoundCurve *)poGeom);
-        if (poLineString->exportToWkt(&pszTmpWKT) == OGRERR_NONE)
+        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
         {
             size_t length = 0;
             while(buffer[length++] != '\0');
@@ -6442,7 +6441,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     {
         // cast it to Polygon and get the WKT
         OGRPolygon *poPolygon = (OGRPolygon *)OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
-        if (poPolygon->exportToWkt(&pszTmpWKT) == OGRERR_NONE)
+        if (poPolygon->exportToWkt(&buffer) == OGRERR_NONE)
         {
             size_t length = 0;
             while(buffer[length++] != '\0');
@@ -6454,7 +6453,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
         else
             return NULL;
     }
-    else if (poGeom->exportToWkt(&pszTmpWKT) == OGRERR_NONE)
+    else if (poGeom->exportToWkt(&buffer) == OGRERR_NONE)
     {
         size_t length = 0;
         while(buffer[length++] != '\0');
