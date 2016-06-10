@@ -1133,11 +1133,11 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
     OGRLinearRing *getExteriorRing();
     const OGRLinearRing *getExteriorRing() const;
-    OGRLinearRing *getInteriorRing( int );
-    const OGRLinearRing *getInteriorRing( int ) const;
+    virtual OGRLinearRing *getInteriorRing( int );
+    virtual const OGRLinearRing *getInteriorRing( int ) const;
 
     OGRLinearRing *stealExteriorRing();
-    OGRLinearRing *stealInteriorRing(int);
+    virtual OGRLinearRing *stealInteriorRing(int);
 
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
@@ -1178,6 +1178,9 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // tested
     virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // tested
     virtual OGRBoolean  Touches( const OGRGeometry * ) const; // tested
+    virtual OGRLinearRing *stealInteriorRing(int);
+    virtual OGRLinearRing *getInteriorRing( int );
+    virtual const OGRLinearRing *getInteriorRing( int ) const;
 };
 
 /************************************************************************/
