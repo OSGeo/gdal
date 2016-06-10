@@ -1,3 +1,5 @@
+The methods that have not been tabbed out need further examination.
+
     OGRErr 	OGR_G_CreateFromWkb (unsigned char *, OGRSpatialReferenceH, OGRGeometryH *, int)
      	Create a geometry object of the appropriate type from it's well known binary representation. More...
 
