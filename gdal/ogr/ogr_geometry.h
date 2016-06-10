@@ -69,33 +69,6 @@ typedef struct GEOSGeom_t *GEOSGeom;
 typedef struct GEOSContextHandle_HS *GEOSContextHandle_t;
 typedef void sfcgal_geometry_t;
 
-#ifndef HAVE_SFCGAL
-typedef enum {
-    //     TYPE_GEOMETRY            = 0, //abstract
-    SFCGAL_TYPE_POINT               = 1,
-    SFCGAL_TYPE_LINESTRING          = 2,
-    SFCGAL_TYPE_POLYGON             = 3,
-    SFCGAL_TYPE_MULTIPOINT          = 4,
-    SFCGAL_TYPE_MULTILINESTRING     = 5,
-    SFCGAL_TYPE_MULTIPOLYGON        = 6,
-    SFCGAL_TYPE_GEOMETRYCOLLECTION  = 7,
-    //     TYPE_CIRCULARSTRING      = 8,
-    //     TYPE_COMPOUNDCURVE       = 9,
-    //     TYPE_CURVEPOLYGON        = 10,
-    //     TYPE_MULTICURVE          = 11, //abstract
-    //     TYPE_MULTISURFACE        = 12, //abstract
-    //     TYPE_CURVE               = 13, //abstract
-    //     TYPE_SURFACE             = 14, //abstract
-    SFCGAL_TYPE_POLYHEDRALSURFACE   = 15,
-    SFCGAL_TYPE_TRIANGULATEDSURFACE = 16,
-
-    //-- not official codes
-    SFCGAL_TYPE_TRIANGLE            = 100, //17 in Wikipedia???
-    SFCGAL_TYPE_SOLID               = 101,
-    SFCGAL_TYPE_MULTISOLID          = 102
-} sfcgal_geometry_type_t ;
-#endif
-
 class OGRPoint;
 class OGRCurve;
 class OGRCompoundCurve;
@@ -1170,17 +1143,11 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     // New methods interfaced through SFCGAL or rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;   // tested
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;  // tested
-    virtual OGRErr       Centroid( OGRPoint * poPoint ) const;  // tested
     virtual OGRBoolean  IsSimple() const;   // tested
     virtual OGRBoolean  IsRing() const; // tested
     virtual OGRErr addRing	(OGRCurve *poNewRing); // tested
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const; // tested
-    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT; // tested
     virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // tested
-    virtual OGRBoolean  Touches( const OGRGeometry * ) const; // tested
-    virtual OGRLinearRing *stealInteriorRing(int);
-    virtual OGRLinearRing *getInteriorRing( int );
-    virtual const OGRLinearRing *getInteriorRing( int ) const;
 };
 
 /************************************************************************/
