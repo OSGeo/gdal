@@ -113,37 +113,39 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 {
     GIntBig nFID = poFeature->GetFID();
-    
+
     // Detect potential FID duplicates and make sure they are eventually
-    // unique
+    // unique.
     if( -1 == nFID )
     {
         nFID = GetFeatureCount(FALSE);
-        OGRFeature* poTryFeature;
+        OGRFeature* poTryFeature = NULL;
         while( (poTryFeature = GetFeature(nFID) ) != NULL )
         {
-            nFID ++;
+            nFID++;
             delete poTryFeature;
         }
     }
     else
     {
-        OGRFeature* poTryFeature;
+        OGRFeature* poTryFeature = NULL;
         if( (poTryFeature = GetFeature(nFID) ) != NULL )
         {
             if( !bOriginalIdModified_ )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Several features with id = " CPL_FRMT_GIB " have been found. "
-                         "Altering it to be unique. This warning will not be emitted for this layer",
-                         nFID);
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Several features with id = " CPL_FRMT_GIB " have been "
+                    "found. Altering it to be unique. This warning will not "
+                    "be emitted for this layer",
+                    nFID );
                 bOriginalIdModified_ = true;
             }
             delete poTryFeature;
             nFID = GetFeatureCount(FALSE);
             while( (poTryFeature = GetFeature(nFID) ) != NULL )
             {
-                nFID ++;
+                nFID++;
                 delete poTryFeature;
             }
         }
@@ -153,7 +155,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
     if( !CPL_INT64_FITS_ON_INT32(nFID) )
         SetMetadataItem(OLMD_FID64, "YES");
 
-    SetUpdatable( true ); /* temporary toggle on updatable flag */
+    SetUpdatable( true );  // Temporary toggle on updatable flag.
     CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
     SetUpdatable( poDS_->IsUpdatable() );
     SetUpdated( false );
