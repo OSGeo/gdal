@@ -100,7 +100,7 @@ typedef enum
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
                                *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTriangle = 17,       /**< A Triangle is a polygon with 3 distinct, non-collinear vertices and no
-                                 interior boundary. GDAL &gt;= 2.1 */
+                                 interior boundary. GDAL &gt;= 2.2 */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -114,7 +114,7 @@ typedef enum
     wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleZ = 1017,         /**< wkbTriangle with Z component. GDAL &gt;= 2.1 */
+    wkbTriangleZ = 1017,         /**< wkbTriangle with Z component. GDAL &gt;= 2.2 */
 
     wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -132,7 +132,7 @@ typedef enum
     wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleM = 2017,            /**<  GDAL &gt;= 2.1 */
+    wkbTriangleM = 2017,            /**<  GDAL &gt;= 2.2 */
 
     wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -150,7 +150,7 @@ typedef enum
     wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleZM = 3017,           /**<  GDAL &gt;= 2.1 */
+    wkbTriangleZM = 3017,           /**<  GDAL &gt;= 2.2 */
 
     wkbPoint25D = -2147483647,   /* 2.5D extensions as per 99-402 */
     wkbLineString25D = -2147483646,
@@ -1901,7 +1901,7 @@ public:
             case wkbCurvePolygonZM:
             case wkbMultiCurveZM:
             case wkbMultiSurfaceZM:
-            case wkbTriangleZM: 
+            case wkbTriangleZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
