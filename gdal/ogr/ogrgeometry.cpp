@@ -4727,7 +4727,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
         OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
         return poPolygon->Centroid(poPoint);
     }
-        
+
 #ifndef HAVE_GEOS
     // notdef ... not implemented yet.
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -6480,8 +6480,7 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
 #ifdef HAVE_SFCGAL
 
     sfcgal_init();
-    char *buffer;
-    char *pszTmpWKT = buffer;
+    char *pszTmpWKT;
     size_t length = 0;
     sfcgal_geometry_as_text_decim (geometry,19,&pszTmpWKT,&length);
 
@@ -6492,12 +6491,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRPoint();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6506,12 +6505,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRLineString();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6520,12 +6519,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRPolygon();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6534,12 +6533,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRMultiPoint();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6548,12 +6547,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRMultiLineString();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6562,12 +6561,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRMultiPolygon();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6576,12 +6575,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRGeometryCollection();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
@@ -6590,18 +6589,18 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRTriangle();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(buffer);
+            free(pszTmpWKT);
             return poGeom;
         }
         else
         {
-            free(buffer);
+            free(pszTmpWKT);
             return NULL;
         }
     }
     else
     {
-        free(buffer);
+        free(pszTmpWKT);
         return NULL;
     }
 
