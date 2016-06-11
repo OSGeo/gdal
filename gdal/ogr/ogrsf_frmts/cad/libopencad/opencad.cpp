@@ -78,9 +78,9 @@ CADFile* OpenCADFile( CADFileIO* pCADFileIO, enum CADFile::OpenOptions eOptions 
     CADFile * poCAD = nullptr;
 
     switch (nCADFileVersion) {
-    // case CADVersions::DWG_R2000:
-        // poCAD = new DWGFileR2000 (pCADFileIO);
-        // break;
+    case CADVersions::DWG_R2000:
+        poCAD = new DWGFileR2000 (pCADFileIO);
+        break;
     default:
         gLastError = CADErrorCodes::UNSUPPORTED_VERSION;
         delete pCADFileIO;

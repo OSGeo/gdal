@@ -10,14 +10,18 @@ class OGRCADLayer : public OGRLayer
 {
     OGRFeatureDefn  *poFeatureDefn;
     
-    int             nNextFID;
-    
+    int             nNextFID; // FIXME: its legal to make it size_t?
+
+    CADLayer        &poCADLayer ;
 public:
-    OGRCADLayer( const char *pszFilename );
+    OGRCADLayer( CADLayer &poCADLayer );
     ~OGRCADLayer();
     
     void            ResetReading();
     OGRFeature      *GetNextFeature();
+    OGRFeature      *GetFeature( GIntBig nFID );
+    GIntBig         GetFeatureCount( int bForce );
+    
     
     OGRFeatureDefn  *GetLayerDefn() { return poFeatureDefn; }
     

@@ -9,6 +9,7 @@ OGRCADDataSource::OGRCADDataSource()
 
 OGRCADDataSource::~OGRCADDataSource()
 {
+    delete( poCADFile );
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
@@ -28,15 +29,19 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "libopencad v%s does not support this version of CAD file.", GetVersionString() );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "libopencad %s does not support this version of CAD file.\n"
+                  "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
         return( FALSE );
     }
 
-    nLayers = 1;
-    papoLayers = ( OGRCADLayer ** ) CPLMalloc(sizeof(void*));
-    
-    papoLayers[0] = new OGRCADLayer( pszFilename );
+    nLayers = poCADFile->getLayersCount();
+    papoLayers = ( OGRCADLayer ** ) CPLMalloc( sizeof( void* ) );
+
+    for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
+    {
+        papoLayers[iIndex] = new OGRCADLayer( poCADFile->getLayer( iIndex ) );
+    }
     
     return( TRUE );
 }
