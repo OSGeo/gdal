@@ -88,7 +88,7 @@ clean:
 	cd ogr
 	$(MAKE) /f makefile.vc allclean
 	cd ..
-    cd gnm
+	cd gnm
 	$(MAKE) /f makefile.vc allclean
 	cd ..
 	cd apps
@@ -159,9 +159,9 @@ ogr_dir:      port_dir
 	cd ..
 
 gnm_dir:      ogr_dir
-    cd gnm
-    $(MAKE) /f makefile.vc gnm.lib frmts
-    cd ..
+	cd gnm
+	$(MAKE) /f makefile.vc gnm.lib frmts
+	cd ..
 
 lib_dist:	default
 	rm -rf $(DISTDIR)
@@ -173,7 +173,7 @@ $(GDAL_DLL): staticlib
 	link /nologo /dll $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(EXTERNAL_LIBS) gcore\Version.res \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
-    if exist $(GDAL_DLL).manifest mt -manifest $(GDAL_DLL).manifest -outputresource:$(GDAL_DLL);2
+	if exist $(GDAL_DLL).manifest mt -manifest $(GDAL_DLL).manifest -outputresource:$(GDAL_DLL);2
 
 dll:	$(GDAL_DLL)
 
