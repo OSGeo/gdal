@@ -3346,8 +3346,8 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
 {
     if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
-        CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Buffer." );
-        return NULL;
+        OGRPolygon poPolygon(*((OGRPolygon *)this));
+        return poPolygon.Buffer(dfDist, nQuadSegs);
     }
 
 #ifndef HAVE_GEOS
@@ -3836,6 +3836,7 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
         {
+            CPLDebug("OGR","poThis is NULL");
             return NULL;
         }
 
@@ -3843,6 +3844,7 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
         if (poOther == NULL)
         {
+            CPLDebug("OGR","poOther is NULL");
             return NULL;
         }
 
@@ -3851,6 +3853,7 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
 
         if (h_prodGeom == NULL)
         {
+            CPLDebug("OGR","h_prodGeom is NULL");
             return NULL;
         }
 
@@ -4109,13 +4112,26 @@ OGRBoolean
 OGRGeometry::Disjoint( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
     {
-        return !this->Crosses(poOtherGeom);
+        OGRPolygon poPolygon1(*((OGRPolygon *)this));
+        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
+        return poPolygon1.Disjoint(&poPolygon2);
     }
-
     else
     {
+        if (EQUAL(getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)this));
+            return poPolygon.Disjoint(poOtherGeom);
+        }
+        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
+            return this->Disjoint(&poPolygon);
+        }
+    }
+
     #ifndef HAVE_GEOS
 
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -4142,7 +4158,6 @@ OGRGeometry::Disjoint( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
         return bResult;
 
     #endif /* HAVE_GEOS */
-    }
 }
 
 /************************************************************************/
@@ -4199,11 +4214,24 @@ OGRBoolean
 OGRGeometry::Touches( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
     {
-        // cast the triangle as a polygon and use the GEOS method on it
-        OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
-        return poPolygon->Touches(poOtherGeom);
+        OGRPolygon poPolygon1(*((OGRPolygon *)this));
+        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
+        return poPolygon1.Touches(&poPolygon2);
+    }
+    else
+    {
+        if (EQUAL(getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)this));
+            return poPolygon.Touches(poOtherGeom);
+        }
+        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
+            return this->Touches(&poPolygon);
+        }
     }
 
 #ifndef HAVE_GEOS
@@ -4403,10 +4431,24 @@ OGRBoolean
 OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
     {
-        CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Within." );
-        return FALSE;
+        OGRPolygon poPolygon1(*((OGRPolygon *)this));
+        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
+        return poPolygon1.Within(&poPolygon2);
+    }
+    else
+    {
+        if (EQUAL(getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)this));
+            return poPolygon.Within(poOtherGeom);
+        }
+        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
+            return this->Within(&poPolygon);
+        }
     }
 
 #ifndef HAVE_GEOS
@@ -4491,10 +4533,24 @@ OGRBoolean
 OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if(EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
     {
-        CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Contains." );
-        return FALSE;
+        OGRPolygon poPolygon1(*((OGRPolygon *)this));
+        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
+        return poPolygon1.Contains(&poPolygon2);
+    }
+    else
+    {
+        if (EQUAL(getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)this));
+            return poPolygon.Contains(poOtherGeom);
+        }
+        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
+            return this->Contains(&poPolygon);
+        }
     }
 
 #ifndef HAVE_GEOS
@@ -4580,13 +4636,26 @@ OGRBoolean
 OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
     {
-        return Crosses(poOtherGeom);
+        OGRPolygon poPolygon1(*((OGRPolygon *)this));
+        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
+        return poPolygon1.Overlaps(&poPolygon2);
     }
-
     else
     {
+        if (EQUAL(getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)this));
+            return poPolygon.Overlaps(poOtherGeom);
+        }
+        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
+        {
+            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
+            return this->Overlaps(&poPolygon);
+        }
+    }
+
     #ifndef HAVE_GEOS
 
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -4613,7 +4682,7 @@ OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
         return bResult;
 
     #endif /* HAVE_GEOS */
-    }
+
 }
 
 /************************************************************************/
@@ -4724,8 +4793,8 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
     {
         // Since SFCGAL doesn't have its own method to deal with centroid, we are casting Triangle to Polygon
         // and using OGRPolygon::Centroid().
-        OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
-        return poPolygon->Centroid(poPoint);
+        OGRPolygon poPolygon(*((OGRPolygon*)this));
+        return poPolygon.Centroid(poPoint);
     }
 
 #ifndef HAVE_GEOS
@@ -4982,8 +5051,9 @@ OGRGeometry *OGRGeometry::Simplify(UNUSED_PARAMETER double dTolerance) const
 {
     if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
-        CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled for OGRTriangle::Simplify" );
-        return NULL;
+        OGRPolygon poPolygon(*((OGRPolygon *)this));
+        OGRTriangle *poTriangle = new OGRTriangle(*((OGRTriangle *)poPolygon.Simplify(dTolerance)));
+        return poTriangle;
     }
 
     else
@@ -5076,9 +5146,9 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(UNUSED_PARAMETER double dTole
 {
     if (EQUAL(this->getGeometryName(), "TRIANGLE"))
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "SFCGAL support not enabled for OGRTriangle::SimplifyPreserveTopology" );
-        return NULL;
+        OGRPolygon poPolygon(*((OGRPolygon *)this));
+        OGRTriangle *poTriangle = new OGRTriangle(*((OGRTriangle *)poPolygon.SimplifyPreserveTopology(dTolerance)));
+        return poTriangle;
     }
 
 #ifndef HAVE_GEOS
@@ -6132,7 +6202,7 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
                eType == wkbMultiSurface;
 
     if( eSuperType == wkbCurvePolygon )
-        return eType == wkbPolygon;
+        return eType == wkbPolygon || eType == wkbTriangle;
 
     if( eSuperType == wkbMultiCurve )
         return eType == wkbMultiLineString;
@@ -6145,7 +6215,7 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
                eType == wkbCompoundCurve;
 
     if( eSuperType == wkbSurface )
-        return eType == wkbCurvePolygon || eType == wkbPolygon;
+        return eType == wkbCurvePolygon || eType == wkbPolygon || eType == wkbTriangle;
 
     return FALSE;
 }

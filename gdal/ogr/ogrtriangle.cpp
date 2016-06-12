@@ -608,8 +608,8 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
 {
     // cast the triangle as a polygon and use the GEOS method on it
-    OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
-    return poPolygon->PointOnSurface(poPoint);
+    OGRPolygon poPolygon(*((OGRPolygon *)this));
+    return poPolygon.PointOnSurface(poPoint);
 }
 
 /************************************************************************/
