@@ -1351,7 +1351,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         if (eType == wkbTriangle)
-            eErr = ((OGRTriangle *)hGeom)->addRingDirectly( (OGRCurve *) hNewSubGeom );
+            eErr = ((OGRTriangle *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
         else if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
             eErr = ((OGRCurvePolygon *)hGeom)->addRingDirectly( (OGRCurve *) hNewSubGeom );
     }

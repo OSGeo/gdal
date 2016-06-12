@@ -334,7 +334,7 @@ typedef void retGetPoints;
 %constant wkbSurfaceZM = 3014;
 %constant wkbPolyhedralSurfaceZM = 3015;
 %constant wkbTINZM = 3016;
-%constant wkbTriangle = 3017;
+%constant wkbTriangleZM = 3017;
 
 %constant wkbPoint25D =              0x80000001;
 %constant wkbLineString25D =         0x80000002;
