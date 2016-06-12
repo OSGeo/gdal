@@ -22,6 +22,7 @@ clean:
 	-del *.lib
 	-del *.obj *.pdb
 	-del *.exe
+	-del *.dll
 
 plugin:	$(PLUGIN_DLL)
 

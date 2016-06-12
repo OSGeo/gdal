@@ -41,8 +41,8 @@ ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj db2\*.obj walk
 !ENDIF
 
 !IFDEF SQLITE_LIB
-SQLITE_DIR	=	sqlite gpkg
-SQLITE_OBJ =	sqlite\*.obj gpkg\*.obj
+SQLITE_DIR	= sqlite gpkg
+SQLITE_OBJ	= sqlite\*.obj gpkg\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
@@ -57,7 +57,7 @@ PLUGIN_OCIDIR = oci
 !IFDEF INGRES_HOME
 !IF "$(INGRES_PLUGIN)" != "YES"
 INGRESDIR	=	ingres
-INGRESOBJ =	ingres\*.obj
+INGRESOBJ	=	ingres\*.obj
 !ELSE
 PLUGIN_INGRESDIR =	ingres
 !ENDIF
@@ -289,7 +289,7 @@ plugindirs:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) ) do \
+	for %d in ( $(DIRLIST) $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd .. \
