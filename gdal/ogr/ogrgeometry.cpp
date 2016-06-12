@@ -6479,9 +6479,10 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
 #ifdef HAVE_SFCGAL
 
     sfcgal_init();
-    char *pszTmpWKT;
+    char *pszTmpWKT = NULL;
     size_t length = 0;
     sfcgal_geometry_as_text_decim (geometry,19,&pszTmpWKT,&length);
+    char *buffer = pszTmpWKT;
 
     sfcgal_geometry_type_t geom_type = sfcgal_geometry_type_id (geometry);
 
@@ -6490,118 +6491,91 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
         OGRGeometry *poGeom = new OGRPoint();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_LINESTRING)
     {
         OGRGeometry *poGeom = new OGRLineString();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_POLYGON)
     {
         OGRGeometry *poGeom = new OGRPolygon();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_MULTIPOINT)
     {
         OGRGeometry *poGeom = new OGRMultiPoint();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_MULTILINESTRING)
     {
         OGRGeometry *poGeom = new OGRMultiLineString();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_MULTIPOLYGON)
     {
         OGRGeometry *poGeom = new OGRMultiPolygon();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_GEOMETRYCOLLECTION)
     {
         OGRGeometry *poGeom = new OGRGeometryCollection();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else if (geom_type == SFCGAL_TYPE_TRIANGLE)
     {
         OGRGeometry *poGeom = new OGRTriangle();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
-            free(pszTmpWKT);
+            free(buffer);
             return poGeom;
         }
         else
-        {
-            free(pszTmpWKT);
             return NULL;
-        }
     }
     else
-    {
-        free(pszTmpWKT);
         return NULL;
-    }
 
 #else
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
