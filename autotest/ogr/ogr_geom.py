@@ -119,6 +119,27 @@ def ogr_geom_area_linearring_big_offset():
 
     return 'success'
 
+###############################################################################
+# Test Area calculation for a Triangle
+
+def ogr_geom_area_triangle():
+
+    geom_wkt = 'TRIANGLE((0 0,100 0,0 100,0 0))'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+
+    area = geom.GetArea()
+    if abs(area-4999.5) < 0.00000000001:
+        gdaltest.post_reason( 'GetArea() result wrong, got %g.' % area )
+        return 'fail'
+
+    # OGR >= 1.8.0
+    area = geom.Area()
+    if abs(area-4999.5) < 0.00000000001:
+        gdaltest.post_reason( 'Area() result wrong, got %g.' % area )
+        return 'fail'
+
+    return 'success'
+
 
 def ogr_geom_is_empty():
 
@@ -130,6 +151,30 @@ def ogr_geom_is_empty():
         return 'fail'
 
     geom_wkt = 'POINT( 1 2 )'
+
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+    if not geom:
+        gdaltest.post_reason ("A geometry could not be created from wkt: %s"%geom_wkt)
+        return 'fail'
+
+    if (geom.IsEmpty() == True):
+        gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test if a Triangle is Empty
+
+def ogr_geom_is_empty_triangle():
+
+    geom_wkt = 'TRIANGLE EMPTY'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    if (geom.IsEmpty() == False):
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
+    geom_wkt = 'TRIANGLE((0 0,100 0,0 100,0 0))'
 
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
@@ -583,6 +628,37 @@ def ogr_geom_flattenTo2D():
     return 'success'
 
 ###############################################################################
+# Test FlattenTo2D(), GetDimension() and GetCoordinateDimension() for Triangle
+
+def ogr_geom_flattenTo2D_triangle():
+
+    geom = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))' )
+
+    # Point is 0 dimension, LineString 1, ...
+    if geom.GetDimension() != 2:
+        gdaltest.post_reason('fail')
+        print(geom.GetDimension())
+        return 'fail'
+
+    if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason('fail')
+        print(geom.GetCoordinateDimension())
+        return 'fail'
+
+    geom.FlattenTo2D()
+    if geom.GetCoordinateDimension() != 2:
+        gdaltest.post_reason('fail')
+        print(geom.GetCoordinateDimension())
+        return 'fail'
+
+    if geom.ExportToWkt() != 'TRIANGLE ((0 0,100 0,0 100,0 0))':
+        gdaltest.post_reason('fail')
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_geom_linestring_limits():
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING EMPTY')
@@ -815,6 +891,20 @@ def ogr_geom_empty():
     return 'success'
 
 ###############################################################################
+# Test OGRGeometry::empty() for Triangle
+
+def ogr_geom_empty_triangle():
+
+    g1 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,100 0,0 100,0 0))' )
+    g1.Empty()
+    wkt = g1.ExportToWkt()
+
+    if wkt != 'TRIANGLE EMPTY':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test parsing WKT made of 2D and 3D parts
 
 def ogr_geom_mixed_coordinate_dimension():
@@ -903,6 +993,15 @@ def ogr_geom_getenvelope3d():
     expected_envelope = ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 )
     if envelope != expected_envelope:
         gdaltest.post_reason('did not get expected envelope (7)')
+        print(envelope)
+        print(expected_envelope)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))')
+    envelope = g.GetEnvelope3D()
+    expected_envelope = (0.0, 100.0, 0.0, 100.0, 0.0, 100.0)
+    if envelope != expected_envelope:
+        gdaltest.post_reason('did not get expected envelope (8)')
         print(envelope)
         print(expected_envelope)
         return 'fail'
@@ -996,6 +1095,7 @@ def ogr_geom_getdimension():
                   ('COMPOUNDCURVE EMPTY', 1),
                   ('CURVEPOLYGON EMPTY', 2),
                   ('MULTICURVE EMPTY', 1),
+                  ('TRIANGLE EMPTY', 2),
                   ('MULTISURFACE EMPTY', 2) ]:
         g = ogr.CreateGeometryFromWkt(geom)
         if g.GetDimension() != dim:
@@ -1011,6 +1111,27 @@ def ogr_geom_getdimension():
 
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT (0 1), LINESTRING EMPTY, POLYGON EMPTY)')
     if g.GetDimension() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGRTriangle. Tests if the GEOS/SFCGAL methods are working
+
+def ogr_geom_triangle():
+
+    g1 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,100 0 100,0 100 100,0 0))' )
+    g2 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((-1 -1,100 0 100,0 100 100,-1 -1))' )
+    if g2.Intersects(g1) != True:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    g1 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,1 0,0 1,0 0))' )
+    g2 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,1 0,1 1,0 0))' )
+    g3 = g1.Intersection(g2)
+    g4 = ogr.CreateGeometryFromWkt('TRIANGLE ((0.5 0.5 0,0 0 0,1 0 0,0.5 0.5 0))')
+    if g4.Equals(g3) == False:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -3168,6 +3289,7 @@ def ogr_geom_gt_functions():
                (ogr.wkbPointM, ogr.wkbPoint),
                (ogr.wkbPointZM, ogr.wkbPoint),
                (ogr.wkbCircularString, ogr.wkbCircularString),
+               (ogr.wkbTriangleZ, ogr.wkbTriangle),
                (ogr.wkbCircularStringZ, ogr.wkbCircularString),
                (ogr.wkbCircularStringM, ogr.wkbCircularString),
                (ogr.wkbCircularStringZM, ogr.wkbCircularString)]
@@ -3183,6 +3305,8 @@ def ogr_geom_gt_functions():
                (ogr.wkbPoint, ogr.wkbUnknown, 1),
                (ogr.wkbPoint, ogr.wkbLineString, 0),
                (ogr.wkbPolygon, ogr.wkbCurvePolygon, 1),
+               (ogr.wkbTriangle, ogr.wkbCurvePolygon, 1),
+               (ogr.wkbTriangle, ogr.wkbPolygon, 1),
                (ogr.wkbMultiSurface, ogr.wkbGeometryCollection, 1),
                (ogr.wkbMultiPolygon, ogr.wkbMultiSurface, 1),
                (ogr.wkbMultiLineString, ogr.wkbMultiCurve, 1),
@@ -3225,7 +3349,8 @@ def ogr_geom_gt_functions():
                (ogr.wkbCurvePolygonZ, 1),
                (ogr.wkbCurvePolygonM, 1),
                (ogr.wkbCurvePolygonZM, 1),
-               (ogr.wkbPolygon, 1) ]
+               (ogr.wkbPolygon, 1),
+               (ogr.wkbTriangle, 1) ]
     for (gt, res) in tuples:
         if ogr.GT_IsSurface(gt) != res:
             gdaltest.post_reason('fail')
@@ -3262,7 +3387,8 @@ def ogr_geom_gt_functions():
                (ogr.wkbMultiCurve, 1),
                (ogr.wkbMultiSurface, 1),
                (ogr.wkbLineString, 0),
-               (ogr.wkbPolygon, 0) ]
+               (ogr.wkbPolygon, 0),
+               (ogr.wkbTriangle, 0) ]
     for (gt, res) in tuples:
         if ogr.GT_IsNonLinear(gt) != res:
             gdaltest.post_reason('fail')
@@ -3647,10 +3773,12 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [
     ogr_geom_area,
+    ogr_geom_area_triangle,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,
     ogr_geom_area_geometrycollection,
     ogr_geom_is_empty,
+    ogr_geom_is_empty_triangle,
     ogr_geom_pickle,
     ogr_geom_boundary_point,
     ogr_geom_boundary_multipoint,
@@ -3667,6 +3795,7 @@ gdaltest_list = [
     ogr_geom_segmentize,
     ogr_geom_value,
     ogr_geom_flattenTo2D,
+    ogr_geom_flattenTo2D_triangle,
     ogr_geom_linestring_limits,
     ogr_geom_coord_round,
     ogr_geom_coord_round_2,
@@ -3674,6 +3803,8 @@ gdaltest_list = [
     ogr_geom_length_point,
     ogr_geom_length_multilinestring,
     ogr_geom_length_geometrycollection,
+    ogr_geom_empty_triangle,
+    ogr_geom_triangle,
     ogr_geom_empty,
     ogr_geom_getpoints,
     ogr_geom_mixed_coordinate_dimension,
