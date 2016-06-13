@@ -1790,8 +1790,8 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType += 2000;
     }
 
-    // ISO SQL/MM style types are between 1-16, 1001-1016, 2001-2016, and
-    // 3001-3016.
+    // ISO SQL/MM style types are between 1-17, 1001-1017, 2001-2017, and
+    // 3001-3017.
     if( !((iRawType > 0 && iRawType <= 17) ||
            (iRawType > 1000 && iRawType <= 1017) ||
            (iRawType > 2000 && iRawType <= 2017) ||
