@@ -352,7 +352,7 @@ def Translate(destName, srcDS, **kwargs):
           destName --- Output dataset name
           srcDS --- a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.TranslateOptions(), string or array of strings
           other keywords arguments of gdal.TranslateOptions()
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
 
@@ -525,7 +525,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
           destNameOrDestDS --- Output dataset name or object
           srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.WarpOptions(), string or array of strings
           other keywords arguments of gdal.WarpOptions()
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
 
@@ -661,7 +661,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
           destNameOrDestDS --- Output dataset name or object
           srcDS --- a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.VectorTranslateOptions(), string or array of strings
           other keywords arguments of gdal.VectorTranslateOptions()
         If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
 
@@ -743,7 +743,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
           srcDS --- a Dataset object or a filename
           processing --- one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness"
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.DEMProcessingOptions(), string or array of strings
           other keywords arguments of gdal.DEMProcessingOptions()
         If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
 
@@ -812,7 +812,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
           destNameOrDestDS --- Output dataset name or object
           srcDS --- a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.NearblackOptions(), string or array of strings
           other keywords arguments of gdal.NearblackOptions()
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
 
@@ -914,7 +914,7 @@ def Grid(destName, srcDS, **kwargs):
           destName --- Output dataset name
           srcDS --- a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.GridOptions(), string or array of strings
           other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
 
@@ -1031,7 +1031,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
           destNameOrDestDS --- Output dataset name or object
           srcDS --- a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.RasterizeOptions(), string or array of strings
           other keywords arguments of gdal.RasterizeOptions()
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
 
@@ -1141,7 +1141,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
           destName --- Output dataset name
           srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
         Keyword arguments are :
-          options --- return of gdal.InfoOptions(), string or array of strings
+          options --- return of gdal.BuildVRTOptions(), string or array of strings
           other keywords arguments of gdal.BuildVRTOptions()
         If options is provided as a gdal.BuildVRTOptions() object, other keywords are ignored. """
 
