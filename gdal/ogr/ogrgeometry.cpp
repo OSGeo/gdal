@@ -2757,12 +2757,6 @@ void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtx
 GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        CPLError( CE_Failure, CPLE_ObjectNull, "GEOS not valid for Triangle");
-        return NULL;
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -2804,8 +2798,18 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
     }
     nDataSize = poLinearGeom->WkbSize();
     pabyData = (unsigned char *) CPLMalloc(nDataSize);
-    if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
-        hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        OGRPolygon poPolygon(*((OGRPolygon *)poLinearGeom));
+        if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
+            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+    }
+    else
+    {
+        if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
+            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+    }
 
     CPLFree( pabyData );
 
@@ -3344,12 +3348,6 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
                                   UNUSED_IF_NO_GEOS int nQuadSegs ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        OGRPolygon poPolygon(*((OGRPolygon *)this));
-        return poPolygon.Buffer(dfDist, nQuadSegs);
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -3730,13 +3728,6 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::UnionCascaded() const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "SFCGAL support not enabled for OGRTriangle::UnionCascaded" );
-        return NULL;
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -4112,52 +4103,32 @@ OGRBoolean
 OGRGeometry::Disjoint( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
+    OGRBoolean bResult = FALSE;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
-        OGRPolygon poPolygon1(*((OGRPolygon *)this));
-        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
-        return poPolygon1.Disjoint(&poPolygon2);
+        bResult = GEOSDisjoint_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
     }
-    else
-    {
-        if (EQUAL(getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)this));
-            return poPolygon.Disjoint(poOtherGeom);
-        }
-        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
-            return this->Disjoint(&poPolygon);
-        }
-    }
+    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
+    freeGEOSContext( hGEOSCtxt );
 
-    #ifndef HAVE_GEOS
+    return bResult;
 
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "GEOS support not enabled." );
-        return FALSE;
-
-    #else
-
-        GEOSGeom hThisGeosGeom = NULL;
-        GEOSGeom hOtherGeosGeom = NULL;
-        OGRBoolean bResult = FALSE;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
-        {
-            bResult = GEOSDisjoint_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return bResult;
-
-    #endif /* HAVE_GEOS */
+#endif /* HAVE_GEOS */
 }
 
 /************************************************************************/
@@ -4214,25 +4185,6 @@ OGRBoolean
 OGRGeometry::Touches( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
-    {
-        OGRPolygon poPolygon1(*((OGRPolygon *)this));
-        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
-        return poPolygon1.Touches(&poPolygon2);
-    }
-    else
-    {
-        if (EQUAL(getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)this));
-            return poPolygon.Touches(poOtherGeom);
-        }
-        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
-            return this->Touches(&poPolygon);
-        }
-    }
 
 #ifndef HAVE_GEOS
 
@@ -4431,26 +4383,6 @@ OGRBoolean
 OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
-    {
-        OGRPolygon poPolygon1(*((OGRPolygon *)this));
-        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
-        return poPolygon1.Within(&poPolygon2);
-    }
-    else
-    {
-        if (EQUAL(getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)this));
-            return poPolygon.Within(poOtherGeom);
-        }
-        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
-            return this->Within(&poPolygon);
-        }
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -4533,26 +4465,6 @@ OGRBoolean
 OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
-    {
-        OGRPolygon poPolygon1(*((OGRPolygon *)this));
-        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
-        return poPolygon1.Contains(&poPolygon2);
-    }
-    else
-    {
-        if (EQUAL(getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)this));
-            return poPolygon.Contains(poOtherGeom);
-        }
-        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
-            return this->Contains(&poPolygon);
-        }
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -4636,52 +4548,32 @@ OGRBoolean
 OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE") && EQUAL(poOtherGeom->getGeometryName(),"TRIANGLE"))
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
+    OGRBoolean bResult = FALSE;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
-        OGRPolygon poPolygon1(*((OGRPolygon *)this));
-        OGRPolygon poPolygon2(*((OGRPolygon *)poOtherGeom));
-        return poPolygon1.Overlaps(&poPolygon2);
+        bResult = GEOSOverlaps_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
     }
-    else
-    {
-        if (EQUAL(getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)this));
-            return poPolygon.Overlaps(poOtherGeom);
-        }
-        if (EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE"))
-        {
-            OGRPolygon poPolygon(*((OGRPolygon *)poOtherGeom));
-            return this->Overlaps(&poPolygon);
-        }
-    }
+    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
+    freeGEOSContext( hGEOSCtxt );
 
-    #ifndef HAVE_GEOS
+    return bResult;
 
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "GEOS support not enabled." );
-        return FALSE;
-
-    #else
-
-        GEOSGeom hThisGeosGeom = NULL;
-        GEOSGeom hOtherGeosGeom = NULL;
-        OGRBoolean bResult = FALSE;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
-        {
-            bResult = GEOSOverlaps_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return bResult;
-
-    #endif /* HAVE_GEOS */
+#endif /* HAVE_GEOS */
 
 }
 
@@ -4788,14 +4680,6 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 {
     if( poPoint == NULL )
         return OGRERR_FAILURE;
-
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
-    {
-        // Since SFCGAL doesn't have its own method to deal with centroid, we are casting Triangle to Polygon
-        // and using OGRPolygon::Centroid().
-        OGRPolygon poPolygon(*((OGRPolygon*)this));
-        return poPolygon.Centroid(poPoint);
-    }
 
 #ifndef HAVE_GEOS
     // notdef ... not implemented yet.
@@ -5049,46 +4933,36 @@ OGRErr OGRGeometry::PointOnSurfaceInternal( OGRPoint * poPoint ) const
 OGRGeometry *OGRGeometry::Simplify(UNUSED_PARAMETER double dTolerance) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != NULL )
     {
-        OGRPolygon poPolygon(*((OGRPolygon *)this));
-        OGRTriangle *poTriangle = new OGRTriangle(*((OGRTriangle *)poPolygon.Simplify(dTolerance)));
-        return poTriangle;
-    }
-
-    else
-    {
-    #ifndef HAVE_GEOS
-
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "GEOS support not enabled." );
-        return NULL;
-
-    #else
-        GEOSGeom hThisGeosGeom = NULL;
-        GEOSGeom hGeosProduct = NULL;
-        OGRGeometry *poOGRProduct = NULL;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != NULL )
+        hGeosProduct = GEOSSimplify_r( hGEOSCtxt, hThisGeosGeom, dTolerance );
+        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+        if( hGeosProduct != NULL )
         {
-            hGeosProduct = GEOSSimplify_r( hGEOSCtxt, hThisGeosGeom, dTolerance );
-            GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-            if( hGeosProduct != NULL )
-            {
-                poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt,  hGeosProduct );
-                if( poOGRProduct != NULL && getSpatialReference() != NULL )
-                    poOGRProduct->assignSpatialReference(getSpatialReference());
-                poOGRProduct = OGRGeometryRebuildCurves(this, NULL, poOGRProduct);
-                GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-            }
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt,  hGeosProduct );
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            poOGRProduct = OGRGeometryRebuildCurves(this, NULL, poOGRProduct);
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
         }
-        freeGEOSContext( hGEOSCtxt );
-        return poOGRProduct;
-
-    #endif /* HAVE_GEOS */
     }
+    freeGEOSContext( hGEOSCtxt );
+    return poOGRProduct;
+
+#endif /* HAVE_GEOS */
 }
 
 /************************************************************************/
@@ -5144,13 +5018,6 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
 OGRGeometry *OGRGeometry::SimplifyPreserveTopology(UNUSED_PARAMETER double dTolerance) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE"))
-    {
-        OGRPolygon poPolygon(*((OGRPolygon *)this));
-        OGRTriangle *poTriangle = new OGRTriangle(*((OGRTriangle *)poPolygon.SimplifyPreserveTopology(dTolerance)));
-        return poTriangle;
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -5342,10 +5209,10 @@ OGRGeometry *OGRGeometry::Polygonize() const
 {
     if (EQUAL(getGeometryName(), "TRIANGLE"))
     {
-        OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon*)this));
+        OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
         return poPolygon;
     }
-
+    
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -6174,7 +6041,7 @@ OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bHasZ,
 }
 
 /************************************************************************/
-/*                        OGR_GT_IsSubClassOf)                          */
+/*                        OGR_GT_IsSubClassOf()                         */
 /************************************************************************/
 /**
  * \brief Returns if a type is a subclass of another one
@@ -6216,6 +6083,9 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
 
     if( eSuperType == wkbSurface )
         return eType == wkbCurvePolygon || eType == wkbPolygon || eType == wkbTriangle;
+
+    if( eSuperType == wkbPolygon )
+        return eType == wkbTriangle;
 
     return FALSE;
 }
@@ -6305,6 +6175,9 @@ OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType )
         eType = wkbCompoundCurve;
 
     else if( eFGType == wkbPolygon )
+        eType = wkbCurvePolygon;
+
+    else if( eFGType == wkbTriangle )
         eType = wkbCurvePolygon;
 
     else if( eFGType == wkbMultiLineString )

@@ -602,17 +602,6 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 }
 
 /************************************************************************/
-/*                          PointOnSurface()                            */
-/************************************************************************/
-
-OGRErr OGRTriangle::PointOnSurface(OGRPoint * poPoint ) const
-{
-    // cast the triangle as a polygon and use the GEOS method on it
-    OGRPolygon poPolygon(*((OGRPolygon *)this));
-    return poPolygon.PointOnSurface(poPoint);
-}
-
-/************************************************************************/
 /*                             SymDifference()                          */
 /*  Generates a new geometry which is the symmetric difference of this  */
 /*  geometry and the second geometry passed into the method.            */
