@@ -1,3 +1,0 @@
-Lbi_Satellite="ALOS"
-Lbi_Sensor="AVNIR-2"
-Lbi_ObservationDate="20100701"

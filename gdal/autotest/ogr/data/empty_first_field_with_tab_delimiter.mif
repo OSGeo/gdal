@@ -1,8 +1,0 @@
-Version 300
-Charset "Neutral"
-Columns 2
-  field1 Char(254)
-  field2 Char(254)
-Data
-
-NONE

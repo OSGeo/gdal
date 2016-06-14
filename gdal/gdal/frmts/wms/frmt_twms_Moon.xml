@@ -1,6 +1,0 @@
-<GDAL_WMS>
-    <Service name="TiledWMS">
-        <ServerUrl>http://onmoon.lmmp.nasa.gov/wms.cgi?</ServerUrl>
-        <TiledGroupName>LRO WAC Mosaic, LMMP</TiledGroupName>
-    </Service>
-</GDAL_WMS>

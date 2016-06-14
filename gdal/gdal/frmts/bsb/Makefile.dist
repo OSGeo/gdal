@@ -1,2 +1,0 @@
-bsb2raw:	
-	$(CXX) $(CFLAGS) *.c *.cpp -o bsb2raw

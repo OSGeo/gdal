@@ -1,4 +1,0 @@
-<WCS_GDAL>
-  <ServiceURL>http://demo.opengeo.org/geoserver/wcs?</ServiceURL>
-  <CoverageName>Img_Sample</CoverageName>
-</WCS_GDAL>

@@ -1,9 +1,0 @@
-!table
-!version 300
-!charset Neutral
-
-Definition Table
-  Type NATIVE Charset "Neutral"
-  Fields 2
-    id Char (254) ;
-    str Char (254) ;

@@ -1,6 +1,0 @@
-<OGRVRTDataSource>
-    <OGRVRTLayer name="départs">
-        <SrcDataSource relativeToVRT="1">departs.shp</SrcDataSource> 
-        <SrcLayer>departs</SrcLayer>
-    </OGRVRTLayer>
-</OGRVRTDataSource>

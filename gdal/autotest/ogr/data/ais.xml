@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="US-ASCII" standalone="no"?>
-<!DOCTYPE ais SYSTEM "http://www.opendap.org/ais/ais_database.dtd">
-<ais xmlns="http://xml.opendap.org/ais">
-  <entry>
-    <primary regexp="http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp*"/>
-
-    <ancillary url="data/natl_prof_bot.cdp.das"/>
-  </entry>
-</ais>

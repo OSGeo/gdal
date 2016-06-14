@@ -1,9 +1,0 @@
-<OGRVRTDataSource>
-    <OGRVRTLayer name="grid">
-	<!-- The CSV data file created from the values and georeferencing of gcore/data/byte.tif -->
-        <SrcDataSource relativeToVRT="1">grid.csv</SrcDataSource>
-        <LayerSRS>EPSG:26711</LayerSRS>
-        <GeometryType>wkbPoint</GeometryType>
-        <GeometryField encoding="PointFromColumns" x="field_1" y="field_2" z="field_3"/>
-    </OGRVRTLayer>
-</OGRVRTDataSource>

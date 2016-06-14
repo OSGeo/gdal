@@ -1,5 +1,0 @@
-<PAMDataset>
-  <PAMRasterBand band="1">
-    <NoDataValue le_hex_equiv="000000E0FFFFEFC7">-3.40282346638529E+38</NoDataValue>
-  </PAMRasterBand>
-</PAMDataset>
