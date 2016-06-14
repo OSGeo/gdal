@@ -1,0 +1,25 @@
+GDAL_ROOT	=	..\..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+OBJ	=	\
+	jcapimin.obj jcapistd.obj jccoefct.obj jccolor.obj jcdctmgr.obj jchuff.obj \
+        jcinit.obj jcmainct.obj jcmarker.obj jcmaster.obj jcomapi.obj jcparam.obj \
+        jcphuff.obj jcprepct.obj jcsample.obj jctrans.obj jdapimin.obj jdapistd.obj \
+        jdatadst.obj jdatasrc.obj jdcoefct.obj jdcolor.obj jddctmgr.obj jdhuff.obj \
+        jdinput.obj jdmainct.obj jdmarker.obj jdmaster.obj jdmerge.obj jdphuff.obj \
+        jdpostct.obj jdsample.obj jdtrans.obj jerror.obj jfdctflt.obj jfdctfst.obj \
+        jfdctint.obj jidctflt.obj jidctfst.obj jidctint.obj jidctred.obj jquant1.obj \
+        jquant2.obj jutils.obj jmemmgr.obj jmemansi.obj 
+
+GDAL_ROOT	=	..\..\..
+
+EXTRAFLAGS      = -DDEFAULT_MAX_MEM=500000000L $(SOFTWARNFLAGS)
+
+default:	$(OBJ)
+        lib /out:libjpeg.lib $(OBJ)
+	xcopy /D  /Y *.obj ..\..\o
+
+clean:
+	-del *.lib
+	-del *.obj

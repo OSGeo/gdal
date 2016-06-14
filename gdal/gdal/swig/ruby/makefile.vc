@@ -1,0 +1,67 @@
+# Use this makefile to build Ruby GDAL bindings on Windows.
+#
+#	nmake -f makefile.vc build - Will build the bindings
+#	nmake -f makefile.vc install - Will install the bindings
+#		to the local Ruby installation
+#
+# Note you must manually set the variable RUBY_DIR, and possibly
+# RUBY_VERSION.
+
+GDAL_ROOT = ../..
+!INCLUDE $(GDAL_ROOT)/nmake.opt
+
+RUBY_VERSION = 1.8
+RUBY_ARCH = i386-mswin32
+RUBY_SO_NAME = msvcrt-ruby18.lib
+
+RUBY_DIR = C:\Development\ruby
+RUBY_ARCH_DIR = $(RUBY_DIR)\lib\ruby\$(RUBY_VERSION)\$(RUBY_ARCH)
+INSTALLATION_DIR = $(RUBY_DIR)\lib\ruby\site_ruby\$(RUBY_VERSION)\i386-msvcrt\gdal
+
+$(INSTALLATION_DIR):
+	mkdir $(INSTALLATION_DIR)
+
+install: $(INSTALLATION_DIR)
+	cp *.so $(INSTALLATION_DIR)
+
+build: $(INSTALLATION_DIR) gdal.so gdalconst.so ogr.so osr.so
+
+gdal.so: gdal_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
+    /out:$*.so $*_wrap.obj
+    
+gdalconst.so: gdalconst_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
+    /out:$*.so $*_wrap.obj
+
+ogr.so: ogr_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
+    /out:$*.so $*_wrap.obj
+    
+osr.so: osr_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
+    /out:$*.so $*_wrap.obj
+    
+    
+.c.obj:	
+	$(CC) $(CFLAGS) /I $(RUBY_ARCH_DIR) /c $*.c
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /I $(RUBY_ARCH_DIR) /c $*.cpp
+
+clean:	
+	-del *.c
+	-del *.cpp
+	-del *.so
+	-del *.dll
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
+	-del *.lib
+	if exist $(RUBY_ARCH_DIR)\gdal\nul rmdir /S /Q $(RUBY_ARCH_DIR)\gdal
+

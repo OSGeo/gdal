@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:gdalautotest="http://gdal.org/gdalautotest"
+            xmlns:ogc="http://www.opengis.net/ogc"
+            xmlns:gml="http://www.opengis.net/gml"
+            targetNamespace="http://gdal.org/gdalautotest" elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/3.1.1/base/feature.xsd"/> 
+    <xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/3.1.1/base/geometryAggregates.xsd"/> 
+
+    <xs:simpleType name="myType">
+        <xs:restriction base="xs:string" />
+    </xs:simpleType>
+  
+    <xs:element name="FeatureCollection" type="gdalautotest:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+    <xs:complexType name="FeatureCollectionType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureCollectionType">
+                <xs:attribute name="lockId" type="xs:string" use="optional"/>
+                <xs:attribute name="scope" type="xs:string" use="optional"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="mainFeature" type="gdalautotest:mainFeatureType" substitutionGroup="gml:_Feature"/>
+    <xs:complexType name="mainFeatureType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureType">
+                <xs:sequence>
+                    <xs:element name="geometryProperty" type="gml:GeometryPropertyType" minOccurs="0"/>
+                    <xs:element name="secondGeometryProperty" type="gml:GeometryPropertyType" minOccurs="0"/>
+                    <xs:element name="subFeatureProperty" type="gml:FeaturePropertyType" minOccurs="0"/>
+                    <xs:element name="subFeatureRepeatedProperty" type="gml:FeaturePropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="subFeature" type="gdalautotest:subFeatureType" substitutionGroup="gml:_Feature"/>
+    <xs:complexType name="subFeatureType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureType">
+                <xs:sequence>
+                    <xs:element name="foo" type="xs:string" minOccurs="0"/>
+                    <xs:element name="subFeatureRepeatedProperty" type="gml:FeaturePropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="subFeatureRepeated" type="gdalautotest:subFeatureRepeatedType" substitutionGroup="gml:_Feature"/>
+    <xs:complexType name="subFeatureRepeatedType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureType">
+                <xs:sequence>
+                    <xs:element name="bar" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>

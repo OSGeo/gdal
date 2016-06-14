@@ -1,0 +1,14 @@
+GDAL_ROOT	=	..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+OBJ	=    sgidataset.obj
+
+EXTRAFLAGS = -I./
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

@@ -1,0 +1,18 @@
+
+OBJ	=	ogrsvgdriver.obj ogrsvgdatasource.obj ogrsvglayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF EXPAT_DIR
+EXTRAFLAGS =	-I.. -I..\.. $(EXPAT_INCLUDE) -DHAVE_EXPAT=1 
+!ELSE
+EXTRAFLAGS =	-I.. -I..\..
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+

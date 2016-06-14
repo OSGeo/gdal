@@ -1,0 +1,26 @@
+
+OBJ	=	ogrgeopackagedriver.obj ogrgeopackagedatasource.obj \
+        ogrgeopackagelayer.obj ogrgeopackagetablelayer.obj ogrgeopackageselectlayer.obj ogrgeopackageutility.obj \
+        gdalgeopackagerasterband.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. -I..\sqlite  -I..\..\..\frmts\mem $(SQLITE_INC) $(SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS) $(SPATIALITE_412_OR_LATER_EXTRAFLAGS)
+
+!IFDEF SQLITE_HAS_COLUMN_METADATA
+SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS = -DSQLITE_HAS_COLUMN_METADATA
+!ENDIF
+
+!IFDEF SPATIALITE_412_OR_LATER
+SPATIALITE_412_OR_LATER_EXTRAFLAGS = -DSPATIALITE_412_OR_LATER
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
+

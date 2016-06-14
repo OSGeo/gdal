@@ -1,0 +1,305 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:app="http://www.deegree.org/app" xmlns:xlink="http://www.w3.org/1999/xlink" targetNamespace="http://www.deegree.org/app" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+  <element name="SGID100_RailroadsDLG100" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID024_StateBoundary" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="STATE" minOccurs="0" type="string"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_Contours2500Ft" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="ELEV" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID93_WATER_UtahMajorRivers" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="RCH_" minOccurs="0" type="decimal"/>
+            <element name="RCH_ID" minOccurs="0" type="decimal"/>
+            <element name="COM_ID" minOccurs="0" type="decimal"/>
+            <element name="RCH_CODE" minOccurs="0" type="string"/>
+            <element name="RCH_DATE" minOccurs="0" type="string"/>
+            <element name="LEVEL_" minOccurs="0" type="decimal"/>
+            <element name="METERS" minOccurs="0" type="decimal"/>
+            <element name="GNIS_ID" minOccurs="0" type="string"/>
+            <element name="NAME" minOccurs="0" type="string"/>
+            <element name="SHAPE_Leng" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID100_RoadsDLG100" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_DominantVegetation" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="DOM" minOccurs="0" type="string"/>
+            <element name="SS1" minOccurs="0" type="string"/>
+            <element name="SS2" minOccurs="0" type="string"/>
+            <element name="SS3" minOccurs="0" type="string"/>
+            <element name="SS4" minOccurs="0" type="string"/>
+            <element name="SS5" minOccurs="0" type="string"/>
+            <element name="SS6" minOccurs="0" type="string"/>
+            <element name="SS7" minOccurs="0" type="string"/>
+            <element name="SS8" minOccurs="0" type="string"/>
+            <element name="SS9" minOccurs="0" type="string"/>
+            <element name="SS10" minOccurs="0" type="string"/>
+            <element name="LAB" minOccurs="0" type="string"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID024_Municipalities2004_edited" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="COUNTYNBR" minOccurs="0" type="string"/>
+            <element name="ENTITYNBR" minOccurs="0" type="decimal"/>
+            <element name="ENTITYYR" minOccurs="0" type="decimal"/>
+            <element name="SHORTDESC" minOccurs="0" type="string"/>
+            <element name="GISKEY" minOccurs="0" type="decimal"/>
+            <element name="SDEKEY" minOccurs="0" type="string"/>
+            <element name="NAME" minOccurs="0" type="string"/>
+            <element name="IMSCOLOR" minOccurs="0" type="decimal"/>
+            <element name="MINNAME" minOccurs="0" type="string"/>
+            <element name="COUNTYSEAT" minOccurs="0" type="decimal"/>
+            <element name="POP2000" minOccurs="0" type="decimal"/>
+            <element name="FIPS" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="COUNTY" minOccurs="0" type="string"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_Contours500Ft" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="ELEV" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID93_LOCATION_UDOTMap_CityLocations" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="NAME" minOccurs="0" type="string"/>
+            <element name="CO_SEAT" minOccurs="0" type="string"/>
+            <element name="POP_1999" minOccurs="0" type="decimal"/>
+            <element name="POP_SYM_99" minOccurs="0" type="decimal"/>
+            <element name="POP_2000" minOccurs="0" type="decimal"/>
+            <element name="POP_SYM_00" minOccurs="0" type="decimal"/>
+            <element name="STATE" minOccurs="0" type="string"/>
+            <element name="geometry" minOccurs="0" type="gml:PointPropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="weathertime" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="ID" minOccurs="0" type="decimal"/>
+            <element name="NAME" minOccurs="0" type="string"/>
+            <element name="CDD" minOccurs="0" type="decimal"/>
+            <element name="TIMESTAMP" minOccurs="0" type="string"/>
+            <element name="geometry" minOccurs="0" type="gml:PointPropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID100_CountyBoundaries_edited" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="NAME" minOccurs="0" type="string"/>
+            <element name="FIPS" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID100_Airports" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID93_GEOSCIENCE_ShallowGroundWater" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="DEPTH" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_Leng" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_Area" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID024_Springs" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="REL" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="SOURCE" minOccurs="0" type="string"/>
+            <element name="geometry" minOccurs="0" type="gml:PointPropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_ZipCodes" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="ZIP" minOccurs="0" type="string"/>
+            <element name="PO_NAME" minOccurs="0" type="string"/>
+            <element name="STATE" minOccurs="0" type="string"/>
+            <element name="SUMBLKPOP" minOccurs="0" type="decimal"/>
+            <element name="POP1999" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID100_LakesDLG100" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_Contours1000Ft" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="ELEV" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiCurvePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+  <element name="SGID500_EnergyResourcesPoly" substitutionGroup="gml:AbstractFeature">
+    <complexType>
+      <complexContent>
+        <extension base="gml:AbstractFeatureType">
+          <sequence>
+            <element name="OBJECTID" minOccurs="0" type="decimal"/>
+            <element name="CODE" minOccurs="0" type="string"/>
+            <element name="SHAPE_AREA" minOccurs="0" type="decimal"/>
+            <element name="SHAPE_LEN" minOccurs="0" type="decimal"/>
+            <element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+</schema>

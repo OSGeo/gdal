@@ -1,0 +1,1008 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DbTopoFeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.geografia.toscana.it/gml/dbtopo" xsi:schemaLocation="http://www.geografia.toscana.it/gml/dbtopo http://www.rete.toscana.it/sett/territorio/carto/gml/dbtopo/18.10/dbtopo.xsd">
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:def:crs:EPSG::3003">
+      <gml:lowerCorner>1685268.99 4829496.98</gml:lowerCorner>
+      <gml:upperCorner>1748204.00 4920171.81</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <dbTopoFeatureMembers>
+    <linea><id>1</id><code>00101</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E29">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N1"/>
+          </gml:directedNode>
+          <gml:directedNode>
+            <gml:Node gml:id="N2"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.4 0.4 -0.3 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>2</id><code>00102</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E28">
+          <gml:directedNode orientation="-" xlink:href="#N2"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N4"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.3 0.4 -0.2 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>3</id><code>00103</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E32">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N5"/>
+          </gml:directedNode>
+          <gml:directedNode xlink:href="#N4"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 0.7 -0.2 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>4</id><code>00104</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E14">
+          <gml:directedNode orientation="-" xlink:href="#N5"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N14"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 0.7 -0.2 0.9 0.2 0.9 0.2 0.8</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>5</id><code>00105</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E30">
+          <gml:directedNode orientation="-" xlink:href="#N4"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N7"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 0.4 -0 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>6</id><code>00106</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E31">
+          <gml:directedNode orientation="-" xlink:href="#N7"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N6"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0 0.4 -0.1 0.5 -0.1 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>7</id><code>00107</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E11">
+          <gml:directedNode orientation="-" xlink:href="#N6"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N13"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.1 0.6 -0 0.7 0.2 0.7</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>8</id><code>00108</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E13">
+          <gml:directedNode orientation="-" xlink:href="#N14"/>
+          <gml:directedNode xlink:href="#N13"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.8 0.2 0.7</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>9</id><code>00109</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E8">
+          <gml:directedNode orientation="-" xlink:href="#N14"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N15"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.8 0.3 0.8 0.4 0.9</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>10</id><code>001010</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E15">
+          <gml:directedNode orientation="-" xlink:href="#N15"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N23"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.4 0.9 1 0.9 1 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>11</id><code>001011</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E10">
+          <gml:directedNode orientation="-" xlink:href="#N13"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N18"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.7 0.3 0.6 0.5 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>12</id><code>001012</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E27">
+          <gml:directedNode orientation="-" xlink:href="#N7"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N8"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0 0.4 0.1 0.4 0.1 0.3</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>13</id><code>001013</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E19">
+          <gml:directedNode orientation="-" xlink:href="#N8"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N10"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.1 0.3 -0.1 0.2 -0.1 0.1 -0.1 0 0.2 -0.2</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>14</id><code>001014</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E3">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N3"/>
+          </gml:directedNode>
+          <gml:directedNode>
+            <gml:Node gml:id="N9"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 -0.4 0.2 -0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>15</id><code>001015</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E7">
+          <gml:directedNode orientation="-" xlink:href="#N10"/>
+          <gml:directedNode xlink:href="#N9"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 -0.2 0.2 -0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>16</id><code>001016</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E18">
+          <gml:directedNode orientation="-" xlink:href="#N10"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N21"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 -0.2 0.3 -0.2 0.6 -0.2 0.9 -0.1 0.9 0.1 0.7 0.2</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>17</id><code>001017</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E25">
+          <gml:directedNode orientation="-" xlink:href="#N21"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N22"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.7 0.2 0.7 0.3 0.9 0.4 0.9 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>18</id><code>001018</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E9">
+          <gml:directedNode orientation="-" xlink:href="#N22"/>
+          <gml:directedNode xlink:href="#N23"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.9 0.6 1 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>19</id><code>001019</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E24">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N26"/>
+          </gml:directedNode>
+          <gml:directedNode xlink:href="#N23"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">1.1 0.4 1.1 0.6 1 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>20</id><code>001020</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E4">
+          <gml:directedNode orientation="-" xlink:href="#N9"/>
+          <gml:directedNode>
+            <gml:Node gml:id="N20"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 -0.4 0.7 -0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>21</id><code>001021</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E23">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N12"/>
+          </gml:directedNode>
+          <gml:directedNode>
+            <gml:Node gml:id="N17"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.4 0.4 0.4 0.5 0.2</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>22</id><code>001022</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E26">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N11"/>
+          </gml:directedNode>
+          <gml:directedNode xlink:href="#N12"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.2 0.2 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>23</id><code>001023</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E21">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N16"/>
+          </gml:directedNode>
+          <gml:directedNode xlink:href="#N17"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.5 0.1 0.5 0.2</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>24</id><code>001024</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E5">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N19"/>
+          </gml:directedNode>
+          <gml:directedNode xlink:href="#N19"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.6 0.1 0.8 0.1 0.8 -0.1 0.6 -0.1 0.6 0.1</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>25</id><code>001025</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E16">
+          <gml:directedNode orientation="-" xlink:href="#N3"/>
+          <gml:directedNode xlink:href="#N1"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 -0.4 -0.4 -0.4 -0.4 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E20">
+          <gml:directedNode orientation="-" xlink:href="#N11"/>
+          <gml:directedNode xlink:href="#N16"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.2 0.2 0 0.5 0 0.5 0.1</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E12">
+          <gml:directedNode orientation="-" xlink:href="#N18"/>
+          <gml:directedNode xlink:href="#N22"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.5 0.6 0.5 0.8 0.7 0.8 0.8 0.6 0.9 0.6</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>26</id><code>001026</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E33">
+          <gml:directedNode orientation="-" xlink:href="#N2"/>
+          <gml:directedNode xlink:href="#N5"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.3 0.4 -0.3 0.7 -0.2 0.7</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E2">
+          <gml:directedNode orientation="-" xlink:href="#N3"/>
+          <gml:directedNode xlink:href="#N9"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">-0.2 -0.4 -0.2 -0.5 0.2 -0.5 0.2 -0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E22">
+          <gml:directedNode orientation="-" xlink:href="#N11"/>
+          <gml:directedNode xlink:href="#N17"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.2 0.2 0.5 0.2</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>27</id><code>001027</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E6">
+          <gml:directedNode orientation="-">
+            <gml:Node gml:id="N24"/>
+          </gml:directedNode>
+          <gml:directedNode>
+            <gml:Node gml:id="N25"/>
+          </gml:directedNode>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">1.1 -0.4 1.1 -0.1</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>28</id><code>001028</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E17">
+          <gml:directedNode orientation="-" xlink:href="#N25"/>
+          <gml:directedNode xlink:href="#N26"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">1.1 -0.1 1.1 0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <linea><id>29</id><code>001029</code><title>ciabatta</title><gml:TopoCurve>
+      <gml:directedEdge>
+        <gml:Edge gml:id="E1">
+          <gml:directedNode orientation="-" xlink:href="#N20"/>
+          <gml:directedNode xlink:href="#N24"/>
+          <gml:curveProperty>
+            <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+              <gml:segments>
+                <gml:LineStringSegment>
+                  <gml:posList srsDimension="2">0.7 -0.4 1.1 -0.4</gml:posList>
+                </gml:LineStringSegment>
+              </gml:segments>
+            </gml:Curve>
+          </gml:curveProperty>
+        </gml:Edge>
+      </gml:directedEdge>
+    </gml:TopoCurve></linea>
+    <suolo><id>1</id><code>00104</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F8">
+          <gml:directedEdge xlink:href="#E25"/>
+          <gml:directedEdge xlink:href="#E18"/>
+          <gml:directedEdge xlink:href="#E19"/>
+          <gml:directedEdge xlink:href="#E27"/>
+          <gml:directedEdge orientation="-" xlink:href="#E31"/>
+          <gml:directedEdge orientation="-" xlink:href="#E11"/>
+          <gml:directedEdge orientation="-" xlink:href="#E10"/>
+          <gml:directedEdge orientation="-" xlink:href="#E12"/>
+          <gml:directedEdge xlink:href="#E5"/>
+          <gml:directedEdge xlink:href="#E26"/>
+          <gml:directedEdge orientation="-" xlink:href="#E20"/>
+          <gml:directedEdge orientation="-" xlink:href="#E21"/>
+          <gml:directedEdge xlink:href="#E23"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>2</id><code>001045</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F9">
+          <gml:directedEdge xlink:href="#E30"/>
+          <gml:directedEdge xlink:href="#E32"/>
+          <gml:directedEdge orientation="-" xlink:href="#E14"/>
+          <gml:directedEdge orientation="-" xlink:href="#E13"/>
+          <gml:directedEdge xlink:href="#E11"/>
+          <gml:directedEdge xlink:href="#E31"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>3</id><code>001046</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F3">
+          <gml:directedEdge orientation="-" xlink:href="#E8"/>
+          <gml:directedEdge orientation="-" xlink:href="#E15"/>
+          <gml:directedEdge xlink:href="#E9"/>
+          <gml:directedEdge xlink:href="#E12"/>
+          <gml:directedEdge xlink:href="#E10"/>
+          <gml:directedEdge xlink:href="#E13"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>4</id><code>001047</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F5">
+          <gml:directedEdge xlink:href="#E1"/>
+          <gml:directedEdge xlink:href="#E4"/>
+          <gml:directedEdge xlink:href="#E7"/>
+          <gml:directedEdge orientation="-" xlink:href="#E18"/>
+          <gml:directedEdge orientation="-" xlink:href="#E25"/>
+          <gml:directedEdge orientation="-" xlink:href="#E9"/>
+          <gml:directedEdge xlink:href="#E24"/>
+          <gml:directedEdge xlink:href="#E17"/>
+          <gml:directedEdge xlink:href="#E6"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>5</id><code>001048</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F1">
+          <gml:directedEdge xlink:href="#E2"/>
+          <gml:directedEdge orientation="-" xlink:href="#E3"/>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F6">
+          <gml:directedEdge xlink:href="#E22"/>
+          <gml:directedEdge orientation="-" xlink:href="#E26"/>
+          <gml:directedEdge orientation="-" xlink:href="#E23"/>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F10">
+          <gml:directedEdge xlink:href="#E28"/>
+          <gml:directedEdge orientation="-" xlink:href="#E33"/>
+          <gml:directedEdge orientation="-" xlink:href="#E32"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>6</id><code>001049</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F4">
+          <gml:directedEdge orientation="-" xlink:href="#E22"/>
+          <gml:directedEdge xlink:href="#E21"/>
+          <gml:directedEdge xlink:href="#E20"/>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F7">
+          <gml:directedEdge xlink:href="#E3"/>
+          <gml:directedEdge orientation="-" xlink:href="#E16"/>
+          <gml:directedEdge orientation="-" xlink:href="#E29"/>
+          <gml:directedEdge orientation="-" xlink:href="#E28"/>
+          <gml:directedEdge orientation="-" xlink:href="#E30"/>
+          <gml:directedEdge orientation="-" xlink:href="#E27"/>
+          <gml:directedEdge orientation="-" xlink:href="#E19"/>
+          <gml:directedEdge orientation="-" xlink:href="#E7"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+    <suolo><id>7</id><code>001051</code><title>ciabatta</title><gml:TopoSurface>
+      <gml:directedFace>
+        <gml:Face gml:id="F12">
+          <gml:directedEdge orientation="-" xlink:href="#E5"/>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E34">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N27"/>
+              </gml:directedNode>
+              <gml:directedNode>
+                <gml:Node gml:id="N28"/>
+              </gml:directedNode>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.63 -0.049 0.63 0.067</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E37">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N30"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N27"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.78 -0.049 0.63 -0.049</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E36">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N29"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N30"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.78 0.067 0.78 -0.049</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E35">
+              <gml:directedNode orientation="-" xlink:href="#N28"/>
+              <gml:directedNode xlink:href="#N29"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.63 0.067 0.78 0.067</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F14">
+          <gml:directedEdge orientation="-" xlink:href="#E35"/>
+          <gml:directedEdge orientation="-" xlink:href="#E36"/>
+          <gml:directedEdge orientation="-" xlink:href="#E37"/>
+          <gml:directedEdge orientation="-" xlink:href="#E34"/>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E38">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N31"/>
+              </gml:directedNode>
+              <gml:directedNode>
+                <gml:Node gml:id="N32"/>
+              </gml:directedNode>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.66 -0.039 0.66 0.057</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E41">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N34"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N31"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.75 -0.039 0.66 -0.039</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E40">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N33"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N34"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.75 0.057 0.75 -0.039</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E39">
+              <gml:directedNode orientation="-" xlink:href="#N32"/>
+              <gml:directedNode xlink:href="#N33"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.66 0.057 0.75 0.057</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F16">
+          <gml:directedEdge orientation="-" xlink:href="#E39"/>
+          <gml:directedEdge orientation="-" xlink:href="#E40"/>
+          <gml:directedEdge orientation="-" xlink:href="#E41"/>
+          <gml:directedEdge orientation="-" xlink:href="#E38"/>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E45">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N38"/>
+              </gml:directedNode>
+              <gml:directedNode>
+                <gml:Node gml:id="N35"/>
+              </gml:directedNode>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.72 -0.029 0.69 -0.029</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E49">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N40"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N38"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.72 0 0.72 -0.029</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E48">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N37"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N40"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.72 0.047 0.72 0</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E43">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N36"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N37"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.69 0.047 0.72 0.047</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E47">
+              <gml:directedNode orientation="-">
+                <gml:Node gml:id="N39"/>
+              </gml:directedNode>
+              <gml:directedNode xlink:href="#N36"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.69 0 0.69 0.047</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge>
+            <gml:Edge gml:id="E46">
+              <gml:directedNode orientation="-" xlink:href="#N35"/>
+              <gml:directedNode xlink:href="#N39"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.69 -0.029 0.69 0</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F17">
+          <gml:directedEdge orientation="-" xlink:href="#E46"/>
+          <gml:directedEdge orientation="-">
+            <gml:Edge gml:id="E50">
+              <gml:directedNode orientation="-" xlink:href="#N39"/>
+              <gml:directedNode xlink:href="#N40"/>
+              <gml:curveProperty>
+                <gml:Curve srsName="urn:ogc:def:crs:EPSG::3003">
+                  <gml:segments>
+                    <gml:LineStringSegment>
+                      <gml:posList srsDimension="2">0.69 0 0.72 0</gml:posList>
+                    </gml:LineStringSegment>
+                  </gml:segments>
+                </gml:Curve>
+              </gml:curveProperty>
+            </gml:Edge>
+          </gml:directedEdge>
+          <gml:directedEdge orientation="-" xlink:href="#E49"/>
+          <gml:directedEdge orientation="-" xlink:href="#E45"/>
+        </gml:Face>
+      </gml:directedFace>
+      <gml:directedFace>
+        <gml:Face gml:id="F18">
+          <gml:directedEdge xlink:href="#E50"/>
+          <gml:directedEdge orientation="-" xlink:href="#E47"/>
+          <gml:directedEdge orientation="-" xlink:href="#E43"/>
+          <gml:directedEdge orientation="-" xlink:href="#E48"/>
+        </gml:Face>
+      </gml:directedFace>
+    </gml:TopoSurface></suolo>
+  </dbTopoFeatureMembers>
+</DbTopoFeatureCollection>

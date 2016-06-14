@@ -1,0 +1,39 @@
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	hdf4dataset.obj hdf4imagedataset.obj
+
+PLUGIN_DLL 	=	gdal_HDF4.dll
+
+EXTRAFLAGS = 	-I..\pds -I$(HDF4_DIR)\include -Ihdf-eos -DFRMT_hdf4 
+
+!IF "$(HDF4_PLUGIN)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_PLUGIN
+!ENDIF
+
+!IF "$(HDF4_HAS_MAXOPENFILES)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_HAS_MAXOPENFILES
+!ENDIF
+
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+	cd  hdf-eos
+	$(MAKE) /f makefile.vc
+
+clean:
+	-del *.obj
+	cd hdf-eos
+	$(MAKE) /f makefile.vc clean
+	cd ..
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) ..\o\SWapi.obj ..\o\GDapi.obj ..\o\EHapi.obj ..\o\gctp_wrap.obj ..\o\nasakeywordhandler.obj $(GDALLIB) $(HDF4_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

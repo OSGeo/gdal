@@ -1,0 +1,34 @@
+001412L 1 0600049   22040000210000012921DQCG42500000;&1107DQCG.DDF0100;&DDF RECORD IDENTIFER1600;&CompletenessMODN!RCID!COMT(A,I,A)00081 D 1   00039   21040001080DQCG3480000001DQCG1VOID AREAS: No void areas.00793 D 1   00041   310400010080DQCG74480000002DQCG2The 7.5-minute series DEMS are based on a UTM grid. Hence, the scans
+do not always have the same number of elevation posts due to the
+variable angle between true north and grid north of the UTM coordinate
+system. Any elevation post that falls outside of the 7.5-minute
+quadrangle edge is dropped, i.e. there is no overedge. The 7.5-minute
+DEM will be encoded as a non-ragged grid by filling with a background
+post value to the edges of the minimum bounding rectangle.  The fill
+value is distinguishable from all other elevation post values, and it
+will be same value for all USGS DEM series encoded in SDTS. The Void
+post value(-32767) will not be reused as the fill value, so the
+original extent of the DEM data can easily be detected.00471 D 1   00041   310400010080DQCG42280000003DQCG3Void areas occur in the DEM as a result of interruptions
+to the contours of the source graphic or DLG (eg. photoimages
+overprinted onto a topographic map). Each DEM elevation post located
+within a void area is assigned a false negative value of -32,767. The
+percentage of void elevation values in the DEM, if present, was
+calculated from the total number of grid posts in the DEM assigned the
+false negative value.01225 D 1   00043   4104000100080DQCG117480000004DQCG4HYDROGRAPHY INCLUDED: For DEM Level 1 and 2, water bodies
+contained in DEM data are edited when they conform to the following
+criteria: 1) Type is a pond, lake, reservoir, or double-line drainage;
+and, 2) Size of a pond, lake or reservoir exceeds approximately 1/2
+inch at map scale (1000 feet at 1:24,000 scale, 4167 feet at 1:100,000
+scale) along the major axis; or, 3) Size of a double-line drain
+exceeds 1/4 inch (500 feet at 1:24,000 scale, 2087 feet at 1:100,000
+scale) in width. For level 3 DEM's, the grid is constrained by all
+major hydrographic features contained within a DLG hydrography
+category, including drainage, lakes, swamps, and
+shorelines. Elevations of hydrographic features are determined through
+interpolation of contours using a registered DLG hypsography file. DEM
+surfaces constrained to drains are treated as a special case of
+hypsographic faulting where the DEM surface is simply creased along
+the track line of the drain. Additionally, all grid cells are tilted
+consistent with the direction of stream flow, along the track line of
+the drain. There must not be any unsupported breaks or discontinuities
+in the rate of slope of the drain.

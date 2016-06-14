@@ -1,0 +1,213 @@
+<html>
+<head>
+<title>Oracle Spatial</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Oracle Spatial</h1>
+
+This driver supports reading and writing data in Oracle Spatial (8.1.7 or
+later) Object-Relational format.  The Oracle Spatial driver is not
+normally built into OGR, but may be built in on platforms where the
+Oracle client libraries are available. <p>
+
+When opening a database, it's name should be specified in the form
+"OCI:userid/password@database_instance:table,table".  The list of tables
+is optional.  The database_instance portion may be omitted
+when accessing the default local database instance.<p>
+
+If the list of tables is not provided, then all tables appearing in
+ALL_SDO_GEOM_METADATA will be treated by OGR as layers with the table
+names as the layer names.  Non-spatial tables or spatial tables not listed
+in the ALL_SDO_GEOM_METADATA table are not accessible unless explicitly
+listed in the datasource name.  Even in databases where all desired layers
+are in the ALL_SDO_GEOM_METADATA table, it may be desirable to list only
+the tables to be used as this can substantially reduce initialization time
+in databases with many tables.<p>
+
+If the table has an integer column called OGR_FID it will be used as the
+feature id by OGR (and it will not appear as a regular attribute).  When
+loading data into Oracle Spatial OGR will always create the OGR_FID field.
+<p>
+
+<h2>SQL Issues</h2>
+
+<p>By default, the Oracle driver passes SQL statements directly to Oracle rather
+than evaluating them internally when using the ExecuteSQL() call on the
+OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
+expressions are also passed through to Oracle.</p>
+
+<p>As well two special commands are supported via the ExecuteSQL() interface.
+These are "<b>DELLAYER:&lt;table_name&gt;</b>" to delete a layer,
+and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the
+SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these
+pseudo-commands are translated into more complex SQL commands for Oracle.</p>
+
+<p>It's also possible to request the driver to handle SQL commands with <a href="ogr_sql.html">OGR SQL</a> engine,
+by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of the SQL dialect.</p>
+
+<h2>Caveats</h2>
+
+<ul>
+
+<li> The type recognition logic is currently somewhat impoverished.  No
+effort is made to preserve real width information for integer and real
+fields.</li>
+
+<li> Various types such as objects, and BLOBs in Oracle will be completely
+ignored by OGR.</li>
+
+<li> Currently the OGR transaction semantics are not properly mapped onto
+transaction semantics in Oracle.</li>
+
+<li> If an attribute called OGR_FID exists in the schema for tables being
+read, it will be used as the FID.  Random (FID based) reads on tables without
+an identified (and indexed) FID field can be very slow.  To force use of a
+particular field name the OCI_FID configuration variable (i.e. environment
+variable) can be set to the target field name.</li>
+
+<li> Curved geometry types are converted to linestrings or linear rings in six degree segments when reading.  The driver has no support for writing curved geometries.</li>
+
+<li> There is no support for point cloud (SDO_PC), TIN (SDO_TIN) and annotation text data types in Oracle Spatial.</li>
+
+<li> It might be necessary to define the environment variable NLS_LANG to
+"American_America.UTF8" to avoid issues with floating point numbers being
+truncated to integer on non-English environments.</li>
+
+<li> For developers: when running the driver under the memory error detection
+tool Valgrind, specifying the database_instance, typically to localhost, or with
+the TWO_TASK environment variable seems to be
+compulsory, otherwise "TNS:permission denied" errors will be reported)</li>
+
+</ul>
+
+<h2>Creation Issues</h2>
+
+The Oracle Spatial driver does not support creation of new datasets (database
+instances), but it does allow creation of new layers within an
+existing database.<P>
+
+Upon closing the OGRDataSource newly created layers will have a spatial
+index automatically built.  At this point the USER_SDO_GEOM_METADATA table
+will also be updated with bounds for the table based on the features that
+have actually been written.  One consequence of this is that once a layer
+has been loaded it is generally not possible to load additional features
+outside the original extents without manually modifying the DIMINFO information
+in USER_SDO_GEOM_METADATA and rebuilding the spatial index.<p>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+
+<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
+desired name to be destroyed before creating the requested layer.<p>
+
+<li> <b>TRUNCATE</b>: This may be "YES" to force the existing table to
+be reused, but to first truncate all records in the table, preserving
+indexes or dependencies.<p>
+
+<li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
+layer to have their field names "laundered" into a form more compatible with
+Oracle.  This converts to upper case and converts some special characters
+like "-" and "#" to "_".  The default value is "NO".<p>
+
+<li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
+layer to try and represent the width and precision information, if available
+using NUMBER(width,precision) or VARCHAR2(width) types.  If "NO" then the types
+NUMBER, INTEGER and VARCHAR2 will be used instead.  The default is "YES".<p>
+
+<li> <b>DIM</b>: This may be set to 2 or 3 to force the dimension of the
+created layer.  If not set 3 is used by default.<p>
+
+<li> <b>SPATIAL_INDEX</b>: This may be set to FALSE to disable creation of a spatial
+index when a layer load is complete.  By default an index is created if
+any of the layer features have valid geometries. The default is "YES".
+Note: option was called INDEX in releases before GDAL 2<p>
+
+<li> <b>INDEX_PARAMETERS</b>: This may be set to pass creation parameters
+when the spatial index is created.  For instance setting INDEX_PARAMETERS to
+SDO_LEVEL=5 would cause a 5 level tile index to be used.  By default no
+parameters are passed causing a default R-Tree spatial index to be created.<p>
+
+<li> <b>ADD_LAYER_GTYPE</b>=YES/NO: (starting with GDAL 2.0) This may be
+set to NO to disable the constraints on the geometry type in the spatial index,
+through the layer_gtype keyword in the PARAMETERS clause of the CREATE INDEX.
+Layers of type MultiPoint, MultiLineString or MultiPolygon will also accept
+single geometry type (Point, LineString, Polygon). Defaults to YES.<p>
+
+<li> <b>DIMINFO_X</b>: This may be set to xmin,xmax,xres values to
+control the X dimension info written into the USER_SDO_GEOM_METADATA table.
+By default extents are collected from the actual data written.<p>
+
+<li> <b>DIMINFO_Y</b>: This may be set to ymin,ymax,yres values to
+control the Y dimension info written into the USER_SDO_GEOM_METADATA table.
+By default extents are collected from the actual data written.<p>
+
+<li> <b>DIMINFO_Z</b>: This may be set to zmin,zmax,zres values to
+control the Z dimension info written into the USER_SDO_GEOM_METADATA table.
+By default fixed values of -100000,100000,0.002 are used for layers with
+a third dimension.<p>
+
+<li> <b>SRID</b>: By default this driver will attempt to find an existing
+row in the MDSYS.CS_SRS table with a well known text coordinate system
+exactly matching the one for this dataset.  If one is not found, a new
+row will be added to this table.  The SRID creation option allows the user
+to force use of an existing Oracle SRID item even it if does not exactly
+match the WKT the driver expects.<p>
+
+<li> <b>MULTI_LOAD</b>: If enabled new features will be created in
+groups of 100 per SQL INSERT command, instead of each feature being a separate
+INSERT command.  Having this enabled is the fastest way to load data quickly.
+Multi-load mode is enabled by default, and may be forced off for existing
+layers or for new layers by setting to NO.<p>
+
+<li> <b>LOADER_FILE</b>: If this option is set, all feature information will
+be written to a file suitable for use with SQL*Loader instead of inserted
+directly in the database.  The layer itself is still created in the database
+immediately.  The SQL*Loader support is experimental, and generally
+MULTI_LOAD enabled mode should be used instead when trying for optimal
+load performance.<p>
+
+<li> <b>GEOMETRY_NAME</b>: By default OGR creates new tables with the
+geometry column named ORA_GEOMETRY.  If you wish to use a different name,
+it can be supplied with the GEOMETRY_NAME layer creation option.<p>
+
+</ul>
+
+<h3>Example</h3>
+
+Simple translation of a shapefile into Oracle.  The table 'ABC' will
+be created with the features from abc.shp and attributes from abc.dbf. <p>
+
+<pre>
+% ogr2ogr -f OCI OCI:warmerda/password@gdal800.dreadfest.com abc.shp
+</pre>
+
+This second example loads a political boundaries layer from VPF (via the
+<a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
+cryptic OGDI layer name to something more sensible.  If an existing table
+of the desired name exists it is overwritten.<p>
+
+<pre>
+% ogr2ogr  -f OCI OCI:warmerda/password \
+        gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
+        -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
+</pre>
+
+This example shows using ogrinfo to evaluate an SQL query statement
+within Oracle.  More sophisticated Oracle Spatial specific queries may also be
+used via the -sql commandline switch to ogrinfo.<p>
+
+<pre>
+ogrinfo -ro OCI:warmerda/password -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+</pre>
+
+
+<h3>Credits</h3>
+
+I would like to thank <a href="http://www.extendthereach.com/">SRC, LLC</a>
+for it's financial support of the development of this driver.<p>
+
+</body>
+</html>

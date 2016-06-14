@@ -1,0 +1,54 @@
+
+#
+# Algorithms
+#
+
+GDAL_ROOT	=	..
+
+EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
+
+!INCLUDE ..\nmake.opt
+
+!IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
+!ENDIF
+
+!IFDEF QHULL_SETTING
+!IF "$(QHULL_SETTING)" == "INTERNAL"
+EXTRAFLAGS = $(EXTRAFLAGS) -DINTERNAL_QHULL -Ilibqhull
+!ELSE
+!IF "$(QHULL_SETTING)" == "EXTERNAL"
+EXTRAFLAGS = $(EXTRAFLAGS) -DEXTERNAL_QHULL $(QHULL_INC)
+!ENDIF
+!ENDIF
+!ENDIF
+
+OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
+	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
+	thinplatespline.obj gdal_tps.obj gdalrasterize.obj llrasterize.obj \
+	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
+	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
+	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
+	contour.obj \
+	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
+	gdaltransformgeolocs.obj delaunay.obj gdalpansharpen.obj
+
+!IF "$(SSEFLAGS)" == "/DHAVE_SSE_AT_COMPILE_TIME"
+SSE_OBJ = gdalgridsse.obj
+!ENDIF
+
+!IF "$(AVXFLAGS)" == "/DHAVE_AVX_AT_COMPILE_TIME"
+AVX_OBJ = gdalgridavx.obj
+!ENDIF
+
+default:	$(OBJ) $(SSE_OBJ) $(AVX_OBJ)
+
+gdalgridsse.obj:  $*.cpp
+	$(CC) $(CPPFLAGS) $(SSE_ARCH_FLAGS) /c $*.cpp
+
+gdalgridavx.obj:  $*.cpp
+	$(CC) $(CPPFLAGS) $(AVX_ARCH_FLAGS) /c $*.cpp
+
+clean:
+	-del *.obj
+

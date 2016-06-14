@@ -1,0 +1,14 @@
+#ifndef DOXYGEN_SKIP
+/*
+$Id$
+Translation corresponds to  gdal_building.dox 11076 2007-03-26 06:49:50Z
+Translator Andrey Kiselev <dron@remotesensing.org>
+*/
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page gdal_building_ru Сборка GDAL из исходных текстов
+
+Этот раздел перенесён на страницы Вики: http://trac.osgeo.org/gdal/wiki/BuildHints
+
+*/

@@ -1,0 +1,36 @@
+#POINTS
+10
+#ROWS
+8
+#TRANSFORM
+5.0E-03 -118.835
+#PTSEPARATION
+12.5
+#RWSEPARATION
+12.5
+#XORIGIN
+1750000.0
+#YORIGIN
+4250.0
+#ROTATION
+0.0
+#UNIT_LENGTH
+"ftUS",0.3048006096012
+#MAP_PROJECTION
+"NAD27 / Ohio North"
+"NAD27",6378206.4,0.082271854,0
+"Lambert Conic Conformal (2SP)",40.4333333333,41.7,39.6666666667,\
+82.5,609601.22
+#MAP_DATUM_TRANSFORM
+"NAD27 to WGS 84 (6)",-8,159,175,0,0,0,1
+#GTYPE
+3
+#GRID
+"""%%/!!!
+"""%%/!!!
+"""%%*!!!(5@(V^?y,?br!!!
+"""%%)!!!(5@(@J)),(5@?y,!!!
+!!!!!!!!!(@J)/h)Nr(7T?UT!!!!!!
+!!!!!!)+@*5@*j^"""%%*!!!
+!!!!!!(c|(B^?y,"""%%*!!!
+!!!!!!!!!(*6"""%%+!!!

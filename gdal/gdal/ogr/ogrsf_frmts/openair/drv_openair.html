@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>OpenAir - OpenAir Special Use Airspace Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>OpenAir - OpenAir Special Use Airspace Format</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+This driver reads files describing Special Use Airspaces in the OpenAir format<p>
+
+Airspace are returned as features of a single layer called 'airspaces', with a
+geometry of type Polygon and the following fields: CLASS, NAME, FLOOR, CEILING.
+<p>
+
+Airspace geometries made of arcs will be tessellated. Styling information when
+present is returned at the feature level.<p>
+
+An extra layer called 'labels' will contain a feature for each label (AT
+element). There can be multiple AT records for a single airspace segment. The
+fields are the same as the 'airspaces' layer.<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.winpilot.com/UsersGuide/UserAirspace.asp">Description of OpenAir format</a><p>
+</ul>
+
+</body>
+</html>

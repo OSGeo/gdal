@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>OGDI Vectors</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>OGDI Vectors</h1>
+
+OGDI vector support is optional in OGR, and is normally only configured if
+OGDI is installed on the build system.  If available OGDI vectors are
+supported for read access for the following family types:
+<ul>
+  <li> Point
+  <li> Line
+  <li> Area
+  <li> Text (Currently returned as points with the text in the "text" attribute)
+</ul>
+<p>
+
+OGDI can (among other formats) read VPF products, such as DCW and VMAP.<p>
+
+If an OGDI gltp url is opened directly the OGDI 3.1 capabilities for the
+driver/server are queried to get a list of layers.  One OGR layer is created
+for each OGDI family available for each layer in the datastore.  For drivers
+such as VRF this can result in a lot of layers.  Each of the layers has an
+OGR name based on the OGDI name plus an underscore and the family name.  For
+instance a layer might be called <b>watrcrsl@hydro(*)_line</b> if coming
+out of the VRF driver.<p>
+
+From GDAL/OGR 1.8.0, setting the <i>OGR_OGDI_LAUNDER_LAYER_NAMES</i> configuration
+option (or environment variable) to YES causes the layer names to be simplified. For example :
+<i>watrcrsl_hydro</i> instead of 'watrcrsl@hydro(*)_line'<p>
+
+Alternatively to accessing all the layers in a datastore, it is possible to
+open a particular layer using a customized filename consisting
+of the regular GLTP URL to
+which you append the layer name and family type (separated by colons).  This
+mechanism must be used to access layers of pre OGDI 3.1 drivers as before
+OGDI 3.1 there was no regular way to discover available layers in OGDI.<p>
+
+<PRE>
+   gltp:[//&lt;hostname&gt;]/&lt;driver_name&gt;/&lt;dataset_name&gt;:&lt;layer_name&gt;:&lt;family&gt;
+</PRE>
+
+Where &lt;layer_name&gt; is the OGDI Layer name, and &lt;family&gt; is one of:
+"line", "area", "point", or "text".<p>
+
+OGDI coordinate system information is supported for most coordinate systems.
+A warning will be produced when a layer is opened if the coordinate
+system cannot be translated.<p>
+
+There is no update or creation support in the OGDI driver.<p>
+
+Raster layers cannot be accessed with this driver but can be accessed
+using the GDAL OGDI Raster driver.<p>
+
+<H3>Examples</H3>
+
+Usage example 'ogrinfo':<BR>
+
+<PRE>
+   ogrinfo gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
+</PRE>
+<P>
+In the dataset name 'gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia' the gltp:/vrf
+part is not really in the filesystem, but has to be added.  The VPF data was at
+/usr4/mpp1/v0eur/. The 'eurnasia' directory should be at the same level as
+the dht. and lat. files. The 'hydro' reference is a subdirectory of 'eurnasia/'
+where watrcrsl.* is found.
+<P>
+
+Usage examples VMAP0 to SHAPE conversion with 'ogr2ogr':<BR>
+
+<PRE>
+   ogr2ogr watrcrsl.shp gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
+   ogr2ogr polbnda.shp  gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'polbnda@bnd(*)_area'
+</PRE>
+
+An OGR SQL query against a VMAP dataset.  Again, note the careful quoting of
+the layer name. <p>
+
+<PRE>
+   ogrinfo -ro gltp:/vrf/usr4/mpp1/v0noa/vmaplv0/noamer \
+           -sql 'select * from "polbndl@bnd(*)_line" where use=26'
+</PRE>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://ogdi.sourceforge.net/">OGDI.SourceForge.Net</a><p>
+<li> <a href="http://www.terragear.org/docs/vmap0/coverage.html">VMap0 Coverages</a>
+</ul>
+
+</body>
+</html>

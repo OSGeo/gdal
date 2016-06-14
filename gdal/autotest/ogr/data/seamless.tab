@@ -1,0 +1,10 @@
+!table
+!version 300
+!charset Neutral
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 2
+    Table Char (254) ;
+    WKT Char (254) ;
+  "\IsSeamless" = "TRUE"

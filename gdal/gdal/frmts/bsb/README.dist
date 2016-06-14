@@ -1,0 +1,48 @@
+	Sample BSB Reader
+	=================
+
+
+Files
+-----
+
+ bsb2raw.c: Sample mainline program for converting BSB files to "raw" format.
+
+ bsb_read.c: Core BSB reading code ... you may use this in your application.
+ bsb_read.h: Declarations for functions and structures in bsb_read.c.  #include
+             this from your application.
+
+ cpl_*: Supporting low level code and include files.
+
+ Makefile: Simple Unix style makefile for building bsb2raw program.
+
+NOTE: It may be necessary to fool with the cpl_config.h include file for
+different platforms. In particular, change the #undef WORDS_BIGENDIAN to 
+a #define WORDS_BIGENDIAN for big endian systems (Sparc, SGI, etc).  Some
+changes may be needed in cpl_config.h for Windows.
+
+
+License
+-------
+
+MIT/X license ... see header of bsb_read.c. 
+
+On the Web
+----------
+
+http://gdal.velocet.ca/projects/bsb/
+
+GDAL
+----
+
+Note that this BSB code is normally incorporated into the larger GDAL 
+library.  To convert BSB to other common formats like GeoTIFF, PNG, etc
+consider using the GDAL utilities at:
+
+  http://www.remotesensing.org/gdal
+
+
+July 19, 2002
+Frank Warmerdam <warmerdam@pobox.com>
+
+
+

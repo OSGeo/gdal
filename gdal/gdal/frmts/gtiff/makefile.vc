@@ -1,0 +1,50 @@
+
+OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
+		tifvsi.obj tif_float.obj gt_citation.obj gt_jpeg_copy.obj
+
+EXTRAFLAGS = 	-I.. $(JPEG_FLAGS) $(TIFF_OPTS) $(TIFF_INC) $(GEOTIFF_INC)
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF TIFF_INC
+SUB_TIFF_TARGET =
+!ELSE
+TIFF_INC   =	-Ilibtiff -DINTERNAL_LIBTIFF -DBIGTIFF_SUPPORT
+SUB_TIFF_TARGET =	tiff
+!ENDIF
+
+!IFDEF GEOTIFF_INC
+SUB_GEOTIFF_TARGET =	
+!ELSE
+GEOTIFF_INC   =	-Ilibgeotiff -DINTERNAL_LIBGEOTIFF
+SUB_GEOTIFF_TARGET =	geotiff
+!ENDIF
+
+!IFDEF JPEG_SUPPORTED
+!IFDEF JPEG_EXTERNAL_LIB
+JPEG_FLAGS =	-I..\jpeg -I$(JPEGDIR) -DHAVE_LIBJPEG
+!ELSE
+JPEG_FLAGS =	-I..\jpeg -I..\jpeg\libjpeg -DHAVE_LIBJPEG
+!ENDIF
+!ENDIF
+
+default:	$(OBJ) $(SUB_TIFF_TARGET) $(SUB_GEOTIFF_TARGET)
+	xcopy /D  /Y *.obj ..\o
+
+tiff:
+	cd libtiff
+	$(MAKE) /f makefile.vc
+	cd ..
+
+geotiff:
+	cd libgeotiff
+	$(MAKE) /f makefile.vc
+	cd ..
+
+clean:
+	-del *.obj libtiff\*.obj libgeotiff\*.obj
+	
+
+

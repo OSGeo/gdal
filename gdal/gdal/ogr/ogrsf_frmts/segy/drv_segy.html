@@ -1,0 +1,27 @@
+<html>
+<head>
+<title>SEG-Y / SEGY</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>SEG-Y / SEGY</h1>
+
+(GDAL/OGR >= 1.9.0)<p>
+
+This driver reads files in SEG-Y format. Those files are binary files that contain single-line seismic digital data.
+The driver will report the attributes of the trace header (in their raw form, see the SEG-Y specification for more
+information), and use the receiver group coordinates as geometry. The sample values are also reported.<p>
+
+A layer "{basefilename}_header" is also created and contains a single feature with the content of the text and binary file
+headers.<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.seg.org/documents/10161/77915/seg_y_rev1.pdf">Description of SEG-Y format Rev1</a><p>
+<li> <a href="http://en.wikipedia.org/wiki/SEG_Y">Wikipedia page about SEG-Y format</a><p>
+</ul>
+
+</body>
+</html>

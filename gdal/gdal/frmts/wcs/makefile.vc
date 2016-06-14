@@ -1,0 +1,16 @@
+
+OBJ	=	wcsdataset.obj httpdriver.obj
+
+EXTRAFLAGS = -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll

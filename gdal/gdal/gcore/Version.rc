@@ -1,0 +1,95 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  GDAL DLL registration information. 
+ * Author:   Martin Daly (Cadcorp)
+ *
+ * Copyright assignment provided by Martin Daly by email, "Be my guest.  Fame!  
+ * At last!  Best not let it go to my head, eh?"
+ *
+ ******************************************************************************
+ * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ * $Log$
+ * Revision 1.6  2006/03/30 15:42:55  fwarmerdam
+ * Added explicit not on right to use.
+ *
+ * Revision 1.5  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
+ */
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include <windows.h>
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include <winver.h>
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+#endif //_WIN32
+
+#include "gdal.h"
+
+#ifndef _MAC
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION GDAL_VERSION_MAJOR,GDAL_VERSION_MINOR,GDAL_VERSION_REV,GDAL_VERSION_BUILD
+ PRODUCTVERSION GDAL_VERSION_MAJOR,GDAL_VERSION_MINOR,GDAL_VERSION_REV,GDAL_VERSION_BUILD
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "OSGeo\0"
+            VALUE "FileDescription", "Geospatial Data Abstraction Library\0"
+            VALUE "FileVersion", GDAL_RELEASE_NAME "\0"
+            VALUE "InternalName", "GDAL\0"
+            VALUE "LegalCopyright", "See LICENSE.TXT"
+            VALUE "ProductName", "GDAL/OGR\0"
+            VALUE "ProductVersion", GDAL_RELEASE_NAME "\0"
+            VALUE "WebPage", "http://www.gdal.org/\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+#endif    // !_MAC
+
+#endif    // Neutral resources

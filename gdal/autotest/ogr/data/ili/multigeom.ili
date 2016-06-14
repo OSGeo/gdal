@@ -1,0 +1,28 @@
+TRANSFER Multigeom;
+
+  DOMAIN
+    LKoord = COORD2 100.00 100.00
+                    300.00 300.00;
+
+MODEL Multigeom
+
+  TOPIC MultigeomTests =
+
+    TABLE MultigeomTable =
+      Text1: TEXT*6;
+      GeomLine: POLYLINE WITH (ARCS,STRAIGHTS)
+                VERTEX LKoord;
+      Number: [0..99];
+      GeomPoint: LKoord;
+    NO IDENT
+    END MultigeomTable;
+
+  END MultigeomTests.
+
+END Multigeom.
+
+FORMAT FREE;
+CODE BLANK = DEFAULT, UNDEFINED = DEFAULT, CONTINUE = DEFAULT;
+TID = ANY;
+
+END.

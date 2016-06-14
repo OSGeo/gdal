@@ -1,0 +1,6 @@
+<gml_registry>
+    <namespace prefix="gdalautotest" uri="http://gdal.org/gdalautotest" useGlobalSRSName="true">
+        <featureType elementName="mainFeature"
+                 schemaLocation="ogr_gml_56_schema.xsd"/>
+    </namespace>
+</gml_registry>

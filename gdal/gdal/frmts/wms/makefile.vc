@@ -1,0 +1,22 @@
+
+OBJ	= \
+	gdalwmscache.obj gdalwmsdataset.obj gdalwmsrasterband.obj wmsutils.obj \
+	gdalhttp.obj md5.obj minidriver.obj  wmsdriver.obj \
+	minidriver_wms.obj minidriver_tileservice.obj \
+	minidriver_worldwind.obj minidriver_tms.obj minidriver_tiled_wms.obj \
+	wmsmetadataset.obj minidriver_virtualearth.obj minidriver_arcgis_server.obj \
+	minidriver_iip.obj
+
+EXTRAFLAGS = -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll

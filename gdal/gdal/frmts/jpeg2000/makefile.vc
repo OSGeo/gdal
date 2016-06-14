@@ -1,0 +1,14 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	jpeg2000dataset.obj jpeg2000_vsil_io.obj
+EXTRAFLAGS = 	$(JASPER_INCLUDE) /DWIN32 -DFRMT_jpeg2000
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

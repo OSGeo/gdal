@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>Informix DataBlade Driver</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>IDB</h1>
+
+<p>This driver implements support for access to spatial tables in
+IBM Informix extended with the DataBlade spatial module.
+
+<p>When opening a database, it's name should be specified in the form
+
+<pre>"IDB:dbname={dbname} server={host} user={login} pass={pass} table={layertable}".</pre>
+
+<p>The IDB: prefix is used to mark the name as a IDB connection string.
+
+<p>If the <i>geometry_columns</i> table exists, then all listed tables and
+named views will be treated as OGR layers.  Otherwise all regular user tables
+will be treated as layers.
+
+<p>Regular (non-spatial) tables can be accessed, and will return features with
+attributes, but not geometry.  If the table has a "st_*" field, it will
+be treated as a spatial table. The type of the field is inspected to
+determine how to read it.
+
+<p>Driver supports automatic FID detection.
+
+<h3>Environment variables</h3>
+<ul>
+<li><b>INFORMIXDIR</b>: It should be set to Informix client SDK install dir
+<li><b>INFORMIXSERVER</b>: Default Informix server name
+<li><b>DB_LOCALE</b>: Locale of Informix database
+<li><b>CLIENT_LOCALE</b>: Client locale
+<li><b>IDB_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.
+</ul>
+
+<p>For more information about Informix variables read documentation of
+Informix Client SDK
+
+<h3> Example </h3>
+<p>This example shows using ogrinfo to list Informix DataBlade layers on a different host.
+
+<pre>
+ogrinfo -ro IDB:'server=demo_on user=informix dbname=frames'
+</pre>
+
+</body>
+</html>

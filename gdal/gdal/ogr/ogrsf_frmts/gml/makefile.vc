@@ -1,0 +1,46 @@
+
+LL_OBJ	=	gmlpropertydefn.obj gmlfeatureclass.obj gmlfeature.obj \
+		gmlreader.obj parsexsd.obj resolvexlinks.obj hugefileresolver.obj gmlutils.obj \
+		gmlreadstate.obj gmlhandler.obj trstring.obj  gfstemplate.obj gmlregistry.obj
+OGR_OBJ	=	ogrgmldriver.obj ogrgmldatasource.obj ogrgmllayer.obj
+
+OBJ	=	$(LL_OBJ) $(OGR_OBJ)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = 	-I.. -I..\.. $(XERCES_EXTRAFLAGS) $(EXPAT_EXTRAFLAGS) $(SQLITE_EXTRAFLAGS)
+
+# By default, XML validation is disabled.  Uncomment the following line to
+# enable XML schema validation in the parser.
+#OGR_GML_VALIDATION = -DOGR_GML_VALIDATION=1
+
+!IFDEF XERCES_DIR
+XERCES_EXTRAFLAGS =	$(XERCES_INCLUDE) -DHAVE_XERCES $(OGR_GML_VALIDATION)
+!ENDIF
+
+!IFDEF EXPAT_DIR
+EXPAT_EXTRAFLAGS =    $(EXPAT_INCLUDE) -DHAVE_EXPAT
+!ENDIF
+
+!IFDEF SQLITE_INC
+SQLITE_EXTRAFLAGS = $(SQLITE_INC) -DHAVE_SQLITE
+!ENDIF
+
+# By default, XML validation is disabled.  Uncomment the following line to
+# enable XML schema validation in the parser.
+#ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
+
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+
+gmlview.exe:	$(LL_OBJ) gmlview.obj
+	cl /Zi gmlview.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(XERCES_LIB) $(LIBS)
+

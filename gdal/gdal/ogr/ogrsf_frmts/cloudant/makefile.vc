@@ -1,0 +1,15 @@
+
+OBJ	=	ogrcloudantdriver.obj ogrcloudantdatasource.obj ogrcloudanttablelayer.obj
+EXTRAFLAGS =	-I.. -I..\..  -I..\geojson -I..\geojson\libjson -I..\couchdb
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

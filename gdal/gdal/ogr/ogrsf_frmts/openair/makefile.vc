@@ -1,0 +1,15 @@
+
+OBJ	=	ogropenairdriver.obj ogropenairdatasource.obj ogropenairlayer.obj ogropenairlabellayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\xplane
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

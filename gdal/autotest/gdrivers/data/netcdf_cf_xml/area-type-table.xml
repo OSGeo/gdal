@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<area_type_table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="area-type-table-1.1.xsd">
+  <title>Area Type Table</title>
+  <version_number>3</version_number>
+  <date>8 July 2015</date>
+  <institution>Program for Climate Model Diagnosis and Intercomparison</institution>
+  <contact>webmaster@pcmdi.llnl.gov</contact>
+
+  <entry id="all_area_types">
+    <description></description>
+  </entry>
+  <entry id="bare_ground">
+    <description></description>
+  </entry>
+  <entry id="burnt_vegetation">
+    <description></description>
+  </entry>
+  <entry id="c3_plant_functional_types">
+    <description>A plant that utilizes the C3 carbon fixation pathway as the sole mechanism to bind CO2 before photosynthesis reactions take place.  All trees are C3 type. Grasses and crops can be C3 or C4.</description>
+  </entry>
+  <entry id="c4_plant_functional_types">
+    <description>A plant that utilizes the C4 carbon fixation pathway in which the CO2 is first bound to a compound containing four carbon atoms before photosynthesis reactions take place. All trees are C3 type. Grasses and crops can be C3 or C4.</description>
+  </entry>
+  <entry id="clear_sky">
+    <description></description>
+  </entry>
+  <entry id="cloud">
+    <description></description>
+  </entry>
+  <entry id="crops">
+    <description>The definition of "crops" is model dependent, for example, some models may include fruit trees as crops.</description>
+  </entry>
+  <entry id="dust_aerosol">
+    <description>An area_type of "dust_aerosol" indicates that dust aerosol is present at some level in the atmospheric column above an area on the surface of the Earth.</description>
+  </entry>
+  <entry id="fire">
+    <description>An area_type of "fire" indicates that biomass fire, either flaming, smouldering, or both, is present.</description>
+  </entry>
+  <entry id="floating_ice">
+    <description>All ice floating on water including lake-ice, sea-ice, ice-shelves and icebergs.</description>
+  </entry>
+  <entry id="ice_free_land">
+    <description></description>
+  </entry>
+  <entry id="ice_free_sea">
+    <description></description>
+  </entry>
+  <entry id="lake_ice_or_sea_ice">
+    <description>Floating ice excluding ice-shelves and icebergs.</description>
+  </entry>
+  <entry id="land">
+    <description></description>
+  </entry>
+  <entry id="land_ice">
+    <description></description>
+  </entry>
+  <entry id="natural_grasses">
+    <description></description>
+  </entry>
+  <entry id="pastures">
+    <description>Pastures are assumed to be anthropogenic in origin.</description>
+  </entry>
+  <entry id="primary_deciduous_trees">
+    <description>A primary forest is a naturally regenerated forest of native species, where there are no clearly visible indications of human activities and the ecological processes are not significantly disturbed. Reference: 'Global Forest Resources Assessment: Terms and Definitions', Forestry Department of Food and Agriculture Organization (FAO) of the United Nations, Rome 2010, www.fao.org/forestry/14241-0d7b74f45b0d2cfef31599cc17e4c28cd.pdf. Deciduous trees lose their leaves seasonally, for example, during winter in high latitudes or following seasonal variations in rainfall.</description>
+  </entry>
+  <entry id="primary_evergreen_trees">
+    <description>A primary forest is a naturally regenerated forest of native species, where there are no clearly visible indications of human activities and the ecological processes are not significantly disturbed. Reference: 'Global Forest Resources Assessment: Terms and Definitions', Forestry Department of Food and Agriculture Organization (FAO) of the United Nations, Rome 2010, www.fao.org/forestry/14241-0d7b74f45b0d2cfef31599cc17e4c28cd.pdf. Evergreen trees have leaves in all seasons.</description>
+  </entry>
+  <entry id="rain">
+    <description>An area_type of "rain" indicates that falling rain is present at some level in the atmospheric column above an area on the surface of the Earth.</description>
+  </entry>
+  <entry id="sea">
+    <description></description>
+  </entry>
+  <entry id="sea_ice">
+    <description></description>
+  </entry>
+  <entry id="secondary_deciduous_trees">
+    <description>A secondary forest is a forest that has been logged and has recovered naturally or artificially. Reference: 'Report of the ad hoc technical expert group on forest biological diversity', United Nations Convention on Biological Diversity, www.cbd.int/forest/definitions.shtml. Deciduous trees lose their leaves seasonally, for example, during winter in high latitudes or following seasonal variations in rainfall.</description>
+  </entry>
+  <entry id="secondary_evergreen_trees">
+    <description>A secondary forest is a forest that has been logged and has recovered naturally or artificially. Reference: 'Report of the ad hoc technical expert group on forest biological diversity', United Nations Convention on Biological Diversity, www.cbd.int/forest/definitions.shtml. Evergreen trees have leaves in all seasons.</description>
+  </entry>
+  <entry id="shrubs">
+    <description>The distinction between trees and shrubs is model dependent.</description>
+  </entry>
+  <entry id="smoke">
+    <description>An area_type of "smoke" indicates that smoke aerosol is present at some level in the atmospheric column above an area on the surface of the Earth.</description>
+  </entry>
+  <entry id="snow">
+    <description></description>
+  </entry>
+  <entry id="snow_free_land">
+    <description></description>
+  </entry>
+  <entry id="trees">
+    <description>The distinction between trees and shrubs is model dependent. All trees are C3 plant functional type.</description>
+  </entry>
+  <entry id="vegetation">
+    <description></description>
+  </entry>
+  <entry id="volcanic_ash_cloud">
+    <description>An area_type of "volcanic_ash_cloud" indicates that volcanic ash aerosol is present at some level in the atmospheric column above an area on the surface of the Earth.</description>
+  </entry>
+</area_type_table>

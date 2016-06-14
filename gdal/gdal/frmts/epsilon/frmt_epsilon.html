@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Epsilon - Wavelet compressed images</title>
+</head>
+
+<body>
+
+<h1>Epsilon - Wavelet compressed images</h1>
+
+<p>Starting with GDAL 1.7.0, GDAL can read and write wavelet-compressed images through the Epsilon library.
+Starting with GDAL 1.9.0, epsilon 0.9.1 is required.</p>
+
+<p>The driver rely on the Open Source EPSILON library (dual LGPL/GPL licence v3). In its current state, the
+   driver will only be able to read images with regular internal tiling.</p>
+
+<p>The EPSILON driver only supports 1 band (grayscale) and 3 bands (RGB) images</p>
+
+<p>This is mainly intended to be used by the <a href="frmt_rasterlite.html">Rasterlite</a> driver.</p>
+
+<h2>Creation options</h2>
+
+<ul>
+<li><p><b>TARGET</b> Target size reduction as a percentage of the original (0-100). Defaults to 96</p></li>
+<li><p><b>FILTER</b>. See EPSILON documentation or 'gdalinfo --format EPSILON' for full list of filter IDs. Defaults to 'daub97lift'</p></li>
+<li><p><b>BLOCKXSIZE</b>=n: Sets tile width, defaults to 256. Power of 2 between 32 and 1024</p></li>
+<li><p><b>BLOCKYSIZE</b>=n: Sets tile height, defaults to 256. Power of 2 between 32 and 1024</p></li>
+<li><p><b>MODE</b>=[NORMAL/OTLPF] : OTLPF is some kind of hack to reduce boundary artifacts  when image is broken into several tiles.
+                                 Due to mathematical constrains this method can be applied to biorthogonal filters only. Defaults to OTLPF</p></li>
+<li><p><b>RGB_RESAMPLE</b>=[YES/NO] : Whether RGB buffer must be resampled to 4:2:0. Defaults to YES</p></li>
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="http://sourceforge.net/projects/epsilon-project">EPSILON home page</a></li>
+</ul>
+
+</body>
+</html>

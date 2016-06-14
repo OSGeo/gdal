@@ -1,0 +1,95 @@
+<html>
+<head>
+<title>VFK - Czech Cadastral Exchange Data Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>VFK - Czech Cadastral Exchange Data Format</h1>
+
+This driver reads VFK files, i.e. data in the <em>Czech cadastral
+exchange data format</em>. The VFK file is recognized as an OGR
+datasource with zero or more OGR layers.
+
+<p>
+Note: starting with OGR 1.10, the driver is compiled only if GDAL
+is <em>built with SQLite support</em>.
+
+<p>
+Points are represented as wkbPoints, lines and boundaries as
+wkbLineStrings and areas as wkbPolygons. wkbMulti* primitives are not
+used. Feature types cannot be mixed in one layer.
+
+<h3>Configuration</h3>
+
+Starting with OGR 1.9, the driver reads and writes VFK data from/to
+internal SQLite database. Default name for the database is
+&quot;input_vfk_file.db&quot;. Since OGR 1.10, you can define an
+alternative DB name with <b>OGR_VFK_DB_NAME</b> configuration
+option. If <b>OGR_VFK_DB_OVERWRITE=YES</b> configuration option is
+given, than the driver overwrites existing SQLite database and reads
+data from original input VFK file into newly created DB. Since OGR
+1.11, if <b>OGR_VFK_DB_DELETE=YES</b> configuration option is given
+than the driver deletes the internal SQLite database when closing the
+data source.
+
+<p>
+Starting with OGR 1.10, resolved geometries are stored also in SQLite
+database. It means that geometries are resolved only once when
+building SQLite database from original VFK data. Geometries are stored
+in WKB format. Note that GDAL doesn't need to be built with SpatiaLite
+support. Geometries are not stored in DB
+when <b>OGR_VFK_DB_SPATIAL=NO</b> configuration option is given. In
+this case the geometries are resolved from DB.
+
+<h3>Internal working and performance tweaking</h3>
+
+Since OGR 1.9, the driver uses an internal SQLite database to resolve
+geometries. By default, this file will be written in the same
+directory as input VFK file. If SQLite database already exists then
+the driver reads VFK features directly from the database (and not from
+original VFK file).
+
+<p>
+Since OGR 1.11, the driver reads by default all data blocks. When
+configuration option <b>OGR_VFK_DB_READ_ALL_BLOCKS=NO</b> is given
+than the driver reads only data blocks which are requested by the
+user.
+
+<h2>Datasource name</h2>
+
+Datasource name is a full path to the VFK file.
+
+<p>The driver supports reading files managed by VSI Virtual File
+System API, which include "regular" files, as well as files in the
+/vsizip/, /vsigzip/, and /vsicurl/ read-only domains.
+
+<h2>Layer names</h2>
+
+VFK data blocks are used as layer names.
+
+<h2>Filters</h2>
+
+<h3>Attribute filter</h3>
+
+OGR internal SQL engine is used to evaluate the expression. Evaluation
+is done once when the attribute filter is set.
+
+<h3>Spatial filter</h3>
+
+Bounding boxes of features stored in topology structure are used to
+evaluate if a features matches current spatial filter. Evaluation is
+done once when the spatial filter is set.
+
+<h2>References</h2>
+
+<ul>
+<li> <a href="http://geo.fsv.cvut.cz/~landa/publications/2010/gis-ostrava-2010/paper/landa-ogr-vfk.pdf">OGR
+VFK Driver Implementation Issues</a></li>
+<li> <a href="http://freegis.fsv.cvut.cz/gwiki/VFK">Open Source Tools for VFK format</a> (in Czech)</li>
+<li> <a href="http://www.cuzk.cz/Dokument.aspx?PRARESKOD=998&MENUID=0&AKCE=DOC:10-VF_ISKNTEXT">Czech
+cadastral exchange data format documentation</a> (in Czech)</li>
+</ul>
+
+</body>
+</html>

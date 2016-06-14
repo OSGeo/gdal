@@ -1,0 +1,6 @@
+<OGRVRTDataSource>
+  <OGRVRTLayer name="mypoly">
+    <SrcDataSource relativeToVRT="1" shared="1">poly.shp</SrcDataSource>
+    <SrcLayer>poly</SrcLayer>
+  </OGRVRTLayer>
+</OGRVRTDataSource>

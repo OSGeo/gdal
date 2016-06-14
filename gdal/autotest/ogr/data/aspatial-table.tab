@@ -1,0 +1,11 @@
+!table
+!version 300
+!charset Neutral
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 4
+    a Integer ;
+    b Integer ;
+    c Integer ;
+    d Char (254) ;

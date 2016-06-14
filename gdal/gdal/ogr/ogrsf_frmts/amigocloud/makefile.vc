@@ -1,0 +1,33 @@
+OBJ	=	ogramigoclouddriver.obj ogramigoclouddatasource.obj ogramigocloudlayer.obj ogramigocloudtablelayer.obj ogramigocloudresultlayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\geojson\libjson -I..\pgdump 
+
+GDAL_ROOT	=	..\..\..
+
+PLUGIN_DLL	=	ogr_AmigoCloud.dll
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+all:	default
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.pdb
+	-del *.tlh
+
+plugin:	$(PLUGIN_DLL)
+
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib ../geojson/libjson/*.obj
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+ <OGRVRTDataSource>
+
+    <OGRVRTLayer name="test2">
+        <SrcDataSource relativeToVRT="1">flat.dbf</SrcDataSource> 
+ 	<SrcLayer>flat</SrcLayer> 
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="PointFromColumns" x="x" y="y" z="z"/> 
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test3">
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource> 
+ 	<SrcLayer>flat</SrcLayer> 
+        <LayerSRS>WGS84</LayerSRS>
+	<FID>fid</FID>
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="WKT" field="wkt"/> 
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test4">
+        <SrcDataSource>data/flat.dbf</SrcDataSource> 
+ 	<SrcSQL>SELECT * FROM flat</SrcSQL> 
+	<FID>fid</FID>
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="WKT" field="wkt"/> 
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test5">
+        <dummySrcDataSource shared="TRUE">data/flat.dbf</dummySrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <LayerSRS>WGS84</LayerSRS>
+        <FID>fid</FID>
+        <GeometryType>wkbPoint</GeometryType>
+        <GeometryField encoding="WKT" field="wkt"/>
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test6">
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <FID>fid</FID>
+        <Field name="x"/>
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test7">
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <FID name="bar">fid</FID>
+        <Field name="x"/>
+    </OGRVRTLayer>
+
+</OGRVRTDataSource>

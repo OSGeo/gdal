@@ -1,0 +1,38 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<title>BAG --- Bathymetry Attributed Grid</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>BAG --- Bathymetry Attributed Grid</h1>
+
+This driver provides read-only support for bathymetry data in the BAG format.
+BAG files are actually a specific product profile in an HDF5 file, but a
+custom driver exists to present the data in a more convenient manner than
+is available through the generic HDF5 driver.<p>
+
+BAG files have two or three image bands representing Elevation (band 1),
+Uncertainty (band 2) and Nominal Elevation (band 3) values for each cell in a
+raster grid area.<p>
+
+The geotransform and coordinate system is extracted from the internal XML
+metadata provided with the dataset.  However, some products may have
+unsupported coordinate system formats.<p>
+
+The full XML metadata is available in the "xml:BAG" metadata domain.<p>
+
+Nodata, minimum and maximum values for each band are also provided.<p>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/hdf5/bagdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.opennavsurf.org">The Open Navigation Surface Project</a>
+</ul>
+
+</body>
+</html>

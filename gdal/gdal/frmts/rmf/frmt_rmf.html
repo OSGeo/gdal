@@ -1,0 +1,58 @@
+<html>
+<head>
+	<title>RMF --- Raster Matrix Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>RMF --- Raster Matrix Format</h1>
+
+RMF is a simple tiled raster format used in the GIS "Integration" and
+"Panorama" GIS. The format itself has very poor capabilities.<p>
+
+There are two flavours of RMF called MTW and RSW. MTW supports 16-bit integer
+and 32/64-bit floating point data in a single channel and aimed to store DEM
+data. RSW is a general purpose raster. It supports single channel colormapped
+or three channel RGB images. Only 8-bit data can be stored in RSW. Simple
+georeferencing can be provided for both image types.<p>
+
+<h2>Metadata</h2>
+<ul>
+	<li> <b>ELEVATION_MINIMUM</b>: Minimum elevation value (MTW only).<p>
+
+	<li> <b>ELEVATION_MAXIMUM</b>: Maximum elevation value (MTW only).<p>
+
+	<li> <b>ELEVATION_UNITS</b>: Name of the units for raster values
+	(MTW only). Can be "m" (meters), "cm" (centimeters),
+	"dm" (decimeters), "mm" (millimeters).<p>
+
+	<li> <b>ELEVATION_TYPE</b>: Could be either 0 (absolute elevation)
+	or 1 (total elevation). MTW only.<p>
+
+</ul>
+
+<h2>Creation Options</h2>
+<ul>
+	<li> <b>MTW=ON</b>: Force the generation of MTW matrix (RSW will be
+	created by default).<p>
+
+	<li> <b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.<p>
+
+	<li> <b>BLOCKYSIZE=n</b>: Set tile height.  Tile height defaults to 256.<p>
+
+        <li> <b>RMFHUGE=NO/YES/IF_SAFER</b>: Creation of huge RMF file (Supported by GIS Panorama since v11). Defaults to NO.<p>
+
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/rmf/rmfdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.gisinfo.ru/index_en.htm">"Panorama" GIS homepage</a><p>
+
+</ul>
+
+</body>
+</html>
+

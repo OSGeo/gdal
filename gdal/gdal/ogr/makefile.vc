@@ -1,0 +1,68 @@
+
+LINKFLAGS =	/Zi /MTd
+EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
+		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
+
+GDAL_ROOT = 	..
+
+!INCLUDE ..\nmake.opt
+
+!IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED -DHAVE_MITAB
+!ELSE
+EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_MITAB
+!ENDIF
+
+!IFDEF EXPAT_DIR
+EXTRAFLAGS = $(EXTRAFLAGS) $(EXPAT_INCLUDE) -DHAVE_EXPAT
+!ENDIF
+
+
+OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
+OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_api.obj \
+		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
+		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
+		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
+		ogrmultipoint.obj ogrcircularstring.obj ogrcompoundcurve.obj \
+		ogrcurvepolygon.obj ogrcurvecollection.obj ogrmultisurface.obj \
+		ogrmulticurve.obj ogrfeature.obj ogrfeaturedefn.obj \
+		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
+		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj \
+		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \
+		ogr_srs_validate.obj ogr_srs_xml.obj ograssemblepolygon.obj \
+		ogr2gmlgeometry.obj gml2ogrgeometry.obj ogr_srs_pci.obj \
+		ogr_srs_usgs.obj ogr_srs_dict.obj ogr_srs_panorama.obj \
+		ogr_srs_ozi.obj ogr_srs_erm.obj ogr_expat.obj \
+		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
+		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
+		ogrgeomediageometry.obj ogr_geocoding.obj osr_cs_wkt.obj \
+		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj
+
+default:        ogr.lib 
+
+ogrsf_frmts\ogrsf_frmts.lib:
+
+sublibs:	frmts
+
+frmts:
+	cd ogrsf_frmts
+	$(MAKE) /f makefile.vc
+	cd ..
+
+all:	frmts default
+
+ogr.lib:	$(OBJ_OGR)
+	lib /nologo /out:ogr.lib $(OBJ_OGR)
+
+install:	default
+
+clean:
+	-del *.obj
+	-del *.lib
+	-del *.pdb
+	-del *.ilk
+
+allclean:	clean
+	cd ogrsf_frmts
+	$(MAKE) /f makefile.vc clean
+	cd ..

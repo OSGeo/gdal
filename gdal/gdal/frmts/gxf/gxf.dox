@@ -1,0 +1,91 @@
+/*! \page index
+
+<center>
+<title>GXF-3</title>
+</center>
+
+<h2>Introduction</h2>
+
+The GXF-3 library is intended to make correct implementation of GXF-3 file
+format readers easy.  It consists of free (OpenSource) C source code for 
+functions to read GXF-3 raster files, and an example program using them to 
+convert GXF data to GeoTIFF format.<p>
+
+GXF (Grid eXchange File) is a standard ASCII file format for exchanging 
+gridded data among different software systems. Software that supports the 
+GXF standard will be able to import properly formatted GXF files and export 
+grids in GXF format.  GXF-3 is an adopted standard format of the
+Gravity/Magnetics Committee of the Society of Exploration Geophysicists (SEG).
+GXF-3 is the primary gridded data interchange format for 
+<a href="http://www.Geosoft.com/">Geosoft</a>.<p>
+
+<h2>Resources</h2>
+
+<ul>
+<li> <a href="gxfopen.h.html">GXF-3 API Documentation</a>
+<li> <a href="ftp://gdal.velocet.ca/pub/outgoing/gxf3_1_0.tar.gz">GXF-3 API in .tar.gz</a>
+<li> <a href="ftp://gdal.velocet.ca/pub/outgoing/gxf3_1_0.zip">GXF-3 API in ZIP</a>
+<li> <a href="gxfr3d9_1.pdf">GXF-3 File Format Specification (pdf)</a>
+</ul>
+
+<h2>Licensing</h2>
+
+This library is offered as <a href="http://www.opensource.org">Open Source</a>.
+In particular, it is offered under the X Consortium license which doesn't
+attempt to impose any copyleft, or credit requirements on users of the code.<p>
+
+The precise license text is:<p>
+
+<em>
+ Copyright (c) 1999, Frank Warmerdam
+<p>
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+<p>
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+<p>
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ DEALINGS IN THE SOFTWARE.
+<p>
+</em>
+
+<h2>Building the Source</h2>
+
+Unix developers should be able to unpack the .tar.gz file, run configure, 
+and type make to build the library (libgxf3.a), and a simple test program
+(gxftest.c).<p>
+
+Windows developers should unpack the .zip file, and type 
+<tt>nmake /f makefile.vc</tt> to build with VC++. <p>
+
+<h2>Author and Acknowledgements</h2>
+
+The primary author of the GXF3 library is 
+<a href="http://pobox.com/warmerdam">Frank Warmerdam</a>, 
+and I can be reached at 
+<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am open to
+bug reports, and suggestions.<p>
+
+I would like to thank:<p>
+
+<ul>
+<li> <a href="http://www.globalgeo.com/">Global Geomatics</a>
+who funded development the majority of the work on this library, 
+and agreed for it to be Open Source.<p>
+
+<li> Ian Macleod of Geosoft who answered a number of questions I had,
+and provided sample files.<p>
+
+</ul>
+
+*/

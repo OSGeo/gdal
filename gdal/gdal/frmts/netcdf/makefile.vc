@@ -1,0 +1,48 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ		=	netcdfdataset.obj netcdflayer.obj netcdfwriterconfig.obj gmtdataset.obj
+
+PLUGIN_DLL 	=	gdal_netCDF.dll
+
+EXTRAFLAGS 	= 	/I$(NETCDF_INC_DIR)
+
+!IF "$(NETCDF_PLUGIN)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DNETCDF_PLUGIN
+!ENDIF
+
+!IFDEF NETCDF_HAS_NC4
+EXTRAFLAGS = $(EXTRAFLAGS) -DNETCDF_HAS_NC4
+!ENDIF
+!IFDEF NETCDF_HAS_HDF4
+EXTRAFLAGS = $(EXTRAFLAGS) -DNETCDF_HAS_HDF4
+!ENDIF
+!IFDEF HDF4_DIR
+EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_HDF4
+!ENDIF
+!IFDEF HDF5_DIR
+EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_HDF5
+!ENDIF
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(NETCDF_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+

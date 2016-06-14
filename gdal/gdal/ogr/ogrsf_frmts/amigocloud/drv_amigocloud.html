@@ -1,0 +1,129 @@
+<html>
+<head>
+<title>AmigoCloud</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>AmigoCloud</h1>
+
+(GDAL/OGR &gt;= 2.1)<p>
+
+This driver can connect to the services implementing the AmigoCloud API.
+GDAL/OGR must be built with Curl support in order for the
+AmigoCloud driver to be compiled.<p>
+
+The driver supports read and write operations.<p>
+
+<h2>Dataset name syntax</h2>
+
+The minimal syntax to open a AmigoCloud datasource is : <pre>AmigoCloud:[project_id]</pre><p>
+
+Additionnal optional parameters can be specified after the ':' sign.
+Currently the following one is supported :<p>
+
+<ul>
+<li> <b>tables=dataset_id1[,dataset_id2]*</b>: A list of AmigoCloud dataset IDs.
+This is necessary when you need to access a particular AmigoCloud datasets.
+</ul>
+
+If several parameters are specified, they must be separated by a space.<p>
+
+<h2>Configuration options</h2>
+
+The following configuration options are available :
+<ul>
+<li>AMIGOCLOUD_API_URL: defaults to https://www.amigocloud.com/api/v1.
+Can be used to point to another server.</li>
+<li>AMIGOCLOUD_HTTPS: can be set to NO to use http:// protocol instead of
+https:// (only if AMIGOCLOUD_API_URL is not defined).</li>
+<li>AMIGOCLOUD_API_KEY: see following paragraph.</li>
+</ul>
+
+
+<h2>Authentication</h2>
+
+All the access permissions are defined by AmigoCloud backend.<p>
+
+Authenticated access is obtained by specifying the API key given in the
+AmigoCloud dashboard web interface. It is specified with the
+AMIGOCLOUD_API_KEY configuration option.<p>
+
+<h2>Geometry</h2>
+
+The OGR driver will report as many geometry fields as available in the
+layer, following RFC 41.
+
+<h2>Filtering</h2>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to
+the server. It also makes the same for attribute
+filters set with SetAttributeFilter().<p>
+
+<h2>Paging</h2>
+
+Features are retrieved from the server by chunks of 500 by default.
+This number can be altered with the AMIGOCLOUD_PAGE_SIZE
+configuration option.<p>
+
+<h2>Write support</h2>
+
+Dataset creation and deletion is possible.<p>
+
+Write support is only enabled when the datasource is opened in update mode.<p>
+
+The mapping between the operations of the AmigoCloud service and the OGR concepts is the following :
+<ul>
+<li>OGRFeature::CreateFeature() &lt;==&gt; INSERT operation</li>
+<li>OGRFeature::SetFeature() &lt;==&gt; UPDATE operation</li>
+<li>OGRFeature::DeleteFeature() &lt;==&gt; DELETE operation</li>
+<li>OGRDataSource::CreateLayer() &lt;==&gt; CREATE TABLE operation</li>
+<li>OGRDataSource::DeleteLayer() &lt;==&gt; DROP TABLE operation</li>
+</ul>
+
+When inserting a new feature with CreateFeature(), and if the command is successful, OGR will fetch the
+returned amigo_id (GUID) and use hash value of it as the OGR FID.<p>
+
+The above operations are by default issued to the server synchronously with the OGR API call. This however
+can cause performance penalties when issuing a lot of commands due to many client/server exchanges.<p>
+
+<p>
+
+<h2>Layer creation options</h2>
+
+<p>The following layer creation options are available:</p>
+<ul>
+<li><b>OVERWRITE</b>=YES/NO: Whether to overwrite an existing table with the
+layer name to be created. Defaults to NO.</li>
+
+<li><b>GEOMETRY_NULLABLE</b>=YES/NO: Whether the values of the geometry column
+can be NULL. Defaults to YES.</li>
+
+</ul>
+
+
+<h2>Examples</h2>
+
+<li>
+Acceccing data from a public table:
+<pre>
+ogrinfo -ro "AmigoCloud:1234 tables=1234,1235"
+</pre>
+<p>
+
+<li>
+Creating and populating a table from a shapefile:
+<pre>
+ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f "AmigoCloud" AmigoCloud:"1234" myshapefile.shp
+</pre>
+<p>
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="https://www.amigocloud.com/accounts/tokens">AmigoCloud API Token management</a><p>
+<li> <a href="https://www.amigocloud.com/api/v1/">AmigoCloud API Browser</a><p>
+</ul>
+
+</body>
+</html>

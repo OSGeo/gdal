@@ -1,0 +1,302 @@
+AVCE00 library - Revision History
+=================================
+ 
+
+Current Version:
+----------------
+
+
+Version 2.0.1 (CVS):
+--------------------
+
+- Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+  (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+
+- Fixed VC++ WIN32 build problems in GDAL/OGR environment 
+  (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2500)
+
+- Detect compressed E00 input files and refuse to open them instead of
+  crashing (bug 1928, GDAL/OGR ticket 2513)
+
+- Avoid scanning the whole E00 input file in AVCE00ReadOpenE00() if the file
+  does not start with an EXP line (GDAL/OGR ticket 1989)
+
+
+Version 2.0.0 (2006-08-17):
+---------------------------
+
+- New functions to read E00 files directly as opposed to translating to
+  binary coverage. Used in the implementation of E00 read support in OGR.
+  Contributed by James E. Flemer <jflemer@alum.rpi.edu> (bug 1497)
+
+  Adds the following new functions:
+
+    AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName);
+    void             AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead);
+    int              AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead);
+    int              AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead,
+                                       int nOffset, int nWhence); 
+    void            *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead,
+                                             int bContinue);
+
+- Support for a new AVCCoverPC2 coverage type that is a hybrid between
+  AVCCoverPC and AVCCoverV7 (bug 1491)
+
+- Accept empty subclass names for TX6/TX7 sections (bug 1261)
+
+- Applied patch to remove any embedded '\0' from data line in 
+  AVCE00GenTableRec()
+
+- Support for reading standalone info tables (just tables, no coverage
+  data) by pointing AVCE00ReadOpen() to the info directory (bug 1549).
+
+- #include <unistd.h> to solve warning on 64 bit platforms (bug 1461)
+
+
+Version 1.3.0 (2005-06-02):
+---------------------------
+
+- Applied Carl Anderson's patch to reduce the amount of stating while trying
+  to discover filename "case" on Unix in AVCAdjustCaseSensitiveFilename.
+  http://bugzilla.remotesensing.org/show_bug.cgi?id=314
+
+- Fixed leak in AVCE00ReadOpen() when trying to open something that's 
+  not a coverage (bug513)
+
+- Added AVCBinReadObject() to randomly read an object using the index file. 
+  Currently only works for Arcs, info records and polygons.  NFW
+
+- Fixed up AVCBinReadObject() to work properly for PC Arc/Info style 
+  coverages.  Also fixed to use upper/lower case 'X' for index based on
+  base file type. NFW  OGR Bug#493. 
+
+- avc_e00write.c: modified to use VSIMkdir().
+
+- Use record size while reading ARC, PAL, CNT to skip junk bytes. (bug940)
+
+- Fixed parsing of type 40 fields (modified for bug#599) to detect exponent
+  format with negative exponents (bug#1272)
+
+- Minor fixes in avc_e00gen.c to avoid compile warnings. (NFW)
+
+- Fixed pointer aliasing ("type punning") problem re: gcc 3.3.x. (NFW)
+  http://bugzilla.remotesensing.org/show_bug.cgi?id=592
+
+
+Version 1.2.1 (2000-11-25):
+---------------------------
+
+- Remove trailing '/' in info directory path when creating the info dir
+  since mkdir() on some UNIXes doesn't like it.
+
+- Fixed a problem writing arc.dir on NT4 networked drives in an empty dir.
+  (bugzilla bug#353)
+
+- Fixed E00 parsing to properly handle PAL entries with 0 arcs which happen
+  to contain a single "0 0 0" entry.
+
+- Fixed E00 generation to correctly format 0-arc PAL records so that 
+  they have a single "0 0 0" (filler) arc record (bug#597)
+
+- Fixed reading of type 40 fields from E00: when a type 40 field is not
+  stored in exponent format then a decimal format may be used but the 
+  decimal position is shifted to the right in the E00 value.  So we have 
+  to shift the decimal point to the left (i.e. divide by 10) as we 
+  interpret the value (bug#599).  Really odd!
+
+- Added a hack to remap type 40 fields bigger than 8 digits to double 
+  precision binary floats while generating E00 output (bug#599).  
+  In E00 format, type 40 fields bigger than 8 digits would lose some 
+  digits of precision and double precision floats can carry up to 18 
+  digits of precision. 
+  This hack is enabled using "-DAVC_MAP_TYPE40_TO_DOUBLE" in OPTFLAGS.
+
+- Fixed problem with info/arc####.dat files coming from Windows that 
+  contained '\\' in the data file path.  Remap '\\' in path to '/' on Unix.
+  This problem seems to be new with Arc8 on Windows.
+
+- Fixed args to fseek() call in _AVCBinReadNextTableRec()... how come
+  we never ran into this before???
+
+
+Version 1.2.0 (2000-10-17):
+---------------------------
+
+- Added Japanese (multibyte characters) support.
+
+- Made validation on new coverage name more flexible (used to accept only 
+  isalnum() chars and '_')
+
+- Added a case to treat pal.adf files with nPrecision==1011 as double prec.
+  Actually, any file with nPrecision > 1000 is now treated as double prec.
+
+- Switch to MIT-style license
+
+- Added PC Coverage write.
+
+- Added optional -DAVC_IGNORE_RMDIR_ERROR to prevent generation of an error
+  when AVCDeleteCoverage() fails to delete the actual coverage directory.
+
+- Accept TXT files in AVCCoverWeird that use both PC or V7 TXT structure
+
+
+Version 1.1.1 (2000-04-01):
+---------------------------
+
+- Support double-precision "weird" coverages... previous version assumed that
+  "weird" coverages were always single precision.
+
+- Fix problem with TX6/TXT object with strings > 80 chars.  String has to
+  be split in 80 chars chunks in E00.
+
+- Made lib more robust to detect corrupted or invalid files in a coverage
+  directory by checking signature and skipping invalid files.
+
+
+Version 1.1 (2000-01-10):
+-------------------------
+
+- PC Arc/Info Coverage support
+
+- Support for reading "Weird" coverages (a kind of hybrid between PC and
+  Unix V7 Coverages).
+
+
+Version 1.0 (1999-12-04):
+-------------------------
+
+- Improved parsing of integer values in E00... big numbers in INFO table
+  headers were sometimes merged and this resulted in unpredictable behavior.
+
+Version 0.6 (1999-08-26):
+-------------------------
+
+- Added AVCE00DeleteCoverage()
+
+- Fixed problem with handling of attribs of type 40 in E00 input/output
+
+- Fixed VC++ warnings
+
+- Fixed some memory leaks.
+
+- Fixed a Windows-specific bug: the arc.dir was sometimes overwritten when
+  several coverages were created by the same process... likely a buffering 
+  issue.
+
+Version 0.5 (1999-06-10):
+-------------------------
+
+- Overwrite existing arc.dir entries when necessary while creating INFO
+  tables.
+  The problem was that when same coverage name was used twice with the
+  same info directory... we ended up with 2 sets of tables with the 
+  same names.
+  This happened if a user deleted a coverage directory using "rm".
+  In this case, IMPORT71 reuses and overwrites the old table entry with 
+  the same name in the ARC.DIR... our lib now does the same.
+
+- Created NMAKE makefile.vc for Windows
+
+- Tested on Windows
+
+
+Version 0.4 (1999-05-17):
+-------------------------
+
+- Added TXT/TX6/TX7 write support.
+
+- Added RXP write support
+
+- Fixed problem with double precision RPL sections: the second PAL 
+  termination line confused the parser.
+
+- The write library now detects the E00's precision and generate
+  a coverage using that precision by default when AVCE00WriteOpen()
+  is called using AVC_DEFAULT_PREC.  (That's also the only valid
+  option.)
+
+- Added a check for maximum coverage name length (13 chars) when creating
+  a new one.  Also force name to contain only alnum() and '_'.
+
+- INFO TABLES: the name of the system attributes (COVER#/COVER-ID) are
+               now changed to the new coverage name when creating a new 
+	       info table.
+
+- Fixed problem parsing an E00 INFO table that contains 0 records
+  (yes, they exist!)
+
+
+Version 0.3 (1999-05-10):
+-------------------------
+
+- Added support to create coverages from E00 (alpha version).  Most file 
+  types are supported, but only single precision has been tested on Linux.
+  There are still a number of known problems with the write support.
+
+- Added proper support and tested with tables containing 16 bits integers
+  (type 50, size=2)
+
+- Fixed problem with 8 bytes floats in single-prec. tables, and 4 bytes
+  floats in double-precision tables.
+
+- Fixed the following problem:
+   In some cases, the "number of records" field for a table in the 
+   arc.dir does not correspond to the real number of records 
+   in the data file.  In this kind of situation, the number of
+   records returned by Arc/Info in an E00 file will be based
+   on the real data file size, and not on the value from the arc.dir.
+
+- Tested on a CPL_MSB system
+
+ 
+Version 0.2 (1999-02-24):
+-------------------------
+
+- Added support for Annotations:
+   - TXT
+   - TX6
+   - TX7 (Handled as TX6)
+
+- Added support for coverages with regions (RXP/RPL sections)
+
+- Tested with routes coverage
+
+- Added support for "par.adf": Double precision coverages have their 
+  tolerances stored in a file named "par.adf" which is different from 
+  the "tol.adf" we find in single precision coverages...
+
+- PRJ section: remove '\r' at end of lines when coverage generated on
+  DOS systems is read on Unix.
+
+- Support centroids (CNT) with more than one label attached to them.
+
+- Do not skip INFO Tables with 0 records.  Since Arc/Info exports them,
+  we should probably do it as well!
+
+- Changed AVCE00ReadOpen() so that the coverage name does not absolutely
+  have to be terminated by a "/".  Now, you can either pass the name of 
+  the coverage directory (with or without a '/' at the end), or the path
+  to one of the files in the coverage directory. 
+
+- Added extra line after the end of PAL sections in double precision
+  coverages: 
+        -1         0         0         0         0         0         0
+ 0.00000000000000E+00 0.00000000000000E+00
+  Even if I consider this second line to be a glitch, I guess I have to
+  mimic this behavior and add this extra line one as well!
+
+- Modified "avcconv" command-line program to accept an output_filename
+  as a its second argument.  Until now its output was always sent to stdout.
+
+- Updated documentation, mainly the list of error codes.
+
+
+Version 0.1 (1999-01-31):
+-------------------------
+
+First version, supports the most common file types, still several 
+know problems.
+
+
+---------
+$Id: HISTORY.TXT,v 1.32 2008/07/30 18:35:53 dmorissette Exp $

@@ -1,0 +1,29 @@
+
+OBJ	=	ogrmssqlspatialdriver.obj ogrmssqlspatialdatasource.obj ogrmssqlspatiallayer.obj ogrmssqlspatialtablelayer.obj ogrmssqlspatialselectlayer.obj ogrmssqlgeometryparser.obj ogrmssqlgeometryvalidator.obj ogrmssqlgeometrywriter.obj
+
+PLUGIN_DLL = ogr_MSSQLSpatial.dll
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. $(SQLNCLI_INCLUDE)
+
+default:	$(OBJ)
+
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(ODBCLIB) $(SQLNCLI_LIB) $(LDEBUG)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+clean:
+    -del *.lib
+	-del *.obj *.pdb *.exp
+    -del *.exe
+	-del *.dll
+	-del *.manifest
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

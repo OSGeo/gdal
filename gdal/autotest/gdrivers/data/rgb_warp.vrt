@@ -1,0 +1,44 @@
+<VRTDataset rasterXSize="50" rasterYSize="50" subClass="VRTWarpedDataset">
+  <SRS>NULL</SRS>
+  <GeoTransform>0.0,  1.0, 0.0, 50, 0, -1</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Red</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Green</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Blue</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>512</BlockXSize>
+  <BlockYSize>128</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <SourceDataset relativeToVRT="1">rgb_gcp.vrt</SourceDataset>
+    <Transformer>
+      <GenImgProjTransformer>
+        <SrcGCPTransformer>
+          <GCPTransformer>
+            <Order>1</Order>
+            <Reversed>0</Reversed>
+            <GCPList>
+              <GCP Id="1" Pixel="0.0000" Line="0.0000" X="0.000000000000E+00" Y="0.000000000000E+00"/>
+              <GCP Id="2" Pixel="0.0000" Line="50.0000" X="0.000000000000E+00" Y="5.000000000000E+01"/>
+              <GCP Id="3" Pixel="50.0000" Line="50.0000" X="5.000000000000E+01" Y="5.000000000000E+01"/>
+              <GCP Id="4" Pixel="50.0000" Line="0.0000" X="5.000000000000E+01" Y="0.000000000000E+00"/>
+            </GCPList>
+          </GCPTransformer>
+        </SrcGCPTransformer>
+        <DstGeoTransform>0.0,1,0,50,0,-1</DstGeoTransform>
+        <DstInvGeoTransform>0.0,1,0,50,0,-1</DstInvGeoTransform>
+      </GenImgProjTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1"/>
+      <BandMapping src="2" dst="2"/>
+      <BandMapping src="3" dst="3"/>
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>

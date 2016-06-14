@@ -1,0 +1,77 @@
+<html>
+<head>
+<title>DODS/OPeNDAP</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>DODS/OPeNDAP</h1>
+
+This driver implements read-only support for reading feature data from
+OPeNDAP (DODS) servers.  It is optionally included in OGR if built
+with OPeNDAP support libraries.<p>
+
+
+When opening a database, it's name should be specified in the form
+"DODS:url".  The URL may include a constraint expression a shown here.
+Note that it may be necessary to quote or otherwise protect DODS URLs on
+the commandline if they include question mark or ampersand characters
+as these often have special meaning to command shells.<p>
+
+<pre>
+DODS:http://dods.gso.uri.edu/dods-3.4/nph-dods/broad1999?&press=148
+</pre>
+
+By default top level Sequence, Grid and Array objects will be translated
+into corresponding layers.  Sequences are (by default) treated as point
+layers with the point geometries picked up from lat and lon variables if
+available.  To provide more sophisticated translation of sequence, grid or
+array items into features it is necessary to provide additional information
+to OGR as DAS (dataset auxiliary information) either from the remote server,
+or locally via the AIS mechanism.<p>
+
+A DAS definition for an OGR layer might look something like:
+
+<pre>
+Attributes {
+    ogr_layer_info {
+	string layer_name WaterQuality;
+	string spatial_ref WGS84;
+	string target_container Water_Quality;
+       	layer_extents {
+	    Float64 x_min -180;
+	    Float64 y_min -90;
+	    Float64 x_max 180;
+	    Float64 y_max 90;
+        }
+        x_field {
+            string name YR;
+	    string scope dds;
+        }
+        y_field {
+            string name JD;
+	    string scope dds;
+        }
+    }
+}
+</pre>
+
+<h2>Caveats</h2>
+
+<ul>
+
+<li> No field widths are captured for attribute fields from DODS.<p>
+
+<li> Performance for repeated requests is dramatically improved by enabling
+DODS caching.  Try setting USE_CACHE=1 in your ~/.dodsrc.
+
+</ul>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.opendap.org/">OPeNDAP</a><p>
+</ul>
+
+</body>
+</html>

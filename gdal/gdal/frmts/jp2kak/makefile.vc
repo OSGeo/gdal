@@ -1,0 +1,49 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+KAKINC = -I$(KAKSRC)/managed/all_includes \
+       -I$(KAKSRC)/apps/jp2
+OBJ_EXT =	obj
+OBJ_PREFIX =	$(KAKOBJDIR)
+OBJ_CONFIG =	release
+
+KAK_APPS_OBJ =	\
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\args.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\image_in.obj \
+	     $(OBJ_PREFIX)\expand\$(OBJ_CONFIG)\image_out.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jp2.obj \
+	     $(OBJ_PREFIX)\merge\$(OBJ_CONFIG)\mj2.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\roi_sources.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\palette.obj \
+	     $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\kdu_stripe_decompressor.obj \
+	     $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\kdu_region_decompressor.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\kdu_tiff.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jpx.obj
+
+!IFDEF KAKADU_7_5_OR_LATER
+KAK_APPS_OBJ = $(KAK_APPS_OBJ) \
+       $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\avx2_stripe_transfer.obj \
+       $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\ssse3_stripe_transfer.obj \
+       $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\ssse3_region_decompressor.obj \
+!ENDIF
+
+# TODO: add kdu_client_window.obj
+#!IFDEF KAKADU_7_7_OR_LATER
+#
+#!ENDIF
+
+OBJ	=	jp2kakdataset.obj
+EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc $(KAKFLAGS)
+
+default:	$(OBJ) kakinstall
+	xcopy /D  /Y *.obj ..\o
+
+kakinstall:
+	for %d in ( $(KAK_APPS_OBJ) ) do \
+	  xcopy /D /Y %d ..\o
+	
+clean:
+	-del *.obj
+

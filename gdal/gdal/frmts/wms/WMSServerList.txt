@@ -1,0 +1,49 @@
+TMS:
+http://maps.opengeo.org/geowebcache/service/tms/1.0.0
+http://demo.opengeo.org/geoserver/gwc/service/tms/1.0.0
+http://osm.omniscale.net/proxy/tms/1.0.0
+http://apps.esdi-humboldt.cz/mapproxy/tms/1.0.0
+http://apps.esdi-humboldt.cz/cgi-bin/tilecache/tilecache.cgi/1.0.0
+http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0
+http://www2.terriscope.fr/geocache/tms
+
+WMS-C:
+http://maps.opengeo.org/geowebcache/service/wms?SERVICE=WMS&TILED=true
+http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&TILED=true
+http://osm.omniscale.net/proxy/service?SERVICE=WMS&TILED=true
+http://apps.esdi-humboldt.cz/mapproxy/service?SERVICE=WMS&tiled=true
+http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0?SERVICE=WMS
+http://wmsc1.terrapages.net/getpngmap?SERVICE=WMS
+http://wxs.ign.fr/geoportail/wmsc?SERVICE=WMS                                                               # requires a key
+http://www2.terriscope.fr/geocache/wms?SERVICE=WMS
+
+Regular WMS:
+http://maps.opengeo.org/geowebcache/service/wms?SERVICE=WMS
+http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS
+http://osm.omniscale.net/proxy/service?SERVICE=WMS
+http://apps.esdi-humboldt.cz/mapproxy/service?SERVICE=WMS
+http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS
+http://mapserver-slp.mendelu.cz/cgi-bin/mapserv?map=/var/local/slp/krtinyWMS.map&SERVICE=WMS
+http://vmap0.tiles.osgeo.org/wms/vmap0?SERVICE=WMS
+http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi?SERVICE=WMS
+http://www.ga.gov.au/bin/getmap.pl?dataset=national&Service=WMS
+http://wms.geosignal.fr/metropole?SERVICE=WMS&FORMAT=image/png
+http://wms.lizardtech.com/lizardtech/iserv/ows?SERVICE=WMS
+http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/indexcouverture/canvec.map&SERVICE=WMS
+http://210.69.84.29:80/liteview6.5/servlet/MapGuideLiteView?SERVICE=WMS                                     # EPSG:NONE
+http://geodata.epa.gov:80/wmsconnector/com.esri.wms.Esrimap/WasteWaterImage?SERVICE=WMS                     # EPSG:NONE
+http://map.ngdc.noaa.gov:80/wmsconnector/com.esri.wms.Esrimap/basicworld?SERVICE=WMS                        # EPSG:NONE
+http://neowms.sci.gsfc.nasa.gov/wms/wms?SERVICE=WMS                                                         # SRS only defined in top layer
+http://www.cubewerx.com/demo/cubeserv/cubeserv.cgi?SERVICE=WMS
+http://www2.demis.nl/wms/wms.asp?wms=WorldMap&SERVICE=WMS
+http://iws.erdas.com/ecwp/ecw_wms.dll?service=WMS
+http://v2.suite.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS
+http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS
+http://geonames.nga.mil/names/request.asp?SERVICE=WMS
+
+WMTS:
+http://maps.opengeo.org/geowebcache/service/wmts?REQUEST=getcapabilities
+http://v2.suite.opengeo.org/geoserver/gwc/service/wmts?REQUEST=getcapabilities
+http://www.cubewerx.com/demo/cubeserv/cubeserv.cgi?SERVICE=WMTS&REQUEST=getcapabilities
+http://iws.erdas.com/ecwp/ecw_wmts.dll?service=WMTS&request=getcapabilities
+http://www2.terriscope.fr/geocache/wmts?service=WMTS&request=getcapabilities

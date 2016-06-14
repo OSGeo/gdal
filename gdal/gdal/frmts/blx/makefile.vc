@@ -1,0 +1,15 @@
+
+OBJ	=	blxdataset.obj blx.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = 	-I. -DGDALDRIVER
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

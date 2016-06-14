@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>WCS -- OGC Web Coverage Service</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WCS -- OGC Web Coverage Service</h1>
+
+The optional GDAL WCS driver allows use of a coverage in a WCS server as a
+raster dataset.  GDAL acts as a client to the WCS server.<p>
+
+Accessing a WCS server is accomplished by creating a local service description
+xml file looking something like the following, with the coverage server url,
+and the name of the coverage to access.  It is important that there be no
+spaces or other content before the <tt>&lt;WCS_GDAL&gt;</tt> element.<p>
+
+<pre>
+&lt;WCS_GDAL&gt;
+  &lt;ServiceURL&gt;http://laits.gmu.edu/cgi-bin/NWGISS/NWGISS?&lt;/ServiceURL&gt;
+  &lt;CoverageName&gt;AUTUMN.hdf&lt;/CoverageName&gt;
+&lt;/WCS_GDAL&gt;
+</pre>
+
+When first opened, GDAL will fetch the coverage description, and a small test
+image to establish details about the raster.  This information will be cached
+in the service description file to make future opens faster - no server access
+should be required till imagery is read for future opens.<p>
+
+The WCS driver should support WCS 1.0.0 and 1.1.0 servers, but WCS 0.7 servers
+are not supported.  Any return format that is a single file, and is in a format
+supported by GDAL should work.  The driver will prefer a format with "tiff"
+in the name, otherwise
+it will fallback to the first offered format.   Coordinate systems are read
+from the DescribeCoverage result, and are expected to be in the form of
+<tt>EPSG:n</tt> in the <tt>&lt;supportedCRSs&gt;</tt> element. <p>
+
+The service description file has the following additional elements as
+immediate children of the <tt>WCS_GDAL</tt> element that may be optionally
+set.<p>
+
+<ul>
+<li> <b>PreferredFormat</b>: the format to use for GetCoverage calls.<p>
+<li> <b>BandCount</b>: Number of bands in the dataset, normally captured from the sample request.
+<li> <b>BandType</b>: The pixel data type to use.  Normally established from the sample request.
+<li> <b>BlockXSize</b>: The block width to use for block cached remote access.
+<li> <b>BlockYSize</b>: The block height to use for block cached remote access.
+<li> <b>NoDataValue</b>: The nodata value to use for all the bands (blank for none).  Normally defaulted from CoverageOffering info.
+<li> <b>Timeout</b>: The timeout to use for remote service requests.  If not provided, the libcurl default is used.
+<li> <b>UserPwd</b>: May be supplied with <i>userid:password</i> to pass a
+userid and password to the remote server.
+<li> <b>HttpAuth</b>: May be BASIC, NTLM or ANY to control the authentication scheme to be used.
+<li> <b>OverviewCount</b>: The number of overviews to represent bands as having.  Defaults to a number such that the top overview is fairly smaller (less than 1K x 1K or so).
+<li> <b>GetCoverageExtra</b>: An additional set of keywords to add to GetCoverage requests in URL encoded form.  eg. "&RESAMPLE=BILINEAR&Band=1"
+<li> <b>DescribeCoverageExtra</b>: An additional set of keywords to add to DescribeCoverage requests in URL encoded form.  eg. "&CustNo=775"
+<li> <b>Version</b>:  Set a specific WCS version to use.  Currently defaults to 1.0.0 and 1.1.0 is also supported.
+<li> <b>FieldName</b>: Name of the field being accessed.  Used only with WCS 1.1.0+.  Defaults to the first field in the DescribeCoverage result.
+<li> <b>DefaultTime</b>: A timePosition to use by default when accessing
+coverages with a time dimension.  Populated with the last offered time
+position by default.
+</ul>
+
+
+<h3>Time</h3>
+
+Starting with GDAL 1.9.0, this driver includes experimental support for time based WCS 1.0.0 servers.
+On initial access the last offered time position will be identified as the
+DefaultTime.  Each time position available for the coverage will be treated
+as a subdataset. <p>
+
+Note that time based subdatasets are not supported when the service description
+is the filename.  Currently time support is not available for versions other
+than WCS 1.0.0.  <p>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.opengeospatial.org/standards/wcs">OGC WCS Standards</a>
+</ul>
+
+</body>
+</html>
