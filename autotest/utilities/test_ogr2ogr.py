@@ -170,10 +170,13 @@ def test_ogr2ogr_5():
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
+    # All 3 variants below should be equivalent
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -append tmp/poly.shp ../ogr/data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/poly.shp ../ogr/data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -update tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 40:
         return 'fail'
 
     feat10 = ds.GetLayer(0).GetFeature(10)
