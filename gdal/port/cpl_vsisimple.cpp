@@ -563,7 +563,7 @@ void *VSIMalloc( size_t nSize )
                          "\n",
                 (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*)
 #ifdef DEBUG_VSIMALLOC_STATS
-                , (GUIntBig)(nCurrentTotalAllocs + nSize),
+                , (GUIntBig)(nCurrentTotalAllocs + nSize)
 #ifdef DEBUG_BLOCK_CACHE_USE
                 , GDALGetCacheUsed64()
 #endif
