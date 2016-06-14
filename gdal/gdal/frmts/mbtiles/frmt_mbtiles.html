@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>MBTiles</title>
+</head>
+
+<body>
+
+<h1>MBTiles</h1>
+
+<p>Starting with GDAL 1.10, the MBTiles driver allows reading rasters in the MBTiles format,
+which is a specification for storing tiled map data in SQLite databases.</p>
+<p>Starting with GDAL 2.1, the MBTiles driver has creation and write support for MBTiles
+datasets.</p>
+
+<p>GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and PNG drivers.</p>
+
+<p>The SRS is always the Pseudo-Mercator (a.k.a Google Mercator) projection.</p>
+
+<p>By default, the driver will try to determine the number of bands by probing
+the content of one tile. It is possible to alter this behaviour by defining the
+MBTILES_BAND_COUNT configuration option (or starting with GDAL 2.1, the
+BAND_COUNT open option) to the number of bands. The values supported are 1, 2, 3
+or 4. Four band (Red,Green,Blue,Alpha) dataset gives the maximum compatibility
+with the various encodings of tiles that can be stored.</p>
+
+<p>The driver will use the 'bounds' metadata in the metadata table and do necessary
+tile clipping, if needed, to respect that extent. However that information being optional,
+if omitted, the driver will use the extent of the tiles at the maximum zoom level.
+The user can also specify the USE_BOUNDS=NO open option to force the use of
+the actual extent of tiles at the maximum zoom level. Or
+it can specify any of MINX/MINY/MAXX/MAXY to have a custom extent.<p>
+
+<p>The driver can retrieve pixel attributes encoded according to the UTFGrid specification
+available in some MBTiles files. They can be obtained with the gdallocationinfo utility, or
+with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
+
+<h2>Opening options</h2>
+
+Starting with GDAL 2.1, the following open options are available:
+<ul>
+<li><b>ZOOM_LEVEL</b>=value: Integer value between 0 and the maximum filled in
+the <i>tiles</i> table. By default, the driver will select the maximum
+zoom level, such as at least one tile at that zoom level is found in the raster table.</li>
+<li><b>BAND_COUNT</b>=AUTO/1/2/3/4: Number of bands of the dataset exposed after opening.
+Some conversions will be done when possible and implemented, but this might fail
+in some cases, depending on the BAND_COUNT value and the number of bands of the tile.
+Defaults to AUTO.</li>
+<li><b>MINX</b>=value: Minimum easting (in EPSG:3857) of the area of interest.</li>
+<li><b>MINY</b>=value: Minimum northing (in EPSG:3857) of the area of interest.</li>
+<li><b>MAXX</b>=value: Maximum easting (in EPSG:3857) of the area of interest.</li>
+<li><b>MAXY</b>=value: Maximum northing (in EPSG:3857) of the area of interest.</li>
+<li><b>USE_BOUNDS</b>=YES/NO: Whether to use the bounds metadata, when available, to determine the AOI. Defaults to YES.</li>
+<li><b>TILE_FORMAT</b>=PNG/PNG8/JPEG: Format used to store tiles. See
+<a href="#tile_format">Tile format</a> section. Only used in update mode. Defaults to PNG.</li>
+<li><b>QUALITY</b>=1-100: Quality setting for JPEG compression. Only used in update mode. Default to 75.</li>
+<li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Only used in update mode. Default to 6.</li>
+<li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
+Only used in update mode. Defaults to NO.</li>
+</ul>
+
+<h2>Creation issues</h2>
+
+<p>Depending of the number of bands of the input dataset and the tile format
+selected, the driver will do the necessary conversions to be compatible with the
+tile format. When using the CreateCopy() API (such as with gdal_translate),
+automatic reprojection of the input dataset to EPSG:3857 (WebMercator) will be done,
+with selection of the appropriate zoom level.</p>
+
+<p>Fully transparent tiles will not be written to the database, as allowed by
+the format.</p>
+
+<p>The driver implements the Create() and IWriteBlock() methods, so that arbitrary
+writing of raster blocks is possible, enabling the direct use of MBTiles as
+the output dataset of utilities such as gdalwarp.</p>
+
+<p>On creation, raster blocks can be written only if the geotransformation
+matrix has been set with SetGeoTransform() This is effectively needed to determine
+the zoom level of the full resolution dataset based on the pixel resolution, dataset
+and tile dimensions.</p>
+
+<p>Technical/implementation note: in the general case, GDAL blocks
+do not exactly match a single MBTiles tile. In which case, each GDAL
+block will overlap four MBTiles tiles. This is easily handled on the read side,
+but on creation/update side, such configuration could cause numerous decompression/
+recompression of tiles to be done, which might cause unnecessary quality loss when using
+lossy compression (JPEG). To avoid that, the driver will create a temporary
+database next to the main MBTiles file to store partial MBTiles tiles in a
+lossless (and uncompressed) way. Once a tile has received data for its four quadrants
+and for all the bands (or the dataset is closed or explicitly flushed with FlushCache()),
+those uncompressed tiles are definitely transferred to the MBTiles file with
+the appropriate compression. All of this is transparent to the user of GDAL API/utilities</p>
+
+<h3><a id="tile_formats">Tile formats</a></h3>
+
+<p>MBTiles can store tiles in PNG or JPEG. Support for those tile formats
+depend if the underlying drivers are available in GDAL. By default, GDAL will PNG
+tiles.</p>
+
+<p>It is possible to select the tile format by setting the creation/open
+option TILE_FORMAT to one of PNG, PNG8 or JPEG. When using JPEG, the alpha channel
+will not be stored.</p>
+
+<p>PNG8 can be selected to use 8-bit PNG with a color table up to 256 colors.
+On creation, an optimized color table is computed for each tile. The DITHER
+option can be set to YES to use Floyd/Steinberg dithering algorithm, which
+spreads the quantization error on neighbouring pixels for better rendering (note
+however than when zooming in, this can cause non desirable visual artifacts).
+Setting it to YES will generally cause less effective compression.
+Note that at that time, such an 8-bit PNG formulation is only used for fully opaque tiles,
+as the median-cut algorithm currently implemented to compute the optimal color
+table does not support alpha channel (even if PNG8 format would potentially allow
+color table with transparency). So when selecting PNG8, non fully opaque tiles
+will be stored as 32-bit PNG.</p>
+
+<h3>Creation options</h3>
+
+<p>The following creation options are available:</p>
+
+<ul>
+<li><b>NAME</b>=string. Tileset name, used to set the 'name' metadata item.
+If not specified, the basename of the filename will be used.</li>
+<li><b>DESCRIPTION</b>=string. A description of the layer, used to set the 'description' metadata item.
+If not specified, the basename of the filename will be used.</li>
+<li><b>TYPE</b>=overlay/baselayer. The layer type, used to set the 'type' metadata
+item. Default to 'overlay'.</li>
+<li><b>VERSION</b>=string. The version of the tileset, as a plain number, used
+to set the 'version' metadata item. Default to '1.1'.</li>
+<li><b>TILE_FORMAT</b>=PNG/PNG8/JPEG: Format used to store tiles. See
+<a href="#tile_formats">Tile formats</a> section. Defaults to PNG.</li>
+<li><b>QUALITY</b>=1-100: Quality setting for JPEG compression. Default to 75.</li>
+<li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Default to 6.</li>
+<li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
+Defaults to NO.</li>
+<li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
+LOWER will select the
+zoom level immediately below the theoretical computed non-integral zoom level,
+leading to subsampling. On the contrary, UPPER will select the immediately above
+zoom level, leading to oversampling. Defaults to AUTO which selects the closest
+zoom level.</li>
+<li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
+Resampling algorithm. Defaults to BILINEAR.</li>
+<li><b>WRITE_BOUNDS</b>=YES/NO: Whether to write the bounds 'metadata' item.
+Defaults to YES.</li>
+</ul>
+
+<h2>Overviews</h2>
+
+<p>gdaladdo / BuildOverviews() can be used to compute overviews. Only power-of-two
+overview factors (2,4,8,16,...) are supported.</p>
+
+<p>If more overview levels are specified than available, the extra ones are silently
+ignored.</p>
+
+<p>Overviews can also be cleared with the -clean option of gdaladdo (or
+BuildOverviews() with nOverviews=0)</p>
+
+<h2>Examples:</h2>
+
+<ul>
+
+<li>Accessing a remote MBTiles raster :
+<pre>
+$ gdalinfo /vsicurl/http://a.tiles.mapbox.com/v3/kkaefer.iceland.mbtiles
+</pre>
+Output:
+<pre>
+Driver: MBTiles/MBTiles
+Files: /vsicurl/http://a.tiles.mapbox.com/v3/kkaefer.iceland.mbtiles
+Size is 16384, 16384
+Coordinate System is:
+PROJCS["WGS 84 / Pseudo-Mercator",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"],
+    AUTHORITY["EPSG","3857"]]
+Origin = (-3757031.250000000000000,11271093.750000000000000)
+Pixel Size = (152.873992919921875,-152.873992919921875)
+Image Structure Metadata:
+  INTERLEAVE=PIXEL
+Corner Coordinates:
+Upper Left  (-3757031.250,11271093.750) ( 33d44'59.95"W, 70d36'45.36"N)
+Lower Left  (-3757031.250, 8766406.250) ( 33d44'59.95"W, 61d36'22.97"N)
+Upper Right (-1252343.750,11271093.750) ( 11d14'59.98"W, 70d36'45.36"N)
+Lower Right (-1252343.750, 8766406.250) ( 11d14'59.98"W, 61d36'22.97"N)
+Center      (-2504687.500,10018750.000) ( 22d29'59.97"W, 66d30'47.68"N)
+Band 1 Block=256x256 Type=Byte, ColorInterp=Red
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 2 Block=256x256 Type=Byte, ColorInterp=Green
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 3 Block=256x256 Type=Byte, ColorInterp=Blue
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 4 Block=256x256 Type=Byte, ColorInterp=Alpha
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+</pre>
+</li>
+
+<li>Reading pixel attributes encoded according to the UTFGrid specification :
+<pre>
+$ gdallocationinfo /vsicurl/http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles -wgs84 2 49 -b 1 -xml
+</pre>
+Output:
+<pre>
+&lt;Report pixel="33132" line="22506"&gt;
+  &lt;BandReport band="1"&gt;
+    &lt;LocationInfo&gt;
+      &lt;Key&gt;74&lt;/Key&gt;
+      &lt;JSon&gt;{"admin":"France","flag_png":"iVBORw0KGgoAAAANSUhEUgAAAGQAAABDEAIAAAC1uevOAAAACXBIWXMAAABIAAAASABGyWs+AAAABmJLR0T///////8JWPfcAAABPklEQVR42u3cMRLBQBSA4Zc9CgqcALXC4bThBA5gNFyFM+wBVNFqjYTszpfi1Sm++bOv2ETEdNK2pc/T9ny977rCn+fx8rjtc7dMmybnxXy9KncGWGCBBRZYYIEFFlhggQUWWGCBBRZYYIE1/GzSLB0CLLAUCyywwAILLLDAAgsssGyFlcAqnJRiKRZYYIEFFlhggQUWWGDZCsFSLLDAAgsssP4DazQowVIssMACy1ZYG6wP30qxwFIssMACCyywwOr/HAYWWIplKwQLLLDAAgssZyywwAILLLDAqh6We4VgKZatECywFAsssMACCyywwAILLLBshWCBpVhggQUWWGCBBRZYYIFlKwQLLMUCCyywwAILLLBG+T8ZsMBSLFshWIoFFlhg/fp8BhZYigUWWGB9C+t9ggUWWGD5FA44XxBz7mcwZM9VAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDExLTA5LTAyVDIzOjI5OjIxLTA0OjAwcQbBWgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxMS0wMi0yOFQyMTo0ODozMS0wNTowMJkeu+wAAABSdEVYdHN2ZzpiYXNlLXVyaQBmaWxlOi8vL2hvbWUvYWovQ29kZS90bS1tYXN0ZXIvZXhhbXBsZXMvZ2VvZ3JhcGh5LWNsYXNzL2ZsYWdzL0ZSQS5zdmen2JoeAAAAAElFTkSuQmCC"}&lt;/JSon&gt;
+    &lt;/LocationInfo&gt;
+    &lt;Value&gt;238&lt;/Value&gt;
+  &lt;/BandReport&gt;
+&lt;/Report&gt;
+</pre>
+</li>
+
+<li>Converting a dataset to MBTiles and adding overviews :
+<pre>
+$ gdal_translate my_dataset.tif my_dataset.mbtiles -of MBTILES
+$ gdaladdo -r average my_dataset.mbtiles 2 4 8 16
+</pre>
+</li>
+
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="https://github.com/mapbox/mbtiles-spec">MBTiles specification</a></li>
+<li><a href="https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md">UTFGrid specification</a></li>
+</ul>
+
+</body>
+</html>

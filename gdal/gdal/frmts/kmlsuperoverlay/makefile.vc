@@ -1,0 +1,20 @@
+OBJ		=	kmlsuperoverlaydataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+all:	default 
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.pdb
+	-del *.ilk
+

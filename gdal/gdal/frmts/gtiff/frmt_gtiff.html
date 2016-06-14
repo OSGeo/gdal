@@ -1,0 +1,450 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang=en>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>GTiff -- GeoTIFF File Format</title>
+</head>
+
+<body>
+
+<h1>GTiff -- GeoTIFF File Format</h1>
+
+<p>Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
+somewhat less varieties can be written.</p>
+
+<p>When built with internal libtiff or with libtiff >= 4.0, GDAL also supports
+reading and writing BigTIFF files (evolution of the TIFF format to support files
+larger than 4 GB).</p>
+
+<p>Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64,
+CInt16, CInt32, CFloat32 and CFloat64 are supported for
+reading and writing.
+Paletted images will return palette information associated with
+the band.  The compression formats listed below should be supported for
+reading as well. </p>
+
+<p>As well, one bit files, and some other unusual formulations of GeoTIFF file,
+such as YCbCr color model files, are automatically translated into RGBA
+(red, green, blue, alpha) form, and treated as four eight bit bands. </p>
+
+<h2>Georeferencing</h2>
+
+<p>Most GeoTIFF projections should be supported, with the caveat that in order
+to translate uncommon Projected, and Geographic coordinate systems into
+OGC WKT it is necessary to have the EPSG .csv files available.  They must
+be found at the location pointed to by the GEOTIFF_CSV environment variable.
+</p>
+
+<p>Georeferencing from GeoTIFF is supported in the form of one tiepoint and
+pixel size, a transformation matrix, or a list of GCPs.</p>
+
+<p>If no georeferencing
+information is available in the TIFF file itself, GDAL will also check for,
+and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
+extension .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file.</p>
+
+<p>GDAL can read and write the <i>RPCCoefficientTag</i> as described in the <a href="http://geotiff.maptools.org/rpc_prop.html">
+RPCs in GeoTIFF</a> proposed extension. The tag is written only for
+files created with the default profile GDALGeoTIFF. For other profiles, a .RPB file
+is created. In GDAL data model, the RPC coefficients are stored into the RPC metadata domain.
+For more details, see the <a href="http://trac.osgeo.org/gdal/wiki/rfc22_rpc">RPC Georeferencing RFC</a>.
+If .RPB or _RPC.TXT files are found, they will be used to read the RPCs, even if the <i>RPCCoefficientTag</i> tag is set.
+</p>
+
+<h2><a name="internal_mask">Internal nodata masks</a></h2>
+
+<p>(from GDAL 1.6.0)</p>
+
+<p>TIFF files can contain internal transparency masks. The GeoTIFF driver
+recognizes an internal directory as being a transparency mask when the
+FILETYPE_MASK bit value is set on the TIFFTAG_SUBFILETYPE tag.
+According to the TIFF specification, such internal transparency masks
+contain 1 sample of 1-bit data. Although the TIFF specification allows
+for higher resolutions for the internal transparency mask, the GeoTIFF
+driver only supports internal transparency masks of the same dimensions
+as the main image. Transparency masks of internal overviews are also
+supported.</p>
+
+<p>When the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES and
+the GeoTIFF file is opened in update mode, the CreateMaskBand() method
+on a TIFF dataset or rasterband will create an internal transparency mask.
+Otherwise, the default behaviour of nodata mask creation will be used,
+that is to say the creation of a .msk file, as per
+<a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a></p>
+
+<p>Starting with GDAL 1.8.0, 1-bit internal mask band are deflate compressed.
+When reading them back, to make conversion between mask band and alpha band easier,
+mask bands are exposed to the user as being promoted to full 8 bits (i.e. the
+value for unmasked pixels is 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
+configuration option is set to NO. This does not affect the way the mask band is
+written (it is always 1-bit).</p>
+
+<h2><a name="overviews">Overviews</a></h2>
+
+<p>The GeoTIFF driver supports reading, creation and update of internal overviews.
+Internal overviews can be created on GeoTIFF files opened in update mode
+(with gdaladdo for instance). If the GeoTIFF file is opened as read only,
+the creation of overviews will be done in an external .ovr file.
+Overview are only updated on request with the BuildOverviews() method.</p>
+
+<p>(From GDAL 1.6.0) If a GeoTIFF file has a transparency mask and the GDAL_TIFF_INTERNAL_MASK
+environment variable is set to YES and the GeoTIFF file is opened in update mode,
+BuildOverviews() will automatically create overviews for the internal transparency mask.
+These overviews will be refreshed by further calls to BuildOverviews() even if
+GDAL_TIFF_INTERNAL_MASK is not set to YES.</p>
+
+<p>(From GDAL 1.8.0) The block size (tile width and height) used for overviews
+(internal or external) can be specified by setting the GDAL_TIFF_OVR_BLOCKSIZE
+environment variable to a power-of-two value between 64 and 4096. The default value is 128.</p>
+
+<h2>Metadata</h2>
+
+<p>GDAL can deal with the following baseline TIFF tags as dataset-level metadata :</p>
+<ul>
+<li>TIFFTAG_DOCUMENTNAME</li>
+<li>TIFFTAG_IMAGEDESCRIPTION</li>
+<li>TIFFTAG_SOFTWARE</li>
+<li>TIFFTAG_DATETIME</li>
+<li>TIFFTAG_ARTIST</li>
+<li>TIFFTAG_HOSTCOMPUTER</li>
+<li>TIFFTAG_COPYRIGHT</li>
+<li>TIFFTAG_XRESOLUTION</li>
+<li>TIFFTAG_YRESOLUTION</li>
+<li>TIFFTAG_RESOLUTIONUNIT</li>
+<li>TIFFTAG_MINSAMPLEVALUE (read only)</li>
+<li>TIFFTAG_MAXSAMPLEVALUE (read only)</li>
+</ul>
+
+<p>The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).</p>
+
+<p>Other non standard metadata items can be stored in a TIFF file created with the profile GDALGeoTIFF
+(the default, see below in the Creation issues section). Those metadata items are grouped together
+into a XML string stored in the non standard TIFFTAG_GDAL_METADATA ASCII tag (code 42112). When BASELINE
+or GeoTIFF profile are used, those non standard metadata items are stored into a PAM .aux.xml file.</p>
+
+<p>The value of GDALMD_AREA_OR_POINT ("AREA_OR_POINT") metadata item is stored in the GeoTIFF key
+RasterPixelIsPoint for GDALGeoTIFF or GeoTIFF profiles.</p>
+
+<p>Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
+stored as XML raw content in the xml:XMP metadata domain.</p>
+
+<p>Starting with GDAL 1.10, EXIF metadata can be extracted from the file, and will be
+stored the EXIF metadata domain.</p>
+
+<h2>Color Profile Metadata</h2>
+
+<p>Starting with GDAL 1.11, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
+<ul>
+<li>SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If available, other tags are ignored.)</li>
+<li>SOURCE_PRIMARIES_RED (xyY in "x,y,1" format for red primary.)</li>
+<li>SOURCE_PRIMARIES_GREEN (xyY in "x,y,1" format for green primary)</li>
+<li>SOURCE_PRIMARIES_BLUE (xyY in "x,y,1" format for blue primary)</li>
+<li>SOURCE_WHITEPOINT (xyY in "x,y,1" format for whitepoint)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_RED (Red table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_GREEN (Green table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_BLUE (Blue table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERRANGE_BLACK (Min range of TIFFTAG_TRANSFERRANGE)</li>
+<li>TIFFTAG_TRANSFERRANGE_WHITE (Max range of TIFFTAG_TRANSFERRANGE)</li>
+</ul>
+
+<p>Note that these metadata properties can only be used on the original raw pixel data. If automatic conversion to RGB has been done, the color profile information cannot be used.</p>
+
+<p>All these metadata tags can be overridden and/or used as creation options.</p>
+
+<h2>Nodata value</h2>
+
+<p>GDAL stores band nodata value in the non standard TIFFTAG_GDAL_NODATA ASCII tag (code 42113) for
+files created with the default profile GDALGeoTIFF. Note that all bands must use the same nodata value.
+When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM .aux.xml file.</p>
+
+<h2>Open options</h2>
+
+<ul>
+
+<li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
+ignored for JPEG.  Default is compression in the main thread.</p></li>
+
+</ul>
+
+<h2>Creation Issues</h2>
+
+<p>GeoTIFF files can be created with any GDAL defined band type, including
+the complex types.  Created files may have any number of bands.  Files
+with exactly 3 bands will be
+given a photometric interpretation of RGB, files with exactly four bands
+will have a photometric interpretation of RGBA, while all other combinations
+will have a photometric interpretation of MIN_IS_WHITE.  Files with
+pseudo-color tables, or GCPs can currently only be created when creating from
+an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).</p>
+
+<p>Note that the GeoTIFF format does not support parametric description of datums,
+so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
+
+<h3>Creation Options</h3>
+
+<ul>
+
+<li><p><b>TFW=YES</b>: Force the generation of an associated ESRI world
+file (.tfw).See a <a href="frmt_various.html#WLD">World Files</a> section
+for details.</p></li>
+
+<li><p><b>RPB=YES</b>: Force the generation of an associated .RPB file to
+describe RPC (Rational Polynomial Coefficients), if RPC information is available.
+If not specified, this file is automatically generated if there's RPC information
+and that the PROFILE is not the default GDALGeoTIFF.</p></li>
+
+<li><p><b>RPCTXT=YES</b>: (GDAL &gt;=2.0) Force the generation of an associated
+_RPC.TXT file to describe RPC (Rational Polynomial Coefficients),
+if RPC information is available.</p></li>
+
+<li><p><b>INTERLEAVE=[BAND,PIXEL]</b>: By default TIFF files with pixel
+interleaving (PLANARCONFIG_CONTIG in TIFF terminology) are created.  These
+are slightly less efficient than BAND interleaving for some purposes, but
+some applications only support pixel interleaved TIFF files.</p></li>
+
+<li><p><b>TILED=YES</b>: By default stripped TIFF files are created.  This
+option can be used to force creation of tiled TIFF files.</p></li>
+
+<li><p><b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.</p></li>
+
+<li><p><b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
+256, strip height defaults to a value such that one strip is 8K or less. </p></li>
+
+<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
+
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
+Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
+But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
+it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
+See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.
+The CCITT compression should only be used with 1bit (NBITS=1) data.
+LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
+None is the default.</p></li>
+
+<li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth for slow compressions such as DEFLATE or LZMA. Will be ignored for JPEG.
+Default is compression in the main thread.</p></li>
+
+<li><p><b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW or DEFLATE compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.</p></li>
+
+<li><p><b>DISCARD_LSB=nbits or nbits_band1,nbits_band2,...nbits_bandN</b>: (GDAL &gt;= 2.0)
+Set the number of least-significant bits to clear, possibly different per band.
+Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compression.</p></li>
+
+<li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.</p></li>
+
+<li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
+
+<li><p><b>JPEGTABLESMODE=0/1/2/3</b>:  (From GDAL 2.0) Configure how and where JPEG quantization and Huffman tables are written in the TIFF JpegTables tag and strip/tile. Default to 1.</p>
+<ul>
+<li>0: JpegTables is not written. Each strip/tile contains its own quantization tables and use optimized Huffman coding.</li>
+<li>1: JpegTables is written with only the quantization tables. Each strip/tile refers to those quantized tables and use optimized Huffman coding.
+This is generally the optimal choice for smallest file size, and consequently is the default.</li>
+<li>2: JpegTables is written with only the default Huffman tables. Each strip/tile refers to those Huffman tables
+    (thus no optimized Huffman coding) and contains its own quantization tables (identical). This option has no anticipated practical value.</li>
+<li>3: JpegTables is written with the quantization and default Huffman tables. Each strip/tile refers to those tables
+    (thus no optimized Huffman coding). This option could perhaps with some data be more efficient than 1, but this should only occur in rare circumstances.</li>
+</ul>
+</li>
+
+<li><p><b>ZLEVEL=[1-9]</b>:  Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 6.</p></li>
+
+<li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
+Set the photometric interpretation tag. Default is MINISBLACK, but if the
+input image has 3 or 4 bands of Byte type, then RGB will be selected. You can
+override default photometric using this option.</p></li>
+
+<li><p><b>ALPHA=[YES/NON-PREMULTIPLIED/PREMULTIPLIED/UNSPECIFIED]</b>:
+The first "extrasample" is marked as being alpha if
+there are any extra samples.  This is necessary if you want to produce
+a greyscale TIFF file with an alpha band (for instance).
+For GDAL &lt; 1.10, only the YES value is supported, and it is then assumed as being PREMULTIPLIED alpha
+(ASSOCALPHA in TIFF). Starting with GDAL 1.10, YES is an alias for NON-PREMULTIPLIED alpha, and
+the other values can be used.</p></li>
+
+<li><p><b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
+tags are emitted by GDAL.</p>
+<ul>
+<li>With <tt>GDALGeoTIFF</tt> (the default) various GDAL custom tags may be written.</li>
+<li>With <tt>GeoTIFF</tt> only GeoTIFF tags will be added to the baseline.</li>
+<li>With <tt>BASELINE</tt> no GDAL or GeoTIFF tags will be written.  BASELINE is occasionally useful when writing files to
+be read by applications intolerant of unrecognized tags.</li>
+</ul>
+</li>
+
+<li><p><b>BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER</b>: Control whether the created file is a BigTIFF or a classic TIFF.</p>
+<ul>
+<li>YES forces BigTIFF.</li>
+<li>NO forces classic TIFF.</li>
+<li>IF_NEEDED will only create a BigTIFF if it is clearly needed (in the uncompressed case, and image larger than 4GB. So no effect when using a compression).</li>
+<li>IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB. Note: this is only a heuristics that might not always work depending on compression ratios.</li>
+</ul>
+<p>BigTIFF is a TIFF variant which can contain more than 4GiB of data (size of classic TIFF is limited by that value). This option is available if GDAL is built with libtiff library version 4.0 or higher (which is the case of the internal libtiff version from GDAL >= 1.5.0).  The default is IF_NEEDED. (IF_NEEDED and IF_SAFER are available from GDAL 1.6.0).</p>
+<p>When creating a new GeoTIFF with no compression, GDAL computes in advance the
+size of the resulting file. If that computed file size is over 4GiB, GDAL will automatically
+decide to create a BigTIFF file. However, when compression is used, it is not possible in
+advance to known the final size of the file, so classical TIFF will be chosen. In
+that case, the user must explicitly require the creation of a BigTIFF with BIGTIFF=YES
+if the final file is anticipated to be too big for classical TIFF format.
+If BigTIFF creation is not explicitly asked or guessed and the resulting file is too big for classical TIFF,
+libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".</p></li>
+
+<li><p><b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a
+new Byte file can be forced to be written as signed byte.</p></li>
+
+<!-- Commented for the moment. Not sure we want to advertize that
+<li> <b>ENDIANNESS=[NATIVE/INVERTED/LITTLE/BIG]</b>: Set the endianness of the
+TIFF file. By default, the native endianness of the host running GDAL will be
+used. Primarily intended for debugging & test purposes</p>
+-->
+
+<li><p><b>COPY_SRC_OVERVIEWS=[YES/NO]</b>: (GDAL >= 1.8.0, CreateCopy() only) By setting this to YES (default is NO), the potential existing overviews
+of the source dataset will be copied to the target dataset without being recomputed. If overviews of mask band
+also exist, provided that the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES, they will also be copied.
+Note that this creation option will have <a href="http://trac.osgeo.org/gdal/ticket/3917">no effect</a> if general options
+(i.e. options which are not creation options) of gdal_translate are used.</p></li>
+
+<li><p><b>GEOTIFF_KEYS_FLAVOR=[STANDARD/ESRI_PE]</b>: (GDAL &gt;= 2.1.0) Determine
+which "flavor" of GeoTIFF keys must be used to write the SRS information. The STANDARD
+way (default choice) will use the general accepted formulations of GeoTIFF keys, including
+extensions of the values accepted for ProjectedCSTypeGeoKey to new EPSG codes.
+The ESRI_PE flavor will write formulations that are (more) compatible of ArcGIS. At the time
+of writing, the ESRI_PE choice has mostly an effect when writing the EPSG:3857 (Web Mercator)
+SRS. For other SRS, the standard way will be used, with the addition of a ESRI_PE WKT
+string as the value of PCSCitationGeoKey.</p></li>
+
+</ul>
+
+<h3>About JPEG compression of RGB images </h3>
+
+<p>When translating a RGB image to JPEG-In-TIFF, using PHOTOMETRIC=YCBCR can make the size
+of the image typically 2 to 3 times smaller than the default photometric value (RGB).
+When using PHOTOMETRIC=YCBCR, the INTERLEAVE option must be kept to its default value (PIXEL),
+otherwise libtiff will fail to compress the data.</p>
+<p>
+Note also that the dimensions of the tiles or strips must be a multiple of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR</p>
+
+<h3>Streaming operations</h3>
+
+Starting with GDAL 2.0, the GeoTIFF driver can support reading or writing TIFF
+files (with some restrictions detailed below) in a streaming compatible way.<p>
+
+When reading a file from /vsistdin/, a named pipe (on Unix), or if forcing streamed
+reading by setting the TIFF_READ_STREAMING configuration option to YES, the GeoTIFF driver
+will assume that the TIFF Image File Directory (IFD) is at the beginning of the file,
+i.e. at offset 8 for a classical TIFF file or at offset 16 for a BigTIFF file.
+The values of the tags of array type must be contained at the beginning of file, after the
+end of the IFD and before the first image strip/tile. The reader must read the
+strips/tiles in the order they are written in the file. For a pixel interleaved file (PlanarConfiguration=Contig),
+the recommended order for a writer, and thus for a reader, is from top to bottom
+for a strip-organized file or from top to bottom, which a chunk of a block height,
+and left to right for a tile-organized file. For a band organized file (PlanarConfiguration=Separate),
+the above order is recommended with the content of the first band, then the
+content of the second band, etc... Technically this order corresponds to increasing
+offsets in the TileOffsets/StripOffsets tag. This is the order that the GDAL raster
+copy routine will assume.
+<p>
+If the order is not the one described above, the UNORDERED_BLOCKS=YES dataset metadata item
+will be set in the TIFF metadata domain. Each block offset can be determined
+by querying the "BLOCK_OFFSET_[xblock]_[yblock]" band metadata items in the TIFF metadata
+domain (where xblock, yblock is the coordinate of the block), and a reader could use
+that information to determine the appropriate reading order for image blocks.
+<p>
+The files that are streamed into the GeoTIFF driver may be compressed, even if the
+GeoTIFF driver cannot produce such files in streamable output mode (regular creation
+of TIFF files will produce such compatible files for streamed reading).
+<p>
+When writing a file to /vsistdout/, a named pipe (on Unix), or when definiting
+the STREAMABLE_OUTPUT=YES creation option, the CreateCopy() method of the GeoTIFF driver
+will generate a file with the above defined constraints (related to position of IFD and
+block order), and this
+is only supported for a uncompressed file. The Create() method also supports creating streamable
+compatible files, but the writer must be careful to set the projection, geotransform
+or metadata before writing image blocks (so that the IFD is written at the beginning
+of the file). And when writing image blocks, the order
+of blocks must be the one of the above paragraph, otherwise errors will be reported.
+
+<p>
+Some examples :
+<pre>
+gdal_translate in.tif /vsistdout/ -co TILED=YES | gzip | gunzip | gdal_translate /vsistdin/ out.tif -co TILED=YES -co COMPRESS=DEFLATE
+</pre>
+or
+<pre>
+mkfifo my_fifo
+gdalwarp in.tif my_fifo -t_srs EPSG:3857
+gdal_translate my_fifo out.png -of PNG
+</pre>
+
+<p>
+Note: not all utilities are compatible with such input or output streaming operations,
+and even those which may deal with such files may not manage to deal with them in
+all circumstances, for example if the reading driver driven by the output file is
+not compatible with the block order of the streamed input.
+
+<h3>Configuration options</h3>
+
+<p>
+
+This paragraph lists the configuration options that can be set to alter the default behaviour of the GTiff driver.
+
+<ul>
+<!-- debug/autotest option : GTIFF_DONT_WRITE_BLOCKS -->
+<li>GTIFF_IGNORE_READ_ERRORS : (GDAL >= 1.9.0) Can be set to TRUE to avoid turning libtiff errors into GDAL errors.
+Can help reading partially corrupted TIFF files</li>
+<li>ESRI_XML_PAM: Can be set to TRUE to force metadata in the xml:ESRI domain to be written to PAM.</li>
+<li>JPEG_QUALITY_OVERVIEW: Integer between 0 and 100. Default value : 75. Quality of JPEG compressed overviews, either internal or external.</li>
+<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : FALSE.</li>
+<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : TRUE</li>
+<li>USE_RRD: Can be set to TRUE to force external overviews in the RRD format. Default value : FALSE</li>
+<li>TIFF_USE_OVR: Can be set to TRUE to force external overviews in the GeoTIFF (.ovr) format. Default value : FALSE</li>
+<li>GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the behaviour of GDAL &lt; 1.8.0
+regarding how PixelIsPoint is interpreted w.r.t geotransform. See <a href="http://trac.osgeo.org/gdal/wiki/rfc33_gtiff_pixelispoint">
+RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default value : FALSE</li>
+<li>GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid stripping the vertical CS of compound CS. Default value : FALSE</li>
+<li>GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid all-in-one-strip files being presented as having. Default value : TRUE</li>
+<!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
+<!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
+<!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
+<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
+<li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that
+have false easting/northing improperly set in meters when it ought to be in
+coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>).
+<li>TAB_APPROX_GEOTRANSFORM=YES/NO: (GDAL &gt;= 2.0) To decide if an approximate geotransform is acceptable when reading a .tab file. Default value: NO
+<li>GTIFF_DIRECT_IO=YES/NO: (GDAL &gt;= 2.0) Can be set to YES to use specialized
+RasterIO() implementations when reading un-compressed TIFF files (un-tiled only
+in GDAL 2.0, both un-tiled and tiled in GDAL 2.1) to
+avoid using the block cache. Setting it to YES even when the optimized cases do
+not apply should be safe (generic implementation will be used). Default value:NO
+<li>GTIFF_VIRTUAL_MEM_IO=YES/NO/IF_ENOUGH_RAM: (GDAL &gt;= 2.0) Can be set to YES
+to use specialized RasterIO() implementations when reading un-compressed TIFF
+files to avoid using the block cache.
+This implementation relies on memory-mapped file I/O,
+and is currently only supported on Linux (64-bit build strongly recommended) or,
+starting with GDAL 2.1, on other POSIX-like systems.
+Setting it to YES even when the optimized cases do not apply should be safe
+(generic implementation will be used), but if the file exceeds RAM, disk swapping
+might occur if the whole file is read. Setting it to IF_ENOUGH_RAM will first
+check if the uncompressed file size is no bigger than the physical memory. Default value:NO.
+If both GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is used
+in priority, and if not possible, the later is tried.
+</ul>
+</p>
+
+<hr>
+
+<p>See Also:</p>
+
+<ul>
+<li> <a href="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF Information Page</a></li>
+<li> <a href="http://www.remotesensing.org/libtiff/">libtiff Page</a></li>
+<li> <a href="http://www.awaresystems.be/imaging/tiff/bigtiff.html">
+        Details on BigTIFF file format</a></li>
+
+</ul>
+
+</body>
+</html>

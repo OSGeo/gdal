@@ -1,0 +1,272 @@
+	Notes on Preparing a GDAL Source Release
+	========================================
+
+
+Prerequisites:
+
+1) Check that the release is ready to go as far as ABI (binary compatibility)
+   is concerned. This can be checked by comparing the installed headers of the
+   candidate release with the installed headers of the previous release 
+   (diff -ur $(OLD_INSTALL_DIR)/include $(NEW_INSTALL_DIR)/include). The API
+   is defined as all functions and classes exported by the CPL_DLL keyword.
+
+  - For major and minor releases, there must be no function signature change
+    for the C API. Only new functions are allowed.
+
+  - For major releases, the allowed changes in C++ API should (or must?) be 
+    such that user calling C++ code can still compile against new headers 
+    without modification (existing methods can become virtual, default 
+    arguments can be added, new methods or members can be added)
+
+  - For minor releases (1.6.1 versus 1.6.0), the C++ ABI stability must be
+    preserved : no method signature change, no addition of virtual methods, no
+    new members. Only non-virtual methods can be added.
+
+    It may also be helpful to check:
+      http://upstream-tracker.org/versions/gdal.html
+
+2) Delete existing fix_typos directory and run scripts/fix_typos.sh
+
+Process :
+
+1) a) Regenerate configure using autogen.sh and commit if changed.
+   b) Regenerate swig generated files for python bindings and commit if changed.
+
+   There is often a reference system on which this should be done (i.e. Frank's
+   dev workstation) to avoid unnecessary churn from different autoconf or swig
+   versions.
+
+   c) "cd scripts; make completion" to regenerate scripts/gdal-bash-completion.sh
+      if new command line switches have been added. scripts/completionFinder.py
+      must also be edited before if new utilities/scripts are added/removed.
+
+2) Update the release date, and number information in gcore/gdal_version.h.
+
+3) Update the VERSION file. 
+
+3.1) Update ./swig/python/setup.py version information.
+     And the version of libgdal in ./swig/python/README.txt
+
+3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
+strings to current version. Update also $VERSION in
+./swig/include/perl/ogr_perl.i to the same as the other $VERSION. Kick
+Perl module maintainer to make a CPAN release.
+
+3.3) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
+
+4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
+   - For a release with no interface changes just bump REVISION. 
+   - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
+   - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
+
+5) Prepare release overview in the NEWS file.  The Trac revision log for
+   trunk or the stable branch can be helpful.
+
+    http://trac.osgeo.org/gdal/log/branches/1.4
+
+  - commit new version to NEWS file.
+
+6) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to 
+   refer to the latest available source. 
+   Update http://trac.osgeo.org/gdal/wiki (Releases section)
+   Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
+
+7) If this is a major release, prepare a branch. 
+
+   svn copy https://svn.osgeo.org/gdal/trunk \
+            https://svn.osgeo.org/gdal/branches/1.5
+
+8) Tag the release set in SVN: 
+
+   svn copy https://svn.osgeo.org/gdal/branches/1.4 \
+            https://svn.osgeo.org/gdal/tags/1.4.1
+
+9) Create the source distributions using the mkgdaldist.sh script.  The
+   argument should be the version number (i.e. 1.4.2). As our process involves
+   doing betas or RCs, use the -rc option so that the filenames include this
+   information (after promotion to official release, filename renaming will have
+   to be done)
+
+   % mkgdaldist.sh 1.4.2 -branch tags/1.4.2 -rc RC1
+
+10) Create a snapshot of the documentation.
+
+ i.e. On www.gdal.org:
+ % cd /osgeo/gdal
+ % ./gdal-web-refresh.sh
+ % zip -r gdal180doc.zip gdal-web/*.* gdal-web/ogr gdal-web/java 
+
+11) Create a snapshot of autotest suite:
+
+  svn export http://svn.osgeo.org/gdal/branches/1.6/autotest gdalautotest-1.6.0
+  tar czvf gdalautotest-1.6.0.tar.gz gdalautotest-1.6.0
+  zip -r gdalautotest-1.6.0.zip gdalautotest-1.6.0
+
+11.5) If changes have been made in the frmts/grass or ogr/ogrsf_frmts/grass dir,
+      generate an up-to-date gdal-grass snapshot (let's not forget do it for GDAL 1.7.0 !):
+
+  % cd frmts/grass
+  % make dist
+
+12) Publish the resulting files in download.osgeo.org/gdal/X.Y.Z (where X.Y.Z is the version number)
+    and add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
+
+  % ln -sf X.Y.Z CURRENT
+
+13) Announce release to :
+    - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org. 
+    - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
+
+14) Update the freecode.com (previously freshmeat) entry for GDAL.
+
+15) Update the freegis.org entry for GDAL.
+
+16) Update doc/index.dox to advertize the new release and link to the release notes
+
+17) Create a News page in Trac for the release (like 
+http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News) and reference it from
+http://trac.osgeo.org/gdal/ (Releases) and 
+http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
+
+18) Add pointers to the source releases at:
+  
+  http://trac.osgeo.org/gdal/wiki/DownloadSource
+
+19) Update Trac to mark this release milestone as "Completed", and create
+    a corresponding version.  Then create a new milestone for the next release.
+
+20) Upload the new Python bindings to Pypi (requires upload rights to
+the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
+( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
+
+a) Create a $HOME/.pypirc file :
+
+[distutils] # this tells distutils what package indexes you can push to
+index-servers = pypi
+                pypitest
+
+[pypi] # authentication details for live PyPI
+repository: https://pypi.python.org/pypi
+username: yourlogin
+password: yourpassword
+
+[pypitest] # authentication details for test PyPI
+repository: https://testpypi.python.org/pypi
+username: yourlogin
+password: yourpassword
+
+b) cd swig/python
+
+c) For trial :
+    python setup.py register -r pypitest
+    python setup.py sdist upload -r pypitest
+
+d) For real :
+    python setup.py register -r pypi
+    python setup.py sdist upload -r pypi
+
+21) Build and bundle the java bindings.
+
+a) cd swig/java
+
+b) Make any updates to java.opt that might be required for the platform. For 
+   example osx and windows users will have to change JAVA_INCLUDE to contain
+   include/darwin and include/win32 respectively. 
+
+c) Build the bindings:
+
+     make
+
+22) Build maven artifacts. NOTE: This step only works on Linux and OSX since it
+    requires a shell script to build javadocs. 
+
+    A quick one-liner for this step is:
+
+      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+
+    This will build and sign the artifacts with a single command. Read on for 
+    more details.
+
+a)  Build the maven artifacts:
+
+     ant maven
+
+    Upon success maven artifacts should be located in the build/maven directory.
+
+b)  Sign maven artifacts with GPG. This step is required in order to deploy the
+    maven artifacts to the central Maven repository. Before this step can 
+    proceed you must set up a signing key as described here:
+
+      http://central.sonatype.org/pages/working-with-pgp-signatures.html
+
+    Each developer can use their own signing key although it is usually best to
+    avoid constantly using a different key for releases as users will need to 
+    import the public key in order to verify the artifacts.
+
+    Here are a quick set of steps to generate a signing key key.
+
+       gpg --gen-key
+       gpg --list-keys (and note the key id)
+       gpg --keyserver hkp://pool.sks-keyservers.net --send-keys <key id>
+
+    See the above link for more details.
+
+    Once a key is set up run the "maven_sign" ant target. The target takes two
+    parameters specified as system properties: 
+
+    1. gpg.key - The identifier for the signing key
+    2. gpg.pass - The passphrase for the signing key (optional)
+
+      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+
+    Upon success you should see maven artifacts along with generated signatures
+    in the build/maven directory. You will also find a file named "bundle.jar"
+    that contains all the maven artifacts with signatures. This file is what
+    will be uploaded to maven central. See the next step.
+
+23) Deploy maven artifacts to Maven central. 
+
+    NOTE: Before you can deploy to maven central you must set up an account
+    in Sonatype JIRA. That can be done here:
+
+        https://issues.sonatype.org/secure/Signup!default.jspa
+
+    Once you have an account set up you must be associated with the gdal 
+    project. Create a ticket here asking to be associated with the project:
+
+        https://issues.sonatype.org/browse/OSSRH
+
+    The entire deployment process is described in detail here:
+
+       http://central.sonatype.org/pages/manual-staging-bundle-creation-and-deployment.html
+       http://central.sonatype.org/pages/releasing-the-deployment.html
+
+    The following steps summarize the process.
+
+a) Log into the Sonatype repository manager at https://oss.sonatype.org. Use the
+   same credentials as your Sonatype JIRA account.
+
+b) Once log in select "Staging Upload" on the left hand side.
+
+c) Select "Artifact Bundle" under "Upload Mode" and then choose the "bundle.jar"
+   created in the previous Step 22. Finally "Upload Bundle" to start the upload.
+
+d) When the upload has been completed you will be notified that a staging 
+   repository has been created. Note the name of the repository. It should look
+   something like "orggdal-100x".
+
+e) From the left hand menu navigate to "Staging Repositories". In the search
+   box look for the staging repository name you noted from the previous section.
+   Or just search for "gdal". It should be obvious which repository is the 
+   current one.
+
+f) Select the staging repository. If all is well You should see the option to 
+   "Release" (Located as a button near the top of the page). If not it means 
+   there was an issue with the bundle. Consult the "Activity" tab at the bottom
+   of the page to find out why. 
+
+e) Click the "Release" button and that is it! The release should be available in
+   Maven Central shortly. You can verify this by going to search.maven.org and 
+   searching for "gdal". 
+
+

@@ -1,0 +1,13 @@
+OBJ = clock.obj degrib1.obj degrib2.obj inventory.obj metaname.obj myerror.obj tdlpack.obj filedatasource.obj memorydatasource.obj grib1tab.obj myutil.obj metaparse.obj weather.obj metaprint.obj engribapi.obj grib2api.obj myassert.obj scan.obj memendian.obj fileendian.obj
+
+EXTRAFLAGS = -I ../g2clib-1.0.4 $(SOFTWARNFLAGS)
+
+GDAL_ROOT       =       ..\..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default: $(OBJ)
+        xcopy /D /Y *.obj ..\..\..\o
+
+clean:
+	-del *.obj

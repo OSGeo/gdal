@@ -1,0 +1,97 @@
+<html>
+<head>
+<title>GPSBabel</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GPSBabel</h1>
+
+(GDAL/OGR >= 1.8.0)<p>
+
+The GPSBabel driver for now that relies on the <a href="http://www.gpsbabel.org">GPSBabel</a> utility to access various GPS file formats.<p>
+
+The GPSBabel executable must be accessible through the PATH.
+
+<h2>Read support</h2>
+
+The driver needs the <a href="drv_gpx.html">GPX</a> driver to be fully configured with read support (through Expat library) to
+be able to parse the output of GPSBabel, as GPX is used as the intermediate pivot format.<p>
+
+The returned layers can be waypoints, routes, route_points, tracks, track_points depending
+on the input data.<p>
+
+The syntax to specify an input datasource is : <i>GPSBabel:gpsbabel_file_format[,gpsbabel_format_option]*:[features=[waypoints,][tracks,][routes]:]filename</i>
+where :
+<ul>
+<li><i>gpsbabel_file_format</i> is one of the <a href="http://www.gpsbabel.org/capabilities.shtml">file formats</a> handled by GPSBabel.</li>
+<li><i>gpsbabel_format_option</i> is any option handled by the specified GPSBabel format (refer to the documentation of each GPSBabel format)</li>
+<li><i>features=</i> can be used to modify the type of features that GPSBabel will import. waypoints matches the -w option of gpsbabel commmandline, tracks matches -t and routes matches -r. This option can be used to require full data import from GPS receivers that are slow and for which GPSBabel would only fetch waypoints by default. See the documentation on <a href="http://www.gpsbabel.org/htmldoc-1.3.6/Route_And_Track_Modes.html">Route and Track modes</a> for more details.</li>
+<li><i>filename</i> can be an actual on-disk file, a file handled through the GDAL virtual file API, or a special device handled by GPSBabel such as "usb:", "/dev/ttyS0", "COM1:", etc.. What is actually supported depends on the used GPSBabel format.</li>
+</ul>
+<p>
+
+Alternatively, for a few selected GPSBabel formats, just specifying the filename might be sufficient. The list
+includes for now :
+<ul>
+<li>garmin_txt</li>
+<li>gdb</li>
+<li>magellan</li>
+<li>mapsend</li>
+<li>mapsource</li>
+<li>nmea</li>
+<li>osm</li>
+<li>ozi</li>
+<li>igc</li>
+</ul>
+<p>
+
+The USE_TEMPFILE=YES configuration option can be used to create an on-disk temporary GPX file instead of a in-memory one,
+when reading big amount of data.<p>
+
+<h2>Write support</h2>
+
+The driver relies on the GPX driver to create an intermediate file that will be finally translated by GPSBabel to
+the desired GPSBabel format. (The GPX driver does not need to be configured for read support for GPSBabel write support.).<p>
+
+The support geometries, options and other creation issues are the ones of the GPX driver. Please refer to its <a href="drv_gpx.html">documentation</a> for more details.<p>
+
+The syntax to specify an output datasource is : <i>GPSBabel:gpsbabel_file_format[,gpsbabel_format_option]*:filename</i>
+where :
+<ul>
+<li><i>gpsbabel_file_format</i> is one of the <a href="http://www.gpsbabel.org/capabilities.shtml">file formats</a> handled by GPSBabel.</li>
+<li><i>gpsbabel_format_option</i> is any option handled by the specified GPSBabel format (refer to the documentation of each GPSBabel format)</li>
+</ul>
+<p>
+
+Alternatively, you can just pass a filename as output datasource name and specify the dataset creation option GPSBABEL_DRIVER=gpsbabel_file_format[,gpsbabel_format_option]*<p>
+
+The USE_TEMPFILE=YES configuration option can be used to create an on-disk temporary GPX file instead of a in-memory one,
+when writing big amount of data.<p>
+
+<h3>Examples</h3>
+
+<li>
+Reading the waypoints from a Garmin USB receiver :
+
+<pre>
+ogrinfo -ro -al GPSBabel:garmin:usb:
+</pre>
+
+<li>
+Converting a shapefile to Magellan Mapsend format :
+
+<pre>
+ogr2ogr -f GPSBabel GPSBabel:mapsend:out.mapsend in.shp
+</pre>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.gpsbabel.org">GPSBabel Home Page</a><p>
+<li> <a href="http://www.gpsbabel.org/capabilities.shtml">GPSBabel file formats</a><p>
+<li> <a href="drv_gpx.html">GPX driver page</a><p>
+</ul>
+
+</body>
+</html>

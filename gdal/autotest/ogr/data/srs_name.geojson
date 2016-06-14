@@ -1,0 +1,28 @@
+{
+   "type": "GeometryCollection",
+   "geometries": [
+       {
+           "type": "Point",
+           "coordinates": [100.0, 0.0],
+           "crs": {
+           "type": "name",
+           "properties": {
+               "name": "urn:ogc:def:crs:EPSG::26916"
+               }
+            }
+       },
+       {
+           "type": "LineString",
+           "coordinates": [
+               [101.0, 0.0], [102.0, 1.0]
+           ]
+       }
+   ],
+   "crs": {
+   "type": "name",
+   "properties": {
+       "name": "urn:ogc:def:crs:EPSG::26915"
+       }
+    }
+
+}

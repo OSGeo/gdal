@@ -1,0 +1,15 @@
+
+OBJ	=	usgsdemdataset.obj usgsdem_create.obj
+
+EXTRAFLAGS = 	-I..\..\alg
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

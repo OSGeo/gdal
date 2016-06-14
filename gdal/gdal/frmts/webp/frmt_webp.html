@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>WEBP - WEBP</title>
+</head>
+
+<body>
+
+<h1>WEBP - WEBP</h1>
+
+<p>Starting with GDAL 1.9.0, GDAL can read and write WebP images through the WebP library.</p>
+
+<p>WebP is a new image format that provides lossy compression for photographic images.
+A WebP file consists of VP8 image data, and a container based on RIFF.</p>
+
+<p>The driver rely on the Open Source WebP library (BSD licensed). The WebP library (at least in its
+version 0.1) only offers compression and decompression of whole images, so RAM might be a limitation
+when dealing with big images (which are limited to 16383x16383 pixels).</p>
+
+<p>The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA) starting with GDAL 1.10 and libwebp 0.1.4.</p>
+
+<p>The WEBP driver can be used as the internal format used by the <a href="frmt_rasterlite.html">Rasterlite</a> driver.</p>
+
+<p>Starting with GDAL 1.10, XMP metadata can be extracted from the file, and will be
+stored as XML raw content in the xml:XMP metadata domain.</p>
+
+<h2>Creation options</h2>
+
+Various creation options exists, among them :
+
+<ul>
+<li><p><b>QUALITY=n</b>: By default the quality flag is set to 75, but this
+option can be used to select other values.  Values must be in the
+range 1-100.  Low values result in higher compression ratios, but poorer
+image quality. <p></li>
+
+<li><p><b>LOSSLESS=True/False</b> (GDAL &gt;= 1.10 and libwebp &gt;= 0.1.4):
+By default, lossy compression is used. If set to True,
+lossless compression will be used.<p></li>
+
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="https://developers.google.com/speed/webp/">WebP home page</a></li>
+</ul>
+
+</body>
+</html>

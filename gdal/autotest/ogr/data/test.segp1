@@ -1,0 +1,24 @@
+H
+ SPHEROID: GRS 1980/WGS-84
+ PROJECTION: Universal Transverse Mercator (UTM)
+ ZONE: 31
+
+
+ UNITS: meters
+
+
+
+
+
+
+
+
+
+
+
+
+
+ firstline             10 49000000N  2000000E  426857 5427937 1234
+ firstline             20 49300000N  2000000E  427592 5483521 5678
+ secondline             1 49000000S  2000000W  134351-5439511 9012
+ secondline             2 49000000S  2300000W   97802-5442045 3456

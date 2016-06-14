@@ -1,0 +1,13 @@
+http://www.litho.ucalgary.ca/geometry/abitibi/seg401.tr
+http://www.litho.ucalgary.ca/geometry/Alberta/l1.seg
+http://www.litho.ucalgary.ca/geometry/Alberta/l11.tr
+http://www.litho.ucalgary.ca/geometry/Alberta/SALT21.segp1
+http://quashnet.er.usgs.gov/data/pubs/of99-037/of99-37_cd1/nav/shotnav/dumpsite.seg
+http://quashnet.er.usgs.gov/data/pubs/of99-037/of99-37_cd1/nav/shotnav/mosaic.seg
+http://pubs.usgs.gov/of/2000/ofr-00-0286/NPRANAV.SEG
+
+http://www.polarhovercraft.no/uploads/Main/Yermak2010_1.UKOOA.dat
+http://cotuit.er.usgs.gov/Data/1974-019-FA/LN/001/74019nav.txt
+
+http://www.seg.org/documents/10161/77915/seg_p1_p2_p3.pdf
+http://www.polarhovercraft.no/uploads/Main/ukooa_p1_90.pdf

@@ -1,0 +1,237 @@
+
+GDAL_ROOT = ..
+
+EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
+		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
+		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
+		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
+		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_rmf \
+		-DFRMT_nitf -DFRMT_pcidsk -DFRMT_airsar -DFRMT_rs2 \
+		-DFRMT_ilwis -DFRMT_msgn -DFRMT_rik -DFRMT_pcraster \
+		-DFRMT_leveller -DFRMT_sgi -DFRMT_srtmhgt -DFRMT_idrisi \
+		-DFRMT_jaxapalsar -DFRMT_ers -DFRMT_ingr -DFRMT_dimap \
+		-DFRMT_gff -DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds \
+		-DFRMT_adrg -DFRMT_coasp -DFRMT_tsx -DFRMT_blx -DFRMT_til \
+		-DFRMT_r -DFRMT_northwood -DFRMT_saga -DFRMT_xyz -DFRMT_hf2 \
+		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
+		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
+		-DFRMT_safe -DFRMT_sentinel2
+
+MOREEXTRA 	=	
+
+DIRLIST 	=	$(EXTRAFLAGS:-DFRMT_=)
+
+PLUGINFLAGS 	=
+
+PLUGINDIRLIST 	=	$(PLUGINFLAGS:-DFRMT_=)
+
+!INCLUDE $(GDAL_ROOT)/nmake.opt
+
+!IFDEF PG_INC_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_postgisraster
+!ENDIF
+
+!IFDEF JPEG_SUPPORTED
+EXTRAFLAGS	=	-DFRMT_jpeg $(EXTRAFLAGS)
+!ENDIF
+
+!IFDEF BSB_SUPPORTED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_bsb
+!ENDIF
+
+!IFDEF OGDIDIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ogdi
+!ELSE
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_zlib
+!ENDIF
+
+!IFDEF JASPER_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpeg2000
+!ENDIF
+
+!IFDEF OPENJPEG_ENABLED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_openjpeg
+!ENDIF
+
+!IFDEF KAKDIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jp2kak -DFRMT_jpipkak
+!ENDIF
+
+!IFDEF ECWDIR
+!IF "$(ECW_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ecw
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_ecw
+!ENDIF
+!ENDIF
+
+!IFDEF HDF4_DIR
+!IF "$(HDF4_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_hdf4
+!ENDIF
+!ENDIF
+
+!IFDEF HDF5_DIR
+!IF "$(HDF5_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_hdf5
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_hdf5
+!ENDIF
+!ENDIF
+
+!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
+!INCLUDE mrsid\nmake.opt
+!ENDIF
+
+!IFDEF MRSID_RASTER_DIR
+!IF "$(MRSID_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrsid
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_mrsid
+!ENDIF
+!ENDIF
+
+!IFDEF MRSID_LIDAR_DIR
+!IF "$(MRSID_LIDAR_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrsid_lidar
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_mrsid_lidar
+!ENDIF
+!ENDIF
+
+!IFDEF FITS_INC_DIR
+!IF "$(FITS_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_fits
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_fits
+!ENDIF
+!ENDIF
+
+!IF DEFINED(POPPLER_LIBS) || DEFINED(PODOFO_LIBS) || DEFINED(PDFIUM_LIBS)
+!IF "$(PDF_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_pdf
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_pdf
+!ENDIF
+!ENDIF
+
+!IFDEF DODS_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_dods
+!ENDIF
+
+!IFDEF NETCDF_SETTING
+!IF "$(NETCDF_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_netcdf
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_netcdf
+!ENDIF
+!ENDIF
+
+!IFDEF GRIB_SETTING
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_grib
+!ENDIF
+
+!IFDEF CURL_LIB
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs -DFRMT_wms -DFRMT_plmosaic -DFRMT_wmts
+!ENDIF
+
+!IFDEF SDE_ENABLED
+!IF "$(SDE_PLUGIN)" != "YES"
+EXTRAFLAGS  	= 	$(EXTRAFLAGS) -DFRMT_sde
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_sde
+!ENDIF
+!ENDIF
+
+!IFDEF RASDAMAN_ENABLED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_rasdaman
+!ENDIF
+
+!IFDEF OCI_LIB
+!IF "$(OCI_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_georaster
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_georaster
+!ENDIF
+!ENDIF
+
+!IFDEF INCLUDE_OGR_FRMTS
+!IFDEF SQLITE_LIB
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_rasterlite -DFRMT_mbtiles
+!ENDIF
+!ENDIF
+
+!IFDEF WEBP_ENABLED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_webp
+!ENDIF
+
+!IFDEF GTA_CFLAGS
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_gta
+!ENDIF
+
+!IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_arg
+!ENDIF
+
+!IFDEF KEA_CFLAGS
+!IF "$(KEA_PLUGIN)" != "YES"
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_kea
+!ELSE
+PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_kea
+!ENDIF
+!ENDIF
+
+!IFDEF MRF_SETTING
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrf
+!ENDIF
+
+default:	o\gdalallregister.obj subdirs
+
+list:
+	echo $(DIRLIST)
+	echo $(PLUGINDIRLIST)
+
+subdirs:
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc \
+		&& cd .. \
+		|| exit 1
+
+plugindirs:
+	-for %d in ( $(PLUGINDIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc plugin \
+		&& cd .. \
+		|| exit 1
+
+o\gdalallregister.obj:	gdalallregister.cpp ..\nmake.opt
+	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
+	copy gdalallregister.obj o
+
+clean:
+	-del o\*.obj *.obj
+	-for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc clean \
+		&& cd .. \
+		|| exit 1
+	-for %d in ( $(PLUGINDIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc clean \
+		&& cd .. \
+		|| exit 1
+	cd iso8211
+	$(MAKE) /f makefile.vc clean
+
+plugins-install:
+	-for %d in ( $(PLUGINDIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc plugin-install \
+		&& cd .. \
+		|| exit 1
+
+html-install:
+	copy *.html $(HTMLDIR)
+	-for %d in ( $(DIRLIST) ) do \
+		copy %d\frmt_*.html $(HTMLDIR)

@@ -1,0 +1,100 @@
+#
+# CPL (Common Portability Library) makefile for MSVC
+#
+
+OBJ	=	cpl_conv.obj \
+		cpl_error.obj \
+		cpl_string.obj \
+		cplstring.obj \
+		cplstringlist.obj \
+		cpl_strtod.obj \
+		cpl_vsisimple.obj \
+		cplgetsymbol.obj \
+		cpl_path.obj \
+		cpl_csv.obj \
+		cpl_findfile.obj \
+		cpl_vsil_win32.obj \
+		cpl_minixml.obj \
+		cpl_multiproc.obj \
+		cpl_list.obj \
+		cpl_getexecpath.obj \
+		cpl_vsil.obj \
+		cpl_vsi_mem.obj \
+                cpl_http.obj \
+                cpl_hash_set.obj \
+                cplkeywordparser.obj \
+		cpl_recode.obj \
+		cpl_recode_iconv.obj \
+		cpl_recode_stub.obj \
+		cpl_quad_tree.obj \
+		cpl_vsil_gzip.obj \
+		cpl_minizip_ioapi.obj \
+		cpl_minizip_unzip.obj \
+		cpl_minizip_zip.obj \
+		cpl_vsil_subfile.obj \
+		cpl_atomic_ops.obj \
+		cpl_time.obj \
+		cpl_vsil_stdout.obj \
+		cpl_vsil_sparsefile.obj \
+		cpl_vsil_abstract_archive.obj \
+		cpl_vsil_tar.obj \
+		cpl_vsil_curl.obj \
+		cpl_vsil_curl_streaming.obj \
+		cpl_vsil_stdin.obj \
+		cpl_vsil_buffered_reader.obj \
+		cpl_vsil_cache.obj \
+		cpl_base64.obj \
+		cpl_xml_validate.obj \
+		cpl_spawn.obj \
+		cpl_google_oauth2.obj \
+		cpl_progress.obj \
+		cpl_virtualmem.obj \
+		cpl_worker_thread_pool.obj \
+		cpl_vsil_crypt.obj \
+		cpl_sha256.obj \
+		cpl_aws.obj \
+		cpl_vsi_error.obj \
+		$(ODBC_OBJ)
+
+LIB	=	cpl.lib
+
+GDAL_ROOT = ..
+
+!INCLUDE ..\nmake.opt
+
+EXTRAFLAGS	= 	 -I..\frmts\zlib -DHAVE_LIBZ
+
+!IFDEF LIBICONV_INCLUDE
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_ICONV $(LIBICONV_CFLAGS) $(LIBICONV_INCLUDE)
+!ENDIF
+
+!IFDEF CURL_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
+!ENDIF
+
+!IFDEF LIBXML2_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
+!ENDIF
+
+!IFDEF CRYPTOPP_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CRYPTOPP $(CRYPTOPP_INC)
+!ENDIF
+
+!IFDEF USE_ONLY_CRYPTODLL_ALG
+EXTRAFLAGS =	$(EXTRAFLAGS) -DUSE_ONLY_CRYPTODLL_ALG
+!ENDIF
+
+!IFDEF ODBC_SUPPORTED
+ODBC_OBJ =	cpl_odbc.obj
+!ENDIF
+
+default:	cpl_config.h $(LIB)
+
+$(LIB):	$(OBJ)
+	lib /out:cpl.lib *.obj
+
+clean:
+	-del *.obj *.lib
+
+cpl_config.h:	cpl_config.h.vc
+	copy cpl_config.h.vc cpl_config.h

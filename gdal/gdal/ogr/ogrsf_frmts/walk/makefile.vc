@@ -1,0 +1,15 @@
+
+OBJ	=	ogrwalkdriver.obj ogrwalkdatasource.obj ogrwalklayer.obj ogrwalktablelayer.obj ogrwalkselectlayer.obj ogrwalktool.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. -I..\generic -I..\pgeo
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe

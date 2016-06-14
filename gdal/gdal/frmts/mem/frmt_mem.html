@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>MEM -- In Memory Raster</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>MEM -- In Memory Raster</h1>
+
+GDAL supports the ability to hold rasters in a temporary in-memory format.
+This is primarily useful for temporary datasets in scripts or internal
+to applications.  It is not generally of any use to application end-users.<p>
+
+Memory datasets should support for most kinds of auxiliary information
+including metadata, coordinate systems, georeferencing, GCPs,
+color interpretation, nodata, color tables and all pixel data types.<p>
+
+<h2>Dataset Name Format</h2>
+
+It is possible to open an existing array in memory.  To do so, construct
+a dataset name with the following format:
+
+<pre>
+  MEM:::option=value[,option=value...]
+</pre>
+
+For example:
+
+<pre>
+  MEM:::DATAPOINTER=342343408,PIXELS=100,LINES=100,BANDS=3,DATATYPE=Byte,
+       PIXELOFFSET=3,LINEOFFSET=300,BANDOFFSET=1
+</pre>
+
+<ul>
+<li> DATAPOINTER: pointer to the first pixel of the first band represented as
+a long integer.  NOTE!  This may not work on platforms where a long is 32 bits and a pointer is 64 bits. (required)
+<li> PIXELS: Width of raster in pixels. (required)
+<li> LINES: Height of raster in lines. (required)
+<li> BANDS: Number of bands, defaults to 1. (optional)
+<li> DATATYPE: Name of the data type, as returned by GDALGetDataTypeName() (eg. Byte, Int16)  Defaults to Byte.  (optional)
+<li> PIXELOFFSET: Offset in bytes between the start of one pixel and the next on the same scanline. (optional)
+<li> LINEOFFSET: Offset in bytes between the start of one scanline and the next. (optional)
+<li> BANDOFFSET: Offset in bytes between the start of one bands data and the next.
+</ul>
+
+<h2>Creation Options</h2>
+
+There are no supported creation options.<p>
+
+The MEM format is one of the few that supports the AddBand() method.
+The AddBand() method supports DATAPOINTER, PIXELOFFSET and LINEOFFSET
+options to reference an existing memory array.<p>
+
+</body>
+</html>
+

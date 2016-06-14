@@ -1,0 +1,232 @@
+GDAL_ROOT = .
+ 
+!INCLUDE nmake.opt
+
+##############################################################################
+# We need to add vb6 support if STDCALL is defined. 
+!IF DEFINED(STDCALL) && $(MSVC_VER) < 1500
+VB6_OBJ = vb6\vb6_support.obj
+VB6_TARGET = vb6_dir
+!ENDIF
+
+##############################################################################
+# The following determines whether we are linking all the OGR formats 
+# into the DLL, or only the minimum spatial reference related stuff required
+# for a raster-gdal build.
+
+#OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation@8 \
+#		/INCLUDE:_OSRValidate@4 \
+#		/INCLUDE:_OPTGetProjectionMethods@0 \
+#		/INCLUDE:_OGR_G_GetPointCount@4
+
+OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
+		/INCLUDE:$(SYM_PREFIX)OPTGetProjectionMethods \
+		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
+
+
+CPPFLAGS = $(CPPFLAGS) -DOGR_ENABLED
+OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
+OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
+		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
+
+!IFDEF INCLUDE_GNM_FRMTS        
+CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED        
+!ENDIF
+
+!IF DEFINED(STDCALL) && !DEFINED(WIN64)
+
+!IF $(MSVC_VER) < 1500
+VB6_SAFEARRAYSYM =	/INCLUDE:_vbSafeArrayToPtr@16
+!ENDIF
+
+BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp@36 \
+		/INCLUDE:_GDALReprojectImage@48 \
+		/INCLUDE:_GDALComputeMedianCutPCT@32 \
+		/INCLUDE:_GDALDitherRGB2PCT@28 \
+		/INCLUDE:_OCTNewCoordinateTransformation@8 $(VB6_SAFEARRAYSYM)
+!ELSE
+BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
+		/INCLUDE:$(SYM_PREFIX)GDALReprojectImage \
+		/INCLUDE:$(SYM_PREFIX)GDALComputeMedianCutPCT \
+		/INCLUDE:$(SYM_PREFIX)GDALDitherRGB2PCT \
+		/INCLUDE:$(SYM_PREFIX)OCTNewCoordinateTransformation
+!ENDIF
+
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(VB6_OBJ) \
+	 apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
+	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
+	
+DISTDIR	=	gdal_$(VERSION)
+
+default:	port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target $(VB6_TARGET)$(GDAL_DLL) \
+		plugin_dir apps_dir 
+
+staticlib:
+	if exist gdal.lib del gdal.lib
+	lib /nologo /out:gdal.lib $(LIBOBJ)
+
+appslib-target:
+	cd apps
+	$(MAKE) /f makefile.vc appslib
+	cd ..	
+
+target-lib: port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target dll 
+
+clean:	
+	cd port
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd gcore
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd alg
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd frmts
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.vc allclean
+	cd ..
+    cd gnm
+	$(MAKE) /f makefile.vc allclean
+	cd ..
+	cd apps
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd swig
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd vb6
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	if exist gdal.lib del gdal.lib
+	if exist $(GDAL_DLL) del $(GDAL_DLL)
+	if exist $(GDAL_DLL).manifest del $(GDAL_DLL).manifest
+	if exist gdal_i.lib del gdal_i.*
+	-del *.ilk
+	-del *.pdb
+
+port_dir:
+	cd port
+	$(MAKE) /f makefile.vc
+	cd ..
+
+ogr_min:
+	cd ogr
+	$(MAKE) /f makefile.vc ogr.lib
+	cd ..
+
+core_dir:
+	cd gcore
+	$(MAKE) /f makefile.vc
+	cd ..\alg
+	$(MAKE) /f makefile.vc
+	cd ..
+
+frmts_dir:
+	cd frmts
+	$(MAKE) /f makefile.vc
+	cd ..
+
+plugin_dir:
+	cd frmts
+	$(MAKE) /f makefile.vc plugindirs
+	cd ..
+!IFDEF INCLUDE_OGR_FRMTS
+	cd ogr\ogrsf_frmts
+	$(MAKE) /f makefile.vc plugindirs
+	cd ..\..
+!ENDIF
+
+apps_dir:
+	cd apps
+	$(MAKE) /f makefile.vc
+	cd ..
+
+vb6_dir:
+	cd vb6
+	$(MAKE) /f makefile.vc
+	cd ..
+	
+ogr_dir:      port_dir
+	cd frmts/iso8211
+	$(MAKE) /f makefile.vc
+	cd ..\sdts
+	$(MAKE) /f makefile.vc
+	cd ..\..\ogr
+	$(MAKE) /f makefile.vc ogr.lib frmts
+	cd ..
+
+gnm_dir:      ogr_dir
+    cd gnm
+    $(MAKE) /f makefile.vc gnm.lib frmts
+    cd ..
+
+lib_dist:	default
+	rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	cp gdal.lib port\*.h gcore\*.h ogr\*.h $(DISTDIR)
+	zip -r $(DISTDIR).zip $(DISTDIR)
+
+$(GDAL_DLL): staticlib
+	link /nologo /dll $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
+		$(EXTERNAL_LIBS) gcore\Version.res \
+		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
+    if exist $(GDAL_DLL).manifest mt -manifest $(GDAL_DLL).manifest -outputresource:$(GDAL_DLL);2
+
+dll:	$(GDAL_DLL)
+
+install: $(GDAL_DLL) plugin_dir apps_dir 
+	-mkdir $(BINDIR)
+	-mkdir $(DATADIR)
+	$(INSTALL) $(GDAL_DLL) $(BINDIR)
+	cd frmts
+	$(MAKE) /f makefile.vc plugins-install
+	cd ..\apps
+	$(MAKE) /f makefile.vc install
+	cd ..
+	$(INSTALL) data\*.* $(DATADIR)
+	$(INSTALL) LICENSE.TXT $(DATADIR)
+!IFDEF HTMLDIR
+	-mkdir $(HTMLDIR)
+	cd frmts
+	$(MAKE) /f makefile.vc html-install
+	cd ..
+!ENDIF
+!IFDEF INCLUDE_OGR_FRMTS
+	cd ogr
+	$(MAKE) /f makefile.vc install
+	cd ..
+	cd ogr\ogrsf_frmts
+	$(MAKE) /f makefile.vc plugins-install
+!IFDEF HTMLDIR
+	$(MAKE) /f makefile.vc html-install
+!ENDIF
+	cd ..\..
+!ENDIF
+!IFDEF INCLUDE_GNM_FRMTS
+    cd gnm
+    $(MAKE) /f makefile.vc install
+    cd ..
+!ENDIF
+
+devinstall: install
+	-mkdir $(INCDIR)
+	-mkdir $(LIBDIR)
+	copy port\*.h $(INCDIR)
+	copy gcore\*.h $(INCDIR)
+	copy alg\*.h $(INCDIR)
+	copy ogr\*.h $(INCDIR)
+	copy frmts\mem\memdataset.h $(INCDIR)
+	copy frmts\raw\rawdataset.h $(INCDIR)
+	copy frmts\vrt\*.h $(INCDIR)
+!IFDEF INCLUDE_OGR_FRMTS
+	copy ogr\ogrsf_frmts\*.h $(INCDIR)
+!ENDIF
+!IFDEF INCLUDE_GNM_FRMTS
+	copy gnm\*.h $(INCDIR)
+!ENDIF
+	copy apps\gdal_utils.h $(INCDIR)
+	copy gdal_i.lib $(LIBDIR)
+

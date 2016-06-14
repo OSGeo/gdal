@@ -1,0 +1,13 @@
+OBJ     =       geoconcept.obj geoconcept_syscoord.obj \
+		ogrgeoconceptdriver.obj \
+		ogrgeoconceptdatasource.obj ogrgeoconceptlayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -DUSE_CPL /wd4706
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb

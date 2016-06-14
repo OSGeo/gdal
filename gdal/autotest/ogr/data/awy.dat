@@ -1,0 +1,14 @@
+I
+640 Version - THIS FILE IS A SHORT EXTRACT FROM THE FOLLOWING DATA MADE FOR OGR TESTING. data cycle 2007.12, build 20070153, metadata AwyXP700.  Copyright © 2007, Robin A. Peel (robin@xsquawkbox.net).   This data is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program ("AptNavGNULicence.txt"); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.  This product was developed using DAFIF (the Defense Aeronautical Flight Information File), a product of the US National Imagery and Mapping Agency (NIMA). NIMA requires the following warranty statements:  (A) Under 10 U.S.C. 456, no civil action may be brought against the United States on the basis of the content of a navigational aid prepared or disseminated by either the former Defense Mapping Agency (DMA) or the National Imagery and Mapping Agency (NIMA).  (B) The DAFIF product is provided "as is," and no warranty, express or implied, including, but not limited to the implied warranties of merchantability and fitness for particular purpose or arising by statute or otherwise in law or from a course of dealing or usage in trade, is made by NIMA as to the accuracy and functioning of the product. ©: Neither NIMA nor its personnel will be liable for any claims, losses, or damages arising from or connected with the use of this product.  The user agrees to hold harmless the United States National Imagery and Mapping Agency.  The user's sole and exclusive remedy is to stop using the DAFIF product.
+
+00MKK  22.528056 -156.170961 BITTA  23.528031 -155.478836 1 012 460 R464
+00MKK  22.528056 -156.170961 CKH99  22.316668 -156.341660 1 012 460 R464
+00UPP  20.566668 -154.125000 BYROW  20.369456 -155.058992 1 140 460 R578
+00UPP  20.566668 -154.125000 FITES  20.794556 -153.000633 1 210 460 R578
+03SML  25.610000  030.635278 57SML  26.482222  030.328333 1 195 600 L321
+03SML  25.610000  030.635278 AST    27.031222  031.032500 1 085 600 W8
+03SML  25.610000  030.635278 KHG    25.448386  030.590792 1 085 600 W8
+03SML  25.610000  030.635278 KUNAK  25.462500  030.686667 1 195 600 L321
+04THT  73.147778 -068.683056 JULET  72.761667 -068.658333 1 055 180 5E42-BR20
+04THT  73.147778 -068.683056 LIPSI  74.833336 -068.566666 1 055 600 5E42
+99

@@ -1,0 +1,135 @@
+<html>
+<head>
+<title>ESRI File Geodatabase (FileGDB)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI File Geodatabase (FileGDB)</h1>
+
+<p>The FileGDB driver provides read and write access to File Geodatabases (.gdb directories) created by ArcGIS 10 and above.</p>
+
+<p>Note : starting with OGR 1.11, the <a href="drv_openfilegdb.html">OpenFileGDB driver</a> driver exists as an alternative built-in
+i.e. not depending on a third-party library) read-only driver.</p>
+
+<h2>Requirements</h2>
+
+<p>
+	<ul>
+		<li><a href="http://www.esri.com/apps/products/download/#File_Geodatabase_API_1.3">FileGDB API SDK</a></li>
+        <li>OGR >= 1.9.0</li>
+	</ul>
+</p>
+
+<h2>Bulk feature loading (OGR >= 1.9.2)</h2>
+
+The FGDB_BULK_LOAD configuration option can be set to YES to speed-up feature insertion (or sometimes solve problems
+when inserting a lot of features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of this configuration option
+is to cause a write lock to be taken and a temporary disabling of the indexes. Those are restored when the datasource is
+closed or when a read operation is done.<p>
+
+Starting with GDAL 2.0, bulk load is enabled by default for newly created layers (unless otherwise specified).
+
+<h2>SQL support (OGR &gt;= 1.10)</h2>
+
+Starting with OGR 1.10, SQL statements are run through the SQL engine of the FileGDB SDK API. This holds for non-SELECT
+statements. However, due to partial/inaccurate support for SELECT statements in current FileGDB SDK API versions (v1.2),
+SELECT statements will be run by default by the OGR SQL engine. This can be changed by specifying the
+<i>-dialect FileGDB</i> option to ogrinfo or ogr2ogr.
+
+<h3>Special SQL requests</h3>
+
+"GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name" can be used as special SQL requests to get
+respectively the definition and metadata of a FileGDB table as XML content.
+
+<h2>Transaction support (OGR &gt;= 2.0)</h2>
+
+The FileGDB driver implements transactions at the database level, through an
+emulation (as per <a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>),
+since the FileGDB SDK itself does not offer it. This works by backing up the
+current state of a geodatabase when StartTransaction(force=TRUE) is called.
+If the transaction is committed, the backup copy is destroyed. If the transaction
+is rolled back, the backup copy is restored. So this might be costly when operating
+on huge geodatabases.<p>
+
+Starting with GDAL 2.1, on Linux/Unix, instead of a full backup copy only layers
+that are modified are backed up.<p>
+
+Note that this emulation has an unspecified behaviour in case of concurrent updates
+(with different connections in the same or another process).<p>
+
+<h2>CreateFeature() support</h2>
+
+The FileGDB SDK API does not allow to create a feature with a FID specified by
+the user. Starting with GDAL 2.1, the FileGDB driver implements a special FID
+remapping technique to enable the user to create features at the FID of their choice.<p>
+
+<h2>Dataset Creation Options</h2>
+
+<p>None.</p>
+
+<h2>Layer Creation Options</h2>
+
+<ul>
+	<li><b>FEATURE_DATASET</b>: When this option is set, the new layer will be created inside the named FeatureDataset folder. If the folder does not already exist, it will be created.</li>
+	<li><b>GEOMETRY_NAME</b>: Set name of geometry column in new layer. Defaults to "SHAPE".</li>
+        <li><b>GEOMETRY_NULLABLE</b>: (GDAL &gt;=2.0)  Whether the values of the geometry column can be NULL. Can be set to NO so that geometry is required. Default to "YES"</li>
+	<li><b>FID</b>: Name of the OID column to create. Defaults to "OBJECTID". Note: option was called OID_NAME in releases before GDAL 2</li>
+	<li><b>XYTOLERANCE, ZTOLERANCE</b>: These parameters control the snapping tolerance used for advanced ArcGIS features like network and topology rules. They won't effect any 	OGR operations, but they will by used by ArcGIS. The units of the parameters are the units of the coordinate reference system.
+		<p>ArcMap 10.0 and OGR defaults for XYTOLERANCE are 0.001m (or equivalent) for projected coordinate systems, and 0.000000008983153&deg; for geographic coordinate systems.</p></li>
+	<li><b>XORIGIN, YORIGIN, ZORIGIN, XYSCALE, ZSCALE</b>: These parameters control the <a href="http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000">coordinate precision grid</a>  inside the file geodatabase. The dimensions of the grid are determined by the origin, and the scale. The origin defines the location of a reference grid point in space. The scale is the reciprocal of the resolution. So, to get a grid with an origin at 0 and a resolution of 0.001 on all axes, you would set all the origins to 0 and all the scales to 1000.
+		<p><em>Important</em>: The domain specified by <code>(xmin=XORIGIN, ymin=YORIGIN, xmax=(XORIGIN + 9E+15 / XYSCALE), ymax=(YORIGIN + 9E+15 / XYSCALE))</code> needs to encompass every possible coordinate value for the feature class. If features are added with coordinates that fall outside the domain, errors will occur in ArcGIS with spatial indexing, feature selection, and exporting data.</p>
+		<p>ArcMap 10.0 and OGR defaults:<ul>
+			<li>For geographic coordinate systems: XORIGIN=-400, YORIGIN=-400, XYSCALE=1000000000</li>
+			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p></li>
+	<li><b>XML_DEFINITION</b> : (GDAL &gt;= 1.10) When this option is set, its value will be used as the XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd</li>
+    <li><b>CREATE_MULTIPATCH</b>=YES : (GDAL &gt;= 1.11) When this option is set, geometries of layers of type MultiPolygon will be written as MultiPatch</li>
+    <li><b>CONFIGURATION_KEYWORD</b>=DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE : (GDAL &gt;= 2.0) Customize how data is stored. By default text in UTF-8 and data up to 1TB</li>
+</ul>
+
+<h2>Examples</h2>
+
+<ul>
+	<li>Read layer from FileGDB and load into PostGIS:</li>
+	<code>ogr2ogr -overwrite -skipfailures -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" "C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"</code>
+
+	<li>Get detailed info for FileGDB:</li>
+	<code>ogrinfo -al "C:\somefolder\MyGDB.gdb"</code>
+
+</ul>
+
+<h2>Building Notes</h2>
+
+<p> Read the <a href="http://trac.osgeo.org/gdal/wiki/BuildingOnWindows">GDAL Windows Building example for Plugins</a>. You will find a similar section in nmake.opt for FileGDB. After you are done, go to the <i>$gdal_source_root\ogr\ogrsf_frmts\filegdb</i> folder and execute:</p>
+
+<p>
+	<code>
+		nmake /f makefile.vc plugin
+		nmake /f makefile.vc plugin-install
+	</code>
+</p>
+
+
+<h2>Known Issues</h2>
+
+<ul>
+        <li>The SDK is known to be unable to open layers with particular spatial reference systems.
+            This might be the case if messages "FGDB: Error opening XXXXXXX. Skipping it (Invalid function arguments.)"
+            when running "ogrinfo --debug on the.gdb" (reported as warning in GDAL 2.0).
+            Using the OpenFileGDB driver will generally solve that issue.</li>
+	<li>Blob fields have not been implemented.</li>
+	<li>FGDB coordinate snapping will cause geometries to be altered during writing. Use the origin and scale layer creation options to control the snapping behavior.</li>
+	<li>Driver can't read data  in SDC format (Smart Data Compression) because operation is not supported by the ESRI SDK.</li>
+        <li>Reading data compressed in CDF format (Compressed Data Format) requires ESRI SDK 1.4 or later.</li>
+        <li>Curve in geometries are not currently supported.</li>
+</ul>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="http://www.esri.com/apps/products/download/#File_Geodatabase_API_1.3">ESRI File Geodatabase API Page</a></li>
+<li><a href="drv_openfilegdb.html">OpenFileGDB driver</a>, not depending on a third-party library/SDK</li>
+</ul>
+
+</body>
+</html>

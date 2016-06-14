@@ -1,0 +1,74 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IF "$(PCIDSK_SETTING)" == "OLD"
+PCIDSKFLAGS	=	-I..\raw
+OBJ		=	pcidskdataset.obj pcidsktiledrasterband.obj
+!ENDIF
+
+!IF "$(PCIDSK_SETTING)" == "EXTERNAL"
+PCIDSKFLAGS	=	$(PCIDSK_INCLUDE) 
+OBJ		=	pcidskdataset2.obj ogrpcidsklayer.obj vsi_pcidsk_io.obj gdal_edb.obj
+!ENDIF
+
+!IF "$(PCIDSK_SETTING)" == "INTERNAL"
+PCIDSKFLAGS	=	-Isdk -DPCIDSK_INTERNAL -DHAVE_LIBJPEG 
+
+OBJ	=	pcidskdataset2.obj ogrpcidsklayer.obj vsi_pcidsk_io.obj gdal_edb.obj \
+	sdk\channel\cbandinterleavedchannel.obj \
+	sdk\channel\cpcidskchannel.obj \
+	sdk\channel\cpixelinterleavedchannel.obj \
+	sdk\channel\ctiledchannel.obj \
+	sdk\channel\cexternalchannel.obj \
+	sdk\core\cpcidskfile.obj \
+	sdk\core\libjpeg_io.obj \
+	sdk\core\edb_pcidsk.obj \
+	sdk\core\metadataset_p.obj \
+	sdk\core\pcidskbuffer.obj \
+	sdk\core\pcidskcreate.obj \
+	sdk\core\pcidskexception.obj \
+	sdk\core\pcidskinterfaces.obj \
+	sdk\core\pcidskopen.obj \
+	sdk\core\pcidsk_pubutils.obj \
+	sdk\core\pcidsk_utils.obj \
+	sdk\core\sysvirtualfile.obj \
+	sdk\core\clinksegment.obj \
+	sdk\segment\cpcidskgeoref.obj \
+	sdk\segment\cpcidskpct.obj \
+	sdk\segment\cpcidsksegment.obj \
+	sdk\segment\cpcidskvectorsegment.obj \
+	sdk\segment\cpcidskvectorsegment_consistencycheck.obj \
+	sdk\segment\vecsegheader.obj \
+	sdk\segment\vecsegdataindex.obj \
+	sdk\segment\metadatasegment_p.obj \
+	sdk\segment\sysblockmap.obj \
+	sdk\segment\cpcidskrpcmodel.obj \
+	sdk\segment\cpcidskgcp2segment.obj \
+	sdk\segment\cpcidskbitmap.obj \
+	sdk\segment\cpcidsk_tex.obj \
+	sdk\segment\cpcidskapmodel.obj \
+	sdk\segment\cpcidsktoutinmodel.obj \
+	sdk\segment\cpcidskbinarysegment.obj \
+	sdk\segment\cpcidsk_array.obj \
+	sdk\segment\cpcidskephemerissegment.obj \
+	sdk\segment\cpcidskads40model.obj
+	
+!ENDIF
+            
+!IFDEF JPEG_EXTERNAL_LIB
+JPEGFLAGS = -I$(JPEGDIR)
+!ELSE
+JPEGFLAGS = -I..\jpeg\libjpeg
+!ENDIF
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) $(PCIDSKFLAGS) $(JPEGFLAGS) /c $*.cpp /Fo$*.obj
+	xcopy /D /Y $*.obj ..\o
+
+default:	$(OBJ)
+
+clean:
+	-del $(OBJ)
+

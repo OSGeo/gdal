@@ -1,0 +1,36 @@
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ		=	hdf5dataset.obj  hdf5imagedataset.obj \
+			bagdataset.obj gh5_convenience.obj iso19115_srs.obj
+
+PLUGIN_DLL 	=	gdal_HDF5.dll
+
+EXTRAFLAGS 	= 	-I$(HDF5_DIR)\include -DWIN32 -D_HDF5USEDLL_ 
+
+!IF "$(HDF5_PLUGIN)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF5_PLUGIN
+!ENDIF
+
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(HDF5_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+

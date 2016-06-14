@@ -1,0 +1,5 @@
+"PRIME_MERIDIAN_CODE","PRIME_MERIDIAN_NAME","GREENWICH_LONGITUDE","UOM_CODE","REMARKS","INFORMATION_SOURCE","DATA_SOURCE","REVISION_DATE","CHANGE_ID","DEPRECATED"
+8901,Greenwich,0.0,9110,,,EPSG,1995-06-02 00:00:00,96.29,0
+8902,Lisbon,-9.0754862,9110,,Instituto Geografico e Cadastral; Lisbon,EPSG,1995-06-02 00:00:00,96.29,0
+8903,Paris,2.5969213,9105,Value adopted by IGN (Paris) in 1936. Equivalent to 2 deg 20min 14.025sec. Preferred by EPSG to earlier value of 2deg 20min 13.95sec (2.596898 grads) used by RGS London.,"Institut Geographique National (IGN), Paris",EPSG,1995-06-02 00:00:00,,0
+8904,Bogota,-74.04513,9110,,"Instituto Geografico ""Augustin Cadazzi"" (IGAC); Bogota",EPSG,1995-06-02 00:00:00,96.29,0

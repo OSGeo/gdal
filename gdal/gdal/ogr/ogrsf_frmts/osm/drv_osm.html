@@ -1,0 +1,159 @@
+<html>
+<head>
+<title>OSM - OpenStreetMap XML and PBF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>OSM - OpenStreetMap XML and PBF</h1>
+
+(GDAL/OGR &gt;= 1.10.0)<p>
+
+This driver reads OpenStreetMap files, in .osm (XML based) and .pbf (optimized binary) formats.<p>
+
+The driver is available if GDAL is built with SQLite support and, for .osm XML files, with Expat support.<p>
+
+The filenames must end with .osm or .pbf extension.<p>
+
+The driver will categorize features into 5 layers :
+<ul>
+    <li><b>points</b> : "node" features that have significant tags attached.</li>
+    <li><b>lines</b> : "way" features that are recognized as non-area.</li>
+    <li><b>multilinestrings</b> : "relation" features that form a multilinestring(type = 'multilinestring' or type = 'route').</li>
+    <li><b>multipolygons</b> : "relation" features that form a multipolygon (type = 'multipolygon' or type = 'boundary'), and "way" features that are recognized as area.</li>
+    <li><b>other_relations</b> : "relation" features that do not belong to the above 2 layers.</li>
+</ul>
+<p>
+
+<h3>Configuration</h3>
+
+In the <i>data</i> folder of the GDAL distribution, you can find a
+<i><a href="http://svn.osgeo.org/gdal/trunk/gdal/data/osmconf.ini">osmconf.ini</a></i> file that can be
+customized to fit your needs. You can also define an alternate path with the OSM_CONFIG_FILE configuration
+option.<p>
+
+The customization is essentially which OSM attributes and keys should be translated into OGR layer fields.<p>
+
+Starting with GDAL 2.0, fields can be computed with SQL expressions (evaluated by SQLite engine)
+from other fields/tags. For example to compute the z_order attribute.<p>
+
+<h3>"other_tags" field</h3>
+
+When keys are not strictly identified in the <i>osmconf.ini</i> file, the key/value pair is appended
+in a "other_tags" field, with a syntax compatible with the PostgreSQL HSTORE type. See the
+<i>COLUMN_TYPES</i> layer creation option of the <a href="drv_pg.html">PG driver</a>.<p>
+
+For example :
+<pre>
+ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf -lco COLUMN_TYPES=other_tags=hstore
+</pre>
+
+<h3>"all_tags" field</h3>
+
+(OGR &gt;= 1.11)<p>
+
+Similar to "other_tags", except that it contains both keys specifically identified to be reported as
+dedicated fields, as well as other keys.<p>
+"all_tags" is disabled by default, and when enabled, it is exclusive with "other_tags".
+
+<h3>Internal working and performance tweaking</h3>
+
+The driver will use an internal SQLite database to resolve geometries. If that database remains under 100 MB
+it will reside in RAM. If it grows above, it will be written in a temporary file on disk. By default, this
+file will be written in the current directory, unless you define the CPL_TMPDIR configuration option. The
+100 MB default threshold can be adjusted with the OSM_MAX_TMPFILE_SIZE configuration option (value in MB).<p>
+
+For indexation of nodes, a custom mechanism not relying on SQLite is used by default (indexation of ways
+to solve relations is still relying on SQLite). It can speed up operations significantly. However, in some
+situations (non increasing node ids, or node ids not in expected range), it might not work and the driver will
+output an error message suggesting to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option to NO.<p>
+
+When custom indexing is used (default case), the OSM_COMPRESS_NODES configuration option can be set to YES (the
+default is NO). This option might be turned on to improve performances when I/O access is the limiting factor (typically
+the case of rotational disk), and will be mostly efficient for country-sized OSM extracts where compression rate can
+go up to a factor of 3 or 4, and help keep the node DB to a size that fit in the OS I/O caches. For whole planet file, the
+effect of this option will be less efficient. This option consumes addionnal 60 MB of RAM.<p>
+
+<h3>Interleaved reading</h3>
+
+Due to the nature of OSM files and how the driver works internally,
+the default reading mode might not work correctly, because too many
+features will accumulate in the layers before being consumed by the
+user application.  For large files, applications should set the
+OGR_INTERLEAVED_READING=YES configuration option to turn on a special
+reading mode where the following reading pattern must be used:
+
+<pre>
+    bool bHasLayersNonEmpty;
+    do
+    {
+        bHasLayersNonEmpty = false;
+
+        for( int iLayer = 0; iLayer &lt; poDS->GetLayerCount(); iLayer++ )
+        {
+            OGRLayer *poLayer = poDS->GetLayer(iLayer);
+
+            OGRFeature* poFeature;
+            while( (poFeature = poLayer->GetNextFeature()) != NULL )
+            {
+                bHasLayersNonEmpty = true;
+                OGRFeature::DestroyFeature(poFeature);
+            }
+        }
+    }
+    while( bHasLayersNonEmpty );
+</pre>
+
+<p>
+
+Note : the ogr2ogr application has been modified to use that OGR_INTERLEAVED_READING mode without any
+particular user action.<p>
+
+<h3>Reading .osm.bz2 files and/or online files</h3>
+
+.osm.bz2 are not natively recognized, however you can process them (on Unix), with the following command :
+<pre>
+bzcat my.osm.bz2 | ogr2ogr -f SQLite my.sqlite /vsistdin/
+</pre>
+
+You can convert a .osm or .pbf file without downloading it :
+<pre>
+wget -O - http://www.example.com/some.pbf | ogr2ogr -f SQLite my.sqlite /vsistdin/
+
+or
+
+ogr2ogr -f SQLite my.sqlite /vsicurl_streaming/http://www.example.com/some.pbf -progress
+</pre>
+
+And to combine the above steps :
+
+<pre>
+wget -O - http://www.example.com/some.osm.bz2 | bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
+</pre>
+
+<h2>Open options</h2>
+
+<ul>
+<li> <b>CONFIG_FILE=filename</b>: (GDAL &gt;=2.0) Configuration filename.
+Defaults to {GDAL_DATA}/osmconf.ini.</li>
+<li> <b>USE_CUSTOM_INDEXING=YES/NO</b>: (GDAL &gt;=2.0)
+Whether to enable custom indexing. Defaults to YES.</li>
+<li> <b>COMPRESS_NODES=YES/NO</b>: (GDAL &gt;=2.0)
+Whether to compress nodes in temporary DB. Defaults to NO.</li>
+<li> <b>MAX_TMPFILE_SIZE=int_val</b>: (GDAL &gt;=2.0) Maximum size in MB
+of in-memory temporary file. If it exceeds that value, it will go to disk.
+Defaults to 100.</li>
+<li> <b>INTERLEAVED_READING=YES/NO</b>: (GDAL &gt;=2.0) Whether to
+enable interleaved reading. Defaults to NO.</li>
+</ul>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.openstreetmap.org/">OpenStreetMap home page</a><p>
+<li> <a href="http://wiki.openstreetmap.org/wiki/OSM_XML">OSM XML Format description</a><p>
+<li> <a href="http://wiki.openstreetmap.org/wiki/PBF_Format">OSM PBF Format description</a><p>
+</ul>
+
+</body>
+</html>

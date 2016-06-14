@@ -1,0 +1,274 @@
+<html>
+<head>
+<title>PostgreSQL / PostGIS</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PostgreSQL / PostGIS</h1>
+
+This driver implements support for access to spatial tables in
+PostgreSQL extended with the
+<a href="http://postgis.net/">PostGIS</a> spatial data support.
+Some support exists in the driver for use with PostgreSQL without PostGIS
+but with less functionalities.<p>
+
+This driver requires a connection to a Postgres database. If you want to
+prepare a SQL dump to inject it later into a Postgres database, you can
+instead use the <a href="drv_pgdump.html">PostgreSQL SQL Dump driver</a> (GDAL/OGR >= 1.8.0)<p>
+
+You can find additionnal information on the driver in the <a href="drv_pg_advanced.html">Advanced OGR PostgreSQL driver Information</a> page.
+
+<h2>Connecting to a database</h2>
+
+To connect to a Postgres datasource, use a connection string specifying the database name,
+with additional parameters as necessary<br>
+<blockquote><pre>PG:dbname=databasename</pre><em> or</em><pre>PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"</pre></blockquote>
+It's also possible to omit the database name and connect
+to a <em>default</em> database, with the same name as the user name.<br>
+<b>Note</b>: We use PQconnectdb() to make the connection, so any other options and defaults
+that would apply to it, apply to the name here (refer to the documentation of the PostgreSQL server.
+Here for <a href="http://www.postgresql.org/docs/8.4/interactive/libpq-connect.html">PostgreSQL 8.4</a>).
+The PG: prefix is used to mark the name as a postgres connection string.<p>
+
+<h2>Geometry columns</h2>
+
+If the <i>geometry_columns</i> table exists (i.e. PostGIS is enabled for the accessed
+database), then all tables and named views listed in the <i>geometry_columns</i> table
+will be treated as OGR layers. Otherwise (PostGIS disabled for the accessed database),
+all regular user tables and named views will be treated as layers.<p>
+
+Starting with GDAL 1.7.0, the driver also supports the
+<a href="http://postgis.refractions.net/documentation/manual-svn/ch04.html#PostGIS_Geography"><i>geography</i></a>
+column type introduced in PostGIS 1.5.<p>
+
+Starting with GDAL 2.0, the driver also supports reading and writing the
+following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE<p>
+
+<h2>SQL statements</h2>
+
+<p>The PostgreSQL driver passes SQL statements directly to PostgreSQL by default,
+rather than evaluating them internally when using the ExecuteSQL() call on the
+OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
+expressions are also passed directly through to PostgreSQL.
+It's also possible to request the ogr Pg driver to handle SQL commands
+with the <a href="ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong>
+string to the ExecuteSQL() method, as the name of the SQL dialect.</p>
+
+<p>The PostgreSQL driver in OGR supports the OGRDataSource::StartTransaction(),
+OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
+calls in the normal SQL sense.<p>
+
+<h2>Creation Issues</h2>
+
+The PostgreSQL driver does not support creation of new datasets (a database
+within PostgreSQL), but it does allow creation of new layers within an
+existing database.<P>
+
+As mentioned above the type system is impoverished, and many OGR types
+are not appropriately mapped into PostgreSQL.<p>
+
+If the database has PostGIS types loaded (i.e. the geometry type), newly
+created layers will be created with the PostGIS Geometry type.  Otherwise
+they will use OID. <p>
+
+By default it is assumed that text being sent to Postgres is in the UTF-8
+encoding.  This is fine for plain ASCII, but can result in errors for
+extended characters (ASCII 155+, LATIN1, etc).  While OGR provides no direct
+control over this, you can set the PGCLIENTENCODING environment variable
+to indicate the format being provided.  For instance, if your text is
+LATIN1 you could set the environment variable to LATIN1 before using OGR
+and input would be assumed to be LATIN1 instead of UTF-8.
+An alternate way of setting the client encoding is to issue the following SQL command
+with ExecuteSQL() : "SET client_encoding TO encoding_name" where encoding_name is LATIN1, etc.
+Errors can be caught by enclosing this command with a CPLPushErrorHandler()/CPLPopErrorHandler() pair.<p>
+
+<h3>Dataset open options</h3>
+
+(GDAL &gt;= 2.0)
+
+<ul>
+<li> <b>DBNAME</b>=string: Database name.<p>
+<li> <b>PORT</b>=integer: Port.<p>
+<li> <b>USER</b>=string: User name.<p>
+<li> <b>PASSWORD</b>=string: Password.<p>
+<li> <b>HOST</b>=string: Server hostname.<p>
+<li> <b>ACTIVE_SCHEMA</b>=string: Active schema.<p>
+<li> <b>SCHEMAS</b>=string: Restricted sets of schemas to explore (comma separated).<p>
+<li> <b>TABLES</b>=string: Restricted set of tables to list (comma separated).<p>
+<li> <b>LIST_ALL_TABLES</b>=YES/NO: This may be "YES" to force all tables,
+including non-spatial ones, to be listed.<p>
+<li> <b>PRELUDE_STATEMENTS</b>=string (GDAL &gt;= 2.1). SQL statement(s) to send on the
+PostgreSQL client connection before any other ones. In case of several statement,
+they must be separated with the semi-column (;) sign. The driver will specifically
+recognize BEGIN as the first statement to avoid emitting BEGIN/COMMIT itself.
+This option may be useful when using the driver with pg_bouncer in transaction pooling,
+e.g. 'BEGIN; SET LOCAL statement_timeout TO "1h";'<p>
+<li> <b>CLOSING_STATEMENTS</b>=string (GDAL &gt;= 2.1). SQL statement(s) to send on the
+PostgreSQL client connection after any other ones. In case of several statement,
+they must be separated with the semi-column (;) sign. With the above example value
+for PRELUDE_STATEMENTS, the appropriate CLOSING_STATEMENTS would be "COMMIT".<p>
+</ul>
+
+<h3>Dataset Creation Options</h3>
+
+None<p>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+<li>
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to
+one of "geometry", "geography" (PostGIS >= 1.5), "BYTEA" or "OID" to force the type of geometry used for
+a table. For a PostGIS database, "geometry" is the default value.<p>
+<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
+desired name to be destroyed before creating the requested layer.<p>
+<li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
+layer to have their field names "laundered" into a form more compatible with
+PostgreSQL.  This converts to lower case and converts some special characters
+like "-" and "#" to "_".  If "NO" exact names are preserved.
+The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
+<li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
+layer to try and represent the width and precision information, if available
+using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
+FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
+<li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
+Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
+on the geometry dimension during loading.<p>
+<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If
+omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
+<li> <b>SCHEMA</b>: Set name of schema for new table.
+Using the same layer name in different schemas is supported, but not in the public schema and others. Note that
+using the -overwrite option of ogr2ogr and -lco SCHEMA= option at the same time will not work, as the ogr2ogr utility
+will not understand that the existing layer must be destroyed in the specified schema. Use the -nln option of ogr2ogr instead,
+or better the active_schema connection string. See below example.<p>
+<li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to YES by default. Creates a spatial index (GiST) on the geometry column
+to speed up queries. Set to FALSE to disable. (Has effect only when PostGIS is available).<p>
+<li> <b>TEMPORARY</b>: (From GDAL 1.8.0) Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
+<li> <b>UNLOGGED</b>: (From GDAL 2.0) Set to OFF by default. Whether to create the table as a unlogged one.
+Unlogged tables are only supported since PostgreSQL 9.1, and GiST indexes used for spatial indexing since PostgreSQL 9.3.<p>
+<li> <b>NONE_AS_UNKNOWN</b>: (From GDAL 1.8.1) Can bet set to TRUE to force non-spatial layers (wkbNone) to be created as
+spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
+a regular table is created and not recorded in the PostGIS geometry_columns table.<p>
+<li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
+<li> <b>FID64</b>: (From GDAL 2.0) This may be "TRUE" to create a FID column that can support
+64 bit identifiers. The default value is "FALSE".</li>
+<li> <b>EXTRACT_SCHEMA_FROM_LAYER_NAME</b>: (From GDAL 1.9.0) Can be set to NO to avoid considering the dot character
+as the separator between the schema and the table name. Defaults to YES.<p>
+<li> <b>COLUMN_TYPES</b>: (From GDAL 1.10) A list of strings of format field_name=pg_field_type (separated by comma)
+that should be use when CreateField() is invoked on them. This will override the default choice that OGR would have made.
+This can for example be used to create a column of type <a href="http://www.postgresql.org/docs/9.0/static/hstore.html">HSTORE</a>.<p>
+<li> <b>DESCRIPTION</b> (From GDAL 2.1) Description string to put in the pg_description system table. On
+reading, if such a description is found, it is exposed in the DESCRIPTION metadata item. The description
+can also be written with SetMetadataItem("DESCRIPTION", description_string). Descriptions are preserved
+by default by ogr2ogr, unless the -nomd option is used.</p>
+</ul>
+
+<h3>Configuration Options</h3>
+
+There are a variety of
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">Configuration
+Options</a> which help control the behavior of this driver.<p>
+
+<ul>
+<li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
+COPY is significantly faster than INSERT. Starting with GDAL 2.0, COPY is used by
+default when inserting from a table that has just been created.</li><p>
+<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'. Only used when opening a layer whose primary key cannot be autodetected.
+Ignored by CreateLayer() that uses the FID creation option.</li><p>
+<!-- Little interest to advertize PG_USE_TEXT... Just to keep it mind it exists for example for debugging -->
+<!-- <li><b>PG_USE_TEXT</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as text instead of their default HEXEWKB form.</li></p> -->
+<li><b>PG_USE_BASE64</b>: (GDAL >= 1.8.0) If set to "YES", geometries will be fetched as BASE64 encoded EWKB instead of canonical HEX encoded EWKB.
+This reduces the amount of data to be transferred from 2 N to 1.333 N, where N is the size of EWKB data. However, it might be a
+bit slower than fetching in canonical form when the client and the server are on the same machine, so the default is NO.</li><p>
+<li><b>OGR_TRUNCATE</b>: (GDAL &gt;= 1.11) If set to "YES", the content of the table will be first erased with the SQL TRUNCATE command before
+inserting the first feature. This is an alternative to using the -overwrite flag of ogr2ogr,
+that avoids views based on the table to be destroyed.
+Typical use case: "ogr2ogr -append PG:dbname=foo abc.shp --config OGR_TRUNCATE YES".
+</ul>
+
+<h3>Examples</h3>
+
+<ul>
+<li>
+Simple translation of a shapefile into PostgreSQL.  The table 'abc' will
+be created with the features from abc.shp and attributes from abc.dbf.
+The database instance (warmerda) must already exist, and the table abc must
+not already exist. <p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
+</pre>
+
+<li>
+<p>
+This second example loads a political boundaries layer from VPF (via the
+<a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
+cryptic OGDI layer name to something more sensible.  If an existing table
+of the desired name exists it is overwritten.<p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda \
+        gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
+        -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
+</pre>
+</li>
+
+<li>
+<p>
+In this example we merge tiger line data from two different directories of
+tiger files into one table.  Note that the second invocation uses -append
+and no OVERWRITE=yes. <p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
+     -lco OVERWRITE=yes CompleteChain
+% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
+     CompleteChain
+</pre>
+</li>
+
+<li>
+<p>
+This example shows using ogrinfo to evaluate an SQL query statement
+within PostgreSQL.  More sophisticated PostGIS specific queries may also be
+used via the -sql commandline switch to ogrinfo.<p>
+
+<pre>
+ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+</pre>
+</li>
+
+<li>
+<p>
+This example shows using ogrinfo to list PostgreSQL/PostGIS layers on a different host.<p>
+
+<pre>
+ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
+</pre>
+</li>
+
+</ul>
+
+<h3>FAQs</h3>
+
+<ul>
+<li> <b>Why can't I see my tables? PostGIS is installed and I have data</b><br>
+You must have permissions on all tables you want to read <i>and</i> geometry_columns and spatial_ref_sys.<br>
+Misleading behavior may follow without an error message if you do not have permissions to these tables. Permission
+issues on geometry_columns and/or spatial_ref_sys tables can be generally confirmed if you can see the tables
+by setting the configuration option PG_LIST_ALL_TABLES to YES. (e.g. ogrinfo --config PG_LIST_ALL_TABLES YES PG:xxxxx)
+</ul>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="drv_pg_advanced.html">Advanced OGR PostgreSQL driver Information</a><p>
+<li> <a href="drv_pgdump.html">OGR PostgreSQL SQL Dump driver Page</a><p>
+<li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
+<li> <a href="http://postgis.net/">PostGIS</a><p>
+<li> <a href="http://trac.osgeo.org/postgis/wiki/UsersWikiOGR">PostGIS / OGR Wiki Examples Page</a><p>
+</ul>
+
+</body>
+</html>

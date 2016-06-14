@@ -1,0 +1,19 @@
+
+OBJ	=	openjpegdataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. $(OPENJPEG_CFLAGS) $(OPENJPEG_VERSION_CFLAGS)
+
+!IFDEF OPENJPEG_VERSION
+OPENJPEG_VERSION_CFLAGS = -DOPENJPEG_VERSION=$(OPENJPEG_VERSION)
+!ENDIF
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

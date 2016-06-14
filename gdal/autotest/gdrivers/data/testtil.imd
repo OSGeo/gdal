@@ -1,0 +1,9 @@
+numRows = 20
+numColumns = 20
+bitsPerPixel = 8
+BEGIN_GROUP = IMAGE_1
+        satId = "WV03";
+        firstLineTime = 2015-01-01T00:00:00.000000Z;
+        cloudCover = 0.027;
+END_GROUP = IMAGE_1
+END;

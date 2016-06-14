@@ -1,0 +1,88 @@
+<html>
+<head>
+<title>OGDI -- OGDI Bridge</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>OGDI -- OGDI Bridge</h1>
+
+<b><u>Note</u></b> : From GDAL >= 1.5.0, there should be little reason to use the
+OGDI raster bridge, as <a href="frmt_various.html#ADRG">ADRG</a>,
+<a href="frmt_dted.html">DTED</a> and <a href="frmt_various.html#RPFTOC">RPF</a>
+(CADRG/CIB) formats are natively supported by GDAL.<br><br>
+
+OGDI raster data sources are supported by GDAL for reading.  Both Matrix
+and Image families should be fully supported, as well as reading of colormap
+and projection metadata.  The GDAL reader is intended
+to be used with OGDI 3.1 drivers, but OGDI 3.0 drivers should also work.<p>
+
+OGDI datasets are opened within GDAL by selecting the GLTP URL.  For
+instance, gltp://gdal.velocet.ca/adrg/usr4/mpp1/adrg/TPSUS0101 would open
+the ADRG dataset stored at /usr4/mpp1/adrg/TPSUS0101 on the machine
+gdal.velocet.ca (assuming it has an OGDI server running) using the 'adrg'
+driver.  This default access to a whole datastore will attempt to represent
+all layers (and all supported family types) as bands all at the resolution
+and region reported by the datastore when initially accessed.<p>
+
+It is also possible to select a particular layer and access family
+from an OGDI datastore by indicating the layer name family in the name.
+The GDAL dataset name
+gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0102.IMG":Matrix would select
+the layer named TPUS0102.IMG from the dataset /usr4/mpp1/adrg/TPUS0101
+on the local system using the ADRG driver, and access the Matrix family.
+When a specific layer is accessed in this manner GDAL will attempt to determine
+the region and resolution from the OGDI 3.1 capabilities document.  Note that
+OGDI 3.0 datastores must have the layer and family specified in the
+dataset name since they cannot be determined automatically.<p>
+
+<pre>
+eg.
+  gltp://gdal.velocet.ca/adrg/usr4/mpp1/adrg/TPUS0101
+  gltp:/adrg/usr4/mpp1/adrg/TPUS0101
+  gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0102.IMG":Matrix
+</pre>
+
+OGDI Matrix family layers (pseudocolored integer layers) are represented
+as a single band of raster data with a color table.  Though the Matrix layers
+contain 32bit integer values, they are represented through GDAL as eight
+layers.  All values over 255 are truncated to 255, and only 256 colormap
+entries are captured.  While this works well for most Matrix layers, it is
+anticipated that at some point in the future Matrix layers with a larger
+dynamic range will be represented as other data types. <p>
+
+OGDI Image family layers may internally have a type of RGB (1) which is
+represented as three 8bit bands in GDAL, or Byte (2), UInt16 (3), Int16 (4)
+or Int32 (5).   There is no support for floating points bands in OGDI 3.1.<p>
+
+The GDAL OGDI driver will represent OGDI datasources as having <i>arbitrary</i>
+overviews.  Any GDAL raster read requests at a reduced resolution will be
+passed on to the OGDI driver at that reduced resolution; potentially allowing
+efficient reading of overview information from OGDI datastores.<p>
+
+If an OGDI datastore is opened without selecting a layer name in the dataset
+name, and if the datastore has OGDI 3.1 style capabilities, the list of layers
+will be made available as SUBDATASETS metadata.  For instance, the
+<i>gdalinfo</i> command might report the following.  This information can be
+used to establish available layers for direct access.<p>
+
+<pre>
+Subdatasets:
+  SUBDATASET_1_NAME=gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0101.IMG":Matrix
+  SUBDATASET_1_DESC=TPUS0101.IMG as Matrix
+  SUBDATASET_2_NAME=gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0102.IMG":Matrix
+  SUBDATASET_2_DESC=TPUS0102.IMG as Matrix
+  SUBDATASET_3_NAME=gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0101.IMG":Image
+  SUBDATASET_3_DESC=TPUS0101.IMG as Image
+  SUBDATASET_4_NAME=gltp:/adrg/usr4/mpp1/adrg/TPUS0101:"TPUS0102.IMG":Image
+  SUBDATASET_4_DESC=TPUS0102.IMG as Image
+</pre>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://ogdi.sourceforge.net/">ogdi.sourceforge.net</a>
+</ul>
+
+</body>
+</html>

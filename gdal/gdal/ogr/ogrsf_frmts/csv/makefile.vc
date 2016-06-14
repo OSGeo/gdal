@@ -1,0 +1,15 @@
+
+OBJ	=	ogrcsvdriver.obj ogrcsvdatasource.obj ogrcsvlayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

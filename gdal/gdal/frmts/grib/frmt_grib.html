@@ -1,0 +1,78 @@
+<html>
+<head>
+<title>GRIB -- WMO General Regularly-distributed Information in Binary form</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GRIB -- WMO General Regularly-distributed Information in Binary form</h1>
+
+GDAL supports reading of GRIB1 and GRIB2 format raster data, with some degree
+of support for coordinate system, georeferencing and other metadata.  GRIB
+format is commonly used for distribution of Meteorological information, and
+is propagated by the World Meteorological Organization.<p>
+
+The GDAL GRIB driver is based on a modified version of the degrib application
+which is written primarily by Arthur Taylor of NOAA NWS NDFD (MDL).  The
+degrib application (and the GDAL GRIB driver) are built on the g2clib
+grib decoding library written primarily by John Huddleston of NOAA NWS NCEP.
+<p>
+
+There are several encoding schemes for raster data in GRIB format.  Most
+common ones should be supported including PNG encoding.  JPEG2000 encoded
+GRIB files will generally be supported if GDAL is also built with JPEG2000
+support via one of the GDAL JPEG2000 drivers.  The JasPer library generally
+provides the best jpeg2000 support for the GRIB driver.<p>
+
+GRIB files may a be represented in GDAL as having many bands, with some sets
+of bands representing a time sequence.  GRIB bands are represented as Float64
+(double precision floating point) regardless of the actual values. GRIB
+metadata is captured as per-band metadata and used to set band descriptions,
+similar to this:
+<pre>
+  Description = 100000[Pa] ISBL="Isobaric surface"
+    GRIB_UNIT=[gpm]
+    GRIB_COMMENT=Geopotential height [gpm]
+    GRIB_ELEMENT=HGT
+    GRIB_SHORT_NAME=100000-ISBL
+    GRIB_REF_TIME=  1201100400 sec UTC
+    GRIB_VALID_TIME=  1201104000 sec UTC
+    GRIB_FORECAST_SECONDS=3600 sec
+</pre>
+
+GRIB2 files may also include an extract of the product definition template
+number (octet 8-9), and the product definition template values (octet 10+)
+as metadata like this:
+
+<pre>
+    GRIB_PDS_PDTN=0
+    GRIB_PDS_TEMPLATE_NUMBERS=3 5 2 0 105 0 0 0 1 0 0 0 1 100 0 0 1 134 160 255 0 0 0 0 0
+</pre>
+
+<h2>Configuration options</h2>
+
+<p>
+
+This paragraph lists the configuration options that can be set to alter the default behaviour of the GRIB driver.
+
+<ul>
+<li>GRIB_NORMALIZE_UNITS : (GDAL >= 1.9.0) Can be set to NO to avoid gdal to normalize units to metric.</li>
+</ul>
+</p>
+
+<h2>Known issues:</h2>
+
+The library that GDAL uses to read GRIB files is known to be not thread-safe, so you should avoid
+reading or writing several GRIB datasets at the same time from different threads.
+
+<h2>See Also:</h2>
+
+<ul>
+
+<li> <a href="http://www.weather.gov/mdl/NDFD_GRIB2Decoder/">NOAA NWS NDFD "degrib" GRIB2 Decoder</a>
+<li> <a href="http://www.nco.ncep.noaa.gov/pmb/codes/GRIB2/">NOAA NWS NCEP g2clib grib decoding library</a>
+<li> <a href="http://www.wmo.int/pages/prog/www/WDM/Guides/Guide-binary-2.html">WMO GRIB Format Documents</a>
+</ul>
+
+</body>
+</html>

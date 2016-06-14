@@ -1,0 +1,232 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<title>INGR --- Intergraph Raster Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>INGR --- Intergraph Raster Format</h1>
+
+This format is supported for read and writes access.<p>
+
+The Intergraph Raster File Format was the native file format used by
+Intergraph software applications to store raster data. It is manifested&nbsp;in
+several internal data&nbsp;formats.<p>
+
+<h2> Reading INGR Files</h2>
+
+Those are the data formats that the INGR driver supports for reading:<p>
+
+<ul>
+  <li>2 - Byte Integer</li>
+  <li>3 - Word Integer</li>
+  <li>4 - Integers 32 bit</li>
+  <li>5 - Floating Point 32 bit</li>
+  <li>6 - Floating Point 64 bit</li>
+  <li>9 - Run Length Encoded</li>
+  <li>10 - Run Length Encoded Color</li>
+  <li>24 - CCITT Group 4</li>
+  <li>27 - Adaptive RGB</li>
+  <li>28 - Uncompressed 24 bit</li>
+  <li>29 - Adaptive Gray Scale</li>
+  <li>30 - JPEG GRAY</li>
+  <li>31 - JPEG RGB </li>
+  <li>32 - JPEG CMYK</li>
+  <li>65 - Tiled</li>
+  <li>67 - Continuous Tone&nbsp;</li>
+</ul>
+
+The format "65 - Tiled" is not a format; it is just an indication that the
+file is tiled. In this case the tile header contains the real data format code
+that could be any of the above formats. The INGR driver can read tiled and
+untiled instance of any of the supported data formats.<p>
+
+<h2>Writing INGR Files</h2>
+
+Those are the data formats that the INGR driver supports for writing:<p>
+
+<ul>
+  <li>2 - Byte Integer</li>
+  <li>3 - Word Integers</li>
+  <li>4 - Integers 32Bit</li>
+  <li>5 - Floating Point 32Bit</li>
+  <li>6 - Floating Point 64Bit</li>
+</ul>
+
+Type 9 RLE bitonal compression is used when outputting ".rle" file. Other file types are uncompressed.<p>
+
+Note that writing in that format is not encouraged.<p>
+
+<h2>File Extension</h2>
+
+The following is a partial listing of INGR file extensions:<p>
+
+<table style="width: 501px; height: 394px; text-align: left; margin-left: 0px; margin-right: auto;" border="1">
+  <tbody>
+    <tr>
+    <td align="left">
+      <p>.cot</p>
+      </td>
+    <td align="left">
+      <p>8-bit grayscale or color table data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.ctc</p>
+      </td>
+    <td align="left">
+      <p>8-bit grayscale using PackBits-type compression (uncommon)</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.rgb</p>
+      </td>
+    <td align="left">
+      <p>24-bit color and grayscale (uncompressed and PackBits-type compression)</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.ctb</p>
+      </td>
+    <td align="left">
+      <p>8-bit color table data (uncompressed or run-length encoded)</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.grd</p>
+      </td>
+    <td align="left">
+      <p>8, 16 and 32 bit elevation data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.crl</p>
+      </td>
+    <td align="left">
+      <p>8 or 16 bit, run-length compressed grayscale or color table data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.tpe</p>
+      </td>
+    <td align="left">
+      <p>8 or 16 bit, run-length compressed grayscale or color table data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.lsr</p>
+      </td>
+    <td align="left">
+      <p>8 or 16 bit, run-length compressed grayscale or color table data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.rle</p>
+      </td>
+    <td align="left">
+      <p>1-bit run-length compressed data (16-bit runs) </p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.cit</p>
+      </td>
+    <td align="left">
+      <p>CCITT G3 or G4 1-bit data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.g3</p>
+      </td>
+    <td align="left">
+      <p>CCITT G3 1-bit data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.g4</p>
+      </td>
+    <td align="left">
+      <p>CCITT G4 1-bit data</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.tg4</p>
+      </td>
+    <td align="left">
+      <p>CCITT G4 1-bit data (tiled)</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.cmp</p>
+      </td>
+    <td align="left">
+      <p>JPEG grayscale, RGB, or CMYK</p>
+      </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <p>.jpg
+    </p>
+      </td>
+      <td align="left">
+      <p>JPEG grayscale, RGB, or CMYK</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<div style="text-align: left;">Source:&nbsp;<a href="http://www.oreilly.com/www/centers/gff/formats/ingr/index.htm">http://www.oreilly.com/www/centers/gff/formats/ingr/index.htm</a><br>
+</div>
+<br>
+
+The INGR driver does not require any especial file
+extension in order to identify or create an INGR file.<p>
+
+<h2>Georeference</h2>
+
+The INGR driver does not support reading or writing
+georeference information. The reason for that is because there is no universal
+way of storing georeferencing in INGR files. It could have georeference stored
+in a accompanying .dgn file or in application specific data storage inside the
+file itself.<p>
+
+<h2>Metadata</h2>
+
+The following creation option and bandset metadata is available.<p>
+<ul type="disc">
+<li>RESOLUTION: This is the DPI (dots per inch). Microns not supported.</li>
+</ul>
+
+
+<h2>See Also:</h2>
+
+For more information:<p>
+
+<ul type="disc">
+
+  <li> Implemented as <tt>gdal/frmts/ingr/intergraphraster.cpp</tt>.
+  </li>
+
+  <li> <a href="http://www.intergraph.com">www.intergraph.com</a></li>
+
+  <li><a href="http://www.oreilly.com/www/centers/gff/formats/ingr/index.htm">http://www.oreilly.com/www/centers/gff/formats/ingr/index.htm</a></li>
+
+  <li>File specification: <a href="ftp://ftp.intergraph.com/pub/bbs/scan/note/rffrgps.zip/">ftp://ftp.intergraph.com/pub/bbs/scan/note/rffrgps.zip/</a></li>
+
+</ul>
+
+</body>
+</html>

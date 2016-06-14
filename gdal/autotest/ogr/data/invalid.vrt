@@ -1,0 +1,81 @@
+<OGRVRTDataSource>
+    <!--<OGRVRTLayer/>-->
+    <OGRVRTLayer name="foo"/>
+    <OGRVRTLayer name="foo">
+        <SrcDataSource/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="foo">
+        <SrcDataSource>foo</SrcDataSource>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="foo">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="foo">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <SrcLayer>bar</SrcLayer>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="foo">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <SrcSQL>bar</SrcSQL>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <FID>foo</FID>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Style>foo</Style>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryField encoding="foo"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryField encoding="PointFromColumns"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryField encoding="WKT"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" type="foo"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" subtype="foo"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" type="Real" subtype="Boolean"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" width="-1"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" precision="-1"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" src="foo"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <SrcRegion>foo</SrcRegion>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <SrcRegion>POINT (0 1)</SrcRegion>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryField name="foo" field="bar"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>

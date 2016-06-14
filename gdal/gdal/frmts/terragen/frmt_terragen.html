@@ -1,0 +1,86 @@
+<html>
+<head>
+	<title>Terragen --- Terragen Terrain File</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Terragen --- Terragen&trade; Terrain File</h1>
+
+Terragen terrain files store 16-bit elevation values with
+optional gridspacing (but not positioning).
+The file extension for Terragen heightfields is "TER" or "TERRAIN" (which
+in the former case is the same as Leveller, but the driver only recognizes Terragen files). The driver ID is "Terragen".
+The dataset is file-based and has only one elevation band.
+Void elevations are not supported. Pixels are considered points.
+<p>
+
+<h2>Reading</h2>
+<blockquote>
+<tt>dataset::GetProjectionRef()</tt> returns a local coordinate system
+using meters.
+<p>
+<tt>band::GetUnitType()</tt> returns meters.
+<p>
+Elevations are <tt>Int16</tt>. You must use the <tt>band::GetScale()</tt> and
+<tt>band::GetOffset()</tt> to convert them to meters.
+<p>&nbsp;<br>
+</blockquote>
+
+<h2>Writing</h2>
+<blockquote>
+Use the <tt>Create</tt> call. Set the <tt>MINUSERPIXELVALUE</tt> option (a float)
+to the lowest elevation of your elevation data, and
+<tt>MAXUSERPIXELVALUE</tt> to the highest. The units must match
+the elevation units you will give to <tt>band::SetUnitType()</tt>.
+<p>
+Call <tt>dataset::SetProjection()</tt> and <tt>dataset::SetGeoTransform()</tt>
+with your coordinate system details. Otherwise, the driver
+will not encode physical elevations properly. Geographic
+(degree-based) coordinate systems will be converted to
+a local meter-based system.
+<p>
+To maintain precision, a best-fit baseheight and scaling will
+be used to use as much of the 16-bit range as possible.
+<p>
+Elevations are <tt>Float32</tt>.
+<p>&nbsp;<br>
+</blockquote>
+
+
+<h2>Roundtripping</h2>
+<blockquote>
+Errors per trip tend to be a few centimeters for elevations
+and up to one or two meters for ground extents if
+degree-based coordinate systems are written. Large degree-based
+DEMs incur unavoidable distortions since the driver currently
+only uses meters.
+<p>&nbsp;<br>
+</blockquote>
+
+<p>
+
+<h2>History</h2>
+v1.0 (Mar 26/06): Created.<br>
+v1.1 (Apr 20/06): Added Create() support and SIZE-only read fix.<br>
+v1.2 (Jun  6/07): Improved baseheight/scale determination when writing.
+<p>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/terragen/terragendataset.cpp</tt>.<p>
+
+<li>
+See <a href="./readme.txt">readme.txt</a>
+for installation and support information.<p>
+
+<li> <a href="http://www.planetside.co.uk/terragen/dev/tgterrain.html">
+Terragen Terrain File Specification</a>.<p>
+
+</ul>
+
+
+</body>
+</html>
+

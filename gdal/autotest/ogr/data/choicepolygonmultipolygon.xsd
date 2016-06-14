@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ogr="http://www.gdal.org/ogr" targetNamespace="http://www.gdal.org/ogr" elementFormDefault="qualified">
+  <xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd"/>
+  <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+  <xs:element name="test" type="ogr:TestType" substitutionGroup="gml:_Feature"/>
+  <xs:complexType name="FeatureCollectionType">
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureCollectionType"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="TestType">
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence>
+          <xs:element name="attr" type="xs:string"/>
+          <xs:choice>
+            <xs:element ref="gml:polygonProperty"/>
+            <xs:element ref="gml:multiPolygonProperty"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

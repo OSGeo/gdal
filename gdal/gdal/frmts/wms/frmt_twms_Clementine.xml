@@ -1,0 +1,6 @@
+<GDAL_WMS>
+    <Service name="TiledWMS">
+	<ServerUrl>http://onmoon.jpl.nasa.gov/wms.cgi?</ServerUrl>
+	<TiledGroupName>Clementine</TiledGroupName>
+    </Service>
+</GDAL_WMS>

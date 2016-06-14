@@ -1,0 +1,63 @@
+Standalone GRASS Drivers for GDAL and OGR
+=========================================
+
+This package contains standalone drivers for GRASS raster and vector
+files that can be built after GDAL has been built and installed as an 
+"autoload" driver.  
+
+This is particularly useful in resolving problems with GRASS depending
+on GDAL, but GDAL with GRASS support depending on GRASS.  With this 
+package you can configure and install GDAL normally (--without-grass), then
+build and install GRASS normally and finally build and install this driver.
+
+To build this driver it is necessary for it to find GDAL and GRASS support
+files.  Typically the configure and build process would look something like:
+
+./configure --with-gdal=/usr/local/bin/gdal-config --with-grass=/usr/local/grass-7.0.0
+make
+sudo make install
+
+See also:
+
+  http://www.gdal.org/
+  http://grass.osgeo.org
+
+
+---
+
+FAQs
+----
+
+
+Question:
+
+I am trying to install gdal-grass 1.3.1 on Red hat enterprise linux
+advanced server 3.0. I have previously installed gdal 1.3.1 without-
+grass, and Grass 6.0.1 with-gdal. I have tried to configure gdal-grass
+with:
+
+./configure --with-gdal=/usr/local/gdal/bin/gdal-config --with-
+grass=/usr/local/grass-6.0.1
+
+It seems to find gdal alright, but then balks at the Grass location. The
+Grass location specified above is indeed the correct location. I have
+also tried adding --with-grass=/usr/local/grass-6.0.1/lib, but with no
+success. My error is:
+
+...
+checking for G_asprintf in -lgrass_gis ... no
+configure: error: --with-grass=/usr/local/grass-6.0.1 requested, but
+libraries not found?
+
+
+Answer:
+
+Your problem is likely to be solved by editing /etc/ld.so.conf to 
+include the locations of proj, gdal, grass, and geos. Specifically, 
+the full path to both gdal-config and geos-config, and the full paths 
+to the library locations of proj (often /usr/local/lib) and grass (/
+usr/local/grass-6.0.1/lib). After editing ld.so.conf, run ldconfig, 
+and you should be good to go.
+
+I ran into this problem this weekend (and posted for help to this 
+list), so it seems to be a pretty common issue. 

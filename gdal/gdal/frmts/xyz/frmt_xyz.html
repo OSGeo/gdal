@@ -1,0 +1,48 @@
+<html>
+<head>
+<title>XYZ -- ASCII Gridded XYZ</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>XYZ -- ASCII Gridded XYZ</h1>
+
+(Available for GDAL >= 1.8.0)
+<p>
+GDAL supports reading and writing ASCII <b>gridded</b> XYZ raster datasets (i.e.
+ungridded XYZ, LIDAR XYZ etc. must be opened by other means.
+See the documentation of the <a href="gdal_grid.html">gdal_grid</a> utility).
+<p>
+Those datasets are ASCII files with (at least) 3 columns, each line containing
+the X and Y coordinates of the center of the cell and the value of the cell.
+<p>
+The spacing between each cell must be constant and no missing value is supported.
+Cells with same Y coordinates must be placed on consecutive lines. For a same Y coordinate value,
+the lines in the dataset must be organized by increasing X values. The value of the Y coordinate
+can increase or decrease however. The supported column separators are space, comma, semicolon and tabulations.
+<p>
+The driver tries to autodetect an header line and will look for 'x', 'lon' or 'east' names to detect
+the index of the X column, 'y', 'lat' or 'north' for the Y column and 'z', 'alt' or 'height' for the Z column.
+If no header is present or one of the column could not be identified in the header, the X, Y and Z columns
+(in that order) are assumed to be the first 3 columns of each line.
+<p>
+The opening of a big dataset can be slow as the driver must scan the whole file to determine
+the dataset size and spatial resolution. The driver will autodetect the data type among
+Byte, Int16, Int32 or Float32.
+<p>
+
+<h2>Creation options</h2>
+
+<ul>
+<li><b>COLUMN_SEPARATOR=</b>a_value : where a_value is a string used to separate the values of the X,Y and Z columns. Defaults to one space character</li>
+<li><b>ADD_HEADER_LINE=</b>YES/NO : whether an header line must be written (content is X &lt;col_sep&gt; Y &lt;col_sep&gt; Z) . Defaults to NO</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li>Documentation of <a href="gdal_grid.html">gdal_grid</a> utility</li>
+</ul>
+
+</body>
+</html>

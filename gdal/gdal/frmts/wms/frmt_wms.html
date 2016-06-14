@@ -1,0 +1,559 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>WMS -- Web Map Services</title>
+	<STYLE type="text/css">
+		td.xml { font-family: monospace; white-space: pre; padding-right: 20px; }
+		td.desc { }
+		span.value { color: #00B000; }
+		body { background-color: #ffffff; }
+	</STYLE>
+</head>
+
+<body>
+
+<h1>WMS -- Web Map Services</h1>
+
+<p>
+  Accessing several different types of web image services is possible
+  using the WMS format in GDAL. Services are accessed by creating a
+  local service description XML file -- there are examples below for
+  each of the supported image services. It is important that there be no
+  spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.
+</p>
+
+	<table>
+		<tr>
+			<td class="xml">&lt;GDAL_WMS&gt;</td>
+			<td class="desc"> </td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
+			<td class="desc">WMS version. (optional, defaults to 1.1.1)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;ServerUrl&gt;<span class="value">http://onearth.jpl.nasa.gov/wms.cgi?</span>&lt;/ServerUrl&gt;</td>
+			<td class="desc">WMS server URL. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SRS&gt;<span class="value">EPSG:4326</span>&lt;/SRS&gt;</td>
+			<td class="desc">Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server).
+			For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a <a href="http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr">spatial reference json object</a></td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;CRS&gt;<span class="value">CRS:83</span>&lt;/CRS&gt;</td>
+			<td class="desc">Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;ImageFormat&gt;<span class="value">image/jpeg</span>&lt;/ImageFormat&gt;</td>
+			<td class="desc">Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)</td>
+		</tr>
+        <tr>
+            <td class="xml">        &lt;Transparent&gt;<span class="value">FALSE</span>&lt;/Transparent&gt;</td>
+            <td class="desc">Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE).&nbsp; The request format and BandsCount need to support alpha.</td>
+        </tr>
+		<tr>
+			<td class="xml">        &lt;Layers&gt;<span class="value">modis%2Cglobal_mosaic</span>&lt;/Layers&gt;</td>
+			<td class="desc">A URL encoded, comma separated string of layers (required, except for TiledWMS)</td>
+		</tr>
+        <tr>
+            <td class="xml">        &lt;TiledGroupName&gt;<span class="value">Clementine</span>&lt;/TiledGroupName&gt;</td>
+            <td class="desc">Comma separated list of layers. (required for TiledWMS)</td>
+        </tr>
+		<tr>
+			<td class="xml">        &lt;Styles&gt;&lt;/Styles&gt;</td>
+			<td class="desc">Comma separated list of styles. (optional)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;BBoxOrder&gt;xyXY&lt;/BBoxOrder&gt;</td>
+			<td class="desc">Reorder bbox coordinates arbitrarily. May be required for version 1.3 servers. (optional)<br>
+				x - low X coordinate, y - low Y coordinate, X - high X coordinate, Y - high Y coordinate
+			</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/Service&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;DataWindow&gt;</td>
+			<td class="desc">Define size and extents of the data. (required, except for TiledWMS and VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;UpperLeftX&gt;<span class="value">-180.0</span>&lt;/UpperLeftX&gt;</td>
+			<td class="desc">X (longitude) coordinate of upper-left corner. (optional, defaults to -180.0, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;UpperLeftY&gt;<span class="value">90.0</span>&lt;/UpperLeftY&gt;</td>
+			<td class="desc">Y (latitude) coordinate of upper-left corner. (optional, defaults to 90.0, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;LowerRightX&gt;<span class="value">180.0</span>&lt;/LowerRightX&gt;</td>
+			<td class="desc">X (longitude) coordinate of lower-right corner. (optional, defaults to 180.0, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;LowerRightY&gt;<span class="value">-90.0</span>&lt;/LowerRightY&gt;</td>
+			<td class="desc">Y (latitude) coordinate of lower-right corner. (optional, defaults to -90.0, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SizeX&gt;<span class="value">2666666</span>&lt;/SizeX&gt;</td>
+			<td class="desc">Image size in pixels.</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SizeY&gt;<span class="value">1333333</span>&lt;/SizeY&gt;</td>
+			<td class="desc">Image size in pixels.</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileX&gt;<span class="value">0</span>&lt;/TileX&gt;</td>
+			<td class="desc">Added to tile X value at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileY&gt;<span class="value">0</span>&lt;/TileY&gt;</td>
+			<td class="desc">Added to tile Y value at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileLevel&gt;<span class="value">0</span>&lt;/TileLevel&gt;</td>
+			<td class="desc">Tile level at highest resolution. (tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileCountX&gt;<span class="value">0</span>&lt;/TileCountX&gt;</td>
+			<td class="desc">Can be used to define image size, SizeX = TileCountX * BlockSizeX * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileCountY&gt;<span class="value">0</span>&lt;/TileCountY&gt;</td>
+			<td class="desc">Can be used to define image size, SizeY = TileCountY * BlockSizeY * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;YOrigin&gt;<span class="value">top</span>&lt;/YOrigin&gt;</td>
+			<td class="desc">Can be used to define the position of the Y origin with respect to the tile grid. Possible values are 'top', 'bottom', and 'default', where the default behavior is mini-driver-specific. (TMS mini-driver only, optional, defaults to 'bottom' for TMS)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/DataWindow&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Projection&gt;<span class="value">EPSG:4326</span>&lt;/Projection&gt;</td>
+			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;IdentificationTolerance&gt;<span class="value">2</span>&lt;/IdentificationTolerance&gt;</td>
+			<td class="desc">Identification tolerance (optional, defaults to 2)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;BandsCount&gt;<span class="value">3</span>&lt;/BandsCount&gt;</td>
+			<td class="desc">Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 3)</td>
+		</tr>
+        <tr>
+            <td class="xml">    &lt;DataType&gt;<span class="value">Byte</span>&lt;/DataType&gt;</td>
+            <td class="desc">Band data type, amont Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)</td>
+        </tr>
+		<tr>
+			<td class="xml">    &lt;BlockSizeX&gt;<span class="value">1024</span>&lt;/BlockSizeX&gt;</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;BlockSizeY&gt;<span class="value">1024</span>&lt;/BlockSizeY&gt;</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;OverviewCount&gt;<span class="value">10</span>&lt;/OverviewCount&gt;</td>
+			<td class="desc">Count of reduced resolution layers each having 2 times lower resolution. (optional, default is calculated at runtime)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Cache&gt;</td>
+			<td class="desc">Enable local disk cache. Allows for offline operation. (optional, defaults to no cache)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Path&gt;<span class="value">./gdalwmscache</span>&lt;/Path&gt;</td>
+			<td class="desc">Location where to store cache files. It is safe to use same cache path for different data sources. (optional, defaults to ./gdalwmscache if GDAL_DEFAULT_WMS_CACHE_PATH configuration option is not specified)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Depth&gt;<span class="value">2</span>&lt;/Depth&gt;</td>
+			<td class="desc">Number of directory layers. 2 will result in files being written as cache_path/A/B/ABCDEF... (optional, defaults to 2)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Extension&gt;<span class="value">.jpg</span>&lt;/Extension&gt;</td>
+			<td class="desc">Append to cache files. (optional, defaults to none)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/Cache&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;MaxConnections&gt;<span class="value">2</span>&lt;/MaxConnections&gt;</td>
+			<td class="desc">Maximum number of simultaneous connections. (optional, defaults to 2)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Timeout&gt;<span class="value">300</span>&lt;/Timeout&gt;</td>
+			<td class="desc">Connection timeout in seconds. (optional, defaults to 300)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;OfflineMode&gt;<span class="value">true</span>&lt;/OfflineMode&gt;</td>
+			<td class="desc">Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;AdviseRead&gt;<span class="value">true</span>&lt;/AdviseRead&gt;</td>
+			<td class="desc">Enable AdviseRead API call - download images into cache. (optional, defaults to false)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;VerifyAdviseRead&gt;<span class="value">true</span>&lt;/VerifyAdviseRead&gt;</td>
+			<td class="desc">Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;ClampRequests&gt;<span class="value">false</span>&lt;/ClampRequests&gt;</td>
+			<td class="desc">Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;UserAgent&gt;<span class="value">GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</span>&lt;/UserAgent&gt;</td>
+			<td class="desc">HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). Added in GDAL 1.8.0</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;UserPwd&gt;<span class="value">user:password</span>&lt;/UserPwd&gt;</td>
+			<td class="desc">User and Password for HTTP authentication (optional). Added in GDAL 1.10.0</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;UnsafeSSL&gt;<span class="value">true</span>&lt;/UnsafeSSL&gt;</td>
+			<td class="desc">Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false). Added in GDAL 1.8.0.</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Referer&gt;<span class="value">http://example.foo/</span>&lt;/Referer&gt;</td>
+			<td class="desc">HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;ZeroBlockHttpCodes&gt;<span class="value">204,404</span>&lt;/ZeroBlockHttpCodes&gt;</td>
+			<td class="desc">Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;ZeroBlockOnServerException&gt;<span class="value">true</span>&lt;/ZeroBlockOnServerException&gt;</td>
+			<td class="desc">Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. Added in 1.9.0. (optional, defaults to false)</td>
+		</tr>
+		<tr>
+			<td class="xml">&lt;/GDAL_WMS&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml"></td>
+			<td class="desc"></td>
+		</tr>
+	</table>
+
+<h2>Minidrivers</h2>
+<p>
+  The GDAL WMS driver has support for several internal 'minidrivers', which
+  allow access to different web mapping services. Each of these services may
+  support a different set of options in the Service block.
+</p>
+<h3>WMS</h3>
+<p>
+  Communications with an OGC WMS server. Has support for both tiled and
+  untiled requests.
+</p>
+
+<p>
+     Starting with GDAL &gt;= 1.10, WMS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
+     with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
+     <pre>gdallocationinfo "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&amp;VERSION=1.1.1&amp;
+                            REQUEST=GetMap&amp;LAYERS=og%3Abugsites&amp;SRS=EPSG:900913&amp;
+                            BBOX=-1.15841845090625E7,5479006.186718751,-1.1505912992109375E7,5557277.703671876&amp;
+                            FORMAT=image/png&amp;TILESIZE=256&amp;OVERVIEWCOUNT=25&amp;MINRESOLUTION=0.0046653459640220&amp;TILED=true"
+                           -geoloc -11547071.455 5528616 -xml -b 1
+    </pre>
+    Output:
+    <pre>
+Report pixel="248595" line="191985"&gt;
+  &lt;BandReport band="1"&gt;
+    &lt;LocationInfo&gt;
+      &lt;wfs:FeatureCollection xmlns="http://www.opengis.net/wfs"
+                                xmlns:wfs="http://www.opengis.net/wfs"
+                                xmlns:gml="http://www.opengis.net/gml"
+                                xmlns:og="http://opengeo.org"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://opengeo.org http://demo.opengeo.org/geoserver/wfs?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;typeName=og%3Abugsites http://www.opengis.net/wfs http://demo.opengeo.org/geoserver/schemas/wfs/1.0.0/WFS-basic.xsd"&gt;
+        &lt;gml:boundedBy&gt;
+          &lt;gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+            &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635 601228,4917635&lt;/gml:coordinates&gt;
+          &lt;/gml:Box&gt;
+        &lt;/gml:boundedBy&gt;
+        &lt;gml:featureMember&gt;
+          &lt;og:bugsites fid="bugsites.40946"&gt;
+            &lt;gml:boundedBy&gt;
+              &lt;gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+                &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635 601228,4917635&lt;/gml:coordinates&gt;
+              &lt;/gml:Box&gt;
+            &lt;/gml:boundedBy&gt;
+            &lt;og:cat&gt;86&lt;/og:cat&gt;
+            &lt;og:str1&gt;Beetle site&lt;/og:str1&gt;
+            &lt;og:the_geom&gt;
+              &lt;gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+                &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635&lt;/gml:coordinates&gt;
+              &lt;/gml:Point&gt;
+            &lt;/og:the_geom&gt;
+          &lt;/og:bugsites&gt;
+        &lt;/gml:featureMember&gt;
+      &lt;/wfs:FeatureCollection&gt;
+    &lt;/LocationInfo&gt;
+    &lt;Value&gt;255&lt;/Value&gt;
+  &lt;/BandReport&gt;
+&lt;/Report&gt;
+    </pre>
+</p>
+
+<h3>TileService</h3>
+<p>
+  Service to support talking to a WorldWind <a href="http://www.worldwindcentral.com/wiki/TileService">TileService</a>. Access is always tile based.
+</p>
+
+<h3>WorldWind</h3>
+<p>
+  Access to web-based WorldWind tile services. Access is always tile based.
+</p>
+
+<h3>TMS (GDAL 1.7.0 and later)</h3>
+<p>
+  The TMS Minidriver is designed primarily to support the users of the
+  <a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS
+  Specification</a>. This service supports only access by tiles.
+</p>
+<p>
+  Because TMS is similar to many other 'x/y/z' flavored services on the web,
+  this service can also be used to access these services. To use it in this
+  fashion, you can use replacement variables, of the format ${x}, ${y}, etc.
+</p>
+<p>
+ Supported variables (name is case sensitive) are :
+</p>
+  <ul>
+    <li>${x} -- x position of the tile</li>
+    <li>${y} -- y position of the tile. This can be either from the top or the bottom of the tileset, based on whether the YOrigin parameter is set to true or false.</li>
+    <li>${z} -- z position of the tile -- zoom level</li>
+    <li>${version} -- version parameter, set in the config file. Defaults to 1.0.0.</li>
+    <li>${format} -- format parameter, set in the config file. Defaults to 'jpg'.</li>
+    <li>${layer} -- layer parameter, set in the config file. Defaults to nothing.</li>
+  </ul>
+<p>
+  A typical ServerURL might look like:<br />
+  <tt>http://tilecache.osgeo.org/wms-c/Basic.py/${version}/${layer}/${z}/${x}/${y}.${format}</tt><br />
+  In order to better suit TMS users, any URL that does not contain "${" will automatically have the string above (after "Basic.py/") appended to their URL.
+</p>
+<p>
+  The TMS Service has 3 XML configuration elements that are different from
+  other services: <tt>Format</tt> which defaults to <tt>jpg</tt>, <tt>Layer</tt> which has no default, and <tt>Version</tt> which defaults to <tt>1.0.0</tt>.
+</p>
+<p>
+  Additionally, the TMS service respects one additional parameter, at the
+  DataWindow level, which is the YOrigin element. This element should be one of
+  <tt>bottom</tt> (the default in TMS) or <tt>top</tt>, which matches
+  OpenStreetMap and many other popular tile services.
+</p>
+<p>
+  Two examples of usage of the TMS service are included in the examples below.
+</p>
+
+<h3>OnEarth Tiled WMS (GDAL 1.9.0 and later)</h3>
+<p>
+The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
+implemented for the JPL OnEarth driver per the specification at
+<a href="http://onearth.jpl.nasa.gov/tiled.html">http://onearth.jpl.nasa.gov/tiled.html</a>.<p>
+
+A typical OnEarth Tiled WMS configuration file might look like:
+
+<pre>
+&lt;GDAL_WMS&gt;
+    &lt;Service name="TiledWMS"&gt;
+	&lt;ServerUrl&gt;http://onmoon.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;
+	&lt;TiledGroupName&gt;Clementine&lt;/TiledGroupName&gt;
+    &lt;/Service&gt;
+&lt;/GDAL_WMS&gt;
+</pre>
+
+Most of the other information is automatically fetched from the remote
+server using the GetTileService method at open time. <p>
+
+<h3>VirtualEarth (GDAL 1.9.0 and later)</h3>
+<p>
+Access to web-based Virtual Earth tile services. Access is always tile based.<p>
+<p>The ${quadkey} variable must be found in the ServerUrl element.<p>
+<p>The DataWindow element might be omitted. The default values are :
+<ul>
+<li>UpperLeftX = -20037508.34</li>
+<li>UpperLeftY = 20037508.34</li>
+<li>LowerRightX = 20037508.34</li>
+<li>LowerRightY = -20037508.34</li>
+<li>TileLevel = 19</li>
+<li>OverviewCount = 18</li>
+<li>SRS = EPSG:900913</li>
+<li>BlockSizeX = 256</li>
+<li>BlockSizeY = 256</li>
+</ul>
+</p>
+
+<h3>ArcGIS REST API (GDAL 2.0 and later)</h3>
+<p>
+Access to ArcGIS REST <a href="http://resources.arcgis.com/en/help/rest/apiref/mapserver.html">map service resource</a> (untiled requests).
+</p>
+<p>AGS layers can be <a href="http://resources.arcgis.com/en/help/rest/apiref/identify.html">queried</a> (through a GetFeatureInfo request) with the gdallocationinfo utility, or with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.
+</p>
+
+<p>
+     <pre>gdallocationinfo -wgs84 "&lt;GDAL_WMS&gt;&lt;Service name=\"AGS\"&gt;&lt;ServerUrl&gt;http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer&lt;/ServerUrl&gt;&lt;BBoxOrder&gt;xyXY&lt;/BBoxOrder&gt;&lt;SRS&gt;3857&lt;/SRS&gt;&lt;/Service&gt;&lt;DataWindow&gt;&lt;UpperLeftX&gt;-20037508.34&lt;/UpperLeftX&gt;&lt;UpperLeftY&gt;20037508.34&lt;/UpperLeftY&gt;&lt;LowerRightX&gt;20037508.34&lt;/LowerRightX&gt;&lt;LowerRightY&gt;-20037508.34&lt;/LowerRightY&gt;&lt;SizeX&gt;512&lt;/SizeX&gt;&lt;SizeY&gt;512&lt;/SizeY&gt;&lt;/DataWindow&gt;&lt;/GDAL_WMS&gt;" -75.704 39.75
+    </pre>
+
+<h3>Internet Imaging Protocol (IIP) (GDAL 2.1 and later)</h3>
+<p>
+Access to images served through <a href="https://en.wikipedia.org/wiki/Internet_Imaging_Protocol">IIP protocol</a>. The server must support the
+JTL (Retrieve a tile as a complete JFIF image) extension of the IIP protocol.
+</p>
+<p>If using the XML syntax, the ServerURL must contain the FIF parameter.</p>
+<p>Otherwise it is also possible to use "IIP:http://foo.com/FIF=image_name" syntax
+as connection string, to retrieve from the server information on the full resolution
+dimension and the number of resolutions.</p>
+<p>The XML definition can then be generated with
+"gdal_translate IIP:http://foo.com/FIF=image_name out.xml -of WMS"</p>
+
+<h2>Examples</h2>
+
+<ul>
+    <li><p>
+	<a href="frmt_wms_onearth_global_mosaic.xml">onearth_global_mosaic.xml</a> - Landsat mosaic from a <a href="http://onearth.jpl.nasa.gov/">OnEarth</a> WMS server<br>
+	<pre>gdal_translate -of JPEG -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic.jpg</pre>
+	<pre>gdal_translate -of JPEG -projwin -10 55 30 35 -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic2.jpg</pre>
+    </p>
+    <p><i>Note : this particular server does no longer accept regular WMS queries.</i></p>
+    </li>
+
+    <li><p>
+	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> -
+	It is possible to configure a WMS Service conforming to a WMS-C cache by
+	specifying a number of overviews and specifying the 'block size' as the
+	tile size of the cache. The following example is a sample set up for
+	a 19-level "Global Profile" WMS-C cache.
+	<pre>gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png" alt="example output">
+    </p></li>
+
+    <li><p>
+	<a href="frmt_wms_tileservice_bmng.xml">tileservice_bmng.xml</a> - TileService, Blue Marble NG (January)<br>
+	<pre>gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg" alt="example output">
+    </p></li>
+
+    <li><p>
+	<a href="frmt_wms_tileservice_nysdop2004.xml">tileservice_nysdop2004.xml</a> - TileService, NYSDOP 2004<br>
+	<pre>gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg" alt="example output">
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_openstreetmap_tms.xml">OpenStreetMap TMS Service Example</a>: Connect to OpenStreetMap tile service. Note that this file takes advantage of the tile cache; more information about configuring the tile cache settings is available above.<br />
+     <tt>gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png</tt>
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_metacarta_tms.xml">MetaCarta TMS Layer Example</a>, accessing the default MetaCarta TMS layer.<br />
+          <tt>gdal_translate -of PNG -outsize 512 256 frmt_wms_metacarta_tms.xml metacarta.png</tt>
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_bluemarble_s3_tms.xml">BlueMarble Amazon S3 Example</a> accessed with the TMS minidriver.
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_googlemaps_tms.xml">Google Maps</a> accessed with the TMS minidriver.
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_arcgis_mapserver_tms.xml">ArcGIS MapServer Tiles</a> accessed with the TMS minidriver.
+    </p></li>
+
+    <li><p>
+     OnEarth Tiled WMS <a href="frmt_twms_Clementine.xml">Clementine</a>,
+     <a href="frmt_twms_daily.xml">daily</a>, and
+     <a href="frmt_twms_srtm.xml">srtm</a> examples.<p>
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_virtualearth.xml">VirtualEarth Aerial Layer</a> accessed with the VirtualEarth minidriver.
+    </p></li>
+
+    <li><p>
+     <a href="frmt_ags_arcgisonline.xml">ArcGIS online sample server layer</a> accessed with the ArcGIS Server REST API minidriver.
+    </p></li>
+
+    <li><p>
+     <a href="frmt_wms_iip.xml">IIP online sample server layer</a> accessed with the IIP minidriver.
+    </p></li>
+</ul>
+
+<h2>Open syntax</h2>
+
+The WMS driver can open :
+<ul>
+<li><p>
+a local service description XML file : <pre>gdalinfo description_file.xml</pre>
+</p></li>
+
+<li><p>
+the content of a description XML file provided as filename :
+<pre>gdalinfo "&lt;GDAL_WMS&gt;&lt;Service name=\"TiledWMS\"&gt;&lt;ServerUrl&gt;http://onearth.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;&lt;TiledGroupName&gt;Global SRTM Elevation&lt;/TiledGroupName&gt;&lt;/Service&gt;&lt;/GDAL_WMS&gt;"</pre>
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) the base URL of a WMS service, prefixed with <i>WMS:</i> :
+<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi"</pre><p>
+A list of subdatasets will be returned, resulting from the parsing of the GetCapabilities request on that server.
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) a pseudo GetMap request, such as the subdataset name returned by the previous syntax :
+<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K%3AELEVATION%2FELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000"</pre>
+</p></li>
+
+<li><p>
+(GDAL >= 1.9.0) the base URL of a Tiled WMS service, prefixed with <i>WMS:</i> and with request=GetTileService as GET argument:
+<pre>gdalinfo "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"</pre><p>
+A list of subdatasets will be returned, resulting from the parsing of the GetTileService request on that server.
+</p></li>
+
+<li><p>
+(GDAL >= 2.0.0) the URL of a REST definition for a ArcGIS MapServer:
+<pre>gdalinfo "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&amp;pretty=true"</pre><p>
+</p></li>
+
+<li><p>
+(GDAL >= 2.1.0) the URL of a IIP image:
+<pre>gdalinfo "IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif"</pre><p>
+</p></li>
+</ul>
+
+<h2>Generation of WMS service description XML file</h2>
+
+The WMS service description XML file can be generated manually, or created
+as the output of the CreateCopy() operation of the WMS driver, only if the source
+dataset is itself a WMS dataset. Said otherwise, you can use gdal_translate
+with as source dataset any of the above syntax mentioned in "Open syntax" and
+as output an XML file.
+
+For example:
+<pre>
+gdal_translate "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json" wms.xml -of WMS
+</pre>
+
+The generated file will come with default values that you may need to edit.
+
+<h2>See Also:</h2>
+
+<ul>
+<li><a href="http://www.opengeospatial.org/standards/wms">OGC WMS Standards</a></li>
+<li><a href="http://wiki.osgeo.org/index.php/WMS_Tiling_Client_Recommendation">WMS Tiling Client Recommendation (WMS-C)</a></li>
+<li><a href="http://www.worldwindcentral.com/wiki/TileService">WorldWind TileService</a></li>
+<li><a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS Specification</a></li>
+<li><a href="http://onearth.jpl.nasa.gov/tiled.html">OnEarth Tiled WMS specification</a></li>
+<li><a href="http://resources.arcgis.com/en/help/rest/apiref/">ArcGIS Server REST API</a></li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,649 @@
+<html>
+
+<head>
+<title>GDAL Driver for FARSITE LCP</title>
+</head>
+
+<body>
+
+<h2>GDAL Driver for FARSITE v.4 LCP Format</h2>
+<p>FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
+wildland fire behavior and fire effect simulation models such as FARSITE,
+FLAMMAP, and FBAT (<a href="http://www.fire.org">www.fire.org</a>). The bands of an LCP file store data describing
+terrain, tree canopy, and surface fuel. The
+<a href="http://landfire.cr.usgs.gov/viewer">USGS National Map for LANDFIRE</a>
+distributes data in LCP format, and
+programs such as FARSITE and <a href="http://www.landfire.gov/datatool.php">LFDAT</a> can create LCP files from a set of input rasters.</p>
+<p>An LCP file (.lcp) is basically a raw format with a 7,316-byte header
+described below. The data type for all bands is 16-bit signed integer. Bands are
+interleaved by pixel. Five bands are required: elevation, slope, aspect, fuel
+model, and tree canopy cover. Crown fuel bands (canopy height, canopy base
+height, canopy bulk density), and surface fuel bands (duff, coarse woody debris)
+are optional.</p>
+<p>The LCP driver reads the linear unit, cell size, and extent, but the LCP file
+does not specify the projection. UTM projections are typical, but other
+projections are possible.</p>
+<p>The GDAL LCP driver reports dataset- and band-level metadata:</p>
+<h3>Dataset</h3>
+<blockquote>
+  <p>LATITUDE: Latitude of the dataset, negative for southern hemisphere<br>
+  LINEAR_UNIT: Feet or meters<br>
+  DESCRIPTION: LCP file description </p>
+</blockquote>
+<h3>Band</h3>
+<blockquote>
+  <p>&lt;band&gt;_UNIT or &lt;band&gt;_OPTION: units or options code for the band<br>
+  &lt;band&gt;_UNIT_NAME or &lt;band&gt;_OPTION_DESC: descriptive name of
+  units/options<br>
+  &lt;band&gt;_MIN: minimum value<br>
+  &lt;band&gt;_MAX: maximum value<br>
+  &lt;band&gt;_NUM_CLASSES: number of classes, -1 if &gt; 100<br>
+  &lt;band&gt;_VALUES: comma-delimited list of class values (fuel model band
+  only)<br>
+  &lt;band&gt;_FILE: original input raster file name for the band </p>
+</blockquote>
+<p><b>Note:</b> The LCP driver derives from the RawDataset helper class declared
+in gdal/frmts/raw. It should be implemented as gdal/frmts/raw/lcpdataset.cpp.</p>
+<h3>Creation Options</h3>
+The LCP driver supports CreateCopy() and metadata values can be set via
+creation options.  Below is a list of options with default values listed first.
+<li><p><b>ELEVATION_UNIT=[METERS/FEET]</b>: Vertical unit for elevation
+band.</p></li>
+
+<li><p><b>SLOPE_UNIT=[DEGREES/PERCENT]</b></p></li>
+<li><p><b>ASPECT_UNIT=[AZIMUTH_DEGREES/GRASS_CATEGORIES/GRASS_DEGREES]</b></p></li>
+<li><p><b>FUEL_MODEL_OPTION=[NO_CUSTOM_AND_NO_FILE/CUSTOM_AND_NO_FILE/
+    NO_CUSTOM_AND_FILE/CUSTOM_AND_FILE]</b>: Specify whether or not custom
+    fuel models are used, and if a custom fuel model file is present.</p></li>
+<li><p><b>CANOPY_COV_UNIT=[PERCENT/CATEGORIES]</b></p></li>
+<li><p><b>CANOPY_HT_UNIT=[METERS_X_10/FEET/METERS/FEET_X_10]</b></p></li>
+<li><p><b>CBH_UNIT=[METERS_X_10/METERS/FEET/FEET_X_10]</b></p></li>
+<li><p><b>CBD_UNIT=[KG_PER_CUBIC_METER_X_100/POUND_PER_CUBIC_FOOT/
+    KG_PER_CUBIC_METER/POUND_PER_CUBIC_FOOT_X_1000/TONS_PER_ACRE_X_100]</b></p></li>
+<li><p><b>DUFF_UNIT=[MG_PER_HECTARE_X_10/TONS_PER_ACRE_X_10]</b></p></li>
+<li><p><b>CALCULATE_STATS=[YES/NO]</b>: Calculate and write the min/max for
+    each band and write the appropriate flags and values in the header.  This is
+    mostly a legacy feature used for creating legends.</p></li>
+<li><p><b>CLASSIFY_DATA=[YES/NO]</b>: Classify the data into 100 unique values
+    or less and write and write the appropriate flags and values in the header.
+    This is mostly a legacy feature used for creating legends.</p></li>
+<li><p><b>LINEAR_UNIT=[SET_FROM_SRS/METER/FOOT/KILOMETER]</b>: Set the
+    linear unit, overriding (if it can be calculated) the value in the
+    associated spatial reference.  If no spatial reference is available, it
+    defaults to METER.</p></li>
+<li><p><b>LATITUDE=[-90-90]</b>: Override the latitude from the spatial
+    reference.  If no spatial reference is available, this should be set,
+    otherwise creation will fail.</p></li>
+<li><p><b>DESCRIPTION=[...]</b>: A short description(less than 512 characters)
+    of the dataset</p></li>
+
+Creation options that are units of linear measure are fairly lenient.
+METERS=METER and FOOT=FEET for the most part.
+
+<p><b>Note:</b> CreateCopy does not scale or change any data.  By setting the
+units for various bands, it is assumed that the values are in the specified
+units.</p>
+
+<p><b>LCP header format:</b></p>
+<table border="1" cellspacing="1" width="885">
+  <tr>
+    <td width="48"><b>Start byte</b> </td>
+    <td width="55"><b>No. of bytes</b> </td>
+    <td width="51"><b>Format</b> </td>
+    <td width="114"><b>Name</b> </td>
+    <td width="583"><b>Description</b> </td>
+  </tr>
+  <tr>
+    <td width="48">0 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">crown fuels </td>
+    <td width="583">20 if no crown fuels, 21 if crown fuels exist (crown fuels =
+    canopy height, canopy base height, canopy bulk density) </td>
+  </tr>
+  <tr>
+    <td width="48">4 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">ground fuels </td>
+    <td width="583">20 if no ground fuels, 21 if ground fuels exist (ground
+    fuels = duff loading, coarse woody) </td>
+  </tr>
+  <tr>
+    <td width="48">8 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">latitude </td>
+    <td width="583">latitude (negative for southern hemisphere) </td>
+  </tr>
+  <tr>
+    <td width="48">12 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">loeast </td>
+    <td width="583">offset to preserve coordinate precision (legacy from 16-bit OS days) </td>
+  </tr>
+  <tr>
+    <td width="48">20 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">hieast </td>
+    <td width="583">offset to preserve coordinate precision (legacy from 16-bit OS days) </td>
+  </tr>
+  <tr>
+    <td width="48">28 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">lonorth </td>
+    <td width="583">offset to preserve coordinate precision (legacy from 16-bit OS days) </td>
+  </tr>
+  <tr>
+    <td width="48">36 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">hinorth </td>
+    <td width="583">offset to preserve coordinate precision (legacy from 16-bit OS days) </td>
+  </tr>
+  <tr>
+    <td width="48">44 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">loelev </td>
+    <td width="583">minimum elevation </td>
+  </tr>
+  <tr>
+    <td width="48">48 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hielev </td>
+    <td width="583">maximum elevation </td>
+  </tr>
+  <tr>
+    <td width="48">52 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numelev </td>
+    <td width="583">number of elevation classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">56 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">elevation values </td>
+    <td width="583">list of elevation values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">456 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">loslope </td>
+    <td width="583">minimum slope </td>
+  </tr>
+  <tr>
+    <td width="48">460 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hislope </td>
+    <td width="583">maximum slope </td>
+  </tr>
+  <tr>
+    <td width="48">464 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numslope </td>
+    <td width="583">number of slope classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">468 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">slope values </td>
+    <td width="583">list of slope values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">868 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">loaspect </td>
+    <td width="583">minimum aspect </td>
+  </tr>
+  <tr>
+    <td width="48">872 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hiaspect </td>
+    <td width="583">maximum aspect </td>
+  </tr>
+  <tr>
+    <td width="48">876 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numaspects </td>
+    <td width="583">number of aspect classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">880 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">aspect values </td>
+    <td width="583">list of aspect values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">1280 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">lofuel </td>
+    <td width="583">minimum fuel model value </td>
+  </tr>
+  <tr>
+    <td width="48">1284 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hifuel </td>
+    <td width="583">maximum fuel model value </td>
+  </tr>
+  <tr>
+    <td width="48">1288 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numfuel </td>
+    <td width="583">number of fuel models -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">1292 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">fuel values </td>
+    <td width="583">list of fuel model values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">1692 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">locover </td>
+    <td width="583">minimum canopy cover </td>
+  </tr>
+  <tr>
+    <td width="48">1696 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hicover </td>
+    <td width="583">maximum canopy cover </td>
+  </tr>
+  <tr>
+    <td width="48">1700 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numcover </td>
+    <td width="583">number of canopy cover classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">1704 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">cover values </td>
+    <td width="583">list of canopy cover values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">2104 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">loheight </td>
+    <td width="583">minimum canopy height </td>
+  </tr>
+  <tr>
+    <td width="48">2108 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hiheight </td>
+    <td width="583">maximum canopy height </td>
+  </tr>
+  <tr>
+    <td width="48">2112 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numheight </td>
+    <td width="583">number of canopy height classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">2116 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">height values </td>
+    <td width="583">list of canopy height values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">2516 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">lobase </td>
+    <td width="583">minimum canopy base height </td>
+  </tr>
+  <tr>
+    <td width="48">2520 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hibase </td>
+    <td width="583">maximum canopy base height </td>
+  </tr>
+  <tr>
+    <td width="48">2524 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numbase </td>
+    <td width="583">number of canopy base height classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">2528 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">base values </td>
+    <td width="583">list of canopy base height values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">2928 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">lodensity </td>
+    <td width="583">minimum canopy bulk density </td>
+  </tr>
+  <tr>
+    <td width="48">2932 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hidensity </td>
+    <td width="583">maximum canopy bulk density </td>
+  </tr>
+  <tr>
+    <td width="48">2936 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numdensity </td>
+    <td width="583">number of canopy bulk density classes, -1 if &gt;100 </td>
+  </tr>
+  <tr>
+    <td width="48">2940 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">density values </td>
+    <td width="583">list of canopy bulk density values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">3340 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">loduff </td>
+    <td width="583">minimum duff </td>
+  </tr>
+  <tr>
+    <td width="48">3344 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hiduff </td>
+    <td width="583">maximum duff </td>
+  </tr>
+  <tr>
+    <td width="48">3348 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numduff </td>
+    <td width="583">number of duff classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">3352 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">duff values </td>
+    <td width="583">list of duff values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">3752 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">lowoody </td>
+    <td width="583">minimum coarse woody </td>
+  </tr>
+  <tr>
+    <td width="48">3756 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">hiwoody </td>
+    <td width="583">maximum coarse woody </td>
+  </tr>
+  <tr>
+    <td width="48">3760 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numwoodies </td>
+    <td width="583">number of coarse woody classes, -1 if &gt; 100 </td>
+  </tr>
+  <tr>
+    <td width="48">3764 </td>
+    <td width="55">400 </td>
+    <td width="51">long </td>
+    <td width="114">woody values </td>
+    <td width="583">list of coarse woody values as longs </td>
+  </tr>
+  <tr>
+    <td width="48">4164 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numeast </td>
+    <td width="583">number of raster columns </td>
+  </tr>
+  <tr>
+    <td width="48">4168 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">numnorth </td>
+    <td width="583">number of raster rows </td>
+  </tr>
+  <tr>
+    <td width="48">4172 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">EastUtm </td>
+    <td width="583">max X </td>
+  </tr>
+  <tr>
+    <td width="48">4180 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">WestUtm </td>
+    <td width="583">min X </td>
+  </tr>
+  <tr>
+    <td width="48">4188 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">NorthUtm </td>
+    <td width="583">max Y </td>
+  </tr>
+  <tr>
+    <td width="48">4196 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">SouthUtm </td>
+    <td width="583">min Y </td>
+  </tr>
+  <tr>
+    <td width="48">4204 </td>
+    <td width="55">4 </td>
+    <td width="51">long </td>
+    <td width="114">GridUnits </td>
+    <td width="583">linear unit: 0 = meters, 1 = feet, 2 = kilometers </td>
+  </tr>
+  <tr>
+    <td width="48">4208 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">XResol </td>
+    <td width="583">cell size width in GridUnits </td>
+  </tr>
+  <tr>
+    <td width="48">4216 </td>
+    <td width="55">8 </td>
+    <td width="51">double </td>
+    <td width="114">YResol </td>
+    <td width="583">cell size height in GridUnits </td>
+  </tr>
+  <tr>
+    <td width="48">4224 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">EUnits </td>
+    <td width="583">elevation units: 0 = meters, 1 = feet </td>
+  </tr>
+  <tr>
+    <td width="48">4226 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">SUnits </td>
+    <td width="583">slope units: 0 = degrees, 1 = percent </td>
+  </tr>
+  <tr>
+    <td width="48">4228 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">AUnits </td>
+    <td width="583">aspect units: 0 = Grass categories, 1 = Grass degrees, 2 =
+    azimuth degrees </td>
+  </tr>
+  <tr>
+    <td width="48">4230 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">FOptions </td>
+    <td width="583">fuel model options: 0 = no custom models AND no conversion
+    file, 1 = custom models BUT no conversion file, 2 = no custom models BUT
+    conversion file, 3 = custom models AND conversion file needed </td>
+  </tr>
+  <tr>
+    <td width="48">4232 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">CUnits </td>
+    <td width="583">canopy cover units: 0 = categories (0-4), 1 = percent </td>
+  </tr>
+  <tr>
+    <td width="48">4234 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">HUnits </td>
+    <td width="583">canopy height units: 1 = meters, 2 = feet, 3 = m x 10, 4 =
+    ft x 10 </td>
+  </tr>
+  <tr>
+    <td width="48">4236 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">BUnits </td>
+    <td width="583">canopy base height units: 1 = meters, 2 = feet, 3 = m x 10,
+    4 = ft x 10 </td>
+  </tr>
+  <tr>
+    <td width="48">4238 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">PUnits </td>
+    <td width="583">canopy bulk density units: 1 = kg/m^3, 2 = lb/ft^3, 3 =
+    kg/m^3 x 100, 4 = lb/ft^3 x 1000 </td>
+  </tr>
+  <tr>
+    <td width="48">4240 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">DUnits </td>
+    <td width="583">duff units: 1 = Mg/ha x 10, 2 = t/ac x 10 </td>
+  </tr>
+  <tr>
+    <td width="48">4242 </td>
+    <td width="55">2 </td>
+    <td width="51">short </td>
+    <td width="114">WOptions </td>
+    <td width="583">coarse woody options (1 if coarse woody band is present) </td>
+  </tr>
+  <tr>
+    <td width="48">4244 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">ElevFile </td>
+    <td width="583">elevation file name </td>
+  </tr>
+  <tr>
+    <td width="48">4500 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">SlopeFile </td>
+    <td width="583">slope file name </td>
+  </tr>
+  <tr>
+    <td width="48">4756 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">AspectFile </td>
+    <td width="583">aspect file name </td>
+  </tr>
+  <tr>
+    <td width="48">5012 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">FuelFile </td>
+    <td width="583">fuel model file name </td>
+  </tr>
+  <tr>
+    <td width="48">5268 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">CoverFile </td>
+    <td width="583">canopy cover file name </td>
+  </tr>
+  <tr>
+    <td width="48">5524 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">HeightFile </td>
+    <td width="583">canopy height file name </td>
+  </tr>
+  <tr>
+    <td width="48">5780 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">BaseFile </td>
+    <td width="583">canopy base file name </td>
+  </tr>
+  <tr>
+    <td width="48">6036 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">DensityFile </td>
+    <td width="583">canopy bulk density file name </td>
+  </tr>
+  <tr>
+    <td width="48">6292 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">DuffFile </td>
+    <td width="583">duff file name </td>
+  </tr>
+  <tr>
+    <td width="48">6548 </td>
+    <td width="55">256 </td>
+    <td width="51">char[] </td>
+    <td width="114">WoodyFile </td>
+    <td width="583">coarse woody file name </td>
+  </tr>
+  <tr>
+    <td width="48">6804 </td>
+    <td width="55">512 </td>
+    <td width="51">char[] </td>
+    <td width="114">Description </td>
+    <td width="583">LCP file description </td>
+  </tr>
+</table>
+
+<p><i>Chris Toney, 2009-02-14</i></p>
+
+</body>
+
+</html>

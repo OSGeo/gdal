@@ -1,0 +1,46 @@
+GDAL_ROOT = ..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ = oci_wrapper.obj \
+      georaster_dataset.obj \
+      georaster_rasterband.obj \
+      georaster_wrapper.obj
+
+PLUGIN_DLL = gdal_GEOR.dll
+
+!IFDEF JPEG_SUPPORTED
+!IFDEF JPEG_EXTERNAL_LIB
+JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORTED
+!ELSE
+JPEG_FLAGS = -I..\jpeg\libjpeg -DJPEG_SUPPORTED
+JPEG_LIB   = ..\jpeg\libjpeg\libjpeg.lib
+!ENDIF
+!ENDIF
+
+EXTRAFLAGS = $(OCI_INCLUDE) -I..\zlib $(JPEG_FLAGS)
+
+default: $(OBJ)
+	xcopy /D  /Y *.obj ..\o
+	cd ..
+
+fastread:
+	cl $(OPTFLAGS) fastread.c $(OCI_INCLUDE) $(OCI_LIB)
+	
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(OCI_LIB) ..\zlib\*.obj \
+	..\jpeg\vsidataio.obj $(JPEG_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

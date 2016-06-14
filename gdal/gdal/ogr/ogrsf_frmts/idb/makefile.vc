@@ -1,0 +1,16 @@
+
+OBJ	=	ogridbdriver.obj ogridbdatasource.obj ogridblayer.obj \
+		ogridbtablelayer.obj ogridbselectlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. $(IDB_INC)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe

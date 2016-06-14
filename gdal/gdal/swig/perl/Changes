@@ -1,0 +1,73 @@
+2.1 <release date here>
+  [Enhancements/changes in the API]
+  * The output from a GDAL driver can be redirected to a write method
+    of a class.
+  * The methods of Geo::GDAL::VSIF (the GDAL file system wrapper) can
+    be imported.
+  * New methods in Dataset: ComputeColorTable, Dither, DEMProcessing,
+    Grid, Info, Nearblack, Rasterize, Translate, Warp, Warped.
+  * New methods in Band: Distance Polygonize and Sieve
+  * New methods in Dataset: ReadTile and WriteTile, these return
+    arrays with three dimensions
+  * ReadTile and WriteTile methods (Band, Dataset) now accept tile
+    size and resampling algorithm
+  * The GDAL XML API has been put into a new class Geo::GDAL::XML. The
+    old API is still there (like for many other enhancements), it is
+    just removed from the documentation to clean up the API of the
+    class Geo::GDAL.
+  * Geo::OGR::Driver and Geo::OGR::DataSource are now pure Perl
+    interfaces to GDAL classes, which do the actual work. This should
+    have been done in 2.0, which merged vector and raster driver and
+    dataset classes. Geo::OGR::Driver is needed for opening, creating,
+    and copying vector datasets but Geo::OGR::DataSource is just a
+    legacy class.
+  * New pure Perl class Geo::GDAL::Extent, which is an array [xmin,
+    ymin, xmax, ymax] to ease some tasks
+  * A new API for GDAL error messages. All errors that are emitted in
+    GDAL during the execution of a call are stored in a stack (array)
+    in Geo::GDAL. The error stack (possibly a multiline string) can be
+    retrieved using the subroutine Geo::GDAL::errstr, which also
+    clears the stack.
+  * The named parameter calling system has been integrated into one
+    subroutine in the bindings, which unifies its behavior. The named
+    parameters capability has been added to some methods.
+  * All errors which are not emitted by Perl or by Swig are now
+    confessed (the stack trace is included), even those that happen
+    within the typemaps (C code between Perl and Swig interface).
+  * The bindings now require at least Perl 5.10, at least for the null
+    coalescing operator.
+  * File::Share can now be used to obtain a file containing the path
+    to GDAL support files.
+  * Add support for 64bit integers if the OS supports them.
+
+  [Bug fixes]
+  * Fix memory leak: CSLAdd* functions copy the parameter string.
+  * Fix the use of EXTEND. Returning large arrays caused core dumps.
+  * Perl bindings have GintBig, so the 64bit versions should be used.
+  * Review of parent - child relationships and their management
+  * Fix a bug in Layer DESTROY.
+  * Fix Geotransform::FromGCPs and typemap for GCP array input. Add
+    tests for these.
+  * Fix sending utf8 from Perl to GDAL. Should also remove some
+    "uninitialized value" warnings.
+  * Fix a bug in Dataset->SpatialReference.
+  * Fix tests which fail if Perl uses longdouble.
+  * The shadow feature was not working for Feature class. Bugfix for
+    Geo::OGR::Feature->new().
+  * Fix #6050: string formatting in croak.
+  * Fix #6039 use standard C comments in swig bindings.
+
+  [Other things]
+  * Many Documentation enhancements and fixes.
+  * Many new tests.
+  * Enhancements to Makefile.PL for independent builds & automatic tests.
+  * Add basic POD to GDAL.pm to make this module look nice in metacpan.
+  * Edit Makefile.PL due to rt.cpan.org requests 91636 and 107023.
+  * Perl Makefile.PL: add support for all hardening buildflags (patch
+    by Bas Couwenberg, #5998).
+
+2.0 Jun 14, 2015
+
+1.11 Apr 16, 2014
+
+1.10 Apr 24, 2013

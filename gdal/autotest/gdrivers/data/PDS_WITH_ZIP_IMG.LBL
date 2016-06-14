@@ -1,0 +1,63 @@
+PDS_VERSION_ID                   = PDS3
+
+OBJECT                           = COMPRESSED_FILE
+  FILE_NAME                      = "PDS_WITH_ZIP_IMG.ZIP"
+  RECORD_TYPE                    = UNDEFINED
+  ENCODING_TYPE                  = ZIP
+  INTERCHANGE_FORMAT             = BINARY
+  UNCOMPRESSED_FILE_NAME         = "PDS_WITH_ZIP_IMG.IMG"
+  REQUIRED_STORAGE_BYTES         = 4
+END_OBJECT                       = COMPRESSED_FILE
+
+OBJECT                           = UNCOMPRESSED_FILE
+  FILE_NAME                      = "PDS_WITH_ZIP_IMG.IMG"
+  RECORD_TYPE                    = FIXED_LENGTH
+  RECORD_BYTES                   = 4
+  ^IMAGE                         = ("PDS_WITH_ZIP_IMG.IMG", 1)
+  OBJECT                         = IMAGE
+    LINES                        = 1
+    LINE_SAMPLES                 = 1
+    SAMPLE_TYPE                  = "PC_REAL"
+    SAMPLE_BITS                  = 32
+    MISSING_CONSTANT             = "16#FF7FFFFB#"
+  END_OBJECT                     = IMAGE
+
+  OBJECT                         = IMAGE_MAP_PROJECTION
+    ^DATA_SET_MAP_PROJECTION     = "DSMAP.CAT"
+    MAP_PROJECTION_TYPE          = "OBLIQUE CYLINDRICAL"
+    A_AXIS_RADIUS                = 2575.000000 <km>
+    B_AXIS_RADIUS                = 2575.000000 <km>
+    C_AXIS_RADIUS                = 2575.000000 <km>
+    FIRST_STANDARD_PARALLEL      = "N/A"
+    SECOND_STANDARD_PARALLEL     = "N/A"
+    POSITIVE_LONGITUDE_DIRECTION = WEST
+    CENTER_LATITUDE              = 0.000000 <deg>
+    CENTER_LONGITUDE             = 0.000000 <deg>
+    REFERENCE_LATITUDE           = 38.827024 <deg>
+    REFERENCE_LONGITUDE          = 88.872240 <deg>
+    LINE_FIRST_PIXEL             = 1
+    LINE_LAST_PIXEL              = 26368
+    SAMPLE_FIRST_PIXEL           = 1
+    SAMPLE_LAST_PIXEL            = 4096
+    MAP_PROJECTION_ROTATION      = 90.0
+    MAP_RESOLUTION               = 256.0 <pix/deg>
+    MAP_SCALE                    = 0.17555558 <km/pix>
+    MAXIMUM_LATITUDE             =  56.86050186 <deg>
+    MINIMUM_LATITUDE             =  20.49594608 <deg>
+    EASTERNMOST_LONGITUDE        = 358.02478394 <deg>
+    WESTERNMOST_LONGITUDE        = 137.67897415 <deg>
+    LINE_PROJECTION_OFFSET       = 9471.500
+    SAMPLE_PROJECTION_OFFSET     = 255.500
+    OBLIQUE_PROJ_POLE_LATITUDE   = 48.137545 <deg>
+    OBLIQUE_PROJ_POLE_LONGITUDE  = 242.787509 <deg>
+    OBLIQUE_PROJ_POLE_ROTATION   = 159.968008 <deg>
+    OBLIQUE_PROJ_X_AXIS_VECTOR   = ( 0.01533300, -0.77889143, 0.62697132 )
+    OBLIQUE_PROJ_Y_AXIS_VECTOR   = ( 0.95217404, 0.20275286, 0.22859544 )
+    OBLIQUE_PROJ_Z_AXIS_VECTOR   = ( -0.30517126, 0.59348076, 0.74474901 )
+    LOOK_DIRECTION               = LEFT
+    COORDINATE_SYSTEM_TYPE       = "BODY-FIXED ROTATING"
+    COORDINATE_SYSTEM_NAME       = "PLANETOGRAPHIC"
+  END_OBJECT                     = IMAGE_MAP_PROJECTION
+
+END_OBJECT                       = UNCOMPRESSED_FILE
+END

@@ -1,0 +1,574 @@
+# $Id:$
+#
+# nmake.opt - configuration file for mrsid raster and lidar drivers
+#
+# This file will get automatically included if any of the following macros are
+# specified in the root nmake.opt file:
+#   MRSID_DIR - Should indicate the path to your MrSID SDK.  This nmake script
+#      will guess the type of SDK it is (raster and/or lidar).
+#   MRSID_RASTER_DIR - Can indicate the path to a MrSID Raster SDK, if lidar
+#      support needs to be disabled or built against a separate SDK.
+#   MRSID_LIDAR_DIR - Can indicate the path to a MrSID Lidar SDK, if raster
+#      support needs to be disabled or built against a separate SDK.
+#
+# Other optional values that can affect mrsid driver configuration:
+#   MRSID_JP2=(YES|NO) - Register the MrSID driver to handle JPEG 2000 files.
+#      By default this option will be disabled.
+#   MRSID_PLUGIN=(YES|NO) - Build the mrsid raster driver as a plugin.  The
+#      default value is NO.
+#   MRSID_LIDAR_PLUGIN=(YES|NO) - Build the mrsid lidar driver as a plugin.
+#      The default value is NO.
+#   MRSID_RDLLBUILD=(YES|NO) - Some versions of the MrSID SDK shipped with
+#      both static and dynamic libraries.  Use this macro to choose between
+#      static and dynamic linkage for the Raster SDK, if both are available.
+#      By default, your SDK will be inspected and the appropriate library
+#      used, with a preference for the DLL if both are found.
+#   MRSID_LDLLBUILD=(YES|NO) - Some versions of the MrSID SDK shipped with
+#      both static and dynamic libraries.  Use this macro to choose between
+#      static and dynamic linkage for the Lidar SDK, if both are available.
+#      By default, your SDK will be inspected and the appropriate library
+#      used, with a preference for the DLL if both are found.
+#   MRSID_CONFIG=(Release|Debug|Release_md|Debug_md) - When linking
+#      statically, the value of this macro should correspond to the run-time
+#      library linkage specified in OPTFLAGS, as follows:
+#         Release=/MT, Debug=/MTd, Release_md=/MD (default), Debug_md=/MDd
+#   MRSID_RVER=000 - Indicate the MrSID Raster SDK version you expect.  This 
+#      value will be validated against the actual SDK you are building to. By
+#      default the auto-detected version will be assumed correct.
+#   MRSID_LVER=000 - Indicate the MrSID Lidar SDK version you expect.  This
+#      value will be validated against the actual SDK you are building to. By
+#      default the auto-detected version will be assumed correct.
+#   MRSID_ESDK=(YES|NO) - Include write support for MrSID raster files.  By
+#      default this option will be enabled if you have a MrSID Raster ESDK.
+#   MRSID_SHOW_CONFIG=(YES|NO) - Display a report of all MRSID_* macro values
+#      after this script has run.
+#
+###############################################################################
+#
+# Initialize some default values.
+#
+!IFNDEF MRSID_CONFIG
+MRSID_CONFIG =     Release_md
+!ENDIF
+!IFNDEF MRSID_JP2
+MRSID_JP2 =        NO
+!ENDIF
+
+###############################################################################
+#
+# If MRSID_DIR was specified, then we will try to guess whether it points to a
+# lidar or a raster SDK (or both).  By the end of this block, we want to end
+# up with independent macros MRSID_RASTER_DIR and/or MRSID_LIDAR_DIR. Thence
+# MRSID_DIR will be ignored.
+#
+!IF DEFINED(MRSID_DIR)
+
+# Guard against conflicting configuration.
+!IF DEFINED(MRSID_RASTER_DIR) && DEFINED(MRSID_LIDAR_DIR)
+!ERROR The MRSID_DIR value is redundant or conflicts with the values of MRSID_RASTER_DIR and MRSID_LIDAR_DIR.  Please remove one of these values from the build configuration.
+!ENDIF
+
+# If a raster path was not explicitly set, see if MRSID_DIR is one.
+!IF !DEFINED(MRSID_RASTER_DIR)
+!IF EXIST("$(MRSID_DIR)\Raster_ESDK\include\lt_base.h")
+MRSID_RASTER_DIR = $(MRSID_DIR)\Raster_ESDK
+!ELSE IF EXIST("$(MRSID_DIR)\Raster_DSDK\include\lt_base.h")
+MRSID_RASTER_DIR = $(MRSID_DIR)\Raster_DSDK
+!ELSE IF EXIST("$(MRSID_DIR)\include\lt_base.h") || EXIST("$(MRSID_DIR)\include\support\lt_base.h")
+MRSID_RASTER_DIR = $(MRSID_DIR)
+!ENDIF
+!ENDIF
+
+# If a lidar path was not explicitly set, see if MRSID_DIR is one.
+!IF !DEFINED(MRSID_LIDAR_DIR) && DEFINED(MRSID_DIR)
+!IF EXIST("$(MRSID_DIR)\Lidar_ESDK\include\lidar\Base.h")
+MRSID_LIDAR_DIR = $(MRSID_DIR)\Lidar_ESDK
+!ELSE IF EXIST("$(MRSID_DIR)\Lidar_DSDK\include\lidar\Base.h")
+MRSID_LIDAR_DIR = $(MRSID_DIR)\Lidar_DSDK
+!ELSE IF EXIST("$(MRSID_DIR)\include\lidar\Base.h")
+MRSID_LIDAR_DIR = $(MRSID_DIR)
+!ENDIF
+!ENDIF
+
+!ENDIF
+
+# Verify we have at least one kind of SDK.  Otherwise, there is nothing to do.
+!IF !DEFINED(MRSID_RASTER_DIR) && !DEFINED(MRSID_LIDAR_DIR)
+!IF DEFINED(MRSID_DIR)
+!ERROR No MrSID SDK was found at $(MRSID_DIR).
+!ELSE
+!ERROR You did not specify a path to a MrSID SDK.
+!ENDIF
+!ENDIF
+
+# Henceforth, we can ignore MRSID_DIR.
+
+
+
+
+###############################################################################
+#
+# Configure the MrSID Raster SDK.
+#
+!IF DEFINED(MRSID_RASTER_DIR)
+
+# Initialize some macros to help with paths that have evolved over time.
+!IF EXIST("$(MRSID_RASTER_DIR)\include\base")
+I_BASE = \base
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\support")
+I_SUPP = \support
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\mrsid_readers")
+I_SIDR = \mrsid_readers
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\j2k_readers")
+I_JP2R = \j2k_readers
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\mrsid_writers")
+I_SIDW = \mrsid_writers
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\c_api")
+I_CAPI = \c_api
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\metadata")
+I_META = \metadata
+!ENDIF
+
+
+#
+# Determine the detailed Raster SDK version.
+R800 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_types.h"
+R701 = "$(MRSID_RASTER_DIR)\include$(I_NITF)\nitf_types.h"
+R700 = "$(MRSID_RASTER_DIR)\include$(I_NONE)\lti_referenceCountedObject.h"
+R607 = "$(MRSID_RASTER_DIR)\include$(I_CAPI)\ltic_api.h"
+R605 = "$(MRSID_RASTER_DIR)\include$(I_META)\lti_metadataTypes.h"
+R604 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_imageStage.h"
+R506 = "$(MRSID_RASTER_DIR)\include$(I_CAPI)\ltic_api.h"
+R415 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_coreStatus.h"
+R412 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_types.h"
+R411 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_utils.h"
+R410 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_geoImageReader.h"
+R409 = "$(MRSID_RASTER_DIR)\include$(I_CAPI)\ltic_api.h"
+R408 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_coreStatus.h"
+R407 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_types.h"
+R406 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_pixelData.h"
+R405 = "$(MRSID_RASTER_DIR)\include$(I_META)\lti_metadataStatus.h"
+R404 = "$(MRSID_RASTER_DIR)\include$(I_SUPP)\lt_platform.h"
+R403 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_coreStatus.h"
+R402 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_image.h"
+R400 = "$(MRSID_RASTER_DIR)\include$(I_BASE)\lti_image.h"
+
+!IF      [find "LTIEncodingModification" $(R800) > NUL 2>&1] == 0
+MRSID_AUTORVER =   800
+!ELSE IF [find "NITFTRELocation" $(R701) > NUL 2>&1] == 0
+MRSID_AUTORVER =   701
+!ELSE IF EXIST($(R700))
+MRSID_AUTORVER =   700
+!ELSE IF [find "ltic_getDimsAtMag" $(R607) > NUL 2>&1] == 0
+MRSID_AUTORVER =   607
+!ELSE IF [find "ENCODING_APPLICATION" $(R605) > NUL 2>&1] == 0
+MRSID_AUTORVER =   605
+!ELSE IF [find "overrideGeoCoord" $(R604) > NUL 2>&1] == 0
+MRSID_AUTORVER =   604
+!ELSE IF [find "ltic_openNITFImageFile" $(R506) > NUL 2>&1] == 0
+MRSID_AUTORVER =   506
+!ELSE IF [find "AllocFailed" $(R415) > NUL 2>&1] == 0
+MRSID_AUTORVER =   415
+!ELSE IF [find "LTIResampleMethod" $(R412) > NUL 2>&1] == 0
+MRSID_AUTORVER =   412
+!ELSE IF [find "isSigned" $(R411) > NUL 2>&1] == 0
+MRSID_AUTORVER =   411
+!ELSE IF EXIST($(R410))
+MRSID_AUTORVER =   410
+!ELSE IF EXIST($(R409))
+MRSID_AUTORVER =   409
+!ELSE IF [find "BBB" $(R408) > NUL 2>&1] == 0
+MRSID_AUTORVER =   408
+!ELSE IF [find "BadFormatForTag" $(R407) > NUL 2>&1] == 0
+MRSID_AUTORVER =   407
+!ELSE IF EXIST($(R405)) && !EXIST($(R406))
+MRSID_AUTORVER =   406
+!ELSE IF [find "BadFormatForTag" $(R405) > NUL 2>&1] == 0
+MRSID_AUTORVER =   405
+!ELSE IF EXIST($(R404)) && [find "macintosh" $(R404) > NUL 2>&1] > 0
+MRSID_AUTORVER =   404
+!ELSE IF [find "DatatypeMismatch" $(R403) > NUL 2>&1] == 0
+MRSID_AUTORVER =   403
+!ELSE IF [find "getDimsAtMag" $(R402) > NUL 2>&1] == 0
+MRSID_AUTORVER =   402
+!ELSE IF [find "class LTIImage" $(R400) > NUL 2>&1] == 0
+MRSID_AUTORVER =   400 # earliest supported raster SDK (2003)
+!ELSE
+!ERROR $(MRSID_RASTER_DIR) is not a MrSID Raster SDK.
+!ENDIF
+
+
+#
+# Check if this might be an encoding SDK.
+!IF EXIST("$(MRSID_RASTER_DIR)\include$(I_SIDW)\lti_mrsidWritersStatus.h")
+MRSID_AUTOESDK =   YES
+!ELSE
+MRSID_AUTOESDK =   NO
+!ENDIF
+
+!IF "$(MRSID_ESDK)" == "YES" && "$(MRSID_AUTOESDK)" != "YES"
+!ERROR MrSID Raster SDK found at $(MRSID_RASTER_DIR) is not an ESDK.
+!ENDIF
+!IF !DEFINED(MRSID_ESDK)
+MRSID_ESDK =       $(MRSID_AUTOESDK)
+!ENDIF
+
+
+#
+# Check if this SDK can write MG4.
+!IF EXIST("$(MRSID_RASTER_DIR)\include$(I_SIDW)\MG4ImageWriter.h")
+MRSID_AUTOMG4W =   YES
+!ELSE
+MRSID_AUTOMG4W =   NO
+!ENDIF
+
+!IF "$(MRSID_HAVE_MG4WRITE)" == "YES" && "$(MRSID_AUTOMG4W)" != "YES"
+!ERROR MrSID Raster SDK found at $(MRSID_RASTER_DIR) is not an ESDK.
+!ENDIF
+!IF !DEFINED(MRSID_HAVE_MG4WRITE)
+MRSID_HAVE_MG4WRITE = $(MRSID_AUTOMG4W)
+!ENDIF
+
+
+#
+# Check if this SDK supports JP2.
+!IF EXIST("$(MRSID_RASTER_DIR)\include$(I_JP2R)\J2KImageReader.h") || EXIST("$(MRSID_RASTER_DIR)\include$(I_SIDR)\J2KImageReader.h")
+MRSID_AUTOJP2 =    YES
+!ELSE
+MRSID_AUTOJP2 =    NO
+!ENDIF
+
+!IF "$(MRSID_JP2)" == "YES" && "$(MRSID_AUTOJP2)" != "YES"
+!ERROR MrSID Raster SDK found at $(MRSID_RASTER_DIR) does not support JP2.
+!ENDIF
+!IF !DEFINED(MRSID_JP2)
+MRSID_JP2 =        $(MRSID_AUTOJP2)
+!ENDIF
+
+
+#
+# Validate the Raster SDK version if one was indicated.
+!IF DEFINED(MRSID_RVER) && "$(MRSID_RVER)" != "$(MRSID_AUTORVER)"
+!ERROR MrSID Raster SDK at $(MRSID_RASTER_DIR) is version $(MRSID_AUTORVER), but you specified $(MRSID_RVER).
+!ENDIF
+MRSID_RVER =       $(MRSID_AUTORVER)
+
+
+#
+# Guess linkage if it was not set explicitly.
+!IF !DEFINED(MRSID_RDLLBUILD)
+!IF "$(MRSID_ESDK)" == "YES" || $(MRSID_RVER)0 < 8000
+MRSID_RDLLBUILD =  NO
+!ELSE
+MRSID_RDLLBUILD =  YES
+!ENDIF
+!ENDIF
+
+!ELSE # MRSID_RASTER_DIR was not defined, so disallow other raster options
+
+!IF DEFINED(MRSID_RVER)
+!ERROR MRSID_RVER specified, but no MrSID Raster SDK was found.
+!ENDIF
+
+!IF "$(MRSID_ESDK)" == "YES"
+!ERROR MRSID_ESDK specified, but no MrSID Raster SDK was found.
+!ENDIF
+
+!IF "$(MRSID_JP2)" == "YES"
+!ERROR MRSID_JP2 specified, but no MrSID Raster SDK was found.
+!ENDIF
+
+!ENDIF # end configuration of Raster SDK
+
+
+
+###############################################################################
+#
+# Configure the MrSID Lidar SDK.
+#
+!IF DEFINED(MRSID_LIDAR_DIR)
+
+# Determine the detailed Lidar SDK version.
+L111 = "$(MRSID_LIDAR_DIR)\include\lidar\Types.h"
+L110 = "$(MRSID_LIDAR_DIR)\include\lidar\PointData.h"
+L101 = "$(MRSID_LIDAR_DIR)\include\lidar\core_status.h"
+L100 = "$(MRSID_LIDAR_DIR)\include\lidar\Mutex.h"
+L090 = "$(MRSID_LIDAR_DIR)\include\lidar\IO.h"
+L060 = "$(MRSID_LIDAR_DIR)\include\lidar\Base.h"
+
+!IF      [find "&Huge(" $(L111) > NUL 2>&1] == 0
+MRSID_AUTOLVER =   111
+!ELSE IF [find "class PointInfo" $(L110) > NUL 2>&1] == 0
+MRSID_AUTOLVER =   110
+!ELSE IF [find "UNSUPPORTED_VERSION" $(L101) > NUL 2>&1] == 0
+MRSID_AUTOLVER =   101
+!ELSE IF EXIST($(L100))
+MRSID_AUTOLVER =   100
+!ELSE IF [find "struct Location" $(L090) > NUL 2>&1] == 0
+MRSID_AUTOLVER =    90
+!ELSE IF [find "LT_END_LIDAR_NAMESPACE" $(L060) > NUL 2>&1] == 0
+MRSID_AUTOLVER =    60
+!ENDIF
+
+# Validate the Lidar SDK version if one was indicated.
+!IF DEFINED(MRSID_LVER) && "$(MRSID_LVER)" != "$(MRSID_AUTOLVER)"
+!ERROR MrSID Lidar SDK at $(MRSID_LIDAR_DIR) is version $(MRSID_AUTOLVER), but you specified $(MRSID_LVER).
+!ENDIF
+MRSID_LVER =       $(MRSID_AUTOLVER)
+
+# Guess linkage if it was not set explicitly.
+!IF !DEFINED(MRSID_LDLLBUILD)
+!IF $(MRSID_LVER)0 < 1110
+MRSID_LDLLBUILD =  NO
+!ELSE
+MRSID_LDLLBUILD =  YES
+!ENDIF
+!ENDIF
+
+!ELSE # MRSID_LIDAR_DIR was not defined, so disallow other lidar options
+
+!IF DEFINED(MRSID_LVER)
+!ERROR MRSID_LVER specified, but no MrSID Lidar SDK was found.
+!ENDIF
+
+!ENDIF
+
+
+
+###############################################################################
+#
+# Set up the build environment: MRSID_FLAGS, MRSID_INCLUDE, MRSID_LIB
+#
+
+#
+# MRSID_FLAGS
+#
+!IF DEFINED(MRSID_RASTER_DIR)
+
+!IF "$(MRSID_JP2)" == "YES"
+MRSID_FLAGS =      -DMRSID_J2K $(MRSID_FLAGS)
+!ENDIF
+
+!IF "$(MRSID_ESDK)" == "YES"
+MRSID_FLAGS =      -DMRSID_ESDK $(MRSID_FLAGS)
+!IF "$(MRSID_HAVE_MG4WRITE)" == "YES"
+MRSID_FLAGS =      -DMRSID_HAVE_MG4WRITE $(MRSID_FLAGS)
+!ENDIF
+!ENDIF
+
+MRSID_FLAGS =      -DMRSID_RVER=$(MRSID_RVER) $(MRSID_FLAGS)
+
+!ENDIF # end raster flags
+
+!IF DEFINED(MRSID_LIDAR_DIR)
+
+MRSID_FLAGS =      -DMRSID_LVER=$(MRSID_LVER) $(MRSID_FLAGS)
+
+!ENDIF # end lidar flags
+
+
+#
+# MRSID_INCLUDE
+#
+!IF DEFINED(MRSID_RASTER_DIR)
+
+!IF $(MRSID_RVER)0 >= 7000
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include" $(MRSID_INCLUDE)
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\base")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\base" $(MRSID_INCLUDE)
+!ENDIF
+#!IF EXIST("$(MRSID_RASTER_DIR)\include\c_api")
+#MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\c_api" $(MRSID_INCLUDE)
+#!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\filters")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\filters" $(MRSID_INCLUDE)
+!ENDIF
+!IF "$(MRSID_JP2)" == "YES" && EXIST("$(MRSID_RASTER_DIR)\include\j2k_readers")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\j2k_readers" $(MRSID_INCLUDE)
+!ENDIF
+!IF "$(MRSID_JP2)" == "YES" && "$(MRSID_ESDK)" == "YES" && EXIST("$(MRSID_RASTER_DIR)\include\j2k_writers")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\j2k_writers" $(MRSID_INCLUDE)
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\metadata")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\metadata" $(MRSID_INCLUDE)
+!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\mrsid_readers")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\mrsid_readers" $(MRSID_INCLUDE)
+!ENDIF
+!IF "$(MRSID_ESDK)" == "YES" && EXIST("$(MRSID_RASTER_DIR)\include\mrsid_writers")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\mrsid_writers" $(MRSID_INCLUDE)
+!ENDIF
+#!IF EXIST("$(MRSID_RASTER_DIR)\include\readers")
+#MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\readers" $(MRSID_INCLUDE)
+#!ENDIF
+!IF EXIST("$(MRSID_RASTER_DIR)\include\support")
+MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\support" $(MRSID_INCLUDE)
+!ENDIF
+#!IF EXIST("$(MRSID_RASTER_DIR)\include\writers")
+#MRSID_INCLUDE =    -I"$(MRSID_RASTER_DIR)\include\writers" $(MRSID_INCLUDE)
+#!ENDIF
+
+!ENDIF # end raster includes
+
+!IF DEFINED(MRSID_LIDAR_DIR)
+
+# lidar include paths
+MRSID_INCLUDE =    -I"$(MRSID_LIDAR_DIR)\include" $(MRSID_INCLUDE)
+
+!ENDIF # end lidar includes
+
+
+#
+# MRSID_LIB
+#
+!IF DEFINED(MRSID_RASTER_DIR)
+
+!IF "$(MRSID_RDLLBUILD)" == "YES"
+
+#
+# Find and validate the specific DLL and add it to MRSID_LIB
+!IF "$(MRSID_ESDK)" == "YES"
+!ERROR Cannot link dynamically against the MrSID Raster ESDK.  Try linking statically by setting MRSID_RDLLBUILD to NO.
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.0.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.1.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.5.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk_dll.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk_dll.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\Release_md\lti_dsdk_dll.dll")
+# sdks 5 and older shipped only one configuration of the dll
+!ERROR Found a MrSID Raster DLL under $(MRSID_RASTER_DIR)\lib\Release_md, but specified config was $(MRSID_CONFIG).  Try setting MRSID_CONFIG to Release_md.
+!ELSE IF $(MRSID_RVER)0 < 4090
+# mrsid sdks first had dlls in v4.0.9
+!ERROR This version of the MrSID Raster SDK ($(MRSID_RVER)) did not ship with DLLs.  Try linking statically by setting MRSID_RDLLBUILD to NO.
+!ELSE
+!ERROR No suitable MrSID Raster DLL was found in $(MRSID_RASTER_DIR)\lib.
+!ENDIF # end DLL search
+
+!ELSE # not building against the DLL; use the static lib(s)
+
+#
+# Find and validate the specific DSDK static lib and add it to MRSID_LIB.
+!IF $(MRSID_RVER)0 >= 8000
+!IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_esdk.lib")
+# v8+ esdk has the dsdk symbols folded into a single lib
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_esdk.lib" $(MRSID_LIB)
+!ELSE
+# v8+ dsdk can only be linked dynamically
+!ERROR Cannot link statically against this version of the MrSID Raster DSDK ($(MRSID_RVER)).  Try linking dynamically by setting MRSID_RDLLBUILD to YES.
+!ENDIF
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_sdk.lib")
+# very old sdk indeed
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_sdk.lib" $(MRSID_LIB)
+!ELSE
+!ERROR No suitable MrSID Raster libs were found in $(MRSID_RASTER_DIR)\lib.
+!ENDIF # end DSDK lib search
+
+#
+# Find and validate the specific JP2 static lib and add it to MRSID_LIB.
+!IF "$(MRSID_JP2)" == "YES"
+!IF EXIST("$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\lt_lib_kakadu.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\lt_lib_kakadu.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\ltikdu.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\ltikdu.lib" $(MRSID_LIB)
+!ELSE IF $(MRSID_RVER)0 < 5000
+!ERROR This version of the MrSID Raster SDK ($(MRSID_RVER)) does not support JPEG 2000.
+!ELSE
+!ERROR The library needed for MrSID Raster SDK to support JPEG 2000 is missing.
+!ENDIF
+!ENDIF # end JP2 lib search
+
+#
+# Find and validate the specific ESDK static lib(s) and add to MRSID_LIB.
+!IF "$(MRSID_ESDK)" == "YES"
+# if we still need to add lti_esdk.lib do that first
+!IF $(MRSID_RVER)0 < 8000 && EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_esdk.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_esdk.lib" $(MRSID_LIB)
+!ENDIF
+
+!IF EXISTS("$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\cryptlib.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\cryptlib.lib" $(MRSID_LIB)
+!ENDIF
+
+!IF EXISTS("$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\xmlparse.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\3rd-party\lib\$(MRSID_CONFIG)\xmlparse.lib" $(MRSID_LIB)
+!ENDIF
+
+!ENDIF # end ESDK lib search
+
+MRSID_LIB =        $(MRSID_LIB) advapi32.lib user32.lib
+
+!ENDIF # end static raster build environment
+
+!ENDIF # end raster libs
+
+#
+# Add Lidar libs to MRSID_LIB
+!IF DEFINED(MRSID_LIDAR_DIR)
+
+!IF "$(MRSID_LDLLBUILD)" == "YES"
+
+#
+# Find and validate the specific DLL and add it to MRSID_LIB
+!IF EXIST("$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.dll")
+MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk_1.1.dll")
+MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.lib" $(MRSID_LIB)
+!ELSE IF $(MRSID_LVER)0 < 1110
+!ERROR Cannot link dynamically against this version of the MrSID Lidar SDK ($(MRSID_LVER)).  Try linking statically by setting MRSID_LDLLBUILD to NO.
+!ELSE
+!ERROR No suitable MrSID Lidar DLL was found in $(MRSID_LIDAR_DIR)\lib.
+!ENDIF
+
+!ELSE # not building against the DLL; use the static lib(s)
+
+#
+# Find and validate the specific lidar static lib and add it to MRSID_LIB
+!IF EXIST("$(MRSID_LIDAR_DIR)\lib\$(MRSID_CONFIG)\lti_lidar_dsdk.lib")
+MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\$(MRSID_CONFIG)\lti_lidar_dsdk.lib" $(MRSID_LIB)
+!ELSE IF $(MRSID_LVER)0 >= 1110
+# v8+ dsdk can only be linked dynamically
+!ERROR Cannot link statically against this version of the MrSID Lidar DSDK ($(MRSID_LVER)).  Try linking dynamically by setting MRSID_LDLLBUILD to YES.
+!ELSE
+!ERROR No suitable MrSID Lidar libs were found under $(MRSID_LIDAR_DIR)\lib.
+!ENDIF
+
+!ENDIF # end static lidar build environment
+
+!ENDIF # end lidar build environment
+
+
+###############################################################################
+#
+# Report the configuration summary
+#
+!IF DEFINED(MRSID_SHOW_CONFIG)
+!MESSAGE MRSID_RASTER_DIR = $(MRSID_RASTER_DIR)
+!MESSAGE MRSID_RVER       = $(MRSID_RVER)
+!MESSAGE MRSID_JP2        = $(MRSID_JP2)
+!MESSAGE MRSID_ESDK       = $(MRSID_ESDK)
+!MESSAGE MRSID_RDLLBUILD  = $(MRSID_RDLLBUILD)
+!MESSAGE MRSID_PLUGIN     = $(MRSID_PLUGIN)
+!MESSAGE MRSID_LIDAR_DIR  = $(MRSID_LIDAR_DIR)
+!MESSAGE MRSID_LVER       = $(MRSID_LVER)
+!MESSAGE MRSID_LDLLBUILD  = $(MRSID_LDLLBUILD)
+!MESSAGE MRSID_LIDAR_PLUGIN=$(MRSID_LIDAR_PLUGIN)
+!MESSAGE MRSID_CONFIG     = $(MRSID_CONFIG)
+!MESSAGE MRSID_FLAGS      = $(MRSID_FLAGS)
+!MESSAGE MRSID_INCLUDE    = $(MRSID_INCLUDE)
+!MESSAGE MRSID_LIB        = $(MRSID_LIB)
+!ENDIF
+

@@ -1,0 +1,114 @@
+<VRTDataset rasterXSize="2220" rasterYSize="2920">
+  <Metadata domain="RPC">
+    <MDI key="LINE_OFF">16201</MDI>
+    <MDI key="SAMP_OFF">15184</MDI>
+    <MDI key="HEIGHT_OFF">97</MDI>
+    <MDI key="LAT_OFF">39.7792</MDI>
+    <MDI key="LONG_OFF">125.7510</MDI>
+    <MDI key="LINE_SCALE">16480</MDI>
+    <MDI key="SAMP_SCALE">15217</MDI>
+    <MDI key="HEIGHT_SCALE">501</MDI>
+    <MDI key="LAT_SCALE">0.0900</MDI>
+    <MDI key="LONG_SCALE">0.1096</MDI>
+    <MDI key="LINE_NUM_COEFF">+5.105608E-04 -2.921055E-02 -1.010407E+00 -1.743729E-02 -6.604239E-05 -7.871396E-05 +3.027877E-04 -4.323587E-04 -2.624751E-04 +6.186490E-06 +1.084676E-06 +5.389738E-05 +4.145232E-06 +3.911486E-07 +1.772434E-05 +3.302960E-06 +3.006106E-06 +1.662606E-05 +6.051677E-06 -2.657667E-08</MDI>
+    <MDI key="LINE_DEN_COEFF">+1.000000E+00 -9.652128E-05 +2.488346E-04 +3.089019E-04 -2.120170E-06 +4.117913E-07 +1.370009E-06 +1.357281E-05 -4.174324E-06 -3.146787E-06 -7.724587E-06 +3.524480E-04 -1.303224E-05 -8.507679E-07 -1.670972E-05 +6.781061E-06 +5.602262E-07 +1.161421E-05 +4.681872E-06 +5.593931E-08</MDI>
+    <MDI key="SAMP_NUM_COEFF">-2.429563E-04 +1.028320E+00 -3.360972E-02 +3.519600E-03 -6.568341E-04 +5.951139E-04 -3.875716E-04 +1.260622E-04 -5.273817E-05 -4.418981E-06 -3.520581E-06 -2.502760E-04 -4.167704E-05 -5.973233E-05 -1.438949E-04 +7.603041E-06 +2.358136E-06 -2.275274E-05 +1.602657E-06 -1.716541E-07</MDI>
+    <MDI key="SAMP_DEN_COEFF">+1.000000E+00 +7.765620E-05 +6.568707E-04 -6.270621E-04 +5.163170E-05 +6.979463E-06 +2.476334E-07 +1.083558E-04 -4.043734E-05 -5.819288E-05 +1.778201E-07 +5.665202E-05 +6.927205E-06 +6.793485E-07 +3.604209E-05 -4.057103E-07 -8.291254E-07 +1.010650E-05 -2.875552E-06 +5.142751E-08</MDI>
+  </Metadata>
+  <Metadata domain="IMD">
+    <MDI key="version">&quot;R&quot;</MDI>
+    <MDI key="generationTime">2006-10-20T08:42:31.000000Z</MDI>
+    <MDI key="productOrderId">&quot;005553965230_01_P001&quot;</MDI>
+    <MDI key="imageDescriptor">&quot;ORStandard2A&quot;</MDI>
+    <MDI key="bandId">&quot;P&quot;</MDI>
+    <MDI key="panSharpenAlgorithm">&quot;None&quot;</MDI>
+    <MDI key="numRows">32380</MDI>
+    <MDI key="numColumns">30324</MDI>
+    <MDI key="productLevel">&quot;LV2A&quot;</MDI>
+    <MDI key="radiometricLevel">&quot;Corrected&quot;</MDI>
+    <MDI key="radiometricEnhancement">&quot;Off&quot;</MDI>
+    <MDI key="bitsPerPixel">16</MDI>
+    <MDI key="compressionType">&quot;None&quot;</MDI>
+    <MDI key="BAND_P.ULLon">125.64811494</MDI>
+    <MDI key="BAND_P.ULLat">39.86920881</MDI>
+    <MDI key="BAND_P.ULHAE">97.12</MDI>
+    <MDI key="BAND_P.URLon">125.86059820</MDI>
+    <MDI key="BAND_P.URLat">39.86415940</MDI>
+    <MDI key="BAND_P.URHAE">97.12</MDI>
+    <MDI key="BAND_P.LRLon">125.85336381</MDI>
+    <MDI key="BAND_P.LRLat">39.68933367</MDI>
+    <MDI key="BAND_P.LRHAE">97.12</MDI>
+    <MDI key="BAND_P.LLLon">125.64141633</MDI>
+    <MDI key="BAND_P.LLLat">39.69435205</MDI>
+    <MDI key="BAND_P.LLHAE">97.12</MDI>
+    <MDI key="BAND_P.absCalFactor">4.656600e-02</MDI>
+    <MDI key="BAND_P.effectiveBandwidth">3.980000e-01</MDI>
+    <MDI key="outputFormat">&quot;GeoTIFF&quot;</MDI>
+    <MDI key="IMAGE_1.satId">&quot;QB02&quot;</MDI>
+    <MDI key="IMAGE_1.mode">&quot;FullSwath&quot;</MDI>
+    <MDI key="IMAGE_1.scanDirection">&quot;Forward&quot;</MDI>
+    <MDI key="IMAGE_1.CatId">&quot;1010010005448B00&quot;</MDI>
+    <MDI key="IMAGE_1.firstLineTime">2006-10-20T02:50:52.250677Z</MDI>
+    <MDI key="IMAGE_1.avgLineRate">6900.11</MDI>
+    <MDI key="IMAGE_1.exposureDuration">0.00260865</MDI>
+    <MDI key="IMAGE_1.collectedRowGSD">0.679</MDI>
+    <MDI key="IMAGE_1.collectedColGSD">0.651</MDI>
+    <MDI key="IMAGE_1.meanCollectedGSD">0.665</MDI>
+    <MDI key="IMAGE_1.rowUncertainty">63.87</MDI>
+    <MDI key="IMAGE_1.colUncertainty">37.90</MDI>
+    <MDI key="IMAGE_1.sunAz">170.1</MDI>
+    <MDI key="IMAGE_1.sunEl">39.7</MDI>
+    <MDI key="IMAGE_1.satAz">192.3</MDI>
+    <MDI key="IMAGE_1.satEl">70.6</MDI>
+    <MDI key="IMAGE_1.inTrackViewAngle">-17.8</MDI>
+    <MDI key="IMAGE_1.crossTrackViewAngle">-1.0</MDI>
+    <MDI key="IMAGE_1.offNadirViewAngle">17.8</MDI>
+    <MDI key="IMAGE_1.PNIIRS">4.4</MDI>
+    <MDI key="IMAGE_1.cloudCover">0.036</MDI>
+    <MDI key="IMAGE_1.resamplingKernel">&quot;CC&quot;</MDI>
+    <MDI key="IMAGE_1.TDILevel">18</MDI>
+    <MDI key="IMAGE_1.positionKnowledgeSrc">&quot;R&quot;</MDI>
+    <MDI key="IMAGE_1.attitudeKnowledgeSrc">&quot;R&quot;</MDI>
+    <MDI key="IMAGE_1.revNumber">28119</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.earliestAcqTime">2006-10-20T02:50:52.526006Z</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.latestAcqTime">2006-10-20T02:50:52.526006Z</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.datumName">&quot;WE&quot;</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.semiMajorAxis">6378137.0000</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.inverseFlattening">298.257223563</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.datumOffset">(0.000,0.000,0.000)</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.mapProjName">&quot;UTM&quot;</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.mapProjCode">1</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.mapZone">51</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.mapHemi">&quot;N&quot;</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.mapProjParam">(0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000,0.000000000)</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.productUnits">&quot;M&quot;</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.originX">726487.50014544</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.originY">4416597.29999868</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.orientationAngle">0.0</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.colSpacing">0.60</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.rowSpacing">0.60</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.productGSD">0.60</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.ULX">726487.50014544</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.ULY">4416597.29999868</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.ULH">97.12</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.URX">744681.30024945</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.URY">4416597.29999863</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.URH">97.12</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LRX">744681.30024444</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LRY">4397169.89999862</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LRH">97.12</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LLX">726487.50014252</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LLY">4397169.89999869</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.LLH">97.12</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.DEMCorrection">&quot;Base Elevation&quot;</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.terrainHae">97.12</MDI>
+    <MDI key="MAP_PROJECTED_PRODUCT.numGCP">0</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata/>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

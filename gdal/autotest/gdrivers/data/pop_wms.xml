@@ -1,0 +1,20 @@
+<GDAL_WMS>
+    <Service name="WMS">
+        <Version>1.1.1</Version>
+        <ServerUrl>http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?</ServerUrl>
+        <SRS>EPSG:4326</SRS>
+        <ImageFormat>image/jpeg</ImageFormat>
+        <Layers>GPWv3_1990_Pop_Density_tif</Layers>
+        <Styles></Styles>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>85.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-60.0</LowerRightY>
+        <SizeX>36000</SizeX>
+        <SizeY>14500</SizeY>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BandsCount>3</BandsCount>
+</GDAL_WMS>

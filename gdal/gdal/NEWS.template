@@ -1,0 +1,230 @@
+= GDAL/OGR X.Y.Z Release Notes (r25919 to rXXXXX) =
+
+== In a nutshell... ==
+
+ * New GDAL drivers:
+ * New OGR drivers:
+
+== New installed files ==
+
+== Backward compatibility issues ==
+
+== GDAL/OGR X.Y.Z - General Changes ==
+
+Build(Unix):
+
+Build(Windows):
+
+== GDAL X.Y.Z - Overview of Changes ==
+
+Port:
+
+Core:
+
+Algorithms:
+
+Utilities:
+
+Multi driver changes:
+
+AAIGrid:
+
+ACE2 driver:
+
+ADRG driver:
+
+BAG driver:
+
+BT driver:
+
+CEOS2 driver:
+
+DIMAP driver:
+
+DTED driver:
+
+ECW driver:
+
+ENVI driver:
+
+ENVISAT driver:
+
+GeoRaster driver:
+
+GIF driver:
+
+GMT driver:
+
+GTiff driver:
+
+GRIB driver:
+
+GSAG driver:
+
+GS7BG driver:
+
+GTX driver:
+
+GXF driver:
+
+HDF4 driver:
+
+HDF5 driver:
+
+HFA driver:
+
+INGR driver:
+
+ISIS3 driver:
+
+JP2ECW driver:
+
+JP2KAK driver:
+
+JP2OpenJPEG driver:
+
+JPEG driver:
+
+JPEG2000 driver:
+
+KMLSuperOverlay driver:
+
+L1B driver:
+
+MG4Lidar driver:
+
+NetCDF driver:
+
+NITF driver:
+
+Northwood driver:
+
+PDF driver:
+
+PNG driver:
+
+PostgisRaster driver:
+
+Rasterlite driver:
+
+RMF driver:
+
+RPFTOC driver:
+
+RS2 driver:
+
+SDTS driver:
+
+SRP driver:
+
+TIL driver:
+
+TSX driver:
+
+VRT driver:
+
+WCS driver:
+
+WebP driver:
+
+WMS driver:
+
+XYZ driver:
+
+== OGR X.Y.Z - Overview of Changes ==
+
+Core:
+
+OGRSpatialReference:
+
+Utilities:
+
+Multi driver changes:
+
+AVCE00 driver:
+
+AVCBin driver:
+
+CSV driver:
+
+DGN driver:
+
+DXF driver:
+
+FileGDB driver:
+
+Geoconcept driver:
+
+GeoJSON driver:
+
+Geomedia driver:
+
+GFT driver:
+
+GML driver:
+
+ILI driver:
+
+Ingres driver:
+
+KML driver:
+
+Idrisi driver:
+
+LIBKML driver:
+
+MITAB driver:
+
+MSSQLSpatial driver:
+
+MySQL:
+
+NAS driver:
+
+NULL driver:
+
+OCI driver:
+
+ODBC driver:
+
+NTF driver:
+
+OCI driver:
+
+PGeo driver:
+
+PG driver:
+
+PGDump driver:
+
+REC driver:
+
+SDE driver:
+
+Shapefile driver:
+
+S57 driver:
+
+SQLite/Spatialite driver:
+
+TIGER driver:
+
+VFK driver:
+
+VRT driver:
+
+WFS driver:
+
+XLS driver:
+
+== SWIG Language Bindings ==
+
+All bindings:
+
+CSharp bindings:
+
+Java bindings:
+
+Perl bindings:
+
+Python bindings:

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="US-ASCII" standalone="no"?>
+<!DOCTYPE ais SYSTEM "http://www.opendap.org/ais/ais_database.dtd">
+<ais xmlns="http://xml.opendap.org/ais">
+
+  <entry>
+    <primary regexp="http://dods.gso.uri.edu/cgi-bin/nph-dods/DODS/pathfdr/.*\.hdf"/>
+    <ancillary url="example_conf.d/pathfinder.hdf.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://g0dug03u.ecs.nasa.gov/daac-bin/dods/nph-dods/datapool/MOAA/MYD[0-9][0-9]_[A-Z]3.003/.*\.hdf"/>
+    <ancillary url="example_conf.d/modis_gsfc_level_3.hdf.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://www.state.me.us/cgi-bin/dmr_data/nph-dods/dods-data/bbhenv.dat*"/>
+
+    <ancillary url="/home/warmerda/dods/bbhenv.dat.das"/>
+  </entry>
+  <entry>
+    <primary regexp="http://gomoos.org/cgi-bin/d/nph-dods/buoy/dods/C0101/C0101.met.raw.nc*"/>
+
+    <ancillary url="/home/warmerda/dods/C0101.met.raw.nc.das"/>
+  </entry>
+  <entry>
+    <primary regexp="http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp*"/>
+
+    <ancillary url="/home/warmerda/dods/natl_prof_bot.cdp.das"/>
+  </entry>
+  <entry>
+    <primary regexp="http://data.nodc.noaa.gov/cgi-bin/nph-dods/pathfinder/Version5.0/Monthly/2001/200105.s04m1pfv50-bsst-16b.hdf*"/>
+
+    <ancillary url="/home/warmerda/dods/200105.s04m1pfv50-bsst-16b.das"/>
+  </entry>
+
+
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/thredds/dodsC/merged/h/msla_oer_merged_h"/>
+
+    <ancillary url="/home/warmerda/dods/msla_oer_merged_h.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/thredds/dodsC/merged/h/msla_oer_merged_h_lr"/>
+
+    <ancillary url="/u/www/dods/tony/msla_oer_merged_h_lr.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/dodsC/en/h/msla_oer_en_err*"/>
+
+    <ancillary url="/home/warmerda/dods/msla_oer_en_err.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://opendap.mercator-ocean.fr/thredds/dodsC/mercator_psy2v1_mersea_grid1o8_nat_best_estimate"/>
+    <ancillary url="/home/warmerda/dods/mercator_psy2v1_mersea_grid1o8_nat_best_estimate.das"/>
+  </entry>
+</ais>

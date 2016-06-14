@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml/3.2"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:xlink="http://www.w3.org/1999/xlink" 
+                       xmlns:gmd="http://www.isotc211.org/2005/gmd" 
+                       xmlns:gn="urn:x-inspire:specification:gmlas:GeographicalNames:3.0"
+                       xmlns:base="urn:x-inspire:specification:gmlas:BaseTypes:3.2"
+                       xmlns:cp="urn:x-inspire:specification:gmlas:CadastralParcels:3.0"
+                       gml:id="some_id"
+                       xsi:schemaLocation="urn:x-inspire:specification:gmlas:CadastralParcels:3.0 http://esdin.fgi.fi/schemas/CadastralParcels.xsd">
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      <gml:lowerCorner>49 2</gml:lowerCorner>
+      <gml:upperCorner>50 3</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <cp:CadastralZoning gml:id="CadastralZoning-01">
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:endLifespanVersion>2001-01-01T00:00:00.0Z</cp:endLifespanVersion>
+      <cp:estimatedAccuracy uom="m">1</cp:estimatedAccuracy>
+      <cp:geometry>
+        <gml:MultiSurface gml:id="CadastralZoning-01-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="CadastralZoning-01-geom-1">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>49 2 50 2 50 3 49 3</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </cp:geometry>
+      <cp:inspireId>
+        <base:Identifier>
+          <base:localId>CadastralZoning-01-localId</base:localId>
+          <base:namespace>namespace</base:namespace>
+        </base:Identifier>
+      </cp:inspireId>
+      <cp:label>label</cp:label>
+      <cp:level>3</cp:level>
+      <cp:levelName>
+        <gmd:LocalisedCharacterString locale="en">English</gmd:LocalisedCharacterString>
+      </cp:levelName>
+      <cp:levelName>
+        <gmd:LocalisedCharacterString locale="fr">Francais</gmd:LocalisedCharacterString>
+      </cp:levelName>
+      <cp:levelName>
+        <gmd:LocalisedCharacterString locale="de">Deutsch</gmd:LocalisedCharacterString>
+      </cp:levelName>
+      <cp:name>
+        <gn:GeographicalName>
+          <gn:language>language</gn:language>
+          <gn:nativeness>nativeness</gn:nativeness>
+          <gn:nameStatus>nameStatus</gn:nameStatus>
+          <gn:sourceOfName>sourceOfName</gn:sourceOfName>
+          <gn:pronunciation xsi:nil="true" />
+          <gn:spelling>
+            <gn:SpellingOfName>
+              <gn:text>text</gn:text>
+              <gn:script>script</gn:script>
+            </gn:SpellingOfName>
+          </gn:spelling>
+        </gn:GeographicalName>
+      </cp:name>
+      <cp:nationalCadastalZoningReference>nationalCadastalZoningReference</cp:nationalCadastalZoningReference>
+      <cp:originalMapScaleDenominator>1000</cp:originalMapScaleDenominator>
+      <cp:referencePoint>
+        <gml:Point gml:id="CadastralZoning-01-refpoint" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:pos>49.5 2.5</gml:pos>
+        </gml:Point>
+      </cp:referencePoint>
+      <cp:validFrom>2002-01-01T00:00:00.0Z</cp:validFrom>
+      <cp:validTo>2003-01-01T00:00:00.0Z</cp:validTo>
+      <cp:upperLevelUnit xlink:type="simple" xlink:href="#ulu.1" />
+    </cp:CadastralZoning>
+  </gml:featureMember>
+
+  <gml:featureMember>
+    <cp:CadastralZoning gml:id="CadastralZoning-02">
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:geometry>
+        <gml:MultiSurface gml:id="CadastralZoning-02-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="CadastralZoning-02-geom-1">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>49 2 50 2 50 3 49 3</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </cp:geometry>
+      <cp:label>label</cp:label>
+      <cp:level>3</cp:level>
+      <cp:levelName>
+        <gmd:LocalisedCharacterString locale="en">English</gmd:LocalisedCharacterString>
+      </cp:levelName>
+      <cp:nationalCadastalZoningReference>nationalCadastalZoningReference</cp:nationalCadastalZoningReference>
+    </cp:CadastralZoning>
+  </gml:featureMember>
+
+</gml:FeatureCollection>

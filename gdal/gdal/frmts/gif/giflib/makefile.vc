@@ -1,0 +1,16 @@
+
+OBJ	=	\
+	dgif_lib.obj egif_lib.obj gif_err.obj gifalloc.obj gif_hash.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	$(SOFTWARNFLAGS)
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\..\o
+
+clean:
+	-del *.obj
+

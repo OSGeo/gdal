@@ -1,0 +1,39 @@
+    // FIXME: is it a typo here or in IRIS itself: Perspective or Prespective ?
+    "Prespective from geosync","Equidistant cylindrical","Gnomonic",
+   /* 160 */ {"Bas_St_Wol", "Untergrenze strat. Bew|lkung", "hft", UC_NONE},
+   /* 161 */ {"Bas_St_Wol", "Untergrenze strat. Bew|lkung", "hPa", UC_NONE},
+   /* 164 */ {"Top_St_Wol", "Obergrenze strat. Bew|lkung", "hft", UC_NONE},
+   /* 165 */ {"Top_St_Wol", "Obergrenze strat. Bew|lkung", "hPa", UC_NONE},
+              "Icing Regime 1.Guess(1=gen,2=conv,3=strat,4=freez)", "1",
+              "Icing Regime(1=general,2=convect,3=strat,4=freez)", "1",
+ * The generated swig_type_info structures are assigned staticly to an initial 
+ * The generated swig_type_info structures are assigned staticly to an initial
+            YUR = 0.0;
+            YUR = oES.YUR;
+        double YUR;
+    l_segment->YUR = seg_data.GetDouble(nPos+215, 22);
+    seg_data.Put(psOrbit->YUR,nPos+215,22,"%22.14f");
+/* Putting statics in headers is trouble. */
+See COMMITERS file. 
+  /* When multiple interpeters are used, a module could have already been initialized in
+    const char* pszNAM = record->GetStringSubfield("DSI", 0, "NAM", 0);
+                    const char* pszNAM = record->GetStringSubfield("FDR", iFDRFieldInstance++, "NAM", 0);
+                                                "PRT!NAM",
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, osNAM.c_str(), 8); /* NAM */
+                                                  "NAM!STR!PRT!SWO!SWA!NEO!NEA",
+        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
+      {136, "Socialist Republic of Viet Nam"},
+		double	eps[NANGLES], ua, va, ang, epsa;
+				ang = uv2ang(ua, va);
+				i = (int) ang;
+				epsa = fabs(ang - (i+.5));
+                "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
+        pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
+    {"kilometre",    /* 15 */ 12,  13,  1000.0},
+                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
+{ "kilometre", SRS_UL_KILOMETER_CONV, "km" }, // Leave as 'kilometre' instead of SRS_UL_KILOMETER due to historical usage
+            passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_CENTIMETRE;
+            passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_MILLIMETRE;
+    SXF_COORD_MU_CENTIMETRE,
+    SXF_COORD_MU_MILLIMETRE,

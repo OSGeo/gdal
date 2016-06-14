@@ -1,0 +1,13 @@
+file format : IDRISI Values A.1
+file title  :
+file type   : ascii
+records     : 2
+fields      : 4
+field 0     : ID
+data type   : integer
+field 1     : IntegerField
+data type   : integer
+field 2     : RealField
+data type   : real
+field 3     : StringField
+data type   : string

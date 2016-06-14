@@ -1,0 +1,147 @@
+<html>
+<head>
+<title>Microstation DGN</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Microstation DGN</h1>
+
+Microstation DGN files from Microstation versions predating version 8.0
+are supported for reading.  The entire file is represented as one layer
+(named "elements").<p>
+
+DGN files are considered to have no georeferencing information through OGR.
+Features will all have the following generic attributes:
+
+<ul>
+<li> Type: The integer type code as listed below in supported elements.
+<li> Level: The DGN level number (0-63).
+<li> GraphicGroup: The graphic group number.
+<li> ColorIndex: The color index from the dgn palette.
+<li> Weight: The drawing weight (thickness) for the element.
+<li> Style: The style value for the element.
+</ul>
+
+DGN files do not contain spatial indexes; however, the DGN driver does take
+advantage of the extents information at the beginning of each element to
+minimize processing of elements outside the current spatial filter window
+when in effect.<p>
+
+<h2>Supported Elements</h2>
+
+The following element types are supported:<p>
+
+<ul>
+<li> Line (3): Line geometry.
+<li> Line String (4): Multi segment line geometry.
+<li> Shape (6): Polygon geometry.
+<li> Curve (11): Approximated as a line geometry.
+<li> B-Spline (21): Treated (inaccurately) as a line geometry.
+<li> Arc (16): Approximated as a line geometry.
+<li> Ellipse (15): Approximated as a line geometry.
+<li> Text (17): Treated as a point geometry.
+</ul>
+
+Generally speaking any concept of complex objects, and cells as associated
+components is lost.  Each component of a complex object or cell is treated
+as a independent feature.<p>
+
+<h2>Styling Information</h2>
+
+Some drawing information about features can be extracted from the ColorIndex,
+Weight and Style generic attributes; however, for all features an OGR
+style string has been prepared with the values encoded in ready-to-use form
+for applications supporting OGR style strings.<p>
+
+The various kinds of linear geometries will carry style information indicating
+the color, thickness and line style (i.e. dotted, solid, etc).<p>
+
+Polygons (Shape elements) will carry styling information for the edge as well
+as a fill color if provided.  Fill patterns are not supported.<p>
+
+Text elements will contain the text, angle, color and size information
+(expressed in ground units) in the style string.<p>
+
+<h2>Creation Issues</h2>
+
+2D DGN files may be written with OGR with significant limitations:<P>
+
+<ul>
+<li> Output features have the usual fixed DGN attributes.  Attempts to create
+any other fields will fail.<p>
+
+<li> Virtual no effort is currently made to translate OGR feature style
+strings back into DGN representation information. <p>
+
+<li> POINT geometries that are not text (Text is NULL, and the feature
+style string is not a LABEL) will be translated as a degenerate (0 length)
+line element. <p>
+
+<li> Polygon, and multipolygon objects will be translated to simple polygons
+with all rings other than the first discarded.<p>
+
+<li> Polygons and line strings with too many vertices will be split into
+a group of elements prefixed with a Complex Shape Header or Complex Chain
+Header element as appropriate. <p>
+
+<li> A seed file must be provided (or if not provided,
+$PREFIX/share/gdal/seed_2d.dgn will be used).  Many aspects of the resulting
+DGN file are determined by the seed file, and cannot be affected via OGR,
+such as initial view window. <p>
+
+<li> The various collection geometries other than MultiPolygon are completely
+discarded at this time. <p>
+
+<li> Geometries which fall outside the "design plane" of the seed file will
+be discarded, or corrupted in unpredictable ways.<p>
+
+<li> DGN files can only have one layer.  Attempts
+to create more than one layer in a DGN file will fail.<p>
+
+</ul>
+
+The dataset creation supports the following options:<p>
+
+<ul>
+
+<li> <b>3D=</b><i>YES</i> or <i>NO</i>: Determine whether 2D (seed_2d.dgn)
+or 3D (seed_3d.dgn) seed file should be used.  This option is ignored if the
+SEED option is provided.<p>
+
+<li> <b>SEED=</b><i>filename</i>: Override the seed file to use.<p>
+
+<li> <b>COPY_WHOLE_SEED_FILE=</b><i>YES/NO</i>: Indicate whether the whole
+seed file should be copied.  If not, only the first three elements (and
+potentially the color table) will be copied.  Default is NO.<p>
+
+<li> <b>COPY_SEED_FILE_COLOR_TABLE=</b><i>YES/NO</i>: Indicates whether the
+color table should be copied from the seed file.  By default this is NO. <p>
+
+<li> <b>MASTER_UNIT_NAME=</b><i>name</i>: Override the master unit name from
+the seed file with the provided one or two character unit name. <p>
+
+<li> <b>SUB_UNIT_NAME=</b><i>name</i>: Override the sub unit name from
+the seed file with the provided one or two character unit name. <p>
+
+<li> <b>SUB_UNITS_PER_MASTER_UNIT=</b><i>count</i>: Override the number of
+subunits per master unit.  By default the seed file value is used.<p>
+
+<li> <b>UOR_PER_SUB_UNIT=</b><i>count</i>: Override the number of
+UORs (Units of Resolution) per sub unit.  By default the seed file value is
+used.<p>
+
+<li> <b>ORIGIN</b>=<i>x,y,z</i>: Override the origin of the design plane.  By
+default the origin from the seed file is used.<p>
+
+</ul>
+
+<hr>
+
+<ul>
+<li> <a href="http://dgnlib.maptools.org/">Dgnlib Page</a>
+<li> <a href="http://gdal.org/ogr_feature_style.html">OGR Feature Style Specification</a>
+</ul>
+
+</body>
+</html>

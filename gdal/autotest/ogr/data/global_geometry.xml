@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<wfs:FeatureCollection xmlns:foo="http://www.foo.net/foo" xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      <gml:lowerCorner>49 2</gml:lowerCorner>
+      <gml:upperCorner>50 3</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <foo:mylayer>
+      <foo:Shape>
+        <gml:Point>
+            <gml:pos>49 2</gml:pos>
+        </gml:Point>
+      </foo:Shape>
+    </foo:mylayer>
+  </gml:featureMember>
+  <gml:featureMember>
+    <foo:mylayer>
+      <foo:Shape>
+        <gml:Point>
+            <gml:pos>50 3</gml:pos>
+        </gml:Point>
+      </foo:Shape>
+    </foo:mylayer>
+  </gml:featureMember>
+</wfs:FeatureCollection>

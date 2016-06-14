@@ -1,0 +1,8 @@
+<GDAL_WMS>
+    <Service name="TiledWMS">
+        <ServerUrl>http://map1.vis.earthdata.nasa.gov/twms-geo/twms.cgi?</ServerUrl>
+        <TiledGroupName>MODIS TERRA tileset</TiledGroupName>
+        <!-- Pick a specific day -->
+        <Change key="${time}">2012-11-27</Change>
+    </Service>
+</GDAL_WMS>

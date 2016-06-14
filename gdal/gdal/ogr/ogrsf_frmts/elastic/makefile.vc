@@ -1,0 +1,15 @@
+
+OBJ	=	ogrelasticdriver.obj ogrelasticdatasource.obj ogrelasticlayer.obj
+EXTRAFLAGS =	-DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC) -I.. -I..\..  -I..\geojson -I..\geojson\libjson
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

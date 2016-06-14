@@ -1,0 +1,1316 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<HTML>
+<HEAD>
+   <TITLE>OGR - Feature Style Specification</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<CENTER>
+<H1>
+OGR - Feature Style Specification</H1></CENTER>
+
+<CENTER>
+  <H2>DRAFT V0.014 - 2011-07-24</H2>
+</CENTER>
+
+<HR WIDTH=50%>
+<H2>REVISION HISTORY</H2>
+<UL>
+<LI><B>Version 0.014 - 2011-07-24 - Even Rouault</B><BR>
+    Mention the escaping of double-quote characters in the text string of a LABEL (ticket #3675)
+<LI><B>Version 0.013 - 2008-07-29 - Daniel Morissette</B><BR>
+    Added 'o:' for font point symbol outline color (ticket #2509)
+<LI><B>Version 0.012 - 2008-07-21 - Daniel Morissette</B><BR>
+    Added 'o:' for text outline color and updated 'b:' to be specifically
+    a filled label background box (ticket #2480)
+<LI><B>Version 0.011 - 2008-02-28 - Tamas Szekeres</B><BR>
+    Note about OGR SQL to transfer the style between the data sources
+<LI><B>Version 0.010 - 2006-09-23- Andrey Kiselev</B><BR>
+    Added label styles 'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'
+<LI><B>Version 0.009 - 2005-03-11- Frank Warmerdam</B><BR>
+    Remove reference to OGRWin, move into ogr distribution
+<LI><B>Version 0.008 - 2001-03-21- Frank Warmerdam</B><BR>
+    Fix minor typos (h:12pt instead of s:12pt in examples)
+<LI><B>Version 0.008 - 2000-07-15 - Stephane Villeneuve</B><BR>
+    Remove style table in Layer.  Add forecolor and backcolor to brush.
+<LI><B>Version 0.007 - 2000-06-22 - Daniel Morissette</B><BR>
+    Fixed typo and added offset param for PEN.
+<LI><B>Version 0.006 - 2000-06-20 - Daniel Morissette</B><BR>
+    Added the OGR-Win idea and made small changes here and there.
+<LI><B>Version 0.005 - 2000-06-12 - Daniel Morissette</B><BR>
+    Allow passing of comma-delimited list of names in PEN's "id" parameter.<BR>
+    Defined system-independent pen style names.
+<LI><B>Version 0.004 - 2000-06-09 - Stephane Villeneuve</B><BR>
+    Added PEN cap and join parameters<BR>
+    More clearly defined the API
+<LI><B>Version 0.003 - 2000-02-15 - Daniel Morissette</B><BR>
+    First kind-of-complete version.
+<P>
+
+</UL>
+
+<HR WIDTH=50%>
+<H2>
+1. Overview</H2>
+This document defines the way feature style information (i.e. colors, line
+width, symbols, etc.) should be handled at the various levels in OGR.
+<H2>
+1.1 Style is a property of Feature object</H2>
+Conceptually, the feature style should be seen as a property of a feature.
+Even though some systems would store style information in a special attribute,
+in OGR it is more consistent to see the style as a property just the same
+way the geometry of a feature is also a property.
+<P>This does not prevent us from storing the style information in an attribute
+when writing to some formats that have no provision for styles (e.g. E00).
+But then at the time such a dataset is opened through OGR, the name of
+the attribute that contains style information should either be specified
+in some metadata, or be specified by the user.
+<P>Also, in the SFCOM interface, the style information will be stored in
+an attribute just like the geometry is. Later in this document, we will
+define a kind of "WKT" format to be used when storing style information
+in text form.
+<H2>
+1.2 Feature Styles can be stored at 2 levels</H2>
+The style defines the way a feature should be drawn, but it is very common
+to have several features that share the same style. In those cases, instead
+of duplicating the style information on each feature, we will provide a
+more efficient way to share style information.
+<P>There are actually 2 levels at which style information can be found:
+<UL>
+<LI>
+<B>At the dataset level</B>:</LI>
+
+<UL>
+<LI>
+A dataset can have a default style that applies to all features.</LI>
+
+<LI>
+It can also have a table of pre-defined styles that can then be referred
+to by the layers or by the individual features.</LI>
+
+<BR>The mechanism for that is defined further down in this document.</UL>
+
+<LI>
+<B>At the feature level (in the OGRFeature)</B>:</LI>
+
+<UL><LI>
+By default, a feature inherits the style information from the dataset.</LI>
+
+<LI>
+A feature can (and should in most cases) be linked to a style in the dataset's table of styles. This can save lots of storage space
+when the same styles are reused often.</LI>
+
+<LI>
+Finally, a feature can have its own complete style definition.</LI>
+</UL>
+</UL>
+It should be possible to have style information stored at one or more of
+the various levels while working on a given dataset. The level(s) where
+the style is actually stored will depend on the most efficient approach
+for the format we are dealing with.
+<P>However, all that stuff should be transparent to the OGR client that
+does not want to worry about the details and a single call to a method
+such as OGRFeature::GetStyleString() should hide all the magic and always
+return the right information.
+
+<H2>
+1.3 Drawing Tools</H2>
+We define a small set of drawing tools that are used to build style definitions:
+<UL>
+<LI>
+<B>PEN</B>: For linear styles</LI>
+
+<LI>
+<B>BRUSH</B>: For filling areas</LI>
+
+<LI>
+<B>SYMBOL</B>: Point symbols</LI>
+
+<LI>
+<B>LABEL</B>: For annotations</LI>
+</UL>
+Each drawing tool can take a number of parameters, all optional. The style
+syntax is built in a way that a system that cannot support all possible
+parameters can safely skip and ignore the parameters it does not support.
+This will also make it easy to extend the specification in the future without
+breaking existing code or applications.
+<P>A style can use a single tool, or use a combination of one or more tools.
+By combining the use of several tools in a style, one can build virtually
+any type of graphical representation. For instance, the SYMBOL tool can
+be used to place spaced symbols along a line. Also, the LABEL tool can
+be used to place text on a point, stretch it along a line, or even, by
+combining the PEN tool with the LABEL tool, use the line as a leader to
+the text label, and draw the text string on the last vertex of the line.
+<P>Of course only few systems can support all that. But the intention here
+is to have a style specification that is powerful and flexible enough to
+allow all types of formats to exchange style information with the least
+possible loss.
+<H2>
+1.4 Feature attributes can be used by style definitions</H2>
+In some cases, it might be useful for a style definition to refer to an
+attribute field on the feature for a given tool parameter's value instead
+of having a hardcoded value inside the style itself.
+<P>Example of this are text angle, text string, etc... these values change
+for every single text label, but we can share the rest of the label style
+at the layer level if we lookup the angle and text string in an attribute
+on each feature.
+<P>The syntax of the style string provides a way that any parameter value
+can be either a constant value, or a lookup to an attribute field.
+<H2>
+1.5 Tool parameter units</H2>
+Several parameter values can be expressed in different measurement units
+depending on the file format you are dealing with. For instance, some systems
+express line width, or text height in points, other in pixels, and others
+use ground units. In order to accommodate all that, all parameters can be
+specified in one of the following units systems:
+<UL>
+<LI>
+<B>g</B>: Map Ground Units (whatever the map coordinate units are)</LI>
+
+<LI>
+<B>px</B>: Pixels</LI>
+
+<LI>
+<B>pt</B>: Points (1/72 Inch)</LI>
+
+<LI>
+<B>mm</B>: Millimeters</LI>
+
+<LI>
+<B>cm</B>: Centimeters</LI>
+
+<LI>
+<B>in</B>: Inches</LI>
+</UL>
+Some tools will have to be provided at the OGR client level to simplify
+the conversion of any value from one units system to another. This would
+imply that the OGR client has to specify a map scale so that conversions
+from ground units to paper/pixel units can be performed.
+<P>
+<HR WIDTH=50%>
+<H2>
+2. Feature Style String</H2>
+As was mentioned earlier, styles definitions will usually be stored as
+strings, either in a per layer (or per dataset) table, or directly in the
+features.
+<H2>
+2.1 Examples</H2>
+The best way to get familiar with something is by example.
+<P>Here we go with some style definition strings:
+<PRE>  A 5 pixels wide red line:
+     "PEN(c:#FF0000,w:5px)"
+
+  A polygon filled in blue, with a black outline:
+     "BRUSH(fc:#0000FF);PEN(c:#000000)"
+
+  A point symbol:
+     "SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")"
+
+  A text label, taking the text string from the "text_string"
+  attribute field:
+     "LABEL(f:"Times New Roman",s:12pt,t:{text_string})"</PRE>
+Here is what a style table that contains all the above styles could look
+like:
+<PRE>    road:      PEN(c:#FF0000,w:5px)
+    lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
+    campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
+    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
+
+And then individual features could refer to styles from the table above
+using the "@" character followed by the style name in their style property.
+<P>For instance, a feature with its style set to "@road" would be drawn
+as a red line.
+<H2>
+2.2 Style String Syntax</H2>
+Each feature object has a style property (a string):
+<TABLE BORDER WIDTH="100%" >
+<TR>
+<TD>
+<PRE>
+  &lt;style_property> = "&lt;style_def>" | "" | "@&lt;style_name>" | "{&lt;field_name>}"</PRE>
+</TD>
+</TR>
+</TABLE>
+
+<UL>
+<LI>
+"&lt;style_def>" is defined later in this section.</LI>
+
+<LI>
+An empty style property means that the feature directly inherits its style
+from the layer it is in.</LI>
+
+<LI>
+"@&lt;style_name>" is a reference to a predefined style in the layer or
+the dataset's style table. The layer's table is looked up first, and if
+style_name is not found there then the dataset's table will be looked up.</LI>
+
+<LI>
+Finally, "{&lt;field_name>}" means that the style property should be read
+from the specified attribute field.</LI>
+</UL>
+The &lt;style_def> is the real style definition. It is a combination of
+1 or more style parts separated by semicolons. Each style_part uses a drawing
+tool to define a portion of the complete graphical representation:
+<TABLE BORDER WIDTH="100%" >
+<TR>
+<TD>
+<PRE>
+  &lt;style_def> =    &lt;style_part>[;&lt;style_part>[;...]]
+
+  &lt;style_part> =   &lt;tool_name>([&lt;tool_param>[,&lt;tool_param>[,...]]])
+
+  &lt;tool_name> =    name of a drawing tool, for now: PEN | BRUSH | SYMBOL | LABEL
+
+  &lt;tool_param> =   &lt;param_name>:&lt;param_value>
+
+  &lt;param_name> =   see list of parameters names for each drawing tool
+
+  &lt;param_value> =  &lt;value> | &lt;value>&lt;units>
+
+  &lt;value> =        "&lt;string_value>" | &lt;numeric_value> | {&lt;field_name>}
+
+  &lt;units> =        g | px | pt | mm | cm | in</PRE>
+</TD>
+</TR>
+</TABLE>
+
+<P>By default, style parts are drawn in the order that they appear in the
+style_def string unless each part is assigned a different level parameter
+value (see the level parameter definition).
+<P>All drawing tool parameters are optional. So it is legal to have a style_part
+with an empty drawing tool parameter list (e.g. "PEN()"). For each parameter
+that does not have any specified value, it is up to the client application
+to use its own default value. This document provides advisory default values
+for most parameters, but it is not mandatory for an application to use
+those default value.
+<P>When {&lt;field_name>} is used for a tool_param value, several options
+are available with respect to the units. The units can be specified after
+the field name as in PEN(c:#FF0000,w:{line_width}pt) or can be left unspecified
+as in PEN(c:#FF0000,w:{line_width}). In the first case, the default units
+will be points (pt), but if the attribute field line_width contains a value
+followed by a units abbreviation (e.g. "5px") then the units specified
+in the attribute fields have precedence (in this case pixels). Note that
+the attribute field does not have to contain a units value and probably
+won't in most cases, it is just an optional feature to be able to override
+the default units from inside an attribute field's value.
+<H2>
+2.3 Pen Tool Parameters</H2>
+<B>Applicable geometry types:</B>
+<UL>
+<LI>
+Point: When applied to a point, a pen tool can only define the color and
+the size of the point to draw.</LI>
+
+<LI>
+Polyline: This is the most obvious case.</LI>
+
+<LI>
+Polygon: Defines the way the outline of a polygon should be drawn.</LI>
+</UL>
+Here is the current list of PEN tool parameters, while this is sufficient
+to cover all the cases that we have encountered so far, new parameters
+might be added in the future to handle new types of graphical representation.
+Note again that all parameters are optional:
+<TABLE BORDER WIDTH="100%" >
+  <TR>
+    <TH>param_name</TH>
+    <TH>Description</TH>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>c</TD>
+    <TD><B>Pen Color</B>, expressed in hexadecimal (#RRGGBB[AA])
+<BR>
+      [AA] the last 2 digits define the alpha channel value, with 0 being transparent and FF being opaque.  The default is FF (opaque)
+      <BR>
+      Suggested default: black (c:#000000)
+<BR>
+      Example: PEN(c:#FF0000), or PEN(C:#FF0000FF)
+<BR>
+      Predefined color names may be allowed in future versions of the specification.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>w</TD>
+    <TD><B>Pen Width</B> - Expressed in a valid unit type (g, px, pt, mm, cm,
+in)
+<BR>
+      Suggested default: 1 pixel
+<BR>
+      Examples: PEN(c:#FF0000,w:5px), PEN(w:3pt), PEN(w:50g)</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>p</TD>
+    <TD><B>Pattern</B> - To create dash lines. A list of pen-down/pen-up distances
+<BR>
+      Examples:
+<BR>
+      <IMG SRC="style_pen1.gif" HEIGHT=15 WIDTH=75>  = PEN(c:#FF0000,w:2px,p:"4px
+5px") - short-dash line
+<BR>
+      <IMG SRC="style_pen2.gif" HEIGHT=15 WIDTH=75>  = PEN(c:#FF0000,w:2px,p:"10px
+5px") - long-dash line
+<BR>
+      <IMG SRC="style_pen3.gif" HEIGHT=15 WIDTH=75>  = PEN(c:#FF0000,w:2px,p:"10px
+5px 4px 5px") - long/short dash line</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>id</TD>
+    <TD><B>Comma-delimited list of Pen Names or Ids</B> - For systems that
+identify pens with a name or an id.  The names in the comma-delimited list
+of ids are scanned until one is recognized by the target system.
+      <P>
+Pen Ids can be either system-specific ids (see further below) or be one
+of the pre-defined OGR pen ids for well known line patterns.  The id
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
+understanding system-specific ids.
+      <P>
+Here is the current list of OGR pen ids (this could grow over time):<BR>
+      <UL>
+        <LI>ogr-pen-0: solid  (the default when no id is provided)
+        <LI>ogr-pen-1: null pen (invisible)
+        <LI>ogr-pen-2: dash
+        <LI>ogr-pen-3: short-dash
+        <LI>ogr-pen-4: long-dash
+        <LI>ogr-pen-5: dot
+line
+        <LI>ogr-pen-6: dash-dot
+line
+        <LI>ogr-pen-7: dash-dot-dot
+line
+        <LI>ogr-pen-8: alternate-line (sets every other pixel)
+
+      </UL>
+      <P>
+System-specific ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
+a name, a filename, etc.).<BR>
+e.g. "mapinfo-5", or "mysoft-lines.sym-123", or "othersystems-funnyline"
+      <P>
+System-specific ids are allowed in order to prevent loss of information when
+dealing with data from systems that store line patterns in external files
+or that have their own pre-defined set of line styles.  (To do a MapInfo MIF
+to TAB translation without any loss for instance.)
+      <P>Examples: <BR>
+PEN(c:#00FF00,id:"ogr-pen-0") - simple solid line<BR>
+PEN(c:#00FF00,id:"mapinfo-5,ogr-pen-7") - corresponds to MapInfo's Pen #5, and a system that can't understand MapInfo pens falls back on the default "ogr-pen-7" pen (dot-dot line).
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>cap</TD>
+    <TD><B>Pen Cap</B> - Set the shape of end points of lines.<BR>
+b=BUTT The ends of the line don't extend beyond the end points. This is the default. <BR>
+r=ROUND Terminate lines with a circle whose diameter is equal to the line width. <BR>
+p=PROJECTING Similar to BUTT, but the ends of the line extend by half of line width beyond the end points. </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>j</TD>
+    <TD><B>Pen Join</B> - Set the shape of the join point (vertex) of lines.<BR>
+m=MITER Extend the outer edge of the lines until they touch. This is the default. <BR>
+r=ROUNDED Join lines with an arc whose center is at the join point and whose diameter is equal to the line width. <BR>
+b=BEVEL Join the lines with butt end caps and fill the resulting triangular notch at the join position. </TD>
+  </TR>
+  <TR>
+    <TD ALIGN=CENTER>dp</TD>
+    <TD><B>Perpendicular Offset</B> - Offset from the line center<BR>
+      If the offset is negative then the pen will be drawn left of the main segment and right otherwise.
+    </TD>
+  </TR>
+  <TR>
+    <TD ALIGN=CENTER>l</TD>
+    <TD><B>Priority Level</B> - Numeric value defining the order in which style
+parts should be drawn. Lower priority style parts are drawn first, and
+higher priority ones are drawn on top.
+<BR>
+      If priority level is unspecified, the default is 1.</TD>
+  </TR>
+</TABLE>
+
+<H2>
+2.4 Brush Tool Parameters</H2>
+<B>Applicable geometry types:</B>
+<UL>
+<LI>
+Point: Not applicable.</LI>
+
+<LI>
+Polyline: Not applicable.</LI>
+
+<LI>
+Polygon: Defines the way the surface of a polygon is filled.</LI>
+</UL>
+Here is the current list of BRUSH tool parameters. Note again that this
+list can eventually grow and that all parameters are optional:
+<TABLE BORDER WIDTH="100%" >
+<TR>
+<TH>param_name</TH>
+
+<TH>Description</TH>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>fc</TD>
+
+    <TD>
+      <P><B>Brush ForeColor</B>, expressed in hexadecimal (#RRGGBB[AA])
+<BR>
+      [AA] the last 2 digits define the alpha channel value, with 0 being transparent and FF being opaque.  The default for [AA] is FF (opaque)<BR>
+        Suggested default brush color: 50% grey (c:#808080)
+<BR>
+      Example: BRUSH(fc:#FF0000)
+<BR>
+        Predefined color names may be allowed in future versions of the specification.</P>
+      </TD>
+</TR>
+<TR>
+<TD ALIGN=CENTER>bc</TD>
+
+    <TD>
+      <P><B>Brush BackColor</B>, expressed in hexadecimal (#RRGGBB[AA])
+<BR>
+      [AA] the last 2 digits define the alpha channel value, with 0 being transparent and FF being opaque.  The default for [AA] is FF (opaque)<BR>
+        Suggested default brush color: 50% grey (c:#808080)
+<BR>
+      Example: BRUSH(bc:#FF0000)
+<BR>
+        Predefined color names may be allowed in future versions of the specification.</P>
+      </TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>id</TD>
+
+<TD>
+      <P><B>Brush Name or Brush Id</B> - Comma-delimited list of brush names or ids.  The names in the comma-delimited list
+of ids are scanned until one is recognized by the target system.
+</P>
+      <P>
+Brush  Ids can be either system-specific ids (see further below) or be one
+of the pre-defined OGR brush  ids for well known brush patterns.  The id
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
+understanding system-specific ids.
+      <P>
+Here is the current list of OGR brush ids (this could grow over time):<BR>
+      <UL>
+        <LI>ogr-brush-0: solid  (the default when no id is provided)
+        <LI>ogr-brush-1: null brush (transparent - no fill)
+        <LI>ogr-brush-2:  horizontal hatch /* ------ */
+        <LI>ogr-brush-3: vertical hatch /* |||||| */
+	      <LI>ogr-brush-4: fdiagonal hatch /* \\\\\\ */
+        <LI>ogr-brush-5: bdiagonal hatch /* ////// */
+        <LI>ogr-brush-6: cross hatch /* ++++++ */
+        <LI>ogr-brush-7:  diagcross hatch /* xxxxxx */
+      </UL>
+      <P>
+Like with Pen Ids, system-specific brush ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
+a name, a filename, etc.).
+      <P>The following conventions will be used for common system-specific brush ids:</P>
+      <UL>
+        <LI>&quot;bmp-filename.bmp&quot; for Windows BMP patterns
+        <LI>??? any others, e.g. vector symbols, WMF, ???
+
+      </UL>
+
+      </TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>a</TD>
+
+<TD><B>Angle</B> - Rotation angle (in degrees, counterclockwise) to apply
+to the brush pattern.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>s</TD>
+
+<TD><B>Size or Scaling Factor</B> - Numeric value with or without units.
+<BR>If units are specified, then this value is the absolute size to draw
+the brush or symbol.
+<BR>If no units are specified then it is taken as a scaling factor relative
+to the symbol's default size.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>dx, dy</TD>
+
+<TD><B>Spacing</B> - If filling an area using point symbols, these values
+will define the spacing to use between them. "dx" is the horizontal distance
+between the center of 2 adjacent symbols and "dy" is the vertical distance.
+<BR>The default is to use the symbol's MBR width for dx, and the symbol's
+height for dy.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>l</TD>
+
+<TD><B>Priority Level</B> - Numeric value defining the order in which style
+parts should be drawn. Lower priority style parts are drawn first, and
+higher priority ones are drawn on top.
+<BR>If priority level is unspecified, the default is 1.</TD>
+</TR>
+</TABLE>
+
+<H2>
+2.5 Symbol Tool Parameters</H2>
+<B>Applicable geometry types:</B>
+<UL>
+<LI>
+Point: Place a symbol at the point's location</LI>
+
+<LI>
+Polyline: Place symbols along the polyline, either at each vertex, or equally
+spaced.</LI>
+
+<LI>
+Polygon: Place the symbols on the outline of the polygon.</LI>
+</UL>
+Here is the current list of SYMBOL tool parameters. Note again that this
+list can eventually grow and that all parameters are optional:
+<TABLE BORDER WIDTH="100%" >
+<TR>
+<TH>param_name</TH>
+
+<TH>Description</TH>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>id</TD>
+
+    <TD>
+      <P><B>Symbol Name or Id</B> - Comma-delimited list of symbol names or ids.  The names in the comma-delimited list
+of ids are scanned until one is recognized by the target system.
+</P>
+      <P>
+Symbol  Ids can be either system-specific ids (see further below) or be one
+of the pre-defined OGR symbol  ids for well known symbols.  The id
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
+understanding system-specific ids.
+      <P>
+Here is the current list of OGR symbol ids (this could grow over time):<BR>
+      <UL>
+        <LI>ogr-sym-0: cross (+)
+        <LI>ogr-sym-1: diagcross (X)
+        <LI>ogr-sym-2: circle (not filled)
+        <LI>ogr-sym-3: circle (filled)
+        <LI>ogr-sym-4: square (not filled)
+        <LI>ogr-sym-5: square (filled)
+        <LI>ogr-sym-6: triangle (not filled)
+        <LI>ogr-sym-7: triangle (filled)
+        <LI>ogr-sym-8: star (not filled)
+        <LI>ogr-sym-9: star (filled)
+        <LI>ogr-sym-10: vertical bar (can be rotated using angle attribute to produce diag bar)
+        <LI>??? should any other common be included ???
+      </UL>
+      <P>
+Like with Pen Ids, system-specific symbol ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
+a name, a filename, etc.).
+      <P>The following conventions will be used for common system-specific symbol ids:</P>
+      <UL>
+        <LI>&quot;bmp-filename.bmp&quot; for Windows BMP symbols
+        <LI>??? any others, e.g. vector symbols, WMF, ???
+
+      </UL>
+      </TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>a</TD>
+
+<TD><B>Angle</B> - Rotation angle (in degrees, counterclockwise) to apply
+to the symbol.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>c</TD>
+
+<TD>
+      <P><B>Symbol Color</B>, expressed in hexadecimal (#RRGGBB[AA])
+<BR>
+      [AA] the last 2 digits define the alpha channel value, with 0 being transparent and FF being opaque.  The default for [AA] is FF (opaque)<BR>
+        Suggested default symbol color: black (c:#000000)
+<BR>
+      Example: SYMBOL(c:#FF0000)
+<BR>
+        Predefined color names may be allowed in future versions of the specification.</P>
+      </TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>o</TD>
+
+<TD>
+      <P><B>Symbol Outline Color</B>, expressed in hexadecimal (#RRGGBB[AA]), no outline if not set.
+      </TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>s</TD>
+
+<TD><B>Size or Scaling Factor</B> - Numeric value with or without units.
+<BR>If units are specified, then this value is the absolute size to draw
+the symbol.
+<BR>If no units are specified then it is taken as a scaling factor relative
+to the symbol's default size.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>dx, dy</TD>
+
+<TD><B>X and Y offset</B> of the symbol's insertion point.
+<BR>Applies to point geometries, and to symbols placed at each vertex of
+a polyline.</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>ds, dp, di</TD>
+
+<TD><B>Spacing</B> - For symbols spaced along a line.
+<BR>"ds" is the step to use when placing symbols along the line.
+<BR>By default, symbols applied to a feature with a line geometry are placed
+at each vertex, but setting "ds" triggers the placement of symbols at an
+equal distance along the line. "ds" has no effect for a feature with a
+point geometry.
+<BR>"dp" can be used together with "ds" to specify the perpendicular distance
+between the symbols' center and the line along which they're placed.
+<BR>Finally, "di" can be used to specify an initial offset from the beginning
+of the line.
+<BR>Example:
+<BR>SYMBOL(id:123, s:5, di:5px, ds:50px)</TD>
+</TR>
+
+<TR>
+<TD ALIGN=CENTER>l</TD>
+
+<TD><B>Priority Level</B> - Numeric value defining the order in which style
+parts should be drawn. Lower priority style parts are drawn first, and
+higher priority ones are drawn on top.
+<BR>If priority level is unspecified, the default is 1.</TD>
+</TR>
+</TABLE>
+
+<H2>
+2.6 Label Tool Parameters</H2>
+<B>Applicable geometry types:</B>
+<UL>
+<LI>
+Point: Place a text label at the point's location</LI>
+
+<LI>
+Polyline: Place text along the polyline.</LI>
+
+<LI>
+Polygon: Place a label at the centroid of the polygon. All parameters behave
+exactly as if the geometry was a point located at the polygon's centroid.</LI>
+</UL>
+Here is the current list of LABEL tool parameters. Note again that that
+this list can eventually grow and all parameters are optional:
+<TABLE BORDER WIDTH="100%" >
+  <TR>
+    <TH>param_name</TH>
+    <TH>Description</TH>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>f</TD>
+    <TD><B>Font Name</B> -
+<BR>
+      Comma-delimited list of fonts names.  works like the HTML FONT tag: the list of font names is scanned until a supported font name is encountered.
+<BR>
+      Example: LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World!")
+
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>s</TD>
+    <TD><B>Font Size</B> - Numeric value with units.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>t</TD>
+    <TD><B>Text String</B> - Can be a constant string, or a reference to an
+attribute field's value. If a double-quote character is present in the string,
+it is escaped with a antislash (\) character before it.
+<BR>
+      Examples:
+<BR>
+      LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World!")
+<BR>
+      LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World with escaped double-quote(\") character!")
+<BR>
+      LABEL(f:"Arial, Helvetica", s:12pt, t:{text_value})</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>a</TD>
+    <TD><B>Angle</B> - Rotation angle (in degrees, counterclockwise).</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>c</TD>
+    <TD><B>Text Foreground Color</B>, expressed in hexadecimal (#RRGGBB[AA])
+<BR>
+      Suggested default: black (c:#000000)
+<BR>
+      Predefined color names may be allowed in future versions of the specification.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>b</TD>
+    <TD><B>Text Background Color</B> - Color of the filled box to draw behind the label, expressed in hexadecimal (#RRGGBB[AA]), no box drawn if not set.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>o</TD>
+    <TD><B>Text Outline Color</B> - Color of the text outline (halo in MapInfo terminology), expressed in hexadecimal (#RRGGBB[AA]), no outline if not set.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>h</TD>
+    <TD><B>Shadow Color</B> - Color of the text shadow, expressed in hexadecimal (#RRGGBB[AA]), no shadow if not set.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>w</TD>
+    <TD><B>Stretch</B> - The stretch factor changes the width of all
+	    characters in the font by factor percent. For example, setting
+	    factor to 150 results in all characters in the font being 1.5
+	    times (i.e. 150%) wider. The default stretch factor is 100.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>st</TD>
+    <TD><B>Strike out text</B></TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>m</TD>
+    <TD><B>Label Placement Mode</B> - How is the text drawn relative to the
+feature's geometry.
+<BR>
+	"m:p" - The default, simple label attached to a point or to the first
+vertex of a polyline.
+<BR>
+	"m:l" - Text is attached to the last vertex of a polyline. A PEN tool
+can be combined with this LABEL tool to draw the polyline as a leader to
+the label.
+<BR>
+	"m:s" - Stretch text string along polyline, with an equal spacing between
+each character.
+<BR>
+	"m:m" - Place text as a single label at the middle of a polyline (based
+on total line length).
+<BR>
+	"m:w" - One word per line segment in a polyline.
+<BR>
+<BR>
+	"m:h" - Every word of text attached to polyline is placed horizontally
+in its segment, anchor point is a center of segment.
+<BR>
+<BR>
+	"m:a" - Every word of text attached to polyline is stretched to fit
+the segment of polyline and placed along that segment. The anchor point is
+a start of a segment.
+<BR>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>p</TD>
+    <TD>
+      <TABLE BORDER=0 WIDTH="100%" >
+        <TR>
+	  <TD><B>Anchor Position</B> - A value from 1 to 12 defining the
+		  label's position relative to the point to which it is
+		  attached. There are four vertical alignment modes:
+		  <i>baseline</i>, <i>center</i>, <i>top</i> and <i>bottom</i>;
+		  and three horizontal modes: <i>left</i>, <i>center</i> and
+		  <i>right</i>. See the scheme: </TD>
+          <TD><IMG SRC="style_textanchor.gif"></TD>
+        </TR>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>dx, dy</TD>
+    <TD><B>X and Y offset</B> of the label's insertion point.
+<BR>
+      Applies to text placed on a point, or at each vertex of a polyline.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>dp</TD>
+    <TD><B>Perpendicular Offset</B> - For labels placed along a line.
+<BR>
+      "dp" specifies the perpendicular distance between the label and the
+line along which it is placed.  If the offset is negative then the label will be shifted  left of the main segment and right otherwise.</TD>
+  </TR>
+  <TR>
+    <TD ALIGN=CENTER>bo</TD>
+    <TD><B>Bold</B> -
+<BR>
+      If specified, then text will be bold.</TD>
+  </TR>
+  <TR>
+    <TD ALIGN=CENTER>it</TD>
+    <TD><B>Italic - </B></TD>
+  </TR>
+  <TR>
+    <TD ALIGN=CENTER>un</TD>
+    <TD><B>Underline</B> -</TD>
+  </TR>
+
+
+  <TR>
+    <TD ALIGN=CENTER>l</TD>
+    <TD><B>Priority Level</B> - Numeric value defining the order in which style
+parts should be drawn. Lower priority style parts are drawn first, and
+higher priority ones are drawn on top.
+<BR>
+      If priority level is unspecified, the default is 1.</TD>
+  </TR>
+</TABLE>
+
+<H2>
+2.7 Styles Table Format</H2>
+For file formats that support tables of styles, then the predefined styles
+would be stored in that format.
+<P>For file formats that do not support tables of styles, then we might
+want to store them in a text file with a .ofs (OGR Feature Styles)  extension and the same basename as the dataset.
+This would apply to formats like ArcView Shapes.
+<P>Here is what one of those .OFS files could look like:
+<PRE>
+    OFS-Version: 1.0
+    StyleField: &quot;style&quot;
+
+    DefaultStyle: PEN(C:#000000FF)
+    road:      PEN(c:#FF0000,w:5px)
+    lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
+    campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
+    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
+
+<P>
+<P>The first line is a signature with a version number.  Must be present
+<P>The second line (StyleField: &quot;style&quot;) is the name of the attribute field in which the Feature Style String is stored for each object in the corresponding layer.  This is optional, if not set, then the objects in the layer will all share the same style defined in DefaultStyle.
+<P>The third line (DefaultStyle:...) defines the default style that applies by default to all objects that have no explicit style.
+<P>Then the list of style definitions follow.
+<P>&nbsp;
+<H2>2.8 Suggestions, possible extensions</H2>
+<P><B>2.8.1 Global list of ids for pen, brush, and symbol ids</B></P>
+<P>There have been discussions about defining a global list of pen, brush, and symbol ids together with a table containing the definition of each code.  This would work similarly to the EPSG projection codes, where the table is updated when new codes are added.  This would have had some advantages, mainly to provide a common set of codes to replace the vendor-dependent pen, brush and symbol ids.  However on the other hand, this mechanism would be redundant with the current approach which is to use a   feature style definition language.</P>
+<P><B>2.8.2 Use of custom brushes in pen definitions</B></P>
+<P>In some cases one might want a pen's pattern to be a brush.  To achieve this, a PEN() definition would have to contain a BRUSH() definition (e.g. PEN(c:&quot;#FF00FFFF&quot;,BRUSH(id:&quot;ogr-brush-4&quot;)) or PEN(c:&quot;#FF00FFFF&quot;,pen-brush,id:&quot;ogr-brush-4&quot;) or ???) but this is currently impossible with the current specs.
+<P>Since there is no current need for custom brush patterns in pen (no file formats that we know of support that), we won't include it now but may do it later.  In the meantime, one can use the &quot;gp&quot; (geometric pattern) pen parameter to allow specifying one of the OGR brushes as a pen brush pattern.
+<P>&nbsp;
+<P>
+<H2>2.9 Using OGR SQL to transfer the style between the data sources</H2>
+<P>We can use the <B>OGR_STYLE</B> special field to extract the feature level style, and ogr2ogr can be used to transfer the style string between the data sources according to the following example:</P>
+<PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, OGR_STYLE from rivers" rivers.shp rivers.tab</PRE>
+<P>Without specifying the length of the style field the output driver may truncate the length to a default value. Therefore it may be necessary to specify the target length manually, like:</P>
+<PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, CAST(OGR_STYLE AS character(255)) from rivers" rivers.shp rivers.tab</PRE>
+<P>OGR is aware of using the OGR_STYLE field if exists and OGRFeature::GetStyleString will return the value of this field if no style string have been specified programmatically.</P>
+<P>&nbsp;
+<P>
+<HR WIDTH=50%>
+<H2>
+3. OGR Support Classes</H2>
+The complete set of classes/API functions is still to be determined.
+<P>Here are some rough ideas:
+<UL>
+<LI>
+Add a 'char *pszStyleString;' member to the OGRFeature, together with OGRFeature::GetStyleString()
+and SetStyleString() methods.</LI>
+
+<LI>
+Add a OGRStyleTable in the  Dataset and in the Layer, The both are
+using StringList to store the StyleTable, ex of a entry "@name, "PEN(color:#122334)"</LI>
+
+<LI>
+Add a char **GetStyleTable() and GBool SetStyleTable(char **) in Dataset
+and in Layer</LI>
+
+<LI>
+The OGRStyle class knows how to parse a style string,</LI>
+</UL>
+
+<PRE>
+    typedef enum ogr_style_tool_class_id
+    {
+       OGRSTCNone,
+       OGRSTCPen,
+       OGRSTCBrush,
+       OGRSTCSymbol,
+       OGRSTCLabel
+    } OGRSTClassId;
+
+    typedef enum ogr_style_tool_units_id
+    {
+       OGRSTUGround,
+       OGRSTUPixel,
+       OGRSTUPoints,
+       OGRSTUMM,
+       OGRSTUCM,
+       OGRSTUInches
+    } OGRSTUnitId;
+
+    typedef enum ogr_style_tool_param_pen_id
+    {
+      OGRSTPenColor = 0,
+      OGRSTPenWidth,
+      OGRSTPenPattern,
+      OGRSTPenId,
+      OGRSTPenPerOffset,
+      OGRSTPenCap,
+      OGRSTPenJoin,
+      OGRSTPenPriority,
+      OGRSTPenLast
+
+    } OGRSTPenParam;
+
+    typedef enum ogr_style_tool_param_brush_id
+    {
+      OGRSTBrushFColor = 0,
+      OGRSTBrushBColor,
+      OGRSTBrushId,
+      OGRSTBrushAngle,
+      OGRSTBrushSize,
+      OGRSTBrushDx,
+      OGRSTBrushDy,
+      OGRSTBrushPriority,
+      OGRSTBrushLast
+
+    } OGRSTBrushParam;
+
+
+
+    typedef enum ogr_style_tool_param_symbol_id
+    {
+      OGRSTSymbolId = 0,
+      OGRSTSymbolAngle,
+      OGRSTSymbolColor,
+      OGRSTSymbolSize,
+      OGRSTSymbolDx,
+      OGRSTSymbolDy,
+      OGRSTSymbolStep,
+      OGRSTSymbolPerp,
+      OGRSTSymbolOffset,
+      OGRSTSymbolPriority,
+      OGRSTSymbolLast
+
+    } OGRSTSymbolParam;
+
+    typedef enum ogr_style_tool_param_label_id
+    {
+      OGRSTLabelFontName = 0,
+      OGRSTLabelSize,
+      OGRSTLabelTextString,
+      OGRSTLabelAngle,
+      OGRSTLabelFColor,
+      OGRSTLabelBColor,
+      OGRSTLabelPlacement,
+      OGRSTLabelAnchor,
+      OGRSTLabelDx,
+      OGRSTLabelDy,
+      OGRSTLabelPerp,
+      OGRSTLabelBold,
+      OGRSTLabelItalic,
+      OGRSTLabelUnderline,
+      OGRSTLabelPriority,
+      OGRSTLabelLast
+
+    } OGRSTLabelParam;
+
+    //Every time a pszStyleString given in parameter is NULL,
+      the StyleString defined in the Mgr will be use.
+
+class OGRStyleMgr
+{
+    OGRStyleMgr(OGRStyleTable *poDataSetStyleTable =NULL);
+
+    GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
+				GBool bNoMatching = FALSE);
+    /*it will set in the given feature the pszStyleString with
+	    the style or will set the style name found in
+            dataset StyleTable (if bNoMatching == FALSE)*/
+
+    const char *InitFromFeature(OGRFeature *);
+    GBool InitStyleString(const char *pszStyleString = NULL);
+
+    const char *GetStyleName(const char *pszStyleString= NULL);
+    const char *GetStyleByName(const char *pszStyleName);
+
+    GBool AddStyle(const char *pszStyleName, const char *pszStyleString=NULL);
+
+    const char *GetStyleString(OGRFeature * = NULL);
+
+    GBool AddPart(OGRStyleTool *);
+    GBool AddPart(const char *);
+
+    int GetPartCount(const char *pszStyleString = NULL);
+    OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = NULL);
+
+    OGRStyleTable *GetDataSetStyleTable(){return m_poDataSetStyleTable;}
+
+    OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString);
+
+};
+
+class OGRStyleTool
+{
+    OGRStyleTool(OGRSTClassId eClassId);
+    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
+			   int &nBlue);
+    int   GetSpecificId(const char *pszId, const char *pszWanted);
+    OGRSTClassId GetType();
+    void SetUnit(OGRSTUnitId,double dfScale = 1.0); //the dfScale will be
+         //used if we are working with Ground Unit ( ground = paper * scale);
+    OGRSTUnitId GetUnit(){return m_eUnit;}
+    void SetStyleString(const char *pszStyleString);
+};
+
+class OGRStylePen : public OGRStyleTool
+{
+   /**********************************************************************/
+    /* Explicit fct for all parameters defined in the Drawing tools  Pen */
+    /**********************************************************************/
+
+    const char *Color(GBool &bDefault)
+    void SetColor(const char *pszColor)
+    double Width(GBool &bDefault)
+    void SetWidth(double dfWidth)
+    const char *Pattern(GBool &bDefault)
+    void SetPattern(const char *pszPattern)
+    const char *Id(GBool &bDefault)
+    void SetId(const char *pszId)
+    double PerpendicularOffset(GBool &bDefault)
+    void SetPerpendicularOffset(double dfPerp)
+    const char *Cap(GBool &bDefault)
+    void SetCap(const char *pszCap)
+    const char *Join(GBool &bDefault)
+    void SetJoin(const char *pszJoin)
+    int  Priority(GBool &bDefault)
+    void SetPriority(int nPriority)
+    /*****************************************************************/
+
+
+    inline const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull)
+    inline int GetParamNum(OGRSTPenParam eParam,GBool &bValueIsNull)
+    inline double GetParamDbl(OGRSTPenParam eParam,GBool &bValueIsNull)
+    inline void SetParamStr(OGRSTPenParam eParam,
+	                        const char *pszParamString)
+    inline void SetParamNum(OGRSTPenParam eParam, int nParam)
+    inline void SetParamDbl(OGRSTPenParam eParam, double dfParam)
+
+};
+
+
+class OGRStyleBrush : public OGRStyleTool
+{
+
+    /*a Explicit fct for all parameters defined in the Drawing tools Brush */
+
+    const char *ForeColor(GBool &bDefault)
+    void SetForeColor(const char *pszColor)
+    const char *BackColor(GBool &bDefault)
+    void SetBackColor(const char *pszColor)
+    const char *Id(GBool &bDefault)
+    void  SetId(const char *pszId)
+    double Angle(GBool &bDefault)
+    void SetAngle(double dfAngle)
+    double Size(GBool &bDefault)
+    void SetSize(double dfSize)
+    double SpacingX(GBool &bDefault)
+    void SetSpacingX(double dfX)
+    double SpacingY(GBool &bDefault)
+    void SetSpacingY(double dfY)
+    int  Priority(GBool &bDefault)
+    void SetPriority(int nPriority)
+
+    /*****************************************************************/
+
+};
+class OGRStyleSymbol : public OGRStyleTool
+{
+    /*****************************************************************/
+    /* Explicit fct for all parameters defined in the Drawing tools */
+    /*****************************************************************/
+
+    const char *Id(GBool &bDefault)
+    void  SetId(const char *pszId)
+    double Angle(GBool &bDefault)
+    void SetAngle(double dfAngle)
+    const char *Color(GBool &bDefault)
+    void SetColor(const char *pszColor)
+    double Size(GBool &bDefault)
+    void SetSize(double dfSize)
+    double SpacingX(GBool &bDefault)
+    void SetSpacingX(double dfX)
+    double SpacingY(GBool &bDefault)
+    void SetSpacingY(double dfY)
+    double Step(GBool &bDefault)
+    void SetStep(double dfStep)
+    double Offset(GBool &bDefault)
+    void SetOffset(double dfOffset)
+    double Perp(GBool &bDefault)
+    void SetPerp(double dfPerp)
+    int  Priority(GBool &bDefault)
+    void SetPriority(int nPriority)
+
+    /*****************************************************************/
+
+};
+
+class OGRStyleLabel : public OGRStyleTool
+{
+
+    /*****************************************************************/
+    /* Explicit fct for all parameters defined in the Drawing tools */
+    /*****************************************************************/
+
+    const char *FontName(GBool &bDefault)
+    void  SetFontName(const char *pszFontName)
+    double Size(GBool &bDefault)
+    void SetSize(double dfSize)
+    const char *TextString(GBool &bDefault)
+    void SetTextString(const char *pszTextString)
+    double Angle(GBool &bDefault)
+    void SetAngle(double dfAngle)
+    const char *ForeColor(GBool &bDefault)
+    void SetForColor(const char *pszForColor)
+    const char *BackColor(GBool &bDefault)
+    void SetBackColor(const char *pszBackColor)
+    const char *Placement(GBool &bDefault)
+    void SetPlacement(const char *pszPlacement)
+    int  Anchor(GBool &bDefault)
+    void SetAnchor(int nAnchor)
+    double SpacingX(GBool &bDefault)
+    void SetSpacingX(double dfX)
+    double SpacingY(GBool &bDefault)
+    void SetSpacingY(double dfY)
+    double Perp(GBool &bDefault)
+    void SetPerp(double dfPerp)
+    GBool Bold(GBool &bDefault)
+    void SetBold(GBool bBold)
+    GBool Italic(GBool &bDefault)
+    void SetItalic(GBool bItalic)
+    GBool Underline(GBool &bDefault)
+    void SetUnderline(GBool bUnderline)
+    int  Priority(GBool &bDefault)
+    void SetPriority(int nPriority)
+    /*****************************************************************/
+
+};
+
+class OGRStyleTable
+{
+
+    OGRStyleTable();
+
+    GBool AddStyle(const char *pszName,const char *pszStyleString);
+    GBool RemoveStyle(const char *pszName);
+    GBool ModifyStyle(const char *pszName, const char *pszStyleString);
+
+    GBool SaveStyleTable(const char *pszFilename);
+    GBool LoadStyleTable(const char *pszFilename);
+    const char *Find(const char *pszStyleString);
+    GBool IsExist(const char *pszName);
+    const char *GetStyleName(const char *pszName);
+    void  Print(FILE *fpOut);
+    void  Clear();
+};
+
+
+Usage examples:
+
+   OGRStyleTable oStyleTable;
+
+   OGRStyleMgr   *poStyleMgr = new OGRStyleMgr(&oStyleTable);
+
+   // Create a New style in the style table
+
+   if (poStyleMgr->AddStyle("@Name","PEN(c:#123456;w:10px);BRUSH(c:345678)"))
+   {
+     poStyleMgr->SetFeatureStyleString(poFeature,"@Name",TRUE) or
+     poStyleMgr->SetFeatureStyleString(poFeature,"PEN(c:#123456,w:10px);BRUSH(c:345678)",FALSE)
+   }
+
+   oStyleTable->SaveStyleTable("ttt.tbl");
+
+
+   // Create a New style in the style table
+
+   poStyleMgr->InitStyleString();
+   poStyleMgr->AddPart("PEN(c:#123456,w:10px)");
+   poStyleMgr->AddPart("BRUSH(c:345678)");
+   poStyleMgr->AddStyle("@Name");
+   poStyleMgr->SetFeatureStyleString(poFeature,"@Name",TRUE);
+   oStyleTable->SaveStyleTable("ttt.tbl");
+
+
+   // Create a New style in the style table
+
+   OGRStyleTool  *poStylePen = new OGRStylePen;
+
+   poStylePen->SetColor("#123456");
+   poStylePen->SetUnit(OGRSTUPixel);
+   poStylePen->SetWidth(10.0);
+   poStyleMgr->AddPart(poStylePen);
+
+   delete poStylePen;
+
+
+   // Reading a style;
+
+   OGRStyleTool  *poStyleTool;
+
+   poStyleMgr->GetStyleString(poFeature);
+
+   for (i=0;i<poStyleMgr->GetPartCount();i++)
+   {
+      poStyleTool = GetPart(i);
+      switch(poStyleTool->GetType())
+      {
+         case OGRSTCPen:
+            poStylePen = (OGRStylePen *)poStyleTool;
+            pszColor = poStylePen->Color(bDefault);
+            if (bDefault == FALSE)
+              poStylePen->GetRGBFromString(pszColor, nRed, nGreen,
+	                                   nBlue, nTrans);
+            else
+              // Color not defined;
+
+            dfWidth = poStylePen->Width(bDefault);
+            if (bDefault == FALSE)
+              // Use dfWidth
+            else
+              // dfWidth not defined
+
+           :
+           :
+       }
+    }
+
+</PRE>
+
+<P>&nbsp;
+</P>
+<P>
+<HR WIDTH=50%>
+</BODY></HTML>

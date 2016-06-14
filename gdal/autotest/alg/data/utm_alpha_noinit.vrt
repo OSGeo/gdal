@@ -1,0 +1,36 @@
+<VRTDataset rasterXSize="558" rasterYSize="466" subClass="VRTWarpedDataset">
+  <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform> -1.1764116862079686e+02,  5.9741237520048360e-04,  0.0000000000000000e+00,  3.3903634039985498e+01,  0.0000000000000000e+00, -5.9741237520048360e-04</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Alpha</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>512</BlockXSize>
+  <BlockYSize>128</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <SourceDataset relativeToVRT="1">../../gdrivers/data/utm.tif</SourceDataset>
+    <Transformer>
+      <GenImgProjTransformer>
+        <SrcGeoTransform>440720,60,0,3751320,0,-60</SrcGeoTransform>
+        <SrcInvGeoTransform>-7345.333333333333,0.01666666666666667,0,62522,0,-0.01666666666666667</SrcInvGeoTransform>
+        <DstGeoTransform>-117.6411686207969,0.0005974123752004836,0,33.9036340399855,0,-0.0005974123752004836</DstGeoTransform>
+        <DstInvGeoTransform>196917.8636135853,1673.885646684861,0,56750.80638998799,0,-1673.885646684861</DstInvGeoTransform>
+        <ReprojectTransformer>
+          <ReprojectionTransformer>
+            <SourceSRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SourceSRS>
+            <TargetSRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]</TargetSRS>
+          </ReprojectionTransformer>
+        </ReprojectTransformer>
+      </GenImgProjTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1" />
+    </BandList>
+    <DstAlphaBand>2</DstAlphaBand>
+  </GDALWarpOptions>
+</VRTDataset>

@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>JAXA PALSAR Level 1.1 and Level 1.5 processed products support</title>
+</head>
+
+<body bgcolor="#ffffff">
+<h1>JAXA PALSAR Processed Products</h1>
+
+<p>This driver provides enhanced support for processed PALSAR products from the JAXA PALSAR processor. This encompasses products acquired from the following organizations:</p>
+
+<ul>
+<li>JAXA (Japanese Aerospace eXploration Agency)
+<li>AADN (Alaska Satellite Facility)
+<li>ESA (European Space Agency)
+</ul>
+
+This driver does not support products created using the Vexcel processor (i.e. products distributed by ERSDAC and affiliated organizations).
+
+<p>Support is provided for the following features of PALSAR products:</p>
+
+<ul>
+<li>Reading Level 1.1 and 1.5 processed products</li>
+<li>Georeferencing for Level 1.5 products</li>
+<li>Basic metadata (sensor information, ground pixel spacing, etc.)</li>
+<li>Multi-channel data (i.e. dual-polarization or fully polarimetric datasets)</li>
+</ul>
+
+<p>This is a read-only driver.</p>
+
+<p>To open a PALSAR product, select the volume directory file (for example, VOL-ALPSR000000000-P1.5_UA or VOL-ALPSR000000000-P1.1__A). The driver will then use the information contained in the volume directory file to find the various image files (the IMG-* files), as well as the Leader file. Note that the Leader file is essential for correct operation of the driver.</p>
+
+<p>See Also:</p>
+
+<ul>
+<li> <a href="http://www.alos-restec.jp/en/staticpages/index.php/service-sampledata">RESTEC Sample Data</a></li>
+</ul>
+
+</body>
+</html>
