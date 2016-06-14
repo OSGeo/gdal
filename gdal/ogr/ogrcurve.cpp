@@ -99,7 +99,6 @@ int OGRCurve::get_IsClosed() const
     OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
-<<<<<<< HEAD
     if (oStartPoint.IsMeasured() && oEndPoint.IsMeasured())
     {
         // XYZM type
@@ -160,11 +159,6 @@ int OGRCurve::get_IsClosed() const
         else
             return FALSE;
     }
-=======
-    return
-        oStartPoint.getX() == oEndPoint.getX() &&
-        oStartPoint.getY() == oEndPoint.getY();
->>>>>>> b5d509a815eda8036fad508e21c57d6a7ab4aff9
 }
 
 /**
