@@ -118,10 +118,8 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 OGRFeature::~OGRFeature()
 
 {
-    int i;
-
     int nFieldcount = ( pauFields != NULL ) ? poDefn->GetFieldCount() : 0;
-    for( i = 0; i < nFieldcount; i++ )
+    for( int i = 0; i < nFieldcount; i++ )
     {
         OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(i);
 
@@ -157,7 +155,7 @@ OGRFeature::~OGRFeature()
     }
 
     int nGeomFieldCount = (papoGeometries != NULL) ? poDefn->GetGeomFieldCount() : 0;
-    for( i = 0; i < nGeomFieldCount; i++ )
+    for( int i = 0; i < nGeomFieldCount; i++ )
     {
         delete papoGeometries[i];
     }
@@ -837,12 +835,11 @@ OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
 OGRFeature *OGRFeature::Clone()
 
 {
-    int i;
     OGRFeature  *poNew = CreateFeature( poDefn );
     if( poNew == NULL )
         return NULL;
 
-    for( i = 0; i < poDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
     {
         if( !poNew->SetFieldInternal( i, pauFields + i ) )
         {
@@ -850,7 +847,7 @@ OGRFeature *OGRFeature::Clone()
             return NULL;
         }
     }
-    for( i = 0; i < poDefn->GetGeomFieldCount(); i++ )
+    for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
     {
         if( papoGeometries[i] != NULL )
         {
@@ -1927,10 +1924,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( eType == OFTIntegerList )
     {
         char    szItem[32];
-        int     i, nCount = pauFields[iField].IntegerList.nCount;
+        int nCount = pauFields[iField].IntegerList.nCount;
 
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        for( i = 0; i < nCount; i++ )
+        int i = 0;  // Used after for.
+        for( ; i < nCount; i++ )
         {
             snprintf( szItem, sizeof(szItem), "%d",
                       pauFields[iField].IntegerList.paList[i] );
@@ -1959,10 +1957,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( eType == OFTInteger64List )
     {
         char    szItem[32];
-        int     i, nCount = pauFields[iField].Integer64List.nCount;
+        int     nCount = pauFields[iField].Integer64List.nCount;
 
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        for( i = 0; i < nCount; i++ )
+        int i = 0;  // Used after for.
+        for( ; i < nCount; i++ )
         {
             snprintf( szItem, sizeof(szItem), CPL_FRMT_GIB,
                       pauFields[iField].Integer64List.paList[i] );
@@ -1992,7 +1991,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         char    szItem[40];
         char    szFormat[64];
-        int     i, nCount = pauFields[iField].RealList.nCount;
+        int nCount = pauFields[iField].RealList.nCount;
 
         if( poFDefn->GetWidth() != 0 )
         {
@@ -2003,7 +2002,8 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcpy( szFormat, "%.16g" );
 
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        for( i = 0; i < nCount; i++ )
+        int i = 0;  // Used after for.
+        for( ; i < nCount; i++ )
         {
             CPLsnprintf( szItem, sizeof(szItem), szFormat,
                       pauFields[iField].RealList.paList[i] );
@@ -2031,10 +2031,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( eType == OFTStringList )
     {
-        int     i, nCount = pauFields[iField].StringList.nCount;
+        int nCount = pauFields[iField].StringList.nCount;
 
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        for( i = 0; i < nCount; i++ )
+        int i = 0;  // Used after for.
+        for( ; i < nCount; i++ )
         {
             const char  *pszItem = pauFields[iField].StringList.paList[i];
 
@@ -3127,11 +3128,11 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         }
         else if( eType == OFTIntegerList )
         {
-            int i, nCount = atoi(papszValueList[0]);
+            int nCount = atoi(papszValueList[0]);
             std::vector<int> anValues;
             if( nCount == CSLCount(papszValueList)-1 )
             {
-                for( i=0; i < nCount; i++ )
+                for( int i = 0; i < nCount; i++ )
                 {
                     errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
                     int nVal = atoi(papszValueList[i+1]);
@@ -3148,11 +3149,11 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         }
         else if( eType == OFTInteger64List )
         {
-            int i, nCount = atoi(papszValueList[0]);
+            int nCount = atoi(papszValueList[0]);
             std::vector<GIntBig> anValues;
             if( nCount == CSLCount(papszValueList)-1 )
             {
-                for( i=0; i < nCount; i++ )
+                for( int i = 0; i < nCount; i++ )
                 {
                     GIntBig nVal = CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
                     anValues.push_back( nVal );
@@ -3162,11 +3163,11 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         }
         else if( eType == OFTRealList )
         {
-            int i, nCount = atoi(papszValueList[0]);
+            int nCount = atoi(papszValueList[0]);
             std::vector<double> adfValues;
             if( nCount == CSLCount(papszValueList)-1 )
             {
-                for( i=0; i < nCount; i++ )
+                for( int i = 0; i < nCount; i++ )
                     adfValues.push_back( CPLAtof(papszValueList[i+1]) );
                 SetField( iField, nCount, &(adfValues[0]) );
             }
@@ -3183,11 +3184,11 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             {
                 char** papszValueList = CSLTokenizeString2(
                                                         pszValue, ",:()", 0 );
-                int i, nCount = atoi(papszValueList[0]);
+                int nCount = atoi(papszValueList[0]);
                 std::vector<char*> aosValues;
                 if( nCount == CSLCount(papszValueList)-1 )
                 {
-                    for( i=0; i < nCount; i++ )
+                    for( int i = 0; i < nCount; i++ )
                         aosValues.push_back( papszValueList[i+1] );
                     aosValues.push_back( NULL );
                     SetField( iField, &(aosValues[0]) );
@@ -4389,9 +4390,8 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
     if( GetDefnRef() != poFeature->GetDefnRef() )
         return FALSE;
 
-    int i;
     int nFields = GetDefnRef()->GetFieldCount();
-    for(i=0; i<nFields; i++)
+    for( int i = 0; i < nFields; i++ )
     {
         if( IsFieldSet(i) != poFeature->IsFieldSet(i) )
             return FALSE;
@@ -4433,8 +4433,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                           poFeature->GetFieldAsIntegerList(i, &nCount2);
                 if( nCount1 != nCount2 )
                     return FALSE;
-                int j;
-                for(j=0;j<nCount1;j++)
+                for( int j = 0; j < nCount1; j++ )
                 {
                     if( pnList1[j] != pnList2[j] )
                         return FALSE;
@@ -4450,8 +4449,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                           poFeature->GetFieldAsInteger64List(i, &nCount2);
                 if( nCount1 != nCount2 )
                     return FALSE;
-                int j;
-                for(j=0;j<nCount1;j++)
+                for( int j = 0; j < nCount1; j++ )
                 {
                     if( pnList1[j] != pnList2[j] )
                         return FALSE;
@@ -4468,8 +4466,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                         poFeature->GetFieldAsDoubleList(i, &nCount2);
                 if( nCount1 != nCount2 )
                     return FALSE;
-                int j;
-                for(j=0;j<nCount1;j++)
+                for( int j = 0; j < nCount1; j++ )
                 {
                     if( padfList1[j] != padfList2[j] )
                         return FALSE;
@@ -4486,8 +4483,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                 nCount2 = CSLCount(papszList2);
                 if( nCount1 != nCount2 )
                     return FALSE;
-                int j;
-                for(j=0;j<nCount1;j++)
+                for( int j = 0; j < nCount1; j++ )
                 {
                     if( strcmp(papszList1[j], papszList2[j]) != 0 )
                         return FALSE;
@@ -4538,7 +4534,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
     }
 
     int nGeomFieldCount = GetGeomFieldCount();
-    for( i = 0; i < nGeomFieldCount; i ++ )
+    for( int i = 0; i < nGeomFieldCount; i++ )
     {
         OGRGeometry* poThisGeom = GetGeomFieldRef(i);
         OGRGeometry* poOtherGeom = poFeature->GetGeomFieldRef(i);
@@ -4617,13 +4613,13 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
 /*      Retrieve the field ids by name.                                 */
 /* -------------------------------------------------------------------- */
-    int         iField, *panMap;
+    int *panMap;
     OGRErr      eErr;
 
     panMap = (int *) VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() );
     if( panMap == NULL )
         return OGRERR_FAILURE;
-    for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         panMap[iField] = GetFieldIndex(
             poSrcFeature->GetFieldDefnRef(iField)->GetNameRef() );
@@ -4744,8 +4740,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
     }
     else
     {
-        int i;
-        for(i = 0; i < GetGeomFieldCount(); i++)
+        for( int i = 0; i < GetGeomFieldCount(); i++ )
         {
             OGRGeomFieldDefn* poGFieldDefn = GetGeomFieldDefnRef(i);
 
@@ -4860,9 +4855,9 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
                                   int bForgiving )
 
 {
-    int         iField, iDstField;
+    int iDstField;
 
-    for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         iDstField = panMap[iField];
 
@@ -5168,7 +5163,6 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
                                 int *panRemapSource )
 
 {
-    int  iDstField;
     OGRField *pauNewFields;
 
     if( poNewDefn == NULL )
@@ -5177,7 +5171,7 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
     pauNewFields = (OGRField *) CPLCalloc( poNewDefn->GetFieldCount(),
                                            sizeof(OGRField) );
 
-    for( iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
+    for( int iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
     {
         if( panRemapSource[iDstField] == -1 )
         {
@@ -5220,7 +5214,6 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                     int *panRemapSource )
 
 {
-    int  iDstField;
     OGRGeometry** papoNewGeomFields;
 
     if( poNewDefn == NULL )
@@ -5229,7 +5222,9 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
     papoNewGeomFields = (OGRGeometry **) CPLCalloc( poNewDefn->GetGeomFieldCount(),
                                            sizeof(OGRGeometry*) );
 
-    for( iDstField = 0; iDstField < poDefn->GetGeomFieldCount(); iDstField++ )
+    for( int iDstField = 0;
+         iDstField < poDefn->GetGeomFieldCount();
+         iDstField++ )
     {
         if( panRemapSource[iDstField] == -1 )
         {
@@ -5427,9 +5422,8 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
 {
     int bRet = TRUE;
 
-    int i;
     int nGeomFieldCount = poDefn->GetGeomFieldCount();
-    for(i = 0; i < nGeomFieldCount; i ++ )
+    for( int i = 0; i < nGeomFieldCount; i++ )
     {
         if( (nValidateFlags & OGR_F_VAL_NULL) &&
             !poDefn->GetGeomFieldDefn(i)->IsNullable() &&
@@ -5474,7 +5468,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
         }
     }
     int nFieldCount = poDefn->GetFieldCount();
-    for(i = 0; i < nFieldCount; i ++ )
+    for( int i = 0; i < nFieldCount; i++ )
     {
         if( (nValidateFlags & OGR_F_VAL_NULL) &&
             !poDefn->GetFieldDefn(i)->IsNullable() &&
