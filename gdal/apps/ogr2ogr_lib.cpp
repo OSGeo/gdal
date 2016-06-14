@@ -3962,7 +3962,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-update") )
         {
-            psOptions->eAccessMode = ACCESS_UPDATE;
+            /* Don't reset -append or -overwrite */
+            if( psOptions->eAccessMode != ACCESS_APPEND && psOptions->eAccessMode != ACCESS_OVERWRITE )
+                psOptions->eAccessMode = ACCESS_UPDATE;
         }
         else if( EQUAL(papszArgv[i],"-relaxedFieldNameMatch") )
         {
