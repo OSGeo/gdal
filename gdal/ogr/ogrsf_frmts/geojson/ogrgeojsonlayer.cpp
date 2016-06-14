@@ -41,7 +41,6 @@
 /************************************************************************/
 
 const char* const OGRGeoJSONLayer::DefaultName = "OGRGeoJSON";
-const char* const OGRGeoJSONLayer::DefaultFIDColumn = "id";
 const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 
 /************************************************************************/
@@ -52,7 +51,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
                                   OGRGeoJSONDataSource* poDS )
-  : OGRMemLayer( pszName, poSRSIn, eGType), poDS_(poDS), bUpdated_(false)
+  : OGRMemLayer( pszName, poSRSIn, eGType), poDS_(poDS), bUpdated_(false),
+    bOriginalIdModified_(false)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable( poDS->IsUpdatable() );
@@ -72,7 +72,7 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
 
 const char* OGRGeoJSONLayer::GetFIDColumn()
 {
-	return sFIDColumn_.c_str();
+    return sFIDColumn_.c_str();
 }
 
 /************************************************************************/
@@ -81,7 +81,7 @@ const char* OGRGeoJSONLayer::GetFIDColumn()
 
 void OGRGeoJSONLayer::SetFIDColumn( const char* pszFIDColumn )
 {
-	sFIDColumn_ = pszFIDColumn;
+    sFIDColumn_ = pszFIDColumn;
 }
 
 /************************************************************************/
@@ -112,26 +112,50 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 
 void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 {
-    if( -1 == poFeature->GetFID() )
-    {
-        GIntBig nFID = GetFeatureCount(FALSE);
-        poFeature->SetFID( nFID );
+    GIntBig nFID = poFeature->GetFID();
 
-        // TODO - mloskot: We need to redesign creation of FID column
-        int nField = poFeature->GetFieldIndex( DefaultFIDColumn );
-        if( -1 != nField &&
-            (GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTInteger ||
-             GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTInteger64 ))
+    // Detect potential FID duplicates and make sure they are eventually
+    // unique.
+    if( -1 == nFID )
+    {
+        nFID = GetFeatureCount(FALSE);
+        OGRFeature* poTryFeature = NULL;
+        while( (poTryFeature = GetFeature(nFID) ) != NULL )
         {
-            poFeature->SetField( nField, nFID );
+            nFID++;
+            delete poTryFeature;
         }
     }
+    else
+    {
+        OGRFeature* poTryFeature = NULL;
+        if( (poTryFeature = GetFeature(nFID) ) != NULL )
+        {
+            if( !bOriginalIdModified_ )
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Several features with id = " CPL_FRMT_GIB " have been "
+                    "found. Altering it to be unique. This warning will not "
+                    "be emitted for this layer",
+                    nFID );
+                bOriginalIdModified_ = true;
+            }
+            delete poTryFeature;
+            nFID = GetFeatureCount(FALSE);
+            while( (poTryFeature = GetFeature(nFID) ) != NULL )
+            {
+                nFID++;
+                delete poTryFeature;
+            }
+        }
+    }
+    poFeature->SetFID( nFID );
 
-    GIntBig nFID = poFeature->GetFID();
     if( !CPL_INT64_FITS_ON_INT32(nFID) )
         SetMetadataItem(OLMD_FID64, "YES");
 
-    SetUpdatable( true ); /* temporary toggle on updatable flag */
+    SetUpdatable( true );  // Temporary toggle on updatable flag.
     CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
     SetUpdatable( poDS_->IsUpdatable() );
     SetUpdated( false );

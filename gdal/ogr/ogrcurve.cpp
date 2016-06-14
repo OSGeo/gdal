@@ -36,17 +36,13 @@ CPL_CVSID("$Id$");
 /*                                OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::OGRCurve()
-{
-}
+OGRCurve::OGRCurve() {}
 
 /************************************************************************/
 /*                               ~OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::~OGRCurve()
-{
-}
+OGRCurve::~OGRCurve() {}
 
 /************************************************************************/
 /*                       OGRCurve( const OGRCurve& )                    */
@@ -54,8 +50,7 @@ OGRCurve::~OGRCurve()
 
 OGRCurve::OGRCurve( const OGRCurve& other ) :
     OGRGeometry( other )
-{
-}
+{}
 
 /************************************************************************/
 /*                       operator=( const OGRCurve& )                   */
@@ -98,11 +93,13 @@ int OGRCurve::getDimension() const
 int OGRCurve::get_IsClosed() const
 
 {
-    OGRPoint            oStartPoint, oEndPoint;
-
+    OGRPoint oStartPoint;
     StartPoint( &oStartPoint );
+
+    OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
+<<<<<<< HEAD
     if (oStartPoint.IsMeasured() && oEndPoint.IsMeasured())
     {
         // XYZM type
@@ -163,6 +160,11 @@ int OGRCurve::get_IsClosed() const
         else
             return FALSE;
     }
+=======
+    return
+        oStartPoint.getX() == oEndPoint.getX() &&
+        oStartPoint.getY() == oEndPoint.getY();
+>>>>>>> b5d509a815eda8036fad508e21c57d6a7ab4aff9
 }
 
 /**
@@ -212,7 +214,8 @@ int OGRCurve::get_IsClosed() const
  */
 
 /**
- * \fn OGRLineString* OGRCurve::CurveToLine( double dfMaxAngleStepSizeDegrees, const char* const* papszOptions ) const;
+ * \fn OGRLineString* OGRCurve::CurveToLine( double dfMaxAngleStepSizeDegrees,
+ *     const char* const* papszOptions ) const;
  *
  * \brief Return a linestring from a curve geometry.
  *
@@ -229,7 +232,8 @@ int OGRCurve::get_IsClosed() const
  * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
  * arc, zero to use the default setting.
  * @param papszOptions options as a null-terminated list of strings or NULL.
- *                     See OGRGeometryFactory::curveToLineString() for valid options.
+ *                     See OGRGeometryFactory::curveToLineString() for valid
+ *                     options.
  *
  * @return a line string approximating the curve
  *
@@ -308,19 +312,22 @@ int OGRCurve::get_IsClosed() const
 
 OGRBoolean OGRCurve::IsConvex() const
 {
-    OGRBoolean bRet = TRUE;
+    bool bRet = true;
     OGRPointIterator* poPointIter = getPointIterator();
-    OGRPoint p1, p2, p3;
+    OGRPoint p1;
+    OGRPoint p2;
     if( poPointIter->getNextPoint(&p1) &&
         poPointIter->getNextPoint(&p2) )
     {
+        OGRPoint p3;
         while( poPointIter->getNextPoint(&p3) )
         {
-            double crossproduct = (p2.getX() - p1.getX()) * (p3.getY() - p2.getY()) -
-                                  (p2.getY() - p1.getY()) * (p3.getX() - p2.getX());
+            const double crossproduct =
+                (p2.getX() - p1.getX()) * (p3.getY() - p2.getY()) -
+                (p2.getY() - p1.getY()) * (p3.getX() - p2.getX());
             if( crossproduct > 0 )
             {
-                bRet = FALSE;
+                bRet = false;
                 break;
             }
             p1.setX(p2.getX());
@@ -349,7 +356,7 @@ OGRBoolean OGRCurve::IsConvex() const
  * @since GDAL 2.0
  */
 
-OGRCompoundCurve* OGRCurve::CastToCompoundCurve(OGRCurve* poCurve)
+OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
 {
     OGRCompoundCurve* poCC = new OGRCompoundCurve();
     if( poCurve->getGeometryType() == wkbLineString )
@@ -380,7 +387,7 @@ OGRCompoundCurve* OGRCurve::CastToCompoundCurve(OGRCurve* poCurve)
  * @since GDAL 2.0
  */
 
-OGRLineString* OGRCurve::CastToLineString(OGRCurve* poCurve)
+OGRLineString* OGRCurve::CastToLineString( OGRCurve* poCurve )
 {
     OGRCurveCasterToLineString pfn = poCurve->GetCasterToLineString();
     return pfn(poCurve);
@@ -402,7 +409,7 @@ OGRLineString* OGRCurve::CastToLineString(OGRCurve* poCurve)
  * @since GDAL 2.0
  */
 
-OGRLinearRing* OGRCurve::CastToLinearRing(OGRCurve* poCurve)
+OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
 {
     OGRCurveCasterToLinearRing pfn = poCurve->GetCasterToLinearRing();
     return pfn(poCurve);
@@ -423,7 +430,7 @@ OGRLinearRing* OGRCurve::CastToLinearRing(OGRCurve* poCurve)
  * @since GDAL 2.0
  */
 
-int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
+int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
 {
     return -1;
 }
@@ -432,9 +439,7 @@ int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
 /*                          ~OGRPointIterator()                         */
 /************************************************************************/
 
-OGRPointIterator::~OGRPointIterator()
-{
-}
+OGRPointIterator::~OGRPointIterator() {}
 
 /**
  * \fn OGRBoolean OGRPointIterator::getNextPoint(OGRPoint* p);
@@ -457,7 +462,7 @@ OGRPointIterator::~OGRPointIterator()
  *
  * @since GDAL 2.0
  */
-void OGRPointIterator::destroy(OGRPointIterator* poIter)
+void OGRPointIterator::destroy( OGRPointIterator* poIter )
 {
     delete poIter;
 }

@@ -598,6 +598,17 @@ def osr_proj4_14():
         gdaltest.post_reason( 'Did not get expected result.' )
         return 'fail'
 
+    # Test exporting standard Transverse_Mercator, with OSR_USE_ETMERC=NO
+    gdal.SetConfigOption('OSR_USE_ETMERC', 'NO')
+    proj4str = srs.ExportToProj4()
+    gdal.SetConfigOption('OSR_USE_ETMERC', None)
+    expect_proj4str = '+proj=tmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs '
+    if proj4str != expect_proj4str:
+        print('Got:%s' % proj4str)
+        print('Expected:%s' % expect_proj4str)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

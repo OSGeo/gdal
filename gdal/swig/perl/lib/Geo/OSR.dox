@@ -1,5 +1,6 @@
 ## @class Geo::OSR
 # @brief Base class for projection related classes.
+# @details 
 
 ## @sub @Projections()
 # @return list of known projections.
@@ -42,8 +43,7 @@
 
 ## @class Geo::OSR::SpatialReference
 # @brief A spatial reference system.
-#
-# <a href="http://www.gdal.org/classOGRSpatialReference.html">Documentation
+# @details <a href="http://www.gdal.org/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
 
 ## @ignore ImportFromEPSGA
@@ -320,6 +320,7 @@
 
 ## @class Geo::OSR::CoordinateTransformation
 # @brief An object for transforming from one projection to another.
+# @details 
 
 ## @cmethod Geo::OSR::CoordinateTransformation new($src, $dst)
 # @param src a Geo::OSR::SpatialReference object

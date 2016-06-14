@@ -727,19 +727,21 @@ def test_gdalwarp_28():
         return 'fail'
 
     # First is GCC; Second is MSVC 6.0. Third is jpeg8. Fourth is with proj 4.9.2 and internal libjpeg (the correct result actually!)
+    # Fifth is proj 4.9.3 and internal libjpeg
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295:
+    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295 and cs != 37441:
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    # First is GCC; Second is MSVC 6.0. Third is proj 4.9.2
+    # First is GCC; Second is MSVC 6.0. Third is proj 4.9.2. Fourth is proj 4.9.3
     expected_gt1 = [-10009026.853177125, 43693.733128680084, 0.0, 5024463.6669970695, 0.0, -43693.733128680084]
     expected_gt2 = [-10009026.853177125, 43691.280523668691, 0.0, 5022121.8610583926, 0.0, -43691.280523668691]
     expected_gt3 = [-19976414.463615071, 95707.390034570519, 0.0, 20003931.458625447, 0.0, -95707.390034570519]
+    expected_gt4 = (-19976414.463615071, 95709.342728086922, 0.0, 19004529.751051534, 0.0, -95474.761005714157)
     for i in range(6):
-        if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1 and abs(gt[i] - expected_gt3[i]) > 1:
+        if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1 and abs(gt[i] - expected_gt3[i]) > 1 and abs(gt[i] - expected_gt4[i]) > 1:
             print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'

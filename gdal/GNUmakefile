@@ -53,7 +53,7 @@ $(GDAL_SLIB):	$(GDAL_OBJ) $(GDAL_LIB)
 		-o $(GDAL_SLIB)
 
 $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
-	$(LD) $(LDFLAGS) $(LIBS) -o $@ $(GDAL_OBJ:.o=.lo) \
+	$(LD) $(LDFLAGS) $(LIBS) -o $@ $(sort $(wildcard $(GDAL_OBJ:.o=.lo))) \
 	    -rpath $(INST_LIB) \
 	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)

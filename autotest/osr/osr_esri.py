@@ -1461,6 +1461,56 @@ def osr_esri_30():
     return 'success'
 
 ###############################################################################
+# Verify import of old-style Mercator
+
+def osr_esri_31():
+
+    prj = [ 'Projection    MERCATOR',
+            'Datum         WGS84',
+            'Spheroid      WGS84',
+            'Units         METERS',
+            'Zunits        NO',
+            'Xshift        0.0',
+            'Yshift        0.0',
+            'Parameters    ',
+             '100  0  0.0 /* longitude of central meridian',
+             '-41  0  0.0 /* latitude of true scale',
+            '100.0 /* false easting (meters)',
+            '200.0 /* false northing (meters)'
+            '' ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI( prj )
+
+    wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["latitude_of_origin",-41],
+    PARAMETER["central_meridian",100],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",100],
+    PARAMETER["false_northing",200],
+    UNIT["METERS",1]]"""
+
+    srs_wkt = osr.SpatialReference(wkt = wkt)
+
+    if not srs_prj.IsSame( srs_wkt ):
+        gdaltest.post_reason( 'fail' )
+        print(srs_prj)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1494,6 +1544,7 @@ gdaltest_list = [
     osr_esri_28,
     osr_esri_29,
     osr_esri_30,
+    osr_esri_31,
    None ]
 
 #gdaltest_list = [osr_esri_30]

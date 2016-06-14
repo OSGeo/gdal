@@ -2495,7 +2495,11 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
-            if( bHasM )
+            // It seems that absence of M is marked with a single byte
+            // with value 66. Be more tolerant and only try to parse the M
+            // array is there are at least as many remaining bytes as
+            // expected points
+            if( bHasM && pabyCur + nPoints <= pabyEnd )
             {
                 poMP->setMeasured(TRUE);
                 GIntBig dm = 0;
@@ -2597,6 +2601,17 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     if( nParts > 1 )
                         poLS = (FileGDBOGRLineString*) poMLS->getGeometryRef(i);
 
+                    // It seems that absence of M is marked with a single byte
+                    // with value 66. Be more tolerant and only try to parse the M
+                    // array is there are at least as many remaining bytes as
+                    // expected points
+                    if( pabyCur + panPointCount[i] > pabyEnd )
+                    {
+                        if( nParts > 1 )
+                            poMLS->setMeasured(FALSE);
+                        break;
+                    }
+                    
                     MLineStringSetter lsmSetter(poLS);
                     if( !ReadMArray<MLineStringSetter>(lsmSetter,
                                     pabyCur, pabyEnd,
@@ -2659,8 +2674,13 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                  panPointCount[i],
                                  dx, dy) )
                 {
-                    while( (int)i >= 0 )
-                        delete papoRings[i--];
+                    while( true )
+                    {
+                        delete papoRings[i];
+                        if( i == 0 )
+                            break;
+                        i--;
+                    }
                     delete[] papoRings;
                     returnError();
                 }
@@ -2677,8 +2697,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                     pabyCur, pabyEnd,
                                     panPointCount[i], dz) )
                     {
-                        while( (int)i >= 0 )
-                            delete papoRings[i--];
+                        for(i=0;i<nParts;i++)
+                            delete papoRings[i];
                         delete[] papoRings;
                         returnError();
                     }
@@ -2690,6 +2710,20 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 GIntBig dm = 0;
                 for(i=0;i<nParts;i++)
                 {
+                    // It seems that absence of M is marked with a single byte
+                    // with value 66. Be more tolerant and only try to parse the M
+                    // array is there are at least as many remaining bytes as
+                    // expected points
+                    if( pabyCur + panPointCount[i] > pabyEnd )
+                    {
+                        while( i != 0 )
+                        {
+                            --i;
+                            papoRings[i]->setMeasured(FALSE);
+                        }
+                        break;
+                    }
+                    
                     papoRings[i]->setMeasured(TRUE);
 
                     MLineStringSetter lsmSetter(papoRings[i]);
@@ -2697,8 +2731,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                     pabyCur, pabyEnd,
                                     panPointCount[i], dm) )
                     {
-                        while( (int)i >= 0 )
-                            delete papoRings[i--];
+                        for(i=0;i<nParts;i++)
+                            delete papoRings[i];
                         delete[] papoRings;
                         returnError();
                     }

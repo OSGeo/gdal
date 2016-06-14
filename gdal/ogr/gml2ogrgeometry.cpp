@@ -590,7 +590,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         iCoord++;
     }
 
-    return iCoord > 0.0;
+    return iCoord > 0;
 }
 
 #ifdef HAVE_GEOS

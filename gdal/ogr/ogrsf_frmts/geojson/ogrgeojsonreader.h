@@ -127,6 +127,7 @@ private:
     bool bFoundRev;
     bool bFoundTypeFeature;
     bool bIsGeocouchSpatiallistFormat;
+    bool bFoundFeatureId;
 
     //
     // Copy operations not supported.
