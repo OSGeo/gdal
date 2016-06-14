@@ -151,6 +151,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            nRetCode = 0;
             goto exit;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
