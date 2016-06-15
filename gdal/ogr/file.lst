@@ -10,6 +10,7 @@ OBJ =	ogrgeometryfactory.o \
 	ogrgeometrycollection.o \
 	ogrmultipolygon.o \
 	ogrsurface.o \
+	ogrpolyhedralsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
     ogrcircularstring.o \
