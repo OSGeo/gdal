@@ -82,6 +82,7 @@ class OGRMultiPolygon;
 class OGRMultiCurve;
 class OGRMultiLineString;
 class OGRTriangle;
+class OGRPolyhedralSurface;
 
 //! @cond Doxygen_Suppress
 typedef OGRLineString* (*OGRCurveCasterToLineString)(OGRCurve*);
@@ -1287,6 +1288,7 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 {
   protected:
     virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    friend class OGRPolyhedralSurface;
 
   public:
             OGRMultiPolygon();
@@ -1307,6 +1309,65 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
 
     static OGRMultiSurface* CastToMultiSurface(OGRMultiPolygon* poMP);
+};
+
+/************************************************************************/
+/*                         OGRPolyhedralSurface                         */
+/************************************************************************/
+
+class CPL_DLL OGRPolyhedralSurface : public OGRSurface
+{
+  protected:
+    OGRMultiPolygon oMP;
+    // virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+
+  public:
+    OGRPolyhedralSurface();
+    OGRPolyhedralSurface(const OGRPolyhedralSurface &poGeom);
+    virtual ~OGRPolyhedralSurface();
+    OGRPolyhedralSurface& operator=(const OGRPolyhedralSurface& other);
+
+    // IWks Interface
+    virtual int WkbSize() const;
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    // virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
+    // virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
+    // virtual OGRErr importFromWkt( char ** );
+    // virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+
+    // virtual void getEnvelope(OGREnvelope * psEnvelope) const = 0;
+    // virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
+    //
+    // // These methods are either (a) inherited from OGRGeometry and are re-written to ensure compatibility with the new
+    // // OGRPolyhedralSurface or (b) written in OGRGeometry on top of GEOS; hence need to remove the GEOS binding in
+    // // OGRPolyhedralSurface and bind it with SFCGAL instead
+    // virtual OGRGeometry *Boundary () const;
+    // virtual OGRErr Centroid (OGRPoint *poPoint) const;
+    // virtual OGRGeometry *ConvexHull () const;
+    // virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRGeometry *DelaunayTriangulation (double dfTolerance, int bOnlyEdges);
+    // virtual OGRGeometry *Difference (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRBoolean Disjoint (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRGeometry *getBoundary () const;
+    // virtual OGRGeometry *Intersection (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRBoolean IsValid () const;
+    // virtual OGRBoolean Overlaps (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRGeometry *Polygonize () const;
+    // virtual OGRGeometry *Simplify (double dTolerance) const;
+    // virtual OGRGeometry *SimplifyPreserveTopology (double dTolerance) const;
+    // virtual OGRGeometry *SymDifference (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRBoolean Touches (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRGeometry *Union (const OGRGeometry *poOtherGeom) const;
+    // virtual OGRGeometry *UnionCascaded () const;
+    // virtual OGRBoolean Within (const OGRGeometry *poOtherGeom) const;
+    //
+    // // Apart from the above functions (some of them can be bound with SFCGAL), other API which is exposed from SFCGAL
+    // // The bulk of the methods which can be ideally interfaced are already-rewritten above when we remove the GEOS bindings
+    // // and expose them through OGR
+    // OGRErr AddPolygon(const OGRCurvePolygon &poPolygon);
+    // virtual float distance3D(const OGRGeometry &poGeom);
+    // virtual float distance(const OGRGeometry &poGeom);
 };
 
 /************************************************************************/
