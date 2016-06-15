@@ -362,12 +362,12 @@ extern "C++" {
 
 
 #ifndef MAX
-#  define MIN(a,b)      ((a<b) ? a : b)
-#  define MAX(a,b)      ((a>b) ? a : b)
+#  define MIN(a,b)      (((a)<(b)) ? (a) : (b))
+#  define MAX(a,b)      (((a)>(b)) ? (a) : (b))
 #endif
 
 #ifndef ABS
-#  define ABS(x)        ((x<0) ? (-1*(x)) : x)
+#  define ABS(x)        (((x)<0) ? (-1*(x)) : (x))
 #endif
 
 #ifndef M_PI
