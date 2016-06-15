@@ -74,6 +74,7 @@ OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
     if( this != &other)
     {
         OGRPolygon::operator=( other );
+        oCC = other.oCC;
     }
     return *this;
 }
