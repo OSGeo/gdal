@@ -360,7 +360,7 @@ typedef enum
                                *   ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
                                *    ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangle = 17,         /** < a Triangle. ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbTriangle = 17,         /**< a Triangle. ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
