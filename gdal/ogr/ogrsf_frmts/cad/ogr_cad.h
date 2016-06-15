@@ -10,9 +10,9 @@ class OGRCADLayer : public OGRLayer
 {
     OGRFeatureDefn  *poFeatureDefn;
     
-    int             nNextFID; // FIXME: its legal to make it size_t?
+    size_t          nNextFID;
 
-    CADLayer        &poCADLayer ;
+    CADLayer        &poCADLayer;
 public:
     OGRCADLayer( CADLayer &poCADLayer );
     ~OGRCADLayer();
@@ -30,10 +30,10 @@ public:
 
 class OGRCADDataSource : public GDALDataset
 {
-    CADFile         *poCADFile;
+    std::unique_ptr<CADFile>    spoCADFile;
     
-    OGRCADLayer     **papoLayers;
-    int               nLayers;
+    OGRCADLayer                 **papoLayers;
+    int                         nLayers;
     
 public:
     OGRCADDataSource();

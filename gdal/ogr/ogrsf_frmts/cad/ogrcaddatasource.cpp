@@ -3,14 +3,13 @@
 
 OGRCADDataSource::OGRCADDataSource()
 {
-    papoLayers = NULL;
+    papoLayers = nullptr;
     nLayers    = 0;
 }
 
 OGRCADDataSource::~OGRCADDataSource()
 {
-    delete( poCADFile );
-    for( int i = 0; i < nLayers; i++ )
+    for( size_t i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 }
@@ -25,7 +24,8 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    poCADFile = OpenCADFile( pszFilename, CADFile::OpenOptions::READ_ALL );
+    spoCADFile = std::unique_ptr<CADFile>(
+                                          OpenCADFile( pszFilename, CADFile::OpenOptions::READ_ALL ) );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -35,12 +35,12 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    nLayers = poCADFile->getLayersCount();
-    papoLayers = ( OGRCADLayer ** ) CPLMalloc( sizeof( void* ) );
+    nLayers = spoCADFile->getLayersCount();
+    papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
 
     for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
     {
-        papoLayers[iIndex] = new OGRCADLayer( poCADFile->getLayer( iIndex ) );
+        papoLayers[iIndex] = new OGRCADLayer( spoCADFile->getLayer( iIndex ) );
     }
     
     return( TRUE );
@@ -49,7 +49,7 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
 OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
 {
     if ( iLayer < 0 || iLayer >= nLayers )
-        return( NULL );
+        return( nullptr );
     else
         return papoLayers[iLayer];
 }

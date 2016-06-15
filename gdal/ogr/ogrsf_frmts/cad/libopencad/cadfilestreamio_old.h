@@ -32,8 +32,6 @@
 #define CADFILESTREAMIO_H
 
 #include "cadfileio.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
 #include <fstream>
 
@@ -52,8 +50,7 @@ public:
     virtual size_t Write(void* ptr, size_t size) override;
     virtual void Rewind() override;
 protected:
-    FILE *m_oFileStream;
-    // std::ifstream m_oFileStream;
+    std::ifstream m_oFileStream;
 };
 
 #endif // CADFILESTREAMIO_H

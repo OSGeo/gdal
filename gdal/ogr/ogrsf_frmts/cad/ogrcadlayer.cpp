@@ -6,13 +6,22 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
 {
 	nNextFID = 0;
 
-	poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
-	SetDescription( poFeatureDefn->GetName() );
-	poFeatureDefn->Reference();
+    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
 
-	OGRFieldDefn oFieldTemplate( "Name", OFTString );
+    OGRFieldDefn  oClassField( "Geometry", OFTString );
+    poFeatureDefn->AddFieldDefn( &oClassField );
+    
+    OGRFieldDefn  oLinetypeField( "Thickness", OFTReal );
+    poFeatureDefn->AddFieldDefn( &oLinetypeField );
+  
+    OGRFieldDefn  oColorField( "Color (RGB):", OFTIntegerList );
+    poFeatureDefn->AddFieldDefn( &oColorField );
 
-	poFeatureDefn->AddFieldDefn( &oFieldTemplate );
+    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
+    poFeatureDefn->AddFieldDefn( &oExtendedField );
+
+    SetDescription( poFeatureDefn->GetName() );
+    poFeatureDefn->Reference();
 }
 
 GIntBig OGRCADLayer::GetFeatureCount( int bForce )
@@ -29,7 +38,6 @@ void OGRCADLayer::ResetReading()
 {
 	nNextFID = 0;
 }
-
 
     //TODO: code duplication. Need to make something like func which will call
     // functions below with additional parameters.
@@ -52,6 +60,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     }
     
     poFeature = new OGRFeature( poFeatureDefn );
+    poFeature->SetFID( static_cast<int>( nFID ) );
     
     switch( spoCADGeometry->getType() )
     {
@@ -61,7 +70,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             CADVector stPositionVector = poCADPoint->getPosition();
             poFeature->SetGeometryDirectly( new OGRPoint( stPositionVector.getX(),
                                                          stPositionVector.getY(), stPositionVector.getZ() ) );
-            
+            poFeature->SetField( "Geometry", "CADPoint" );
             return poFeature;
         }
         case CADGeometry::LINE:
@@ -76,6 +85,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                            poCADLine->getEnd().getPosition().getZ() );
             poFeature->SetGeometryDirectly( poLS );
             
+            poFeature->SetField( "Geometry", "CADLine" );
             return poFeature;
         }
         case CADGeometry::CIRCLE:
@@ -89,6 +99,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                     0.0 );
             poFeature->SetGeometryDirectly( poCircle );
             
+            poFeature->SetField( "Geometry", "CADCircle" );
             return poFeature;
         }
             
@@ -123,6 +134,7 @@ OGRFeature *OGRCADLayer::GetNextFeature()
 	}
 
 	poFeature = new OGRFeature( poFeatureDefn );
+    poFeature->SetFID( nNextFID );
 
 	switch( spoCADGeometry->getType() )
 	{
@@ -134,6 +146,7 @@ OGRFeature *OGRCADLayer::GetNextFeature()
 											stPositionVector.getY(), stPositionVector.getZ() ) );
 											
 			++nNextFID;
+            poFeature->SetField( "Geometry", "CADPoint" );
 			return poFeature;
 		}
 		case CADGeometry::LINE:
@@ -149,6 +162,7 @@ OGRFeature *OGRCADLayer::GetNextFeature()
 			poFeature->SetGeometryDirectly( poLS );
 
 			++nNextFID;
+            poFeature->SetField( "Geometry", "CADLine" );
 			return poFeature;
 		}
 		case CADGeometry::CIRCLE:
@@ -164,6 +178,7 @@ OGRFeature *OGRCADLayer::GetNextFeature()
 			poFeature->SetGeometryDirectly( poCircle );
 
 			++nNextFID;
+            poFeature->SetField( "Geometry", "CADCircle" );
 			return poFeature;
 		}
 
