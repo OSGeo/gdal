@@ -38,7 +38,7 @@ using namespace std;
 
 CADTables::CADTables()
 {
-
+    
 }
 
 void CADTables::addTable(TableType eType, CADHandle hHandle)

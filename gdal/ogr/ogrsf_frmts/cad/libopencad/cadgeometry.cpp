@@ -59,8 +59,19 @@ double CADGeometry::getThickness() const
     return thickness;
 }
 
-void CADGeometry::setThickness(double thicknes){
+void CADGeometry::setThickness(double thicknes)
+{
     thickness = thicknes;
+}
+
+RGBColor CADGeometry::getColor() const
+{
+    return geometry_color;
+}
+
+void CADGeometry::setColor(int ACIColorIndex)
+{
+    geometry_color = CADACIColors[ACIColorIndex];
 }
 
 //------------------------------------------------------------------------------

@@ -861,7 +861,7 @@ public:
     vector<CADVector> avertVertexes;
     vector<double> adfBulges;
     vector<short> adVertexesID;
-    vector<pair<double, double> > astWidths; // start, end.
+    vector<pair<double, double>> astWidths; // start, end.
 };
 
 class CADSplineObject : public CADEntityObject

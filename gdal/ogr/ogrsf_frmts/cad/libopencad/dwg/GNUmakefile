@@ -14,5 +14,6 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 ../../../o/%.$(OBJ_EXT):	%.cpp
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-clean: rm -f *.o $(O_OBJ)
+clean:
+	rm -f *.o $(O_OBJ)
 	rm -f *~

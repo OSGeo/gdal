@@ -1016,6 +1016,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADArcObject * cadArc = static_cast<CADArcObject*>(
                     readedObject.get());
 
+        arc->setColor (cadArc->stCed.nCMColor);
         arc->setPosition (cadArc->vertPosition);
         arc->setExtrusion (cadArc->vectExtrusion);
         arc->setRadius (cadArc->dfRadius);
@@ -1031,7 +1032,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADPoint3D * point = new CADPoint3D();
         CADPointObject * cadPoint = static_cast<CADPointObject*>(
                     readedObject.get());
-                        // FIXME: no cast should be used.
+
+        point->setColor (cadPoint->stCed.nCMColor);
         point->setPosition (cadPoint->vertPosition);
         point->setExtrusion (cadPoint->vectExtrusion);
         point->setXAxisAng (cadPoint->dfXAxisAng);
@@ -1046,6 +1048,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADPolyline3DObject * cadPolyline3D = static_cast<CADPolyline3DObject*>(
                     readedObject.get ());
 
+        polyline->setColor (cadPolyline3D->stCed.nCMColor);
         // TODO: code can be much simplified if CADHandle will be used.
         // to do so, == and ++ operators should be implemented.
         unique_ptr<CADVertex3DObject> vertex;
@@ -1088,6 +1091,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject*>(
                     readedObject.get ());
 
+        lwPolyline->setColor (cadlwPolyline->stCed.nCMColor);
         lwPolyline->setConstWidth (cadlwPolyline->dfConstWidth);
         lwPolyline->setElevation (cadlwPolyline->dfElevation);
         for(const CADVector& vertex : cadlwPolyline->avertVertexes)
@@ -1104,6 +1108,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADCircleObject * cadCircle = static_cast<CADCircleObject*>(
                     readedObject.get());
 
+        circle->setColor (cadCircle->stCed.nCMColor);
         circle->setPosition (cadCircle->vertPosition);
         circle->setExtrusion (cadCircle->vectExtrusion);
         circle->setRadius (cadCircle->dfRadius);
@@ -1117,7 +1122,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADEllipse * ellipse = new CADEllipse();
         CADEllipseObject * cadEllipse = static_cast<CADEllipseObject*>(
                     readedObject.get());
-// + nBitOffsetFromStart/8 + 2 is because dObjectSize doesnot cover CRC and itself.
+
+        ellipse->setColor (cadEllipse->stCed.nCMColor);
         ellipse->setPosition (cadEllipse->vertPosition);
         ellipse->setAxisRatio (cadEllipse->dfAxisRatio);
         ellipse->setEndingAngle (cadEllipse->dfEndAngle);
@@ -1134,7 +1140,9 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADPoint3D ptBeg(cadLine->vertStart, cadLine->dfThickness);
         CADPoint3D ptEnd(cadLine->vertEnd, cadLine->dfThickness);
 
-        return new CADLine(ptBeg, ptEnd);
+        CADLine * line = new CADLine(ptBeg, ptEnd);
+        line->setColor (cadLine->stCed.nCMColor);
+        return line;
     }
 
     case CADObject::RAY:
@@ -1143,6 +1151,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADRayObject * cadRay = static_cast<CADRayObject *>(
                     readedObject.get());
 
+        ray->setColor (cadRay->stCed.nCMColor);
         ray->setVectVector (cadRay->vectVector);
         ray->setPosition (cadRay->vertPosition);
 
@@ -1155,6 +1164,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADSplineObject * cadSpline = static_cast<CADSplineObject *>(
                     readedObject.get());
 
+        spline->setColor (cadSpline->stCed.nCMColor);
         spline->setScenario (cadSpline->dScenario);
         if ( spline->getScenario() == 2 )
         {
@@ -1184,6 +1194,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADTextObject * cadText = static_cast<CADTextObject *>(
                     readedObject.get());
 
+        text->setColor (cadText->stCed.nCMColor);
         text->setPosition (cadText->vertInsetionPoint);
         text->setTextValue (cadText->sTextValue);
         text->setRotationAngle (cadText->dfRotationAng);
@@ -1199,6 +1210,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADSolid * solid = new CADSolid();
         CADSolidObject * cadSolid = static_cast<CADSolidObject *>(
                     readedObject.get());
+
+        solid->setColor (cadSolid->stCed.nCMColor);
         solid->setElevation (cadSolid->dfElevation);
         solid->setThickness(cadSolid->dfThickness);
         for(const CADVector& corner : cadSolid->avertCorners)
@@ -1219,6 +1232,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
                         getObject ( cadImage->hImageDef.getAsLong () ) ) );
 
 
+        image->setColor (cadImage->stCed.nCMColor);
         image->setClippingBoundaryType (cadImage->dClipBoundaryType);
         image->setFilePath (cadImageDef->sFilePath);
         image->setVertInsertionPoint(cadImage->vertInsertion);
@@ -1249,6 +1263,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADMLineObject * cadmLine = static_cast<CADMLineObject *>(
                     readedObject.get());
 
+        mline->setColor (cadmLine->stCed.nCMColor);
         mline->setScale (cadmLine->dfScale);
         mline->setOpened (cadmLine->dOpenClosed == 1 ? true : false);
         for (  const CADMLineVertex &vertex : cadmLine->avertVertexes )
@@ -1261,6 +1276,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADMText * mtext = new CADMText();
         CADMTextObject * cadmText = static_cast<CADMTextObject *>(
                     readedObject.get());
+
+        mtext->setColor (cadmText->stCed.nCMColor);
 
         mtext->setTextValue (cadmText->sTextValue);
         mtext->setXAxisAng (cadmText->vectXAxisDir.getX ()); //TODO: is this needed?
@@ -1284,6 +1301,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
 
         // TODO: code can be much simplified if CADHandle will be used.
         // to do so, == and ++ operators should be implemented.
+        polyline->setColor (cadpolyPface->stCed.nCMColor);
         unique_ptr<CADVertexPFaceObject> vertex;
         auto dCurrentEntHandle = cadpolyPface->hVertexes[0].getAsLong ();
         auto dLastEntHandle    = cadpolyPface->hVertexes[1].getAsLong ();
@@ -1330,6 +1348,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADXLineObject * cadxLine = static_cast<CADXLineObject *>(
                     readedObject.get());
 
+        xline->setColor (cadxLine->stCed.nCMColor);
         xline->setVectVector (cadxLine->vectVector);
         xline->setPosition (cadxLine->vertPosition);
 
@@ -1341,6 +1360,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CAD3DFaceObject * cad3DFace = static_cast<CAD3DFaceObject *>(
                     readedObject.get());
 
+        face->setColor (cad3DFace->stCed.nCMColor);
         for(const CADVector& corner : cad3DFace->avertCorners)
             face->addCorner (corner);
         face->setInvisFlags (cad3DFace->dInvisFlags);

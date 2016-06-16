@@ -33,6 +33,7 @@
 #define CADGEOMETRIES_H
 
 #include "cadobjects.h"
+#include "cadcolors.h"
 
 using namespace std;
 
@@ -73,11 +74,14 @@ class CADGeometry
     enum GeometryType getType() const;
     double getThickness() const;
     void setThickness(double thicknes);
+    RGBColor getColor() const;
+    void setColor(int ACIColorIndex);// TODO: in 2004+ ACI is not the only way to set the color.
 
     virtual void print () const = 0;
 protected:
     enum GeometryType geometryType;
     double          thickness;
+    RGBColor        geometry_color;
 };
 
 /* TODO: Point3D should be named Point, but because of possible redefenitions

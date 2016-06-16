@@ -28,7 +28,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-#include "dwg/io.h"
+#include <dwg/io.h>
 #include "cadheader.h"
 #include "opencad_api.h"
 
