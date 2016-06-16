@@ -42,7 +42,7 @@ from osgeo import gdal
 
 def matches_non_existing_error_msg(msg):
     m1 = "does not exist in the file system,\nand is not recognized as a supported dataset name.\n" in msg
-    m2 = msg == 'No such file or directory'
+    m2 = 'No such file or directory' in msg
     return m1 or m2
 
 def basic_test_1():
