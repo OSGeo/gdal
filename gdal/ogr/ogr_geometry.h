@@ -1064,6 +1064,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRMultiSurface;
+    friend class OGRPolyhedralSurface;
 
     virtual int checkRing( OGRCurve * poNewRing ) const;
     OGRErr      importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
@@ -1319,6 +1320,9 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 {
   protected:
     OGRMultiPolygon oMP;
+    virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
+    virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
+    OGRErr exportToWktInternal (char ** ppszDstText, OGRwkbVariant eWkbVariant, const char* pszSkipPrefix ) const;
     // virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
 
   public:
@@ -1331,14 +1335,27 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual int WkbSize() const;
     virtual const char *getGeometryName() const;
     virtual OGRwkbGeometryType getGeometryType() const;
-    // virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
-    // virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    // virtual OGRErr importFromWkt( char ** );
-    // virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
 
-    // virtual void getEnvelope(OGREnvelope * psEnvelope) const = 0;
-    // virtual void getEnvelope(OGREnvelope3D * psEnvelope) const = 0;
-    //
+    // IGeometry methods
+    virtual int getDimension() const;
+
+    virtual void empty();
+
+    virtual OGRGeometry *clone() const;
+    virtual void getEnvelope(OGREnvelope * psEnvelope) const;
+    virtual void getEnvelope(OGREnvelope3D * psEnvelope) const;
+
+    virtual void flattenTo2D();
+    virtual OGRErr transform(OGRCoordinateTransformation*);
+    virtual OGRBoolean Equals(OGRGeometry*) const;
+    virtual double get_Area() const;
+    virtual OGRErr PointOnSurface(OGRPoint*) const;
+
+    OGRMultiPolygon* CastToMultiPolygon();
     // // These methods are either (a) inherited from OGRGeometry and are re-written to ensure compatibility with the new
     // // OGRPolyhedralSurface or (b) written in OGRGeometry on top of GEOS; hence need to remove the GEOS binding in
     // // OGRPolyhedralSurface and bind it with SFCGAL instead

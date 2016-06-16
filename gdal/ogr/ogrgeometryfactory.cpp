@@ -333,6 +333,11 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
         poGeom = new OGRMultiSurface();
     }
 
+    else if( STARTS_WITH_CI(szToken,"POLYHEDRALSURFACE") )
+    {
+        poGeom = new OGRPolyhedralSurface();
+    }
+
     else
     {
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -467,10 +472,10 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 
       case wkbTriangle:
           return new (std::nothrow) OGRTriangle();
-      //
-    //   case wkbPolyhedralSurface:
-    //       return new (std::nothrow) OGRPolyhedralSurface();
-      //
+
+      case wkbPolyhedralSurface:
+          return new (std::nothrow) OGRPolyhedralSurface();
+
     //   case wkbTIN:
     //       return new (std::nothrow) OGRTIN();
 
