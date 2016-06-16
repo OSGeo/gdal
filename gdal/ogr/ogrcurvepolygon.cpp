@@ -574,7 +574,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
