@@ -251,7 +251,7 @@ int OGRCurvePolygon::getNumInteriorRings() const
  *
  * Relates to the SFCOM IPolygon::get_InternalRing() method.
  *
- * @param iRing internal ring index from 0 to getNumInternalRings() - 1.
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
  *
  * @return pointer to interior ring.  May be NULL.
  */
