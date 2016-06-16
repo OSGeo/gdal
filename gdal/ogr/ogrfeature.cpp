@@ -29,12 +29,15 @@
  ****************************************************************************/
 
 #include "ogr_feature.h"
+
+#include <errno.h>
+
+#include <new>
+#include <vector>
+
+#include "cpl_time.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
-#include "cpl_time.h"
-#include <vector>
-#include <errno.h>
-#include <new>
 
 CPL_CVSID("$Id$");
 
