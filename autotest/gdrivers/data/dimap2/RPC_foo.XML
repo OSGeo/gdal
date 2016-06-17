@@ -12,7 +12,7 @@
       <RESOURCE_ID>RPC00B</RESOURCE_ID>
     </Resource_Reference>
     <Global_RFM>
-      <Direct_Model>
+      <Inverse_Model>
         <SAMP_NUM_COEFF_1>SAMP_NUM_COEFF_1</SAMP_NUM_COEFF_1>
         <SAMP_NUM_COEFF_2>SAMP_NUM_COEFF_2</SAMP_NUM_COEFF_2>
         <SAMP_NUM_COEFF_3>SAMP_NUM_COEFF_3</SAMP_NUM_COEFF_3>
@@ -95,14 +95,14 @@
         <LINE_DEN_COEFF_20>LINE_DEN_COEFF_20</LINE_DEN_COEFF_20>
         <ERR_BIAS_X>ERR_BIAS_X</ERR_BIAS_X>
         <ERR_BIAS_Y>ERR_BIAS_Y</ERR_BIAS_Y>
-      </Direct_Model>
+      </Inverse_Model>
       <RFM_Validity>
-        <Direct_Model_Validity_Domain>
-          <FIRST_ROW>FIRST_ROW</FIRST_ROW>
-          <FIRST_COL>FIRST_COL</FIRST_COL>
-          <LAST_ROW>LAST_ROW</LAST_ROW>
-          <LAST_COL>LAST_COL</LAST_COL>
-        </Direct_Model_Validity_Domain>
+        <Inverse_Model_Validity_Domain>
+          <FIRST_LON>FIRST_LON</FIRST_LON>
+          <FIRST_LAT>FIRST_LAT</FIRST_LAT>
+          <LAST_LON>LAST_LON</LAST_LON>
+          <LAST_LAT>LAST_LAT</LAST_LAT>
+        </Inverse_Model_Validity_Domain>
         <LONG_SCALE>LONG_SCALE</LONG_SCALE>
         <LONG_OFF>LONG_OFF</LONG_OFF>
         <LAT_SCALE>LAT_SCALE</LAT_SCALE>
@@ -110,9 +110,9 @@
         <HEIGHT_SCALE>HEIGHT_SCALE</HEIGHT_SCALE>
         <HEIGHT_OFF>HEIGHT_OFF</HEIGHT_OFF>
         <SAMP_SCALE>SAMP_SCALE</SAMP_SCALE>
-        <SAMP_OFF>SAMP_OFF</SAMP_OFF>
+        <SAMP_OFF>5</SAMP_OFF>
         <LINE_SCALE>LINE_SCALE</LINE_SCALE>
-        <LINE_OFF>LINE_OFF</LINE_OFF>
+        <LINE_OFF>10</LINE_OFF>
       </RFM_Validity>
     </Global_RFM>
   </Rational_Function_Model>
