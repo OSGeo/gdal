@@ -622,6 +622,10 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
     VSIStatBufL sStatBuf;
     CPLXMLNode *psTree = NULL;
 
+    CPLErr eLastErr = CPLGetLastErrorType();
+    int nLastErrNo = CPLGetLastErrorNo();
+    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
+
     if (papszSiblingFiles != NULL && IsPamFilenameAPotentialSiblingFile())
     {
         const int iSibling =
@@ -633,6 +637,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
             CPLPushErrorHandler( CPLQuietErrorHandler );
             psTree = CPLParseXMLFile( psPam->pszPamFilename );
             CPLPopErrorHandler();
+            CPLErrorReset();
         }
     }
     else
@@ -644,7 +649,11 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
         CPLPushErrorHandler( CPLQuietErrorHandler );
         psTree = CPLParseXMLFile( psPam->pszPamFilename );
         CPLPopErrorHandler();
+        CPLErrorReset();
     }
+
+    if( eLastErr != CE_None )
+        CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      If we are looking for a subdataset, search for it's subtree     */
