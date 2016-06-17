@@ -45,6 +45,9 @@ CPL_CVSID("$Id$");
 #  define D2R	(M_PI/180)
 #endif
 
+#define ARCSEC2RAD (M_PI/648000)
+#define RAD2ARCSEC (648000/M_PI)
+
 int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA);
 void ClearSR(HFAHandle hHFA);
 
@@ -3393,7 +3396,13 @@ CPLErr HFADataset::WriteProjection()
             sDatum.datumname = (char*) "GDA94";
 
         if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
+        {
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
+            sDatum.params[3] *= -ARCSEC2RAD;
+            sDatum.params[4] *= -ARCSEC2RAD;
+            sDatum.params[5] *= -ARCSEC2RAD;
+            sDatum.params[6] *= 1e-6;
+        }
         else if( EQUAL(sDatum.datumname,"NAD27") )
         {
             sDatum.type = EPRJ_DATUM_GRID;
@@ -4921,10 +4930,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
             oSRS.SetTOWGS84( psDatum->params[0],
                              psDatum->params[1],
                              psDatum->params[2],
-                             psDatum->params[3],
-                             psDatum->params[4],
-                             psDatum->params[5],
-                             psDatum->params[6] );
+                             -psDatum->params[3]*RAD2ARCSEC,
+                             -psDatum->params[4]*RAD2ARCSEC,
+                             -psDatum->params[5]*RAD2ARCSEC,
+                             psDatum->params[6]*1e+6 );
         }
     }
 
