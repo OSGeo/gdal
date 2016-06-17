@@ -57,6 +57,7 @@ protected:
     virtual void LoadMetadata();
     char** LoadRPCXmlFile();
 protected:
+    CPLString m_osBaseFilename;
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;
 };
