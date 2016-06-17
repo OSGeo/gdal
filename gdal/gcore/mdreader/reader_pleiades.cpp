@@ -98,6 +98,17 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
                   m_osRPBSourceFilename.c_str() );
 }
 
+GDALMDReaderPleiades::GDALMDReaderPleiades() : GDALMDReaderBase(NULL, NULL)
+{
+}
+
+GDALMDReaderPleiades* GDALMDReaderPleiades::CreateReaderForRPC(const char* pszRPCSourceFilename)
+{
+    GDALMDReaderPleiades* poReader = new GDALMDReaderPleiades();
+    poReader->m_osRPBSourceFilename = pszRPCSourceFilename;
+    return poReader;
+}
+
 /**
  * ~GDALMDReaderPleiades()
  */
@@ -329,8 +340,12 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
         CPLString value;
         for( j = 1; j < 21; j++ )
         {
+            // We want to use the Inverse_Model
+            // Quoting PleiadesUserGuideV2-1012.pdf:
+            // """When using the inverse model (ground --> image), the user
+            // supplies geographic coordinates (lon, lat) and an altitude (alt)"""
             const char* pszValue = CSLFetchNameValue(papszRawRPCList,
-                 CPLSPrintf("Inverse_Model.%s_%d", apszRPCTXT20ValItems[i], j)); // Direct_Model
+                 CPLSPrintf("Inverse_Model.%s_%d", apszRPCTXT20ValItems[i], j));
             if(NULL != pszValue)
                 value = value + " " + CPLString(pszValue);
         }

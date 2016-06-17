@@ -53,12 +53,18 @@ public:
     virtual ~GDALMDReaderPleiades();
     virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
+
+    static GDALMDReaderPleiades* CreateReaderForRPC(const char* pszRPCSourceFilename);
+
+    char** LoadRPCXmlFile();
+
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;
+private:
+    GDALMDReaderPleiades();
 };
 
 #endif // READER_PLEIADES_H_INCLUDED
