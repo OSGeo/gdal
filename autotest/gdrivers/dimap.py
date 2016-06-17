@@ -121,10 +121,14 @@ def dimap_2():
             gdaltest.post_reason( 'RPC wrong.' )
             print(rpc)
             return 'fail'
-        ds = None
 
-    # Shouldn't be needed ideally
-    gdal.Unlink('data/dimap2/IMG_foo_R1C1.TIF.aux.xml')
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 7024:
+            gdaltest.post_reason( 'wrong checksum.' )
+            print(cs)
+            return 'fail'
+
+        ds = None
 
     return 'success'
 
