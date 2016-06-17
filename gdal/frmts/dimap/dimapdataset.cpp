@@ -50,6 +50,7 @@ class DIMAPDataset : public GDALPamDataset
 
     CPLXMLNode *psProductDim; /* DIMAP2, DIM_<product_id>.XML */
     CPLXMLNode *psProductStrip; /* DIMAP2, STRIP_<product_id>.XML */
+    CPLXMLNode *psProductRPC; /* DIMAP2, RPC_<product_id>.XML */
 
     GDALDataset   *poImageDS;
 
@@ -76,6 +77,8 @@ class DIMAPDataset : public GDALPamDataset
     int ReadImageInformation2(); /* DIMAP 2 */
 
     void SetMetadataFromXML(CPLXMLNode *psProduct, const char * const apszMetadataTranslation[]);
+    void SetRPC(CPLXMLNode *psProductIn);
+
   public:
             DIMAPDataset();
             ~DIMAPDataset();
@@ -130,6 +133,7 @@ DIMAPDataset::DIMAPDataset() :
     psProduct(NULL),
     psProductDim(NULL),
     psProductStrip(NULL),
+    psProductRPC(NULL),
     poImageDS(NULL),
     nGCPCount(0),
     pasGCPList(NULL),
@@ -155,7 +159,8 @@ DIMAPDataset::~DIMAPDataset()
         CPLDestroyXMLNode( psProductDim );
     if( psProductStrip != NULL )
         CPLDestroyXMLNode( psProductStrip );
-
+    if (psProductRPC != NULL)
+        CPLDestroyXMLNode(psProductRPC);
     CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
@@ -372,6 +377,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Ingest the xml file.                                            */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psProductDim = NULL, *psProductStrip = NULL;
+    CPLXMLNode *psProductRPC = NULL;
 
     CPLXMLNode *psProduct = CPLParseXMLFile( osMDFilename );
     if( psProduct == NULL )
@@ -474,7 +480,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        /* We need the STRIP_<product_id>.XML file for a few metadata */
+        /* We need the {STRIP|RPC}_<product_id>.XML file for a few metadata */
         CPLXMLNode *psDocDim = CPLGetXMLNode( psProductDim, "=Dimap_Document" );
         if( !psDocDim )
             psDocDim = CPLGetXMLNode( psProductDim, "=PHR_DIMAP_Document" );
@@ -506,6 +512,34 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             psProductStrip = CPLParseXMLFile( osSTRIPFilename );
         }
+        
+        CPLXMLNode *psDatasetRFMComponents = CPLGetXMLNode(psDocDim, "Geoposition.Geoposition_Models.Rational_Function_Model");
+        if (psDatasetRFMComponents != NULL)
+        {
+           CPLString osRPCFilename;
+           CPLXMLNode *psDatasetRFMComponent = psDatasetRFMComponents->psChild;
+  
+           for (; psDatasetRFMComponent != NULL; psDatasetRFMComponent = psDatasetRFMComponent->psNext)
+           {
+              const char* pszComponentTitle = CPLGetXMLValue(psDatasetRFMComponent, "COMPONENT_TITLE", "");
+              if (strcmp(pszComponentTitle, "RPC Model") == 0)
+              {
+                 const char *pszHref = CPLGetXMLValue(
+                    psDatasetRFMComponent, "COMPONENT_PATH.href", "");
+  
+                 if (strlen(pszHref) > 0) /* RPC product found*/
+                 {
+                    CPLString osPath = CPLGetPath(osDIMAPFilename);
+                    osRPCFilename =
+                       CPLFormCIFilename(osPath, pszHref, NULL);
+  
+                    break;
+                 }
+              }
+           }
+  
+           psProductRPC = CPLParseXMLFile(osRPCFilename);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -516,6 +550,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psProduct = psProduct;
     poDS->psProductDim = psProductDim;
     poDS->psProductStrip = psProductStrip;
+    poDS->psProductRPC = psProductRPC;
     poDS->nProductVersion = nProductVersion;
     poDS->osMDFilename = osMDFilename;
     poDS->osImageDSFilename = osImageDSFilename;
@@ -868,8 +903,13 @@ int DIMAPDataset::ReadImageInformation2()
     else
     {
         // Try to get geotransform from underlying raster.
-        if ( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None )
+        // But make sure it is a real geotransform
+        if ( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None &&
+             !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 1.5 &&
+               adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) )
+        {
             bHaveGeoTransform = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -946,6 +986,9 @@ int DIMAPDataset::ReadImageInformation2()
 
     if( psProductStrip != NULL )
         SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
+
+    if (psProductRPC != NULL)
+        SetRPC(psProductRPC);
 
 /* -------------------------------------------------------------------- */
 /*      Set Band metadata from the <Band_Radiance> and                  */
@@ -1097,6 +1140,117 @@ void DIMAPDataset::SetMetadataFromXML(CPLXMLNode *psProductIn, const char * cons
             }
         }
     }
+}
+
+/************************************************************************/
+/*                     SetCoefficientInArrayOf20()                      */
+/************************************************************************/
+
+static void SetCoefficientInArrayOf20( std::vector<CPLString>& osValues,
+                            const CPLString& osName,
+                            const CPLString& osValue)
+{
+    size_t nUnderscore = osName.rfind('_');
+    if( nUnderscore != std::string::npos )
+    {
+        int nCoeffIdx = atoi( osName.substr(nUnderscore+1).c_str() );
+        if( nCoeffIdx >= 1 && nCoeffIdx <= (int)osValues.size() )
+            osValues[nCoeffIdx-1] = osValue;
+    }
+}
+
+/************************************************************************/
+/*                       MakeStringFromArrayOf20()                      */
+/************************************************************************/
+
+static CPLString MakeStringFromArrayOf20( std::vector<CPLString>& osValues )
+{
+    CPLString osVal;
+    for( size_t i = 0; i < osValues.size() ; i++ )
+    {
+        if( i > 0 )
+            osVal += " ";
+        osVal += osValues[i];
+    }
+    return osVal;
+}
+
+/************************************************************************/
+/*                          SetRPC()                                    */
+/************************************************************************/
+
+void DIMAPDataset::SetRPC(CPLXMLNode *psProductIn)
+{
+    CPLXMLNode *psDoc = CPLGetXMLNode( psProductIn, "=Dimap_Document" );
+
+    std::vector<CPLString> aosSAMP_DEN_COEFF(20, CPLString(""));
+    std::vector<CPLString> aosSAMP_NUM_COEFF(20, CPLString(""));
+    std::vector<CPLString> aosLINE_DEN_COEFF(20, CPLString(""));
+    std::vector<CPLString> aosLINE_NUM_COEFF(20, CPLString(""));
+
+    for( int i = 0; i < 2; i ++ )
+    {
+        CPLXMLNode *psParent =
+            CPLGetXMLNode( psDoc, (i == 0 ) ? "Rational_Function_Model.Global_RFM.Direct_Model" :
+                                              "Rational_Function_Model.Global_RFM.RFM_Validity" );
+
+        if( psParent == NULL )
+            continue;
+
+        CPLXMLNode *psTarget;
+        if( psParent->psChild != NULL
+            && psParent->psChild->eType == CXT_Text )
+            psTarget = psParent;
+        else
+            psTarget = psParent->psChild;
+
+        for( ; psTarget != NULL && psTarget != psParent;
+             psTarget = psTarget->psNext )
+        {
+            if( psTarget->eType == CXT_Element
+                && psTarget->psChild != NULL)
+            {
+                CPLString osName = psTarget->pszValue;
+
+                if (psTarget->psChild->eType == CXT_Text)
+                {
+                    if( osName.ifind("SAMP_DEN_COEFF") != std::string::npos ) 
+                    {
+                        SetCoefficientInArrayOf20(aosSAMP_DEN_COEFF,
+                                                  osName,
+                                                  psTarget->psChild->pszValue);
+                    }
+                    else if( osName.ifind("SAMP_NUM_COEFF") != std::string::npos ) 
+                    {
+                        SetCoefficientInArrayOf20(aosSAMP_NUM_COEFF,
+                                                  osName,
+                                                  psTarget->psChild->pszValue);
+                    }
+                    else if( osName.ifind("LINE_DEN_COEFF") != std::string::npos ) 
+                    {
+                        SetCoefficientInArrayOf20(aosLINE_DEN_COEFF,
+                                                  osName,
+                                                  psTarget->psChild->pszValue);
+                    }
+                    else if( osName.ifind("LINE_NUM_COEFF") != std::string::npos ) 
+                    {
+                        SetCoefficientInArrayOf20(aosLINE_NUM_COEFF,
+                                                  osName,
+                                                  psTarget->psChild->pszValue);
+                    }
+                    else
+                    {
+                        SetMetadataItem(osName, psTarget->psChild->pszValue, "RPC");
+                    }
+                }
+            }
+        }
+    }
+
+    SetMetadataItem("SAMP_DEN_COEFF", MakeStringFromArrayOf20(aosSAMP_DEN_COEFF), "RPC");
+    SetMetadataItem("SAMP_NUM_COEFF", MakeStringFromArrayOf20(aosSAMP_NUM_COEFF), "RPC");
+    SetMetadataItem("LINE_DEN_COEFF", MakeStringFromArrayOf20(aosLINE_DEN_COEFF), "RPC");
+    SetMetadataItem("LINE_NUM_COEFF", MakeStringFromArrayOf20(aosLINE_NUM_COEFF), "RPC");
 }
 
 /************************************************************************/
