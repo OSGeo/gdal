@@ -2283,6 +2283,57 @@ def tiff_read_md11():
     return 'success'
 
 ###############################################################################
+# Check read Dimap metadata format
+
+def tiff_read_md12():
+
+    ds = gdal.Open( '../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2016-06-17 12:34:56':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    # Test RPC and that we have a LINE_OFF shift
+    rpc = ds.GetMetadata('RPC')
+    if rpc['LINE_OFF'] != '-11':
+        gdaltest.post_reason( 'RPC wrong.' )
+        print(rpc)
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_kompsat.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 # Test reading a TIFFTAG_GDAL_NODATA with empty text
 
 def tiff_read_empty_nodata_tag():
@@ -2527,8 +2578,9 @@ gdaltest_list.append( (tiff_read_md8) )
 gdaltest_list.append( (tiff_read_md9) )
 gdaltest_list.append( (tiff_read_md10) )
 gdaltest_list.append( (tiff_read_md11) )
+gdaltest_list.append( (tiff_read_md12) )
 
-#gdaltest_list = [ tiff_read_strace_check ]
+#gdaltest_list = [ tiff_read_md12 ]
 
 if __name__ == '__main__':
 

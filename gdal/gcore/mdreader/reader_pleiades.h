@@ -61,6 +61,7 @@ public:
 protected:
     virtual void LoadMetadata();
 protected:
+    CPLString m_osBaseFilename;
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;
 private:
