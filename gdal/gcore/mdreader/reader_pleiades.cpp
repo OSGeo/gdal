@@ -38,6 +38,7 @@ CPL_CVSID("$Id$");
 GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
+    m_osBaseFilename = pszPath;
     const char* pszBaseName = CPLGetBasename(pszPath);
     size_t nBaseNameLen = strlen(pszBaseName);
     if( nBaseNameLen < 4 || nBaseNameLen > 511 )
@@ -268,8 +269,8 @@ void GDALMDReaderPleiades::LoadMetadata()
  */
 
 static const char * const apszRPBMap[] = {
-    RPC_LINE_OFF,   "RFM_Validity.LINE_OFF",
-    RPC_SAMP_OFF,   "RFM_Validity.SAMP_OFF",
+    RPC_LINE_OFF,   "RFM_Validity.LINE_OFF", // do not change order !
+    RPC_SAMP_OFF,   "RFM_Validity.SAMP_OFF", // do not change order !
     RPC_LAT_OFF,    "RFM_Validity.LAT_OFF",
     RPC_LONG_OFF,   "RFM_Validity.LONG_OFF",
     RPC_HEIGHT_OFF, "RFM_Validity.HEIGHT_OFF",
@@ -311,10 +312,44 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
         return NULL;
     }
 
+    // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
+    int nLineOffShift = 0;
+    int nPixelOffShift = 0;
+    for(int i=1; TRUE; i++ )
+    {
+        CPLString osKey;
+        osKey.Printf("Raster_Data.Data_Access.Data_Files.Data_File_%d.DATA_FILE_PATH.href", i);
+        const char* pszHref = CSLFetchNameValue(m_papszIMDMD, osKey);
+        if( pszHref == NULL )
+            break;
+        if( strcmp( CPLGetFilename(pszHref), CPLGetFilename(m_osBaseFilename) ) == 0 )
+        {
+            osKey.Printf("Raster_Data.Data_Access.Data_Files.Data_File_%d.tile_C", i);
+            const char* pszC = CSLFetchNameValue(m_papszIMDMD, osKey);
+            osKey.Printf("Raster_Data.Data_Access.Data_Files.Data_File_%d.tile_R", i);
+            const char* pszR = CSLFetchNameValue(m_papszIMDMD, osKey);
+            const char* pszTileWidth = CSLFetchNameValue(m_papszIMDMD,
+                "Raster_Data.Raster_Dimensions.Tile_Set.Regular_Tiling.NTILES_SIZE.ncols");
+            const char* pszTileHeight = CSLFetchNameValue(m_papszIMDMD,
+                "Raster_Data.Raster_Dimensions.Tile_Set.Regular_Tiling.NTILES_SIZE.nrows");
+            const char* pszOVERLAP_COL = CSLFetchNameValueDef(m_papszIMDMD,
+                "Raster_Data.Raster_Dimensions.Tile_Set.Regular_Tiling.OVERLAP_COL", "0");
+            const char* pszOVERLAP_ROW = CSLFetchNameValueDef(m_papszIMDMD,
+                "Raster_Data.Raster_Dimensions.Tile_Set.Regular_Tiling.OVERLAP_ROW", "0");
+
+            if( pszC && pszR && pszTileWidth && pszTileHeight &&
+                atoi(pszOVERLAP_COL) == 0 && atoi(pszOVERLAP_ROW) == 0 )
+            {
+                nLineOffShift = - (atoi(pszR) - 1) * atoi(pszTileHeight);
+                nPixelOffShift = - (atoi(pszC) - 1) * atoi(pszTileWidth);
+            }
+            break;
+        }
+    }
+
     // format list
     char** papszRPB = NULL;
-    int i, j;
-    for( i = 0; apszRPBMap[i] != NULL; i += 2 )
+    for( int i = 0; apszRPBMap[i] != NULL; i += 2 )
     {
         // Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
         // Digital globe convention of "center of upper left pixel is 0,0".
@@ -323,7 +358,12 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
             CPLString osField;
             const char *pszOffset = CSLFetchNameValue(papszRawRPCList,
                                                     apszRPBMap[i + 1]);
-            osField.Printf( "%.15g", CPLAtofM( pszOffset ) -1.0 );
+            double dfVal = CPLAtofM( pszOffset ) -1.0 ;
+            if( i == 0 )
+                dfVal += nLineOffShift;
+            else
+                dfVal += nPixelOffShift;
+            osField.Printf( "%.15g", dfVal );
             papszRPB = CSLAddNameValue( papszRPB, apszRPBMap[i], osField );
         }
         else
@@ -335,10 +375,10 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     }
 
     // merge coefficients
-    for( i = 0; apszRPCTXT20ValItems[i] != NULL; i++ )
+    for( int i = 0; apszRPCTXT20ValItems[i] != NULL; i++ )
     {
         CPLString value;
-        for( j = 1; j < 21; j++ )
+        for( int j = 1; j < 21; j++ )
         {
             // We want to use the Inverse_Model
             // Quoting PleiadesUserGuideV2-1012.pdf:
