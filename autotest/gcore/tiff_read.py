@@ -2681,6 +2681,31 @@ def tiff_read_gcp_internal_and_auxxml():
     return 'success'
 
 ###############################################################################
+# Test reading .tif + .aux
+
+class myHandlerClass:
+    def __init__(self):
+        self.msg = None
+
+    def handler(self, eErrClass, err_no, msg):
+        if msg.find('File open of') >= 0:
+            self.msg = msg
+
+def tiff_read_aux():
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/f2r23.tif')
+    handler = myHandlerClass()
+    gdal.PushErrorHandler(handler.handler)
+    ds.GetFileList()
+    gdal.PopErrorHandler()
+    if handler.msg is not None:
+        gdaltest.post_reason('Got message that indicate recursive calls: %s' % handler.msg)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2762,7 +2787,9 @@ gdaltest_list.append( (tiff_read_nogeoref) )
 gdaltest_list.append( (tiff_read_inconsistent_georef) )
 gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
 
-#gdaltest_list = [ tiff_read_nogeoref, tiff_read_inconsistent_georef, tiff_read_gcp_internal_and_auxxml ]
+gdaltest_list.append( (tiff_read_aux) ) 
+
+#gdaltest_list = [ tiff_read_aux ]
 
 if __name__ == '__main__':
 

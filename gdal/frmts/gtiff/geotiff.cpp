@@ -12827,6 +12827,11 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         CPLAssert(!bGeoTIFFInfoChanged);
         CPLAssert(!bNoDataChanged);
 
+        // We must absolutely unset m_bLoadPam now, otherwise calling
+        // GetFileList() on a .tif with a .aux will result in an (almost) endless
+        // sequence of calls
+        m_bLoadPam = false;
+
         TryLoadXML( GetSiblingFiles() );
         ApplyPamInfo();
 
