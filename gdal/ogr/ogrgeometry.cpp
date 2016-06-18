@@ -2780,6 +2780,13 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
         if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
             hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
     }
+    else if (EQUAL(getGeometryName(), "POLYHEDRALSURFACE"))
+    {
+        OGRMultiPolygon *poMultiPolygon = ((OGRPolyhedralSurface *)poLinearGeom)->CastToMultiPolygon();
+        if( poMultiPolygon->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
+            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+        delete poMultiPolygon;
+    }
     else
     {
         if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
@@ -5182,7 +5189,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
         OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
         return poPolygon;
     }
-    
+
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,

@@ -1,20 +1,38 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  The OGRPolyhedralSurface geometry class.
+ * Author:   Avyav Kumar Singh <avyavkumar at gmail dot com>
+ *
+ ******************************************************************************
+ * Copyright (c) 2016, Avyav Kumar Singh <avyavkumar at gmail dot com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_sfcgal.h"
 #include "ogr_geos.h"
 #include "ogr_api.h"
-
-#ifndef HAVE_GEOS
-#define UNUSED_IF_NO_GEOS CPL_UNUSED
-#else
-#define UNUSED_IF_NO_GEOS
-#endif
-
-#ifndef HAVE_SFCGAL
-#define UNUSED_IF_NO_SFCGAL CPL_UNUSED
-#else
-#define UNUSED_IF_NO_SFCGAL
-#endif
+#include "ogr_libs.h"
 
 /************************************************************************/
 /*                         OGRPolyhedralSurface()                       */
@@ -617,28 +635,63 @@ OGRSurfaceCasterToCurvePolygon OGRPolyhedralSurface::GetCasterToCurvePolygon() c
 
 OGRBoolean OGRPolyhedralSurface::Equals(OGRGeometry * poOther) const
 {
-    // Will write function later
-    if (poOther == NULL)
-    {
 
+    if( poOther == this )
+        return TRUE;
+
+    if( poOther->getGeometryType() != getGeometryType() )
+        return FALSE;
+
+    if ( IsEmpty() && poOther->IsEmpty() )
+        return TRUE;
+
+    OGRPolyhedralSurface *poOMP = (OGRPolyhedralSurface *) poOther;
+    if( oMP.getNumGeometries() != poOMP->oMP.getNumGeometries() )
+        return FALSE;
+
+    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+    {
+        if( !oMP.getGeometryRef(iGeom)->Equals(poOMP->oMP.getGeometryRef(iGeom)) )
+            return FALSE;
     }
+
     return TRUE;
 }
 
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
 double OGRPolyhedralSurface::get_Area() const
 {
-    // Will write function later
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
     return -1.0;
+
+#else
+
+    sfcgal_init();
+    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+    if (poThis == NULL)
+        return -1.0;
+
+    double area = sfcgal_geometry_area_3d(poThis);
+
+    sfcgal_geometry_delete(poThis);
+
+    return (area > 0)? area: -1.0;
+
+#endif
 }
+
+/************************************************************************/
+/*                           PointOnSurface()                           */
+/************************************************************************/
 
 OGRErr OGRPolyhedralSurface::PointOnSurface(OGRPoint *poPoint) const
 {
-    // Will write function later
-    if (poPoint != NULL)
-    {
-
-    }
-    return OGRERR_NONE;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/
@@ -649,4 +702,185 @@ OGRMultiPolygon* OGRPolyhedralSurface::CastToMultiPolygon()
 {
     OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon(this->oMP);
     return poMultiPolygon;
+}
+
+/************************************************************************/
+/*                            addGeometry()                             */
+/*      Add a new geometry to a collection.  Subclasses should          */
+/*      override this to verify the type of the new geometry, and       */
+/*      then call this method to actually add it.                       */
+/************************************************************************/
+
+OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
+{
+    if (!EQUAL(poNewGeom->getGeometryName(),"POLYGON"))
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    OGRGeometry *poClone = poNewGeom->clone();
+    OGRErr      eErr;
+
+    if (poClone == NULL)
+        return OGRERR_FAILURE;
+    eErr = oMP.addGeometryDirectly(poClone);
+    if( eErr != OGRERR_NONE )
+        delete poClone;
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                           getNumPolygons()                           */
+/************************************************************************/
+
+int OGRPolyhedralSurface::getNumPolygons()
+{
+    return oMP.nGeomCount;
+}
+
+/************************************************************************/
+/*                             getPolygon()                             */
+/************************************************************************/
+
+OGRGeometry* OGRPolyhedralSurface::getPolygon(int i)
+{
+    return (OGRGeometry *)oMP.papoGeoms[i];
+}
+
+/************************************************************************/
+/*                               IsEmpty()                              */
+/************************************************************************/
+
+OGRBoolean  OGRPolyhedralSurface::IsEmpty() const
+{
+    return oMP.IsEmpty();
+}
+
+/************************************************************************/
+/*                                 set3D()                              */
+/************************************************************************/
+
+void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
+{
+    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+        oMP.papoGeoms[iGeom]->set3D( bIs3D );
+
+    OGRGeometry::set3D( bIs3D );
+}
+
+/************************************************************************/
+/*                             setMeasured()                            */
+/************************************************************************/
+
+void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
+{
+    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+        oMP.papoGeoms[iGeom]->setMeasured( bIsMeasured );
+
+    OGRGeometry::setMeasured( bIsMeasured );
+}
+
+/************************************************************************/
+/*                       setCoordinateDimension()                       */
+/************************************************************************/
+
+void OGRPolyhedralSurface::setCoordinateDimension (int nNewDimension)
+{
+    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+        oMP.papoGeoms[iGeom]->setCoordinateDimension( nNewDimension );
+
+    OGRGeometry::setCoordinateDimension( nNewDimension );
+}
+
+/************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+void OGRPolyhedralSurface::swapXY()
+{
+    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+        oMP.papoGeoms[iGeom]->swapXY();
+}
+
+/************************************************************************/
+/*                             Distance3D()                             */
+/*    Returns the 3D distance between the two geometries. The distance  */
+/*    is expressed into the same unit as the coordinates of the         */
+/*    geometries.                                                       */
+/************************************************************************/
+
+double OGRPolyhedralSurface::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
+{
+    if (poOtherGeom == NULL)
+    {
+        CPLDebug( "OGR", "%s::Distance3D called with NULL geometry pointer", getGeometryName() );
+        return -1.0;
+    }
+
+    if (!(poOtherGeom->Is3D() && this->Is3D()))
+    {
+        CPLDebug( "OGR", "%s::Distance3D called with two dimensional geometry(geometries)", getGeometryName() );
+        return -1.0;
+    }
+
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return -1.0;
+
+#else
+
+    sfcgal_init();
+    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+    if (poThis == NULL)
+        return -1.0;
+
+    sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+    if (poOther == NULL)
+        return -1.0;
+
+    double _distance = sfcgal_geometry_distance_3d(poThis, poOther);
+
+    sfcgal_geometry_delete(poThis);
+    sfcgal_geometry_delete(poOther);
+
+    return (_distance > 0)? _distance: -1.0;
+
+#endif
+}
+
+/************************************************************************/
+/*                         hasCurveGeometry()                           */
+/************************************************************************/
+
+OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+{
+    return FALSE;
+}
+
+/************************************************************************/
+/*                              IsValid()                               */
+/*                  Test if the geometry is valid.                      */
+/************************************************************************/
+
+OGRBoolean OGRPolyhedralSurface::IsValid() const
+{
+#ifndef HAVE_SFCGAL
+
+    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
+    return -1.0;
+
+#else
+
+    sfcgal_init();
+    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+    if (poThis == NULL)
+        return -1.0;
+
+    OGRBoolean isValid = sfcgal_geometry_is_valid(poThis);
+
+    sfcgal_geometry_delete(poThis);
+
+    return isValid;
+
+#endif
 }
