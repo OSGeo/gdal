@@ -1,0 +1,13 @@
+!table
+!version 300
+!charset WindowsLatin1
+
+Definition Table
+  File "HP.TIF"
+  Type "RASTER"
+  (400000,1200000) (0,4000) Label "Pt 1",
+  (500000,1200000) (4000,4000) Label "Pt 2",
+  (500000,1300000) (4000,0) Label "Pt 3",
+  (400000,1300000) (0,0) Label "Pt 4"
+  CoordSys Earth Projection 8, 79, "m", -2, 49, 0.9996012717, 400000, -100000
+  Units "m"

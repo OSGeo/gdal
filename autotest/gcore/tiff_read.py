@@ -847,7 +847,7 @@ def tiff_read_pixelispoint():
         gdaltest.post_reason( 'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE' )
         return 'fail'
 
-    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', None )
 
     return 'success'
 
@@ -882,7 +882,7 @@ def tiff_read_geomatrix():
         gdaltest.post_reason( 'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE' )
         return 'fail'
 
-    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', None )
 
     return 'success'
 
@@ -2503,6 +2503,184 @@ def tiff_read_one_strip_no_bytecount():
     return 'success'
 
 ###############################################################################
+# Test GDAL_GEOREF_SOURCES
+
+def tiff_read_nogeoref():
+
+    tests = [ (None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, False, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, False, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              (None, False, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL,PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('INTERNAL,WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('INTERNAL,PAM,WORLDFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('INTERNAL,WORLDFILE,PAM', True, True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('PAM,WORLDFILE,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('TABFILE,WORLDFILE,INTERNAL', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+              ('PAM', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('PAM,WORLDFILE', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('WORLDFILE', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('NONE', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
+        for iteration in range(2):
+            gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.tif', open('data/byte_nogeoref.tif', 'rb').read())
+            if copy_pam:
+                gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.tif.aux.xml', open('data/byte_nogeoref.tif.aux.xml', 'rb').read())
+            if copy_worldfile:
+                gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.tfw', open('data/byte_nogeoref.tfw', 'rb').read())
+            if copy_tabfile:
+                gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.tab', open('data/byte_nogeoref.tab', 'rb').read())
+
+            ds = gdal.Open('/vsimem/byte_nogeoref.tif')
+            if iteration == 0:
+                gt = ds.GetGeoTransform()
+                srs_wkt = ds.GetProjectionRef()
+            else:
+                srs_wkt = ds.GetProjectionRef()
+                gt = ds.GetGeoTransform()
+            ds = None
+            gdal.SetConfigOption('GDAL_GEOREF_SOURCES', None)
+            gdal.Unlink('/vsimem/byte_nogeoref.tif')
+            gdal.Unlink('/vsimem/byte_nogeoref.tif.aux.xml')
+            gdal.Unlink('/vsimem/byte_nogeoref.tfw')
+            gdal.Unlink('/vsimem/byte_nogeoref.tab')
+
+            if gt != expected_gt:
+                gdaltest.post_reason('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration,config_option_value,str(copy_pam),str(copy_worldfile),str(copy_tabfile)))
+                print('Got ' + str(gt))
+                print('Expected ' + str(expected_gt))
+                return 'fail'
+
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+                gdaltest.post_reason('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration,config_option_value,str(copy_pam),str(copy_worldfile),str(copy_tabfile)))
+                print('Got ' + srs_wkt)
+                print('Expected ' + expected_srs)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GDAL_GEOREF_SOURCES
+
+def tiff_read_inconsistent_georef():
+
+    tests = [ (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, False, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, False, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, False, True, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, False, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, True, False, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('INTERNAL', True, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('PAM,TABFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+              ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+              ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
+        for iteration in range(2):
+            gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
+            gdal.FileFromMemBuffer('/vsimem/byte_inconsistent_georef.tif', open('data/byte_inconsistent_georef.tif', 'rb').read())
+            if copy_pam:
+                gdal.FileFromMemBuffer('/vsimem/byte_inconsistent_georef.tif.aux.xml', open('data/byte_inconsistent_georef.tif.aux.xml', 'rb').read())
+            if copy_worldfile:
+                gdal.FileFromMemBuffer('/vsimem/byte_inconsistent_georef.tfw', open('data/byte_inconsistent_georef.tfw', 'rb').read())
+            if copy_tabfile:
+                gdal.FileFromMemBuffer('/vsimem/byte_inconsistent_georef.tab', open('data/byte_inconsistent_georef.tab', 'rb').read())
+            ds = gdal.Open('/vsimem/byte_inconsistent_georef.tif')
+            if iteration == 0:
+                gt = ds.GetGeoTransform()
+                srs_wkt = ds.GetProjectionRef()
+            else:
+                srs_wkt = ds.GetProjectionRef()
+                gt = ds.GetGeoTransform()
+            ds = None
+            gdal.SetConfigOption('GDAL_GEOREF_SOURCES', None)
+            gdal.Unlink('/vsimem/byte_inconsistent_georef.tif')
+            gdal.Unlink('/vsimem/byte_inconsistent_georef.tif.aux.xml')
+            gdal.Unlink('/vsimem/byte_inconsistent_georef.tfw')
+            gdal.Unlink('/vsimem/byte_inconsistent_georef.tab')
+
+            if gt != expected_gt:
+                gdaltest.post_reason('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration,config_option_value,str(copy_pam),str(copy_worldfile),str(copy_tabfile)))
+                print('Got ' + str(gt))
+                print('Expected ' + str(expected_gt))
+                return 'fail'
+
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+                gdaltest.post_reason('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration,config_option_value,str(copy_pam),str(copy_worldfile),str(copy_tabfile)))
+                print('Got ' + srs_wkt)
+                print('Expected ' + expected_srs)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GDAL_GEOREF_SOURCES
+
+def tiff_read_gcp_internal_and_auxxml():
+
+    tests = [ (None, True, 'LOCAL_CS["PAM"]', 1),
+              (None, False, '4326', 2),
+              ('INTERNAL', True, '4326', 2),
+              ('INTERNAL', False, '4326', 2),
+              ('INTERNAL,PAM', True, '4326', 2),
+              ('INTERNAL,PAM', False, '4326', 2),
+              ('PAM', True, 'LOCAL_CS["PAM"]', 1),
+              ('PAM', False, '', 0),
+              ('PAM,INTERNAL', True, 'LOCAL_CS["PAM"]', 1),
+              ('PAM,INTERNAL', False, '4326', 2),
+              ]
+
+    for (config_option_value, copy_pam, expected_srs, expected_gcp_count) in tests:
+        for iteration in range(2):
+            gdal.FileFromMemBuffer('/vsimem/byte_gcp.tif', open('data/byte_gcp.tif', 'rb').read())
+            if copy_pam:
+                gdal.FileFromMemBuffer('/vsimem/byte_gcp.tif.aux.xml', open('data/byte_gcp.tif.aux.xml', 'rb').read())
+            open_options = []
+            if config_option_value is not None:
+                open_options += [ 'GEOREF_SOURCES=' + config_option_value ]
+            ds = gdal.OpenEx('/vsimem/byte_gcp.tif', open_options = open_options)
+            if iteration == 0:
+                gcp_count = ds.GetGCPCount()
+                srs_wkt = ds.GetGCPProjection()
+            else:
+                srs_wkt = ds.GetGCPProjection()
+                gcp_count= ds.GetGCPCount()
+            ds = None
+            gdal.Unlink('/vsimem/byte_gcp.tif')
+            gdal.Unlink('/vsimem/byte_gcp.tif.aux.xml')
+
+            if gcp_count != expected_gcp_count:
+                gdaltest.post_reason('Iteration %d, did not get expected gcp count for %s,copy_pam=%s' % (iteration,config_option_value,str(copy_pam)))
+                print('Got ' + str(gcp_count))
+                print('Expected ' + str(expected_gcp_count))
+                return 'fail'
+
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+                gdaltest.post_reason('Iteration %d, did not get expected SRS for %s,copy_pam=%s' % (iteration,config_option_value,str(copy_pam)))
+                print('Got ' + srs_wkt)
+                print('Expected ' + expected_srs)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2580,7 +2758,11 @@ gdaltest_list.append( (tiff_read_md10) )
 gdaltest_list.append( (tiff_read_md11) )
 gdaltest_list.append( (tiff_read_md12) )
 
-#gdaltest_list = [ tiff_read_md12 ]
+gdaltest_list.append( (tiff_read_nogeoref) )
+gdaltest_list.append( (tiff_read_inconsistent_georef) )
+gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
+
+#gdaltest_list = [ tiff_read_nogeoref, tiff_read_inconsistent_georef, tiff_read_gcp_internal_and_auxxml ]
 
 if __name__ == '__main__':
 
