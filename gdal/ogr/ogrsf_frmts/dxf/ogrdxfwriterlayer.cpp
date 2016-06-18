@@ -221,16 +221,30 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
     }
     else
     {
-        const char *pszExists =
-            poDS->oHeaderDS.LookupLayerProperty( pszLayer, "Exists" );
-        if( (pszExists == NULL || strlen(pszExists) == 0)
-            && CSLFindString( poDS->papszLayersToCreate, pszLayer ) == -1 )
+        CPLString osSanitizedLayer(pszLayer);
+        // Replaced restricted characters with underscore
+        // See http://docs.autodesk.com/ACD/2010/ENU/AutoCAD%202010%20User%20Documentation/index.html?url=WS1a9193826455f5ffa23ce210c4a30acaf-7345.htm,topicNumber=d0e41665
+        const char achForbiddenChars[] = { '<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '\'' };
+        for( size_t i = 0; i < CPL_ARRAYSIZE(achForbiddenChars); ++i ) 
         {
-            poDS->papszLayersToCreate =
-                CSLAddString( poDS->papszLayersToCreate, pszLayer );
+            osSanitizedLayer.replaceAll( achForbiddenChars[i], '_' );
         }
 
-        WriteValue( 8, pszLayer );
+        // also remove newline characters (#15067)
+        osSanitizedLayer.replaceAll( "\r\n", "_" );
+        osSanitizedLayer.replaceAll( '\r', '_' );
+        osSanitizedLayer.replaceAll( '\n', '_' );
+
+        const char *pszExists =
+            poDS->oHeaderDS.LookupLayerProperty( osSanitizedLayer, "Exists" );
+        if( (pszExists == NULL || strlen(pszExists) == 0)
+            && CSLFindString( poDS->papszLayersToCreate, osSanitizedLayer ) == -1 )
+        {
+            poDS->papszLayersToCreate =
+                CSLAddString( poDS->papszLayersToCreate, osSanitizedLayer );
+        }
+
+        WriteValue( 8, osSanitizedLayer );
     }
 
     return OGRERR_NONE;
