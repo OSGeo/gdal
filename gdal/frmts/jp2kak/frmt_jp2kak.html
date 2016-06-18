@@ -62,6 +62,30 @@ on.  Defaults to NO.<p>
 
 </ul>
 
+<h2><a name="georeferencing">Georeferencing</a></h2>
+
+<p>
+Georeferencing information can come from different sources : internal (GeoJP2
+or GMLJP2 boxes), worldfile .j2w/.wld sidecar files, or PAM (Persitant Auxiliary metadata)
+.aux.xml sidecar files.
+By default, information is fetched in following order (first listed is the most
+prioritary): PAM, GeoJP2, GMLJP2, WORLDFILE.
+</p>
+<p>Starting with GDAL 2.2, the allowed sources
+and their priority order can be changed with the GDAL_GEOREF_SOURCES
+configuration option (or GEOREF_SOURCES open option) whose value is a
+comma-separated list of the following keywords :
+PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for GEOJP2,GMLJP2), WORLDFILE, NONE.
+First mentionned sources are the most prioritary over the next ones. A non mentionned
+source will be ignored.
+</p>
+<p>
+For example setting it to "WORLDFILE,PAM,INTERNAL" will make a geotransformation
+matrix from a potential worldfile prioritary over PAM or internal JP2 boxes.
+Setting it to "PAM,WORLDFILE,GEOJP2" will use the mentionned sources and
+ignore GMLJP2 boxes.
+</p>
+
 <h2>Option Options</h2>
 
 (GDAL &gt;= 2.0 )
@@ -70,6 +94,8 @@ The following open option is available:
 <ul>
 <li><p><b>1BIT_ALPHA_PROMOTION=YES/NO</b>: Whether a 1-bit alpha channel should be promoted to 8-bit.
 Defaults to YES.</li>
+<li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
+allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
 </ul>
 
 <h2>Creation Issues</h2>

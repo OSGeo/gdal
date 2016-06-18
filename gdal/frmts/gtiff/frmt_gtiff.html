@@ -27,12 +27,12 @@ reading as well. </p>
 such as YCbCr color model files, are automatically translated into RGBA
 (red, green, blue, alpha) form, and treated as four eight bit bands. </p>
 
-<h2>Georeferencing</h2>
+<h2><a name="georeferencing">Georeferencing</a></h2>
 
 <p>Most GeoTIFF projections should be supported, with the caveat that in order
 to translate uncommon Projected, and Geographic coordinate systems into
 OGC WKT it is necessary to have the EPSG .csv files available.  They must
-be found at the location pointed to by the GEOTIFF_CSV environment variable.
+be found at the location pointed to by the GDAL_DATA or GEOTIFF_CSV environment variable.
 </p>
 
 <p>Georeferencing from GeoTIFF is supported in the form of one tiepoint and
@@ -42,6 +42,23 @@ pixel size, a transformation matrix, or a list of GCPs.</p>
 information is available in the TIFF file itself, GDAL will also check for,
 and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extension .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file.</p>
+
+<p>
+By default, information is fetched in following order (first listed is the most
+prioritary): PAM (Persitant Auxiliary metadata) .aux.xml sidecar file,
+INTERNAL (GeoTIFF keys and tags), TABFILE (.tab), WORLDFILE (.tfw, .tifw/.tiffw or .wld).
+</p>
+<p>Starting with GDAL 2.2, the allowed sources
+and their priority order can be changed with the GDAL_GEOREF_SOURCES
+configuration option (or GEOREF_SOURCES open option) whose value is a
+comma-separated list of the following keywords : PAM, INTERNAL, TABFILE, WORLDFILE, NONE.
+First mentionned sources are the most prioritary over the next ones. A non mentionned
+source will be ignored.
+</p>
+<p>
+For example setting it to "WORLDFILE,PAM,INTERNAL" will make a geotransformation
+matrix from a potential worldfile prioritary over PAM or GeoTIFF.
+</p>
 
 <p>GDAL can read and write the <i>RPCCoefficientTag</i> as described in the <a href="http://geotiff.maptools.org/rpc_prop.html">
 RPCs in GeoTIFF</a> proposed extension. The tag is written only for
@@ -165,6 +182,9 @@ When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM
 Enable multi-threaded compression by specifying the number of worker threads.
 Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
 ignored for JPEG.  Default is compression in the main thread.</p></li>
+
+<li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
+allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
 
 </ul>
 
@@ -397,8 +417,8 @@ This paragraph lists the configuration options that can be set to alter the defa
 Can help reading partially corrupted TIFF files</li>
 <li>ESRI_XML_PAM: Can be set to TRUE to force metadata in the xml:ESRI domain to be written to PAM.</li>
 <li>JPEG_QUALITY_OVERVIEW: Integer between 0 and 100. Default value : 75. Quality of JPEG compressed overviews, either internal or external.</li>
-<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : FALSE.</li>
-<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : TRUE</li>
+<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i></a>  section. Default value : FALSE.</li>
+<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i></a>  section. Default value : TRUE</li>
 <li>USE_RRD: Can be set to TRUE to force external overviews in the RRD format. Default value : FALSE</li>
 <li>TIFF_USE_OVR: Can be set to TRUE to force external overviews in the GeoTIFF (.ovr) format. Default value : FALSE</li>
 <li>GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the behaviour of GDAL &lt; 1.8.0
@@ -409,7 +429,7 @@ RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default
 <!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
 <!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
-<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
+<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i></a> section.
 <li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that
 have false easting/northing improperly set in meters when it ought to be in
 coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>).
@@ -431,6 +451,9 @@ might occur if the whole file is read. Setting it to IF_ENOUGH_RAM will first
 check if the uncompressed file size is no bigger than the physical memory. Default value:NO.
 If both GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is used
 in priority, and if not possible, the later is tried.
+<li>GDAL_GEOREF_SOURCES=comma-separated list with one or several of
+PAM, INTERNAL, TABFILE or WORLDFILE. (GDAL &gt;= 2.2).
+See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
 </ul>
 </p>
 

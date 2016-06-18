@@ -451,6 +451,15 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool        m_bHasGotSiblingFiles;
     char      **GetSiblingFiles();
 
+    void        IdentifyAuthorizedGeoreferencingSources();
+    bool        m_bHasIdentifiedAuthorizedGeoreferencingSources;
+    int         m_nPAMGeorefSrcIndex;
+    int         m_nINTERNALGeorefSrcIndex;
+    int         m_nTABFILEGeorefSrcIndex;
+    int         m_nWORLDFILEGeorefSrcIndex;
+    int         m_nGeoTransformGeorefSrcIndex;
+    //int         m_nProjectionGeorefSrcIndex;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -6522,7 +6531,14 @@ GTiffDataset::GTiffDataset() :
     m_nTempBufferForCommonDirectIOSize(0),
     m_bReadGeoTransform(false),
     m_bLoadPam(false),
-    m_bHasGotSiblingFiles(false)
+    m_bHasGotSiblingFiles(false),
+    m_bHasIdentifiedAuthorizedGeoreferencingSources(false),
+    m_nPAMGeorefSrcIndex(-1),
+    m_nINTERNALGeorefSrcIndex(-1),
+    m_nTABFILEGeorefSrcIndex(-1),
+    m_nWORLDFILEGeorefSrcIndex(-1),
+    m_nGeoTransformGeorefSrcIndex(-1)
+//    m_nProjectionGeorefSrcIndex(-1)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -10869,7 +10885,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->StealSiblingFiles() );
 
     // For backward compatibility, in case GTIFF_POINT_GEO_IGNORE is defined
-    // load georeferencing right now.
+    // load georeferencing right now so as to not require it to be defined
+    // at the GetGeoTransform() time
     if( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE", NULL) != NULL )
     {
         poDS->LoadGeoreferencingAndPamIfNeeded();
@@ -10944,6 +10961,11 @@ void GTiffDataset::LookForProjection()
         return;
 
     bLookedForProjection = true;
+
+    IdentifyAuthorizedGeoreferencingSources();
+    if( m_nINTERNALGeorefSrcIndex < 0 )
+        return;
+
     if( !SetDirectory() )
         return;
 
@@ -11013,6 +11035,10 @@ void GTiffDataset::LookForProjection()
     {
         pszProjection = CPLStrdup( "" );
     }
+    //else if( !EQUAL(pszProjection, "") )
+    //{
+    //    m_nProjectionGeorefSrcIndex = m_nINTERNALGeorefSrcIndex;
+    //}
 
     bGeoTIFFInfoChanged = false;
     bForceUnsetGTOrGCPs = false;
@@ -11071,28 +11097,60 @@ void GTiffDataset::AdjustLinearUnit(short UOMLength)
 void GTiffDataset::ApplyPamInfo()
 
 {
-    double adfPamGeoTransform[6];
-
-    if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None
-        && (adfPamGeoTransform[0] != 0.0 || adfPamGeoTransform[1] != 1.0
-            || adfPamGeoTransform[2] != 0.0 || adfPamGeoTransform[3] != 0.0
-            || adfPamGeoTransform[4] != 0.0 || adfPamGeoTransform[5] != 1.0 ))
+    if( m_nPAMGeorefSrcIndex >= 0 &&
+        ((bGeoTransformValid && m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
+          m_nGeoTransformGeorefSrcIndex < 0 || !bGeoTransformValid) )
     {
-        memcpy( adfGeoTransform, adfPamGeoTransform, sizeof(double)*6 );
-        bGeoTransformValid = true;
+        double adfPamGeoTransform[6];
+        if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None
+            && (adfPamGeoTransform[0] != 0.0 || adfPamGeoTransform[1] != 1.0
+                || adfPamGeoTransform[2] != 0.0 || adfPamGeoTransform[3] != 0.0
+                || adfPamGeoTransform[4] != 0.0 || adfPamGeoTransform[5] != 1.0 ))
+        {
+            if( m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEGeorefSrcIndex )
+                osGeorefFilename.clear();
+            memcpy( adfGeoTransform, adfPamGeoTransform, sizeof(double)*6 );
+            bGeoTransformValid = true;
+        }
     }
 
-    const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
-
-    if( pszPamSRS != NULL && strlen(pszPamSRS) > 0 )
+    if( m_nPAMGeorefSrcIndex >= 0 )
     {
-        CPLFree( pszProjection );
-        pszProjection = CPLStrdup( pszPamSRS );
-        bLookedForProjection = true;
+        if( (m_nTABFILEGeorefSrcIndex < 0 || m_nPAMGeorefSrcIndex < m_nTABFILEGeorefSrcIndex) &&
+            (m_nINTERNALGeorefSrcIndex < 0 || m_nPAMGeorefSrcIndex < m_nINTERNALGeorefSrcIndex) )
+        {
+            const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
+            if( pszPamSRS != NULL && strlen(pszPamSRS) > 0 )
+            {
+                CPLFree( pszProjection );
+                pszProjection = CPLStrdup( pszPamSRS );
+                bLookedForProjection = true;
+                //m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
+            }
+        }
+        else
+        {
+            if( m_nINTERNALGeorefSrcIndex >= 0 )
+                LookForProjection();
+            if( pszProjection == NULL || strlen(pszProjection) == 0 )
+            {
+                const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
+                if( pszPamSRS != NULL && strlen(pszPamSRS) > 0 )
+                {
+                    CPLFree( pszProjection );
+                    pszProjection = CPLStrdup( pszPamSRS );
+                    bLookedForProjection = true;
+                    //m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
+                }
+            }
+        }
     }
 
-    int nPamGCPCount = GDALPamDataset::GetGCPCount();
-    if( nPamGCPCount > 0 )
+    int nPamGCPCount;
+    if( m_nPAMGeorefSrcIndex >= 0 &&
+        (nPamGCPCount = GDALPamDataset::GetGCPCount()) > 0 &&
+        ( (nGCPCount > 0 && m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
+          m_nGeoTransformGeorefSrcIndex < 0 || nGCPCount == 0 ) )
     {
         if( nGCPCount > 0 )
         {
@@ -11106,6 +11164,7 @@ void GTiffDataset::ApplyPamInfo()
 
         CPLFree( pszProjection );
         pszProjection = NULL;
+        //m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
 
         const char *pszPamGCPProjection = GDALPamDataset::GetGCPProjection();
         if( pszPamGCPProjection != NULL && strlen(pszPamGCPProjection) > 0 )
@@ -12502,12 +12561,37 @@ char** GTiffDataset::GetSiblingFiles()
 }
 
 /************************************************************************/
+/*                   IdentifyAuthorizedGeoreferencingSources()          */
+/************************************************************************/
+
+void GTiffDataset::IdentifyAuthorizedGeoreferencingSources()
+{
+    if( m_bHasIdentifiedAuthorizedGeoreferencingSources )
+        return;
+    m_bHasIdentifiedAuthorizedGeoreferencingSources = true;
+    CPLString osGeorefSources = CSLFetchNameValueDef( papszOpenOptions,
+        "GEOREF_SOURCES",
+        CPLGetConfigOption("GDAL_GEOREF_SOURCES", "PAM,INTERNAL,TABFILE,WORLDFILE") );
+    char** papszTokens = CSLTokenizeString2(osGeorefSources, ",", 0);
+    m_nPAMGeorefSrcIndex = CSLFindString(papszTokens, "PAM");
+    m_nINTERNALGeorefSrcIndex = CSLFindString(papszTokens, "INTERNAL");
+    m_nTABFILEGeorefSrcIndex = CSLFindString(papszTokens, "TABFILE");
+    m_nWORLDFILEGeorefSrcIndex = CSLFindString(papszTokens, "WORLDFILE");
+    CSLDestroy(papszTokens);
+}
+
+/************************************************************************/
 /*                     LoadGeoreferencingAndPamIfNeeded()               */
 /************************************************************************/
 
 void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
 {
+    if( !m_bReadGeoTransform && !m_bLoadPam )
+        return;
+
+    IdentifyAuthorizedGeoreferencingSources();
+
 /* -------------------------------------------------------------------- */
 /*      Get the transform or gcps from the GeoTIFF file.                */
 /* -------------------------------------------------------------------- */
@@ -12525,107 +12609,139 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         if( !SetDirectory() )
             return;
 
-        GTIF    *psGTIF = GTIFNew( hTIFF ); // I wonder how expensive this is?
-
-        if( psGTIF )
+        std::set<int> aoSetPriorities;
+        if( m_nINTERNALGeorefSrcIndex >= 0 ) aoSetPriorities.insert(m_nINTERNALGeorefSrcIndex);
+        if( m_nTABFILEGeorefSrcIndex >= 0 ) aoSetPriorities.insert(m_nTABFILEGeorefSrcIndex);
+        if( m_nWORLDFILEGeorefSrcIndex >= 0 ) aoSetPriorities.insert(m_nWORLDFILEGeorefSrcIndex);
+        std::set<int>::iterator oIter = aoSetPriorities.begin();
+        for( ; oIter != aoSetPriorities.end(); ++oIter )
         {
-            if( GDALGTIFKeyGetSHORT(psGTIF, GTRasterTypeGeoKey, &nRasterType,
-                        0, 1 ) == 1
-                && nRasterType == (short) RasterPixelIsPoint )
+            int nIndex = *oIter;
+            if( m_nINTERNALGeorefSrcIndex == nIndex )
             {
-                bPixelIsPoint = true;
-                bPointGeoIgnore =
-                    CPLTestBool( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
-                                                    "FALSE") );
-            }
+                GTIF    *psGTIF = GTIFNew( hTIFF ); // I wonder how expensive this is?
 
-            GTIFFree( psGTIF );
-        }
-
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = 0.0;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = 1.0;
-
-        if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
-            && nCount >= 2
-            && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
-        {
-            adfGeoTransform[1] = padfScale[0];
-            adfGeoTransform[5] = - ABS(padfScale[1]);
-
-            if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
-                && nCount >= 6 )
-            {
-                adfGeoTransform[0] =
-                    padfTiePoints[3] - padfTiePoints[0] * adfGeoTransform[1];
-                adfGeoTransform[3] =
-                    padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
-
-                if( bPixelIsPoint && !bPointGeoIgnore )
+                if( psGTIF )
                 {
-                    adfGeoTransform[0] -=
-                        (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
-                    adfGeoTransform[3] -=
-                        (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
+                    if( GDALGTIFKeyGetSHORT(psGTIF, GTRasterTypeGeoKey, &nRasterType,
+                                0, 1 ) == 1
+                        && nRasterType == (short) RasterPixelIsPoint )
+                    {
+                        bPixelIsPoint = true;
+                        bPointGeoIgnore =
+                            CPLTestBool( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                                            "FALSE") );
+                    }
+
+                    GTIFFree( psGTIF );
                 }
 
-                bGeoTransformValid = true;
+                adfGeoTransform[0] = 0.0;
+                adfGeoTransform[1] = 1.0;
+                adfGeoTransform[2] = 0.0;
+                adfGeoTransform[3] = 0.0;
+                adfGeoTransform[4] = 0.0;
+                adfGeoTransform[5] = 1.0;
+
+                if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
+                    && nCount >= 2
+                    && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
+                {
+                    adfGeoTransform[1] = padfScale[0];
+                    adfGeoTransform[5] = - ABS(padfScale[1]);
+
+                    if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+                        && nCount >= 6 )
+                    {
+                        adfGeoTransform[0] =
+                            padfTiePoints[3] - padfTiePoints[0] * adfGeoTransform[1];
+                        adfGeoTransform[3] =
+                            padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
+
+                        if( bPixelIsPoint && !bPointGeoIgnore )
+                        {
+                            adfGeoTransform[0] -=
+                                (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
+                            adfGeoTransform[3] -=
+                                (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
+                        }
+
+                        bGeoTransformValid = true;
+                        m_nGeoTransformGeorefSrcIndex = nIndex;
+                    }
+                }
+
+                else if( TIFFGetField(hTIFF,TIFFTAG_GEOTRANSMATRIX,&nCount,&padfMatrix )
+                        && nCount == 16 )
+                {
+                    adfGeoTransform[0] = padfMatrix[3];
+                    adfGeoTransform[1] = padfMatrix[0];
+                    adfGeoTransform[2] = padfMatrix[1];
+                    adfGeoTransform[3] = padfMatrix[7];
+                    adfGeoTransform[4] = padfMatrix[4];
+                    adfGeoTransform[5] = padfMatrix[5];
+
+                    if( bPixelIsPoint && !bPointGeoIgnore )
+                    {
+                        adfGeoTransform[0] -=
+                            (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
+                        adfGeoTransform[3] -=
+                            (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
+                    }
+
+                    bGeoTransformValid = true;
+                    m_nGeoTransformGeorefSrcIndex = nIndex;
+                }
+                if( bGeoTransformValid )
+                    break;
             }
-        }
-
-        else if( TIFFGetField(hTIFF,TIFFTAG_GEOTRANSMATRIX,&nCount,&padfMatrix )
-                 && nCount == 16 )
-        {
-            adfGeoTransform[0] = padfMatrix[3];
-            adfGeoTransform[1] = padfMatrix[0];
-            adfGeoTransform[2] = padfMatrix[1];
-            adfGeoTransform[3] = padfMatrix[7];
-            adfGeoTransform[4] = padfMatrix[4];
-            adfGeoTransform[5] = padfMatrix[5];
-
-            if( bPixelIsPoint && !bPointGeoIgnore )
-            {
-                adfGeoTransform[0] -=
-                    (adfGeoTransform[1] * 0.5 + adfGeoTransform[2] * 0.5);
-                adfGeoTransform[3] -=
-                    (adfGeoTransform[4] * 0.5 + adfGeoTransform[5] * 0.5);
-            }
-
-            bGeoTransformValid = true;
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise try looking for a .tab, .tfw, .tifw or .wld file.     */
 /* -------------------------------------------------------------------- */
-        else
-        {
-            char* pszGeorefFilename = NULL;
-
-            char** papszSiblingFiles = GetSiblingFiles();
-
-            /* Begin with .tab since it can also have projection info */
-            int bTabFileOK =
-                GDALReadTabFile2( osFilename, adfGeoTransform,
-                                    &pszTabWKT, &nGCPCount, &pasGCPList,
-                                    papszSiblingFiles, &pszGeorefFilename );
-
-            if( bTabFileOK )
+            if( m_nTABFILEGeorefSrcIndex == nIndex )
             {
-                if( nGCPCount == 0 )
-                    bGeoTransformValid = true;
-            }
-            else
-            {
-                if( !bGeoTransformValid )
+                char* pszGeorefFilename = NULL;
+
+                char** papszSiblingFiles = GetSiblingFiles();
+
+                /* Begin with .tab since it can also have projection info */
+                int bTabFileOK =
+                    GDALReadTabFile2( osFilename, adfGeoTransform,
+                                        &pszTabWKT, &nGCPCount, &pasGCPList,
+                                        papszSiblingFiles, &pszGeorefFilename );
+
+                if( bTabFileOK )
                 {
-                    bGeoTransformValid =
-                        CPL_TO_BOOL( GDALReadWorldFile2(
-                            osFilename, NULL, adfGeoTransform,
-                            papszSiblingFiles, &pszGeorefFilename ) );
+                    m_nGeoTransformGeorefSrcIndex = nIndex;
+                    //if( pszTabWKT )
+                    //{
+                    //    m_nProjectionGeorefSrcIndex = nIndex;
+                    //}
+                    if( nGCPCount == 0 )
+                    {
+                        bGeoTransformValid = true;
+                    }
                 }
+
+                if( pszGeorefFilename )
+                {
+                    osGeorefFilename = pszGeorefFilename;
+                    CPLFree(pszGeorefFilename);
+                }
+                if( bGeoTransformValid )
+                    break;
+            }
+
+            if( m_nWORLDFILEGeorefSrcIndex == nIndex )
+            {
+                char* pszGeorefFilename = NULL;
+
+                char** papszSiblingFiles = GetSiblingFiles();
+
+                bGeoTransformValid = CPL_TO_BOOL( GDALReadWorldFile2(
+                                osFilename, NULL, adfGeoTransform,
+                                papszSiblingFiles, &pszGeorefFilename) );
 
                 if( !bGeoTransformValid )
                 {
@@ -12634,22 +12750,31 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                             osFilename, "wld", adfGeoTransform,
                             papszSiblingFiles, &pszGeorefFilename ) );
                 }
-            }
+                if( bGeoTransformValid )
+                    m_nGeoTransformGeorefSrcIndex = nIndex;
 
-            if( pszGeorefFilename )
-            {
-                osGeorefFilename = pszGeorefFilename;
-                CPLFree(pszGeorefFilename);
+                if( pszGeorefFilename )
+                {
+                    osGeorefFilename = pszGeorefFilename;
+                    CPLFree(pszGeorefFilename);
+                }
+                if( bGeoTransformValid )
+                    break;
             }
         }
 
 /* -------------------------------------------------------------------- */
-/*      Check for GCPs.  Note, we will allow there to be GCPs and a     */
-/*      transform in some circumstances.                                */
+/*      Check for GCPs.                                                 */
 /* -------------------------------------------------------------------- */
-        if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+        if( m_nINTERNALGeorefSrcIndex >= 0 &&
+            TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
             && !bGeoTransformValid )
         {
+            if( nGCPCount > 0 )
+            {
+                GDALDeinitGCPs( nGCPCount, pasGCPList );
+                CPLFree( pasGCPList );
+            }
             nGCPCount = nCount / 6;
             pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
 
@@ -12672,6 +12797,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     pasGCPList[iGCP].dfGCPLine -= 0.5;
                 }
             }
+            m_nGeoTransformGeorefSrcIndex = m_nINTERNALGeorefSrcIndex;
         }
 
 /* -------------------------------------------------------------------- */
@@ -12691,11 +12817,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
     }
 
 
-
-    if( m_bLoadPam )
+    if( m_bLoadPam && m_nPAMGeorefSrcIndex >= 0 )
     {
-        m_bLoadPam = false;
-
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -12740,6 +12863,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->eBandInterp = ePAMColorInterp;
         }
     }
+    m_bLoadPam = false;
 }
 
 /************************************************************************/
@@ -15473,9 +15597,6 @@ const char *GTiffDataset::GetProjectionRef()
         LoadGeoreferencingAndPamIfNeeded();
         LookForProjection();
 
-        if( EQUAL(pszProjection,"") )
-            return GDALPamDataset::GetProjectionRef();
-
         return pszProjection;
     }
 
@@ -16655,6 +16776,7 @@ void GDALRegister_GTiff()
 "       <Value>STANDARD</Value>"
 "       <Value>ESRI_PE</Value>"
 "   </Option>"
+"   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/TABFILE/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,INTERNAL,TABFILE,WORLDFILE'/>"
 "</OpenOptionList>" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

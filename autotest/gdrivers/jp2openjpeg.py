@@ -2109,6 +2109,7 @@ def jp2openjpeg_42():
     # Check we have no longer metadata or GCP
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata() != {}:
+        print(ds.GetMetadata())
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPCount() != 0:
@@ -3382,6 +3383,136 @@ def jp2openjpeg_online_6():
     return 'success'
 
 ###############################################################################
+# Test GDAL_GEOREF_SOURCES
+
+def jp2openjpeg_49():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    tests = [ (None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, False, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              (None, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('INTERNAL,WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('INTERNAL,PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('INTERNAL,WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('PAM,WORLDFILE,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
+        gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
+        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/byte_nogeoref.jp2', 'rb').read())
+        if copy_pam:
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/byte_nogeoref.jp2.aux.xml', 'rb').read())
+        if copy_worldfile:
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/byte_nogeoref.j2w', 'rb').read())
+        ds = gdal.Open('/vsimem/byte_nogeoref.jp2')
+        gt = ds.GetGeoTransform()
+        srs_wkt = ds.GetProjectionRef()
+        ds = None
+        gdal.SetConfigOption('GDAL_GEOREF_SOURCES', None)
+        gdal.Unlink('/vsimem/byte_nogeoref.jp2')
+        gdal.Unlink('/vsimem/byte_nogeoref.jp2.aux.xml')
+        gdal.Unlink('/vsimem/byte_nogeoref.j2w')
+
+        if gt != expected_gt:
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + str(gt))
+            print('Expected ' + str(expected_gt))
+            return 'fail'
+
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + srs_wkt)
+            print('Expected ' + expected_srs)
+            return 'fail'
+
+    tests = [ (None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,PAM,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,WORLDFILE,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('WORLDFILE,PAM,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('PAM,WORLDFILE,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GEOJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GMLJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('MSIG', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('MSIG,GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('MSIG,GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
+        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
+        if copy_pam:
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
+        if copy_worldfile:
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
+        open_options = []
+        if config_option_value is not None:
+            open_options += [ 'GEOREF_SOURCES=' + config_option_value ]
+        ds = gdal.OpenEx('/vsimem/inconsitant_geojp2_gmljp2.jp2', open_options = open_options)
+        gt = ds.GetGeoTransform()
+        srs_wkt = ds.GetProjectionRef()
+        ds = None
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.jp2')
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml')
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.j2w')
+
+        if gt != expected_gt:
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + str(gt))
+            print('Expected ' + str(expected_gt))
+            return 'fail'
+
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + srs_wkt)
+            print('Expected ' + expected_srs)
+            return 'fail'
+
+    ds = gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options = [ 'GEOREF_SOURCES=PAM,WORLDFILE' ] )
+    fl = ds.GetFileList()
+    if set(fl) != set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']):
+        gdaltest.post_reason('Did not get expected filelist')
+        print(fl)
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options = [ 'GEOREF_SOURCES=unhandled' ] )
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('expected warning')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3438,6 +3569,7 @@ gdaltest_list = [
     jp2openjpeg_46,
     jp2openjpeg_47,
     jp2openjpeg_48,
+    jp2openjpeg_49,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
@@ -3448,9 +3580,7 @@ gdaltest_list = [
 
 disabled_gdaltest_list = [
     jp2openjpeg_1,
-    jp2openjpeg_45,
-    jp2openjpeg_46,
-    jp2openjpeg_47,
+    jp2openjpeg_49,
     jp2openjpeg_cleanup ]
 
 if __name__ == '__main__':

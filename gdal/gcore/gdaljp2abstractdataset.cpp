@@ -41,7 +41,8 @@
 GDALJP2AbstractDataset::GDALJP2AbstractDataset() :
     pszWldFilename(NULL),
     poMemDS(NULL),
-    papszMetadataFiles(NULL)
+    papszMetadataFiles(NULL),
+    m_nWORLDFILEIndex(-1)
 {}
 
 /************************************************************************/
@@ -83,28 +84,88 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
         pszOverrideFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
+/*      Identify authorized georeferencing sources                      */
+/* -------------------------------------------------------------------- */
+    const char* pszGeorefSourcesOption = 
+      CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
+    bool bGeorefSourcesConfigOption = pszGeorefSourcesOption != NULL;
+    CPLString osGeorefSources = (pszGeorefSourcesOption) ?
+        pszGeorefSourcesOption :
+        CPLGetConfigOption("GDAL_GEOREF_SOURCES", "PAM,INTERNAL,WORLDFILE");
+    size_t nInternalIdx = osGeorefSources.ifind("INTERNAL");
+    if( nInternalIdx != std::string::npos &&
+        (nInternalIdx == 0 || osGeorefSources[nInternalIdx-1] == ',') &&
+        (nInternalIdx + strlen("INTERNAL") == osGeorefSources.size() ||
+         osGeorefSources[nInternalIdx+strlen("INTERNAL")] == ',') )
+    {
+        osGeorefSources.replace( nInternalIdx, strlen("INTERNAL"),
+                                 "GEOJP2,GMLJP2,MSIG" );
+    }
+    char** papszTokens = CSLTokenizeString2(osGeorefSources, ",", 0);
+    m_bGotPAMGeorefSrcIndex = true;
+    m_nPAMGeorefSrcIndex = CSLFindString(papszTokens, "PAM");
+    const int nGEOJP2Index = CSLFindString(papszTokens, "GEOJP2");
+    const int nGMLJP2Index = CSLFindString(papszTokens, "GMLJP2");
+    const int nMSIGIndex = CSLFindString(papszTokens, "MSIG");
+    m_nWORLDFILEIndex = CSLFindString(papszTokens, "WORLDFILE");
+
+    if( bGeorefSourcesConfigOption )
+    {
+        for(char** papszIter = papszTokens; *papszIter; ++papszIter )
+        {
+            if( !EQUAL(*papszIter, "PAM") &&
+                !EQUAL(*papszIter, "GEOJP2") &&
+                !EQUAL(*papszIter, "GMLJP2") &&
+                !EQUAL(*papszIter, "MSIG") &&
+                !EQUAL(*papszIter, "WORLDFILE") &&
+                !EQUAL(*papszIter, "NONE") )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Unhandled value %s in GEOREF_SOURCES", *papszIter);
+            }
+        }
+    }
+    CSLDestroy(papszTokens);
+
+/* -------------------------------------------------------------------- */
 /*      Check for georeferencing information.                           */
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
-
-    if( (poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL &&
-         oJP2Geo.ReadAndParse(poOpenInfo->fpL) ) ||
+    int nIndexUsed = -1;
+    if( ((poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL &&
+         oJP2Geo.ReadAndParse(poOpenInfo->fpL, nGEOJP2Index, nGMLJP2Index,
+                              nMSIGIndex, &nIndexUsed) ) ||
         (!(poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL) &&
-         oJP2Geo.ReadAndParse( pszOverrideFilename )) )
+         oJP2Geo.ReadAndParse( pszOverrideFilename, nGEOJP2Index, nGMLJP2Index,
+                               nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) && 
+        (nGMLJP2Index >= 0 || nGEOJP2Index >= 0 || nMSIGIndex >= 0 ||
+         m_nWORLDFILEIndex >= 0) )
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+        if( strlen(pszProjection) > 0 )
+            m_nProjectionGeorefSrcIndex = nIndexUsed;
         bGeoTransformValid = CPL_TO_BOOL( oJP2Geo.bHaveGeoTransform );
+        if( bGeoTransformValid )
+            m_nGeoTransformGeorefSrcIndex = nIndexUsed;
         memcpy( adfGeoTransform, oJP2Geo.adfGeoTransform,
                 sizeof(double) * 6 );
         nGCPCount = oJP2Geo.nGCPCount;
+        if( nGCPCount )
+            m_nGCPGeorefSrcIndex = nIndexUsed;
         pasGCPList =
             GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
 
         if( oJP2Geo.bPixelIsPoint )
-            GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
+        {
+            m_bPixelIsPoint = true;
+            m_nPixelIsPointGeorefSrcIndex = nIndexUsed;
+        }
         if( oJP2Geo.papszRPCMD )
-            GDALDataset::SetMetadata( oJP2Geo.papszRPCMD, "RPC" );
+        {
+            m_papszRPC = CSLDuplicate( oJP2Geo.papszRPCMD );
+            m_nRPCGeorefSrcIndex = nIndexUsed;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -145,8 +206,14 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
     if( oJP2Geo.pszGDALMultiDomainMetadata != NULL )
     {
+        CPLErr eLastErr = CPLGetLastErrorType();
+        int nLastErrNo = CPLGetLastErrorNo();
+        CPLString osLastErrorMsg = CPLGetLastErrorMsg();
         CPLXMLNode* psXMLNode =
             CPLParseXMLString(oJP2Geo.pszGDALMultiDomainMetadata);
+        if( CPLGetLastErrorType() == CE_None && eLastErr != CE_None )
+            CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
+
         if( psXMLNode )
         {
             GDALMultiDomainMetadata oLocalMDMD;
@@ -205,7 +272,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    if( !bGeoTransformValid )
+    if( m_nWORLDFILEIndex >= 0 &&
+        ((bGeoTransformValid && m_nWORLDFILEIndex <
+                    m_nGeoTransformGeorefSrcIndex) || !bGeoTransformValid) )
     {
         bGeoTransformValid |=
             GDALReadWorldFile2( pszOverrideFilename, NULL,
@@ -215,6 +284,12 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
                                    adfGeoTransform,
                                    poOpenInfo->GetSiblingFiles(),
                                    &pszWldFilename );
+        if( bGeoTransformValid )
+        {
+            m_nGeoTransformGeorefSrcIndex = m_nWORLDFILEIndex;
+            m_bPixelIsPoint = false;
+            m_nPixelIsPointGeorefSrcIndex = -1;
+        }
     }
 
     GDALMDReaderManager mdreadermanager;
@@ -238,9 +313,15 @@ char **GDALJP2AbstractDataset::GetFileList()
     char **papszFileList = GDALGeorefPamDataset::GetFileList();
 
     if( pszWldFilename != NULL &&
+        m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex &&
         CSLFindString( papszFileList, pszWldFilename ) == -1 )
     {
-        papszFileList = CSLAddString( papszFileList, pszWldFilename );
+        double l_adfGeoTransform[6];
+        GetGeoTransform(l_adfGeoTransform);
+        if( m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex )
+        {
+            papszFileList = CSLAddString( papszFileList, pszWldFilename );
+        }
     }
     if( papszMetadataFiles != NULL )
     {
@@ -266,7 +347,14 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
         static_cast<GDALDriver *>(GDALGetDriverByName("Memory"));
     if( poMemDriver == NULL )
         return;
+
+    CPLErr eLastErr = CPLGetLastErrorType();
+    int nLastErrNo = CPLGetLastErrorNo();
+    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
     CPLXMLNode* const psRoot = CPLParseXMLString(papszGMLJP2[0]);
+    if( CPLGetLastErrorType() == CE_None && eLastErr != CE_None )
+        CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
+
     if( psRoot == NULL )
         return;
     CPLXMLNode* const psCC =
