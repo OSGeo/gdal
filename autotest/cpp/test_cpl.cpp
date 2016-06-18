@@ -917,4 +917,41 @@ namespace tut
         CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : NULL);
     }
 
+/************************************************************************/
+/*                         CPLString::replaceAll()                      */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<16>()
+    {
+        CPLString osTest;
+        osTest = "foobarbarfoo";
+        osTest.replaceAll("bar", "was_bar");
+        ensure_equals( osTest, "foowas_barwas_barfoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll("X", "was_bar");
+        ensure_equals( osTest, "foobarbarfoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll("", "was_bar");
+        ensure_equals( osTest, "foobarbarfoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll("bar", "");
+        ensure_equals( osTest, "foofoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll('b', 'B');
+        ensure_equals( osTest, "fooBarBarfoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll('b', "B");
+        ensure_equals( osTest, "fooBarBarfoo" );
+
+        osTest = "foobarbarfoo";
+        osTest.replaceAll("b", 'B');
+        ensure_equals( osTest, "fooBarBarfoo" );
+    }
+
 } // namespace tut
