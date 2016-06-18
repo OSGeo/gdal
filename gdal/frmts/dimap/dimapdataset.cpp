@@ -271,6 +271,20 @@ class DIMAPRasterBand : public GDALPamRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg );
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
+    virtual CPLErr ComputeRasterMinMax( int bApproxOK,
+                                            double adfMinMax[2] );
+    virtual CPLErr ComputeStatistics( int bApproxOK,
+                                      double *pdfMin, double *pdfMax,
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc, void *pProgressData );
+
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, GUIntBig * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc, void *pProgressData );
+
 };
 
 /************************************************************************/
@@ -311,7 +325,7 @@ CPLErr DIMAPRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  GDALRasterIOExtraArg* psExtraArg )
 
 {
-    if(GetOverviewCount() > 0)
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
     {
         return GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
@@ -322,6 +336,86 @@ CPLErr DIMAPRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     return poVRTBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
                                  nPixelSpace, nLineSpace, psExtraArg );
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int DIMAPRasterBand::GetOverviewCount()
+{
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::GetOverviewCount();
+    }
+    return poVRTBand->GetOverviewCount();
+}
+
+/************************************************************************/
+/*                             GetOverview()                            */
+/************************************************************************/
+
+GDALRasterBand *DIMAPRasterBand::GetOverview(int iOvr)
+{
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::GetOverview(iOvr);
+    }
+    return poVRTBand->GetOverview(iOvr);
+}
+
+/************************************************************************/
+/*                         ComputeRasterMinMax()                        */
+/************************************************************************/
+
+CPLErr DIMAPRasterBand::ComputeRasterMinMax( int bApproxOK,
+                                            double adfMinMax[2] )
+{
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
+    }
+    return poVRTBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+}
+
+/************************************************************************/
+/*                          ComputeStatistics()                         */
+/************************************************************************/
+
+CPLErr DIMAPRasterBand::ComputeStatistics( int bApproxOK,
+                                           double *pdfMin, double *pdfMax,
+                                           double *pdfMean, double *pdfStdDev,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData )
+{
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev,
+            pfnProgress, pProgressData);
+    }
+    return poVRTBand->ComputeStatistics(bApproxOK, pdfMin, pdfMax, pdfMean,
+                                        pdfStdDev, pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+CPLErr DIMAPRasterBand::GetHistogram( double dfMin, double dfMax,
+                                           int nBuckets, GUIntBig *panHistogram,
+                                           int bIncludeOutOfRange, int bApproxOK,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData )
+{
+    if(GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::GetHistogram(
+            dfMin, dfMax, nBuckets, panHistogram, bIncludeOutOfRange,
+            bApproxOK, pfnProgress, pProgressData);
+    }
+    return poVRTBand->GetHistogram(dfMin, dfMax, nBuckets, panHistogram,
+            bIncludeOutOfRange, bApproxOK, pfnProgress, pProgressData);
 }
 
 /************************************************************************/
