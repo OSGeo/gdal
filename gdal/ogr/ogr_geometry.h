@@ -1323,7 +1323,6 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
     OGRErr exportToWktInternal (char ** ppszDstText, OGRwkbVariant eWkbVariant, const char* pszSkipPrefix ) const;
-    // virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
 
   public:
     OGRPolyhedralSurface();
@@ -1344,6 +1343,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual int getDimension() const;
 
     virtual void empty();
+    virtual OGRBoolean IsValid() const;
 
     virtual OGRGeometry *clone() const;
     virtual void getEnvelope(OGREnvelope * psEnvelope) const;
@@ -1356,35 +1356,17 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRErr PointOnSurface(OGRPoint*) const;
 
     OGRMultiPolygon* CastToMultiPolygon();
-    // // These methods are either (a) inherited from OGRGeometry and are re-written to ensure compatibility with the new
-    // // OGRPolyhedralSurface or (b) written in OGRGeometry on top of GEOS; hence need to remove the GEOS binding in
-    // // OGRPolyhedralSurface and bind it with SFCGAL instead
-    // virtual OGRGeometry *Boundary () const;
-    // virtual OGRErr Centroid (OGRPoint *poPoint) const;
-    // virtual OGRGeometry *ConvexHull () const;
-    // virtual OGRBoolean Crosses (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRGeometry *DelaunayTriangulation (double dfTolerance, int bOnlyEdges);
-    // virtual OGRGeometry *Difference (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRBoolean Disjoint (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRGeometry *getBoundary () const;
-    // virtual OGRGeometry *Intersection (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRBoolean IsValid () const;
-    // virtual OGRBoolean Overlaps (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRGeometry *Polygonize () const;
-    // virtual OGRGeometry *Simplify (double dTolerance) const;
-    // virtual OGRGeometry *SimplifyPreserveTopology (double dTolerance) const;
-    // virtual OGRGeometry *SymDifference (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRBoolean Touches (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRGeometry *Union (const OGRGeometry *poOtherGeom) const;
-    // virtual OGRGeometry *UnionCascaded () const;
-    // virtual OGRBoolean Within (const OGRGeometry *poOtherGeom) const;
-    //
-    // // Apart from the above functions (some of them can be bound with SFCGAL), other API which is exposed from SFCGAL
-    // // The bulk of the methods which can be ideally interfaced are already-rewritten above when we remove the GEOS bindings
-    // // and expose them through OGR
-    // OGRErr AddPolygon(const OGRCurvePolygon &poPolygon);
-    // virtual float distance3D(const OGRGeometry &poGeom);
-    // virtual float distance(const OGRGeometry &poGeom);
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRErr addGeometry( const OGRGeometry * );
+    virtual int getNumPolygons();
+    virtual OGRGeometry* getPolygon(int i);
+
+    virtual OGRBoolean  IsEmpty() const;
+    virtual void setCoordinateDimension( int nDimension );
+    virtual void set3D( OGRBoolean bIs3D );
+    virtual void setMeasured( OGRBoolean bIsMeasured );
+    virtual void swapXY();
+    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
 };
 
 /************************************************************************/
