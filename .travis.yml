@@ -169,7 +169,4 @@ notifications:
     channels:
       - "irc.freenode.org#gdal"
     use_notice: true
-<<<<<<< HEAD
     on_success: change
-=======
->>>>>>> checks
