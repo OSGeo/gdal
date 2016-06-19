@@ -425,7 +425,8 @@ const vector<char> CADGeometryObjectTypes
       CADObject::LWPOLYLINE, CADObject::POLYLINE3D, CADObject::MLINE,
       CADObject::SPLINE, CADObject::SOLID, CADObject::MTEXT, CADObject::IMAGE,
       CADObject::XLINE, CADObject::RAY, CADObject::MLINE, CADObject::FACE3D,
-      CADObject::POLYLINE_PFACE
+      CADObject::POLYLINE_PFACE, CADObject::ATTRIB, CADObject::ATTDEF,
+      CADObject::POLYLINE2D, CADObject::HATCH, CADObject::INSERT
 };
 
 bool isGeometryType(short nType)

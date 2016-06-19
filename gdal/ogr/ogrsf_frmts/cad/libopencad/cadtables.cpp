@@ -38,7 +38,7 @@ using namespace std;
 
 CADTables::CADTables()
 {
-    
+
 }
 
 void CADTables::addTable(TableType eType, CADHandle hHandle)
@@ -117,7 +117,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
     while ( true )
     {
         unique_ptr<CADEntityObject> ent( static_cast<CADEntityObject *>(
-                                          file->getObject (dCurrentEntHandle)));
+                                          file->getObject (dCurrentEntHandle, true))); // true = read CED && handles only
 
         /* TODO: this check is excessive, but if something goes wrong way -
          * some part of geometries will be parsed. */
@@ -134,7 +134,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
         if ( dCurrentEntHandle == dLastEntHandle )
         {
             ent.reset (static_cast<CADEntityObject *>(
-                           file->getObject (dCurrentEntHandle) ) );
+                           file->getObject (dCurrentEntHandle, true) ) );
             fillLayer(ent.get ());
             break;
         }

@@ -110,6 +110,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetField( "Geometry", "CADPoint" );
             return poFeature;
         }
+        
         case CADGeometry::LINE:
         {
             CADLine * const poCADLine = ( CADLine* ) spoCADGeometry.get();
@@ -125,6 +126,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetField( "Geometry", "CADLine" );
             return poFeature;
         }
+
         case CADGeometry::CIRCLE:
         {
             CADCircle * const poCADCircle = ( CADCircle* ) spoCADGeometry.get();
@@ -137,6 +139,55 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( poCircle );
             
             poFeature->SetField( "Geometry", "CADCircle" );
+            return poFeature;
+        }
+        
+        case CADGeometry::ARC:
+        {
+            CADArc * const poCADArc = ( CADArc* ) spoCADGeometry.get();
+            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
+                poCADArc->getPosition().getX(), poCADArc->getPosition().getY(),
+                poCADArc->getPosition().getZ(),
+                poCADArc->getRadius(), poCADArc->getRadius(), 0.0,
+                poCADArc->getStartingAngle(), 
+                poCADArc->getEndingAngle() < poCADArc->getStartingAngle() ?
+                    poCADArc->getEndingAngle() : ( poCADArc->getEndingAngle() + 360.0f ),
+                0.0 );
+
+
+            poFeature->SetGeometryDirectly( poArc );
+
+            poFeature->SetField( "Geometry", "CADArc" );
+            return poFeature;
+        }
+
+        case CADGeometry::FACE3D:
+        {
+            CADFace3D * const poCADFace = ( CADFace3D* ) spoCADGeometry.get();
+            OGRPolygon * poPoly = new OGRPolygon();
+            OGRLinearRing * poLR = new OGRLinearRing();
+
+            for ( size_t i = 0; i < 3; ++i )
+            {
+                poLR->addPoint(
+                    poCADFace->getCorner( i ).getX(),
+                    poCADFace->getCorner( i ).getY(),
+                    poCADFace->getCorner( i ).getZ()
+                );
+            }
+            if ( !(poCADFace->getCorner( 2 ) == poCADFace->getCorner( 3 )) )
+            {
+                poLR->addPoint(
+                    poCADFace->getCorner( 3 ).getX(),
+                    poCADFace->getCorner( 3 ).getY(),
+                    poCADFace->getCorner( 3 ).getZ()
+                );
+            }
+            poPoly->addRingDirectly( poLR );
+            poPoly->closeRings();
+            poFeature->SetGeometryDirectly( poPoly );
+
+            poFeature->SetField( "Geometry", "CADFace3D" );
             return poFeature;
         }
             

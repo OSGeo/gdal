@@ -864,6 +864,9 @@ public:
     vector<pair<double, double>> astWidths; // start, end.
 };
 
+/**
+ * @brief The CADSplineObject class
+ */
 class CADSplineObject : public CADEntityObject
 {
 public:
@@ -894,6 +897,9 @@ public:
     vector<CADVector> averFitPoints;
 };
 
+/**
+ * @brief Common Dimensional Data structure
+ */
 typedef struct _dimdata
 {
     char dVersion;
@@ -921,6 +927,9 @@ typedef struct _dimdata
     CADVector vert12Pt;
 } CADCommonDimensionData;
 
+/**
+ * @brief The CADDimensionObject class
+ */
 class CADDimensionObject : public CADEntityObject
 {
 public:
@@ -930,6 +939,9 @@ public:
     CADHandle hAnonymousBlock;
 };
 
+/**
+ * @brief The CADDimensionOrdinateObject class
+ */
 class CADDimensionOrdinateObject : public CADDimensionObject
 {
 public:
@@ -938,6 +950,9 @@ public:
     unsigned char Flags2;
 };
 
+/**
+ * @brief The CADDimensionLinearObject class
+ */
 class CADDimensionLinearObject : public CADDimensionObject
 {
 public:
@@ -948,6 +963,9 @@ public:
     double dfDimRot;
 };
 
+/**
+ * @brief The CADDimensionAlignedObject class
+ */
 class CADDimensionAlignedObject : public CADDimensionObject
 {
 public:
@@ -957,6 +975,9 @@ public:
     double dfExtLnRot;
 };
 
+/**
+ * @brief The CADDimensionAngular3PtObject class
+ */
 class CADDimensionAngular3PtObject : public CADDimensionObject
 {
 public:
@@ -965,6 +986,9 @@ public:
     CADVector vert15pt;
 };
 
+/**
+ * @brief The CADDimensionAngular2LnObject class
+ */
 class CADDimensionAngular2LnObject : public CADDimensionAngular3PtObject
 {
 public:
@@ -974,6 +998,9 @@ public:
 
 };
 
+/**
+ * @brief The CADDimensionRadiusObject class
+ */
 class CADDimensionRadiusObject : public CADDimensionObject
 {
 public:
@@ -983,12 +1010,18 @@ public:
     double dfLeaderLen;
 };
 
+/**
+ * @brief The CADDimensionDiameterObject class
+ */
 class CADDimensionDiameterObject : public CADDimensionRadiusObject
 {
 public:
     CADDimensionDiameterObject();
 };
 
+/**
+ * @brief The CADImageObject class
+ */
 class CADImageObject : public CADEntityObject
 {
 public:
@@ -1020,6 +1053,9 @@ public:
     CADHandle hImageDefReactor;
 };
 
+/**
+ * @brief The CADImageDefReactorObject class
+ */
 class CADImageDefReactorObject : public CADObject
 {
 public:
@@ -1036,6 +1072,9 @@ public:
     CADHandle hXDictionary;
 };
 
+/**
+ * @brief The CADImageDefObject class
+ */
 class CADImageDefObject : public CADImageDefReactorObject
 {
 public:
@@ -1050,6 +1089,9 @@ public:
     double dfYPixelSize;
 };
 
+/**
+ * @brief The CADMTextObject class
+ */
 class CADMTextObject : public CADEntityObject
 {
 public:
@@ -1075,6 +1117,9 @@ public:
     CADHandle hStyle;
 };
 
+/**
+ * @brief Linestyle data structure
+ */
 typedef struct _linestyle
 {
     short          nNumSegParms;
@@ -1083,6 +1128,9 @@ typedef struct _linestyle
     vector<double> adfAreaFillParameters;
 } CADLineStyle;
 
+/**
+ * @brief MLine vertex data structure
+ */
 typedef struct _mlinevertex
 {
     CADVector vertPosition;
@@ -1091,6 +1139,9 @@ typedef struct _mlinevertex
     vector < CADLineStyle > astLStyles;
 } CADMLineVertex;
 
+/**
+ * @brief The CADMLineObject class
+ */
 class CADMLineObject : public CADEntityObject
 {
 public:
@@ -1109,6 +1160,9 @@ public:
     CADHandle hMLineStyle;
 };
 
+/**
+ * @brief The CAD3DFaceObject class
+ */
 class CAD3DFaceObject : public CADEntityObject
 {
 public:
@@ -1120,6 +1174,9 @@ public:
     short dInvisFlags;
 };
 
+/**
+ * @brief The CADPolylinePFaceObject class
+ */
 class CADPolylinePFaceObject : public CADEntityObject
 {
 public:

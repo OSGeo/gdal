@@ -38,9 +38,12 @@ typedef struct
     unsigned char B;
 } RGBColor;
 
+/**
+ * @brief Lookup table to translate ACI to RGB color.
+ */
 static const RGBColor CADACIColors[257]
 {
-    {0,0,0}, // FIXME: ACI indexes counts from 0, but CMColor value is never equals 0?
+    {0,0,0}, // FIXME: ACI indexes counts from 0, but CMColor value never equals 0?
     {0,0,0},
     {255,0,0},
     {255,255,0},

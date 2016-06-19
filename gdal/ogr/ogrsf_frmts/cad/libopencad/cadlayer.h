@@ -90,7 +90,7 @@ protected:
     short geometryType; // if all geometry is same type set this type or -1
 
     vector<long> geometryHandles;
-    vector<long> attributeHandles;
+    vector< pair< long, map< string, long > > > geometryAttributes;
 
     CADFile * const pCADFile;
 };

@@ -37,6 +37,9 @@
 
 using namespace std;
 
+class CADAttrib;
+class CADAttdef;
+
 /**
  * @brief Base CAD geometry class
  */
@@ -68,7 +71,9 @@ class CADGeometry
         MLINE,
         XLINE,
         FACE3D,
-        POLYLINE_PFACE
+        POLYLINE_PFACE,
+        ATTRIB,
+        ATTDEF
     };
 
     enum GeometryType getType() const;
@@ -78,16 +83,16 @@ class CADGeometry
     void setColor(int ACIColorIndex);// TODO: in 2004+ ACI is not the only way to set the color.
 
     virtual void print () const = 0;
+
+    void addAttribute( CADAttdef* );
+    void addAttribute( CADAttrib* );
+    map< string, CADAttdef> getAttributes();
 protected:
     enum GeometryType geometryType;
     double          thickness;
     RGBColor        geometry_color;
+    map< string, CADAttdef> mapstAttributes;
 };
-
-/* TODO: Point3D should be named Point, but because of possible redefenitions
- * its named Point3D
- *
- */
 
 /**
  * @brief Geometry class which a single Point
@@ -151,7 +156,7 @@ protected:
 };
 
 /**
- * @brief Geometry class which represents Lwpolyline
+ * @brief Geometry class which represents LWPolyline
  */
 
 class CADLWPolyline : public CADPolyline3D
@@ -294,6 +299,9 @@ protected:
     std::vector < CADVector > averFitPoints;
 };
 
+/**
+ * @brief Geometry class which represents Solid
+ */
 class CADSolid : public CADPoint3D
 {
 public:
@@ -307,6 +315,9 @@ protected:
     vector < CADVector > avertCorners;
 };
 
+/**
+ * @brief Geometry class which represents Ray
+ */
 class CADRay : public CADPoint3D
 {
 public:
@@ -316,12 +327,18 @@ public:
     virtual void print () const override;
 };
 
+/**
+ * @brief Geometry class which represents Hatch
+ */
 class CADHatch : public CADGeometry
 {
 public:
     CADHatch();
 };
 
+/**
+ * @brief Geometry class which represents Image (Raster Image)
+ */
 class CADImage : public CADGeometry
 {
 public:
@@ -376,6 +393,9 @@ protected:
     vector < CADVector > avertClippingPolygon;
 };
 
+/**
+ * @brief Geometry class which represents MText
+ */
 class CADMText : public CADText
 {
 public:
@@ -406,11 +426,15 @@ protected:
     //long dBackgroundTransparency;
 };
 
+/**
+ * @brief Geometry class which represents 3DFace
+ */
 class CADFace3D : public CADGeometry
 {
 public:
     CADFace3D();
     void addCorner(const CADVector &corner);
+    CADVector getCorner( size_t index );
     virtual void print () const override;
 
     short getInvisFlags() const;
@@ -421,6 +445,9 @@ protected:
     short invisFlags;
 };
 
+/**
+ * @brief Geometry class which represents Polyline (PFace)
+ */
 class CADPolylinePFace : public CADGeometry
 {
 public:
@@ -431,6 +458,9 @@ protected:
     vector < CADVector > vertexes;
 };
 
+/**
+ * @brief Geometry class which represents XLine
+ */
 class CADXLine : public CADRay
 {
 public:
@@ -438,6 +468,9 @@ public:
     virtual void print () const override;
 };
 
+/**
+ * @brief Geometry class which represents MLine
+ */
 class CADMLine : public CADPoint3D
 {
 public:
@@ -458,7 +491,50 @@ protected:
     vector < CADVector > avertVertexes;
 };
 
-//
+/**
+ * @brief Geometry class which represents Attribute
+ */
+class CADAttrib : public CADText
+{
+public:
+    CADAttrib();
+    virtual void print () const override;
+
+    double getElevation() const;
+    void   setElevation( double );
+
+    string getTag() const;
+    void   setTag( const string& );
+
+    CADVector getAlignmentPoint() const;
+    void      setAlignmentPoint( const CADVector& );
+
+    bool   isPositionLocked() const;
+    void   setPositionLocked( bool );
+protected:
+    CADVector vertAlignmentPoint;
+    double dfElevation;
+    string sTag;
+    bool   bLockPosition;
+};
+
+/**
+ * @brief Geometry class which represents Attribute definition
+ */
+class CADAttdef : public CADAttrib
+{
+public:
+    CADAttdef();
+    virtual void print () const override;
+
+    string getPrompt() const;
+    void   setPrompt( const string& );
+
+protected:
+    string sPrompt;
+};
+
+
 //class EXTERN LineType
 //{
 //public:

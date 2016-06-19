@@ -56,7 +56,7 @@ set(HHEADERS
     cadtables.h
     cadgeometry.h
     cadlayer.h
-        cadcolors.h)
+    cadcolors.h)
 
 set(HHEADER_PRIV
     cadobjects.h

@@ -126,12 +126,12 @@ int GetLastErrorCode()
 }
 
 /**
- * @brief GetDeafultFileIO return default file in/out class.
+ * @brief GetDefaultFileIO return default file in/out class.
  * @param pszFileName CAD file path
  * @return CADFileIO pointer or null if error. The pointer have to be freed by
  * user
  */
-CADFileIO* GetDeafultFileIO(const char* pszFileName)
+CADFileIO* GetDefaultFileIO ( const char *pszFileName )
 {
     return new CADFileStreamIO(pszFileName);
 }
@@ -166,7 +166,7 @@ const char* GetCADFormats()
  */
 CADFile* OpenCADFile( const char* pszFileName, enum CADFile::OpenOptions eOptions )
 {
-    return OpenCADFile (GetDeafultFileIO(pszFileName), eOptions);
+    return OpenCADFile (GetDefaultFileIO (pszFileName), eOptions);
 }
 
 void DebugMsg(const char* format, ...)

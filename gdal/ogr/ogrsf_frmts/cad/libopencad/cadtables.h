@@ -47,7 +47,8 @@ public:
     /**
      * @brief The CAD table types enum
      */
-    enum TableType{
+    enum TableType
+    {
         CurrentViewportTable,
         BlocksTable,
         LayersTable,

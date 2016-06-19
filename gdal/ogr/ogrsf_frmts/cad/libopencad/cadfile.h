@@ -75,9 +75,10 @@ protected:
     /**
      * @brief Get CAD Object from file
      * @param index Object index
+     * @param bHandlesOnly set TRUE if object data should be skipped, and only object handles should be read.
      * @return pointer to CADObject or nullptr. User have to free returned pointer.
      */
-    virtual CADObject * getObject( long index ) = 0;
+    virtual CADObject * getObject( long index, bool bHandlesOnly = false ) = 0;
 
     /**
      * @brief read geometry from CAD file

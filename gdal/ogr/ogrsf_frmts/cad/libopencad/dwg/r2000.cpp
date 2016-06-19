@@ -83,7 +83,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     pabyBuf = new char[dHeaderVarsSectionLength + 4];
     fileIO->Read ( pabyBuf, dHeaderVarsSectionLength + 2 );
 
-    if(eOptions == OpenOptions::READ_ALL){
+    if(eOptions == OpenOptions::READ_ALL)
+    {
         header.addValue(UNKNOWN1, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));
         header.addValue(UNKNOWN2, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));
         header.addValue(UNKNOWN3, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));
@@ -95,7 +96,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
         header.addValue(UNKNOWN9, ReadBITLONG (pabyBuf, nBitOffsetFromStart));
         header.addValue(UNKNOWN10, ReadBITLONG (pabyBuf, nBitOffsetFromStart));
     }
-    else{
+    else
+    {
         skipBITDOUBLE(pabyBuf, nBitOffsetFromStart);
         skipBITDOUBLE(pabyBuf, nBitOffsetFromStart);
         skipBITDOUBLE(pabyBuf, nBitOffsetFromStart);
@@ -112,7 +114,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     tables.addTable (CADTables::CurrentViewportTable,
                         stCurrentViewportTable);
 
-    if(eOptions == OpenOptions::READ_ALL){
+    if(eOptions == OpenOptions::READ_ALL)
+    {
         header.addValue(CADHeader::DIMASO, ReadBIT (pabyBuf, nBitOffsetFromStart));     // 1
         header.addValue(CADHeader::DIMSHO, ReadBIT (pabyBuf, nBitOffsetFromStart));     // 2
         header.addValue(CADHeader::PLINEGEN, ReadBIT (pabyBuf, nBitOffsetFromStart));   // 3
@@ -134,19 +137,22 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
         header.addValue(CADHeader::DISPSILH, ReadBIT (pabyBuf, nBitOffsetFromStart));   // 19
         header.addValue(CADHeader::PELLIPSE, ReadBIT (pabyBuf, nBitOffsetFromStart));   // 20
     }
-    else{
+    else
+    {
         nBitOffsetFromStart += 20;
     }
 
-    if(eOptions == OpenOptions::READ_ALL){
-    header.addValue(CADHeader::PROXYGRAPHICS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart)); // 1
-    header.addValue(CADHeader::TREEDEPTH, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 2
-    header.addValue(CADHeader::LUNITS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 3
-    header.addValue(CADHeader::LUPREC, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 4
-    header.addValue(CADHeader::AUNITS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 5
-    header.addValue(CADHeader::AUPREC, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 6
+    if(eOptions == OpenOptions::READ_ALL)
+    {
+        header.addValue(CADHeader::PROXYGRAPHICS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart)); // 1
+        header.addValue(CADHeader::TREEDEPTH, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 2
+        header.addValue(CADHeader::LUNITS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 3
+        header.addValue(CADHeader::LUPREC, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 4
+        header.addValue(CADHeader::AUNITS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 5
+        header.addValue(CADHeader::AUPREC, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));        // 6
     }
-    else {
+    else
+    {
         for(char i = 0; i < 6; ++i)
             skipBITSHORT (pabyBuf, nBitOffsetFromStart);
     }
@@ -154,28 +160,30 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     header.addValue(CADHeader::ATTMODE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
     header.addValue(CADHeader::PDMODE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
 
-    if(eOptions == OpenOptions::READ_ALL){
-    header.addValue(CADHeader::USERI1, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 1
-    header.addValue(CADHeader::USERI2, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 2
-    header.addValue(CADHeader::USERI3, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 3
-    header.addValue(CADHeader::USERI4, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 4
-    header.addValue(CADHeader::USERI5, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 5
-    header.addValue(CADHeader::SPLINESEGS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));// 6
-    header.addValue(CADHeader::SURFU, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 7
-    header.addValue(CADHeader::SURFV, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 8
-    header.addValue(CADHeader::SURFTYPE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 9
-    header.addValue(CADHeader::SURFTAB1, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 10
-    header.addValue(CADHeader::SURFTAB2, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 11
-    header.addValue(CADHeader::SPLINETYPE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));// 12
-    header.addValue(CADHeader::SHADEDGE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 13
-    header.addValue(CADHeader::SHADEDIF, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 14
-    header.addValue(CADHeader::UNITMODE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 15
-    header.addValue(CADHeader::MAXACTVP, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 16
-    header.addValue(CADHeader::ISOLINES, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 17
-    header.addValue(CADHeader::CMLJUST, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));   // 18
-    header.addValue(CADHeader::TEXTQLTY, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 19
+    if(eOptions == OpenOptions::READ_ALL)
+    {
+        header.addValue(CADHeader::USERI1, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 1
+        header.addValue(CADHeader::USERI2, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 2
+        header.addValue(CADHeader::USERI3, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 3
+        header.addValue(CADHeader::USERI4, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 4
+        header.addValue(CADHeader::USERI5, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));    // 5
+        header.addValue(CADHeader::SPLINESEGS, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));// 6
+        header.addValue(CADHeader::SURFU, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 7
+        header.addValue(CADHeader::SURFV, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));     // 8
+        header.addValue(CADHeader::SURFTYPE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 9
+        header.addValue(CADHeader::SURFTAB1, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 10
+        header.addValue(CADHeader::SURFTAB2, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 11
+        header.addValue(CADHeader::SPLINETYPE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));// 12
+        header.addValue(CADHeader::SHADEDGE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 13
+        header.addValue(CADHeader::SHADEDIF, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 14
+        header.addValue(CADHeader::UNITMODE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 15
+        header.addValue(CADHeader::MAXACTVP, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 16
+        header.addValue(CADHeader::ISOLINES, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 17
+        header.addValue(CADHeader::CMLJUST, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));   // 18
+        header.addValue(CADHeader::TEXTQLTY, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));  // 19
     }
-    else {
+    else
+    {
         for(char i = 0; i < 19; ++i)
             skipBITSHORT (pabyBuf, nBitOffsetFromStart);
     }
@@ -190,23 +198,25 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     header.addValue(CADHeader::PDSIZE, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));
     header.addValue(CADHeader::PLINEWID, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));
 
-    if(eOptions == OpenOptions::READ_ALL){
-    header.addValue(CADHeader::USERR1, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 1
-    header.addValue(CADHeader::USERR2, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 2
-    header.addValue(CADHeader::USERR3, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 3
-    header.addValue(CADHeader::USERR4, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 4
-    header.addValue(CADHeader::USERR5, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 5
-    header.addValue(CADHeader::CHAMFERA, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 6
-    header.addValue(CADHeader::CHAMFERB, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 7
-    header.addValue(CADHeader::CHAMFERC, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 8
-    header.addValue(CADHeader::CHAMFERD, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 9
-    header.addValue(CADHeader::FACETRES, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 10
-    header.addValue(CADHeader::CMLSCALE, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 11
-    header.addValue(CADHeader::CELTSCALE, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));// 12
+    if(eOptions == OpenOptions::READ_ALL)
+    {
+        header.addValue(CADHeader::USERR1, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 1
+        header.addValue(CADHeader::USERR2, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 2
+        header.addValue(CADHeader::USERR3, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 3
+        header.addValue(CADHeader::USERR4, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 4
+        header.addValue(CADHeader::USERR5, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));   // 5
+        header.addValue(CADHeader::CHAMFERA, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 6
+        header.addValue(CADHeader::CHAMFERB, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 7
+        header.addValue(CADHeader::CHAMFERC, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 8
+        header.addValue(CADHeader::CHAMFERD, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 9
+        header.addValue(CADHeader::FACETRES, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 10
+        header.addValue(CADHeader::CMLSCALE, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart)); // 11
+        header.addValue(CADHeader::CELTSCALE, ReadBITDOUBLE (pabyBuf, nBitOffsetFromStart));// 12
 
-    header.addValue(CADHeader::MENU, ReadTV (pabyBuf, nBitOffsetFromStart));
+        header.addValue(CADHeader::MENU, ReadTV (pabyBuf, nBitOffsetFromStart));
     }
-    else{
+    else
+    {
         for(char i = 0; i < 12; ++i)
             skipBITDOUBLE (pabyBuf, nBitOffsetFromStart);
         skipTV (pabyBuf, nBitOffsetFromStart);
@@ -454,7 +464,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     header.addValue(CADHeader::DIMLWD, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
     header.addValue(CADHeader::DIMLWE, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
     }
-    else {
+    else
+    {
         skipTV(pabyBuf, nBitOffsetFromStart);
         skipTV(pabyBuf, nBitOffsetFromStart);
 
@@ -517,11 +528,13 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     CADHandle stAPPIDTable = ReadHANDLE (pabyBuf, nBitOffsetFromStart);
     tables.addTable (CADTables::APPIDTable, stAPPIDTable);
 
-    if(eOptions == OpenOptions::READ_ALL){
+    if(eOptions == OpenOptions::READ_ALL)
+    {
         header.addValue(CADHeader::DIMSTYLE, ReadHANDLE (pabyBuf,
                                                         nBitOffsetFromStart));
     }
-    else{
+    else
+    {
         skipHANDLE (pabyBuf, nBitOffsetFromStart);
     }
 
@@ -538,7 +551,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     tables.addTable (CADTables::NamedObjectsDict, stNamedObjectsDict);
 
 
-    if(eOptions == OpenOptions::READ_ALL){
+    if(eOptions == OpenOptions::READ_ALL)
+    {
         header.addValue(CADHeader::TSTACKALIGN, ReadBITSHORT (pabyBuf,
                                                         nBitOffsetFromStart));
         header.addValue(CADHeader::TSTACKSIZE, ReadBITSHORT (pabyBuf,
@@ -562,18 +576,20 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     CADHandle stPlotStylesDict = ReadHANDLE (pabyBuf, nBitOffsetFromStart);
     tables.addTable (CADTables::PlotStylesDict, stPlotStylesDict);
 
-    if(eOptions == OpenOptions::READ_ALL){
-    int Flags = ReadBITLONG (pabyBuf, nBitOffsetFromStart);
-    header.addValue(CADHeader::CELWEIGHT, Flags & 0x001F);
-    header.addValue(CADHeader::ENDCAPS, static_cast<bool>(Flags & 0x0060));
-    header.addValue(CADHeader::JOINSTYLE, static_cast<bool>(Flags & 0x0180));
-    header.addValue(CADHeader::LWDISPLAY, static_cast<bool>(!(Flags & 0x0200)));
-    header.addValue(CADHeader::XEDIT, static_cast<bool>(!(Flags & 0x0400)));
-    header.addValue(CADHeader::EXTNAMES, static_cast<bool>(Flags & 0x0800));
-    header.addValue(CADHeader::PSTYLEMODE, static_cast<bool>(Flags & 0x2000));
-    header.addValue(CADHeader::OLESTARTUP, static_cast<bool>(Flags & 0x4000));
+    if(eOptions == OpenOptions::READ_ALL)
+    {
+        int Flags = ReadBITLONG (pabyBuf, nBitOffsetFromStart);
+        header.addValue(CADHeader::CELWEIGHT, Flags & 0x001F);
+        header.addValue(CADHeader::ENDCAPS, static_cast<bool>(Flags & 0x0060));
+        header.addValue(CADHeader::JOINSTYLE, static_cast<bool>(Flags & 0x0180));
+        header.addValue(CADHeader::LWDISPLAY, static_cast<bool>(!(Flags & 0x0200)));
+        header.addValue(CADHeader::XEDIT, static_cast<bool>(!(Flags & 0x0400)));
+        header.addValue(CADHeader::EXTNAMES, static_cast<bool>(Flags & 0x0800));
+        header.addValue(CADHeader::PSTYLEMODE, static_cast<bool>(Flags & 0x2000));
+        header.addValue(CADHeader::OLESTARTUP, static_cast<bool>(Flags & 0x4000));
     }
-    else{
+    else
+    {
         skipBITLONG (pabyBuf, nBitOffsetFromStart);
     }
 
@@ -595,19 +611,21 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     CADHandle stBlockRecordModelSpace = ReadHANDLE (pabyBuf, nBitOffsetFromStart);
     tables.addTable (CADTables::BlockRecordModelSpace, stBlockRecordModelSpace);
 
-    if(eOptions == OpenOptions::READ_ALL){
-    // Is this part of the header?
+    if(eOptions == OpenOptions::READ_ALL)
+    {
+        // Is this part of the header?
 
-    /*CADHandle LTYPE_BYLAYER = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
-    /*CADHandle LTYPE_BYBLOCK = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
-    /*CADHandle LTYPE_CONTINUOUS = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
+        /*CADHandle LTYPE_BYLAYER = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
+        /*CADHandle LTYPE_BYBLOCK = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
+        /*CADHandle LTYPE_CONTINUOUS = */ReadHANDLE (pabyBuf, nBitOffsetFromStart);
 
-    header.addValue(UNKNOWN11, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
-    header.addValue(UNKNOWN12, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
-    header.addValue(UNKNOWN13, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
-    header.addValue(UNKNOWN14, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
+        header.addValue(UNKNOWN11, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
+        header.addValue(UNKNOWN12, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
+        header.addValue(UNKNOWN13, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
+        header.addValue(UNKNOWN14, ReadBITSHORT (pabyBuf, nBitOffsetFromStart));
     }
-    else {
+    else
+    {
         skipHANDLE (pabyBuf, nBitOffsetFromStart);
         skipHANDLE (pabyBuf, nBitOffsetFromStart);
         skipHANDLE (pabyBuf, nBitOffsetFromStart);
@@ -769,7 +787,7 @@ int DWGFileR2000::createFileMap ()
     return CADErrorCodes::SUCCESS;
 }
 
-CADObject * DWGFileR2000::getObject (long index )
+CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
 {
     CADObject * readed_object = nullptr;
 
@@ -1117,6 +1135,50 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         return circle;
     }
 
+    case CADObject::ATTRIB:
+    {
+        CADAttrib * attrib = new CADAttrib();
+        CADAttribObject * cadAttrib = static_cast<CADAttribObject*>(
+                readedObject.get() );
+
+        attrib->setPosition (cadAttrib->vertInsetionPoint);
+        attrib->setColor (cadAttrib->stCed.nCMColor);
+        attrib->setExtrusion (cadAttrib->vectExtrusion);
+        attrib->setRotationAngle (cadAttrib->dfRotationAng);
+        attrib->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
+        attrib->setElevation (cadAttrib->dfElevation);
+        attrib->setHeight (cadAttrib->dfHeight);
+        attrib->setObliqueAngle (cadAttrib->dfObliqueAng);
+        attrib->setPositionLocked (cadAttrib->bLockPosition);
+        attrib->setTag (cadAttrib->sTag);
+        attrib->setTextValue (cadAttrib->sTextValue);
+        attrib->setThickness (cadAttrib->dfThickness);
+
+        return attrib;
+    }
+
+    case CADObject::ATTDEF:
+    {
+        CADAttdef * attdef = new CADAttdef();
+        CADAttdefObject * cadAttrib = static_cast<CADAttdefObject*>(
+                readedObject.get() );
+
+        attdef->setPosition (cadAttrib->vertInsetionPoint);
+        attdef->setColor (cadAttrib->stCed.nCMColor);
+        attdef->setExtrusion (cadAttrib->vectExtrusion);
+        attdef->setRotationAngle (cadAttrib->dfRotationAng);
+        attdef->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
+        attdef->setElevation (cadAttrib->dfElevation);
+        attdef->setHeight (cadAttrib->dfHeight);
+        attdef->setObliqueAngle (cadAttrib->dfObliqueAng);
+        attdef->setPositionLocked (cadAttrib->bLockPosition);
+        attdef->setTag (cadAttrib->sTag);
+        attdef->setTextValue (cadAttrib->sTextValue);
+        attdef->setThickness (cadAttrib->dfThickness);
+
+        return attdef;
+    }
+
     case CADObject::ELLIPSE:
     {
         CADEllipse * ellipse = new CADEllipse();
@@ -1129,7 +1191,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         ellipse->setEndingAngle (cadEllipse->dfEndAngle);
         ellipse->setStartingAngle (cadEllipse->dfBegAngle);
 
-        return  ellipse;
+        return ellipse;
     }
 
     case CADObject::LINE:
@@ -2373,10 +2435,10 @@ CADAttdefObject *DWGFileR2000::getAttributesDefn(long dObjectSize,
     attdef->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
     if ( !attdef->stCed.bNoLinks )
-                {
+    {
         attdef->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
         attdef->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                }
+    }
 
     attdef->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
@@ -2387,7 +2449,7 @@ CADAttdefObject *DWGFileR2000::getAttributesDefn(long dObjectSize,
 
     attdef->hStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     attdef->setCRC( ReadRAWSHORT (pabyInput, nBitOffsetFromStart) );
 
 #ifdef _DEBUG

@@ -34,7 +34,7 @@
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
-    return IdentifyCADFile( GetDeafultFileIO(poOpenInfo->pszFilename) ) == 0 ? 0 : 1;
+    return IdentifyCADFile( GetDefaultFileIO(poOpenInfo->pszFilename) ) == 0 ? 0 : 1;
 }
 
 /************************************************************************/

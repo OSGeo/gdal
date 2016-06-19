@@ -28,6 +28,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
+#include <iostream>
 #include "cadlayer.h"
 #include "cadfile.h"
 
@@ -140,15 +141,50 @@ void CADLayer::setHandle(long value)
 
 void CADLayer::addHandle(long handle, CADObject::ObjectType type)
 {
-    if(isGeometryType (type)){
-        geometryHandles.push_back (handle);
-        if(geometryType == -2) // if not inited set type for first geometry
+    if(isGeometryType (type))
+    {
+        if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
+        {
+            unique_ptr< CADObject > geometry( pCADFile->getObject ( handle, false ) );
+            if ( geometry.get() == nullptr ) return;
+
+            switch( geometry->getType () )
+            {
+                case CADObject::ATTRIB:
+                {
+                    auto attrib = ( CADAttribObject* ) geometry.get();
+                    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
+                    {
+                        if ( i->first == attrib->stChed.hOwner.getAsLong () )
+                        {
+                            i->second.insert ( make_pair ( attrib->sTag, handle ) );
+                            return;
+                        }
+                    }
+                    break;
+                }
+
+                case CADObject::ATTDEF:
+                {
+                    auto attrib = ( CADAttdefObject* ) geometry.get();
+                    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
+                    {
+                        if ( i->first == attrib->stChed.hOwner.getAsLong () )
+                        {
+                            i->second.insert ( make_pair( attrib->sTag, handle ) );
+                            return;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        geometryHandles.push_back( handle );
+        if( geometryType == -2 ) // if not inited set type for first geometry
             geometryType = type;
-        else if(geometryType != type) // if type differs from previous geomtry this is geometry bag
+        else if( geometryType != type ) // if type differs from previous geometry this is geometry bag
             geometryType = -1;
-    }
-    else {
-        attributeHandles.push_back (handle);
     }
 }
 

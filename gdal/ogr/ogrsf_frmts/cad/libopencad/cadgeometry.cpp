@@ -74,6 +74,29 @@ void CADGeometry::setColor(int ACIColorIndex)
     geometry_color = CADACIColors[ACIColorIndex];
 }
 
+map< string, CADAttdef> CADGeometry::getAttributes ()
+{
+    return mapstAttributes;
+}
+
+void CADGeometry::addAttribute( CADAttrib* attrib )
+{
+    // FIXME: very dangerous. should be casted to attdef
+    // manually
+    if ( attrib != nullptr )
+    {
+        mapstAttributes.insert( make_pair( attrib->getTag (), *( CADAttdef* ) attrib ) );
+    }
+}
+
+void CADGeometry::addAttribute( CADAttdef* attdef )
+{
+    if( attdef != nullptr )
+    {
+        mapstAttributes.insert ( make_pair( attdef->getTag (), *attdef ) );
+    }
+}
+
 //------------------------------------------------------------------------------
 // CADPoint3D
 //------------------------------------------------------------------------------
@@ -811,6 +834,11 @@ void CADFace3D::addCorner(const CADVector &corner)
     avertCorners.push_back (corner);
 }
 
+CADVector CADFace3D::getCorner ( size_t index )
+{
+    return avertCorners[index];
+}
+
 void CADFace3D::print() const
 {
     cout << "|---------3DFace---------|\n"
@@ -935,4 +963,95 @@ void CADMLine::setOpened(bool value)
 void CADMLine::addVertex(const CADVector &vertex)
 {
     avertVertexes.push_back (vertex);
+}
+
+//------------------------------------------------------------------------------
+// CADAttrib
+//------------------------------------------------------------------------------
+
+CADAttrib::CADAttrib ()
+{
+    geometryType = CADGeometry::ATTRIB;
+}
+
+void CADAttrib::print () const
+{
+    cout << "|---------Attribute---------|\n"
+    << "Base point: "
+    << position.getX() << "\t"
+    << position.getY() << "\t"
+    << position.getZ() << "\n"
+    << "Tag: " << sTag << "\n"
+    << "Text: " << textValue << "\n" << endl;
+}
+
+double CADAttrib::getElevation () const
+{
+    return dfElevation;
+}
+
+void CADAttrib::setElevation ( double elev )
+{
+    dfElevation = elev;
+}
+
+string CADAttrib::getTag () const
+{
+    return sTag;
+}
+
+void CADAttrib::setTag ( const string & tag)
+{
+    sTag = tag;
+}
+
+CADVector CADAttrib::getAlignmentPoint () const
+{
+    return vertAlignmentPoint;
+}
+
+void CADAttrib::setAlignmentPoint ( const CADVector & vect )
+{
+    vertAlignmentPoint = vect;
+}
+
+bool CADAttrib::isPositionLocked () const
+{
+    return bLockPosition;
+}
+
+void CADAttrib::setPositionLocked ( bool lock )
+{
+    bLockPosition = lock;
+}
+
+//------------------------------------------------------------------------------
+// CADAttdef
+//------------------------------------------------------------------------------
+
+CADAttdef::CADAttdef ()
+{
+    geometryType = CADGeometry::ATTDEF;
+}
+
+void CADAttdef::print () const
+{
+    cout << "|---------Attribute defn---------|\n"
+    << "Base point: "
+    << position.getX() << "\t"
+    << position.getY() << "\t"
+    << position.getZ() << "\n"
+    << "Tag: " << sTag << "\n"
+    << "Text: " << textValue << "\n"
+    << "Prompt: " << sPrompt << "\n" << endl;
+}
+
+string CADAttdef::getPrompt () const
+{
+    return sPrompt;
+}
+
+void CADAttdef::setPrompt ( const string & prompt)
+{
+    sPrompt = prompt;
 }
