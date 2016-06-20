@@ -1290,10 +1290,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        OGRwkbGeometryType eGType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
-        if (eGType == wkbTriangle)
-            eErr = ((OGRTriangle *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
-        else if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
             eErr = ((OGRCurvePolygon *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
@@ -1349,9 +1346,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        if (eType == wkbTriangle)
-            eErr = ((OGRTriangle *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
-        else if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
             eErr = ((OGRCurvePolygon *)hGeom)->addRingDirectly( (OGRCurve *) hNewSubGeom );
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )

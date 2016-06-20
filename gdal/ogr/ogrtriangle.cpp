@@ -1,20 +1,40 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  The OGRTriangle geometry class.
+ * Author:   Avyav Kumar Singh <avyavkumar at gmail dot com>
+ *
+ ******************************************************************************
+ * Copyright (c) 2016, Avyav Kumar Singh <avyavkumar at gmail dot com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_sfcgal.h"
 #include "ogr_geos.h"
 #include "ogr_api.h"
+#include "ogr_libs.h"
 
-#ifndef HAVE_GEOS
-#define UNUSED_IF_NO_GEOS CPL_UNUSED
-#else
-#define UNUSED_IF_NO_GEOS
-#endif
-
-#ifndef HAVE_SFCGAL
-#define UNUSED_IF_NO_SFCGAL CPL_UNUSED
-#else
-#define UNUSED_IF_NO_SFCGAL
-#endif
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -577,12 +597,6 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
     }
 
     // check if the ring to be added is valid
-    OGRPoint *poStart = new OGRPoint();
-    OGRPoint *poEnd = new OGRPoint();
-
-    poNewRingCloned->StartPoint(poStart);
-    poNewRingCloned->EndPoint(poEnd);
-
     if (!poNewRingCloned->get_IsClosed() || poNewRingCloned->getNumPoints() != 4)
     {
         // condition fails; cannot add this ring as it is not valid
@@ -594,10 +608,6 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;
-
-    // free poStart and poEnd as we don't need them
-    delete poStart;
-    delete poEnd;
 
     return eErr;
 }
@@ -628,15 +638,6 @@ OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
 /************************************************************************/
 
 OGRBoolean  OGRTriangle::IsSimple() const
-{
-    return TRUE;
-}
-
-/************************************************************************/
-/*                               IsRing()                               */
-/************************************************************************/
-
-OGRBoolean  OGRTriangle::IsRing() const
 {
     return TRUE;
 }

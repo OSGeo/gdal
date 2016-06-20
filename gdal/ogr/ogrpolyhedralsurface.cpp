@@ -706,9 +706,8 @@ OGRMultiPolygon* OGRPolyhedralSurface::CastToMultiPolygon()
 
 /************************************************************************/
 /*                            addGeometry()                             */
-/*      Add a new geometry to a collection.  Subclasses should          */
-/*      override this to verify the type of the new geometry, and       */
-/*      then call this method to actually add it.                       */
+/*      Add a new geometry to a collection.  Only a POLYGON can be      */
+/*      added to a POLYHEDRALSURFACE.                                   */
 /************************************************************************/
 
 OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
@@ -729,19 +728,19 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
 }
 
 /************************************************************************/
-/*                           getNumPolygons()                           */
+/*                          getNumGeometries()                          */
 /************************************************************************/
 
-int OGRPolyhedralSurface::getNumPolygons()
+int OGRPolyhedralSurface::getNumGeometries()
 {
     return oMP.nGeomCount;
 }
 
 /************************************************************************/
-/*                             getPolygon()                             */
+/*                            getGeometry()                             */
 /************************************************************************/
 
-OGRGeometry* OGRPolyhedralSurface::getPolygon(int i)
+OGRGeometry* OGRPolyhedralSurface::getGeometry(int i)
 {
     return (OGRGeometry *)oMP.papoGeoms[i];
 }
@@ -855,32 +854,4 @@ double OGRPolyhedralSurface::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *p
 OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                              IsValid()                               */
-/*                  Test if the geometry is valid.                      */
-/************************************************************************/
-
-OGRBoolean OGRPolyhedralSurface::IsValid() const
-{
-#ifndef HAVE_SFCGAL
-
-    CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
-    return -1.0;
-
-#else
-
-    sfcgal_init();
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
-        return -1.0;
-
-    OGRBoolean isValid = sfcgal_geometry_is_valid(poThis);
-
-    sfcgal_geometry_delete(poThis);
-
-    return isValid;
-
-#endif
 }
