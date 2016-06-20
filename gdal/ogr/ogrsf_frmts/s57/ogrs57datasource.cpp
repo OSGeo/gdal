@@ -55,12 +55,6 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
-    if( papszOpenOptionsIn != NULL )
-    {
-        papszOptions = CSLDuplicate(papszOpenOptionsIn);
-        return;
-    }
-
     const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
 
     if ( pszOptString == NULL )
@@ -76,6 +70,21 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
         while( *papszCurOption )
             CPLDebug( "S57", "    %s", *papszCurOption++ );
     }
+
+/* -------------------------------------------------------------------- */
+/*      And from open options.                                          */
+/* -------------------------------------------------------------------- */
+    for(char** papszIter = papszOpenOptionsIn; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = NULL;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            papszOptions = CSLSetNameValue(papszOptions, pszKey, pszValue);
+        }
+        CPLFree(pszKey);
+    }
+
 }
 
 /************************************************************************/
