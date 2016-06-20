@@ -29,9 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-//#ifndef FROM_GDAL_I
+#ifndef FROM_GDAL_I
 %include "exception.i"
-//#endif
+#endif
 %include constraints.i
 
 #ifdef PERL_CPAN_NAMESPACE
@@ -55,28 +55,51 @@
 #endif
 
 %{
+#include <iostream>
+using namespace std;
+
 #include "gdal.h"
+#include "ogr_api.h"
+#include "ogr_p.h"
+#include "ogr_core.h"
+#include "cpl_port.h"
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
 #include "gnm_api.h"
 
 typedef void GDALMajorObjectShadow;
 typedef void GNMNetworkShadow;
 typedef void GNMGenericNetworkShadow;
-%}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
-%{
 #ifdef DEBUG
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
+typedef struct OGRDriverHS OGRDriverShadow;
+typedef struct OGRDataSourceHS OGRDataSourceShadow;
+#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
+typedef void OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
+typedef void OGRDriverShadow;
+typedef void OGRDataSourceShadow;
+#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
-typedef void OSRSpatialReferenceShadow;
+typedef void OGRFeatureDefnShadow;
+typedef void OGRGeometryShadow;
+typedef void OSRCoordinateTransformationShadow;
+typedef void OGRFieldDefnShadow;
 #endif
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
+typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
 
 #if defined(SWIGPYTHON)
 %include python_exceptions.i
@@ -97,8 +120,12 @@ typedef void OSRSpatialReferenceShadow;
 %include gdal_typemaps.i
 #endif
 
-typedef int CPLErr;
+#define FROM_OGR_I
+%import ogr.i
+
+
 typedef int GNMDirection;
+typedef int CPLErr;
 
 //************************************************************************
 //
@@ -109,7 +136,6 @@ typedef int GNMDirection;
 %{
 #include "gdal.h"
 %}
-typedef int CPLErr;
 #define FROM_PYTHON_OGR_I
 %include MajorObject.i
 #undef FROM_PYTHON_OGR_I
@@ -144,12 +170,6 @@ typedef enum
   GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
       return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
   }
-%}
-#endif
-
-#if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
-%inline %{
-typedef char retStringAndCPLFree;
 %}
 #endif
 
@@ -395,4 +415,3 @@ class GNMGenericNetworkShadow : public GNMNetworkShadow
         }
     }
 };
-
