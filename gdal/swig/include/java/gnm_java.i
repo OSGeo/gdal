@@ -63,6 +63,7 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.gdal.MajorObject;
 import org.gdal.ogr.Geometry;
+import org.gdal.ogr.Feature;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 %}
@@ -71,6 +72,7 @@ import org.gdal.ogr.Layer;
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdal.MajorObject;
 import org.gdal.ogr.Geometry;
+import org.gdal.ogr.Feature;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 %}
@@ -79,6 +81,7 @@ import org.gdal.ogr.Layer;
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdal.MajorObject;
 import org.gdal.ogr.Geometry;
+import org.gdal.ogr.Feature;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 %}
@@ -87,6 +90,7 @@ import org.gdal.ogr.Layer;
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdal.MajorObject;
 import org.gdal.ogr.Geometry;
+import org.gdal.ogr.Feature;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 %}
