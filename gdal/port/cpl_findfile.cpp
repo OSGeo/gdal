@@ -118,8 +118,6 @@ static FindFileTLS* CPLFinderInit()
   #else
             CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
   #endif
-#else
-            CPLPushFinderLocation( "/usr/local/share/gdal" );
 #endif
         }
     }
@@ -244,6 +242,10 @@ void CPLPushFinderLocation( const char *pszLocation )
 {
     FindFileTLS* pTLSData = CPLFinderInit();
     if( pTLSData == NULL )
+        return;
+    // check if location already is in list    
+    if(CSLFindStringCaseSensitive(pTLSData->papszFinderLocations,
+                                   pszLocation) > -1 )    
         return;
     pTLSData->papszFinderLocations
         = CSLAddStringMayFail( pTLSData->papszFinderLocations,
