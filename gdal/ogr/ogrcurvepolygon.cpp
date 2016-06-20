@@ -398,7 +398,15 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
 
 OGRErr OGRCurvePolygon::addRingDirectly( OGRCurve * poNewRing )
 {
-    return addRingDirectlyInternal( poNewRing, TRUE );
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        if (oCC.nCurveCount == 0)
+            return addRingDirectlyInternal( poNewRing, TRUE );
+        else
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+    else
+        return addRingDirectlyInternal( poNewRing, TRUE );
 }
 
 OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,

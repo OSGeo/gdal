@@ -1127,28 +1127,27 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 {
 
   public:
-    OGRTriangle(); // tested
-    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r); // tested
-    OGRTriangle(const OGRTriangle &other); // tested
-    OGRTriangle& operator=(const OGRTriangle& other); // tested
+    OGRTriangle();
+    OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r);
+    OGRTriangle(const OGRTriangle &other);
+    OGRTriangle& operator=(const OGRTriangle& other);
     virtual ~OGRTriangle();
-    const char *getGeometryName() const; // tested
-    virtual OGRwkbGeometryType getGeometryType() const; // tested
+    const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
 
     // IWks Interface
-    virtual int WkbSize() const; // tested
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ); // tested
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const; // tested
-    virtual OGRErr importFromWkt( char ** ); // tested
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const; // tested
+    virtual int WkbSize() const;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
 
     // New methods interfaced through SFCGAL or rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry
-    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;   // tested
-    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;  // tested
-    virtual OGRBoolean  IsSimple() const;   // tested
-    virtual OGRBoolean  IsRing() const; // tested
-    virtual OGRErr addRing	(OGRCurve *poNewRing); // tested
-    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT; // tested
+    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
+    virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
+    virtual OGRBoolean  IsSimple() const;
+    virtual OGRErr addRing	(OGRCurve *poNewRing);
+    virtual OGRGeometry *SymDifference( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT;
 };
 
 /************************************************************************/
@@ -1343,7 +1342,6 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual int getDimension() const;
 
     virtual void empty();
-    virtual OGRBoolean IsValid() const;
 
     virtual OGRGeometry *clone() const;
     virtual void getEnvelope(OGREnvelope * psEnvelope) const;
@@ -1358,8 +1356,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     OGRMultiPolygon* CastToMultiPolygon();
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRErr addGeometry( const OGRGeometry * );
-    virtual int getNumPolygons();
-    virtual OGRGeometry* getPolygon(int i);
+    virtual int getNumGeometries();
+    virtual OGRGeometry* getGeometry(int i);
 
     virtual OGRBoolean  IsEmpty() const;
     virtual void setCoordinateDimension( int nDimension );
