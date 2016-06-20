@@ -89,7 +89,7 @@ typedef void OSRSpatialReferenceShadow;
 #elif defined(SWIGCSHARP)
 //%include gnm_csharp.i
 #elif defined(SWIGJAVA)
-//%include gnm_java.i
+%include gnm_java.i
 #elif defined(SWIGPERL)
 //%include gnm_perl.i
 %import typemaps_perl.i
@@ -105,7 +105,17 @@ typedef int GNMDirection;
 // Define the MajorObject object
 //
 //************************************************************************
-%include "MajorObject.i"
+#if defined(SWIGPYTHON)
+%{
+#include "gdal.h"
+%}
+typedef int CPLErr;
+#define FROM_PYTHON_OGR_I
+%include MajorObject.i
+#undef FROM_PYTHON_OGR_I
+#else /* defined(SWIGPYTHON) */
+%import MajorObject.i
+#endif /* defined(SWIGPYTHON) */
 
 %feature("autodoc");
 
@@ -123,6 +133,7 @@ typedef enum
 #define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
 #define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source
 
+#ifndef SWIGJAVA
 %inline %{
   GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
       return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
@@ -134,6 +145,7 @@ typedef enum
       return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
   }
 %}
+#endif
 
 #if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
 %inline %{
@@ -162,11 +174,13 @@ class GNMNetworkShadow : public GDALMajorObjectShadow
             }
         }
 
+#ifndef SWIGJAVA
         %apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
         void ReleaseResultSet(OGRLayerShadow *layer){
             GDALDatasetReleaseResultSet(self, layer);
         }
         %clear OGRLayerShadow *layer;
+#endif
 
         int GetVersion()
         {
