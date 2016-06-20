@@ -200,6 +200,60 @@ def ogr_geom_pickle():
     return 'success'
 
 ###############################################################################
+# Test suite for PolyhedralSurface
+
+def geom_polyhedral_surface():
+    from osgeo import ogr
+    wkt_original = 'POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
+((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),\
+((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),\
+((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),\
+((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),\
+((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
+    ps = ogr.CreateGeometryFromWkt(wkt_original)
+
+    wkb_string = ps.ExportToWkb(ogr.wkbXDR)
+    geom = ogr.CreateGeometryFromWkb(wkb_string)
+    wkt_string = geom.ExportToWkt()
+    if wkt_string != wkt_original:
+        gdaltest.post_reason ("Failure in Wkb methods of PolyhedralSurface")
+        return 'fail'
+
+    area = ps.Area()
+    if area != 6.0:
+        gdaltest.post_reason ("Wrong area of PolyhedralSurface")
+        return 'fail'
+
+    size = ps.WkbSize()
+    if size != 807:
+        gdaltest.post_reason ("Wrong WkbSize() of PolyhedralSurface")
+        return 'fail'
+
+    geom = ps.DelaunayTriangulation(0.0,True)
+    wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 0 0),(1 0 0,1 1 0),(0 1 0,1 0 0))'
+    wkt_geom = geom.ExportToWkt()
+    if wkt_geom != wkt_geom_dt:
+        gdaltest.post_reason ("Failure in DelaunayTriangulation() of PolyhedralSurface")
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkb(wkb_string)
+    if ps.Contains(geom) != True:
+        gdaltest.post_reason ("Failure in Contains() of PolyhedralSurface")
+        return 'fail'
+
+    if ps.IsEmpty() == True:
+        gdaltest.post_reason ("Failure in IsEmpty() of PolyhedralSurface")
+        return 'fail'
+
+    ps.Empty()
+    wkt_string = ps.ExportToWkt()
+    if wkt_string != 'POLYHEDRALSURFACE EMPTY':
+        gdaltest.post_reason ("Failure in Empty() of PolyhedralSurface")
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test OGRGeometry::getBoundary() result for point.
 
 def ogr_geom_boundary_point():
@@ -3773,6 +3827,7 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [
     ogr_geom_area,
+    geom_polyhedral_surface,
     ogr_geom_area_triangle,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,
