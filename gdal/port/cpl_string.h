@@ -335,10 +335,11 @@ public:
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
-    CPLString &replaceAll(const std::string & osBefore, const std::string & osAfter);
-    CPLString &replaceAll(const std::string & osBefore, char chAfter);
-    CPLString &replaceAll(char chBefore, const std::string & osAfter);
-    CPLString &replaceAll(char chBefore, char chAfter);
+    CPLString &replaceAll(
+        const std::string &osBefore, const std::string& osAfter );
+    CPLString &replaceAll( const std::string &osBefore, char chAfter );
+    CPLString &replaceAll( char chBefore, const std::string &osAfter );
+    CPLString &replaceAll( char chBefore, char chAfter );
 
     /* case insensitive find alternates */
     size_t    ifind( const std::string & str, size_t pos = 0 ) const;

@@ -328,14 +328,14 @@ CPLString &CPLString::tolower()
 /**
  * Replace all occurences of osBefore with osAfter.
  */
-CPLString &CPLString::replaceAll(const std::string & osBefore,
-                                 const std::string & osAfter)
+CPLString &CPLString::replaceAll( const std::string &osBefore,
+                                  const std::string &osAfter )
 {
-    size_t nStartPos = 0;
     const size_t nBeforeSize = osBefore.size();
     const size_t nAfterSize = osAfter.size();
     if( nBeforeSize )
     {
+        size_t nStartPos = 0;
         while( (nStartPos = find(osBefore, nStartPos)) != std::string::npos )
         {
             replace(nStartPos, nBeforeSize, osAfter);
@@ -345,22 +345,22 @@ CPLString &CPLString::replaceAll(const std::string & osBefore,
     return *this;
 }
 
-CPLString &CPLString::replaceAll(char chBefore,
-                                 const std::string & osAfter)
+CPLString &CPLString::replaceAll( char chBefore,
+                                  const std::string &osAfter )
 {
     return replaceAll(std::string(&chBefore,1), osAfter);
 }
 
-CPLString &CPLString::replaceAll(const std::string & osBefore,
-                                 char chAfter)
+CPLString &CPLString::replaceAll( const std::string &osBefore,
+                                  char chAfter )
 {
-    return replaceAll(osBefore, std::string(&chAfter,1));
+    return replaceAll(osBefore, std::string(&chAfter, 1));
 }
 
-CPLString &CPLString::replaceAll(char chBefore,
-                                 char chAfter)
+CPLString &CPLString::replaceAll( char chBefore,
+                                  char chAfter )
 {
-    return replaceAll(std::string(&chBefore,1), std::string(&chAfter,1));
+    return replaceAll(std::string(&chBefore, 1), std::string(&chAfter, 1));
 }
 
 /************************************************************************/
