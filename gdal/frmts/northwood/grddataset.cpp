@@ -993,12 +993,11 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     GDALRasterBand *pBand = poSrcDS->GetRasterBand(1);
     char sMax[10];
     char sMin[10];
-    CPLErr err;
 
     if ((CSLFetchNameValue(papszOptions, "ZMAX") == NULL)
             || (CSLFetchNameValue(papszOptions, "ZMIN") == NULL)) {
-        err = pBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, &dfMean,
-                &dfStdDev);
+        CPL_IGNORE_RET_VAL(pBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, &dfMean,
+                &dfStdDev));
     }
 
     if (CSLFetchNameValue(papszOptions, "ZMAX") == NULL) {
