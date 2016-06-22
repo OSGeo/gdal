@@ -73,9 +73,6 @@ class NWT_GRDDataset: public GDALPamDataset {
     GByte abyHeader[1024];
     NWT_GRID *pGrd;
     NWT_RGB ColorMap[4096];
-    //char *pszProjection;
-    char *pszTabFile; // TAB file path
-    char *pszImageFile; // Image file path
     bool bUpdateHeader;
     CPLString m_osProjection;
 
@@ -378,7 +375,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 NWT_GRDDataset::NWT_GRDDataset() :
-        fp(NULL), pGrd(NULL), pszTabFile(NULL), pszImageFile(NULL), bUpdateHeader(false) {
+        fp(NULL), pGrd(NULL), bUpdateHeader(false) {
     //poCT = NULL;
     for (size_t i = 0; i < CPL_ARRAYSIZE(ColorMap); ++i) {
         ColorMap[i].r = 0;
@@ -658,12 +655,12 @@ int NWT_GRDDataset::UpdateHeader() {
     poHeaderBlock->WriteFloat(pGrd->fZMaxScale);
 
     // Description String
-    int nChar = strlen(pGrd->cDescription);
+    int nChar = static_cast<int>(strlen(pGrd->cDescription));
     poHeaderBlock->WriteBytes(nChar, (GByte*) pGrd->cDescription);
     poHeaderBlock->WriteZeros(32 - nChar);
 
     // Unit Name String
-    nChar = strlen(pGrd->cZUnits);
+    nChar = static_cast<int>(strlen(pGrd->cZUnits));
     poHeaderBlock->WriteBytes(nChar, (GByte *) pGrd->cZUnits);
     poHeaderBlock->WriteZeros(32 - nChar);
 
