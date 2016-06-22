@@ -52,8 +52,7 @@ public:
     virtual size_t Write(void* ptr, size_t size) override;
     virtual void Rewind() override;
 protected:
-    FILE *m_oFileStream;
-    // std::ifstream m_oFileStream;
+    VSILFILE *m_oFileStream;
 };
 
 #endif // CADFILESTREAMIO_H

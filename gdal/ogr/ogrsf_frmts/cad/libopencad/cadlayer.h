@@ -33,6 +33,8 @@
 
 #include "cadgeometry.h"
 
+#include <memory>
+
 class CADFile;
 
 using namespace std;

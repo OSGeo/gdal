@@ -50,7 +50,7 @@ const char* CADFileStreamIO::ReadLine()
 
 bool CADFileStreamIO::Eof()
 {
-    return VSIFEof( m_oFileStream ) == 0 ? false : true;
+    return VSIFEofL( m_oFileStream ) == 0 ? false : true;
 }
 
 bool CADFileStreamIO::Open(int mode)
@@ -65,7 +65,7 @@ bool CADFileStreamIO::Open(int mode)
         return false;
     }
 
-    m_oFileStream = VSIFOpen( m_pszFilePath, sOpenMode.c_str() );
+    m_oFileStream = VSIFOpenL( m_pszFilePath, sOpenMode.c_str() );
 
     if( m_oFileStream != NULL )
         m_bIsOpened = true;
@@ -75,7 +75,7 @@ bool CADFileStreamIO::Open(int mode)
 
 bool CADFileStreamIO::Close()
 {
-    return VSIFClose( m_oFileStream ) == 0 ? true : false;
+    return VSIFCloseL( m_oFileStream ) == 0 ? true : false;
 }
 
 int CADFileStreamIO::Seek(long offset, CADFileIO::SeekOrigin origin)
@@ -93,17 +93,17 @@ int CADFileStreamIO::Seek(long offset, CADFileIO::SeekOrigin origin)
         break;
     }
 
-    return VSIFSeek( m_oFileStream, offset, nWhence) == 0 ? 0 : 1;
+    return VSIFSeekL( m_oFileStream, offset, nWhence) == 0 ? 0 : 1;
 }
 
 long CADFileStreamIO::Tell()
 {
-    return VSIFTell( m_oFileStream );
+    return VSIFTellL( m_oFileStream );
 }
 
 size_t CADFileStreamIO::Read(void* ptr, size_t size)
 {
-    return VSIFRead( static_cast<char*>(ptr),
+    return VSIFReadL( static_cast<char*>(ptr),
                      1,
                      size,
                      m_oFileStream );
@@ -117,5 +117,5 @@ size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
 
 void CADFileStreamIO::Rewind()
 {
-    VSIRewind ( m_oFileStream );
+    VSIRewindL ( m_oFileStream );
 }

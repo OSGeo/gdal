@@ -29,6 +29,8 @@
 #ifndef OGR_CAD_H_INCLUDED
 #define OGR_CAD_H_INCLUDED
 
+#include <memory>
+
 #include "ogrsf_frmts.h"
 
 #include "libopencad/opencad_api.h"
