@@ -1038,8 +1038,8 @@ int OGRLIBKMLDataSource::OpenKml (
       std::string layername_default( CPLGetBasename ( pszFilename ) );
 
       if( m_poKmlDSContainer->has_name ( ) ) {
-	  layername_default = m_poKmlDSContainer->get_name ( );
-	}
+          layername_default = m_poKmlDSContainer->get_name ( );
+      }
 
       AddLayer ( layername_default.c_str(),
                    poOgrSRS, wkbUnknown,
@@ -1263,16 +1263,16 @@ int OGRLIBKMLDataSource::OpenKmz (
 
         if ( nPlacemarks && !nLayers ) {
 
-	  std::string layername_default( CPLGetBasename ( pszFilename ) );
+            std::string layername_default( CPLGetBasename ( pszFilename ) );
 
-	  if( poKmlContainer->has_name ( ) ) {
-	      layername_default = poKmlContainer->get_name ( );
-	    }
+            if( poKmlContainer->has_name ( ) ) {
+                layername_default = poKmlContainer->get_name ( );
+            }
 
-	  AddLayer ( layername_default.c_str(),
-		     poOgrSRS, wkbUnknown,
-		     this, poKmlDocKmlRoot, poKmlContainer,
-		     pszFilename, FALSE, bUpdateIn, 1 );
+          AddLayer ( layername_default.c_str(),
+                     poOgrSRS, wkbUnknown,
+                     this, poKmlDocKmlRoot, poKmlContainer,
+                     pszFilename, FALSE, bUpdateIn, 1 );
         }
     }
 
