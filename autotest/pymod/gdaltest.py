@@ -333,7 +333,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
                  xoff = 0, yoff = 0, xsize = 0, ysize = 0, options = [],
-                 filename_absolute = 0, chksum_after_reopening = None ):
+                 filename_absolute = 0, chksum_after_reopening = None, open_options = None ):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
@@ -354,6 +354,7 @@ class GDALTest:
         self.xsize = xsize
         self.ysize = ysize
         self.options = options
+        self.open_options = open_options
 
     def testDriver(self):
         if self.driver is None:
@@ -379,7 +380,10 @@ class GDALTest:
         else:
             wrk_filename = 'data/' + self.filename
 
-        ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+        if self.open_options:
+            ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
 
         if ds is None:
             post_reason( 'Failed to open dataset: ' + wrk_filename )
@@ -495,7 +499,8 @@ class GDALTest:
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
                        vsimem = 0, new_filename = None, strict_in = 0,
                        skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
-                       check_checksum_not_null = None, interrupt_during_copy = False):
+                       check_checksum_not_null = None, interrupt_during_copy = False,
+                       dest_open_options = None):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -505,7 +510,11 @@ class GDALTest:
         else:
             wrk_filename = 'data/' + self.filename
 
-        src_ds = gdal.Open( wrk_filename )
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
 
@@ -576,7 +585,10 @@ class GDALTest:
 
         # hopefully it's closed now!
 
-        new_ds = gdal.Open( new_filename )
+        if dest_open_options is not None:
+            new_ds = gdal.OpenEx( new_filename, gdal.OF_RASTER, open_options = dest_open_options )
+        else:
+            new_ds = gdal.Open( new_filename )
         if new_ds is None:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
@@ -645,7 +657,7 @@ class GDALTest:
         return 'success'
 
     def testCreate(self, vsimem = 0, new_filename = None, out_bands = 1,
-                   check_minmax = 1 ):
+                   check_minmax = 1, dest_open_options = None ):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -654,7 +666,11 @@ class GDALTest:
         else:
             wrk_filename = 'data/' + self.filename
 
-        src_ds = gdal.Open( wrk_filename )
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
         src_img = src_ds.GetRasterBand(self.band).ReadRaster(0,0,xsize,ysize)
@@ -701,7 +717,10 @@ class GDALTest:
 
         new_ds = None
 
-        new_ds = gdal.Open( new_filename )
+        if dest_open_options is not None:
+            new_ds = gdal.OpenEx( new_filename, gdal.OF_RASTER, open_options = dest_open_options )
+        else:
+            new_ds = gdal.Open( new_filename )
         if new_ds is None:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
@@ -729,7 +748,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
@@ -779,7 +803,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
@@ -839,7 +868,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
@@ -889,7 +923,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
@@ -951,7 +990,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
@@ -989,7 +1033,12 @@ class GDALTest:
         if self.testDriver() == 'fail':
             return 'skip'
 
-        src_ds = gdal.Open( 'data/' + self.filename )
+        wrk_filename = 'data/' + self.filename
+        if self.open_options:
+            src_ds = gdal.OpenEx( wrk_filename, gdal.OF_RASTER, open_options = self.open_options )
+        else:
+            src_ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
+
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
