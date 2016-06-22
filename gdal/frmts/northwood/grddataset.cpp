@@ -941,6 +941,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     poDS->fp = VSIFOpenL(pszFilename, "wb");
     if (poDS->fp == NULL) {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
+        delete poDS;
         return NULL;
     }
 
@@ -953,6 +954,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     VSIFSeekL(poDS->fp, 0, SEEK_SET);
     if (poDS->UpdateHeader() != 0) {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
+        delete poDS;
         return NULL;
     }
 
@@ -974,6 +976,13 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
 GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
         GDALDataset * poSrcDS, int bStrict, char **papszOptions,
         GDALProgressFunc pfnProgress, void * pProgressData) {
+
+    if( poSrcDS->GetRasterCount() != 1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                "Only single band datasets are supported for writing");
+        return NULL;
+    }
 
     char **tmpOptions = CSLDuplicate(papszOptions);
 
