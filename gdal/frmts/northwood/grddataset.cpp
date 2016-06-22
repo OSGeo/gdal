@@ -642,8 +642,8 @@ int NWT_GRDDataset::UpdateHeader() {
     poHeaderBlock->WriteFloat(pGrd->fVersion);
 
     // Dimenions
-    poHeaderBlock->WriteInt16(pGrd->nXSide);
-    poHeaderBlock->WriteInt16(pGrd->nYSide);
+    poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nXSide));
+    poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nYSide));
 
     // Extents
     poHeaderBlock->WriteDouble(pGrd->dfMinX);
@@ -686,7 +686,7 @@ int NWT_GRDDataset::UpdateHeader() {
     poHeaderBlock->WriteZeros(256 - (int) strlen(pGrd->cMICoordSys));
 
     // Unit code
-    poHeaderBlock->WriteByte(pGrd->iZUnits);
+    poHeaderBlock->WriteByte(static_cast<GByte>(pGrd->iZUnits));
 
     // Info on shading
     GByte byDisplayStatus = 0;
@@ -858,13 +858,13 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     if (CSLFetchNameValue(papszParmList, "ZMIN") == NULL) {
         fZMin = (float) -2E+37;
     } else {
-        fZMin = CPLAtof(CSLFetchNameValue(papszParmList, "ZMIN"));
+        fZMin = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParmList, "ZMIN")));
     }
 
     if (CSLFetchNameValue(papszParmList, "ZMAX") == NULL) {
         fZMax = (float) 2E+38;
     } else {
-        fZMax = CPLAtof(CSLFetchNameValue(papszParmList, "ZMAX"));
+        fZMax = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParmList, "ZMAX")));
     }
 
     poDS->pGrd->fZMin = fZMin;
@@ -983,7 +983,7 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     /*
     * Compute the statistics if ZMAX and ZMIN are not provided
     */
-    double pdfMin, pdfMax, pdfMean, pdfStdDev;
+    double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
     GDALRasterBand *pBand = poSrcDS->GetRasterBand(1);
     char sMax[10];
     char sMin[10];
@@ -991,16 +991,16 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
 
     if ((CSLFetchNameValue(papszOptions, "ZMAX") == NULL)
             || (CSLFetchNameValue(papszOptions, "ZMIN") == NULL)) {
-        err = pBand->GetStatistics(FALSE, TRUE, &pdfMin, &pdfMax, &pdfMean,
-                &pdfStdDev);
+        err = pBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, &dfMean,
+                &dfStdDev);
     }
 
     if (CSLFetchNameValue(papszOptions, "ZMAX") == NULL) {
-        CPLsnprintf(sMax, sizeof(sMax), "%f", pdfMax);
+        CPLsnprintf(sMax, sizeof(sMax), "%f", dfMax);
         tmpOptions = CSLSetNameValue(tmpOptions, "ZMAX", sMax);
     }
     if (CSLFetchNameValue(papszOptions, "ZMIN") == NULL) {
-        CPLsnprintf(sMin, sizeof(sMin), "%f", pdfMin);
+        CPLsnprintf(sMin, sizeof(sMin), "%f", dfMin);
         tmpOptions = CSLSetNameValue(tmpOptions, "ZMIN", sMin);
     }
 
