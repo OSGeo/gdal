@@ -3866,7 +3866,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  nPixelSpace, nLineSpace,
                                  psExtraArg,
                                  &bTried );
-        poGDS->nJPEGOverviewVisibilityCounter --;
+        --poGDS->nJPEGOverviewVisibilityCounter;
         if( bTried )
             return eErr;
     }
