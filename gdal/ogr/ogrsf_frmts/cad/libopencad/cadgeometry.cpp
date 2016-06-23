@@ -619,6 +619,16 @@ void CADSpline::setFitTollerance(double value)
     fitTollerance = value;
 }
 
+long CADSpline::getDegree() const
+{
+    return degree;
+}
+
+void CADSpline::setDegree(long value)
+{
+    degree = value;
+}
+
 //------------------------------------------------------------------------------
 // CADSolid
 //------------------------------------------------------------------------------

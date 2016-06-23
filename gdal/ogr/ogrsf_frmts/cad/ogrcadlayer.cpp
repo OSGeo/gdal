@@ -27,6 +27,7 @@
  *  SOFTWARE.
  *******************************************************************************/
 #include "ogr_cad.h"
+#include "ogrcadgeometryutils.h"
 #include "cpl_conv.h"
 
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
@@ -47,6 +48,9 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
 
     OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
     poFeatureDefn->AddFieldDefn( &oExtendedField );
+
+    OGRFieldDefn  oTextField( "Text", OFTString );
+    poFeatureDefn->AddFieldDefn( &oTextField );
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -105,6 +109,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         {
             CADPoint3D * const poCADPoint = ( CADPoint3D* ) spoCADGeometry.get();
             CADVector stPositionVector = poCADPoint->getPosition();
+            
             poFeature->SetGeometryDirectly( new OGRPoint( stPositionVector.getX(),
                                                          stPositionVector.getY(), stPositionVector.getZ() ) );
             poFeature->SetField( "Geometry", "CADPoint" );
@@ -121,8 +126,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poLS->addPoint( poCADLine->getEnd().getPosition().getX(),
                            poCADLine->getEnd().getPosition().getY(),
                            poCADLine->getEnd().getPosition().getZ() );
-            poFeature->SetGeometryDirectly( poLS );
             
+            poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "Geometry", "CADLine" );
             return poFeature;
         }
@@ -153,7 +158,6 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                 poCADArc->getEndingAngle() < poCADArc->getStartingAngle() ?
                     poCADArc->getEndingAngle() : ( poCADArc->getEndingAngle() + 360.0f ),
                 0.0 );
-
 
             poFeature->SetGeometryDirectly( poArc );
 
@@ -190,6 +194,103 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetField( "Geometry", "CADFace3D" );
             return poFeature;
         }
+
+        // TODO: unsupported smooth lines
+        case CADGeometry::LWPOLYLINE:
+        {
+            CADLWPolyline * const poCADLWPolyline = ( CADLWPolyline* ) spoCADGeometry.get();
+            OGRLineString * poLS = new OGRLineString();
+
+            for( size_t i = 0; i < poCADLWPolyline->getVertexCount(); ++i )
+            {
+                CADVector stVertex = poCADLWPolyline->getVertex( i );
+
+                poLS->addPoint( stVertex.getX(),
+                                stVertex.getY(),
+                                stVertex.getZ() );
+            }
+
+            poFeature->SetGeometryDirectly( poLS );
+            poFeature->SetField( "Geometry", "CADLWPolyline" );
+            return poFeature;
+        }
+
+        // TODO: unsupported smooth lines
+        case CADGeometry::POLYLINE3D:
+        {
+            CADPolyline3D * const poCADPolyline3D = ( CADPolyline3D* ) spoCADGeometry.get();
+            OGRLineString * poLS = new OGRLineString();
+
+            for( size_t i = 0; i < poCADPolyline3D->getVertexCount(); ++i )
+            {
+                CADVector stVertex = poCADPolyline3D->getVertex( i );
+
+                poLS->addPoint( stVertex.getX(),
+                                stVertex.getY(),
+                                stVertex.getZ() );
+            }
+            
+            poFeature->SetGeometryDirectly( poLS );
+            poFeature->SetField( "Geometry", "CADPolyline3D" );
+            return poFeature;
+        }
+
+        case CADGeometry::TEXT:
+        {
+            CADText * const poCADText = ( CADText * ) spoCADGeometry.get();
+            OGRPoint * poPoint = new OGRPoint( poCADText->getPosition().getX(),
+                                               poCADText->getPosition().getY(),
+                                               poCADText->getPosition().getZ() );
+            poFeature->SetField( "Text", poCADText->getTextValue().c_str() );
+
+            poFeature->SetGeometryDirectly( poPoint );
+            poFeature->SetField( "Geometry", "CADText" );
+            return poFeature;
+        }
+
+        case CADGeometry::MTEXT:
+        {
+            CADMText * const poCADMText = ( CADMText * ) spoCADGeometry.get();
+            OGRPoint * poPoint = new OGRPoint( poCADMText->getPosition().getX(),
+                                               poCADMText->getPosition().getY(),
+                                               poCADMText->getPosition().getZ() );
+            poFeature->SetField( "Text", poCADMText->getTextValue().c_str() );
+
+            poFeature->SetGeometryDirectly( poPoint );
+            poFeature->SetField( "Geometry", "CADMText" );
+            return poFeature;
+        }
+
+        // case CADGeometry::ELLIPSE:
+        // {
+        //     CADEllipse * const poCADEllipse = ( CADEllipse* ) spoCADGeometry.get();
+
+        //     double dfStartAngle = -1 * poCADEllipse->getStartingAngle()
+        //                              * 180 / M_PI;
+        //     double dfEndAngle = -1 * poCADEllipse->getEndingAngle()
+        //                              * 180 / M_PI;
+        //     double dfAngleRatio = poCADEllipse->getAxisRatio();
+
+        //     dfStartAngle = CADUtils::AngleCorrect( dfStartAngle, dfAngleRatio );
+        //     dfEndAngle = CADUtils::AngleCorrect( dfEndAngle, dfAngleRatio );
+
+        //     if( dfStartAngle > dfEndAngle )
+        //         dfEndAngle += 360.0;
+
+        //     // poFeature->SetGeometryDirectly( poEllipse );
+        //     poFeature->SetField( "Geometry", "CADEllipse" );
+        //     return poFeature;
+        // }
+
+        // case CADGeometry::SPLINE:
+        // {
+        //     CADSpline * const poCADSpline = ( CADSpline* ) spoCADGeometry.get();
+        //     OGRLineString * poLS = new OGRLineString();
+
+        //     poFeature->SetGeometryDirectly( poLS );
+        //     poFeature->SetField( "Geometry", "CADSpline" );
+        //     return poFeature;
+        // }
             
         default:
         {

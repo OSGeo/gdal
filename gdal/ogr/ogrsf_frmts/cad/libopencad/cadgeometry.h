@@ -287,12 +287,15 @@ public:
     double getFitTollerance() const;
     void setFitTollerance(double value);
 
+    long getDegree() const;
+    void setDegree(long value);
 protected:
     long scenario;
     bool rational;
     bool closed;
     bool weight;
     double fitTollerance;
+    long degree;
 
     std::vector < double > ctrlPointsWeight;
     std::vector < CADVector > avertCtrlPoints;
