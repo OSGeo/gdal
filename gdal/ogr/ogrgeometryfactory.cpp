@@ -3243,16 +3243,23 @@ int OGRGeometryFactory::GetCurveParmeters(
     double& R, double& cx, double& cy, double& alpha0, double& alpha1, double& alpha2 )
 {
     /* Circle */
-    if( x0 == x2 && y0 == y2 && (x0 != x1 || y0 != y1) )
+    if( x0 == x2 && y0 == y2 )
     {
-        cx = (x0 + x1) / 2;
-        cy = (y0 + y1) / 2;
-        R = DISTANCE(cx,cy,x0,y0);
-        /* Arbitrarily pick counter-clock-wise order (like PostGIS does) */
-        alpha0 = atan2(y0 - cy, x0 - cx);
-        alpha1 = alpha0 + M_PI;
-        alpha2 = alpha0 + 2 * M_PI;
-        return TRUE;
+        if (x0 != x1 || y0 != y1)
+        {
+            cx = (x0 + x1) / 2;
+            cy = (y0 + y1) / 2;
+            R = DISTANCE(cx,cy,x0,y0);
+            /* Arbitrarily pick counter-clock-wise order (like PostGIS does) */
+            alpha0 = atan2(y0 - cy, x0 - cx);
+            alpha1 = alpha0 + M_PI;
+            alpha2 = alpha0 + 2 * M_PI;
+            return TRUE;
+        }
+        else
+        {
+            return FALSE;
+        }
     }
 
     double dx01 = x1 - x0;
