@@ -2450,6 +2450,36 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
             else
                 return "Surface";
 
+        case wkbTriangle:
+            if (b3D && bMeasured)
+                return "3D Measured Triangle";
+            else if (b3D)
+                return "3D Triangle";
+            else if (bMeasured)
+                return "Measured Triangle";
+            else
+                return "Triangle";
+
+        case wkbPolyhedralSurface:
+            if (b3D && bMeasured)
+                return "3D Measured PolyhedralSurface";
+            else if (b3D)
+                return "3D PolyhedralSurface";
+            else if (bMeasured)
+                return "Measured PolyhedralSurface";
+            else
+                return "PolyhedralSurface";
+
+        case wkbTIN:
+            if (b3D && bMeasured)
+                return "3D Measured TriangulatedSurface";
+            else if (b3D)
+                return "3D TriangulatedSurface";
+            else if (bMeasured)
+                return "Measured TriangulatedSurface";
+            else
+                return "TriangulatedSurface";
+
         case wkbNone:
             return "None";
 

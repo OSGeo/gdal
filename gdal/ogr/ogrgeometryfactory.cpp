@@ -338,6 +338,11 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
         poGeom = new OGRPolyhedralSurface();
     }
 
+    else if( STARTS_WITH_CI(szToken,"TIN") )
+    {
+        poGeom = new OGRTriangulatedSurface();
+    }
+
     else
     {
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -476,8 +481,8 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       case wkbPolyhedralSurface:
           return new (std::nothrow) OGRPolyhedralSurface();
 
-    //   case wkbTIN:
-    //       return new (std::nothrow) OGRTIN();
+      case wkbTIN:
+          return new (std::nothrow) OGRTriangulatedSurface();
 
       default:
           return NULL;

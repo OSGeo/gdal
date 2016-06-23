@@ -11,6 +11,7 @@ OBJ =	ogrgeometryfactory.o \
 	ogrmultipolygon.o \
 	ogrsurface.o \
 	ogrpolyhedralsurface.o \
+	ogrtriangulatedsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
     ogrcircularstring.o \
