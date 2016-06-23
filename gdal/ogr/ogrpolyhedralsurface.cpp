@@ -34,6 +34,8 @@
 #include "ogr_api.h"
 #include "ogr_libs.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                         OGRPolyhedralSurface()                       */
 /************************************************************************/
@@ -482,8 +484,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
             /* skip empty subgeoms */
             if( papszGeoms[iGeom][nSkip] != '(' )
             {
-                CPLDebug( "OGR", "OGRPolyhedralSurface::exportToWkt() - skipping %s.",
-                          papszGeoms[iGeom] );
+                CPLDebug( "OGR", "OGR%s::exportToWkt() - skipping %s.",getGeometryName(), papszGeoms[iGeom] );
                 CPLFree( papszGeoms[iGeom] );
                 papszGeoms[iGeom] = NULL;
                 continue;
@@ -720,7 +721,9 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
 
     if (poClone == NULL)
         return OGRERR_FAILURE;
+
     eErr = oMP.addGeometryDirectly(poClone);
+    
     if( eErr != OGRERR_NONE )
         delete poClone;
 

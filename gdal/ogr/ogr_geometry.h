@@ -75,6 +75,7 @@ class OGRMultiCurve;
 class OGRMultiLineString;
 class OGRTriangle;
 class OGRPolyhedralSurface;
+class OGRTriangulatedSurface;
 
 typedef OGRLineString* (*OGRCurveCasterToLineString)(OGRCurve*);
 typedef OGRLinearRing* (*OGRCurveCasterToLinearRing)(OGRCurve*);
@@ -1007,6 +1008,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
   protected:
     friend class OGRMultiSurface;
     friend class OGRPolyhedralSurface;
+    friend class OGRTriangulatedSurface;
 
     virtual int checkRing( OGRCurve * poNewRing ) const;
     OGRErr      importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
@@ -1066,6 +1068,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
+  protected:
+    friend class OGRTriangulatedSurface;
 
   public:
     OGRTriangle();
@@ -1229,6 +1233,7 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
   protected:
     virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
     friend class OGRPolyhedralSurface;
+    friend class OGRTriangulatedSurface;
 
   public:
             OGRMultiPolygon();
@@ -1305,6 +1310,32 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void setMeasured( OGRBoolean bIsMeasured );
     virtual void swapXY();
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
+};
+
+/************************************************************************/
+/*                        OGRTriangulatedSurface                        */
+/************************************************************************/
+
+class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
+{
+  public:
+    OGRTriangulatedSurface();
+    OGRTriangulatedSurface(const OGRTriangulatedSurface &other);
+    ~OGRTriangulatedSurface();
+
+    OGRTriangulatedSurface& operator=(const OGRTriangulatedSurface& other);
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+
+    // IWks Interface
+    virtual int WkbSize() const;
+    virtual OGRErr importFromWkb(unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc);
+    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc) const;
+    virtual OGRErr importFromWkt(char **);
+    virtual OGRErr exportToWkt(char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc) const;
+
+    virtual OGRGeometry *clone() const;
+    virtual OGRErr addGeometry( const OGRGeometry * );
 };
 
 /************************************************************************/
