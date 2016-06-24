@@ -305,7 +305,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] \n"
-            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]\n"
+            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
             "               [-dim 2|3|layer_dim] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
