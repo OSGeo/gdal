@@ -34,6 +34,7 @@
 #define DWG_IO_H
 
 #include "cadheader.h"
+#include "cadobjects.h"
 
 #include <string>
 #include <algorithm>
@@ -168,5 +169,8 @@ std::string ReadTV ( const char * pabyInput, size_t& nBitOffsetFromStart );
 void skipTV(const char * pabyInput, size_t& nBitOffsetFromStart);
 void skipBITLONG(const char * pabyInput, size_t& nBitOffsetFromStart);
 void skipBITSHORT(const char * pabyInput, size_t& nBitOffsetFromStart);
+
+CADVector ReadVector(const char * pabyInput, size_t& nBitOffsetFromStart);
+CADVector ReadRAWVector(const char * pabyInput, size_t& nBitOffsetFromStart);
 
 #endif // DWG_IO_H

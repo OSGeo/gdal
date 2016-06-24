@@ -1,5 +1,5 @@
 
-OBJ	=	ogrcaddriver.obj ogrcaddatasource.obj ogrcadlayer.obj ogrcadgeometryutils.obj
+OBJ	=	ogrcaddriver.obj ogrcaddatasource.obj ogrcadlayer.obj
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..

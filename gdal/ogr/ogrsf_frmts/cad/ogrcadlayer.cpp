@@ -27,7 +27,6 @@
  *  SOFTWARE.
  *******************************************************************************/
 #include "ogr_cad.h"
-#include "ogrcadgeometryutils.h"
 #include "cpl_conv.h"
 
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
@@ -58,6 +57,7 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
 
 GIntBig OGRCADLayer::GetFeatureCount( int bForce )
 {
+    bForce = false; // FIXME: fix warning only
     return poCADLayer.getGeometryCount();
 }
 
@@ -261,26 +261,43 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             return poFeature;
         }
 
-        // case CADGeometry::ELLIPSE:
-        // {
-        //     CADEllipse * const poCADEllipse = ( CADEllipse* ) spoCADGeometry.get();
+        case CADGeometry::ELLIPSE:
+        {
+            CADEllipse * const poCADEllipse = ( CADEllipse* ) spoCADGeometry.get();
 
-        //     double dfStartAngle = -1 * poCADEllipse->getStartingAngle()
-        //                              * 180 / M_PI;
-        //     double dfEndAngle = -1 * poCADEllipse->getEndingAngle()
-        //                              * 180 / M_PI;
-        //     double dfAngleRatio = poCADEllipse->getAxisRatio();
+            // FIXME: start/end angles should be swapped to work exactly as DXF driver.
+            // is it correct?
+            double dfStartAngle = -1 * poCADEllipse->getEndingAngle()
+                                     * 180 / M_PI;
+            double dfEndAngle = -1 * poCADEllipse->getStartingAngle()
+                                     * 180 / M_PI;
+            double dfAxisRatio = poCADEllipse->getAxisRatio();
 
-        //     dfStartAngle = CADUtils::AngleCorrect( dfStartAngle, dfAngleRatio );
-        //     dfEndAngle = CADUtils::AngleCorrect( dfEndAngle, dfAngleRatio );
+            if( dfStartAngle > dfEndAngle )
+                dfEndAngle += 360.0;
 
-        //     if( dfStartAngle > dfEndAngle )
-        //         dfEndAngle += 360.0;
+            CADVector vectPosition = poCADEllipse->getPosition();
+            CADVector vectSMAxis = poCADEllipse->getSMAxis();
+            double dfPrimaryRadius, dfSecondaryRadius;
+            double dfRotation;
+            dfPrimaryRadius = sqrt( vectSMAxis.getX() * vectSMAxis.getX()
+                                    + vectSMAxis.getY() * vectSMAxis.getY()
+                                    + vectSMAxis.getZ() * vectSMAxis.getZ() );
 
-        //     // poFeature->SetGeometryDirectly( poEllipse );
-        //     poFeature->SetField( "Geometry", "CADEllipse" );
-        //     return poFeature;
-        // }
+            dfSecondaryRadius = dfAxisRatio * dfPrimaryRadius;
+
+            dfRotation = -1 * atan2( vectSMAxis.getY(), vectSMAxis.getX() ) * 180 / M_PI;
+
+            OGRGeometry *poEllipse =
+                OGRGeometryFactory::approximateArcAngles(
+                    vectPosition.getX(), vectPosition.getY(), vectPosition.getZ(),
+                    dfPrimaryRadius, dfSecondaryRadius, dfRotation,
+                    dfStartAngle, dfEndAngle, 0.0 );
+
+            poFeature->SetGeometryDirectly( poEllipse );
+            poFeature->SetField( "Geometry", "CADEllipse" );
+            return poFeature;
+        }
 
         // case CADGeometry::SPLINE:
         // {
@@ -295,9 +312,10 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         default:
         {
             CPLError( CE_Failure, CPLE_NotSupported,
-                     "Unhandled feature." );
+                     "Unhandled feature. Skipping it." );
             
-            return NULL;
+            poFeature->SetField( "Geometry", "Unhandled" );
+            return poFeature;
         }
     }
     

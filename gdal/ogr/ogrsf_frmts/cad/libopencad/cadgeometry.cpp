@@ -402,6 +402,16 @@ void CADEllipse::setAxisRatio(double value)
     axisRatio = value;
 }
 
+CADVector CADEllipse::getSMAxis()
+{
+    return vectSMAxis;
+};
+
+void CADEllipse::setSMAxis(const CADVector& SMAxisVect)
+{
+    vectSMAxis = SMAxisVect;
+}
+
 void CADEllipse::print() const
 {
     cout << "|---------Ellipse---------|\n"

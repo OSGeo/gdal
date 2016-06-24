@@ -995,7 +995,6 @@ public:
     CADDimensionAngular2LnObject();
 
     CADVector vert16pt;
-
 };
 
 /**
@@ -1187,6 +1186,48 @@ public:
     long   nObjectsOwned;
     vector < CADHandle > hVertexes; // content really depends on DWG version.
     CADHandle hSeqend;
+};
+
+/**
+ * @brief The CADHatchObject class TODO: not completed
+ */
+class CADHatchObject : public CADEntityObject
+{
+public:
+    typedef struct
+    {
+        double dfUnknowndouble;
+        short  dUnknownshort;
+        long   dRGBColor;
+        char   dIgnoredColorByte;
+    } _gradient_color;
+
+    CADHatchObject();
+
+    long dIsGradientFill; // 2004+
+    long dReserved;
+    double dfGradientAngle;
+    double dfGradientShift;
+    long dSingleColorGrad;
+    double dfGradientTint;
+    long nGradientColors;
+    vector < _gradient_color > astGradientColors;
+
+    string sGradientName;
+
+    double dfZCoord; // always X = Y = 0.0
+    CADVector vectExtrusion;
+    string sHatchName;
+    bool bSolidFill;
+    bool bAssociative;
+    long nNumPaths;
+
+    typedef struct
+    {
+        char dPathTypeStatus;
+        CADVector vectPt0;
+        CADVector vectPt1;
+    } _path_segment;
 };
 
 #endif //CADOBJECTS_H

@@ -63,7 +63,7 @@ class OGRCADDataSource : public GDALDataset
     std::unique_ptr<CADFile>    spoCADFile;
     
     OGRCADLayer                 **papoLayers;
-    size_t                      nLayers;
+    int                         nLayers;
     
 public:
     OGRCADDataSource();

@@ -255,9 +255,13 @@ public:
     CADEllipse();
     double getAxisRatio() const;
     void setAxisRatio(double value);
-    virtual void print () const override;
 
+    CADVector getSMAxis();
+    void setSMAxis(const CADVector& vectSMA);
+
+    virtual void print () const override;
 protected:
+    CADVector vectSMAxis;
     double axisRatio;
 };
 
@@ -536,7 +540,6 @@ public:
 protected:
     string sPrompt;
 };
-
 
 //class EXTERN LineType
 //{

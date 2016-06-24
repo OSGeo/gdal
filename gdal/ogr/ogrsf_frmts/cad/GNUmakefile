@@ -6,8 +6,7 @@ SUBDIRS-yes := libopencad
 OBJ	= \
 	ogrcaddriver.o \
 	ogrcaddatasource.o \
-	ogrcadlayer.o \
-	ogrcadgeometryutils.o
+	ogrcadlayer.o
 
 CPPFLAGS	:=	-I. -I.. -I../.. $(CPPFLAGS) -std=c++11 
 

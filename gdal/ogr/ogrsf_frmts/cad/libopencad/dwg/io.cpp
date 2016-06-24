@@ -852,3 +852,22 @@ void skipBIT(const char */*pabyInput*/, size_t &nBitOffsetFromStart)
 {
     ++nBitOffsetFromStart;
 }
+
+CADVector ReadVector(const char *pabyInput, size_t &nBitOffsetFromStart)
+{
+    double x, y, z;
+    x = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
+    y = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
+    z = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
+
+    return CADVector(x, y, z);
+}
+
+CADVector ReadRAWVector(const char *pabyInput, size_t &nBitOffsetFromStart)
+{
+    double x, y;
+    x = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+    y = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+
+    return CADVector(x, y);
+}
