@@ -29,11 +29,11 @@
 
 #include "libkml_headers.h"
 
-#include  <ogrsf_frmts.h>
+#include <string>
+
 #include <ogr_feature.h>
 #include "ogr_p.h"
-
-#include <iostream>
+#include <ogrsf_frmts.h>
 
 using kmldom::ExtendedDataPtr;
 using kmldom::SchemaPtr;
