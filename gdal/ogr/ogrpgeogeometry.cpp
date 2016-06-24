@@ -2048,6 +2048,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     int nBits;
                     memcpy( &nBits, pabyShape + nOffset + 16, 4 );
                     CPL_LSBPTR32(&nBits);
+
+                    (void)EXT_SHAPE_ARC_MINOR;
 #ifdef DEBUG_VERBOSE
                     CPLDebug("OGR", "Arc: ");
                     CPLDebug("OGR", " dfVal1 = %f, dfVal2 = %f, nBits=%X", dfVal1, dfVal2, nBits);
@@ -2145,6 +2147,13 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     CPL_LSBPTR32(&nBits);
                     nOffset += 4;
 
+                    (void)EXT_SHAPE_ELLIPSE_EMPTY;
+                    (void)EXT_SHAPE_ELLIPSE_LINE;
+                    (void)EXT_SHAPE_ELLIPSE_POINT;
+                    (void)EXT_SHAPE_ELLIPSE_CIRCULAR;
+                    (void)EXT_SHAPE_ELLIPSE_CCW;
+                    (void)EXT_SHAPE_ELLIPSE_MINOR;
+                    (void)EXT_SHAPE_ELLIPSE_COMPLETE;
 #ifdef DEBUG_VERBOSE
                     CPLDebug("OGR", "Ellipse:");
                     CPLDebug("OGR", "  dfVS0 = %f", dfVS0);
