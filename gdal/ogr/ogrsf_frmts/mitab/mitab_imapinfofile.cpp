@@ -440,6 +440,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
     TABFieldType        eTABType;
     int                 nWidth = poField->GetWidth();
+    int                 nPrecision = poField->GetPrecision();
 
     if( poField->GetType() == OFTInteger )
     {
@@ -457,6 +458,21 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
         else
         {
             eTABType = TABFDecimal;
+            // Enforce Mapinfo limits, otherwise MapInfo will crash (#6392)
+            if( nWidth > 20 || nWidth - nPrecision < 2 || nPrecision > 16 )
+            {
+                if( nWidth > 20 )
+                    nWidth = 20;
+                if( nWidth - nPrecision < 2 )
+                    nPrecision = nWidth - 2;
+                if( nPrecision > 16 )
+                    nPrecision = 16;
+                CPLDebug( "MITAB",
+                          "Adjusting initial width,precision of %s from %d,%d to %d,%d",
+                          poField->GetNameRef(),
+                          poField->GetWidth(), poField->GetPrecision(),
+                          nWidth, nPrecision );
+            }
         }
     }
     else if( poField->GetType() == OFTDate )
@@ -497,7 +513,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
 
     if( AddFieldNative( poField->GetNameRef(), eTABType,
-                        nWidth, poField->GetPrecision(), FALSE, FALSE, bApproxOK ) > -1 )
+                        nWidth, nPrecision, FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
     else
         return OGRERR_FAILURE;
