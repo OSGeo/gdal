@@ -268,13 +268,6 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
                                             OGRwkbVariant eWkbVariant ) const
 
 {
-    if( eWkbVariant == wkbVariantOldOgc &&
-        (wkbFlatten(getGeometryType()) == wkbMultiCurve ||
-         wkbFlatten(getGeometryType()) == wkbMultiSurface) ) /* does not make sense for new geometries, so patch it */
-    {
-        eWkbVariant = wkbVariantIso;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
@@ -392,8 +385,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 
         /* We accept POLYGON() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if ((EQUAL(szToken,"POLYGON") ||
-                  EQUAL(szToken,"CURVEPOLYGON")))
+        else if ((EQUAL(szToken,"POLYGON"))
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;
@@ -444,7 +436,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 OGRErr OGRPolyhedralSurface::exportToWkt ( char ** ppszDstText,
                                            OGRwkbVariant eWkbVariant ) const
 {
-    return exportToWktInternal(ppszDstText, eWkbVariant, "POLYGON");
+    return exportToWktInternal(ppszDstText, wkbVariantIso, "POLYGON");
 }
 
 OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
@@ -723,7 +715,7 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
         return OGRERR_FAILURE;
 
     eErr = oMP.addGeometryDirectly(poClone);
-    
+
     if( eErr != OGRERR_NONE )
         delete poClone;
 
@@ -763,8 +755,7 @@ OGRBoolean  OGRPolyhedralSurface::IsEmpty() const
 
 void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
 {
-    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-        oMP.papoGeoms[iGeom]->set3D( bIs3D );
+    oMP.set3D(bIs3D);
 
     OGRGeometry::set3D( bIs3D );
 }
@@ -775,8 +766,7 @@ void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
 
 void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
 {
-    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-        oMP.papoGeoms[iGeom]->setMeasured( bIsMeasured );
+    oMP.set3D(bIs3D);
 
     OGRGeometry::setMeasured( bIsMeasured );
 }
@@ -787,8 +777,7 @@ void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
 
 void OGRPolyhedralSurface::setCoordinateDimension (int nNewDimension)
 {
-    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-        oMP.papoGeoms[iGeom]->setCoordinateDimension( nNewDimension );
+    oMP.setCoordinateDimension(nNewDimension);
 
     OGRGeometry::setCoordinateDimension( nNewDimension );
 }
@@ -799,8 +788,7 @@ void OGRPolyhedralSurface::setCoordinateDimension (int nNewDimension)
 
 void OGRPolyhedralSurface::swapXY()
 {
-    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-        oMP.papoGeoms[iGeom]->swapXY();
+    oMP.swapXY();
 }
 
 /************************************************************************/

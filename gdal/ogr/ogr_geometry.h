@@ -148,6 +148,7 @@ class CPL_DLL OGRGeometry
                                                         int& nGeomCount,
                                                         OGRwkbVariant eWkbVariant );
     OGRErr                PointOnSurfaceInternal( OGRPoint * poPoint ) const;
+    OGRBoolean            IsSFCGALCompatible() const;
 //! @endcond
 
   public:
