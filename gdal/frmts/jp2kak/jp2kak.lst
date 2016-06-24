@@ -24,7 +24,8 @@ endif
 ifneq ($(wildcard $(KAKDIR)/apps/make/ssse3_region_decompressor.o),)
 KAK_OBJ +=	\
     $(KAKDIR)/apps/make/ssse3_region_decompressor.o \
-    $(KAKDIR)/apps/make/avx2_stripe_transfer.o
+    $(KAKDIR)/apps/make/avx2_stripe_transfer.o \
+    $(KAKDIR)/apps/make/avx2_region_decompressor.o
 endif
 
 # The following are for Kakadu 7.7 and later
@@ -32,4 +33,12 @@ endif
 ifneq ($(wildcard $(KAKDIR)/apps/make/kdu_client_windo?.o),)
 KAK_OBJ +=      \
     $(KAKDIR)/apps/make/kdu_client_window.o
+endif
+
+# The following are for Kakadu 7.8 and later.
+ifneq ($(wildcard $(KAKDIR)/apps/make/sse4_region_decompressor.o),)
+KAK_OBJ +=      \
+    $(KAKDIR)/apps/make/sse4_region_decompressor.o \
+    $(KAKDIR)/apps/make/avx2_region_compositor.o \
+    $(KAKDIR)/apps/make/avx2_vex_transfer.o
 endif
