@@ -329,7 +329,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     int date[6];
                     SOSITypeToDateTime(tokens[k], date);
                     if (date[0]>0) 
-                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], date[5], 1);
+                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], static_cast<float>(date[5]), 1);
                     break;
                   }
                   case OFTReal: {
