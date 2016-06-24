@@ -548,12 +548,12 @@ id,WKT
         memcpy((*ppabyShape) + nShpSizeBeforeCurve + 8 + 4, &dfVal, 8);
         dfVal = 0;
         memcpy((*ppabyShape) + nShpSizeBeforeCurve + 8 + 4 + 8, &dfVal, 8);
-        nTmp = EXT_SHAPE_ARC_MINOR; // Inconsistant with SP and EP. Only the CCW/not CCW is taken into account by ArcGIS
+        nTmp = EXT_SHAPE_ARC_MINOR; // Inconsistent with SP and EP. Only the CCW/not CCW is taken into account by ArcGIS
         memcpy((*ppabyShape) + nShpSizeBeforeCurve + 8 + 4 + 16, &nTmp, 4);
     }
     else if( nCounter == 6 )
     {
-        double dfVal = 30; // Radius inconsistant with SP and EP
+        double dfVal = 30; // Radius inconsistent with SP and EP
         memcpy((*ppabyShape) + nShpSizeBeforeCurve + 8 + 4, &dfVal, 8);
         dfVal = 0;
         memcpy((*ppabyShape) + nShpSizeBeforeCurve + 8 + 4 + 8, &dfVal, 8);

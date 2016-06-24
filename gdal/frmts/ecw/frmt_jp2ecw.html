@@ -44,13 +44,13 @@ and their priority order can be changed with the GDAL_GEOREF_SOURCES
 configuration option (or GEOREF_SOURCES open option) whose value is a
 comma-separated list of the following keywords :
 PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for GEOJP2,GMLJP2), WORLDFILE, NONE.
-First mentionned sources are the most prioritary over the next ones. A non mentionned
+First mentioned sources are the most prioritary over the next ones. A non mentioned
 source will be ignored.
 </p>
 <p>
 For example setting it to "WORLDFILE,PAM,INTERNAL" will make a geotransformation
 matrix from a potential worldfile prioritary over PAM or internal JP2 boxes.
-Setting it to "PAM,WORLDFILE,GEOJP2" will use the mentionned sources and
+Setting it to "PAM,WORLDFILE,GEOJP2" will use the mentioned sources and
 ignore GMLJP2 boxes.
 </p>
 

@@ -646,7 +646,7 @@ PG driver:
  * Add PRELUDE_STATEMENTS and CLOSING_STATEMENTS open option to be for example able to specify options, like statement_timeout, with pg_bouncer
  * Fix 2.0 regression when overwriting several existing PostGIS layers with ogr2ogr (#6018)
  * Update PG, PGDump and CartoDB drivers to correctly export POINT EMPTY for PostGIS 2.2
- * avoid reseting error potentially emitted by ExecuteSQL() (#6194)
+ * avoid resetting error potentially emitted by ExecuteSQL() (#6194)
  * sanitize management of quoting for FID column at layer creation
  * fix to get SRID on result layer with PostGIS 2.2
  * in copy mode (the default on layer creation), do not truncate the concatenated string list to the field width (#6356)

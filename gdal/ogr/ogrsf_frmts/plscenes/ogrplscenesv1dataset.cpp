@@ -652,7 +652,7 @@ retry:
 
         CPLErrorReset();
         poOutDS->SetDescription(poOpenInfo->pszFilename);
-        CSLDestroy(poOutDS->GetFileList()); /* so as to probe all auxiliary files before reseting the allowed extensions */
+        CSLDestroy(poOutDS->GetFileList()); /* so as to probe all auxiliary files before resetting the allowed extensions */
     }
     else if( CPLGetLastErrorType() == CE_None )
     {

@@ -496,7 +496,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                             OGREnvelope oErrorRegion = oZones[i].oEnvelope;
                             oErrorRegion.Intersect( oEnvelope );
                             CPLError(CE_Failure, CPLE_NotSupported,
-                                    "Overlaping polygons in rectangle (%.16g %.16g, %.16g %.16g))",
+                                    "Overlapping polygons in rectangle (%.16g %.16g, %.16g %.16g))",
                                     oErrorRegion.MinX,
                                     oErrorRegion.MinY,
                                     oErrorRegion.MaxX,
@@ -516,7 +516,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                             OGREnvelope oErrorRegion = oZones[i].oEnvelope;
                             oErrorRegion.Intersect( oEnvelope );
                             CPLError(CE_Failure, CPLE_NotSupported,
-                                    "Overlaping polygons in rectangle (%.16g %.16g, %.16g %.16g))",
+                                    "Overlapping polygons in rectangle (%.16g %.16g, %.16g %.16g))",
                                     oErrorRegion.MinX,
                                     oErrorRegion.MinY,
                                     oErrorRegion.MaxX,

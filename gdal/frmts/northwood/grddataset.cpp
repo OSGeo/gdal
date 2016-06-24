@@ -468,7 +468,7 @@ const char *NWT_GRDDataset::GetProjectionRef() {
     // First try getting it from the PAM dataset
     pszProjection = GDALPamDataset::GetProjectionRef();
 
-    // If that isnt possible, read it from the GRD file. This may be a less complete
+    // If that isn't possible, read it from the GRD file. This may be a less complete
     // projection string
     if (strlen(pszProjection) == 0) {
 #ifdef OGR_ENABLED
@@ -638,7 +638,7 @@ int NWT_GRDDataset::UpdateHeader() {
     // Version number
     poHeaderBlock->WriteFloat(pGrd->fVersion);
 
-    // Dimenions
+    // Dimensions
     poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nXSide));
     poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nYSide));
 
@@ -903,7 +903,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     poDS->pGrd->fHillShadeAzimuth = 0;
     poDS->pGrd->fHillShadeAngle = 0;
 
-    // Set the raster style settings. These arent used anywhere other than to write the TAB file
+    // Set the raster style settings. These aren't used anywhere other than to write the TAB file
     if (CSLFetchNameValue(papszParmList, "BRIGHTNESS") == NULL) {
         poDS->pGrd->style.iBrightness = 50;
     } else {
