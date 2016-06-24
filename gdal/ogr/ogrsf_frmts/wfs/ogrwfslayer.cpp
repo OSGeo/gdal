@@ -1152,6 +1152,16 @@ void OGRWFSLayer::ResetReading()
         poBaseLayer->ResetReading();
 }
 
+/************************************************************************/
+/*                         SetIgnoredFields()                           */
+/************************************************************************/
+
+OGRErr OGRWFSLayer::SetIgnoredFields( const char **papszFields )
+{
+    bReloadNeeded = TRUE;
+    ResetReading();
+    return OGRLayer::SetIgnoredFields(papszFields);
+}
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -1431,7 +1441,7 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,OLCIgnoreFields) )
     {
-        return poBaseDS == NULL;
+        return TRUE;
     }
 
     return FALSE;
