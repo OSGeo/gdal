@@ -247,7 +247,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name]
-               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]
+               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
                [-dim XY|XYZ|XYM|XYZM|2|3|layer_dim] [layer [layer ...]]
 
 Advanced options :
@@ -331,7 +331,10 @@ multilinestrings to multilinestrings. Can be useful when converting
 shapefiles to PostGIS and other target drivers that implement strict
 checks for geometry types. Starting with GDAL 2.0, CONVERT_TO_LINEAR
 can be used to to convert non-linear geometries types into linear
-geometries by approximating them. Starting with 2.1 the type can be
+geometries by approximating them, and CONVERT_TO_CURVE to promote a
+non-linear type to its generalized curve type (POLYGON to CURVEPOLYGON,
+MULTIPOLYGON to MULTISURFACE, LINESTRING to COMPOUNDCURVE, MULTILINESTRING to
+MULTICURVE). Starting with 2.1 the type can be
 defined as measured ("25D" remains as an alias for single "Z").</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force
 the coordinate dimension to val (valid values are XY, XYZ, XYM, and
