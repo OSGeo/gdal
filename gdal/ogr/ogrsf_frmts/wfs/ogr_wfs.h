@@ -169,6 +169,8 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
+    virtual OGRErr      SetIgnoredFields( const char **papszFields );
+
     int                 HasLayerDefn() { return poFeatureDefn != NULL; }
 
     OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
