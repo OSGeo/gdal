@@ -314,7 +314,7 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
     // serialize each of the geometries
     for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
-        oMP.papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, eWkbVariant );
+        oMP.papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, wkbVariantIso );
         nOffset += oMP.papoGeoms[iGeom]->WkbSize();
     }
 
@@ -385,7 +385,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 
         /* We accept POLYGON() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if ((EQUAL(szToken,"POLYGON"))
+        else if (EQUAL(szToken,"POLYGON"))
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;
@@ -434,7 +434,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 /************************************************************************/
 
 OGRErr OGRPolyhedralSurface::exportToWkt ( char ** ppszDstText,
-                                           OGRwkbVariant eWkbVariant ) const
+                                           CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 {
     return exportToWktInternal(ppszDstText, wkbVariantIso, "POLYGON");
 }
@@ -766,7 +766,7 @@ void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
 
 void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
 {
-    oMP.set3D(bIs3D);
+    oMP.setMeasured(bIsMeasured);
 
     OGRGeometry::setMeasured( bIsMeasured );
 }
