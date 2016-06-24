@@ -1309,16 +1309,18 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
 
     TABFieldType        eTABType = m_pasFieldDef[iField].eTABType;
     int                 nWidth = m_pasFieldDef[iField].byLength ;
+    int                 nPrecision = m_pasFieldDef[iField].byDecimals ;
     int                 nWidthDummy;
+    int                 nPrecisionDummy;
     if( (nFlags & ALTER_TYPE_FLAG) )
     {
-        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABType, &nWidthDummy ) < 0 )
+        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABType, &nWidthDummy, &nPrecisionDummy ) < 0 )
             return -1;
     }
     if( (nFlags & ALTER_WIDTH_PRECISION_FLAG) )
     {
         TABFieldType eTABTypeDummy;
-        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABTypeDummy, &nWidth ) < 0 )
+        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABTypeDummy, &nWidth, &nPrecision ) < 0 )
             return -1;
     }
 
@@ -1372,6 +1374,7 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
         {
             m_pasFieldDef[iField].byLength = (GByte)nWidth;
+            m_pasFieldDef[iField].byDecimals = (GByte)nPrecision;
         }
         return 0;
     }
@@ -1393,7 +1396,7 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
                                  m_pasFieldDef[iField].szName,
                                  eTABType,
                                  nWidth,
-                                 m_pasFieldDef[iField].byDecimals);
+                                 nPrecision);
 
     for(i = 0; i < m_numFields; i++)
     {
