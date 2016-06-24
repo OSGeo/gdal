@@ -1,6 +1,6 @@
 
 OBJ	=	ogrsosidriver.obj ogrsosidatasource.obj \
-        ogrsosilayer.obj fyba_melding.obj
+        ogrsosilayer.obj fyba_melding.obj ogrsosidatatypes.obj
 
 PLUGIN_DLL = ogr_SOSI.dll
 
