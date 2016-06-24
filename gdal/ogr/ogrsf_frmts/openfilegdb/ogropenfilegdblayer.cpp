@@ -1356,8 +1356,21 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                     OGRwkbGeometryType eFlattenType = wkbFlatten(poGeom->getGeometryType());
                     if( eFlattenType == wkbPolygon )
                         poGeom = OGRGeometryFactory::forceToMultiPolygon(poGeom);
+                    else if( eFlattenType == wkbCurvePolygon)
+                    {
+                        OGRMultiSurface* poMS = new OGRMultiSurface();
+                        poMS->addGeometryDirectly( poGeom );
+                        poGeom = poMS;
+                    }
                     else if( eFlattenType == wkbLineString )
                         poGeom = OGRGeometryFactory::forceToMultiLineString(poGeom);
+                    else if (eFlattenType == wkbCompoundCurve)
+                    {
+                        OGRMultiCurve* poMC = new OGRMultiCurve();
+                        poMC->addGeometryDirectly( poGeom );
+                        poGeom = poMC;
+                    }
+
                     poGeom->assignSpatialReference(
                         m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() );
 

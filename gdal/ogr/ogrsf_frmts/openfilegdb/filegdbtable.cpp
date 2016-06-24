@@ -48,6 +48,15 @@ CPL_CVSID("$Id");
 /*       or for 4 ReadVarUInt64NoCheck */
 #define ZEROES_AFTER_END_OF_BUFFER      4
 
+
+static const int EXT_SHAPE_Z_FLAG     = 0x80000000;
+static const int EXT_SHAPE_M_FLAG     = 0x40000000;
+static const int EXT_SHAPE_CURVE_FLAG = 0x20000000;
+
+static const GUInt32 EXT_SHAPE_SEGMENT_ARC = 1;
+static const GUInt32 EXT_SHAPE_SEGMENT_BEZIER = 4;
+static const GUInt32 EXT_SHAPE_SEGMENT_ELLIPSE = 5;
+
 namespace OpenFileGDB
 {
 
@@ -1844,7 +1853,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALPOLYGON:
         {
-            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            nToSkip = 1 + ((nGeomType & EXT_SHAPE_CURVE_FLAG) ? 1 : 0);
             break;
         }
 
@@ -1941,7 +1950,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALPOLYGON:
         {
-            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            nToSkip = 1 + ((nGeomType & EXT_SHAPE_CURVE_FLAG) ? 1 : 0);
             break;
         }
 
@@ -2050,12 +2059,13 @@ class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConve
         int                          bUseOrganize;
 #endif
 
-        int                         ReadPartDefs( GByte*& pabyCur,
+        bool                        ReadPartDefs( GByte*& pabyCur,
                                                   GByte* pabyEnd,
                                                   GUInt32& nPoints,
                                                   GUInt32& nParts,
-                                                  int bHasCurveDesc,
-                                                  int bIsMultiPatch );
+                                                  GUInt32& nCurves,
+                                                  bool bHasCurveDesc,
+                                                  bool bIsMultiPatch );
         template <class XYSetter> int ReadXYArray(XYSetter& setter,
                                                   GByte*& pabyCur,
                                                   GByte* pabyEnd,
@@ -2072,6 +2082,12 @@ class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConve
                                                 GByte* pabyEnd,
                                                 GUInt32 nPoints,
                                                 GIntBig& dm);
+
+        OGRGeometry* CreateCurveGeometry(
+                  GUInt32 nBaseShapeType,
+                  GUInt32 nParts, GUInt32 nPoints, GUInt32 nCurves,
+                  bool bHasZ, bool bHasM,
+                  GByte*& pabyCur, GByte* pabyEnd );
 
     public:
                                         FileGDBOGRGeometryConverterImpl(
@@ -2109,29 +2125,37 @@ FileGDBOGRGeometryConverterImpl::~FileGDBOGRGeometryConverterImpl()
 /*                          ReadPartDefs()                              */
 /************************************************************************/
 
-int FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
+bool FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
                                 GByte* pabyEnd,
                                 GUInt32& nPoints,
                                 GUInt32& nParts,
-                                int bHasCurveDesc,
-                                int bIsMultiPatch )
+                                GUInt32& nCurves,
+                                bool bHasCurveDesc,
+                                bool bIsMultiPatch )
 {
-    const int errorRetValue = FALSE;
+    const bool errorRetValue = false;
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nPoints));
     if( nPoints == 0 )
     {
         nParts = 0;
-        return TRUE;
+        nCurves = 0;
+        return true;
     }
     returnErrorIf(nPoints > (GUInt32)(pabyEnd - pabyCur) );
     if( bIsMultiPatch )
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd) );
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
     returnErrorIf(nParts > (GUInt32)(pabyEnd - pabyCur));
+    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
     if( bHasCurveDesc )
-        returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd) );
+    {
+        returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves) );
+        returnErrorIf(nCurves > (GUInt32)(pabyEnd - pabyCur));
+    }
+    else
+        nCurves = 0;
     if( nParts == 0 )
-        return TRUE;
+        return true;
     GUInt32 i;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, 4) );
     if( nParts > nPointCountMax )
@@ -2154,7 +2178,7 @@ int FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
     returnErrorIf(nSumNPartsM1 > nPoints );
     panPointCount[nParts-1] = (GUInt32)(nPoints - nSumNPartsM1);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -2382,6 +2406,165 @@ template <class MSetter> int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter
 }
 
 /************************************************************************/
+/*                          CreateCurveGeometry()                       */
+/************************************************************************/
+
+class XYBufferSetter
+{
+        GByte* pabyBuffer;
+    public:
+        XYBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+
+        void set(int i, double dfX, double dfY)
+        {
+            CPL_LSBPTR64(&dfX);
+            memcpy( pabyBuffer + 16 * i, &dfX, 8 );
+            CPL_LSBPTR64(&dfY);
+            memcpy( pabyBuffer + 16 * i + 8, &dfY, 8 );
+        }
+};
+
+class ZOrMBufferSetter
+{
+        GByte* pabyBuffer;
+    public:
+        ZOrMBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+
+        void set(int i, double dfValue)
+        {
+            CPL_LSBPTR64(&dfValue);
+            memcpy( pabyBuffer + 8 * i, &dfValue, 8 );
+        }
+};
+
+/* We first create an extended shape buffer from the compressed stream */
+/* and finally use OGRCreateFromShapeBin() to make a geometry from it */
+
+OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
+                  GUInt32 nBaseShapeType,
+                  GUInt32 nParts, GUInt32 nPoints, GUInt32 nCurves,
+                  bool bHasZ, bool bHasM,
+                  GByte*& pabyCur, GByte* pabyEnd )
+{
+    OGRGeometry* errorRetValue = NULL;
+    GUInt32 i;
+    const int nDims = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
+    GIntBig nMaxSize64 = 44 + 4 * static_cast<GUIntBig>(nParts) +
+                         8 * nDims * static_cast<GUIntBig>(nPoints);
+    nMaxSize64 += 4; // nCurves
+    nMaxSize64 += static_cast<GUIntBig>(nCurves) * (4 + /* start index */
+                            4 + /* curve type */
+                            44 /* size of ellipse struct */ );
+    if( nMaxSize64 >= INT_MAX )
+    {
+        returnError();
+    }
+    const int nMaxSize = static_cast<int>(nMaxSize64);
+    GByte* pabyExtShapeBuffer = (GByte*) VSI_MALLOC_VERBOSE(nMaxSize);
+    if( pabyExtShapeBuffer == NULL )
+    {
+        VSIFree(pabyExtShapeBuffer);
+        returnError();
+    }
+    GUInt32 nShapeType = nBaseShapeType | EXT_SHAPE_CURVE_FLAG;
+    if( bHasZ ) nShapeType |= EXT_SHAPE_Z_FLAG;
+    if( bHasM ) nShapeType |= EXT_SHAPE_M_FLAG;
+    GUInt32 nTmp;
+    nTmp = CPL_LSBWORD32(nShapeType);
+    memcpy( pabyExtShapeBuffer, &nTmp, 4 );
+    memset( pabyExtShapeBuffer + 4, 0, 32 ); /* bbox: unused */
+    nTmp = CPL_LSBWORD32(nParts);
+    memcpy( pabyExtShapeBuffer + 36, &nTmp, 4 );
+    nTmp = CPL_LSBWORD32(nPoints);
+    memcpy( pabyExtShapeBuffer + 40, &nTmp, 4 );
+    GUInt32 nIdx = 0;
+    for( i=0; i<nParts; i++ )
+    {
+        nTmp = CPL_LSBWORD32(nIdx);
+        nIdx += panPointCount[i];
+        memcpy( pabyExtShapeBuffer + 44 + 4 * i, &nTmp, 4 );
+    }
+    int nOffset = 44 + 4 * nParts;
+    GIntBig dx = 0;
+    GIntBig dy = 0;
+    XYBufferSetter arraySetter(pabyExtShapeBuffer + nOffset);
+    if( !ReadXYArray<XYBufferSetter>(arraySetter,
+                    pabyCur, pabyEnd, nPoints, dx, dy) )
+    {
+        VSIFree(pabyExtShapeBuffer);
+        returnError();
+    }
+    nOffset += 16 * nPoints;
+
+    if( bHasZ )
+    {
+        GIntBig dz = 0;
+        ZOrMBufferSetter arrayzSetter(pabyExtShapeBuffer + nOffset);
+        if( !ReadZArray<ZOrMBufferSetter>(arrayzSetter,
+                        pabyCur, pabyEnd, nPoints, dz) )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        nOffset += 8 * nPoints;
+    }
+    if( bHasM )
+    {
+        ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
+        GIntBig dm = 0;
+        if( !ReadMArray<ZOrMBufferSetter>(arraymSetter,
+                        pabyCur, pabyEnd, nPoints, dm) )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        nOffset += 8 * nPoints;
+    }
+
+    nTmp = CPL_LSBWORD32(nCurves);
+    memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+    nOffset += 4;
+    for( i=0; i<nCurves; i++ )
+    {
+        // start index
+        returnErrorAndCleanupIf( !ReadVarUInt32(pabyCur, pabyEnd, nTmp),
+                                 VSIFree(pabyExtShapeBuffer) );
+        nTmp = CPL_LSBWORD32(nTmp);
+        memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+        nOffset += 4;
+
+        GUInt32 nCurveType;
+        returnErrorAndCleanupIf( !ReadVarUInt32(pabyCur, pabyEnd, nCurveType),
+                                 VSIFree(pabyExtShapeBuffer) );
+        nTmp = CPL_LSBWORD32(nCurveType);
+        memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+        nOffset += 4;
+
+        int nStructureSize = 0;
+        if( nCurveType == EXT_SHAPE_SEGMENT_ARC )
+            nStructureSize = 2 * 8 + 4;
+        else if( nCurveType == EXT_SHAPE_SEGMENT_BEZIER )
+            nStructureSize = 4 * 8;
+        else if( nCurveType == EXT_SHAPE_SEGMENT_ELLIPSE )
+            nStructureSize = 5 * 8 + 4;
+        if( nStructureSize == 0 || pabyCur + nStructureSize > pabyEnd )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        memcpy( pabyExtShapeBuffer + nOffset, pabyCur, nStructureSize );
+        pabyCur += nStructureSize;
+        nOffset += nStructureSize;
+    }
+    CPLAssert( nOffset <= nMaxSize );
+
+    OGRGeometry* poRet = NULL;
+    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset);
+    VSIFree(pabyExtShapeBuffer);
+    return poRet;
+}
+
+/************************************************************************/
 /*                          GetAsGeometry()                             */
 /************************************************************************/
 
@@ -2390,14 +2573,14 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
     OGRGeometry* errorRetValue = NULL;
     GByte* pabyCur = psField->Binary.paData;
     GByte* pabyEnd = pabyCur + psField->Binary.nCount;
-    GUInt32 nGeomType, i, nPoints, nParts;
+    GUInt32 nGeomType, i, nPoints, nParts, nCurves;
     GUIntBig x, y, z;
     GIntBig dx, dy, dz;
 
     ReadVarUInt32NoCheck(pabyCur, nGeomType);
 
-    int bHasZ = (nGeomType & 0x80000000) != 0;
-    bool bHasM = (nGeomType & 0x40000000) != 0;
+    bool bHasZ = (nGeomType & EXT_SHAPE_Z_FLAG) != 0;
+    bool bHasM = (nGeomType & EXT_SHAPE_M_FLAG) != 0;
     switch( (nGeomType & 0xff) )
     {
         case SHPT_NULL:
@@ -2405,7 +2588,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_POINTZ:
         case SHPT_POINTZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
             // CPL_FALLTHROUGH
         case SHPT_POINT:
         case SHPT_POINTM:
@@ -2451,7 +2634,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_MULTIPOINTZM:
         case SHPT_MULTIPOINTZ:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
             // CPL_FALLTHROUGH
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTM:
@@ -2518,7 +2701,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_ARCZ:
         case SHPT_ARCZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
             // CPL_FALLTHROUGH
         case SHPT_ARC:
         case SHPT_ARCM:
@@ -2527,9 +2710,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             if( nGeomType == SHPT_ARCM || nGeomType == SHPT_ARCZM )
                 bHasM = true;
 
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
-                              (nGeomType & 0x20000000) != 0,
-                              FALSE) );
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves,
+                              (nGeomType & EXT_SHAPE_CURVE_FLAG) != 0,
+                              false) );
 
             if( nPoints == 0 || nParts == 0 )
             {
@@ -2539,6 +2722,20 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 if( bHasM )
                     poLS->setMeasured(TRUE);
                 return poLS;
+            }
+
+            if( nCurves )
+            {
+                GByte* pabyCurBackup = pabyCur;
+                OGRGeometry* poRet = CreateCurveGeometry(
+                    SHPT_GENERALPOLYLINE,
+                    nParts, nPoints, nCurves,
+                    bHasZ, bHasM,
+                    pabyCur, pabyEnd );
+                if( poRet )
+                    return poRet;
+                // In case something went wrong, go on without curves
+                pabyCur = pabyCurBackup;
             }
 
             OGRMultiLineString* poMLS = NULL;
@@ -2636,7 +2833,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_POLYGONZ:
         case SHPT_POLYGONZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
             // CPL_FALLTHROUGH
         case SHPT_POLYGON:
         case SHPT_POLYGONM:
@@ -2645,9 +2842,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             if( nGeomType == SHPT_POLYGONM || nGeomType == SHPT_POLYGONZM )
                 bHasM = true;
 
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
-                              (nGeomType & 0x20000000) != 0,
-                              FALSE) );
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves,
+                              (nGeomType & EXT_SHAPE_CURVE_FLAG) != 0,
+                              false) );
 
             if( nPoints == 0 || nParts == 0 )
             {
@@ -2657,6 +2854,20 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 if( bHasM )
                     poPoly->setMeasured(TRUE);
                 return poPoly;
+            }
+
+            if( nCurves )
+            {
+                GByte* pabyCurBackup = pabyCur;
+                OGRGeometry* poRet = CreateCurveGeometry(
+                    SHPT_GENERALPOLYGON,
+                    nParts, nPoints, nCurves,
+                    bHasZ, bHasM,
+                    pabyCur, pabyEnd );
+                if( poRet )
+                    return poRet;
+                // In case something went wrong, go on without curves
+                pabyCur = pabyCurBackup;
             }
 
             OGRLinearRing** papoRings = new OGRLinearRing*[nParts];
@@ -2817,11 +3028,11 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
             // CPL_FALLTHROUGH
         case SHPT_GENERALMULTIPATCH:
         {
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, TRUE ) );
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves, false, true ) );
 
             if( nPoints == 0 || nParts == 0 )
             {

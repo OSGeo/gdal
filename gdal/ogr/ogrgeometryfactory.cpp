@@ -1130,15 +1130,17 @@ typedef struct _sPolyExtended sPolyExtended;
 
 struct _sPolyExtended
 {
-    OGRPolygon*     poPolygon;
+    OGRGeometry* poGeometry;
+    OGRCurvePolygon* poPolygon;
     OGREnvelope     sEnvelope;
-    OGRLinearRing*  poExteriorRing;
+    OGRCurve*  poExteriorRing;
     OGRPoint        poAPoint;
     int             nInitialIndex;
-    int             bIsTopLevel;
-    OGRPolygon*     poEnclosingPolygon;
+    OGRCurvePolygon*     poEnclosingPolygon;
     double          dfArea;
-    int             bIsCW;
+    bool            bIsTopLevel;
+    bool            bIsCW;
+    bool            bIsPolygon;
 };
 
 static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
@@ -1183,7 +1185,7 @@ typedef enum
  * (or a MultiPolygon if dealing with more than one polygon) that follow the
  * OGC Simple Feature specification.
  *
- * All the input geometries must be OGRPolygons with only a valid exterior
+ * All the input geometries must be OGRPolygon/OGRCurvePolygon with only a valid exterior
  * ring (at least 4 points) and no interior rings.
  *
  * The passed in geometries become the responsibility of the method, but the
@@ -1221,7 +1223,8 @@ typedef enum
  * FALSE otherwise.
  * @param papszOptions a list of strings for passing options
  *
- * @return a single resulting geometry (either OGRPolygon or OGRMultiPolygon).
+ * @return a single resulting geometry (either OGRPolygon, OGRCurvePolygon,
+ * OGRMultiPolygon, OGRMultiSurface or OGRGeometryCollection).
  */
 
 OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
@@ -1233,6 +1236,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int i, j;
     OGRGeometry* geom = NULL;
     OrganizePolygonMethod method = METHOD_NORMAL;
+    bool bHasCurves = false;
 
 /* -------------------------------------------------------------------- */
 /*      Trivial case of a single polygon.                               */
@@ -1273,7 +1277,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
     sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
 
-    bool go_on = true;
+    bool bValidTopology = true;
     bool bMixedUpGeometries = false;
     bool bNonPolygon = false;
     bool bFoundCCW = false;
@@ -1311,18 +1315,36 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     for(i=0;i<nPolygonCount;i++)
     {
         asPolyEx[i].nInitialIndex = i;
-        asPolyEx[i].poPolygon = (OGRPolygon*)papoPolygons[i];
+        asPolyEx[i].poGeometry = papoPolygons[i];
+        asPolyEx[i].poPolygon = dynamic_cast<OGRCurvePolygon*>(papoPolygons[i]);
         papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
 
-        if( wkbFlatten(papoPolygons[i]->getGeometryType()) == wkbPolygon
-            && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0
-            && ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints() >= 4)
+        OGRwkbGeometryType eType = wkbFlatten(papoPolygons[i]->getGeometryType());
+        if( eType == wkbCurvePolygon )
+            bHasCurves = true;
+        if( asPolyEx[i].poPolygon != NULL
+            && asPolyEx[i].poPolygon->getNumInteriorRings() == 0
+            && asPolyEx[i].poPolygon->getExteriorRingCurve()->getNumPoints() >= 4)
         {
             if( method != METHOD_CCW_INNER_JUST_AFTER_CW_OUTER )
                 asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
-            asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
-            asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
-            asPolyEx[i].bIsCW = asPolyEx[i].poExteriorRing->isClockwise();
+            asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRingCurve();
+            asPolyEx[i].poExteriorRing->StartPoint(&asPolyEx[i].poAPoint);
+            if( eType == wkbPolygon )
+            {
+                asPolyEx[i].bIsCW = CPL_TO_BOOL(reinterpret_cast<OGRLinearRing*>(
+                          asPolyEx[i].poExteriorRing)->isClockwise());
+                asPolyEx[i].bIsPolygon = true;
+            }
+            else
+            {
+                OGRLineString* poLS = asPolyEx[i].poExteriorRing->CurveToLine();
+                OGRLinearRing oLR;
+                oLR.addSubLineString(poLS);
+                asPolyEx[i].bIsCW = CPL_TO_BOOL(oLR.isClockwise());
+                asPolyEx[i].bIsPolygon = false;
+                delete poLS;
+            }
             if (asPolyEx[i].bIsCW)
             {
                 indexOfCWPolygon = i;
@@ -1342,7 +1364,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     "or a non-Polygon geometry.  Return arguments as a collection." );
                 bMixedUpGeometries = true;
             }
-            if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
+            if( eType != wkbPolygon && eType != wkbCurvePolygon )
                 bNonPolygon = true;
         }
     }
@@ -1352,27 +1374,28 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     if ((method == METHOD_ONLY_CCW || method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER) &&
         nCountCWPolygon == 1 && bUseFastVersion && !bNonPolygon )
     {
-        geom = asPolyEx[indexOfCWPolygon].poPolygon;
+        OGRCurvePolygon* poCP = asPolyEx[indexOfCWPolygon].poPolygon;
         for(i=0; i<nPolygonCount; i++)
         {
             if (i != indexOfCWPolygon)
             {
-                ((OGRPolygon*)geom)->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRing());
+                poCP->addRingDirectly(
+                              asPolyEx[i].poPolygon->stealExteriorRingCurve());
                 delete asPolyEx[i].poPolygon;
             }
         }
         delete [] asPolyEx;
         if (pbIsValidGeometry)
             *pbIsValidGeometry = TRUE;
-        return geom;
+        return poCP;
     }
 
     if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER && !bNonPolygon && asPolyEx[0].bIsCW )
     {
         /* Inner rings are CCW oriented and follow immediately the outer */
         /* ring (that is CW oriented) in which they are included */
-        OGRMultiPolygon* poMulti = NULL;
-        OGRPolygon* poCur = asPolyEx[0].poPolygon;
+        OGRMultiSurface* poMulti = NULL;
+        OGRCurvePolygon* poCur = asPolyEx[0].poPolygon;
         OGRGeometry* poRet = poCur;
         /* We have already checked that the first ring is CW */
         OGREnvelope* psEnvelope = &(asPolyEx[0].sEnvelope);
@@ -1382,7 +1405,10 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             {
                 if( poMulti == NULL )
                 {
-                    poMulti = new OGRMultiPolygon();
+                    if( bHasCurves )
+                        poMulti = new OGRMultiSurface();
+                    else
+                        poMulti = new OGRMultiPolygon();
                     poRet = poMulti;
                     poMulti->addGeometryDirectly(poCur);
                 }
@@ -1392,7 +1418,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             }
             else
             {
-                poCur->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRing());
+                poCur->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRingCurve());
                 if(!(asPolyEx[i].poAPoint.getX() >= psEnvelope->MinX &&
                      asPolyEx[i].poAPoint.getX() <= psEnvelope->MaxX &&
                      asPolyEx[i].poAPoint.getY() >= psEnvelope->MinY &&
@@ -1489,23 +1515,23 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
 
     /* The first (largest) polygon is necessarily top-level */
-    asPolyEx[0].bIsTopLevel = TRUE;
+    asPolyEx[0].bIsTopLevel = true;
     asPolyEx[0].poEnclosingPolygon = NULL;
 
     int nCountTopLevel = 1;
 
     /* STEP 2 */
-    for(i=1; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
+    for(i=1; !bMixedUpGeometries && bValidTopology && i<nPolygonCount; i++)
     {
         if (method == METHOD_ONLY_CCW && asPolyEx[i].bIsCW)
         {
             nCountTopLevel ++;
-            asPolyEx[i].bIsTopLevel = TRUE;
+            asPolyEx[i].bIsTopLevel = true;
             asPolyEx[i].poEnclosingPolygon = NULL;
             continue;
         }
 
-        for(j=i-1; go_on && j>=0;j--)
+        for(j=i-1; bValidTopology && j>=0;j--)
         {
             bool b_i_inside_j = false;
 
@@ -1527,19 +1553,23 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         /* the winding order rules is broken */
                         b_i_inside_j = true;
                     }
-                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
+                    else if (asPolyEx[i].bIsPolygon && asPolyEx[j].bIsPolygon &&
+                             reinterpret_cast<OGRLinearRing*>(asPolyEx[j].poExteriorRing)->
+                                  isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
                     {
+                        OGRLinearRing* poLR_i = reinterpret_cast<OGRLinearRing*>(asPolyEx[i].poExteriorRing);
+                        OGRLinearRing* poLR_j = reinterpret_cast<OGRLinearRing*>(asPolyEx[j].poExteriorRing);
                         /* If the point of i is on the boundary of j, we will iterate over the other points of i */
-                        int k, nPoints = asPolyEx[i].poExteriorRing->getNumPoints();
+                        int k, nPoints = poLR_i->getNumPoints();
                         for(k=1;k<nPoints;k++)
                         {
                             OGRPoint point;
-                            asPolyEx[i].poExteriorRing->getPoint(k, &point);
-                            if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point, FALSE))
+                            poLR_i->getPoint(k, &point);
+                            if (poLR_j->isPointOnRingBoundary(&point, FALSE))
                             {
                                 /* If it is on the boundary of j, iterate again */
                             }
-                            else if (asPolyEx[j].poExteriorRing->isPointInRing(&point, FALSE))
+                            else if (poLR_j->isPointInRing(&point, FALSE))
                             {
                                 /* If then point is strictly included in j, then i is considered inside j */
                                 b_i_inside_j = true;
@@ -1559,15 +1589,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                             for(k=0;k<nPoints-1;k++)
                             {
                                 OGRPoint point1, point2, pointMiddle;
-                                asPolyEx[i].poExteriorRing->getPoint(k, &point1);
-                                asPolyEx[i].poExteriorRing->getPoint(k+1, &point2);
+                                poLR_i->getPoint(k, &point1);
+                                poLR_i->getPoint(k+1, &point2);
                                 pointMiddle.setX((point1.getX() + point2.getX()) / 2);
                                 pointMiddle.setY((point1.getY() + point2.getY()) / 2);
-                                if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&pointMiddle, FALSE))
+                                if (poLR_j->isPointOnRingBoundary(&pointMiddle, FALSE))
                                 {
                                     /* If it is on the boundary of j, iterate again */
                                 }
-                                else if (asPolyEx[j].poExteriorRing->isPointInRing(&pointMiddle, FALSE))
+                                else if (poLR_j->isPointInRing(&pointMiddle, FALSE))
                                 {
                                     /* If then point is strictly included in j, then i is considered inside j */
                                     b_i_inside_j = true;
@@ -1582,7 +1612,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         }
                     }
                     /* Note that isPointInRing only test strict inclusion in the ring */
-                    else if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint, FALSE))
+                    else if (asPolyEx[i].bIsPolygon && asPolyEx[j].bIsPolygon &&
+                             reinterpret_cast<OGRLinearRing*>(asPolyEx[j].poExteriorRing)->
+                                  isPointInRing(&asPolyEx[i].poAPoint, FALSE))
                     {
                         b_i_inside_j = true;
                     }
@@ -1599,7 +1631,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 if (asPolyEx[j].bIsTopLevel)
                 {
                     /* We are a lake */
-                    asPolyEx[i].bIsTopLevel = FALSE;
+                    asPolyEx[i].bIsTopLevel = false;
                     asPolyEx[i].poEnclosingPolygon = asPolyEx[j].poPolygon;
                 }
                 else
@@ -1607,7 +1639,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     /* We are included in a something not toplevel (a lake), */
                     /* so in OGCSF we are considered as toplevel too */
                     nCountTopLevel ++;
-                    asPolyEx[i].bIsTopLevel = TRUE;
+                    asPolyEx[i].bIsTopLevel = true;
                     asPolyEx[i].poEnclosingPolygon = NULL;
                 }
                 break;
@@ -1625,7 +1657,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                    contained inside the other one. This is a really broken
                    case. We just make a multipolygon with the whole set of
                    polygons */
-                go_on = false;
+                bValidTopology = false;
 #ifdef DEBUG
                 char* wkt1;
                 char* wkt2;
@@ -1647,28 +1679,31 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             /* We come here because we are not included in anything */
             /* We are toplevel */
             nCountTopLevel ++;
-            asPolyEx[i].bIsTopLevel = TRUE;
+            asPolyEx[i].bIsTopLevel = true;
             asPolyEx[i].poEnclosingPolygon = NULL;
         }
     }
 
     if (pbIsValidGeometry)
-        *pbIsValidGeometry = go_on && !bMixedUpGeometries;
+        *pbIsValidGeometry = bValidTopology && !bMixedUpGeometries;
 
 /* -------------------------------------------------------------------- */
 /*      Things broke down - just turn everything into a multipolygon.   */
 /* -------------------------------------------------------------------- */
-    if ( !go_on || bMixedUpGeometries )
+    if ( !bValidTopology || bMixedUpGeometries )
     {
+        OGRGeometryCollection* poGC;
         if( bNonPolygon )
-            geom = new OGRGeometryCollection();
+            poGC = new OGRGeometryCollection();
+        else if( bHasCurves )
+            poGC = new OGRMultiSurface();
         else
-            geom = new OGRMultiPolygon();
+            poGC = new OGRMultiPolygon();
+        geom = poGC;
 
         for( i=0; i < nPolygonCount; i++ )
         {
-            ((OGRGeometryCollection*)geom)->
-                addGeometryDirectly( asPolyEx[i].poPolygon );
+            poGC->addGeometryDirectly( asPolyEx[i].poGeometry );
         }
     }
 
@@ -1678,16 +1713,16 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
     else
     {
-        /* STEP 3: Resort in initial order */
+        /* STEP 3: Sort again in initial order */
         qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended), OGRGeometryFactoryCompareByIndex);
 
         /* STEP 4: Add holes as rings of their enclosing polygon */
         for(i=0;i<nPolygonCount;i++)
         {
-            if (asPolyEx[i].bIsTopLevel == FALSE)
+            if (asPolyEx[i].bIsTopLevel == false)
             {
                 asPolyEx[i].poEnclosingPolygon->addRingDirectly(
-                    asPolyEx[i].poPolygon->stealExteriorRing());
+                    asPolyEx[i].poPolygon->stealExteriorRingCurve());
                 delete asPolyEx[i].poPolygon;
             }
             else if (nCountTopLevel == 1)
@@ -1699,21 +1734,22 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         /* STEP 5: Add toplevel polygons */
         if (nCountTopLevel > 1)
         {
+            OGRGeometryCollection* poGC = NULL;
             for(i=0;i<nPolygonCount;i++)
             {
                 if (asPolyEx[i].bIsTopLevel)
                 {
-                    if (geom == NULL)
+                    if (poGC == NULL)
                     {
-                        geom = new OGRMultiPolygon();
-                        ((OGRMultiPolygon*)geom)->addGeometryDirectly(asPolyEx[i].poPolygon);
+                        if( bHasCurves )
+                            poGC = new OGRMultiSurface();
+                        else
+                            poGC = new OGRMultiPolygon();
                     }
-                    else
-                    {
-                        ((OGRMultiPolygon*)geom)->addGeometryDirectly(asPolyEx[i].poPolygon);
-                    }
+                    poGC->addGeometryDirectly(asPolyEx[i].poPolygon);
                 }
             }
+            geom = poGC;
         }
     }
 

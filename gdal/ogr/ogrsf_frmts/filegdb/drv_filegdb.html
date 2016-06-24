@@ -21,6 +21,8 @@ i.e. not depending on a third-party library) read-only driver.</p>
 	</ul>
 </p>
 
+<p>Curve in geometries are supported on reading with GDAL &gt;= 2.2.</p>
+
 <h2>Bulk feature loading (OGR >= 1.9.2)</h2>
 
 The FGDB_BULK_LOAD configuration option can be set to YES to speed-up feature insertion (or sometimes solve problems
@@ -117,11 +119,9 @@ remapping technique to enable the user to create features at the FID of their ch
             This might be the case if messages "FGDB: Error opening XXXXXXX. Skipping it (Invalid function arguments.)"
             when running "ogrinfo --debug on the.gdb" (reported as warning in GDAL 2.0).
             Using the OpenFileGDB driver will generally solve that issue.</li>
-	<li>Blob fields have not been implemented.</li>
 	<li>FGDB coordinate snapping will cause geometries to be altered during writing. Use the origin and scale layer creation options to control the snapping behavior.</li>
 	<li>Driver can't read data  in SDC format (Smart Data Compression) because operation is not supported by the ESRI SDK.</li>
         <li>Reading data compressed in CDF format (Compressed Data Format) requires ESRI SDK 1.4 or later.</li>
-        <li>Curve in geometries are not currently supported.</li>
 </ul>
 
 <h2>Links</h2>
