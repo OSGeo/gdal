@@ -202,9 +202,9 @@ def ogr_geom_pickle():
 ###############################################################################
 # Test suite for PolyhedralSurface
 
-def ogr_geom_polyhedral_surface():
-    from osgeo import ogr
-    wkt_original = 'POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
+def geom_polyhedral_surface():
+
+    wkt_original = 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
 ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),\
 ((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),\
 ((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),\
@@ -247,7 +247,7 @@ def ogr_geom_polyhedral_surface():
 
     ps.Empty()
     wkt_string = ps.ExportToWkt()
-    if wkt_string != 'POLYHEDRALSURFACE EMPTY':
+    if wkt_string != 'POLYHEDRALSURFACE Z EMPTY':
         gdaltest.post_reason ("Failure in Empty() of PolyhedralSurface")
         return 'fail'
 
@@ -3827,7 +3827,7 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [
     ogr_geom_area,
-    ogr_geom_polyhedral_surface,
+    geom_polyhedral_surface,
     ogr_geom_area_triangle,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,
