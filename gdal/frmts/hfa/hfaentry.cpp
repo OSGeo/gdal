@@ -904,7 +904,6 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
         || pabyData == NULL
         || poType == NULL )
     {
-        CPLAssert( FALSE );
         return CE_Failure;
     }
 
