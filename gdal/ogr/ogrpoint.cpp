@@ -58,13 +58,12 @@ OGRPoint::OGRPoint()
 /*      Initialize point to value.                                      */
 /************************************************************************/
 
-OGRPoint::OGRPoint( double xIn, double yIn, double zIn )
-
+OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
+    x(xIn),
+    y(yIn),
+    z(zIn),
+    m(0.0)
 {
-    x = xIn;
-    y = yIn;
-    z = zIn;
-    m = 0.0;
     flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D;
 }
 
@@ -74,13 +73,12 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn )
 /*      Initialize point to value.                                      */
 /************************************************************************/
 
-OGRPoint::OGRPoint( double xIn, double yIn )
-
+OGRPoint::OGRPoint( double xIn, double yIn ) :
+    x(xIn),
+    y(yIn),
+    z(0.0),
+    m(0.0)
 {
-    x = xIn;
-    y = yIn;
-    z = 0.0;
-    m = 0.0;
     flags = OGR_G_NOT_EMPTY_POINT;
 }
 
@@ -90,13 +88,12 @@ OGRPoint::OGRPoint( double xIn, double yIn )
 /*      Initialize point to value.                                      */
 /************************************************************************/
 
-OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn )
-
+OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
+    x(xIn),
+    y(yIn),
+    z(zIn),
+    m(mIn)
 {
-    x = xIn;
-    y = yIn;
-    z = zIn;
-    m = mIn;
     flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D | OGR_G_MEASURED;
 }
 
