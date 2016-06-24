@@ -51,14 +51,14 @@ void SOSIInitTypes() {
   addSimpleType(&oTypes, "REF", "", OFTString); //ignore this
 }
 
-int SOSITypeToInt(char* value) {
+int SOSITypeToInt(const char* value) {
   return atoi(value);
 }
-float SOSITypeToReal(char* value) {
-  return atof(value);
+double SOSITypeToReal(const char* value) {
+  return CPLAtof(value);
 }
 
-void SOSITypeToDate(char* value, int* date) {
+void SOSITypeToDate(const char* value, int* date) {
   char dato[9];
   snprintf(dato, 9, "%s", value);
   date[2] = atoi(dato+6);
@@ -68,7 +68,7 @@ void SOSITypeToDate(char* value, int* date) {
   date[0] = atoi(dato);
 }
 
-void SOSITypeToDateTime(char* value, int* date) {
+void SOSITypeToDateTime(const char* value, int* date) {
   char dato[15];
   snprintf(dato, 15, "%s", value);
   if (strlen(dato)==14) {
