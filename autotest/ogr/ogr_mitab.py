@@ -2174,6 +2174,33 @@ def ogr_mitab_43():
     return 'success'
 
 ###############################################################################
+# Test limitation on width and precision of numeric fields in creation (#6392)
+
+def ogr_mitab_44():
+
+    ds = gdaltest.mapinfo_drv.CreateDataSource('/vsimem/ogr_mitab_44.mif')
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('test', ogr.OFTReal)
+    fld_defn.SetWidth(30)
+    fld_defn.SetPrecision(29)
+    lyr.CreateField(fld_defn)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_mitab_44.mif')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if fld_defn.GetWidth() != 20 or fld_defn.GetPrecision() != 16:
+        gdaltest.post_reason('fail')
+        print(fld_defn.GetWidth())
+        print(fld_defn.GetPrecision())
+        return 'fail'
+    ds = None
+
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/ogr_mitab_44.mif' )
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2228,6 +2255,7 @@ gdaltest_list = [
     ogr_mitab_38,
     ogr_mitab_42,
     ogr_mitab_43,
+    ogr_mitab_44,
     ogr_mitab_cleanup
     ]
 
