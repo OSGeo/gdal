@@ -1941,7 +1941,7 @@ OGRBoolean
 OGRGeometry::IsValid(  ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -2472,13 +2472,13 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
         case wkbTIN:
             if (b3D && bMeasured)
-                return "3D Measured TriangulatedSurface";
+                return "3D Measured TIN";
             else if (b3D)
-                return "3D TriangulatedSurface";
+                return "3D TIN";
             else if (bMeasured)
-                return "Measured TriangulatedSurface";
+                return "Measured TIN";
             else
-                return "TriangulatedSurface";
+                return "TIN";
 
         case wkbNone:
             return "None";
@@ -2847,7 +2847,7 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
         if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
             hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
     }
-    else if (EQUAL(getGeometryName(), "POLYHEDRALSURFACE"))
+    else if (EQUAL(getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(getGeometryName(), "TIN"))
     {
         OGRMultiPolygon *poMultiPolygon = ((OGRPolyhedralSurface *)poLinearGeom)->CastToMultiPolygon();
         if( poMultiPolygon->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
@@ -2998,8 +2998,7 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
         return -1.0;
     }
 
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE")
-    || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(poOtherGeom->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -3144,7 +3143,7 @@ static OGRGeometry* OGRGeometryRebuildCurves(const OGRGeometry* poGeom,
 OGRGeometry *OGRGeometry::ConvexHull() const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -3503,8 +3502,7 @@ OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
 OGRGeometry *OGRGeometry::Intersection( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE")
-        || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(poOtherGeom->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -3513,7 +3511,6 @@ OGRGeometry *OGRGeometry::Intersection( UNUSED_PARAMETER const OGRGeometry *poOt
 
     #else
 
-        CPLDebug("OGR","HERE");
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
             return FALSE;
@@ -3643,8 +3640,7 @@ OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::Union( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE")
-    || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(poOtherGeom->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -3868,8 +3864,7 @@ OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
 OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE")
-    || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(poOtherGeom->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -4323,8 +4318,7 @@ OGRBoolean
 OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
 {
-    if (EQUAL(this->getGeometryName(), "TRIANGLE") || EQUAL(poOtherGeom->getGeometryName(), "TRIANGLE")
-    || EQUAL(this->getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(poOtherGeom->getGeometryName(), "POLYHEDRALSURFACE"))
+    if (this->IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
     #ifndef HAVE_SFCGAL
 
@@ -6138,7 +6132,7 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
 
     if( eSuperType == wkbSurface )
         return eType == wkbCurvePolygon || eType == wkbPolygon || eType == wkbTriangle ||
-               eType == wkbPolyhedralSurface;
+               eType == wkbPolyhedralSurface || eType == wkbTIN;
 
     if( eSuperType == wkbPolygon )
         return eType == wkbTriangle;
@@ -6580,4 +6574,11 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
     return NULL;
 #endif
+}
+
+OGRBoolean OGRGeometry::IsSFCGALCompatible() const
+{
+    return (wkbFlatten(this->getGeometryType()) == wkbTriangle ||
+            wkbFlatten(this->getGeometryType()) == wkbPolyhedralSurface ||
+            wkbFlatten(this->getGeometryType()) == wkbTIN);
 }
