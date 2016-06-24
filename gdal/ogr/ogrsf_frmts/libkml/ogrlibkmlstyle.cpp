@@ -29,9 +29,11 @@
 
 #include "libkml_headers.h"
 
-#include <ogr_featurestyle.h>
-
 #include <set>
+#include <string>
+
+#include "ogr_featurestyle.h"
+
 
 using kmldom::KmlFactory;;
 using kmldom::ElementPtr;

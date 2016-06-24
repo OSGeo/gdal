@@ -30,9 +30,11 @@
 //#include "cpl_conv.h"
 //#include "cpl_string.h"
 //#include "cpl_error.h"
-#include <iostream>
+// #include <iostream>
 //#include <sstream>
 #include "libkml_headers.h"
+
+#include <string>
 
 using kmldom::KmlFactory;
 using kmldom::DocumentPtr;

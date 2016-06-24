@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <string>
+
 using kmldom::KmlFactory;
 using kmldom::StyleSelectorPtr;
 using kmldom::StylePtr;
@@ -37,7 +39,7 @@ using kmldom::FeaturePtr;
 StylePtr addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
-    KmlFactory * poKmlFactory,
+    KmlFactory *poKmlFactory,
     FeaturePtr poKmlFeature );
 
 
@@ -61,7 +63,7 @@ StyleSelectorPtr StyleFromStyleSelector(
     OGRStyleTable * poStyleTable);
 
 StyleSelectorPtr StyleFromStyleURL(
-    const string styleurl,
+    const std::string styleurl,
     OGRStyleTable * poStyleTable);
 
 StyleSelectorPtr StyleFromStyleMap(
