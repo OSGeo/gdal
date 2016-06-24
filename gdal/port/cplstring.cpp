@@ -326,7 +326,7 @@ CPLString &CPLString::tolower()
 /************************************************************************/
 
 /**
- * Replace all occurences of osBefore with osAfter.
+ * Replace all occurrences of osBefore with osAfter.
  */
 CPLString &CPLString::replaceAll( const std::string &osBefore,
                                   const std::string &osAfter )
