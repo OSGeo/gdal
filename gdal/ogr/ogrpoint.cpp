@@ -180,7 +180,10 @@ OGRGeometry *OGRPoint::clone() const
 void OGRPoint::empty()
 
 {
-    x = y = z = m = 0.0;
+    x = 0.0;
+    y = 0.0;
+    z = 0.0;
+    m = 0.0;
     flags &= ~OGR_G_NOT_EMPTY_POINT;
 }
 
