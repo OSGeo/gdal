@@ -602,6 +602,21 @@ int FileGDBTable::ReadTableXHeader()
 }
 
 /************************************************************************/
+/*                            ReadUTF16String()                         */
+/************************************************************************/
+
+static std::string ReadUTF16String(const GByte* pabyIter, int nCarCount)
+{
+    std::wstring osWideStr;
+    for(int j=0;j<nCarCount;j++)
+        osWideStr += pabyIter[2 * j] | (pabyIter[2 * j + 1] << 8);
+    char* pszStr = CPLRecodeFromWChar(osWideStr.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
+    std::string osRet(pszStr);
+    CPLFree(pszStr);
+    return osRet;
+}
+
+/************************************************************************/
 /*                                 Open()                               */
 /************************************************************************/
 
@@ -740,9 +755,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        std::string osName;
-        for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-            osName += pabyIter[2 * j];
+        std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -751,9 +764,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        std::string osAlias;
-        for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-            osAlias += pabyIter[2 * j];
+        std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -908,9 +919,7 @@ int FileGDBTable::Open(const char* pszFilename,
                 pabyIter ++;
                 nRemaining --;
                 returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-                std::string osRasterColumn;
-                for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-                    osRasterColumn += pabyIter[2 * j];
+                std::string osRasterColumn(ReadUTF16String(pabyIter, nCarCount));
                 pabyIter += 2 * nCarCount;
                 nRemaining -= 2 * nCarCount;
                 poRasterField->osRasterColumnName = osRasterColumn;
@@ -922,8 +931,7 @@ int FileGDBTable::Open(const char* pszFilename,
             nRemaining -= sizeof(nLengthWKT);
 
             returnErrorIf(nRemaining < (GUInt32)(1 + nLengthWKT) );
-            for(int j=0;j<nLengthWKT/2;j++) //FIXME? UTF16
-                poField->osWKT += pabyIter[2 * j];
+            poField->osWKT = ReadUTF16String(pabyIter, nLengthWKT/2);
             pabyIter += nLengthWKT;
             nRemaining -= nLengthWKT;
 
@@ -1671,10 +1679,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt32);
         returnErrorAndCleanupIf(nIdxNameCarCount > 1024, VSIFree(pabyIdx) );
         returnErrorAndCleanupIf((GUInt32)(pabyEnd - pabyCur) < 2 * nIdxNameCarCount, VSIFree(pabyIdx) );
-        std::string osIndexName;
-        GUInt32 j;
-        for(j=0;j<nIdxNameCarCount;j++) //FIXME? UTF16
-            osIndexName += pabyCur[2 * j];
+        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCarCount));
         pabyCur += 2 * nIdxNameCarCount;
 
         // Skip magic fields
@@ -1685,9 +1690,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt32);
         returnErrorAndCleanupIf(nColNameCarCount > 1024, VSIFree(pabyIdx) );
         returnErrorAndCleanupIf((GUInt32)(pabyEnd - pabyCur) < 2 * nColNameCarCount, VSIFree(pabyIdx) );
-        std::string osFieldName;
-        for(j=0;j<nColNameCarCount;j++) //FIXME? UTF16
-            osFieldName += pabyCur[2 * j];
+        std::string osFieldName(ReadUTF16String(pabyCur, nColNameCarCount));
         pabyCur += 2 * nColNameCarCount;
 
         // Skip magic field
