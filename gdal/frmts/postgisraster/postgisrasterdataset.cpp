@@ -1213,19 +1213,11 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
     char * pszFilteredRes = NULL;
     char ** papszParams = NULL;
         
-    if (pszWhere == NULL) {
-        osCommand.Printf("select st_bandmetadata(%s, band) from "
-        "(select %s, generate_series(1, st_numbands(%s)) band from "
-        "(select %s from %s.%s limit 1) bar) foo", pszColumn, pszColumn,
-        pszColumn, pszColumn, pszSchema, pszTable);
-    } 
-
-    else {
-        osCommand.Printf("select st_bandmetadata(%s, band) from "
-        "(select %s, generate_series(1, st_numbands(%s)) band from "
-        "(select %s from %s.%s where %s limit 1) bar) foo", pszColumn, 
-        pszColumn, pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
-    }
+    osCommand.Printf("select st_bandmetadata(%s, band) from "
+      "(select %s, generate_series(1, %d) band from "
+      "(select %s from %s.%s where (%s) AND st_numbands(%s)=%d limit 1) bar) foo", pszColumn,
+      pszColumn, nBandsToCreate, pszColumn, pszSchema, pszTable, pszWhere ? pszWhere : "true",
+      pszColumn, nBandsToCreate);
     
 #ifdef DEBUG_QUERY
     CPLDebug("PostGIS_Raster", 
@@ -1708,7 +1700,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 #endif
         
         papoSourcesHolders = (PostGISRasterTileDataset **)
-            VSIMalloc2(nTiles, sizeof(PostGISRasterTileDataset *));
+            VSICalloc(nTiles, sizeof(PostGISRasterTileDataset *));
     
         if (papoSourcesHolders == NULL) {
             ReportError(CE_Failure, CPLE_OutOfMemory, 
