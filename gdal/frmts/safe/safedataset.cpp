@@ -833,7 +833,8 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                 GDALClose( (GDALRasterBandH) poBandFile );
              }
             else {
-
+                poDS->papszExtraFiles = CSLAddString( poDS->papszExtraFiles,
+                                                  osAnnotationFilePath );
                 poDS->papszExtraFiles = CSLAddString( poDS->papszExtraFiles,
                                                   pszFullname );
 
