@@ -3875,27 +3875,17 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_PARAMETER const OGRGeometry *poOthe
 
         sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
         if (poThis == NULL)
-        {
-            CPLDebug("OGR","poThis is NULL");
             return NULL;
-        }
-
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
         if (poOther == NULL)
-        {
-            CPLDebug("OGR","poOther is NULL");
             return NULL;
-        }
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_difference_3d(poThis, poOther);
         OGRGeometry *h_prodGeom = OGRGeometry::SFCGALexportToOGR(poRes);
 
         if (h_prodGeom == NULL)
-        {
-            CPLDebug("OGR","h_prodGeom is NULL");
             return NULL;
-        }
 
         if (h_prodGeom != NULL && getSpatialReference() != NULL
             && poOtherGeom->getSpatialReference() != NULL
@@ -6559,6 +6549,28 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
     else if (geom_type == SFCGAL_TYPE_TRIANGLE)
     {
         OGRGeometry *poGeom = new OGRTriangle();
+        if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
+        {
+            free(buffer);
+            return poGeom;
+        }
+        else
+            return NULL;
+    }
+    else if (geom_type == SFCGAL_TYPE_POLYHEDRALSURFACE)
+    {
+        OGRGeometry *poGeom = new OGRPolyhedralSurface();
+        if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
+        {
+            free(buffer);
+            return poGeom;
+        }
+        else
+            return NULL;
+    }
+    else if (geom_type == SFCGAL_TYPE_TRIANGULATEDSURFACE)
+    {
+        OGRGeometry *poGeom = new OGRTriangulatedSurface();
         if (poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE)
         {
             free(buffer);
