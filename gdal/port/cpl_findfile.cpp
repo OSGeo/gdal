@@ -243,13 +243,13 @@ void CPLPushFinderLocation( const char *pszLocation )
     FindFileTLS* pTLSData = CPLFinderInit();
     if( pTLSData == NULL )
         return;
-    // check if location already is in list    
-    if(CSLFindStringCaseSensitive(pTLSData->papszFinderLocations,
-                                   pszLocation) > -1 )    
+    // Check if location already is in list.
+    if( CSLFindStringCaseSensitive(pTLSData->papszFinderLocations,
+                                   pszLocation) > -1 )
         return;
     pTLSData->papszFinderLocations
         = CSLAddStringMayFail( pTLSData->papszFinderLocations,
-                                   pszLocation );
+                               pszLocation );
 }
 
 
