@@ -651,12 +651,12 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             psProductStrip = CPLParseXMLFile( osSTRIPFilename );
         }
-        
+
         CPLXMLNode *psDatasetRFMComponents = CPLGetXMLNode(psDocDim, "Geoposition.Geoposition_Models.Rational_Function_Model");
         if (psDatasetRFMComponents != NULL)
         {
            CPLXMLNode *psDatasetRFMComponent = psDatasetRFMComponents->psChild;
-  
+
            for (; psDatasetRFMComponent != NULL; psDatasetRFMComponent = psDatasetRFMComponent->psNext)
            {
               const char* pszComponentTitle = CPLGetXMLValue(psDatasetRFMComponent, "COMPONENT_TITLE", "");
@@ -664,13 +664,13 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
               {
                  const char *pszHref = CPLGetXMLValue(
                     psDatasetRFMComponent, "COMPONENT_PATH.href", "");
-  
+
                  if (strlen(pszHref) > 0) /* RPC product found*/
                  {
                     CPLString osPath = CPLGetPath(osDIMAPFilename);
                     osRPCFilename =
                        CPLFormCIFilename(osPath, pszHref, NULL);
-  
+
                     break;
                  }
               }
