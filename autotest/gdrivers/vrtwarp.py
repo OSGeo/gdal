@@ -43,7 +43,7 @@ import gdaltest
 def vrtwarp_1():
 
     tst = gdaltest.GDALTest( 'VRT', 'rgb_warp.vrt', 2, 21504 )
-    return tst.testOpen()
+    return tst.testOpen( check_filelist = False )
 
 ###############################################################################
 # Create a new VRT warp in the temp directory.

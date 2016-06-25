@@ -720,6 +720,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         char* pszCurDir = CPLGetCurrentDir();
         const char *currentVrtFilename
             = CPLProjectRelativeFilename(pszCurDir, poOpenInfo->pszFilename);
+        CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
 #if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
@@ -776,7 +777,10 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 #endif  // HAVE_READLINK && HAVE_LSTAT
 
-        pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
+        if( osInitialCurrentVrtFilename == currentVrtFilename )
+            pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+        else
+            pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
