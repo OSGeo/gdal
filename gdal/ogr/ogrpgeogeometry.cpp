@@ -1412,7 +1412,6 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                              /*const*/ double* padfM,
                                              int* pnLastCurveIdx )
 {
-  
     OGRCompoundCurve* poCC = new OGRCompoundCurve();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
@@ -1458,7 +1457,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1] );
 
             // Some software (like QGIS, see https://hub.qgis.org/issues/15116)
-            // do not like 3-point circles, so let's use a 5 point variant 
+            // do not like 3-point circles, so use a 5 point variant.
             if( p1.getX() == p3.getX() && p1.getY() == p3.getY() )
             {
                 if( p1.getX() != p2.getX() || p1.getY() != p2.getY() )
