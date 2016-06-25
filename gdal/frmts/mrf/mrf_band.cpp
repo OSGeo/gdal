@@ -283,7 +283,7 @@ CPLErr  GDALMRFRasterBand::SetNoDataValue(double val)
 	CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: NoData can be set only during file create");
 	return CE_Failure;
     }
-    if (GInt32(poDS->vNoData.size()) < m_band)
+    if (GInt32(poDS->vNoData.size()) < nBand)
 	poDS->vNoData.resize(nBand);
     poDS->vNoData[m_band] = val;
     // We also need to set it for this band
