@@ -654,7 +654,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     // transparent, consider it as the nodata value
     else if( !bHasNoData && nTransparentIdx >= 0 )
     {
-        bHasNoData = TRUE;
+        /*bHasNoData = TRUE; */ /* never read */
         fNoDataValue = static_cast<float>(nTransparentIdx);
     }
 
