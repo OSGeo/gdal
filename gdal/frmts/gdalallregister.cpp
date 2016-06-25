@@ -431,6 +431,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SNODAS();
     GDALRegister_KRO();
     GDALRegister_ROIPAC();
+    GDALRegister_RRASTER();
 
     // Those ones need to look for side car files so put them at end
     GDALRegister_ENVI();

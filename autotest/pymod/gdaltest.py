@@ -367,7 +367,8 @@ class GDALTest:
 
     def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None, \
                  check_stat = None, check_approx_stat = None, \
-                 stat_epsilon = None, skip_checksum = None):
+                 stat_epsilon = None, skip_checksum = None, check_min = None, \
+                 check_max = None):
         """check_prj - projection reference, check_gt - geotransformation
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
@@ -471,7 +472,7 @@ class GDALTest:
 
                 sv = str(new_stat[i]).lower()
                 if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
-                    post_reason( 'NaN or Invinite value encountered '%'.' % sv )
+                    post_reason( 'NaN or Infinite value encountered '%'.' % sv )
                     return 'fail'
 
                 if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
@@ -480,6 +481,16 @@ class GDALTest:
                     print('new = ', new_stat)
                     post_reason( 'Statistics differs.' )
                     return 'fail'
+
+        if check_min:
+            if oBand.GetMinimum() != check_min:
+                post_reason( 'Unexpected minimum value %s' % str(oBand.GetMinimum()) )
+                return 'fail'
+
+        if check_max:
+            if oBand.GetMaximum() != check_max:
+                post_reason( 'Unexpected maximum value %s' % str(oBand.GetMaximum()) )
+                return 'fail'
 
         ds = None
 

@@ -1117,6 +1117,26 @@ as the list of the NITF tiles of the subdataset.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="RRASTER">RRASTER -- R Raster</a></h2>
+
+<p>(GDAL &gt;= 2.2)</p>
+
+<p>
+This is a read-only reader for the datasets handled by the
+<a href="https://cran.r-project.org/web/packages/raster/index.html">R Raster package</a>.
+Those datasets are made of a .grd file, which is a text header file, and a .gri
+binary file containing the raster data itself. The .grd is the file opened by
+GDAL.
+</p>
+
+<p>See Also:</p>
+
+<ul>
+<li>Description of the <a href="https://cran.r-project.org/web/packages/raster/vignettes/rasterfile.pdf">"rasterfile" format</a></li>
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="SAR_CEOS">SAR_CEOS -- CEOS SAR Image</a></h2>
 
 <p>This is a read-only reader for CEOS SAR image files.  To use, select
