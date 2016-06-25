@@ -767,14 +767,14 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             SQLSMALLINT attr_ret;
             SQLCHAR attr[256];
             SQLCHAR driver[256];
-            while(SQL_SUCCEEDED(SQLDrivers(hEnv, direction, 
-                driver, sizeof(driver), &driver_ret, attr, sizeof(attr), &attr_ret))) 
+            while(SQL_SUCCEEDED(SQLDrivers(hEnv, direction,
+                driver, sizeof(driver), &driver_ret, attr, sizeof(attr), &attr_ret)))
             {
 	            direction = SQL_FETCH_NEXT;
                 osDriverList += CPLSPrintf("%s\n", driver);
 	        }
 
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                 "Unable to initialize connection to the server for %s,\n"
                 "%s\n"
                 "Try specifying the driver in the connection string from the list of available drivers:\n"
@@ -782,7 +782,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                 "Unable to initialize connection to the server for %s,\n"
                 "%s\n", pszNewName, oSession.GetLastError() );
         }

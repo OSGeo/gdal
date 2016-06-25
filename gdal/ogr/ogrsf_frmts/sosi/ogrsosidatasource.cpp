@@ -155,9 +155,9 @@ OGRSOSIDataSource::OGRSOSIDataSource() {
     poCurveHeaders = NULL;
 
     pszEncoding = CPL_ENC_UTF8;
-    
+
     SOSIInitTypes();
-    
+
     nMode = MODE_READING;
 }
 
@@ -339,8 +339,8 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                     }
                     break;
                 }
-                case L_KURVE:  
-                case L_LINJE:  
+                case L_KURVE:
+                case L_LINJE:
                 case L_BUEP:  {    /* FIXME: maybe not use the same headers for both */
                     if (poCurveHeaders->find(osKey) == poCurveHeaders->end()) {
                         iH = static_cast<int>(poCurveHeaders->size());
@@ -348,7 +348,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                     }
                     break;
                 }
-                case L_PUNKT: 
+                case L_PUNKT:
                 case L_SYMBOL: {
                     if (poPointHeaders->find(osKey) == poPointHeaders->end()) {
                         iH = static_cast<int>(poPointHeaders->size());
@@ -382,7 +382,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             /* cannot build geometries that reference others yet */
             break;
         }
-        case L_KURVE: 
+        case L_KURVE:
         case L_LINJE: {
             /* Pre-build a line feature. Activate line/curve layer. */
             bCurveLayer = TRUE;
@@ -637,7 +637,7 @@ void OGRSOSIDataSource::buildOGRLineString(int nNumCoo, long iSerial) {
     papoBuiltGeometries[iSerial] = poLS;
 }
 
-static double sqr(double x) { return x * x; } 
+static double sqr(double x) { return x * x; }
 
 void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
     if (papoBuiltGeometries[iSerial] != NULL) {
@@ -645,7 +645,7 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
     }
 
     OGRLineString *poLS = new OGRLineString();
-   
+
     /* fetch reference points on circle (easting, northing) */
     double e1 = 0, e2 = 0, e3 = 0;
     double n1 = 0, n2 = 0, n3 = 0;
@@ -663,8 +663,8 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
     double dN13 = n1 - n3;
 
     /* center of the circle */
-    double cE = (dN13 * p12 - dN12 * p13) / (dE12 * dN13 - dN12 * dE13) ; 
-    double cN = (dE13 * p12 - dE12 * p13) / (dN12 * dE13 - dE12 * dN13) ;
+    double cE = (dN13 * p12 - dN12 * p13) / (dE12 * dN13 - dN12 * dE13);
+    double cN = (dE13 * p12 - dE12 * p13) / (dN12 * dE13 - dE12 * dN13);
 
     /* radius of the circle */
     double r = sqrt(sqr(e1 - cE) + sqr(n1 - cN));
@@ -676,7 +676,7 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
     /* interpolation step in radians */
     double dth = th3 - th1;
     if (dth < 0) {dth  += 2 * M_PI;}
-    if (dth > M_PI) { 
+    if (dth > M_PI) {
       dth = - 2*M_PI + dth;
     }
     int    npt = (int)(ARC_INTERPOLATION_FULL_CIRCLE * dth / 2*M_PI);
@@ -687,7 +687,7 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
 
     long i;
     double dfEast = 0, dfNorth = 0;
-    
+
     for (i=0; i<npt; i++) {
         dfEast  = cE + r * cos(th1 + dth * i);
         dfNorth = cN + r * sin(th1 + dth * i);
@@ -698,8 +698,6 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
         poLS->setPoint(i, dfEast, dfNorth);
     }
     papoBuiltGeometries[iSerial] = poLS;
-     
-    
 }
 
 void OGRSOSIDataSource::buildOGRPoint(long iSerial) {

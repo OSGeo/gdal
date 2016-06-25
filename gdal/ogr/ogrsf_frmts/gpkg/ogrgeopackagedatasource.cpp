@@ -3030,8 +3030,8 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     GDALDestroyGenImgProjTransformer( hTransformArg );
     hTransformArg = NULL;
 
-    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when 
-    // reprojection latitude = +/- 90 to EPSG:3857
+    // Hack to compensate for GDALSuggestedWarpOutput2() failure when
+    // reprojection latitude = +/- 90 to EPSG:3857.
     double adfSrcGeoTransform[6];
     if( nEPSGCode == 3857 && poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
     {

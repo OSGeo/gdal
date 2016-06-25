@@ -225,7 +225,7 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
         // Replaced restricted characters with underscore
         // See http://docs.autodesk.com/ACD/2010/ENU/AutoCAD%202010%20User%20Documentation/index.html?url=WS1a9193826455f5ffa23ce210c4a30acaf-7345.htm,topicNumber=d0e41665
         const char achForbiddenChars[] = { '<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '\'' };
-        for( size_t i = 0; i < CPL_ARRAYSIZE(achForbiddenChars); ++i ) 
+        for( size_t i = 0; i < CPL_ARRAYSIZE(achForbiddenChars); ++i )
         {
             osSanitizedLayer.replaceAll( achForbiddenChars[i], '_' );
         }

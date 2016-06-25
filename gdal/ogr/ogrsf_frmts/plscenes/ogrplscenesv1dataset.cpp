@@ -311,7 +311,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
             CPLPopErrorHandler();
     }
     CSLDestroy(papszOptions);
-    
+
     if ( pszPostContent != NULL && m_bMustCleanPersistent)
     {
         papszOptions = CSLSetNameValue(NULL, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));

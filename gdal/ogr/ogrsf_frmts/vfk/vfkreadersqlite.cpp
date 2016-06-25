@@ -67,7 +67,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
 
     if (!m_bDbSource) {
         m_bNewDb = TRUE;
-        
+
         /* open tmp SQLite DB (re-use DB file if already exists) */
         if (pszDbNameConf) {
             osDbName = pszDbNameConf;
@@ -88,7 +88,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
         nLen = strlen(pszFileName);
         osDbName = pszFileName;
     }
-     
+
     m_pszDBname = new char [nLen+1];
     std::strncpy(m_pszDBname, osDbName.c_str(), nLen);
     m_pszDBname[nLen] = 0;
@@ -172,7 +172,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
                           &nRowCount, &nColCount, &pszErrMsg);
         sqlite3_free_table(papszResult);
         sqlite3_free(pszErrMsg);
-        
+
         if (nColCount != 7) {
             /* it seems that DB is outdated, let's create new DB from
              * scratch */
@@ -180,7 +180,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid VFK DB datasource");
             }
-            
+
             if (SQLITE_OK != sqlite3_close(m_poDB)) {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Closing SQLite DB failed: %s",
@@ -203,7 +203,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFileName) : VFKReader(pszFileNam
     CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF",
                                     NULL, NULL, &pszErrMsg));
     sqlite3_free(pszErrMsg);
-    
+
     if (m_bNewDb) {
         /* new DB, create support metadata tables */
         osCommand.Printf("CREATE TABLE %s (file_name text, file_size integer, table_name text, num_records integer, "
@@ -342,7 +342,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         }
         sqlite3_finalize(hStmt);
     }
-    
+
     if (bReadDb) {        /* read records from DB */
         /* read from  DB */
         long iFID;
@@ -400,7 +400,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
         /* Store VFK header to DB */
         StoreInfo2DB();
-        
+
         /* Insert VFK data records into DB */
         nDataRecords += VFKReader::ReadDataRecords(poDataBlock);
 

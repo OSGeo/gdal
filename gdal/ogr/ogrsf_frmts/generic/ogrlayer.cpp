@@ -2535,7 +2535,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 }
             }
             if( poIntersection->IsEmpty() ||
-                (!bKeepLowerDimGeom && 
+                (!bKeepLowerDimGeom &&
                  (x_geom->getDimension() == y_geom->getDimension() &&
                   poIntersection->getDimension() < x_geom->getDimension())) )
             {
@@ -2659,7 +2659,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         while (OGRFeature *y = GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            
+
             if (x_geom_diff) {
                 CPLErrorReset();
                 OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
@@ -3378,7 +3378,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 }
             }
             else if( poIntersection->IsEmpty() ||
-                     (!bKeepLowerDimGeom && 
+                     (!bKeepLowerDimGeom &&
                       (x_geom->getDimension() == y_geom->getDimension() &&
                        poIntersection->getDimension() < x_geom->getDimension())) )
             {

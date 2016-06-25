@@ -465,7 +465,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
     }
     if (NULL == poDataBlockLines1) {
         CPLError(CE_Warning, CPLE_FileIO,
-                 "Data block %s not found. Unable to build geometry for %s.", 
+                 "Data block %s not found. Unable to build geometry for %s.",
                  bIsPar ? "HP" : "OB", m_pszName);
         return -1;
     }

@@ -1865,7 +1865,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary
     time_t nCurTimeStamp = time(NULL);
     if( m_nLastSpaceCheckTimestamp == 0 )
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
-    if( m_nLastSpaceCheckTimestamp > 0 && 
+    if( m_nLastSpaceCheckTimestamp > 0 &&
         (m_bForceTempDBCompaction || nCurTimeStamp - m_nLastSpaceCheckTimestamp > 10) )
     {
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;

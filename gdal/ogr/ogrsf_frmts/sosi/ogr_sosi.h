@@ -143,7 +143,7 @@ public:
  ************************************************************************/
 
 class OGRSOSISimpleDataType {
-    const char          *pszName; 
+    const char          *pszName;
     OGRFieldType        nType;
 
 public:
