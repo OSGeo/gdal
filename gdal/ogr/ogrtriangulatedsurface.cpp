@@ -221,13 +221,6 @@ OGRErr  OGRTriangulatedSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
                                               OGRwkbVariant eWkbVariant ) const
 
 {
-    if( eWkbVariant == wkbVariantOldOgc &&
-        (wkbFlatten(getGeometryType()) == wkbMultiCurve ||
-         wkbFlatten(getGeometryType()) == wkbMultiSurface) ) /* does not make sense for new geometries, so patch it */
-    {
-        eWkbVariant = wkbVariantIso;
-    }
-
     // Set the byte order
     pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
 
@@ -381,9 +374,9 @@ OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
 /************************************************************************/
 
 OGRErr OGRTriangulatedSurface::exportToWkt ( char ** ppszDstText,
-                                           OGRwkbVariant eWkbVariant ) const
+                                           CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 {
-    return exportToWktInternal(ppszDstText, eWkbVariant, "POLYGON");
+    return exportToWktInternal(ppszDstText, wkbVariantIso, "POLYGON");
 }
 
 /************************************************************************/
