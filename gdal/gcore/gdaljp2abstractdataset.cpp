@@ -86,8 +86,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Identify authorized georeferencing sources                      */
 /* -------------------------------------------------------------------- */
-    const char* pszGeorefSourcesOption = 
-      CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
+    const char* pszGeorefSourcesOption =
+        CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
     bool bGeorefSourcesConfigOption = pszGeorefSourcesOption != NULL;
     CPLString osGeorefSources = (pszGeorefSourcesOption) ?
         pszGeorefSourcesOption :
@@ -137,7 +137,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
                               nMSIGIndex, &nIndexUsed) ) ||
         (!(poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL) &&
          oJP2Geo.ReadAndParse( pszOverrideFilename, nGEOJP2Index, nGMLJP2Index,
-                               nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) && 
+                               nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) &&
         (nGMLJP2Index >= 0 || nGEOJP2Index >= 0 || nMSIGIndex >= 0 ||
          m_nWORLDFILEIndex >= 0) )
     {
