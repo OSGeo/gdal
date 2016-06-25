@@ -172,9 +172,9 @@ class RMFDataset : public GDALDataset
     virtual CPLErr      SetGeoTransform( double * );
     virtual const char  *GetProjectionRef();
     virtual CPLErr      SetProjection( const char * );
-    
+
     vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
-    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );    
+    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
 };
 
 /************************************************************************/

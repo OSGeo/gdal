@@ -2013,7 +2013,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         //  ----------------------------------------------------------------
 
 #ifndef CPL_MSB
-        if( nCellSizeBits > 8 && 
+        if( nCellSizeBits > 8 &&
             EQUAL( sCompressionType.c_str(), "DEFLATE") == false )
         {
             int nWordSize  = nCellSizeBits / 8;

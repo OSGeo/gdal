@@ -184,9 +184,8 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 */
 
 JPNG_Band::JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, level), 
-rgb(FALSE), sameres(FALSE), optimize(false)
-
+    GDALMRFRasterBand(pDS, image, b, level),
+    rgb(FALSE), sameres(FALSE), optimize(false)
 {   // Check error conditions
     if (image.dt != GDT_Byte) {
 	CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");

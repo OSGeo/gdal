@@ -487,7 +487,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 
     char** papszMinValues = CSLTokenizeString2(osMinValue, ":", 0);
     char** papszMaxValues = CSLTokenizeString2(osMaxValue, ":", 0);
-    if( CSLCount(papszMinValues) != l_nBands || 
+    if( CSLCount(papszMinValues) != l_nBands ||
         CSLCount(papszMaxValues) != l_nBands )
     {
         CSLDestroy(papszMinValues);

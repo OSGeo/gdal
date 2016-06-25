@@ -327,7 +327,7 @@ CPLErr PNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 }
 
 CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
-{   
+{
     if (!codec.PNGColors && img.comp == IL_PPNG) { // Late set PNG palette to conserve memory
         GDALColorTable *poCT = GetColorTable();
         if (!poCT) {
