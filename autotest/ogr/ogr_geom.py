@@ -202,7 +202,7 @@ def ogr_geom_pickle():
 ###############################################################################
 # Test suite for PolyhedralSurface
 
-def geom_polyhedral_surface():
+def ogr_geom_polyhedral_surface():
 
     wkt_original = 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
 ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),\
@@ -3827,7 +3827,7 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [
     ogr_geom_area,
-    geom_polyhedral_surface,
+    ogr_geom_polyhedral_surface,
     ogr_geom_area_triangle,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,
