@@ -655,7 +655,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     else if( !bHasNoData && nTransparentIdx >= 0 )
     {
         bHasNoData = TRUE;
-        fNoDataValue = nTransparentIdx;
+        fNoDataValue = static_cast<float>(nTransparentIdx);
     }
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
