@@ -712,8 +712,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     papszResult = NULL;
 
     if( nRowCount > 0 )
-        return FALSE; /* DB is valid VFK datasource */ 
-    
+        return FALSE; /* DB is valid VFK datasource */
+
     nRowCount = nColCount = 0;
     sqlite3_get_table( hDB,
                        "SELECT name, sql FROM sqlite_master "

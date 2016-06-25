@@ -225,7 +225,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    if(oSXFPassport.version == 3 && 
+    if(oSXFPassport.version == 3 &&
                oSXFPassport.informationFlags.bProjectionDataCompliance == false)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -276,9 +276,9 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
 
-    //1. Create layers from RSC file or create default set of layers from 
-    // gdal_data/default.rsc
-    
+    // 1. Create layers from RSC file or create default set of layers from
+    // gdal_data/default.rsc.
+
     if(soRSCRileName.empty())
     {
         pszRSCRileName = CPLFindFile( "gdal", "default.rsc" );
@@ -589,7 +589,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         int nEPSG;
         /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXFIn);
 
-        if (nEPSG >= MIN_EPSG && nEPSG <= MAX_EPSG) //TODO: check epsg valid range 
+        if (nEPSG >= MIN_EPSG && nEPSG <= MAX_EPSG) //TODO: check epsg valid range
         {
             passport.stMapDescription.pSpatRef = new OGRSpatialReference();
             passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);

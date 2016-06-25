@@ -2811,7 +2811,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                             poMLS->setMeasured(FALSE);
                         break;
                     }
-                    
+
                     MLineStringSetter lsmSetter(poLS);
                     if( !ReadMArray<MLineStringSetter>(lsmSetter,
                                     pabyCur, pabyEnd,
@@ -2937,7 +2937,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                         }
                         break;
                     }
-                    
+
                     papoRings[i]->setMeasured(TRUE);
 
                     MLineStringSetter lsmSetter(papoRings[i]);

@@ -77,7 +77,7 @@ int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
     GDALOpenInfo *poOpenInfo;
 
     poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
-   
+
     if (poOpenInfo->fpL == NULL) {
         if (!bTestOpen)
             CPLError(CE_Failure, CPLE_OpenFailed,
@@ -86,7 +86,7 @@ int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
         delete poOpenInfo;
         return FALSE;
     }
-    
+
     /* load a header chunk and check for signs it is VFK data
        source */
     if (bTestOpen) {
@@ -98,9 +98,9 @@ int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
         }
     }
     delete poOpenInfo;
-    
+
     pszName = CPLStrdup(pszFileName);
-    
+
     /* create VFK reader */
     poReader = CreateVFKReader(pszFileName);
     if (poReader == NULL || !poReader->IsValid()) {
@@ -128,13 +128,13 @@ int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
     if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES"))) {
         /* read data records if requested */
         poReader->ReadDataRecords();
-        
+
         for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
             /* load geometry */
             poReader->GetDataBlock(iLayer)->LoadGeometry();
         }
     }
-    
+
     return TRUE;
 }
 
