@@ -316,7 +316,7 @@ def ogr_geom_tin():
     geom_count = tin.GetGeometryCount()
     x = tin.AddGeometry(wrong_polygon)
     if tin.GetGeometryCount() != geom_count:
-        gdaltest.post_reason ("Added wrong geometry in TIN")
+        gdaltest.post_reason ("Added wrong geometry in TIN, error has code " + str(x))
         return 'fail'
 
     point = tin.PointOnSurface()
