@@ -2246,7 +2246,7 @@ def ogr_mitab_44():
     fld_defn.SetPrecision(29)
     lyr.CreateField(fld_defn)
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_mitab_44.mif')
     lyr = ds.GetLayer(0)
     fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
