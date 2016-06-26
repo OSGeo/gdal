@@ -1371,6 +1371,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void setMeasured( OGRBoolean bIsMeasured );
     virtual void swapXY();
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
+    virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
 };
 
 /************************************************************************/
