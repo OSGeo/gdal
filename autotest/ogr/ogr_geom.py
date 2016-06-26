@@ -254,6 +254,94 @@ def ogr_geom_polyhedral_surface():
     return 'success'
 
 ###############################################################################
+# Test suite for TIN
+
+def ogr_geom_tin():
+    poly1 = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 0 1,0 1 0,0 0 0))")
+    poly2 = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 1 0,1 1 0,0 0 0))")
+    tin = ogr.Geometry(ogr.wkbTIN)
+    tin.AddGeometry(poly1)
+    tin.AddGeometry(poly2)
+    polygon_wkt = [poly1.ExportToWkt(), poly2.ExportToWkt()]
+    for i in range(0, tin.GetGeometryCount()):
+        geom = tin.GetGeometryRef(i)
+        wkt_geom = geom.ExportToWkt()
+        if polygon_wkt[i] != wkt_geom:
+            gdaltest.post_reason ("Failure in getting geometries of TIN")
+            return 'fail'
+
+    wkt_original = 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'
+    tin = ogr.CreateGeometryFromWkt(wkt_original)
+
+    wkb_string = tin.ExportToWkb(ogr.wkbXDR)
+    geom = ogr.CreateGeometryFromWkb(wkb_string)
+    wkt_string = geom.ExportToWkt()
+    if wkt_string != wkt_original:
+        gdaltest.post_reason ("Failure in Wkb methods of TIN")
+        return 'fail'
+
+    area = 12.3*tin.Area()
+    if area != 12.3:
+        gdaltest.post_reason ("Wrong area of TIN")
+        return 'fail'
+
+    size = tin.WkbSize()
+    if size != 227:
+        gdaltest.post_reason ("Wrong WkbSize() of TIN")
+        return 'fail'
+
+    geom = tin.DelaunayTriangulation(0.0,True)
+    wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 1 0))'
+    wkt_geom = geom.ExportToWkt()
+    if wkt_geom != wkt_geom_dt:
+        gdaltest.post_reason ("Failure in DelaunayTriangulation() of TIN")
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkb(wkb_string)
+    if tin.Contains(geom) != True:
+        gdaltest.post_reason ("Failure in Contains() of TIN")
+        return 'fail'
+
+    if tin.IsEmpty() == True:
+        gdaltest.post_reason ("Failure in IsEmpty() of TIN")
+        return 'fail'
+
+    tin.Empty()
+    wkt_string = tin.ExportToWkt()
+    if wkt_string != 'TIN Z EMPTY':
+        gdaltest.post_reason ("Failure in Empty() of TIN")
+        return 'fail'
+
+    wrong_polygon = ogr.CreateGeometryFromWkt('POLYGON ((0 0 0,0 1 0,1 1 0,0 0 1))')
+    geom_count = tin.GetGeometryCount()
+    x = tin.AddGeometry(wrong_polygon)
+    if tin.GetGeometryCount() != geom_count:
+        gdaltest.post_reason ("Added wrong geometry in TIN")
+        return 'fail'
+
+    point = tin.PointOnSurface()
+    point_wkt = point.ExportToWkt()
+    point_correct_wkt = 'POINT EMPTY'
+    if point_wkt != point_correct_wkt:
+        gdaltest.post_reason ("Wrong Point Obtained for PointOnSurface() in TIN")
+        return 'fail'
+
+    tin = ogr.CreateGeometryFromWkt(wkt_original)
+    point = tin.PointOnSurface()
+    point_wkt = point.ExportToWkt()
+    point_correct_wkt = 'POINT (0.25 0.5)'
+    if point_wkt != point_correct_wkt:
+        gdaltest.post_reason ("Wrong Point Obtained for PointOnSurface() in TIN")
+        return 'fail'
+
+    tin.FlattenTo2D()
+    if tin.IsValid() == True:
+        gdaltest.post_reason ("Problem with IsValid() in TIN")
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test OGRGeometry::getBoundary() result for point.
 
 def ogr_geom_boundary_point():
@@ -3828,6 +3916,7 @@ def ogr_geom_cleanup():
 gdaltest_list = [
     ogr_geom_area,
     ogr_geom_polyhedral_surface,
+    ogr_geom_tin,
     ogr_geom_area_triangle,
     ogr_geom_area_linearring,
     ogr_geom_area_linearring_big_offset,

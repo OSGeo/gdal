@@ -846,3 +846,12 @@ OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(CPL_UNUSED int bLookForNonLine
 {
     return FALSE;
 }
+
+/************************************************************************/
+/*                          removeGeometry()                            */
+/************************************************************************/
+
+OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
+{
+    return this->oMP.removeGeometry(iGeom,bDelete);
+}

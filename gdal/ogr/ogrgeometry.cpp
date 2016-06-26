@@ -6127,6 +6127,9 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
     if( eSuperType == wkbPolygon )
         return eType == wkbTriangle;
 
+    if (eSuperType == wkbPolyhedralSurface)
+        return eType == wkbTIN;
+
     return FALSE;
 }
 
