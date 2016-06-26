@@ -6445,7 +6445,7 @@ def tiff_write_144():
 # Test various warnings / errors of Create()
 
 def tiff_write_145():
-  
+
     options_list = [ { 'bands': 65536, 'expected_failure': True },
                      { 'creation_options': [ 'INTERLEAVE=foo' ], 'expected_failure': True },
                      { 'creation_options': [ 'COMPRESS=foo' ], 'expected_failure': False },
@@ -6517,7 +6517,7 @@ def tiff_write_146():
     got_stats = [out_ds.GetRasterBand(i+1).GetOverview(2).ComputeStatistics(True) for i in range(4)]
     out_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_146.tif')
-    
+
     for i in range(4):
         for j in range(4):
             if i != 2 and j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
@@ -6575,7 +6575,7 @@ def tiff_write_148():
     got_stats = [out_ds.GetRasterBand(i+1).GetOverview(0).ComputeStatistics(True) for i in range(4)]
     out_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_148.tif')
-    
+
     for i in range(4):
         for j in range(4):
             if j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:

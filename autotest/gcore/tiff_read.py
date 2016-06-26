@@ -2787,7 +2787,7 @@ gdaltest_list.append( (tiff_read_nogeoref) )
 gdaltest_list.append( (tiff_read_inconsistent_georef) )
 gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
 
-gdaltest_list.append( (tiff_read_aux) ) 
+gdaltest_list.append( (tiff_read_aux) )
 
 #gdaltest_list = [ tiff_read_aux ]
 
