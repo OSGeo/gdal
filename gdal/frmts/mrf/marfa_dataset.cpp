@@ -1069,11 +1069,11 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
     CPLXMLNode *config = CPLCreateXMLNode(NULL, CXT_Element, "MRF_META");
 
     if (!source.empty()) {
-	CPLXMLNode *CS = CPLCreateXMLNode(config, CXT_Element, "CachedSource");
+	CPLXMLNode *psCachedSource = CPLCreateXMLNode(config, CXT_Element, "CachedSource");
 	// Should wrap the string in CDATA, in case it is XML
-	CPLXMLNode *S = CPLCreateXMLElementAndValue(CS, "Source", source);
+	CPLXMLNode *psSource = CPLCreateXMLElementAndValue(psCachedSource, "Source", source);
 	if (clonedSource)
-	    CPLSetXMLValue(S, "#clone", "true");
+	    CPLSetXMLValue(psSource, "#clone", "true");
     }
 
     // Use the full size
