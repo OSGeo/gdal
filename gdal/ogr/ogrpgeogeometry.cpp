@@ -1872,7 +1872,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         }
 
         panPartStart = (GInt32 *) VSI_MALLOC2_VERBOSE(nParts,sizeof(GInt32));
-        if (panPartStart == NULL)
+        if (nParts != 0 && panPartStart == NULL)
         {
             return OGRERR_FAILURE;
         }
@@ -1934,7 +1934,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         double *padfY = (double *) VSI_MALLOC_VERBOSE(sizeof(double)*nPoints);
         double *padfZ = (double *) VSI_CALLOC_VERBOSE(sizeof(double),nPoints);
         double *padfM = (double *) (bHasM ? VSI_CALLOC_VERBOSE(sizeof(double),nPoints) : NULL);
-        if (padfX == NULL || padfY == NULL || padfZ == NULL || (bHasM && padfM == NULL))
+        if ( nPoints != 0 && (padfX == NULL || padfY == NULL || padfZ == NULL || (bHasM && padfM == NULL)) )
         {
             CPLFree( panPartStart );
             CPLFree( panPartType );
