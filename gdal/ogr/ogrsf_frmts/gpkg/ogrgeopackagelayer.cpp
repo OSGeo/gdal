@@ -142,15 +142,18 @@ OGRErr OGRGeoPackageLayer::ReadFeature( sqlite3_stmt *poQuery, OGRFeature **ppoF
         {
             OGRSpatialReference* poSrs = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
             int iGpkgSize = sqlite3_column_bytes(poQuery, iColOffset);
-            GByte *pabyGpkg = (GByte *)sqlite3_column_blob(poQuery, iColOffset);
-            OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
-            if ( ! poGeom )
+            if( iGpkgSize >= 8 )
             {
-                delete poFeature;
-                CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
-                return OGRERR_FAILURE;
+                GByte *pabyGpkg = (GByte *)sqlite3_column_blob(poQuery, iColOffset);
+                OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
+                if ( ! poGeom )
+                {
+                    delete poFeature;
+                    CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                    return OGRERR_FAILURE;
+                }
+                poFeature->SetGeometryDirectly( poGeom );
             }
-            poFeature->SetGeometryDirectly( poGeom );
         }
         iColOffset++;
     }
@@ -560,6 +563,7 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
     
     /* Populate feature definition from table description */
     m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
+    m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
     
     const char *pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
@@ -599,12 +603,7 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
                 {
                     OGRGeomFieldDefn oGeomField(pszName, oGeomType);
                     m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
-                }
-                else if ( m_poFeatureDefn->GetGeomFieldCount() == 1 )
-                {
-                    m_poFeatureDefn->GetGeomFieldDefn(0)->SetType(oGeomType);
-                    m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszName);
-                    
+
                     /* Read the SRS */
                     OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(iSrsId);
                     if ( poSRS )
