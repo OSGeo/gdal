@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.44 2016-06-28 15:12:19 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.45 2016-06-28 15:37:33 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -786,7 +786,7 @@ PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		return (0);
 	}
 	/* Check that we will not fill more than what was allocated */
-	if (sp->stream.avail_out > sp->tbuf_size)
+	if ((tmsize_t)sp->stream.avail_out > sp->tbuf_size)
 	{
 		TIFFErrorExt(tif->tif_clientdata, module, "sp->stream.avail_out > sp->tbuf_size");
 		return (0);
