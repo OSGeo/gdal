@@ -224,10 +224,13 @@ typedef struct {
     double     *padfDEMBuffer;
     int         nDEMExtractions;
     int         nBufferMaxRadius;
+    int         nHitsInBuffer;
     int         nBufferX;
     int         nBufferY;
     int         nBufferWidth;
     int         nBufferHeight;
+    int         nLastQueriedX;
+    int         nLastQueriedY;
 
     OGRCoordinateTransformation *poCT;
 
@@ -1150,6 +1153,7 @@ double BiCubicKernel(double dfVal)
 /*                        GDALRPCExtractDEMWindow()                     */
 /************************************************************************/
 
+//#define DEBUG_VERBOSE_EXTRACT_DEM
 static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
                                      int nX, int nY, int nWidth, int nHeight,
                                      double* padfOut )
@@ -1158,10 +1162,10 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
     if( psTransform->padfDEMBuffer == NULL )
     {
         // Should only happen in case of failed memory allocation
-        int anBands[] = { 1 };
-        return psTransform->poDS->RasterIO(GF_Read, nX, nY, nWidth, nHeight,
+        return psTransform->poDS->GetRasterBand(1)->
+                                  RasterIO(GF_Read, nX, nY, nWidth, nHeight,
                                            padfOut, nWidth, nHeight,
-                                           GDT_Float64, 1, anBands, 0, 0, 0,
+                                           GDT_Float64, 0, 0,
                                            NULL) == CE_None;
     }
 
@@ -1173,6 +1177,18 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
           nY >= psTransform->nBufferY &&
           nY + nHeight <= psTransform->nBufferY + psTransform->nBufferHeight ) )
     {
+#ifdef DEBUG_VERBOSE_EXTRACT_DEM
+        CPLDebug("RPC", "Current request: %d,%d-%dx%d",
+                  nX, nY, nWidth, nHeight);
+        CPLDebug("RPC", "Hits in last DEM buffer: %d (%d pixels)",
+                 psTransform->nHitsInBuffer,
+                 psTransform->nBufferWidth * psTransform->nBufferHeight);
+        CPLDebug("RPC", "Last DEM buffer: %d,%d-%dx%d",
+                 psTransform->nBufferX,
+                 psTransform->nBufferY,
+                 psTransform->nBufferWidth,
+                 psTransform->nBufferHeight);
+#endif
         const int nRasterXSize = psTransform->poDS->GetRasterXSize();
         const int nRasterYSize = psTransform->poDS->GetRasterYSize();
         // If we have only queried a few points, no need to extract on a large window
@@ -1184,29 +1200,42 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
             nRadius = static_cast<int> (
                   sqrt(static_cast<double>(psTransform->nDEMExtractions)) );
             CPLAssert( nRadius <= psTransform->nBufferMaxRadius );
-            if( nRadius < nWidth )
-                nRadius = nWidth;
         }
-        CPLAssert( nRadius >= nWidth && nRadius >= nHeight );
+        // Check if there's some overlap between consecutive requests to decide
+        // if we must have a buffer around the interest window
+        const int nDiffX = nX - psTransform->nLastQueriedX;
+        const int nDiffY = nY - psTransform->nLastQueriedY;
+        if( psTransform->nLastQueriedX >= 0 && 
+            (nDiffX > nRadius || -nDiffX > nRadius ||
+             nDiffY > nRadius || -nDiffY > nRadius) )
+        {
+            nRadius = 0;
+        }
         psTransform->nBufferX = nX - nRadius;
         if( psTransform->nBufferX < 0 )
             psTransform->nBufferX = 0;
         psTransform->nBufferY = nY - nRadius;
         if( psTransform->nBufferY < 0 )
             psTransform->nBufferY = 0;
-        psTransform->nBufferWidth = 2 * nRadius;
+        psTransform->nBufferWidth = nWidth + 2 * nRadius;
         if( psTransform->nBufferX + psTransform->nBufferWidth > nRasterXSize )
             psTransform->nBufferWidth = nRasterXSize - psTransform->nBufferX;
-        psTransform->nBufferHeight = 2 * nRadius;
+        psTransform->nBufferHeight = nHeight + 2 * nRadius;
         if( psTransform->nBufferY + psTransform->nBufferHeight > nRasterYSize )
             psTransform->nBufferHeight = nRasterYSize - psTransform->nBufferY;
-        int anBands[] = { 1 };
-        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read,
+#ifdef DEBUG_VERBOSE_EXTRACT_DEM
+        CPLDebug("RPC", "New DEM buffer: %d,%d-%dx%d",
+                 psTransform->nBufferX,
+                 psTransform->nBufferY,
+                 psTransform->nBufferWidth,
+                 psTransform->nBufferHeight);
+#endif
+        CPLErr eErr = psTransform->poDS->GetRasterBand(1)->RasterIO(GF_Read,
                         psTransform->nBufferX, psTransform->nBufferY,
                         psTransform->nBufferWidth, psTransform->nBufferHeight,
                         psTransform->padfDEMBuffer,
                         psTransform->nBufferWidth, psTransform->nBufferHeight,
-                        GDT_Float64, 1, anBands, 0, 0, 0, NULL);
+                        GDT_Float64, 0, 0, NULL);
         if( eErr != CE_None )
         {
             psTransform->nBufferX = -1;
@@ -1215,7 +1244,18 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
             psTransform->nBufferHeight = -1;
             return false;
         }
+#ifdef DEBUG_VERBOSE_EXTRACT_DEM
+         psTransform->nHitsInBuffer = 1;
+#endif
     }
+    else
+    {
+#ifdef DEBUG_VERBOSE
+        psTransform->nHitsInBuffer ++;
+#endif
+    }
+    psTransform->nLastQueriedX = nX;
+    psTransform->nLastQueriedY = nY;
 
     for( int i=0; i<nHeight; i++)
     {
@@ -1593,13 +1633,18 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                                 GDALOpen( psTransform->pszDEMPath, GA_ReadOnly );
         if(psTransform->poDS != NULL && psTransform->poDS->GetRasterCount() >= 1)
         {
-            psTransform->nBufferMaxRadius = 128;
+            psTransform->nBufferMaxRadius = atoi(CPLGetConfigOption("GDAL_RPC_DEM_BUFFER_MAX_RADIUS", "2"));
+            psTransform->nHitsInBuffer = 0;
+            const int nMaxWindowSize = 4;
             psTransform->padfDEMBuffer = static_cast<double*>(VSIMalloc(
-                2 * psTransform->nBufferMaxRadius * 2 * psTransform->nBufferMaxRadius * sizeof(double) ));
+                (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) *
+                (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) * sizeof(double) ));
             psTransform->nBufferX = -1;
             psTransform->nBufferY = -1;
             psTransform->nBufferWidth = -1;
             psTransform->nBufferHeight = -1;
+            psTransform->nLastQueriedX = -1;
+            psTransform->nLastQueriedY = -1;
             const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
             if (pszSpatialRef != NULL && pszSpatialRef[0] != '\0')
             {
