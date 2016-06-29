@@ -245,6 +245,7 @@ void RegisterOGRGeoPackage()
 "  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including those non listed in gpkg_contents, should be listed' default='YES' />"
 "  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
 "  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
 "  <Option name='BAND_COUNT' type='int' min='1' max='4' description='Number of raster bands' default='4'/>"
@@ -301,6 +302,7 @@ COMPRESSION_OPTIONS
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "  <Option name='IDENTIFIER' type='string' description='Identifier of the layer, as put in the contents table'/>"
 "  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
+"  <Option name='REGISTER_AS_ASPATIAL' type='boolean' description='Whether non spatial tables should be registered as aspatial in gpkg_contents' default='YES'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

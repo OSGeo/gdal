@@ -28,7 +28,11 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <ul>
 <li>GeoPackage only supports one geometry column per table.</li>
 <li>Before GDAL 2.0, the driver did not implement the GeoPackage spatial index extension.</li>
-<li>The core GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 2.0, the driver allows creating and reading such tables via the <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.</li>
+<li>The core GeoPackage specification does not currently support non-spatial tables, but
+    starting with GDAL 2.0, the driver allows creating and reading such tables via the
+    <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.
+    Note: starting with GDAL 2.2, the driver will also, by default, list non spatial tables
+    that are not registered through the gdal_aspatial extension.</li>
 </ul>
 
 <h2>SQL</h2>
@@ -93,6 +97,17 @@ The driver implements transactions at the database level, per
 <a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>
 </p>
 
+<h2>Opening options</h2>
+
+The following open options are available:
+<ul>
+<li><b>LIST_ALL_TABLES</b>=YES/NO: (GDAL &gt;=2.2) Whether all tables, including
+those non listed in gpkg_contents, should be listed. Defaults to YES.</li>
+</ul>
+
+Note: open options are typically specified with "-oo name=value" syntax in
+most OGR utilities, or with the GDALOpenEx() API call.
+
 <h2>Creation Issues</h2>
 
 <p>When creating a new GeoPackage file, the driver will attempt to
@@ -120,6 +135,7 @@ that exceed the maximum allowed width of text fields, and also to "fix" the pass
 to make it a valid UTF-8 string. If "NO" then the value is not truncated nor modified. The default is "NO".<p>
 <li><b>IDENTIFIER</b>=string: (GDAL &gt;=2.0) Identifier of the layer, as put in the contents table.<p>
 <li><b>DESCRIPTION</b>=string: (GDAL &gt;=2.0) Description of the layer, as put in the contents table.<p>
+<li><b>REGISTER_AS_ASPATIAL</b>=YES/NO: (GDAL &gt;=2.2) Whether non spatial tables should be registered as aspatial in gpkg_contents. Defaults to YES<p>
 </ul>
 
 <h3>Metadata</h3>

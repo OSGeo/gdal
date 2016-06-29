@@ -620,16 +620,25 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
         /* and non-spatial tables as well */
         std::string osSQL =
-            "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y "
+            "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_gpkg_table "
             "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
             "  WHERE c.data_type = 'features' ";
 
         if (HasGDALAspatialExtension()) {
             osSQL +=
                 "UNION ALL "
-                "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax "
+                "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
                 "  FROM gpkg_contents"
                 "  WHERE data_type = 'aspatial' ";
+        }
+
+        if( CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES")) )
+        {
+            osSQL += "UNION ALL "
+                    "SELECT name, name, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_gpkg_table "
+                    "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'gpkg_%' "
+                    "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
+                    "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
 
         SQLResult oResult;
@@ -652,9 +661,10 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     CPLError(CE_Warning, CPLE_AppDefined, "unable to read table name for layer(%d)", i);
                     continue;
                 }
-                int bIsSpatial = SQLResultGetValueAsInteger(&oResult, 2, i);
+                bool bIsSpatial = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 2, i));
+                bool bIsGpkgTable = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 7, i));
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
-                if( OGRERR_NONE != poLayer->ReadTableDefinition(bIsSpatial) )
+                if( OGRERR_NONE != poLayer->ReadTableDefinition(bIsSpatial, bIsGpkgTable) )
                 {
                     delete poLayer;
                     CPLError(CE_Warning, CPLE_AppDefined, "unable to read table definition for '%s'", pszTableName);
@@ -3453,6 +3463,11 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
     poLayer->SetTruncateFieldsFlag( CSLFetchBoolean(papszOptions,"TRUNCATE_FIELDS",FALSE));
+    if( eGType == wkbNone )
+    {
+        poLayer->SetRegisterAsAspatial( CPLFetchBool(
+            (const char**)papszOptions,"REGISTER_AS_ASPATIAL",true) );
+    }
 
     m_papoLayers = (OGRGeoPackageTableLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageTableLayer*) * (m_nLayers+1));
     m_papoLayers[m_nLayers++] = poLayer;
