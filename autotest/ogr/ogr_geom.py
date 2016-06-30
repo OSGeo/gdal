@@ -3602,12 +3602,14 @@ def ogr_geom_import_corrupted_wkb():
 
         # Test altering the WKB
         for i in range(len(wkb)):
-            for method in range(9):
+            for method in range(4 + 4 + 4 + 1):
                 init_val = wkb[i]
                 if method < 4:
                     wkb[i] = method
                 elif method < 8:
                     wkb[i] = 255 - (method - 4)
+                elif method < 12:
+                    wkb[i] = 127 + 2 - (method - 8)
                 else:
                     wkb[i] = 255 - wkb[i]
                 with gdaltest.error_handler():
