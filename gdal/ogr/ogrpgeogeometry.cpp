@@ -1443,7 +1443,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             poLine->setPoints( nStartPointIdx - nLastPointIdx + 1,
                                 padfX + nLastPointIdx,
                                 padfY + nLastPointIdx,
-                                padfZ + nLastPointIdx,
+                                (padfZ != NULL) ? padfZ + nLastPointIdx : NULL,
                                 (padfM != NULL) ? padfM + nLastPointIdx : NULL );
             poCC->addCurveDirectly(poLine);
         }
@@ -1451,10 +1451,15 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
         if( pasCurves[i].eType == CURVE_ARC_INTERIOR_POINT &&
             nStartPointIdx+1 < nPartStartIdx + nPartPoints )
         {
-            OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx] );
+            OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx],
+                         (padfZ != NULL) ? padfZ[nStartPointIdx] : 0.0,
+                         (padfM != NULL) ? padfM[nStartPointIdx] : 0.0 );
             OGRPoint p2( pasCurves[i].u.ArcByIntermediatePoint.dfX,
-                         pasCurves[i].u.ArcByIntermediatePoint.dfY );
-            OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1] );
+                         pasCurves[i].u.ArcByIntermediatePoint.dfY,
+                         (padfZ != NULL) ?  padfZ[nStartPointIdx] : 0.0 );
+            OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1],
+                         (padfZ != NULL) ? padfZ[nStartPointIdx+1] : 0.0,
+                         (padfM != NULL) ? padfM[nStartPointIdx+1] : 0.0 );
 
             // Some software (like QGIS, see https://hub.qgis.org/issues/15116)
             // do not like 3-point circles, so use a 5 point variant.
@@ -1468,13 +1473,17 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                     double dfCenterY = (p1.getY() + p2.getY()) / 2;
                     poCS->addPoint( &p1 );
                     OGRPoint pInterm1( dfCenterX - ( p2.getY() - dfCenterY ),
-                                       dfCenterY + ( p1.getX() - dfCenterX ) );
+                                       dfCenterY + ( p1.getX() - dfCenterX ),
+                                       (padfZ != NULL) ?  padfZ[nStartPointIdx] : 0.0 );
                     poCS->addPoint( &pInterm1 );
                     poCS->addPoint( &p2 );
                     OGRPoint pInterm2( dfCenterX + ( p2.getY() - dfCenterY ),
-                                       dfCenterY - ( p1.getX() - dfCenterX ) );
+                                       dfCenterY - ( p1.getX() - dfCenterX ),
+                                       (padfZ != NULL) ?  padfZ[nStartPointIdx] : 0.0 );
                     poCS->addPoint( &pInterm2 );
                     poCS->addPoint( &p3 );
+                    poCS->set3D( padfZ != NULL );
+                    poCS->setMeasured( padfM != NULL );
                     poCC->addCurveDirectly(poCS);
                 }
             }
@@ -1485,6 +1494,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                 poCS->addPoint( &p1 );
                 poCS->addPoint( &p2 );
                 poCS->addPoint( &p3 );
+                poCS->set3D( padfZ != NULL );
+                poCS->setMeasured( padfM != NULL );
                 poCC->addCurveDirectly(poCS);
             }
         }
@@ -1513,16 +1524,23 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                     dfAngleEnd -= 2 * M_PI;
             }
             const double dfMidAngle = (dfAngleStart + dfAngleEnd) / 2;
-            OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx] );
+            OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx],
+                         (padfZ != NULL) ? padfZ[nStartPointIdx] : 0.0,
+                         (padfM != NULL) ? padfM[nStartPointIdx] : 0.0 );
             OGRPoint p2( dfCenterX + dfRadius * cos(dfMidAngle),
-                         dfCenterY + dfRadius * sin(dfMidAngle) );
-            OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1] );
+                         dfCenterY + dfRadius * sin(dfMidAngle),
+                         (padfZ != NULL) ?  padfZ[nStartPointIdx] : 0.0 );
+            OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1],
+                         (padfZ != NULL) ? padfZ[nStartPointIdx+1] : 0.0,
+                         (padfM != NULL) ? padfM[nStartPointIdx+1] : 0.0 );
 
             bHasCircularArcs = true;
             OGRCircularString* poCS = new OGRCircularString();
             poCS->addPoint( &p1 );
             poCS->addPoint( &p2 );
             poCS->addPoint( &p3 );
+            poCS->set3D( padfZ != NULL );
+            poCS->setMeasured( padfM != NULL );
             poCC->addCurveDirectly(poCS);
         }
 
@@ -1540,7 +1558,9 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             const double dfY2 = pasCurves[i].u.Bezier.dfY2;
             const double dfX3 = padfX[nStartPointIdx+1];
             const double dfY3 = padfY[nStartPointIdx+1];
-            poLine->setPoint(0, dfX0, dfY0);
+            poLine->setPoint(0, dfX0, dfY0,
+                             (padfZ != NULL) ? padfZ[nStartPointIdx] : 0.0,
+                             (padfM != NULL) ? padfM[nStartPointIdx] : 0.0);
             for(int j=1;j<nSteps; j++)
             {
                 const double t = static_cast<double>(j) / nSteps;
@@ -1551,7 +1571,11 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                  (1-t)*(1-t)*(1-t)*dfY0 + 3*(1-t)*(1-t)*t*dfY1 +
                                  3*(1-t)*t*t*dfY2 + t*t*t*dfY3);
             }
-            poLine->setPoint(nSteps, dfX3, dfY3);
+            poLine->setPoint(nSteps, dfX3, dfY3,
+                             (padfZ != NULL) ? padfZ[nStartPointIdx+1] : 0.0,
+                             (padfM != NULL) ? padfM[nStartPointIdx+1] : 0.0);
+            poLine->set3D( padfZ != NULL );
+            poLine->setMeasured( padfM != NULL );
             poCC->addCurveDirectly(poLine);
         }
 
@@ -1616,7 +1640,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
               OGRGeometryFactory::approximateArcAngles(
                   pasCurves[i].u.EllipseByCenter.dfX,
                   pasCurves[i].u.EllipseByCenter.dfY,
-                  padfZ[nStartPointIdx],
+                  (padfZ != NULL) ? padfZ[nStartPointIdx] : 0.0,
                   pasCurves[i].u.EllipseByCenter.dfSemiMajor,
                   dfSemiMinor,
                   dfRotationDeg,
@@ -1626,11 +1650,17 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
              {
                 poLine->setPoint(0,
                                  padfX[nStartPointIdx],
-                                 padfY[nStartPointIdx]);
+                                 padfY[nStartPointIdx],
+                                 (padfZ != NULL) ? padfZ[nStartPointIdx] : 0.0,
+                                 (padfM != NULL) ? padfM[nStartPointIdx] : 0.0);
                 poLine->setPoint(poLine->getNumPoints()-1,
                                  padfX[nStartPointIdx+1],
-                                 padfY[nStartPointIdx+1]);
+                                 padfY[nStartPointIdx+1],
+                                 (padfZ != NULL) ? padfZ[nStartPointIdx+1] : 0.0,
+                                 (padfM != NULL) ? padfM[nStartPointIdx+1] : 0.0);
              }
+             poLine->set3D( padfZ != NULL );
+             poLine->setMeasured( padfM != NULL );
              poCC->addCurveDirectly(poLine);
         }
 
@@ -1641,7 +1671,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             poLine->setPoints( 2,
                                 padfX + nStartPointIdx,
                                 padfY + nStartPointIdx,
-                                padfZ + nStartPointIdx,
+                                (padfZ != NULL) ? padfZ + nStartPointIdx : NULL,
                                 (padfM != NULL) ? padfM + nStartPointIdx : NULL );
             poCC->addCurveDirectly(poLine);
         }
@@ -1660,7 +1690,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
         poLine->setPoints( nPartStartIdx+nPartPoints-1 - nLastPointIdx + 1,
                             padfX + nLastPointIdx,
                             padfY + nLastPointIdx,
-                            padfZ + nLastPointIdx,
+                            (padfZ != NULL) ? padfZ + nLastPointIdx : NULL,
                             (padfM != NULL) ? padfM + nLastPointIdx : NULL );
         poCC->addCurveDirectly(poLine);
     }
@@ -2214,7 +2244,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                 {
                     *ppoGeom = OGRShapeCreateCompoundCurve(
                       0, nPoints, pasCurves, nCurves, 0,
-                      padfX, padfY, padfZ, padfM, NULL );
+                      padfX, padfY, (bHasZ) ? padfZ : NULL, padfM, NULL );
                 }
                 else
                 {
@@ -2249,7 +2279,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         poMulti->addGeometryDirectly( OGRShapeCreateCompoundCurve(
                                 panPartStart[i], nVerticesInThisPart,
                                 pasCurves, nCurves, iCurveIdx,
-                                padfX, padfY, padfZ, padfM, &iCurveIdx ) );
+                                padfX, padfY, (bHasZ) ? padfZ : NULL, padfM, &iCurveIdx ) );
                     }
                 }
                 else
@@ -2298,7 +2328,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
                     OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                       panPartStart[0], nVerticesInThisPart, pasCurves, nCurves, 0,
-                      padfX, padfY, padfZ, padfM, NULL );
+                      padfX, padfY, (bHasZ) ? padfZ : NULL, padfM, NULL );
                     if( poOGRPoly->addRingDirectly( poRing ) != OGRERR_NONE )
                     {
                         delete poRing;
@@ -2327,7 +2357,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                             panPartStart[i], nVerticesInThisPart,
                             pasCurves, nCurves, iCurveIdx,
-                            padfX, padfY, padfZ, padfM, &iCurveIdx );
+                            padfX, padfY, (bHasZ) ? padfZ : NULL, padfM, &iCurveIdx );
                         if( tabPolygons[i]->addRingDirectly( poRing ) != OGRERR_NONE )
                         {
                             delete poRing;

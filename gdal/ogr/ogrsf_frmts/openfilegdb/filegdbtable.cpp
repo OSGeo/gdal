@@ -2458,6 +2458,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     nMaxSize64 += static_cast<GUIntBig>(nCurves) * (4 + /* start index */
                             4 + /* curve type */
                             44 /* size of ellipse struct */ );
+    nMaxSize64 += ((bHasZ ? 1 : 0) + (bHasM ? 1 : 0)) * 16; // space for bounding boxes
     if( nMaxSize64 >= INT_MAX )
     {
         returnError();
@@ -2501,6 +2502,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
 
     if( bHasZ )
     {
+        memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+        nOffset += 16;
         GIntBig dz = 0;
         ZOrMBufferSetter arrayzSetter(pabyExtShapeBuffer + nOffset);
         if( !ReadZArray<ZOrMBufferSetter>(arrayzSetter,
@@ -2513,6 +2516,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     }
     if( bHasM )
     {
+        memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+        nOffset += 16;
         ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
         GIntBig dm = 0;
         if( !ReadMArray<ZOrMBufferSetter>(arraymSetter,
