@@ -929,7 +929,7 @@ Error""")
     lyr = ds.CreateLayer('table1', geom_type = ogr.wkbPolygon, options = ['OVERWRITE=YES', 'CARTODBFY=NO'])
     gdal.Unlink("""/vsimem/cartodb&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""")
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0), the_geom_webmercator GEOMETRY(MULTIPOLYGON, 3857),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     f = ogr.Feature(lyr.GetLayerDefn())
