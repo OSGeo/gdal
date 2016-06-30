@@ -81,7 +81,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      A common case is the data requested with the destination        */
 /*      is packed, and the block width is the raster width.             */
 /* ==================================================================== */
-    if( nPixelSpace == nBufDataSize
+    if( !psExtraArg->bFloatingPointWindowValidity
+        && nPixelSpace == nBufDataSize
         && nLineSpace == nPixelSpace * nXSize
         && nBlockXSize == GetXSize()
         && nBufXSize == nXSize
@@ -241,8 +242,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     int         iSrcX;
 
-    if ( /* nPixelSpace == nBufDataSize
-            && */ nXSize == nBufXSize
+    if ( !psExtraArg->bFloatingPointWindowValidity
+         /* && nPixelSpace == nBufDataSize */
+         && nXSize == nBufXSize
          && nYSize == nBufYSize )
     {
 //        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
