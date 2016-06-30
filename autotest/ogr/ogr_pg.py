@@ -4957,6 +4957,49 @@ def ogr_pg_85():
     return 'success'
 
 ###############################################################################
+# Test OFTBinary
+
+def ogr_pg_86():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+        return 'skip'
+
+    old_val = gdal.GetConfigOption('PG_USE_COPY')
+
+    gdal.SetConfigOption('PG_USE_COPY', 'YES')
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_86')
+    lyr.CreateField(ogr.FieldDefn('test', ogr.OFTBinary))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString('test', '3020')
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '3020':
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('PG_USE_COPY', old_val)
+        return 'fail'
+
+    gdal.SetConfigOption('PG_USE_COPY', 'NO')
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_86', options = ['OVERWRITE=YES'])
+    lyr.CreateField(ogr.FieldDefn('test', ogr.OFTBinary))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString('test', '3020')
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '3020':
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('PG_USE_COPY', old_val)
+        return 'fail'
+
+
+    gdal.SetConfigOption('PG_USE_COPY', old_val)
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -5019,6 +5062,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_82' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_86' )
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -5132,6 +5176,7 @@ gdaltest_list_internal = [
     ogr_pg_81,
     ogr_pg_82,
     ogr_pg_85,
+    ogr_pg_86,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [ 
@@ -5144,6 +5189,7 @@ DISABLED_gdaltest_list_internal = [
 
 def ogr_pg_with_and_without_postgis():
 
+    gdaltest.ogr_pg_second_run = False
     gdaltest.run_tests( [ ogr_pg_1 ] )
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5154,9 +5200,11 @@ def ogr_pg_with_and_without_postgis():
 
         if gdaltest.pg_has_postgis:
             gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
+            gdaltest.ogr_pg_second_run = True
             gdaltest.run_tests( [ ogr_pg_1 ] )
             gdaltest.run_tests( gdaltest_list_internal )
             gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
+            gdaltest.ogr_pg_second_run = True
 
     return 'success'
 
