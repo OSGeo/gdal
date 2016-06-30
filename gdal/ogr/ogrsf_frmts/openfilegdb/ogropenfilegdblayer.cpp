@@ -413,7 +413,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
         // Check that the first feature has actually a M value before advertizing
         // it.
-        if( poGDBGeomField->HasM() && m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
+        if( poGDBGeomField->HasM() &&
+            m_poLyrTable->GetValidRecordCount() > 0 &&
+            m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
         {
             const OGRField* psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
             if( psField != NULL )
