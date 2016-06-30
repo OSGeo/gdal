@@ -44,7 +44,7 @@
  *  seen the 3/8-3/8-1/4 distribution described as "our" algorithm before,
  *  but I have no idea who the credit really belongs to.
  *  --
- *					    Lou Steinberg
+ *                                          Lou Steinberg
  *
  */
 
@@ -154,7 +154,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     VALIDATE_POINTER1( hTarget, "GDALDitherRGB2PCT", CE_Failure );
     VALIDATE_POINTER1( hColorTable, "GDALDitherRGB2PCT", CE_Failure );
 
-    int		nXSize, nYSize;
+    int nXSize, nYSize;
     CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -190,7 +190,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Setup more direct colormap.                                     */
 /* -------------------------------------------------------------------- */
-    int		nColors, iColor;
+    int nColors, iColor;
 #ifdef USE_SSE2
     int anPCTUnaligned[256+4]; /* 4 for alignment on 16-byte boundary */
     int* anPCT = ALIGN_INT_ARRAY_ON_16_BYTE(anPCTUnaligned);
@@ -219,7 +219,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     iColor = 0;
     do
     {
-        GDALColorEntry	sEntry;
+        GDALColorEntry sEntry;
 
         GDALGetColorEntryAsRGB( hColorTable, iColor, &sEntry );
         CAST_PCT(anPCT)[4*iColor+0] = static_cast<GByte>(sEntry.c1);
@@ -305,11 +305,11 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      Loop over all scanlines of data to process.                     */
 /* ==================================================================== */
-    int		iScanline;
+    int iScanline;
 
     for( iScanline = 0; iScanline < nYSize; iScanline++ )
     {
-        int	nLastRedError, nLastGreenError, nLastBlueError, i;
+        int nLastRedError, nLastGreenError, nLastBlueError, i;
 
 /* -------------------------------------------------------------------- */
 /*      Report progress                                                 */
@@ -336,7 +336,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
             goto end_and_cleanup;
 
 /* -------------------------------------------------------------------- */
-/*	Apply the error from the previous line to this one.		*/
+/*      Apply the error from the previous line to this one.             */
 /* -------------------------------------------------------------------- */
         if( bDither )
         {
@@ -354,7 +354,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         }
 
 /* -------------------------------------------------------------------- */
-/*	Figure out the nearest color to the RGB value.			*/
+/*      Figure out the nearest color to the RGB value.                  */
 /* -------------------------------------------------------------------- */
         nLastRedError = 0;
         nLastGreenError = 0;
@@ -362,8 +362,8 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 
         for( i = 0; i < nXSize; i++ )
         {
-            int		iIndex, nError, nSixth;
-            int		nRedValue, nGreenValue, nBlueValue;
+            int iIndex, nError, nSixth;
+            int nRedValue, nGreenValue, nBlueValue;
 
             nRedValue =   MAX(0,MIN(255, pabyRed[i]   + nLastRedError));
             nGreenValue = MAX(0,MIN(255, pabyGreen[i] + nLastGreenError));

@@ -330,21 +330,21 @@ end:
 /*      macro for checking whether a point is nearer than the           */
 /*      existing closest point.                                         */
 /************************************************************************/
-#define QUAD_CHECK(quad_dist, quad_value, 				\
-target_x, target_y, origin_x, origin_y, target_value )			\
-									\
-if( quad_value != nNoDataVal ) 						\
-{									\
-    double dfDx = (double)target_x - (double)origin_x;			\
-    double dfDy = (double)target_y - (double)origin_y;			\
-    double dfDistSq = dfDx * dfDx + dfDy * dfDy;			\
-    									\
-    if( dfDistSq < quad_dist*quad_dist )				\
-    {									\
-	CPLAssert( dfDistSq > 0.0 );                                    \
-        quad_dist = sqrt(dfDistSq); 					\
-        quad_value = target_value;					\
-    }									\
+#define QUAD_CHECK(quad_dist, quad_value,                               \
+target_x, target_y, origin_x, origin_y, target_value )                  \
+                                                                        \
+if( quad_value != nNoDataVal )                                          \
+{                                                                       \
+    double dfDx = (double)target_x - (double)origin_x;                  \
+    double dfDy = (double)target_y - (double)origin_y;                  \
+    double dfDistSq = dfDx * dfDx + dfDy * dfDy;                        \
+                                                                        \
+    if( dfDistSq < quad_dist*quad_dist )                                \
+    {                                                                   \
+        CPLAssert( dfDistSq > 0.0 );                                    \
+        quad_dist = sqrt(dfDistSq);                                     \
+        quad_value = target_value;                                      \
+    }                                                                   \
 }
 
 /************************************************************************/

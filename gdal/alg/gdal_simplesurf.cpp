@@ -469,9 +469,9 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
                             bestDist_2 = curDist;
                 }
 /* -------------------------------------------------------------------- */
-/*	    False matching pruning.                                         */
+/*      False matching pruning.                                         */
 /* If ratio bestDist to bestDist_2 greater than 0.8 =>                  */
-/* 		consider as false detection.                                    */
+/*     consider as false detection.                                     */
 /* Otherwise, add points as matched pair.                               */
 /*----------------------------------------------------------------------*/
         if (bestDist_2 > 0 && bestDist >= 0)

@@ -33,14 +33,14 @@
 
 static int llCompareInt(const void *a, const void *b)
 {
-	return (*(const int *)a) - (*(const int *)b);
+    return (*(const int *)a) - (*(const int *)b);
 }
 
 static void llSwapDouble(double *a, double *b)
 {
-	double temp = *a;
-	*a = *b;
-	*b = temp;
+    double temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
 /************************************************************************/
@@ -147,7 +147,7 @@ No known bug
 
     /* Fix in 1.3: count a vertex only once */
     for (y=miny; y <= maxy; y++) {
-        int	partoffset = 0;
+        int partoffset = 0;
 
         dy = y +0.5; /* center height of line*/
 
