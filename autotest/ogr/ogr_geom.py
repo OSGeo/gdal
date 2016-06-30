@@ -257,8 +257,8 @@ def ogr_geom_polyhedral_surface():
 # Test suite for TIN
 
 def ogr_geom_tin():
-    poly1 = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 0 1,0 1 0,0 0 0))")
-    poly2 = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 1 0,1 1 0,0 0 0))")
+    poly1 = ogr.CreateGeometryFromWkt("TRIANGLE ((0 0 0,0 0 1,0 1 0,0 0 0))")
+    poly2 = ogr.CreateGeometryFromWkt("TRIANGLE ((0 0 0,0 1 0,1 1 0,0 0 0))")
     tin = ogr.Geometry(ogr.wkbTIN)
     tin.AddGeometry(poly1)
     tin.AddGeometry(poly2)
@@ -314,7 +314,9 @@ def ogr_geom_tin():
 
     wrong_polygon = ogr.CreateGeometryFromWkt('POLYGON ((0 0 0,0 1 0,1 1 0,0 0 1))')
     geom_count = tin.GetGeometryCount()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     x = tin.AddGeometry(wrong_polygon)
+    gdal.PopErrorHandler()
     if tin.GetGeometryCount() != geom_count:
         gdaltest.post_reason ("Added wrong geometry in TIN, error has code " + str(x))
         return 'fail'
