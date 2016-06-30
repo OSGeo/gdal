@@ -55,6 +55,46 @@ OGRTriangle::OGRTriangle(const OGRTriangle& other) :
 /*                             OGRTriangle()                            */
 /************************************************************************/
 
+OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
+{
+    // In case of Polygon, we have to check that it is a valid triangle -
+    // closed and contains one external ring of four points
+    // If not, then eErr will contain the error description
+    if (other.getNumInteriorRings() == 0)
+    {
+        OGRCurve *poCurve = (OGRCurve *)other.getExteriorRingCurve();
+        if (poCurve->get_IsClosed())
+        {
+            if (poCurve->getNumPoints() == 4)
+            {
+                // everything is fine
+                eErr = this->addRing(poCurve);
+                if (eErr != OGRERR_NONE)
+                    CPLError( CE_Failure, CPLE_NotSupported, "Invalid Polygon");
+            }
+            else
+            {
+                eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+                CPLError( CE_Failure, CPLE_NotSupported, "Invalid Polygon");
+            }
+        }
+        else
+        {
+            eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+            CPLError( CE_Failure, CPLE_NotSupported, "Invalid Polygon");
+        }
+    }
+    else
+    {
+        eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        CPLError( CE_Failure, CPLE_NotSupported, "Invalid Polygon");
+    }
+}
+
+/************************************************************************/
+/*                             OGRTriangle()                            */
+/************************************************************************/
+
 OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r)
 {
     OGRLinearRing *poCurve = new OGRLinearRing();
@@ -649,4 +689,16 @@ OGRBoolean  OGRTriangle::IsSimple() const
 OGRGeometry *OGRTriangle::Boundary() const
 {
     return oCC.papoCurves[0];
+}
+
+/************************************************************************/
+/*                             CastToPolygon()                          */
+/************************************************************************/
+
+OGRGeometry* OGRTriangle::CastToPolygon()
+{
+    OGRPolygon *poPolygon = new OGRPolygon();
+    poPolygon->addRing((OGRCurve *)oCC.papoCurves[0]);
+    poPolygon->assignSpatialReference(getSpatialReference());
+    return poPolygon;
 }

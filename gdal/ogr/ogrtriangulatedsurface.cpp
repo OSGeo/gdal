@@ -229,16 +229,10 @@ OGRErr  OGRTriangulatedSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
     if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
-    else if( eWkbVariant == wkbVariantPostGIS1 )
+    else
     {
-        int bIs3D = wkbHasZ((OGRwkbGeometryType)nGType);
-        nGType = wkbFlatten(nGType);
-        if( nGType == wkbMultiCurve )
-            nGType = POSTGIS15_MULTICURVE;
-        else if( nGType == wkbMultiSurface )
-            nGType = POSTGIS15_MULTISURFACE;
-        if( bIs3D )
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+        eWkbVariant = wkbVariantIso;
+        nGType = getIsoGeometryType();
     }
 
     if( eByteOrder == wkbNDR )
@@ -262,7 +256,7 @@ OGRErr  OGRTriangulatedSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
     // serialize each of the geometries
     for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
-        oMP.papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, eWkbVariant );
+        oMP.papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, wkbVariantIso );
         nOffset += oMP.papoGeoms[iGeom]->WkbSize();
     }
 
@@ -312,20 +306,20 @@ OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
         // Start importing
         if (EQUAL(szToken,"("))
         {
-            OGRPolygon      *poPolygon = new OGRPolygon();
-            poSurface = poPolygon;
+            OGRTriangle      *poTriangle = new OGRTriangle();
+            poSurface = poTriangle;
             pszInput = pszInputBefore;
-            eErr = poPolygon->importFromWKTListOnly( (char**)&pszInput, bHasZ, bHasM,
+            eErr = poTriangle->importFromWKTListOnly( (char**)&pszInput, bHasZ, bHasM,
                                                      paoPoints, nMaxPoints, padfZ );
         }
         else if (EQUAL(szToken, "EMPTY") )
         {
-            poSurface = new OGRPolygon();
+            poSurface = new OGRTriangle();
         }
 
-        /* We accept POLYGON() but this is an extension to the BNF, also */
+        /* We accept TRIANGLE() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if (EQUAL(szToken,"POLYGON"))
+        else if (EQUAL(szToken,"TRIANGLE"))
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;
@@ -341,7 +335,7 @@ OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
         }
 
         if( eErr == OGRERR_NONE )
-            eErr = oMP.addGeometryDirectly( poSurface );
+            eErr = addGeometryDirectly( poSurface );
         if( eErr != OGRERR_NONE )
         {
             delete poSurface;
@@ -376,13 +370,13 @@ OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
 OGRErr OGRTriangulatedSurface::exportToWkt ( char ** ppszDstText,
                                            CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 {
-    return exportToWktInternal(ppszDstText, wkbVariantIso, "POLYGON");
+    return exportToWktInternal(ppszDstText, wkbVariantIso, "TRIANGLE");
 }
 
 /************************************************************************/
 /*                            addGeometry()                             */
-/*      Add a new geometry to a TIN.  Only a POLYGON or a TRIANGLE      */
-/*      can be added to a TRIANGULATEDSURFACE.                          */
+/*      Add a new geometry to a TIN.  Only a TRIANGLE can be added      */
+/*      to a TRIANGULATEDSURFACE.                                       */
 /************************************************************************/
 
 OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
@@ -391,30 +385,85 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     // If it is a triangle, we can add it to the TIN without any hassle
-    // However, we can only add it as a polygon, so we need to create a Polygon out of it
-    if (EQUAL(poNewGeom->getGeometryName(), "TRIANGLE"))
+    else if (EQUAL(poNewGeom->getGeometryName(), "TRIANGLE"))
     {
-        OGRPolygon *poGeom = new OGRPolygon(*((OGRPolygon *)poNewGeom));
-        OGRErr eErr = OGRPolyhedralSurface::addGeometry(poGeom);
-        delete poGeom;
+        OGRGeometry *poClone = poNewGeom->clone();
+        OGRErr      eErr;
+
+        if (poClone == NULL)
+            return OGRERR_FAILURE;
+
+        eErr = addGeometryDirectly(poClone);
+
+        if( eErr != OGRERR_NONE )
+            delete poClone;
+
         return eErr;
     }
 
-    // In case of Polygon, we have to check that it is a valid triangle -
-    // closed and contains one external ring of four points
-    OGRPolygon *poPolygon = (OGRPolygon *)poNewGeom;
-    if (poPolygon->getNumInteriorRings() == 0)
+    // We can only add polygon as a triangle
+    else
     {
-        OGRCurve *poCurve = poPolygon->getExteriorRingCurve();
-        if (poCurve->get_IsClosed())
+        OGRErr eErr;
+        OGRTriangle *poTriangle = new OGRTriangle(*((OGRPolygon *)poNewGeom), eErr);
+        if (poTriangle != NULL && eErr == OGRERR_NONE)
         {
-            if (poCurve->getNumPoints() == 4)
-            {
-                // everything is fine, we will add this to the TIN
-                return OGRPolyhedralSurface::addGeometry(poNewGeom);
-            }
+            eErr = addGeometryDirectly(poTriangle);
+
+            if( eErr != OGRERR_NONE )
+                delete poTriangle;
+
+            return eErr;
         }
+        else
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+}
+
+/************************************************************************/
+/*                        addGeometryDirectly()                         */
+/************************************************************************/
+
+OGRErr OGRTriangulatedSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
+{
+    if( poNewGeom->Is3D() && !Is3D() )
+        set3D(TRUE);
+
+    if( poNewGeom->IsMeasured() && !IsMeasured() )
+        setMeasured(TRUE);
+
+    if( !poNewGeom->Is3D() && Is3D() )
+        poNewGeom->set3D(TRUE);
+
+    if( !poNewGeom->IsMeasured() && IsMeasured() )
+        poNewGeom->setMeasured(TRUE);
+
+    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( oMP.papoGeoms,
+                                             sizeof(void*) * (oMP.nGeomCount+1) );
+    if( papoNewGeoms == NULL )
+        return OGRERR_FAILURE;
+
+    oMP.papoGeoms = papoNewGeoms;
+    oMP.papoGeoms[oMP.nGeomCount] = poNewGeom;
+    oMP.nGeomCount++;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CastToMultiPolygon()                         */
+/************************************************************************/
+
+OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygon()
+{
+    OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon();
+
+    for (int i = 0; i < oMP.nGeomCount; i++)
+    {
+        OGRTriangle *geom = (OGRTriangle *)oMP.papoGeoms[i];
+        OGRPolygon *poPolygon = (OGRPolygon *)geom->CastToPolygon();
+        poMultiPolygon->addGeometry(poPolygon);
     }
 
-    return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    return poMultiPolygon;
 }
