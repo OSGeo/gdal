@@ -760,7 +760,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
-/*      Read alpha case.						*/
+/*      Read alpha case.                                                */
 /* -------------------------------------------------------------------- */
     if( nBandCount >= 0 )
     {
@@ -982,12 +982,12 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 }
 
 
-#define COPY_MEM(target,type,count)					\
-   do { if( (psSrcOptions->target) != NULL && (count) != 0 ) 		\
-   { 									\
+#define COPY_MEM(target,type,count)                                     \
+   do { if( (psSrcOptions->target) != NULL && (count) != 0 )            \
+   {                                                                    \
        (psDstOptions->target) = (type *) CPLMalloc(sizeof(type)*(count)); \
-       memcpy( (psDstOptions->target), (psSrcOptions->target),		\
- 	       sizeof(type) * (count) ); 	        			\
+       memcpy( (psDstOptions->target), (psSrcOptions->target),          \
+               sizeof(type) * (count) );                                \
    } \
    else \
        (psDstOptions->target) = NULL; } while(0)

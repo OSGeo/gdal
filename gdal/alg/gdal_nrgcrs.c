@@ -127,7 +127,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
     if ( TwoDPolyFit( &rms_err, psInfo->adfFromGeoX, nReqOrder, nGCPCount,
-		      padfRasterX, padfGeoX, padfGeoY ) < 0 )
+                      padfRasterX, padfGeoX, padfGeoY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -135,7 +135,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfFromGeoY, nReqOrder, nGCPCount,
-		      padfRasterY, padfGeoX, padfGeoY ) < 0 )
+                      padfRasterY, padfGeoX, padfGeoY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -143,7 +143,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfToGeoX, nReqOrder, nGCPCount,
-		      padfGeoX, padfRasterX, padfRasterY ) < 0 )
+                      padfGeoX, padfRasterX, padfRasterY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -151,7 +151,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfToGeoY, nReqOrder, nGCPCount,
-		      padfGeoY, padfRasterX, padfRasterY ) < 0 )
+                      padfGeoY, padfRasterX, padfRasterY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -163,19 +163,19 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Dump residuals.                                                 */
 /* -------------------------------------------------------------------- */
     CPLDebug( "GDALCreateGCPTransformer",
-	      "Number of GCPs %d, transformation order %d",
-	      nGCPCount, psInfo->nOrder );
+              "Number of GCPs %d, transformation order %d",
+              nGCPCount, psInfo->nOrder );
 
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
-	double x = pasGCPList[iGCP].dfGCPX;
-	double y = pasGCPList[iGCP].dfGCPY;
-	double z = pasGCPList[iGCP].dfGCPZ;
-	int bSuccess;
-	GDALGCPTransform( psInfo, TRUE, 1, &x, &y, &z, &bSuccess );
-	CPLDebug( "GDALCreateGCPTransformer",
-		  "GCP %d. Residuals: X: %f, Y: %f", iGCP,
-		  pasGCPList[iGCP].dfGCPPixel - x, pasGCPList[iGCP].dfGCPLine - y );
+        double x = pasGCPList[iGCP].dfGCPX;
+        double y = pasGCPList[iGCP].dfGCPY;
+        double z = pasGCPList[iGCP].dfGCPZ;
+        int bSuccess;
+        GDALGCPTransform( psInfo, TRUE, 1, &x, &y, &z, &bSuccess );
+        CPLDebug( "GDALCreateGCPTransformer",
+                  "GCP %d. Residuals: X: %f, Y: %f", iGCP,
+                  pasGCPList[iGCP].dfGCPPixel - x, pasGCPList[iGCP].dfGCPLine - y );
     }
 
     return psInfo;
@@ -251,19 +251,19 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
     for( i = 0; i < nPointCount; i++ )
     {
-	X = x[i];
-	Y = y[i];
+        X = x[i];
+        Y = y[i];
         if( bDstToSrc )
         {
             x[i] = TwoDPolyEval( psInfo->adfFromGeoX, psInfo->nOrder, X, Y );
-	    y[i] = TwoDPolyEval( psInfo->adfFromGeoY, psInfo->nOrder, X, Y );
+            y[i] = TwoDPolyEval( psInfo->adfFromGeoY, psInfo->nOrder, X, Y );
         }
         else
         {
             x[i] = TwoDPolyEval( psInfo->adfToGeoX, psInfo->nOrder, X, Y );
-	    y[i] = TwoDPolyEval( psInfo->adfToGeoY, psInfo->nOrder, X, Y );
+            y[i] = TwoDPolyEval( psInfo->adfToGeoY, psInfo->nOrder, X, Y );
         }
-	z[i] = 0;
+        z[i] = 0;
         panSuccess[i] = TRUE;
     }
 

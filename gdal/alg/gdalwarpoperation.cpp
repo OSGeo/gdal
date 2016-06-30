@@ -2061,14 +2061,17 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         if( nBitsPerPixel == 32 )
             nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts) * 4;
         else
-            nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
+            nBytes =
+                (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
         const size_t nByteSize_t = static_cast<size_t>(nBytes);
 #if SIZEOF_VOIDP != 8
         if( static_cast<GIntBig>(nByteSize_t) != nBytes )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
-                      nBytes );
+            CPLError(
+                CE_Failure, CPLE_OutOfMemory,
+                "Cannot allocate " CPL_FRMT_GIB " bytes",
+                nBytes );
             return CE_Failure;
         }
 #endif

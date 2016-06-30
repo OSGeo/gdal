@@ -157,7 +157,8 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             break;
         }
     }
-    if( !ok ) {
+    if( !ok )
+    {
         for( int i=0; i <= nBandCount; i++ )
         {
             VSIFree(papabySrcData[i]);

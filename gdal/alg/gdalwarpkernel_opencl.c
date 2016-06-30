@@ -380,7 +380,7 @@ cl_int set_supported_formats(struct oclWarper *warper,
 cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
                         void **wrkPtr, cl_mem *wrkCL)
 {
-	cl_int err = CL_SUCCESS;
+    cl_int err = CL_SUCCESS;
     wrkCL[imgNum] = clCreateBuffer(warper->context,
                                    CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
                                    dataSz, NULL, &err);
@@ -418,7 +418,7 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
 cl_int alloc_working_arr(struct oclWarper *warper,
                          size_t ptrSz, size_t dataSz, size_t *fmtSz)
 {
-	cl_int err = CL_SUCCESS;
+    cl_int err = CL_SUCCESS;
     int i, b;
     size_t srcDataSz1, dstDataSz1, srcDataSz4, dstDataSz4;
     const int numBands = warper->numBands;
@@ -524,9 +524,9 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
                      int nXRadius, int nYRadius, int nFiltInitX, int nFiltInitY,
                      cl_int *clErr )
 {
-	cl_program program;
+    cl_program program;
     cl_kernel kernel;
-	cl_int err = CL_SUCCESS;
+    cl_int err = CL_SUCCESS;
     char *buffer = (char *)CPLCalloc(128000, sizeof(char));
 #define PROGBUF_SIZE 128000
     char *progBuf = (char *)CPLCalloc(PROGBUF_SIZE, sizeof(char));
@@ -579,7 +579,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
                 "__constant float *fDstNoDataReal,\n"
                 "int bandNum)\n"
 "{\n"
-	"fReal *= dstMaxVal;\n"
+    "fReal *= dstMaxVal;\n"
 
     "if (fReal < dstMinVal)\n"
         "dstPtr[iDstOffset] = (outType)dstMinVal;\n"
@@ -854,29 +854,29 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         "float fMult1 = fRatioX * fRatioY;\n"
         "float fMult2 = (1.0f-fRatioX) * fRatioY;\n"
 
-		// Upper Left Pixel
-		"if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
-			 "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-						"useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY),\n"
-						"bandNum, &fDens, &fReal, &fImag))\n"
-		"{\n"
-			"fAccumulatorDivisor += fMult1;\n"
-			"fAccumulatorReal += fReal * fMult1;\n"
-			"fAccumulatorImag += fImag * fMult1;\n"
-			"fAccumulatorDensity += fDens * fMult1;\n"
-		"}\n"
+                // Upper Left Pixel
+                "if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
+                         "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
+                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY),\n"
+                                                "bandNum, &fDens, &fReal, &fImag))\n"
+                "{\n"
+                        "fAccumulatorDivisor += fMult1;\n"
+                        "fAccumulatorReal += fReal * fMult1;\n"
+                        "fAccumulatorImag += fImag * fMult1;\n"
+                        "fAccumulatorDensity += fDens * fMult1;\n"
+                "}\n"
 
-		// Upper Right Pixel
-		"if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
-			"&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-						"useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY),\n"
-						"bandNum, &fDens, &fReal, &fImag))\n"
-		"{\n"
-			"fAccumulatorDivisor += fMult2;\n"
-			"fAccumulatorReal += fReal * fMult2;\n"
-			"fAccumulatorImag += fImag * fMult2;\n"
-			"fAccumulatorDensity += fDens * fMult2;\n"
-		"}\n"
+                // Upper Right Pixel
+                "if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
+                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
+                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY),\n"
+                                                "bandNum, &fDens, &fReal, &fImag))\n"
+                "{\n"
+                        "fAccumulatorDivisor += fMult2;\n"
+                        "fAccumulatorReal += fReal * fMult2;\n"
+                        "fAccumulatorImag += fImag * fMult2;\n"
+                        "fAccumulatorDensity += fDens * fMult2;\n"
+                "}\n"
     "}\n"
 
     "if ( iSrcY+1 >= 0 && iSrcY+1 < iSrcHeight ) {\n"
@@ -884,28 +884,28 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         "float fMult2 = (1.0f-fRatioX) * (1.0f-fRatioY);\n"
 
         // Lower Left Pixel
-		"if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
-			"&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-						"useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY+1),\n"
-						"bandNum, &fDens, &fReal, &fImag))\n"
-		"{\n"
-			"fAccumulatorDivisor += fMult1;\n"
-			"fAccumulatorReal += fReal * fMult1;\n"
-			"fAccumulatorImag += fImag * fMult1;\n"
-			"fAccumulatorDensity += fDens * fMult1;\n"
-		"}\n"
+                "if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
+                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
+                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY+1),\n"
+                                                "bandNum, &fDens, &fReal, &fImag))\n"
+                "{\n"
+                        "fAccumulatorDivisor += fMult1;\n"
+                        "fAccumulatorReal += fReal * fMult1;\n"
+                        "fAccumulatorImag += fImag * fMult1;\n"
+                        "fAccumulatorDensity += fDens * fMult1;\n"
+                "}\n"
 
-		// Lower Right Pixel
-		"if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
-			"&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-						"useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+1),\n"
-						"bandNum, &fDens, &fReal, &fImag))\n"
-		"{\n"
-			"fAccumulatorDivisor += fMult2;\n"
-			"fAccumulatorReal += fReal * fMult2;\n"
-			"fAccumulatorImag += fImag * fMult2;\n"
-			"fAccumulatorDensity += fDens * fMult2;\n"
-		"}\n"
+                // Lower Right Pixel
+                "if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
+                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
+                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+1),\n"
+                                                "bandNum, &fDens, &fReal, &fImag))\n"
+                "{\n"
+                        "fAccumulatorDivisor += fMult2;\n"
+                        "fAccumulatorReal += fReal * fMult2;\n"
+                        "fAccumulatorImag += fImag * fMult2;\n"
+                        "fAccumulatorDensity += fDens * fMult2;\n"
+                "}\n"
     "}\n"
 
     // Compute and save final pixel
@@ -2288,11 +2288,11 @@ cl_int GDALWarpKernelOpenCL_runResamp(struct oclWarper *warper,
                                       int nFiltInitX, int nFiltInitY)
 {
     int i, nextBandNum = 0, chSize = 1;
-	cl_int err = CL_SUCCESS;
+    cl_int err = CL_SUCCESS;
     cl_mem xy, unifiedSrcDensityCL, unifiedSrcValidCL;
     cl_mem dstDensityCL, dstValidCL, dstNoDataRealCL;
     cl_mem useBandSrcValidCL, nBandSrcValidCL;
-	size_t groupSize, wordSize;
+    size_t groupSize, wordSize;
     cl_kernel kern = NULL;
     cl_channel_order chOrder;
 
@@ -2507,7 +2507,7 @@ cl_int GDALWarpKernelOpenCL_getRow(struct oclWarper *warper,
 cl_int GDALWarpKernelOpenCL_deleteEnv(struct oclWarper *warper)
 {
     int i;
-	cl_int err = CL_SUCCESS;
+    cl_int err = CL_SUCCESS;
 
     for (i = 0; i < warper->numImages; ++i) {
         // Run free!!
