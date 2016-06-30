@@ -4213,20 +4213,72 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
 /* -------------------------------------------------------------------- */
-    {
-        const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+     // Why 10 ? Somewhat arbitrary
+#define MAX_BANDS_FOR_DIRTY_CHECK 10
+    GDALRasterBlock* apoBlocks[MAX_BANDS_FOR_DIRTY_CHECK];
+    const int nBands = poGDS->nBands;
+    bool bAllBlocksDirty = false;
 
-        const CPLErr eErr = poGDS->LoadBlockBuf( nBlockId );
-        if( eErr != CE_None )
-            return eErr;
+
+/* -------------------------------------------------------------------- */
+/*     If all blocks are cached and dirty then we do not need to reload */
+/*     the tile/strip from disk                                         */
+/* -------------------------------------------------------------------- */
+    if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+    {
+        bAllBlocksDirty = true;
+        for( int iBand = 0; iBand < nBands; ++iBand )
+        {
+            if( iBand+1 != nBand )
+            {
+                apoBlocks[iBand] =
+                    reinterpret_cast<GTiffRasterBand *>(
+                        poGDS->GetRasterBand( iBand+1 ))
+                            ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
+
+                if( apoBlocks[iBand] == NULL )
+                {
+                    bAllBlocksDirty = false;
+                }
+                else if( !apoBlocks[iBand]->GetDirty() )
+                {
+                    apoBlocks[iBand]->DropLock();
+                    apoBlocks[iBand] = NULL;
+                    bAllBlocksDirty = false;
+                }
+            }
+            else
+                apoBlocks[iBand] = NULL;
+        }
+#if 0
+        if( bAllBlocksDirty )
+            CPLDebug("GTIFF", "Saved reloading block %d", nBlockId);
+        else
+            CPLDebug("GTIFF", "Must reload block %d", nBlockId);
+#endif
     }
+
+    CPLErr eErr = poGDS->LoadBlockBuf( nBlockId, !bAllBlocksDirty );
+    if( eErr != CE_None )
+    {
+        if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+        {
+            for( int iBand = 0; iBand < nBands; ++iBand )
+            {
+                if( apoBlocks[iBand] != NULL )
+                    apoBlocks[iBand]->DropLock();
+            }
+        }
+        return eErr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      On write of pixel interleaved data, we might as well flush      */
 /*      out any other bands that are dirty in our cache.  This is       */
 /*      especially helpful when writing compressed blocks.              */
 /* -------------------------------------------------------------------- */
     const int nWordBytes = poGDS->nBitsPerSample / 8;
-    const int nBands = poGDS->nBands;
 
     for( int iBand = 0; iBand < nBands; ++iBand )
     {
@@ -4239,8 +4291,10 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            poBlock =
-                reinterpret_cast<GTiffRasterBand *>(
+            if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+                poBlock = apoBlocks[iBand];
+            else
+                poBlock = reinterpret_cast<GTiffRasterBand *>(
                     poGDS->GetRasterBand( iBand+1 ))
                         ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
 
@@ -4269,9 +4323,20 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    poGDS->bLoadedBlockDirty = true;
+    if( bAllBlocksDirty )
+    {
+        // We can synchronously write the block now
+        eErr =
+            poGDS->WriteEncodedTileOrStrip(nBlockId, poGDS->pabyBlockBuf, true);
+        poGDS->bLoadedBlockDirty = false;
+        return eErr;
+    }
+    else
+    {
+        poGDS->bLoadedBlockDirty = true;
 
-    return CE_None;
+        return CE_None;
+    }
 }
 
 /************************************************************************/
