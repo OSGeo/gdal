@@ -668,7 +668,7 @@ Error""")
     fld_defn.SetWidth(20)
     lyr.CreateField(fld_defn)
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "my_layer" ( cartodb_id SERIAL,the_geom GEOMETRY(GEOMETRY, 4326), the_geom_webmercator GEOMETRY(GEOMETRY, 3857),"strfield" VARCHAR NOT NULL DEFAULT 'DEFAULT VAL',PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "my_layer_cartodb_id_seq" CASCADE;CREATE SEQUENCE "my_layer_cartodb_id_seq" START 1;ALTER TABLE "my_layer" ALTER COLUMN cartodb_id SET DEFAULT nextval('"my_layer_cartodb_id_seq"')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "my_layer" ( cartodb_id SERIAL,the_geom GEOMETRY(GEOMETRY, 4326),"strfield" VARCHAR NOT NULL DEFAULT 'DEFAULT VAL',PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "my_layer_cartodb_id_seq" CASCADE;CREATE SEQUENCE "my_layer_cartodb_id_seq" START 1;ALTER SEQUENCE "my_layer_cartodb_id_seq" OWNED BY "my_layer".cartodb_id;ALTER TABLE "my_layer" ALTER COLUMN cartodb_id SET DEFAULT nextval('"my_layer_cartodb_id_seq"')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
 
@@ -1159,6 +1159,27 @@ def ogr_cartodb_rw_1():
     srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbMultiPolygon, srs = srs)
     lyr.GetNextFeature()
+    ds.ExecuteSQL("DELLAYER:" + lyr_name)
+
+    # Test that the_geom_webmercator is properly created
+    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbPoint, srs = srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+
+    sql_lyr = ds.ExecuteSQL('SELECT ST_AsText(the_geom_webmercator) AS foo FROM ' + lyr_name)
+    f = sql_lyr.GetNextFeature()
+    if not f.GetField(0).startswith('POINT'):
+        gdaltest.post_reason('fail')
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
     # Layer without geometry
