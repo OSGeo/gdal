@@ -208,7 +208,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    /* coverity[tainted_data] */
+    
     oMP.papoGeoms = (OGRGeometry **) VSI_CALLOC_VERBOSE(sizeof(void*), oMP.nGeomCount);
     if (oMP.nGeomCount != 0 && oMP.papoGeoms == NULL)
     {
