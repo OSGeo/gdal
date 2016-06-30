@@ -2847,9 +2847,17 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
         if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
             hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
     }
-    else if (EQUAL(getGeometryName(), "POLYHEDRALSURFACE") || EQUAL(getGeometryName(), "TIN"))
+    else if (EQUAL(getGeometryName(), "POLYHEDRALSURFACE"))
     {
         OGRMultiPolygon *poMultiPolygon = ((OGRPolyhedralSurface *)poLinearGeom)->CastToMultiPolygon();
+        OGRErr eErr = poMultiPolygon->exportToWkb( wkbNDR, pabyData );
+        if( eErr == OGRERR_NONE )
+            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+        delete poMultiPolygon;
+    }
+    else if (EQUAL(getGeometryName(), "TIN"))
+    {
+        OGRMultiPolygon *poMultiPolygon = ((OGRTriangulatedSurface *)poLinearGeom)->CastToMultiPolygon();
         if( poMultiPolygon->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
             hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
         delete poMultiPolygon;
