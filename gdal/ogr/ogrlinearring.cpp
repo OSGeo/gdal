@@ -278,7 +278,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
             }
             if( flags & OGR_G_MEASURED )
             {
-                CPL_SWAPDOUBLE( padfZ + i );
+                CPL_SWAPDOUBLE( padfM + i );
             }
         }
     }
