@@ -1,11 +1,78 @@
-= GDAL/OGR 1.11.5 *PRELIMINARY* Release Notes = 
+= GDAL/OGR 1.11.5 Release Notes = 
 
 The 1.11.5 release is a bug fix release.
 
+== Build ==
+ * Windows: update mrsid driver build to find MrSID 9.5 dll
+
+== Port ==
+ * Export VSICreateCachedFile() as CPL_DLL so as to enable building JP2KAK as a plugin (https://github.com/OSGeo/gdal/pull/126)
+
+== GDAL algorithms ==
+ * GDALWarpOperation::CreateKernelMask(): fix potential 32 bit integer overflow when using warp memory value > 2GB (#6448)
+
+== GDAL Core ==
+ * GDALLoadRPCFile(): load .rpc files from Ikonos products that have extra end-of-line character (#6341)
+
+== Utilities ==
+ * gdal_translate: fix random behaviour when -scale is used without source bounds (#6455)
+ * gdalbuildvrt: accept nan as value for -srcnodata and -vrtnodata (#6495)
+
+== GDAL drivers ==
+
+GTiff driver:
+ * Internal libtiff: fix 1.11 regression that prevents from reading one-strip files that have no StripByteCounts tag (#6490)
+
+netCDF driver:
+ * do not crash on NC4 unsigned short attributes (#6337)
+
+PostgisRaster driver:
+ * fix potential crash when one tile has a lower number of bands than the max of the table (fixes #6267)
+
+== OGRSpatialReference == 
+ * importFromESRI(): fix import of multi line MERCATOR SRS (#6523)
+
 == OGR drivers == 
 
- * Driver removed:
-    - Google Maps Engine (GME)  (#6261)
+Driver removed:
+ * Google Maps Engine (GME)  (#6261)
+
+GeoJSON driver:
+ * do not 'promote' a null field to OFTString type if it had another type before (#6351)
+ * ESRI Json reader: do not set field width of 2147483647 (#6529)
+
+GPKG driver:
+ * fix crash on layers with curve geometries (#6558)
+
+KML driver:
+ * fix crash on KML files without content but with nested folders (#6486)
+
+LIBKML driver:
+ * fix crash when reading <gx:TimeStamp> or <gx:TimeSpan> elements (#6518)
+
+MITAB driver:
+ * limit (width, precision) of numeric fields on creation to (20,16) for compatibility with MapInfo (#6392)
+
+OpenFileGDB driver:
+ * transcode UTF-16 strings found in column names, alias, etc... to UTF-8 (instead of using only their ASCII byte) (#6544)
+
+OSM driver:
+ * do not override 'our' osm_id (the node, way or relation id) with a tag named 'osm_id' (#6347)
+
+PG/PGDump drivers:
+ * in copy mode (the default on layer creation), do not truncate the concatenated string list to the field width (#6356)
+
+SQLite driver:
+ * fix crash on Unix systems with SQLite >= 3.10.0 when xCurrentTimeInt function is called (#6360)
+
+VFK driver:
+ * recreate DB automatically when it's outdated (#6511)
+
+WFS driver:
+ * invalidate underlying layer when SetIgnoredFields() is called (QGIS #15112)
+
+XLSX driver:
+ * fix reading sheets with more than > 26 columns and 'holes' (#6363)
 
 = GDAL/OGR 1.11.4 Release Notes = 
 
