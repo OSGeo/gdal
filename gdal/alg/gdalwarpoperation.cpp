@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "ogr_api.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -1357,15 +1358,29 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      If we aren't doing fixed initialization of the output buffer    */
 /*      then read it from disk so we can overlay on existing imagery.   */
 /* -------------------------------------------------------------------- */
+    GDALDataset* poDstDS = reinterpret_cast<GDALDataset*>(psOptions->hDstDS);
     if( pszInitDest == NULL )
     {
-        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Read,
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poDstDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                  GF_Read,
+                  nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                  pDstBuffer, nDstXSize, nDstYSize,
+                  psOptions->eWorkingDataType,
+                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poDstDS->RasterIO( GF_Read,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     pDstBuffer, nDstXSize, nDstYSize,
                                     psOptions->eWorkingDataType,
                                     psOptions->nBandCount,
                                     psOptions->panDstBands,
-                                    0, 0, 0 );
+                                    0, 0, 0, NULL );
+        }
 
         if( eErr != CE_None )
         {
@@ -1390,13 +1405,27 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Write,
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poDstDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                  GF_Write,
+                  nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                  pDstBuffer, nDstXSize, nDstYSize,
+                  psOptions->eWorkingDataType,
+                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poDstDS->RasterIO( GF_Write,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     pDstBuffer, nDstXSize, nDstYSize,
                                     psOptions->eWorkingDataType,
                                     psOptions->nBandCount,
                                     psOptions->panDstBands,
-                                    0, 0, 0 );
+                                    0, 0, 0, NULL );
+        }
+
         if( eErr == CE_None &&
             CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH",
                              FALSE ) )
@@ -1583,13 +1612,29 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             + nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * i;
 
     if( eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0 )
-        eErr =
-            GDALDatasetRasterIO( psOptions->hSrcDS, GF_Read,
-                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                 oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
-                                 psOptions->eWorkingDataType,
-                                 psOptions->nBandCount, psOptions->panSrcBands,
-                                 0, 0, nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) );
+    {
+        GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(psOptions->hSrcDS);
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poSrcDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                                  GF_Read,
+                                  nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                                  oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
+                                  psOptions->eWorkingDataType,
+                                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poSrcDS->RasterIO( GF_Read,
+                  nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                  oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
+                  psOptions->eWorkingDataType,
+                  psOptions->nBandCount, psOptions->panSrcBands,
+                  0, 0, nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS),
+                  NULL );
+        }
+    }
 
     ReportTiming( "Input buffer read" );
 
