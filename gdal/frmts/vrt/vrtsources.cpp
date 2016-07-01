@@ -699,10 +699,10 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     CPLXMLNode * const psSrcRect = CPLGetXMLNode(psSrc,"SrcRect");
     if( psSrcRect )
     {
-        m_dfSrcXOff = CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1"));
-        m_dfSrcYOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
-        m_dfSrcXSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
-        m_dfSrcYSize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
+        SetSrcWindow( CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1")),
+                      CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1")),
+                      CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1")),
+                      CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1")) );
     }
     else
     {
@@ -715,10 +715,10 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     CPLXMLNode * const psDstRect = CPLGetXMLNode(psSrc,"DstRect");
     if( psDstRect )
     {
-        m_dfDstXOff = CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1"));
-        m_dfDstYOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
-        m_dfDstXSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
-        m_dfDstYSize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
+        SetDstWindow( CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1")),
+                      CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1")),
+                      CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1")),
+                      CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1")) );
     }
     else
     {
