@@ -297,7 +297,9 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-    bool        IsBlockAvailable( int nBlockId );
+    bool        IsBlockAvailable( int nBlockId,
+                                  vsi_l_offset* pnOffset = NULL,
+                                  vsi_l_offset* pnSize = NULL );
 
     bool        bGeoTIFFInfoChanged;
     bool        bForceUnsetGTOrGCPs;
@@ -737,7 +739,9 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // Make sure it is available.
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId) )
+    vsi_l_offset nOffset = 0;
+    vsi_l_offset nByteCount = 0;
+    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId, &nOffset, &nByteCount) )
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize );
         return CE_None;
@@ -746,33 +750,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int nScaleFactor = 1 << poGDS->nOverviewLevel;
     if( poGDS->poJPEGDS == NULL || nBlockId != poGDS->nBlockId )
     {
-        toff_t *panByteCounts = NULL;
-        toff_t *panOffsets = NULL;
-        vsi_l_offset nOffset = 0;
-        vsi_l_offset nByteCount = 0;
-
-        // Find offset and size of the JPEG tile/strip.
-        TIFF* hTIFF = poGDS->poParentDS->hTIFF;
-        if( (( TIFFIsTiled( hTIFF )
-            && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts )
-            && TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
-            || ( !TIFFIsTiled( hTIFF )
-            && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
-            && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) )) &&
-            panByteCounts != NULL && panOffsets != NULL )
-        {
-            if( panByteCounts[nBlockId] < 2 )
-                return CE_Failure;
-            nOffset = panOffsets[nBlockId] + 2;  // Skip leading 0xFF 0xF8.
-            nByteCount = panByteCounts[nBlockId] - 2;
-        }
-        else
-        {
+        if( nByteCount < 2 )
             return CE_Failure;
-        }
+        nOffset += 2;  // Skip leading 0xFF 0xF8.
+        nByteCount -= 2;
 
         // Special case for last strip that might be smaller than other strips
         // In which case we must invalidate the dataset.
+        TIFF* hTIFF = poGDS->poParentDS->hTIFF;
         if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
             (nBlockYOff + 1 ==
              static_cast<int>(
@@ -3980,7 +3965,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Handle the case of a strip or tile that doesn't exist yet.      */
 /*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
-    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId) )
+    vsi_l_offset nOffset = 0;
+    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId, &nOffset) )
     {
         NullBlock( pImage );
         return CE_None;
@@ -3991,20 +3977,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
           nBlockId == poGDS->nLoadedBlock) )
     {
-        toff_t* panOffsets = NULL;
-        TIFFGetField( poGDS->hTIFF,
-                      TIFFIsTiled( poGDS->hTIFF ) ?
-                      TIFFTAG_TILEOFFSETS : TIFFTAG_STRIPOFFSETS,
-                      &panOffsets );
-        if( panOffsets == NULL )
-            return CE_Failure;
-        if( panOffsets[nBlockId] < VSIFTellL(poGDS->fpL) )
+        if( nOffset < VSIFTellL(poGDS->fpL) )
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Trying to load block %d at offset " CPL_FRMT_GUIB
                       " whereas current pos is " CPL_FRMT_GUIB
                       " (backward read not supported)",
-                      nBlockId, (GUIntBig)panOffsets[nBlockId],
+                      nBlockId, (GUIntBig)nOffset,
                       (GUIntBig)VSIFTellL(poGDS->fpL) );
             return CE_Failure;
         }
@@ -4573,24 +4552,13 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
             }
 
-            if( !poGDS->IsBlockAvailable(nBlockId) )
+            vsi_l_offset nOffset = 0;
+            if( !poGDS->IsBlockAvailable(nBlockId, &nOffset) )
             {
                 return NULL;
             }
 
-            toff_t *panOffsets = NULL;
-            TIFF* hTIFF = poGDS->hTIFF;
-            if( (( TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
-                || ( !TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) ))
-                && panOffsets != NULL )
-            {
-                return CPLSPrintf( CPL_FRMT_GUIB,
-                                   (GUIntBig)panOffsets[nBlockId] );
-            }
-
-            return NULL;
+            return CPLSPrintf( CPL_FRMT_GUIB, (GUIntBig)nOffset );
         }
 
         if( sscanf( pszName, "BLOCK_SIZE_%d_%d",
@@ -4613,26 +4581,13 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
             }
 
-            if( !poGDS->IsBlockAvailable(nBlockId) )
+            vsi_l_offset nByteCount = 0;
+            if( !poGDS->IsBlockAvailable(nBlockId, NULL, &nByteCount) )
             {
                 return NULL;
             }
 
-            toff_t *panByteCounts = NULL;
-            TIFF* hTIFF = poGDS->hTIFF;
-            if( (( TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS,
-                                 &panByteCounts ) )
-                || ( !TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS,
-                                 &panByteCounts ) )) &&
-                panByteCounts != NULL )
-            {
-                return CPLSPrintf( CPL_FRMT_GUIB,
-                                   (GUIntBig)panByteCounts[nBlockId] );
-            }
-
-            return NULL;
+            return CPLSPrintf( CPL_FRMT_GUIB, (GUIntBig)nByteCount );
         }
     }
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
@@ -8206,7 +8161,9 @@ void GTiffCacheOffsetOrCount(VSILFILE* fp,
 /*      zero then the block has never been committed to disk.           */
 /************************************************************************/
 
-bool GTiffDataset::IsBlockAvailable( int nBlockId )
+bool GTiffDataset::IsBlockAvailable( int nBlockId,
+                                     vsi_l_offset* pnOffset,
+                                     vsi_l_offset* pnSize )
 
 {
 #ifdef INTERNAL_LIBTIFF
@@ -8327,20 +8284,31 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId )
                 return false;
             }
         }
+        if( pnOffset )
+            *pnOffset = hTIFF->tif_dir.td_stripoffset[nBlockId];
+        if( pnSize )
+            *pnSize = hTIFF->tif_dir.td_stripbytecount[nBlockId];
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
 #endif  // DEFER_STRILE_LOAD
 #endif  // INTERNAL_LIBTIFF
     toff_t *panByteCounts = NULL;
+    toff_t *panOffsets = NULL;
 
     if( ( TIFFIsTiled( hTIFF )
-          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
+          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) 
+          && (pnOffset == NULL || TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets )) )
         || ( !TIFFIsTiled( hTIFF )
-          && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) ) )
+          && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
+          && (pnOffset == NULL || TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets )) ) )
     {
-        if( panByteCounts == NULL )
+        if( panByteCounts == NULL || (pnOffset != NULL && panOffsets == NULL) )
             return false;
 
+        if( pnOffset )
+            *pnOffset = panOffsets[nBlockId];
+        if( pnSize )
+            *pnSize = panByteCounts[nBlockId];
         return panByteCounts[nBlockId] != 0;
     }
 
