@@ -135,7 +135,6 @@ OGRGeometry* OGRTriangulatedSurface::clone() const
             return NULL;
         }
     }
-
     return poNewTIN;
 }
 
@@ -462,7 +461,7 @@ OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygon()
     {
         OGRTriangle *geom = (OGRTriangle *)oMP.papoGeoms[i];
         OGRPolygon *poPolygon = (OGRPolygon *)geom->CastToPolygon();
-        poMultiPolygon->addGeometry(poPolygon);
+        poMultiPolygon->addGeometryDirectly(poPolygon);
     }
 
     return poMultiPolygon;
