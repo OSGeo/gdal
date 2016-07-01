@@ -129,12 +129,11 @@ def test_ogrlineref_5():
     if os.path.exists('tmp/parts.kml'):
         ogr.GetDriverByName('KML').DeleteDataSource('tmp/parts.kml')
 
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222')
-    if err is not None and err != '':
-        gdaltest.post_reason('got error/warning: "%s"' % err)
-        return 'fail'
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222')
+    if os.path.exists('tmp/parts.kml'):
+        return 'success'
 
-    return 'success'    
+    return 'fail'    
 
 
 def test_ogrlineref_cleanup():
