@@ -79,6 +79,7 @@ XYZ driver:
 
 == OGRSpatialReference == 
  * importFromESRI(): fix import of multi line MERCATOR SRS (#6523)
+ * morphToESRI(): correctly compute standard_parallel_1 of Mercator(2SP) projection from scale factor of Mercator(1SP) (#6456, #4861)
 
 == OGR utilities ==
  * ogr2ogr: fix -append with a source dataset with a mix of existing and non existing layers in the target datasource (#6345)
