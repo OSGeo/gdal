@@ -1321,7 +1321,7 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
+    PARAMETER["standard_parallel_1",4.45405154""") != 0:
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
@@ -1339,7 +1339,7 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
+    PARAMETER["standard_parallel_1",4.45405154""") != 0:
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'

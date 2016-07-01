@@ -1331,7 +1331,7 @@ OGRErr OGRSpatialReference::morphToESRI()
             double f = 1 / dfInvFlattening;
             e2 = 2 *f - f*f;
         }
-        double dfStdP1Lat = acos( sqrt( (1 - e2) / (1 / (dfK0 * dfK0)) - e2) ) / M_PI * 180.0;
+        double dfStdP1Lat = acos( sqrt( (1 - e2) / ((1 / (dfK0 * dfK0)) - e2)) ) / M_PI * 180.0;
         if( poProjCS )
         {
             int iScaleFactorChild = FindProjParm( SRS_PP_SCALE_FACTOR, poProjCS );
