@@ -63,7 +63,7 @@ OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
     if (other.getNumInteriorRings() == 0)
     {
         OGRCurve *poCurve = (OGRCurve *)other.getExteriorRingCurve();
-        if (poCurve->get_IsClosed())
+        if (poCurve->get_IsClosed() && poCurve != NULL)
         {
             if (poCurve->getNumPoints() == 4)
             {
