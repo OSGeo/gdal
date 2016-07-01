@@ -34,6 +34,8 @@
 #include "gdal_proxy.h"
 #include "vrtdataset.h"
 
+// #define DEBUG_VERBOSE 1
+
 // See #5459
 #ifdef isnan
 #define HAS_ISNAN_MACRO
@@ -178,6 +180,16 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 }
 
 /************************************************************************/
+/*                         RoundIfCloseToInt()                          */
+/************************************************************************/
+
+static double RoundIfCloseToInt(double dfValue)
+{
+    double dfClosestInt = floor(dfValue + 0.5);
+    return (fabs( dfValue - dfClosestInt ) < 1e-5) ? dfClosestInt : dfValue;
+}
+
+/************************************************************************/
 /*                            SetSrcWindow()                            */
 /************************************************************************/
 
@@ -185,10 +197,10 @@ void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
-    m_dfSrcXOff = dfNewXOff;
-    m_dfSrcYOff = dfNewYOff;
-    m_dfSrcXSize = dfNewXSize;
-    m_dfSrcYSize = dfNewYSize;
+    m_dfSrcXOff = RoundIfCloseToInt(dfNewXOff);
+    m_dfSrcYOff = RoundIfCloseToInt(dfNewYOff);
+    m_dfSrcXSize = RoundIfCloseToInt(dfNewXSize);
+    m_dfSrcYSize = RoundIfCloseToInt(dfNewYSize);
 }
 
 /************************************************************************/
@@ -199,10 +211,10 @@ void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
-    m_dfDstXOff = dfNewXOff;
-    m_dfDstYOff = dfNewYOff;
-    m_dfDstXSize = dfNewXSize;
-    m_dfDstYSize = dfNewYSize;
+    m_dfDstXOff = RoundIfCloseToInt(dfNewXOff);
+    m_dfDstYOff = RoundIfCloseToInt(dfNewYOff);
+    m_dfDstXSize = RoundIfCloseToInt(dfNewXSize);
+    m_dfDstYSize = RoundIfCloseToInt(dfNewYSize);
 }
 
 /************************************************************************/
@@ -1173,12 +1185,14 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 #if DEBUG_VERBOSE
     CPLDebug(
         "VRT",
-        "nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d, nBufXSize=%d, nBufYSize=%d, "
-        "dfReqXOff=%g, dfReqYOff=%g, dfReqXSize=%g, dfReqYSize=%g, "
+        "nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d, nBufXSize=%d, nBufYSize=%d,\n"
+        "dfReqXOff=%g, dfReqYOff=%g, dfReqXSize=%g, dfReqYSize=%g,\n"
+        "nReqXOff=%d, nReqYOff=%d, nReqXSize=%d, nReqYSize=%d,\n"
         "nOutXOff=%d, nOutYOff=%d, nOutXSize=%d, nOutYSize=%d",
         nXOff, nYOff, nXSize, nYSize,
         nBufXSize, nBufYSize,
         dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize,
+        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
         nOutXOff, nOutYOff, nOutXSize, nOutYSize );
 #endif
 
@@ -2271,6 +2285,19 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
+#if DEBUG_VERBOSE
+    CPLDebug(
+        "VRT",
+        "nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d, nBufXSize=%d, nBufYSize=%d,\n"
+        "dfReqXOff=%g, dfReqYOff=%g, dfReqXSize=%g, dfReqYSize=%g,\n"
+        "nReqXOff=%d, nReqYOff=%d, nReqXSize=%d, nReqYSize=%d,\n"
+        "nOutXOff=%d, nOutYOff=%d, nOutXSize=%d, nOutYSize=%d",
+        nXOff, nYOff, nXSize, nYSize,
+        nBufXSize, nBufYSize,
+        dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize,
+        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+        nOutXOff, nOutYOff, nOutXSize, nOutYSize );
+#endif
 
     if( m_osResampling.size() )
     {
