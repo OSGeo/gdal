@@ -147,7 +147,7 @@ CPLErr GDALMRFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 #endif
 
 /*
- *\brief Format specifc RasterIO, may be bypassed by BlockBasedRasterIO by setting
+ *\brief Format specific RasterIO, may be bypassed by BlockBasedRasterIO by setting
  * GDAL_FORCE_CACHING to Yes, in which case the band ReadBlock and WriteBLock are called
  * directly
  *
@@ -175,7 +175,7 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
 
     //
     // Call the parent implementation, which splits it into bands and calls their IRasterIO
-    // 
+    //
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
 	eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace
 #if GDAL_VERSION_MAJOR >= 2
@@ -231,7 +231,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
     if (nOverviews == 0)
     {
 	if (current.size.l == 0)
-	    return GDALDataset::IBuildOverviews(pszResampling, 
+	    return GDALDataset::IBuildOverviews(pszResampling,
 		nOverviews, panOverviewList,
 		nBands, panBandList, pfnProgress, pProgressData);
 	else
@@ -350,7 +350,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 		if (srclevel > 0)
 		    b = static_cast<GDALMRFRasterBand *>(b->GetOverview(srclevel - 1));
 
-		eErr = PatchOverview(0, 0, b->nBlocksPerRow, b->nBlocksPerColumn, srclevel, 
+		eErr = PatchOverview(0, 0, b->nBlocksPerRow, b->nBlocksPerColumn, srclevel,
 		    0, sampling);
 		if (eErr == CE_Failure)
 		    throw eErr;
@@ -381,7 +381,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 		//
 		// Ready, generate this overview
 		// Note that this function has a bug in GDAL, the block stepping is incorect
-		// It can generate multiple overview in one call, 
+		// It can generate multiple overview in one call,
 		// Could rewrite this loop so this function only gets called once
 		//
 		GDALRegenerateOverviewsMultiBand(nBands, papoBandList,
@@ -717,7 +717,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
         }
     }
 
-    // Orientation, some other systems might support something 
+    // Orientation, some other systems might support something
     //   if (!EQUAL(CPLGetXMLValue(defimage,"Orientation","TL"), "TL")) {
     //// GDAL only handles Top Left Images
     //CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Only Top-Left orientation is supported");
@@ -750,7 +750,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
     // The palette starts initialized with zeros
     // HSV and HLS are the similar, with c2 and c3 swapped
     // RGB or RGBA are same
-    // 
+    //
 
     if ((image.pagesize.c == 1) && (NULL != (node = CPLGetXMLNode(defimage, "Palette")))) {
 	int entries = static_cast<int>(getXMLNum(node, "Size", 255));
@@ -1013,7 +1013,7 @@ VSILFILE *GDALMRFDataset::IdxFP() {
 }
 
 //
-// Returns the dataset data file or null 
+// Returns the dataset data file or null
 // Data file is opened either in Read or Append mode, never in straight write
 //
 VSILFILE *GDALMRFDataset::DataFP() {
@@ -1029,11 +1029,11 @@ VSILFILE *GDALMRFDataset::DataFP() {
     }
 
     dfp.FP = VSIFOpenL(current.datfname, mode);
-    if (dfp.FP) 
+    if (dfp.FP)
 	return dfp.FP;
 
     // It could be a caching MRF
-    if (source.empty()) 
+    if (source.empty())
 	goto io_error;
 
     // Cloud be there but read only, remember that it was open that way
@@ -1045,7 +1045,7 @@ VSILFILE *GDALMRFDataset::DataFP() {
 	return dfp.FP;
     }
 
-    if (source.empty()) 
+    if (source.empty())
 	goto io_error;
 
     // caching, maybe the folder didn't exist
@@ -1069,11 +1069,11 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
     CPLXMLNode *config = CPLCreateXMLNode(NULL, CXT_Element, "MRF_META");
 
     if (!source.empty()) {
-	CPLXMLNode *CS = CPLCreateXMLNode(config, CXT_Element, "CachedSource");
+	CPLXMLNode *psCachedSource = CPLCreateXMLNode(config, CXT_Element, "CachedSource");
 	// Should wrap the string in CDATA, in case it is XML
-	CPLXMLNode *S = CPLCreateXMLElementAndValue(CS, "Source", source);
+	CPLXMLNode *psSource = CPLCreateXMLElementAndValue(psCachedSource, "Source", source);
 	if (clonedSource)
-	    CPLSetXMLValue(S, "#clone", "true");
+	    CPLSetXMLValue(psSource, "#clone", "true");
     }
 
     // Use the full size
@@ -1220,14 +1220,14 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
 	SetMetadataItem("ZSIZE", CPLString().Printf("%d", current.size.z), "IMAGE_STRUCTURE");
 	SetMetadataItem("ZSLICE", CPLString().Printf("%d", zslice), "IMAGE_STRUCTURE");
 	// Capture the zslice in pagesize.l
-	current.pagesize.l = zslice; 
+	current.pagesize.l = zslice;
 	// Adjust offset for base image
         if( full.size.z <= 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Invalid Raster.z value");
             return CE_Failure;
         }
-	current.idxoffset += sizeof(ILIdx) * current.pagecount.l / full.size.z * zslice; 
+	current.idxoffset += sizeof(ILIdx) * current.pagecount.l / full.size.z * zslice;
     }
 
     // Dataset metadata setup
@@ -1309,7 +1309,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
 
     CPLXMLNode *rsets = CPLGetXMLNode(config, "Rsets");
     if (NULL != rsets && NULL != rsets->psChild) {
-	// We have rsets 
+	// We have rsets
 
 	// Regular spaced overlays, until everything fits in a single tile
 	if (EQUAL("uniform", CPLGetXMLValue(rsets, "model", "uniform"))) {
@@ -1411,7 +1411,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 
 	// And adjust the offset again, within next level
 	img.idxoffset += sizeof(ILIdx) * img.pagecount.l / img.size.z * zslice;
-		
+
 	// Create and register the the overviews for each band
 	for (int i = 1; i <= nBands; i++) {
 	    GDALMRFRasterBand *b = (GDALMRFRasterBand *)GetRasterBand(i);
@@ -1719,7 +1719,7 @@ void GDALMRFDataset::Crystalize()
     if (bCrystalized || eAccess != GA_Update)
 	return;
 
-    // No need to write to disk if there is no filename.  This is a 
+    // No need to write to disk if there is no filename.  This is a
     // memory only dataset.
     if (strlen(GetDescription()) == 0
 	|| EQUALN(GetDescription(), "<MRF_META>", 10))
@@ -1752,7 +1752,7 @@ CPLErr GDALMRFDataset::AddVersion()
 //
 // Write a tile at the end of the data file
 // If buff and size are zero, it is equivalent to erasing the tile
-// If only size is zero, it is a special empty tile, 
+// If only size is zero, it is a special empty tile,
 // when used for caching, offset should be 1
 //
 // To make it multi-processor safe, open the file in append mode
@@ -1891,7 +1891,7 @@ CPLErr GDALMRFDataset::SetGeoTransform(double *gt)
 CPLErr GDALMRFDataset::GetGeoTransform(double *gt)
 {
     memcpy(gt, GeoTransform, 6 * sizeof(double));
-    if (GetMetadata("RPC") || GetGCPCount()) 
+    if (GetMetadata("RPC") || GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid) return CE_Failure;
     return CE_None;

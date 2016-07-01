@@ -2079,6 +2079,44 @@ def ogr_gpkg_31():
     return 'success'
 
 ###############################################################################
+# Run creating a non-spatial layer that isn't registered as 'aspatial' and
+# read it back
+
+def ogr_gpkg_32():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_32.gpkg')
+    ds.CreateLayer('aspatial', geom_type = ogr.wkbNone, options = ['REGISTER_AS_ASPATIAL=NO'] )
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_32.gpkg')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_contents')
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_geometry_columns')
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_32.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -2167,6 +2205,7 @@ gdaltest_list = [
     ogr_gpkg_29,
     ogr_gpkg_30,
     ogr_gpkg_31,
+    ogr_gpkg_32,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

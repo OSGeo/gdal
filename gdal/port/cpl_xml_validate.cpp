@@ -111,8 +111,7 @@ static bool CPLHasLibXMLBug()
 {
     static bool bHasLibXMLBug = false;
     static bool bLibXMLBugChecked = false;
-
-    if( bXMLBugChecked )
+    if( bLibXMLBugChecked )
         return bHasLibXMLBug;
 
     static const char szLibXMLBugTester[] =
@@ -290,7 +289,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
         }
     }
 
-    else if( bHasLibXMLBug && psIter->eType == CXT_Element &&
+    else if( CPLHasLibXMLBug() && psIter->eType == CXT_Element &&
              strcmp(psIter->pszValue, "complexType") == 0 &&
              (strcmp(CPLGetXMLValue(psIter, "name", ""),
                      "QuantityExtentType") == 0 ||
@@ -411,7 +410,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal( CPLHashSet* hSetSchemas,
         bool bDestroyCurrentNode = false;
 
 #ifdef HAS_VALIDATION_BUG
-        if( bHasLibXMLBug )
+        if( CPLHasLibXMLBug() )
             bDestroyCurrentNode = CPLWorkaroundLibXMLBug(psIter);
 #endif
 

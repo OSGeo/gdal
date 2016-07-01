@@ -404,7 +404,7 @@ int VizGeorefSpline2D::solve(void)
     int r, c;
     int p;
 
-    //	No points at all
+    // No points at all.
     if ( _nof_points < 1 )
     {
         type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
@@ -624,55 +624,55 @@ int VizGeorefSpline2D::solve(void)
 
 int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars )
 {
-	int v, r;
-	double tmp, Pu;
-	double fact;
-	int leftP=0, rightP=0, found = 0;
+     int v, r;
+     double tmp, Pu;
+     double fact;
+     int leftP=0, rightP=0, found = 0;
 
-	switch ( type )
-	{
-	case VIZ_GEOREF_SPLINE_ZERO_POINTS :
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = 0.0;
-		break;
-	case VIZ_GEOREF_SPLINE_ONE_POINT :
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = rhs[v][3];
-		break;
-	case VIZ_GEOREF_SPLINE_TWO_POINTS :
-		fact = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = ( 1 - fact ) * rhs[v][3] + fact * rhs[v][4];
-		break;
-	case VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL :
-		Pu = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
-		if ( Pu <= u[index[0]] )
-		{
-			leftP = index[0];
-			rightP = index[1];
-		}
-		else if ( Pu >= u[index[_nof_points-1]] )
-		{
-			leftP = index[_nof_points-2];
-			rightP = index[_nof_points-1];
-		}
-		else
-		{
-			for ( r = 1; !found && r < _nof_points; r++ )
-			{
-				leftP = index[r-1];
-				rightP = index[r];
-				if ( Pu >= u[leftP] && Pu <= u[rightP] )
-					found = 1;
-			}
-		}
+     switch ( type )
+     {
+     case VIZ_GEOREF_SPLINE_ZERO_POINTS :
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = 0.0;
+         break;
+     case VIZ_GEOREF_SPLINE_ONE_POINT :
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = rhs[v][3];
+         break;
+     case VIZ_GEOREF_SPLINE_TWO_POINTS :
+         fact = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = ( 1 - fact ) * rhs[v][3] + fact * rhs[v][4];
+         break;
+     case VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL :
+         Pu = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
+         if ( Pu <= u[index[0]] )
+         {
+             leftP = index[0];
+             rightP = index[1];
+         }
+         else if ( Pu >= u[index[_nof_points-1]] )
+         {
+             leftP = index[_nof_points-2];
+             rightP = index[_nof_points-1];
+         }
+         else
+         {
+             for ( r = 1; !found && r < _nof_points; r++ )
+             {
+                 leftP = index[r-1];
+                 rightP = index[r];
+                 if ( Pu >= u[leftP] && Pu <= u[rightP] )
+                     found = 1;
+             }
+         }
 
-		fact = ( Pu - u[leftP] ) / ( u[rightP] - u[leftP] );
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = ( 1.0 - fact ) * rhs[v][leftP+3] +
-			fact * rhs[v][rightP+3];
-		break;
-	case VIZ_GEOREF_SPLINE_FULL :
+         fact = ( Pu - u[leftP] ) / ( u[rightP] - u[leftP] );
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = ( 1.0 - fact ) * rhs[v][leftP+3] +
+                 fact * rhs[v][rightP+3];
+         break;
+     case VIZ_GEOREF_SPLINE_FULL :
     {
         double Pxy[2] = { Px, Py };
         for ( v = 0; v < _nof_vars; v++ )
@@ -696,25 +696,25 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
         }
         break;
     }
-	case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED :
-		fprintf(stderr, " A point was added after the last solve\n");
-		fprintf(stderr, " NO interpolation - return values are zero\n");
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = 0.0;
-		return(0);
-		break;
-	case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED :
-		fprintf(stderr, " A point was deleted after the last solve\n");
-		fprintf(stderr, " NO interpolation - return values are zero\n");
-		for ( v = 0; v < _nof_vars; v++ )
-			vars[v] = 0.0;
-		return(0);
-		break;
-	default :
-		return(0);
-		break;
-	}
-	return(1);
+     case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED :
+         fprintf(stderr, " A point was added after the last solve\n");
+         fprintf(stderr, " NO interpolation - return values are zero\n");
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = 0.0;
+         return(0);
+         break;
+     case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED :
+         fprintf(stderr, " A point was deleted after the last solve\n");
+         fprintf(stderr, " NO interpolation - return values are zero\n");
+         for ( v = 0; v < _nof_vars; v++ )
+             vars[v] = 0.0;
+         return(0);
+         break;
+     default :
+         return(0);
+         break;
+     }
+     return(1);
 }
 
 #ifndef HAVE_ARMADILLO
@@ -766,10 +766,10 @@ static int matrixInvert( int N, double input[], double output[] )
             // Our index into the temp array is X2 because it's twice as wide
             // as the input matrix.
 
-            temp[ 2*row*N + col ] = input[ row*N+col ];	// left = input matrix
-            temp[ 2*row*N + col + N ] = 0.0f;			// right = 0
+            temp[ 2*row*N + col ] = input[ row*N+col ];  // left = input matrix
+            temp[ 2*row*N + col + N ] = 0.0f;            // right = 0
         }
-        temp[ 2*row*N + row + N ] = 1.0f;		// 1 on the diagonal of RHS
+        temp[ 2*row*N + row + N ] = 1.0f;  // 1 on the diagonal of RHS
     }
 
     // Now perform row-oriented operations to convert the left hand side
@@ -780,7 +780,7 @@ static int matrixInvert( int N, double input[], double output[] )
     int k=0;
     for (k = 0; k < N; k++)
     {
-        if (k+1 < N)	// if not on the last row
+        if (k+1 < N)  // if not on the last row
         {
             max = k;
             for (row = k+1; row < N; row++) // find the maximum element
@@ -791,7 +791,7 @@ static int matrixInvert( int N, double input[], double output[] )
                 }
             }
 
-            if (max != k)	// swap all the elements in the two rows
+            if (max != k)  // swap all the elements in the two rows
             {
                 for (col=k; col<2*N; col++)
                 {

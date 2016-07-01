@@ -143,7 +143,7 @@ public:
  ************************************************************************/
 
 class OGRSOSISimpleDataType {
-    const char          *pszName; 
+    const char          *pszName;
     OGRFieldType        nType;
 
 public:
@@ -181,9 +181,9 @@ typedef std::map<CPLString, OGRSOSIDataType> C2F;
 
 void SOSIInitTypes();
 OGRSOSIDataType* SOSIGetType(CPLString name);
-int  SOSITypeToInt(char* value);
-float  SOSITypeToReal(char* value);
-void SOSITypeToDate(char* value, int* date);
-void SOSITypeToDateTime(char* value, int* date);
+int  SOSITypeToInt(const char* value);
+double  SOSITypeToReal(const char* value);
+void SOSITypeToDate(const char* value, int* date);
+void SOSITypeToDateTime(const char* value, int* date);
 
 #endif /* OGR_SOSI_H_INCLUDED */

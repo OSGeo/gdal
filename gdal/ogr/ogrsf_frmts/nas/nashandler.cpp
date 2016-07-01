@@ -62,6 +62,10 @@ static const int MAX_TOKEN_SIZE = 1000;
                                         <wfs:Name>adv:anlass</wfs:Name>
                                         <wfs:Value>000000</wfs:Value>
                                 </wfs:Property>
+                                <wfs:Property>
+                                        <wfs:Name>adv:anlass</wfs:Name>
+                                        <wfs:Value>010102</wfs:Value>
+                                </wfs:Property>
                                 <ogc:Filter>
                                         <ogc:FeatureId fid="DENW11AL000062WD20111016T122010Z" />
                                 </ogc:Filter>
@@ -266,10 +270,10 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
         }
 
         if( EQUAL( pszLast, "Update" )  &&
-            ( m_osLastEnded == "" || m_osLastOccasion == "" ) )
+            ( m_osLastEnded == "" || m_LastOccasions.empty() ) )
         {
             CPLError( CE_Failure, CPLE_AssertionFailed,
-                      "m_osLastEnded == \"\" || m_osLastOccasion == \"\"" );
+                      "m_osLastEnded == \"\" || m_LastOccasions.empty()" );
 
             m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
@@ -300,13 +304,19 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
         else if( EQUAL( pszLast, "Update" ) )
         {
             //CPLAssert( m_osLastEnded != "" );
-            //CPLAssert( m_osLastOccasion != "" );
+            //CPLAssert( m_LastOccasions.empty() );
             m_poReader->SetFeaturePropertyDirectly(
                 "endet", CPLStrdup(m_osLastEnded) );
-            m_poReader->SetFeaturePropertyDirectly(
-                "anlass", CPLStrdup(m_osLastOccasion) );
+
+            for( std::list<CPLString>::iterator it = m_LastOccasions.begin();
+                 it != m_LastOccasions.end();
+                 ++it )
+            {
+              m_poReader->SetFeaturePropertyDirectly(
+                  "anlass", CPLStrdup(*it) );
+            }
             m_osLastEnded = "";
-            m_osLastOccasion = "";
+            m_LastOccasions.clear();
         }
 
         return;
@@ -537,7 +547,7 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
            else if( EQUAL( m_osLastPropertyName, "adv:anlass" ) )
            {
                CPLAssert( m_osLastPropertyValue != "" );
-               m_osLastOccasion = m_osLastPropertyValue;
+               m_LastOccasions.push_back( m_osLastPropertyValue );
            }
            else
            {

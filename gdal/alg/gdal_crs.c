@@ -450,7 +450,7 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Attach GCP List. 						*/
+/*     Attach GCP List.                                                 */
 /* -------------------------------------------------------------------- */
     if( psInfo->nGCPCount > 0 )
     {

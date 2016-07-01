@@ -478,8 +478,24 @@ void *VSICalloc( size_t nCount, size_t nSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nMul > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p\n",
-                    (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*));
+            fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p"
+#ifdef DEBUG_VSIMALLOC_STATS
+                         ", current_cumul = " CPL_FRMT_GUIB
+#ifdef DEBUG_BLOCK_CACHE_USE
+                         ", block_cache_used = " CPL_FRMT_GIB
+#endif
+                         ", mal+cal-free = %d"
+#endif
+                         "\n",
+                (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*)
+#ifdef DEBUG_VSIMALLOC_STATS
+                , (GUIntBig)(nCurrentTotalAllocs + nMul)
+#ifdef DEBUG_BLOCK_CACHE_USE
+                , GDALGetCacheUsed64()
+#endif
+                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+#endif
+                );
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
@@ -687,8 +703,24 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nNewSize > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p\n",
-                    (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*));
+            fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p"
+#ifdef DEBUG_VSIMALLOC_STATS
+                         ", current_cumul = " CPL_FRMT_GUIB
+#ifdef DEBUG_BLOCK_CACHE_USE
+                         ", block_cache_used = " CPL_FRMT_GIB
+#endif
+                         ", mal+cal-free = %d"
+#endif
+                         "\n",
+                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*)
+#ifdef DEBUG_VSIMALLOC_STATS
+                , (GUIntBig)(nCurrentTotalAllocs - nOldSize + nNewSize)
+#ifdef DEBUG_BLOCK_CACHE_USE
+                , GDALGetCacheUsed64()
+#endif
+                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+#endif
+                );
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS

@@ -38,10 +38,9 @@ import gdaltest
 gdaltest.buggy_jasper = None
 
 def is_buggy_jasper():
-  
     if gdaltest.buggy_jasper is not None:
         return gdaltest.buggy_jasper
-  
+
     gdaltest.buggy_jasper = False
     if gdal.GetDriverByName( 'JPEG2000' ) is None:
         return False
@@ -57,7 +56,7 @@ def is_buggy_jasper():
             gdaltest.post_reason('Jasper library would need patches')
             gdaltest.buggy_jasper = True
             return True
-          
+
     return False
 
 ###############################################################################
@@ -523,4 +522,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

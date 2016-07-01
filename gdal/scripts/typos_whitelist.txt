@@ -37,3 +37,6 @@ See COMMITERS file.
             passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_MILLIMETRE;
     SXF_COORD_MU_CENTIMETRE,
     SXF_COORD_MU_MILLIMETRE,
+      addSimpleType(&oTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
+      addSimpleType(&oTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
+      addSimpleType(&oTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);

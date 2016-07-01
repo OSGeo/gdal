@@ -328,15 +328,15 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                   case OFTDateTime: {
                     int date[6];
                     SOSITypeToDateTime(tokens[k], date);
-                    if (date[0]>0) 
-                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], date[5], 1);
+                    if (date[0]>0)
+                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], static_cast<float>(date[5]), 1);
                     break;
                   }
                   case OFTReal: {
                     poFeature->SetField( iHNr, SOSITypeToReal(tokens[k]));
                     break;
                   }
-                  default: { 
+                  default: {
                     if ((k==0)&&((pszLine[0] == '\'')||(pszLine[0] == '\"'))) { /* If the value is quoted, ignore these */
                         int nLen = strlen(pszLine);
                         char *pszNline = (char*)CPLMalloc(nLen-1);

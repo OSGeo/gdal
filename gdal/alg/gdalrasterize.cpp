@@ -78,7 +78,7 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
                 + nY * psInfo->nXSize + nXStart;
 
             if( psInfo->eMergeAlg == GRMA_Add ) {
-                int	nPixels = nXEnd - nXStart + 1;
+                int nPixels = nXEnd - nXStart + 1;
                 while( nPixels-- > 0 )
                     *(pabyInsert++) += nBurnValue;
             } else {
@@ -90,7 +90,7 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
     {
         for( iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            int	nPixels = nXEnd - nXStart + 1;
+            int nPixels = nXEnd - nXStart + 1;
             double   *padfInsert;
             double   dfBurnValue =
                 ( psInfo->padfBurnValue[iBand] +
@@ -663,7 +663,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
          iY < poDS->GetRasterYSize() && eErr == CE_None;
          iY += nYChunkSize )
     {
-        int	nThisYChunkSize;
+        int nThisYChunkSize;
         int     iShape;
 
         nThisYChunkSize = nYChunkSize;
@@ -972,7 +972,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
              iY < poDS->GetRasterYSize() && eErr == CE_None;
              iY += nYChunkSize )
         {
-            int	nThisYChunkSize;
+            int nThisYChunkSize;
 
             nThisYChunkSize = nYChunkSize;
             if( nThisYChunkSize + iY > poDS->GetRasterYSize() )

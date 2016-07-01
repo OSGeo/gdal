@@ -30,9 +30,11 @@
 //#include "cpl_conv.h"
 //#include "cpl_string.h"
 //#include "cpl_error.h"
-#include <iostream>
+// #include <iostream>
 //#include <sstream>
 #include "libkml_headers.h"
+
+#include <string>
 
 using kmldom::KmlFactory;
 using kmldom::DocumentPtr;
@@ -600,8 +602,6 @@ void OGRLIBKMLDataSource::FlushCache (
 
 OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
 {
-
-
     /***** sync the DS to disk *****/
 
     FlushCache (  );
@@ -617,11 +617,7 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
     CPLFree ( papoLayers );
 
     CSLDestroy( m_papszOptions );
-
-    //delete m_poStyleTable;
-
 }
-
 
 /******************************************************************************
  method to parse a schemas out of a document
@@ -660,9 +656,8 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
             poKmlDocument = AsDocument ( m_poKmlDocKml );
 
     }
-
-
-    else if ( ( pszPound = strchr ( (char *)pszSchemaUrl, '#' ) ) != NULL ) {
+    else if ( ( pszPound = strchr ( (char *)pszSchemaUrl, '#' ) ) != NULL )
+    {
         pszFile = CPLStrdup ( pszSchemaUrl );
         pszID = CPLStrdup ( pszPound + 1 );
         pszPound = strchr ( pszFile, '#' );
@@ -685,9 +680,8 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
 
     }
 
-
-    if ( poKmlDocument) {
-
+    if ( poKmlDocument)
+    {
         size_t nKmlSchemas = poKmlDocument->get_schema_array_size (  );
         size_t iKmlSchema;
 
@@ -1038,8 +1032,8 @@ int OGRLIBKMLDataSource::OpenKml (
       std::string layername_default( CPLGetBasename ( pszFilename ) );
 
       if( m_poKmlDSContainer->has_name ( ) ) {
-	  layername_default = m_poKmlDSContainer->get_name ( );
-	}
+          layername_default = m_poKmlDSContainer->get_name ( );
+      }
 
       AddLayer ( layername_default.c_str(),
                    poOgrSRS, wkbUnknown,
@@ -1061,7 +1055,6 @@ int OGRLIBKMLDataSource::OpenKml (
  Returns:       True on success, false on failure
 
 ******************************************************************************/
-
 
 int OGRLIBKMLDataSource::OpenKmz (
     const char *pszFilename,
@@ -1263,16 +1256,16 @@ int OGRLIBKMLDataSource::OpenKmz (
 
         if ( nPlacemarks && !nLayers ) {
 
-	  std::string layername_default( CPLGetBasename ( pszFilename ) );
+            std::string layername_default( CPLGetBasename ( pszFilename ) );
 
-	  if( poKmlContainer->has_name ( ) ) {
-	      layername_default = poKmlContainer->get_name ( );
-	    }
+            if( poKmlContainer->has_name ( ) ) {
+                layername_default = poKmlContainer->get_name ( );
+            }
 
-	  AddLayer ( layername_default.c_str(),
-		     poOgrSRS, wkbUnknown,
-		     this, poKmlDocKmlRoot, poKmlContainer,
-		     pszFilename, FALSE, bUpdateIn, 1 );
+          AddLayer ( layername_default.c_str(),
+                     poOgrSRS, wkbUnknown,
+                     this, poKmlDocKmlRoot, poKmlContainer,
+                     pszFilename, FALSE, bUpdateIn, 1 );
         }
     }
 
@@ -1394,7 +1387,6 @@ int OGRLIBKMLDataSource::OpenDir (
             pszStylePath = CPLStrdup((char *) "style.kml");
             continue;
         }
-
 
         /***** create the layer *****/
 
@@ -1834,7 +1826,6 @@ int OGRLIBKMLDataSource::CreateDir (
     return TRUE;
 }
 
-
 /******************************************************************************
  method to create a datasource
 
@@ -1906,7 +1897,6 @@ OGRLayer *OGRLIBKMLDataSource::GetLayer (
         return NULL;
     else
         return papoLayers[iLayer];
-
 }
 
 /******************************************************************************
@@ -1930,7 +1920,6 @@ OGRLayer *OGRLIBKMLDataSource::GetLayerByName (
 
     return NULL;
 }
-
 
 /******************************************************************************
  method to DeleteLayers in a .kml datasource
@@ -1961,7 +1950,6 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKml (
         }
 
     }
-
 
     return OGRERR_NONE;
 }
@@ -2020,8 +2008,6 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz (
                                 m_poKmlDocKml->DeleteFeatureAt ( iKmlFeature );
                                 break;
                             }
-
-
                         }
                     }
                 }
@@ -2508,7 +2494,6 @@ void OGRLIBKMLDataSource::SetStyleTable (
     return;
 }
 
-
 /******************************************************************************
  Test if capability is available.
 
@@ -2531,5 +2516,4 @@ int OGRLIBKMLDataSource::TestCapability (
         return bUpdate;
     else
         return FALSE;
-
 }

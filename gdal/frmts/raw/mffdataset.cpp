@@ -62,6 +62,7 @@ class MFFDataset : public RawDataset
     char *pszProjection;
     char *pszGCPProjection;
     double adfGeoTransform[6];
+    char**      m_papszFileList;
 
     void        ScanForGCPs();
     void        ScanForProjectionInfo();
@@ -73,6 +74,8 @@ class MFFDataset : public RawDataset
     char        **papszHdrLines;
 
     VSILFILE        **pafpBandFiles;
+
+    virtual char** GetFileList();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -242,6 +245,7 @@ MFFDataset::MFFDataset() :
     pasGCPList(NULL),
     pszProjection(CPLStrdup("")),
     pszGCPProjection(CPLStrdup("")),
+    m_papszFileList(NULL),
     papszHdrLines(NULL),
     pafpBandFiles(NULL)
 {
@@ -284,7 +288,19 @@ MFFDataset::~MFFDataset()
     CPLFree( pasGCPList );
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
+    CSLDestroy( m_papszFileList );
 
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** MFFDataset::GetFileList()
+{
+    char** papszFileList = RawDataset::GetFileList();
+    papszFileList = CSLInsertStrings(papszFileList, -1, m_papszFileList);
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -854,6 +870,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             nSkipped++;
             continue;
         }
+        poDS->m_papszFileList = CSLAddString(poDS->m_papszFileList, pszRawFilename);
 
         GDALDataType eDataType = GDT_Unknown;
         pszExtension = CPLGetExtension(papszDirFiles[i]);

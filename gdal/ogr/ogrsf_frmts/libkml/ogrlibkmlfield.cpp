@@ -29,11 +29,11 @@
 
 #include "libkml_headers.h"
 
-#include  <ogrsf_frmts.h>
+#include <string>
+
 #include <ogr_feature.h>
 #include "ogr_p.h"
-
-#include <iostream>
+#include <ogrsf_frmts.h>
 
 using kmldom::ExtendedDataPtr;
 using kmldom::SchemaPtr;
@@ -1713,9 +1713,9 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->tsfield = CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD",
                                                 "timestamp" );
     oFC->beginfield = CPLGetConfigOption ( "LIBKML_BEGIN_FIELD",
-	                                               "begin" );
-	oFC->endfield = CPLGetConfigOption ( "LIBKML_END_FIELD",
-	                                             "end" );
+                                           "begin" );
+    oFC->endfield = CPLGetConfigOption ( "LIBKML_END_FIELD",
+                                         "end" );
     oFC->altitudeModefield = CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD",
                                                           "altitudeMode" );
     oFC->tessellatefield = CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD",

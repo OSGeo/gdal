@@ -33,6 +33,7 @@
 #include "northwood.h"
 
 #include <algorithm>
+#include <string>
 
 int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {
@@ -526,9 +527,9 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
     {
         printf( "\n%s\n\nGrid type is Numeric ", pGrd->szFileName );
         if( pGrd->cFormat == 0x00 )
-            printf( "16 bit (Standard Percision)" );
+            printf( "16 bit (Standard Precision)" );
         else if( pGrd->cFormat == 0x01 )
-            printf( "32 bit (High Percision)" );
+            printf( "32 bit (High Precision)" );
         else
         {
             printf( "GRD - Unhandled Format or Type %d", pGrd->cFormat );

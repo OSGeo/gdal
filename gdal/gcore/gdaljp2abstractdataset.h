@@ -39,6 +39,7 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
 
     GDALDataset*        poMemDS;
     char**              papszMetadataFiles;
+    int                 m_nWORLDFILEIndex;
 
   protected:
     virtual int         CloseDependentDatasets();

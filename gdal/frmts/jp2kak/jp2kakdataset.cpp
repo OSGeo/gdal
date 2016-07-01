@@ -325,6 +325,21 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
         int nLutIndex = 0;
         int nCSI = 0;
 
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
+        int nFMT = 0;
+        if( oJP2Channels.get_num_colours() == 3 )
+        {
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI, nFMT );
+            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex, nCSI, nFMT );
+            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex, nCSI, nFMT );
+        }
+        else
+        {
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI, nFMT );
+            if( nBand == 1 )
+                eInterp = GCI_GrayIndex;
+        }
+#else
         if( oJP2Channels.get_num_colours() == 3 )
         {
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
@@ -337,7 +352,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
             if( nBand == 1 )
                 eInterp = GCI_GrayIndex;
         }
-
+#endif
         if( eInterp != GCI_Undefined )
             /* nothing to do */;
 
@@ -365,14 +380,24 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
                 int lut_idx = 0;
 
                 // get_opacity_mapping sets that last 3 args by non-const refs.
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
+                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
+                                                      lut_idx, nCSI, nFMT ) )
+#else
                 if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
                                                       lut_idx, nCSI ) )
+#endif
                 {
                     if( opacity_idx == nBand - 1 )
                         eInterp = GCI_AlphaBand;
                 }
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
+                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
+                                                      lut_idx, nCSI, nFMT ) )
+#else
                 if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
                                                       lut_idx, nCSI ) )
+#endif
                 {
                     if( opacity_idx == nBand - 1 )
                         eInterp = GCI_AlphaBand;
@@ -2921,6 +2946,7 @@ void GDALRegister_JP2KAK()
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
+"   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

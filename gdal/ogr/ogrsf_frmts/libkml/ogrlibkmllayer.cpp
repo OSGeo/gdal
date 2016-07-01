@@ -29,6 +29,8 @@
 
 #include "libkml_headers.h"
 
+#include <string>
+
 #include "ogr_libkml.h"
 //#include "cpl_conv.h"
 //#include "cpl_string.h"
@@ -354,7 +356,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                         const DataPtr& data = poKmlExtendedData->get_data_array_at(i);
                         if (data->has_name())
                         {
-                            CPLString osName = data->get_name();
+                            CPLString osName = std::string(data->get_name());
                             if (bLaunderFieldNames)
                                 osName = LaunderFieldNames(osName);
                             OGRFieldDefn oOgrField ( osName,

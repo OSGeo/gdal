@@ -1376,6 +1376,11 @@ CPLErr JP2OpenJPEGDataset::SetMetadata( char ** papszMetadata,
     if( eAccess == GA_Update )
     {
         bRewrite = TRUE;
+        if( pszDomain == NULL || EQUAL(pszDomain, "") )
+        {
+            CSLDestroy(m_papszMainMD);
+            m_papszMainMD = CSLDuplicate(papszMetadata);
+        }
         return GDALDataset::SetMetadata(papszMetadata, pszDomain);
     }
     return GDALJP2AbstractDataset::SetMetadata(papszMetadata, pszDomain);
@@ -1392,6 +1397,10 @@ CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
     if( eAccess == GA_Update )
     {
         bRewrite = TRUE;
+        if( pszDomain == NULL || EQUAL(pszDomain, "") )
+        {
+            m_papszMainMD = CSLSetNameValue( GetMetadata(), pszName, pszValue );
+        }
         return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
     }
     return GDALJP2AbstractDataset::SetMetadataItem(pszName, pszValue, pszDomain);
@@ -3636,6 +3645,7 @@ void GDALRegister_JP2OpenJPEG()
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
+"   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

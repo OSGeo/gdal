@@ -383,6 +383,11 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         for( CPLXMLNode *psEntry = CPLGetXMLNode( psTree, "ColorTable" )->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
+            if( !(psEntry->eType == CXT_Element &&
+                  EQUAL(psEntry->pszValue, "Entry")) )
+            {
+                continue;
+            }
             GDALColorEntry sCEntry;
 
             sCEntry.c1 = (short) atoi(CPLGetXMLValue( psEntry, "c1", "0" ));

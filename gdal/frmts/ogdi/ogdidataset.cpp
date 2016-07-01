@@ -220,6 +220,7 @@ OGDIRasterBand::~OGDIRasterBand()
 {
     FlushCache();
     CPLFree( pszLayerName );
+    delete poCT;
 }
 
 /************************************************************************/

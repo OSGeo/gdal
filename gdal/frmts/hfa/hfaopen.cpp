@@ -62,6 +62,7 @@ static const char * const apszAuxMetadataItems[] = {
  "StatisticsParameters", "lSkipFactorY",          "STATISTICS_SKIPFACTORY", "",
  "StatisticsParameters", "dExcludedValues",       "STATISTICS_EXCLUDEDVALUES","",
  "",                     "elayerType",            "LAYER_TYPE",             "",
+ "RRDInfoList",          "salgorithm.string",     "OVERVIEWS_ALGORITHM",    "Emif_String",
  NULL
 };
 

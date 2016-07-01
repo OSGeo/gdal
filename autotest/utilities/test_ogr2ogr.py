@@ -2616,6 +2616,22 @@ def test_ogr2ogr_64():
 
     return 'success'
 
+###############################################################################
+# Test detection of bad extension
+
+def test_ogr2ogr_65():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' /vsimem/out.csv ../ogr/data/poly.shp')
+    if err.find("The target file has a 'csv' extension") < 0:
+        gdaltest.post_reason('expected a warning about probably wrong extension')
+        print(ret)
+        print(err)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2681,7 +2697,8 @@ gdaltest_list = [
     test_ogr2ogr_61,
     test_ogr2ogr_62,
     test_ogr2ogr_63,
-    test_ogr2ogr_64
+    test_ogr2ogr_64,
+    test_ogr2ogr_65
     ]
 
 if __name__ == '__main__':

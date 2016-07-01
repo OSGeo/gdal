@@ -29,12 +29,15 @@
  ****************************************************************************/
 
 #include "ogr_feature.h"
+
+#include <errno.h>
+
+#include <new>
+#include <vector>
+
+#include "cpl_time.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
-#include "cpl_time.h"
-#include <vector>
-#include <errno.h>
-#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -68,11 +71,12 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     poDefnIn->Reference();
 
     // Allocate array of fields and initialize them to the unset special value
-    pauFields = (OGRField *) VSI_MALLOC_VERBOSE( poDefn->GetFieldCount() *
-                                        sizeof(OGRField) );
+    pauFields = static_cast<OGRField *>(
+        VSI_MALLOC_VERBOSE( poDefn->GetFieldCount() * sizeof(OGRField) ) );
 
-    papoGeometries = (OGRGeometry **) VSI_CALLOC_VERBOSE( poDefn->GetGeomFieldCount(),
-                                        sizeof(OGRGeometry*) );
+    papoGeometries = static_cast<OGRGeometry **>(
+        VSI_CALLOC_VERBOSE( poDefn->GetGeomFieldCount(),
+                            sizeof(OGRGeometry*) ) );
 
     if( pauFields != NULL )
     {
@@ -3275,7 +3279,8 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
                 {
                     if( panValuesMod == NULL )
                     {
-                        panValuesMod = (int*)VSI_MALLOC_VERBOSE(nCount * sizeof(int));
+                        panValuesMod = static_cast<int *>(
+                            VSI_MALLOC_VERBOSE(nCount * sizeof(int)) );
                         if( panValuesMod == NULL )
                             return;
                         memcpy(panValuesMod, panValues, nCount * sizeof(int));
@@ -3319,7 +3324,8 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     }
     else if( eType == OFTStringList )
     {
-        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        char** papszValues = static_cast<char **>(
+            VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
         for( int i=0; i < nCount; i++ )
@@ -3432,7 +3438,8 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     }
     else if( eType == OFTStringList )
     {
-        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        char** papszValues = static_cast<char **>(
+            VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
         for( int i=0; i < nCount; i++ )
@@ -3534,7 +3541,8 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     }
     else if( eType == OFTStringList )
     {
-        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        char** papszValues = static_cast<char **>(
+            VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
         for( int i=0; i < nCount; i++ )
@@ -3609,7 +3617,8 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     else if( eType == OFTIntegerList )
     {
         int nValues = CSLCount(papszValues);
-        int* panValues = (int*)VSI_MALLOC_VERBOSE(nValues * sizeof(int));
+        int* panValues = static_cast<int *>(
+            VSI_MALLOC_VERBOSE(nValues * sizeof(int)) );
         if( panValues == NULL )
             return;
         for(int i=0;i<nValues;i++)
@@ -3634,7 +3643,8 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     else if( eType == OFTInteger64List )
     {
         int nValues = CSLCount(papszValues);
-        GIntBig* panValues = (GIntBig*)VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig));
+        GIntBig* panValues = static_cast<GIntBig *>(
+            VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig)) );
         if( panValues == NULL )
             return;
         for(int i=0;i<nValues;i++)
@@ -3647,7 +3657,8 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     else if( eType == OFTRealList )
     {
         int nValues = CSLCount(papszValues);
-        double* padfValues = (double*)VSI_MALLOC_VERBOSE(nValues * sizeof(double));
+        double* padfValues = static_cast<double *>(
+            VSI_MALLOC_VERBOSE(nValues * sizeof(double)) );
         if( padfValues == NULL )
             return;
         for(int i=0;i<nValues;i++)
@@ -3721,7 +3732,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
     }
     else if( eType == OFTString || eType == OFTStringList )
     {
-        char* pszStr = (char*)VSI_MALLOC_VERBOSE(nBytes + 1);
+        char* pszStr = static_cast<char *>( VSI_MALLOC_VERBOSE(nBytes + 1) );
         if( pszStr == NULL )
             return;
         memcpy(pszStr, pabyData, nBytes);
@@ -3985,7 +3996,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         else
         {
             pauFields[iField].IntegerList.paList =
-                (int *) VSI_MALLOC_VERBOSE(sizeof(int) * nCount);
+                static_cast<int *>( VSI_MALLOC_VERBOSE(sizeof(int) * nCount) );
             if( pauFields[iField].IntegerList.paList == NULL )
             {
                 pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
@@ -4012,8 +4023,8 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         }
         else
         {
-            pauFields[iField].Integer64List.paList =
-                (GIntBig *) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nCount);
+            pauFields[iField].Integer64List.paList = static_cast<GIntBig *>(
+                VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nCount) );
             if( pauFields[iField].Integer64List.paList == NULL )
             {
                 pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
@@ -4040,8 +4051,8 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         }
         else
         {
-            pauFields[iField].RealList.paList =
-                (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nCount);
+            pauFields[iField].RealList.paList = static_cast<double *>(
+                VSI_MALLOC_VERBOSE(sizeof(double) * nCount) );
             if( pauFields[iField].RealList.paList == NULL )
             {
                 pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
@@ -4098,8 +4109,8 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         }
         else
         {
-            pauFields[iField].Binary.paData =
-                (GByte *) VSI_MALLOC_VERBOSE(puValue->Binary.nCount);
+            pauFields[iField].Binary.paData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(puValue->Binary.nCount) );
             if( pauFields[iField].Binary.paData == NULL )
             {
                 pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
@@ -4616,7 +4627,8 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
     int *panMap;
     OGRErr      eErr;
 
-    panMap = (int *) VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() );
+    panMap = static_cast<int *>(
+        VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() ) );
     if( panMap == NULL )
         return OGRERR_FAILURE;
     for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
@@ -5168,8 +5180,8 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    pauNewFields = (OGRField *) CPLCalloc( poNewDefn->GetFieldCount(),
-                                           sizeof(OGRField) );
+    pauNewFields = static_cast<OGRField *>(
+        CPLCalloc( poNewDefn->GetFieldCount(), sizeof(OGRField) ) );
 
     for( int iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
     {
@@ -5219,8 +5231,8 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    papoNewGeomFields = (OGRGeometry **) CPLCalloc( poNewDefn->GetGeomFieldCount(),
-                                           sizeof(OGRGeometry*) );
+    papoNewGeomFields = static_cast<OGRGeometry **>(
+        CPLCalloc( poNewDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) ) );
 
     for( int iDstField = 0;
          iDstField < poDefn->GetGeomFieldCount();

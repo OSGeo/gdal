@@ -2243,97 +2243,106 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
 }
 
 /************************************************************************/
-/*                        GDALUnrolledByteCopy()                        */
+/*                        GDALUnrolledCopy()                            */
 /************************************************************************/
 
-template<int srcStride, int dstStride>
-static inline void GDALUnrolledByteCopy( GByte* CPL_RESTRICT pabyDest,
-                                         const GByte* CPL_RESTRICT pabySrc,
-                                         int nIters )
+template<class T, int srcStride, int dstStride>
+static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
+                                     const T* CPL_RESTRICT pSrc,
+                                     int nIters )
 {
     if (nIters >= 16)
     {
         for ( int i = nIters / 16; i != 0; i -- )
         {
-            pabyDest[0*dstStride] = pabySrc[0*srcStride];
-            pabyDest[1*dstStride] = pabySrc[1*srcStride];
-            pabyDest[2*dstStride] = pabySrc[2*srcStride];
-            pabyDest[3*dstStride] = pabySrc[3*srcStride];
-            pabyDest[4*dstStride] = pabySrc[4*srcStride];
-            pabyDest[5*dstStride] = pabySrc[5*srcStride];
-            pabyDest[6*dstStride] = pabySrc[6*srcStride];
-            pabyDest[7*dstStride] = pabySrc[7*srcStride];
-            pabyDest[8*dstStride] = pabySrc[8*srcStride];
-            pabyDest[9*dstStride] = pabySrc[9*srcStride];
-            pabyDest[10*dstStride] = pabySrc[10*srcStride];
-            pabyDest[11*dstStride] = pabySrc[11*srcStride];
-            pabyDest[12*dstStride] = pabySrc[12*srcStride];
-            pabyDest[13*dstStride] = pabySrc[13*srcStride];
-            pabyDest[14*dstStride] = pabySrc[14*srcStride];
-            pabyDest[15*dstStride] = pabySrc[15*srcStride];
-            pabyDest += 16*dstStride;
-            pabySrc += 16*srcStride;
+            pDest[0*dstStride] = pSrc[0*srcStride];
+            pDest[1*dstStride] = pSrc[1*srcStride];
+            pDest[2*dstStride] = pSrc[2*srcStride];
+            pDest[3*dstStride] = pSrc[3*srcStride];
+            pDest[4*dstStride] = pSrc[4*srcStride];
+            pDest[5*dstStride] = pSrc[5*srcStride];
+            pDest[6*dstStride] = pSrc[6*srcStride];
+            pDest[7*dstStride] = pSrc[7*srcStride];
+            pDest[8*dstStride] = pSrc[8*srcStride];
+            pDest[9*dstStride] = pSrc[9*srcStride];
+            pDest[10*dstStride] = pSrc[10*srcStride];
+            pDest[11*dstStride] = pSrc[11*srcStride];
+            pDest[12*dstStride] = pSrc[12*srcStride];
+            pDest[13*dstStride] = pSrc[13*srcStride];
+            pDest[14*dstStride] = pSrc[14*srcStride];
+            pDest[15*dstStride] = pSrc[15*srcStride];
+            pDest += 16*dstStride;
+            pSrc += 16*srcStride;
         }
         nIters = nIters % 16;
     }
     for( int i = 0; i < nIters; i++ )
     {
-        pabyDest[i*dstStride] = *pabySrc;
-        pabySrc += srcStride;
+        pDest[i*dstStride] = *pSrc;
+        pSrc += srcStride;
     }
 }
 
 /************************************************************************/
-/*                         GDALFastByteCopy()                           */
+/*                         GDALFastCopy()                               */
 /************************************************************************/
 
-static inline void GDALFastByteCopy( GByte* CPL_RESTRICT pabyDest,
-                                     int nDestStride,
-                                     const GByte* CPL_RESTRICT pabySrc,
-                                     int nSrcStride,
-                                     int nIters )
+template<class T>
+static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
+                                 int nDestStride,
+                                 const T* CPL_RESTRICT pSrc,
+                                 int nSrcStride,
+                                 int nIters )
 {
-    if( nDestStride == 1 )
+    if( nDestStride == static_cast<int>(sizeof(T)) )
     {
-        if( nSrcStride == 1 )
+        if( nSrcStride == static_cast<int>(sizeof(T)) )
         {
-            memcpy(pabyDest, pabySrc, nIters);
+            memcpy(pDest, pSrc, nIters * sizeof(T));
         }
-        else if( nSrcStride == 3 )
+        else if( nSrcStride == 2 * static_cast<int>(sizeof(T)) )
         {
-            GDALUnrolledByteCopy<3,1>(pabyDest, pabySrc, nIters);
+            GDALUnrolledCopy<T, 2,1>(pDest, pSrc, nIters);
         }
-        else if( nSrcStride == 4 )
+        else if( nSrcStride == 3 * static_cast<int>(sizeof(T)) )
         {
-            GDALUnrolledByteCopy<4,1>(pabyDest, pabySrc, nIters);
+            GDALUnrolledCopy<T, 3,1>(pDest, pSrc, nIters);
+        }
+        else if( nSrcStride == 4 * static_cast<int>(sizeof(T)) )
+        {
+            GDALUnrolledCopy<T, 4,1>(pDest, pSrc, nIters);
         }
         else
         {
             while( nIters-- > 0 )
             {
-                *pabyDest = *pabySrc;
-                pabySrc += nSrcStride;
-                pabyDest ++;
+                *pDest = *pSrc;
+                pSrc += nSrcStride;
+                pDest ++;
             }
         }
     }
-    else if( nSrcStride == 1 )
+    else if( nSrcStride == static_cast<int>(sizeof(T))  )
     {
-        if( nDestStride == 3 )
+        if( nDestStride == 2 * static_cast<int>(sizeof(T)) )
         {
-            GDALUnrolledByteCopy<1,3>(pabyDest, pabySrc, nIters);
+            GDALUnrolledCopy<T, 1,2>(pDest, pSrc, nIters);
         }
-        else if( nDestStride == 4 )
+        else if( nDestStride == 3 * static_cast<int>(sizeof(T)) )
         {
-            GDALUnrolledByteCopy<1,4>(pabyDest, pabySrc, nIters);
+            GDALUnrolledCopy<T, 1,3>(pDest, pSrc, nIters);
+        }
+        else if( nDestStride == 4 * static_cast<int>(sizeof(T))  )
+        {
+            GDALUnrolledCopy<T, 1,4>(pDest, pSrc, nIters);
         }
         else
         {
             while( nIters-- > 0 )
             {
-                *pabyDest = *pabySrc;
-                pabySrc ++;
-                pabyDest += nDestStride;
+                *pDest = *pSrc;
+                pSrc ++;
+                pDest += nDestStride;
             }
         }
     }
@@ -2341,9 +2350,9 @@ static inline void GDALFastByteCopy( GByte* CPL_RESTRICT pabyDest,
     {
         while( nIters-- > 0 )
         {
-            *pabyDest = *pabySrc;
-            pabySrc += nSrcStride;
-            pabyDest += nDestStride;
+            *pDest = *pSrc;
+            pSrc += nSrcStride;
+            pDest += nDestStride;
         }
     }
 }
@@ -2466,21 +2475,27 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData,
     {
         if( eSrcType == GDT_Byte )
         {
-            GDALFastByteCopy(
-                (GByte*)pDstData, nDstPixelStride,
-                (const GByte*)pSrcData, nSrcPixelStride, nWordCount );
+            GDALFastCopy(
+                static_cast<GByte*>(pDstData), nDstPixelStride,
+                static_cast<const GByte*>(pSrcData), nSrcPixelStride, nWordCount );
+            return;
+        }
+
+        if( nSrcDataTypeSize == 2 )
+        {
+            GDALFastCopy(
+                static_cast<short*>(pDstData), nDstPixelStride,
+                static_cast<const short*>(pSrcData), nSrcPixelStride, nWordCount );
             return;
         }
 
         if( nWordCount == 1 )
         {
-            if( eSrcType == GDT_Int16 || eSrcType == GDT_UInt16 )
+            if( nSrcDataTypeSize == 2 )
                 memcpy(pDstData, pSrcData, 2);
-            else if( eSrcType == GDT_Int32 || eSrcType == GDT_UInt32 ||
-                     eSrcType == GDT_Float32 || eSrcType == GDT_CInt16 )
+            else if( nSrcDataTypeSize == 4 )
                 memcpy(pDstData, pSrcData, 4);
-            else if( eSrcType == GDT_Float64 || eSrcType == GDT_CInt32 ||
-                     eSrcType == GDT_CFloat32 )
+            else if( nSrcDataTypeSize == 8 )
                 memcpy(pDstData, pSrcData, 8 );
             else /* if( eSrcType == GDT_CFloat64 ) */
                 memcpy(pDstData, pSrcData, 16);

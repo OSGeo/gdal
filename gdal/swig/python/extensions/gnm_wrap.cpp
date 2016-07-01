@@ -2943,15 +2943,16 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_GNMGenericNetworkShadow swig_types[2]
 #define SWIGTYPE_p_GNMGraphAlgorithmType swig_types[3]
 #define SWIGTYPE_p_GNMNetworkShadow swig_types[4]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[5]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[6]
-#define SWIGTYPE_p_OGRwkbGeometryType swig_types[7]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[8]
-#define SWIGTYPE_p_char swig_types[9]
-#define SWIGTYPE_p_int swig_types[10]
-#define SWIGTYPE_p_p_char swig_types[11]
-static swig_type_info *swig_types[13];
-static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
+#define SWIGTYPE_p_OGRDataSourceShadow swig_types[5]
+#define SWIGTYPE_p_OGRDriverShadow swig_types[6]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[7]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[8]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[9]
+#define SWIGTYPE_p_char swig_types[10]
+#define SWIGTYPE_p_int swig_types[11]
+#define SWIGTYPE_p_p_char swig_types[12]
+static swig_type_info *swig_types[14];
+static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3048,23 +3049,50 @@ namespace swig {
 }
 
 
+#include <iostream>
+using namespace std;
+
 #include "gdal.h"
+#include "ogr_api.h"
+#include "ogr_p.h"
+#include "ogr_core.h"
+#include "cpl_port.h"
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
 #include "gnm_api.h"
 
 typedef void GDALMajorObjectShadow;
 typedef void GNMNetworkShadow;
 typedef void GNMGenericNetworkShadow;
 
-
 #ifdef DEBUG
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
+typedef struct OGRDriverHS OGRDriverShadow;
+typedef struct OGRDataSourceHS OGRDataSourceShadow;
+#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
+typedef void OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
+typedef void OGRDriverShadow;
+typedef void OGRDataSourceShadow;
+#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
-typedef void OSRSpatialReferenceShadow;
+typedef void OGRFeatureDefnShadow;
+typedef void OGRGeometryShadow;
+typedef void OSRCoordinateTransformationShadow;
+typedef void OGRFieldDefnShadow;
 #endif
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
+typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 
 
 static int bUseExceptions=0;
@@ -3216,9 +3244,33 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 }
 
 
-SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
-    return GDALGetDescription( self );
+
+#include "gdal.h"
+
+
+  GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
+      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
   }
+
+
+  GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
+      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
+  }
+
+SWIGINTERN void delete_GNMNetworkShadow(GNMNetworkShadow *self){
+            if ( GDALDereferenceDataset( self ) <= 0 ) {
+              GDALClose(self);
+            }
+        }
+SWIGINTERN void GNMNetworkShadow_ReleaseResultSet(GNMNetworkShadow *self,OGRLayerShadow *layer){
+            GDALDatasetReleaseResultSet(self, layer);
+        }
+SWIGINTERN int GNMNetworkShadow_GetVersion(GNMNetworkShadow *self){
+            return GNMGetVersion(self);
+        }
+SWIGINTERN char const *GNMNetworkShadow_GetName(GNMNetworkShadow *self){
+            return GNMGetName(self);
+        }
 
 SWIGINTERN swig_type_info*
 SWIG_pchar_descriptor(void)
@@ -3260,139 +3312,6 @@ SWIG_FromCharPtr(const char *cptr)
   return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
 }
 
-
-SWIGINTERN int
-SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
-{
-#if PY_VERSION_HEX>=0x03000000
-  if (PyUnicode_Check(obj))
-#else  
-  if (PyString_Check(obj))
-#endif
-  {
-    char *cstr; Py_ssize_t len;
-#if PY_VERSION_HEX>=0x03000000
-    if (!alloc && cptr) {
-        /* We can't allow converting without allocation, since the internal
-           representation of string in Python 3 is UCS-2/UCS-4 but we require
-           a UTF-8 representation.
-           TODO(bhy) More detailed explanation */
-        return SWIG_RuntimeError;
-    }
-    obj = PyUnicode_AsUTF8String(obj);
-    PyBytes_AsStringAndSize(obj, &cstr, &len);
-    if(alloc) *alloc = SWIG_NEWOBJ;
-#else
-    PyString_AsStringAndSize(obj, &cstr, &len);
-#endif
-    if (cptr) {
-      if (alloc) {
-	/* 
-	   In python the user should not be able to modify the inner
-	   string representation. To warranty that, if you define
-	   SWIG_PYTHON_SAFE_CSTRINGS, a new/copy of the python string
-	   buffer is always returned.
-
-	   The default behavior is just to return the pointer value,
-	   so, be careful.
-	*/ 
-#if defined(SWIG_PYTHON_SAFE_CSTRINGS)
-	if (*alloc != SWIG_OLDOBJ) 
-#else
-	if (*alloc == SWIG_NEWOBJ) 
-#endif
-	  {
-	    *cptr = reinterpret_cast< char* >(memcpy((new char[len + 1]), cstr, sizeof(char)*(len + 1)));
-	    *alloc = SWIG_NEWOBJ;
-	  }
-	else {
-	  *cptr = cstr;
-	  *alloc = SWIG_OLDOBJ;
-	}
-      } else {
-        #if PY_VERSION_HEX>=0x03000000
-        assert(0); /* Should never reach here in Python 3 */
-        #endif
-	*cptr = SWIG_Python_str_AsChar(obj);
-      }
-    }
-    if (psize) *psize = len + 1;
-#if PY_VERSION_HEX>=0x03000000
-    Py_XDECREF(obj);
-#endif
-    return SWIG_OK;
-  } else {
-    swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
-    if (pchar_descriptor) {
-      void* vptr = 0;
-      if (SWIG_ConvertPtr(obj, &vptr, pchar_descriptor, 0) == SWIG_OK) {
-	if (cptr) *cptr = (char *) vptr;
-	if (psize) *psize = vptr ? (strlen((char *)vptr) + 1) : 0;
-	if (alloc) *alloc = SWIG_OLDOBJ;
-	return SWIG_OK;
-      }
-    }
-  }
-  return SWIG_TypeError;
-}
-
-
-
-
-SWIGINTERN void GDALMajorObjectShadow_SetDescription(GDALMajorObjectShadow *self,char const *pszNewDesc){
-    GDALSetDescription( self, pszNewDesc );
-  }
-SWIGINTERN char **GDALMajorObjectShadow_GetMetadataDomainList(GDALMajorObjectShadow *self){
-    return GDALGetMetadataDomainList( self );
-  }
-SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_Dict(GDALMajorObjectShadow *self,char const *pszDomain=""){
-    return GDALGetMetadata( self, pszDomain );
-  }
-SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_List(GDALMajorObjectShadow *self,char const *pszDomain=""){
-    return GDALGetMetadata( self, pszDomain );
-  }
-SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_0(GDALMajorObjectShadow *self,char **papszMetadata,char const *pszDomain=""){
-    return GDALSetMetadata( self, papszMetadata, pszDomain );
-  }
-SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_1(GDALMajorObjectShadow *self,char *pszMetadataString,char const *pszDomain=""){
-    char *tmpList[2];
-    tmpList[0] = pszMetadataString;
-    tmpList[1] = 0;
-    return GDALSetMetadata( self, tmpList, pszDomain );
-  }
-SWIGINTERN char const *GDALMajorObjectShadow_GetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszDomain=""){
-    return GDALGetMetadataItem( self, pszName, pszDomain);
-  }
-SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszValue,char const *pszDomain=""){
-    return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
-  }
-
-  GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
-      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
-  }
-
-
-  GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
-      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
-  }
-
-
-typedef char retStringAndCPLFree;
-
-SWIGINTERN void delete_GNMNetworkShadow(GNMNetworkShadow *self){
-            if ( GDALDereferenceDataset( self ) <= 0 ) {
-              GDALClose(self);
-            }
-        }
-SWIGINTERN void GNMNetworkShadow_ReleaseResultSet(GNMNetworkShadow *self,OGRLayerShadow *layer){
-            GDALDatasetReleaseResultSet(self, layer);
-        }
-SWIGINTERN int GNMNetworkShadow_GetVersion(GNMNetworkShadow *self){
-            return GNMGetVersion(self);
-        }
-SWIGINTERN char const *GNMNetworkShadow_GetName(GNMNetworkShadow *self){
-            return GNMGetName(self);
-        }
 SWIGINTERN OGRFeatureShadow *GNMNetworkShadow_GetFeatureByGlobalFID(GNMNetworkShadow *self,GIntBig GFID){
             return GNMGetFeatureByGlobalFID(self, GFID);
         }
@@ -3556,6 +3475,85 @@ SWIGINTERN char const *GNMNetworkShadow_GetProjectionRef(GNMNetworkShadow *self)
 SWIGINTERN char **GNMNetworkShadow_GetFileList(GNMNetworkShadow *self){
             return GDALGetFileList( self );
         }
+
+SWIGINTERN int
+SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
+{
+#if PY_VERSION_HEX>=0x03000000
+  if (PyUnicode_Check(obj))
+#else  
+  if (PyString_Check(obj))
+#endif
+  {
+    char *cstr; Py_ssize_t len;
+#if PY_VERSION_HEX>=0x03000000
+    if (!alloc && cptr) {
+        /* We can't allow converting without allocation, since the internal
+           representation of string in Python 3 is UCS-2/UCS-4 but we require
+           a UTF-8 representation.
+           TODO(bhy) More detailed explanation */
+        return SWIG_RuntimeError;
+    }
+    obj = PyUnicode_AsUTF8String(obj);
+    PyBytes_AsStringAndSize(obj, &cstr, &len);
+    if(alloc) *alloc = SWIG_NEWOBJ;
+#else
+    PyString_AsStringAndSize(obj, &cstr, &len);
+#endif
+    if (cptr) {
+      if (alloc) {
+	/* 
+	   In python the user should not be able to modify the inner
+	   string representation. To warranty that, if you define
+	   SWIG_PYTHON_SAFE_CSTRINGS, a new/copy of the python string
+	   buffer is always returned.
+
+	   The default behavior is just to return the pointer value,
+	   so, be careful.
+	*/ 
+#if defined(SWIG_PYTHON_SAFE_CSTRINGS)
+	if (*alloc != SWIG_OLDOBJ) 
+#else
+	if (*alloc == SWIG_NEWOBJ) 
+#endif
+	  {
+	    *cptr = reinterpret_cast< char* >(memcpy((new char[len + 1]), cstr, sizeof(char)*(len + 1)));
+	    *alloc = SWIG_NEWOBJ;
+	  }
+	else {
+	  *cptr = cstr;
+	  *alloc = SWIG_OLDOBJ;
+	}
+      } else {
+        #if PY_VERSION_HEX>=0x03000000
+        assert(0); /* Should never reach here in Python 3 */
+        #endif
+	*cptr = SWIG_Python_str_AsChar(obj);
+      }
+    }
+    if (psize) *psize = len + 1;
+#if PY_VERSION_HEX>=0x03000000
+    Py_XDECREF(obj);
+#endif
+    return SWIG_OK;
+  } else {
+    swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+    if (pchar_descriptor) {
+      void* vptr = 0;
+      if (SWIG_ConvertPtr(obj, &vptr, pchar_descriptor, 0) == SWIG_OK) {
+	if (cptr) *cptr = (char *) vptr;
+	if (psize) *psize = vptr ? (strlen((char *)vptr) + 1) : 0;
+	if (alloc) *alloc = SWIG_OLDOBJ;
+	return SWIG_OK;
+      }
+    }
+  }
+  return SWIG_TypeError;
+}
+
+
+
+
 SWIGINTERN OGRLayerShadow *GNMNetworkShadow_CreateLayer(GNMNetworkShadow *self,char const *name,OSRSpatialReferenceShadow *srs=NULL,OGRwkbGeometryType geom_type=wkbUnknown,char **options=0){
             OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetCreateLayer( self,
                                       name,
@@ -3731,687 +3729,6 @@ fail:
   return NULL;
 }
 
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetDescription(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  char *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:MajorObject_GetDescription",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetDescription(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_SetDescription",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetDescription" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_Py_Void();
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataDomainList(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  char **result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:MajorObject_GetMetadataDomainList",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadataDomainList" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char **)GDALMajorObjectShadow_GetMetadataDomainList(arg1);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  {
-    /* %typemap(out) char **CSL -> ( string ) */
-    char **stringarray = result;
-    if ( stringarray == NULL ) {
-      resultobj = Py_None;
-      Py_INCREF( resultobj );
-    }
-    else {
-      int len = CSLCount( stringarray );
-      resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i ) {
-        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
-        PyList_SetItem(resultobj, i, o );
-      }
-    }
-    CSLDestroy(result);
-  }
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  char **result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O|O:MajorObject_GetMetadata_Dict",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  if (obj1) {
-    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "2"" of type '" "char const *""'");
-    }
-    arg2 = reinterpret_cast< char * >(buf2);
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  {
-    /* %typemap(out) char **dict */
-    char **stringarray = result;
-    resultobj = PyDict_New();
-    if ( stringarray != NULL ) {
-      while (*stringarray != NULL ) {
-        char const *valptr;
-        char *keyptr;
-        const char* pszSep = strchr( *stringarray, '=' );
-        if ( pszSep != NULL) {
-          keyptr = CPLStrdup(*stringarray);
-          keyptr[pszSep - *stringarray] = '\0';
-          valptr = pszSep + 1;
-          PyObject *nm = GDALPythonObjectFromCStr( keyptr );
-          PyObject *val = GDALPythonObjectFromCStr( valptr );
-          PyDict_SetItem(resultobj, nm, val );
-          Py_DECREF(nm);
-          Py_DECREF(val);
-          CPLFree( keyptr );
-        }
-        stringarray++;
-      }
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  char **result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O|O:MajorObject_GetMetadata_List",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_List" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  if (obj1) {
-    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_List" "', argument " "2"" of type '" "char const *""'");
-    }
-    arg2 = reinterpret_cast< char * >(buf2);
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  {
-    /* %typemap(out) char **options -> ( string ) */
-    char **stringarray = result;
-    if ( stringarray == NULL ) {
-      resultobj = Py_None;
-      Py_INCREF( resultobj );
-    }
-    else {
-      int len = CSLCount( stringarray );
-      resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i ) {
-        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
-        PyList_SetItem(resultobj, i, o );
-      }
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char **arg2 = (char **) 0 ;
-  char *arg3 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    /* %typemap(in) char **dict */
-    arg2 = NULL;
-    if ( PySequence_Check( obj1 ) ) {
-      Py_ssize_t size = PySequence_Size(obj1);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        int bFreeStr;
-        char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
-        if ( pszStr == NULL ) {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        arg2 = CSLAddString( arg2, pszStr );
-        GDALPythonFreeCStr(pszStr, bFreeStr);
-        Py_DECREF(pyObj);
-      }
-    }
-    else if ( PyMapping_Check( obj1 ) ) {
-      /* We need to use the dictionary form. */
-      Py_ssize_t size = PyMapping_Length( obj1 );
-      if ( size > 0 && size == (int)size) {
-        PyObject *item_list = PyMapping_Items( obj1 );
-        for( int i=0; i<(int)size; i++ ) {
-          PyObject *it = PySequence_GetItem( item_list, i );
-          
-          PyObject *k, *v;
-          if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
-            Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
-            SWIG_fail;
-          }
-          
-          int bFreeK, bFreeV;
-          char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
-          char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
-          if( pszK == NULL || pszV == NULL )
-          {
-            GDALPythonFreeCStr(pszK, bFreeK);
-            GDALPythonFreeCStr(pszV, bFreeV);
-            Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
-            SWIG_fail;
-          }
-          arg2 = CSLAddNameValue( arg2, pszK, pszV );
-          
-          GDALPythonFreeCStr(pszK, bFreeK);
-          GDALPythonFreeCStr(pszV, bFreeV);
-          Py_DECREF(it);
-        }
-        Py_DECREF(item_list);
-      }
-    }
-    else {
-      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
-      SWIG_fail;
-    }
-  }
-  if (obj2) {
-    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
-    }
-    arg3 = reinterpret_cast< char * >(buf3);
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2,(char const *)arg3);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(freearg) char **dict */
-    CSLDestroy( arg2 );
-  }
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  {
-    /* %typemap(freearg) char **dict */
-    CSLDestroy( arg2 );
-  }
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetMetadata" "', argument " "2"" of type '" "char *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  if (obj2) {
-    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
-    }
-    arg3 = reinterpret_cast< char * >(buf3);
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[4];
-  int ii;
-  
-  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
-  argc = (int)PyObject_Length(args);
-  for (ii = 0; (ii < 3) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if ((argc >= 2) && (argc <= 3)) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
-        /* Note: we exclude explicitly strings, because they can be considered as a sequence of characters, */
-        /* which is not desirable since it makes it impossible to define bindings such as SetMetadata(string) and SetMetadata(array_of_string) */
-        /* (see #4816) */
-        _v = ((PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0)) ) ? 1 : 0;
-      }
-      if (_v) {
-        if (argc <= 2) {
-          return _wrap_MajorObject_SetMetadata__SWIG_0(self, args);
-        }
-        int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          return _wrap_MajorObject_SetMetadata__SWIG_0(self, args);
-        }
-      }
-    }
-  }
-  if ((argc >= 2) && (argc <= 3)) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        if (argc <= 2) {
-          return _wrap_MajorObject_SetMetadata__SWIG_1(self, args);
-        }
-        int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          return _wrap_MajorObject_SetMetadata__SWIG_1(self, args);
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_SetMetadata'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GDALMajorObjectShadow::SetMetadata(char **,char const *)\n"
-    "    GDALMajorObjectShadow::SetMetadata(char *,char const *)\n");
-  return 0;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  char *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_GetMetadataItem",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadataItem" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  if (obj2) {
-    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_GetMetadataItem" "', argument " "3"" of type '" "char const *""'");
-    }
-    arg3 = reinterpret_cast< char * >(buf3);
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char *)GDALMajorObjectShadow_GetMetadataItem(arg1,(char const *)arg2,(char const *)arg3);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) 0 ;
-  char *arg4 = (char *) "" ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  int res4 ;
-  char *buf4 = 0 ;
-  int alloc4 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOO|O:MajorObject_SetMetadataItem",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetMetadataItem" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadataItem" "', argument " "3"" of type '" "char const *""'");
-  }
-  arg3 = reinterpret_cast< char * >(buf3);
-  if (obj3) {
-    res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
-    if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "MajorObject_SetMetadataItem" "', argument " "4"" of type '" "char const *""'");
-    }
-    arg4 = reinterpret_cast< char * >(buf4);
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *MajorObject_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *obj;
-  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
-  SWIG_TypeNewClientData(SWIGTYPE_p_GDALMajorObjectShadow, SWIG_NewClientData(obj));
-  return SWIG_Py_Void();
-}
 
 SWIGINTERN PyObject *_wrap_CastToNetwork(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
@@ -4982,8 +4299,8 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
   int alloc2 = 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
-  void *argp4 ;
-  int res4 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -5013,19 +4330,11 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
     arg3 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp3);
   }
   if (obj3) {
-    {
-      res4 = SWIG_ConvertPtr(obj3, &argp4, SWIGTYPE_p_OGRwkbGeometryType,  0  | 0);
-      if (!SWIG_IsOK(res4)) {
-        SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Network_CreateLayer" "', argument " "4"" of type '" "OGRwkbGeometryType""'"); 
-      }  
-      if (!argp4) {
-        SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "Network_CreateLayer" "', argument " "4"" of type '" "OGRwkbGeometryType""'");
-      } else {
-        OGRwkbGeometryType * temp = reinterpret_cast< OGRwkbGeometryType * >(argp4);
-        arg4 = *temp;
-        if (SWIG_IsNewObj(res4)) delete temp;
-      }
-    }
+    ecode4 = SWIG_AsVal_int(obj3, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Network_CreateLayer" "', argument " "4"" of type '" "OGRwkbGeometryType""'");
+    } 
+    arg4 = static_cast< OGRwkbGeometryType >(val4);
   }
   if (obj4) {
     {
@@ -5075,6 +4384,11 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
         }
         Py_DECREF(pyObj);
       }
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
   {
@@ -5261,7 +4575,7 @@ SWIGINTERN PyObject *_wrap_Network_DeleteLayer(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = GNMNetworkShadow_DeleteLayer(arg1,arg2);
+    result = (OGRErr)GNMNetworkShadow_DeleteLayer(arg1,arg2);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5447,6 +4761,11 @@ SWIGINTERN PyObject *_wrap_Network_TestCapability(PyObject *SWIGUNUSEDPARM(self)
   }
   arg2 = reinterpret_cast< char * >(buf2);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
@@ -5502,7 +4821,7 @@ SWIGINTERN PyObject *_wrap_Network_StartTransaction(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = GNMNetworkShadow_StartTransaction(arg1,arg2);
+    result = (OGRErr)GNMNetworkShadow_StartTransaction(arg1,arg2);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5550,7 +4869,7 @@ SWIGINTERN PyObject *_wrap_Network_CommitTransaction(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = GNMNetworkShadow_CommitTransaction(arg1);
+    result = (OGRErr)GNMNetworkShadow_CommitTransaction(arg1);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5598,7 +4917,7 @@ SWIGINTERN PyObject *_wrap_Network_RollbackTransaction(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = GNMNetworkShadow_RollbackTransaction(arg1);
+    result = (OGRErr)GNMNetworkShadow_RollbackTransaction(arg1);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6409,39 +5728,30 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, NULL},
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, NULL},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_GetMetadataDomainList", _wrap_MajorObject_GetMetadataDomainList, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_GetMetadata_Dict", _wrap_MajorObject_GetMetadata_Dict, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_GetMetadata_List", _wrap_MajorObject_GetMetadata_List, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_SetMetadata", _wrap_MajorObject_SetMetadata, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_GetMetadataItem", _wrap_MajorObject_GetMetadataItem, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_SetMetadataItem", _wrap_MajorObject_SetMetadataItem, METH_VARARGS, NULL},
-	 { (char *)"MajorObject_swigregister", MajorObject_swigregister, METH_VARARGS, NULL},
 	 { (char *)"CastToNetwork", _wrap_CastToNetwork, METH_VARARGS, (char *)"CastToNetwork(MajorObject base) -> Network"},
 	 { (char *)"CastToGenericNetwork", _wrap_CastToGenericNetwork, METH_VARARGS, (char *)"CastToGenericNetwork(MajorObject base) -> GenericNetwork"},
 	 { (char *)"delete_Network", _wrap_delete_Network, METH_VARARGS, (char *)"delete_Network(Network self)"},
-	 { (char *)"Network_ReleaseResultSet", _wrap_Network_ReleaseResultSet, METH_VARARGS, (char *)"Network_ReleaseResultSet(Network self, OGRLayerShadow * layer)"},
+	 { (char *)"Network_ReleaseResultSet", _wrap_Network_ReleaseResultSet, METH_VARARGS, (char *)"Network_ReleaseResultSet(Network self, Layer layer)"},
 	 { (char *)"Network_GetVersion", _wrap_Network_GetVersion, METH_VARARGS, (char *)"Network_GetVersion(Network self) -> int"},
 	 { (char *)"Network_GetName", _wrap_Network_GetName, METH_VARARGS, (char *)"Network_GetName(Network self) -> char const *"},
-	 { (char *)"Network_GetFeatureByGlobalFID", _wrap_Network_GetFeatureByGlobalFID, METH_VARARGS, (char *)"Network_GetFeatureByGlobalFID(Network self, GIntBig GFID) -> OGRFeatureShadow *"},
+	 { (char *)"Network_GetFeatureByGlobalFID", _wrap_Network_GetFeatureByGlobalFID, METH_VARARGS, (char *)"Network_GetFeatureByGlobalFID(Network self, GIntBig GFID) -> Feature"},
 	 { (char *)"Network_GetPath", (PyCFunction) _wrap_Network_GetPath, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Network_GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, \n"
-		"    char ** options=None) -> OGRLayerShadow *\n"
+		"    char ** options=None) -> Layer\n"
 		""},
 	 { (char *)"Network_DisconnectAll", _wrap_Network_DisconnectAll, METH_VARARGS, (char *)"Network_DisconnectAll(Network self) -> CPLErr"},
 	 { (char *)"Network_GetProjection", _wrap_Network_GetProjection, METH_VARARGS, (char *)"Network_GetProjection(Network self) -> char const *"},
 	 { (char *)"Network_GetProjectionRef", _wrap_Network_GetProjectionRef, METH_VARARGS, (char *)"Network_GetProjectionRef(Network self) -> char const *"},
 	 { (char *)"Network_GetFileList", _wrap_Network_GetFileList, METH_VARARGS, (char *)"Network_GetFileList(Network self) -> char **"},
 	 { (char *)"Network_CreateLayer", (PyCFunction) _wrap_Network_CreateLayer, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Network_CreateLayer(Network self, char const * name, OSRSpatialReferenceShadow * srs=None, OGRwkbGeometryType geom_type=wkbUnknown, \n"
-		"    char ** options=None) -> OGRLayerShadow *\n"
+		"Network_CreateLayer(Network self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, \n"
+		"    char ** options=None) -> Layer\n"
 		""},
-	 { (char *)"Network_CopyLayer", (PyCFunction) _wrap_Network_CopyLayer, METH_VARARGS | METH_KEYWORDS, (char *)"Network_CopyLayer(Network self, OGRLayerShadow * src_layer, char const * new_name, char ** options=None) -> OGRLayerShadow *"},
+	 { (char *)"Network_CopyLayer", (PyCFunction) _wrap_Network_CopyLayer, METH_VARARGS | METH_KEYWORDS, (char *)"Network_CopyLayer(Network self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"},
 	 { (char *)"Network_DeleteLayer", _wrap_Network_DeleteLayer, METH_VARARGS, (char *)"Network_DeleteLayer(Network self, int index) -> OGRErr"},
 	 { (char *)"Network_GetLayerCount", _wrap_Network_GetLayerCount, METH_VARARGS, (char *)"Network_GetLayerCount(Network self) -> int"},
-	 { (char *)"Network_GetLayerByIndex", _wrap_Network_GetLayerByIndex, METH_VARARGS, (char *)"Network_GetLayerByIndex(Network self, int index=0) -> OGRLayerShadow *"},
-	 { (char *)"Network_GetLayerByName", _wrap_Network_GetLayerByName, METH_VARARGS, (char *)"Network_GetLayerByName(Network self, char const * layer_name) -> OGRLayerShadow *"},
+	 { (char *)"Network_GetLayerByIndex", _wrap_Network_GetLayerByIndex, METH_VARARGS, (char *)"Network_GetLayerByIndex(Network self, int index=0) -> Layer"},
+	 { (char *)"Network_GetLayerByName", _wrap_Network_GetLayerByName, METH_VARARGS, (char *)"Network_GetLayerByName(Network self, char const * layer_name) -> Layer"},
 	 { (char *)"Network_TestCapability", _wrap_Network_TestCapability, METH_VARARGS, (char *)"Network_TestCapability(Network self, char const * cap) -> bool"},
 	 { (char *)"Network_StartTransaction", (PyCFunction) _wrap_Network_StartTransaction, METH_VARARGS | METH_KEYWORDS, (char *)"Network_StartTransaction(Network self, int force=False) -> OGRErr"},
 	 { (char *)"Network_CommitTransaction", _wrap_Network_CommitTransaction, METH_VARARGS, (char *)"Network_CommitTransaction(Network self) -> OGRErr"},
@@ -6475,6 +5785,15 @@ static PyMethodDef SwigMethods[] = {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static void *_p_OGRDriverShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRDriverShadow *) x));
+}
+static void *_p_OGRLayerShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRLayerShadow *) x));
+}
+static void *_p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRDataSourceShadow *) x));
+}
 static void *_p_GNMNetworkShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((GDALMajorObjectShadow *)  ((GNMNetworkShadow *) x));
 }
@@ -6485,16 +5804,17 @@ static void *_p_GNMGenericNetworkShadowTo_p_GNMNetworkShadow(void *x, int *SWIGU
     return (void *)((GNMNetworkShadow *)  ((GNMGenericNetworkShadow *) x));
 }
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OGRDriverShadow = {"_p_OGRDriverShadow", 0, 0, 0, 0, 0};
+static swig_type_info _swigt__p_OGRDataSourceShadow = {"_p_OGRDataSourceShadow", 0, 0, 0, 0, 0};
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GNMGenericNetworkShadow = {"_p_GNMGenericNetworkShadow", "GNMGenericNetworkShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GNMGraphAlgorithmType = {"_p_GNMGraphAlgorithmType", "enum GNMGraphAlgorithmType *|GNMGraphAlgorithmType *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GNMNetworkShadow = {"_p_GNMNetworkShadow", "GNMNetworkShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRFeatureShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_OGRwkbGeometryType = {"_p_OGRwkbGeometryType", "OGRwkbGeometryType *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "CPLErr *|int *|GNMDirection *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRAxisOrientation *|GNMDirection *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
@@ -6503,23 +5823,25 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GNMGenericNetworkShadow,
   &_swigt__p_GNMGraphAlgorithmType,
   &_swigt__p_GNMNetworkShadow,
+  &_swigt__p_OGRDataSourceShadow,
+  &_swigt__p_OGRDriverShadow,
   &_swigt__p_OGRFeatureShadow,
   &_swigt__p_OGRLayerShadow,
-  &_swigt__p_OGRwkbGeometryType,
   &_swigt__p_OSRSpatialReferenceShadow,
   &_swigt__p_char,
   &_swigt__p_int,
   &_swigt__p_p_char,
 };
 
-static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GNMNetworkShadow, _p_GNMNetworkShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GNMGenericNetworkShadow, _p_GNMGenericNetworkShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OGRDriverShadow[] = {{&_swigt__p_OGRDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OGRDataSourceShadow[] = {{&_swigt__p_OGRDataSourceShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_OGRDriverShadow, _p_OGRDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRDataSourceShadow, _p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GNMNetworkShadow, _p_GNMNetworkShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GNMGenericNetworkShadow, _p_GNMGenericNetworkShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GNMGenericNetworkShadow[] = {  {&_swigt__p_GNMGenericNetworkShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GNMGraphAlgorithmType[] = {  {&_swigt__p_GNMGraphAlgorithmType, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GNMNetworkShadow[] = {  {&_swigt__p_GNMNetworkShadow, 0, 0, 0},  {&_swigt__p_GNMGenericNetworkShadow, _p_GNMGenericNetworkShadowTo_p_GNMNetworkShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRFeatureShadow[] = {  {&_swigt__p_OGRFeatureShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_OGRwkbGeometryType[] = {  {&_swigt__p_OGRwkbGeometryType, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
@@ -6531,9 +5853,10 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GNMGenericNetworkShadow,
   _swigc__p_GNMGraphAlgorithmType,
   _swigc__p_GNMNetworkShadow,
+  _swigc__p_OGRDataSourceShadow,
+  _swigc__p_OGRDriverShadow,
   _swigc__p_OGRFeatureShadow,
   _swigc__p_OGRLayerShadow,
-  _swigc__p_OGRwkbGeometryType,
   _swigc__p_OSRSpatialReferenceShadow,
   _swigc__p_char,
   _swigc__p_int,

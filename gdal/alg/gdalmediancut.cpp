@@ -60,12 +60,12 @@ typedef struct
     int     nCount3;
 } HashHistogram;
 
-typedef	struct colorbox {
-	struct	colorbox *next, *prev;
-	int	rmin, rmax;
-	int	gmin, gmax;
-	int	bmin, bmax;
-	GUIntBig	total;
+typedef struct colorbox {
+    struct colorbox *next, *prev;
+    int rmin, rmax;
+    int gmin, gmax;
+    int bmin, bmax;
+    GUIntBig total;
 } Colorbox;
 
 template<class T>
@@ -298,7 +298,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     VALIDATE_POINTER1( hGreen, "GDALComputeMedianCutPCT", CE_Failure );
     VALIDATE_POINTER1( hBlue, "GDALComputeMedianCutPCT", CE_Failure );
 
-    int		nXSize, nYSize;
+    int nXSize, nYSize;
     CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -349,7 +349,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      STEP 1: create empty boxes.                                     */
 /* ==================================================================== */
-    int	     i;
+    int i;
     Colorbox *box_list, *ptr;
     T* histogram;
     Colorbox *freeboxes;
@@ -412,8 +412,8 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      Build histogram.                                                */
 /* ==================================================================== */
-    GByte	*pabyRedLine, *pabyGreenLine, *pabyBlueLine;
-    int		iLine, iPixel;
+    GByte *pabyRedLine, *pabyGreenLine, *pabyBlueLine;
+    int iLine, iPixel;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
@@ -469,7 +469,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {
-            int	nRed, nGreen, nBlue;
+            int nRed, nGreen, nBlue;
 
             nRed = pabyRedLine[iPixel] >> nColorShift;
             nGreen = pabyGreenLine[iPixel] >> nColorShift;
@@ -549,7 +549,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
     for (i = 0, ptr = usedboxes; ptr != NULL; ++i, ptr = ptr->next)
     {
-        GDALColorEntry	sEntry;
+        GDALColorEntry sEntry;
 
         sEntry.c1 = (GByte) (((ptr->rmin + ptr->rmax) << nColorShift) / 2);
         sEntry.c2 = (GByte) (((ptr->gmin + ptr->gmax) << nColorShift) / 2);
@@ -761,13 +761,13 @@ splitbox(Colorbox* ptr, const T* histogram,
          GByte* pabyGreenBand,
          GByte* pabyBlueBand, T nPixels)
 {
-    T		hist2[256];
-    int		first=0, last=0;
-    Colorbox	*new_cb;
-    const T	*iptr;
+    T hist2[256];
+    int first=0, last=0;
+    Colorbox *new_cb;
+    const T *iptr;
     T *histp;
-    int	i, j;
-    int	ir,ig,ib;
+    int i, j;
+    int ir,ig,ib;
     T sum, sum1, sum2;
     enum { RED, GREEN, BLUE } axis;
 

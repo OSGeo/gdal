@@ -6445,7 +6445,7 @@ def tiff_write_144():
 # Test various warnings / errors of Create()
 
 def tiff_write_145():
-  
+
     options_list = [ { 'bands': 65536, 'expected_failure': True },
                      { 'creation_options': [ 'INTERLEAVE=foo' ], 'expected_failure': True },
                      { 'creation_options': [ 'COMPRESS=foo' ], 'expected_failure': False },
@@ -6517,7 +6517,7 @@ def tiff_write_146():
     got_stats = [out_ds.GetRasterBand(i+1).GetOverview(2).ComputeStatistics(True) for i in range(4)]
     out_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_146.tif')
-    
+
     for i in range(4):
         for j in range(4):
             if i != 2 and j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
@@ -6575,7 +6575,7 @@ def tiff_write_148():
     got_stats = [out_ds.GetRasterBand(i+1).GetOverview(0).ComputeStatistics(True) for i in range(4)]
     out_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_148.tif')
-    
+
     for i in range(4):
         for j in range(4):
             if j >= 2 and abs(original_stats[i][j] - got_stats[i][j]) > 5:
@@ -6647,6 +6647,55 @@ def tiff_write_149():
         print(cs)
         return 'fail'
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
+
+    return 'success'
+
+###############################################################################
+# Test failure when loading block from disk in IWriteBlock()
+
+def tiff_write_150():
+
+    shutil.copy('data/tiled_bad_offset.tif', 'tmp/tiled_bad_offset.tif')
+    ds = gdal.Open('tmp/tiled_bad_offset.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds.FlushCache()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('tmp/tiled_bad_offset.tif')
+
+    return 'success'
+
+###############################################################################
+# Test IWriteBlock() with more than 10 bands
+
+def tiff_write_151():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_151.tif', 1, 1, 11)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Checksum()
+    ds.GetRasterBand(2).Fill(1)
+    ds.GetRasterBand(3).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif')
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_151.tif')
 
     return 'success'
 
@@ -6829,10 +6878,12 @@ gdaltest_list = [
     tiff_write_147,
     tiff_write_148,
     tiff_write_149,
+    tiff_write_150,
+    tiff_write_151,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_149 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_151 ]
 
 if __name__ == '__main__':
 
