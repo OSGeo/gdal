@@ -2342,7 +2342,7 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
             {
                 *pDest = *pSrc;
                 pSrc ++;
-                pDest += nDestStride;
+                pDest += nDestStride / static_cast<int>(sizeof(T));
             }
         }
     }
@@ -2351,8 +2351,8 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
         while( nIters-- > 0 )
         {
             *pDest = *pSrc;
-            pSrc += nSrcStride;
-            pDest += nDestStride;
+            pSrc += nSrcStride / static_cast<int>(sizeof(T));
+            pDest += nDestStride / static_cast<int>(sizeof(T));
         }
     }
 }
@@ -2481,7 +2481,8 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData,
             return;
         }
 
-        if( nSrcDataTypeSize == 2 )
+        if( nSrcDataTypeSize == 2 && (nSrcPixelStride%2) == 0 &&
+            (nDstPixelStride%2) == 0 )
         {
             GDALFastCopy(
                 static_cast<short*>(pDstData), nDstPixelStride,
