@@ -6,7 +6,7 @@
 #ifndef GDAL_VERSION_MAJOR
 #  define GDAL_VERSION_MAJOR    2
 #  define GDAL_VERSION_MINOR    0
-#  define GDAL_VERSION_REV      2
+#  define GDAL_VERSION_REV      3
 #  define GDAL_VERSION_BUILD    0
 #endif
 
@@ -22,8 +22,8 @@
 #endif
 
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20160126
+#  define GDAL_RELEASE_DATE     20160701
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "2.0.2"
+#  define GDAL_RELEASE_NAME     "2.0.3"
 #endif
