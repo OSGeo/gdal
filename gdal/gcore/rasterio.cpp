@@ -2317,7 +2317,7 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
             while( nIters-- > 0 )
             {
                 *pDest = *pSrc;
-                pSrc += nSrcStride;
+                pSrc += nSrcStride / static_cast<int>(sizeof(T));
                 pDest ++;
             }
         }
