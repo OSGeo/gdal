@@ -130,8 +130,8 @@ use Geo::OSR;
 # For GDAL 2.0 or above, GDAL X.Y.Z should then
 # VERSION = X + Y / 100.0 + Z / 10000.0
 
-our $VERSION = '2.0002';
-our $GDAL_VERSION = '2.0.2';
+our $VERSION = '2.0003';
+our $GDAL_VERSION = '2.0.3';
 
 =pod
 
