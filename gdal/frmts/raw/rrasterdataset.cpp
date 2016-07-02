@@ -171,20 +171,21 @@ CPLErr RRASTERRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg* psExtraArg )
+                                     int nXOff, int nYOff,
+                                     int nXSize, int nYSize,
+                                     void * pData, int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType,
+                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALRasterIOExtraArg* psExtraArg )
 
 {
     if( eRWFlag == GF_Write )
         m_bMinMaxValid = false;
     return RawRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
-                                      nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize,
-                                      eBufType,
-                                      nPixelSpace, nLineSpace, psExtraArg );
+                                     nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize,
+                                     eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg );
 }
 #endif
 
@@ -278,10 +279,10 @@ int RRASTERDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if (!Identify(poOpenInfo))
+    if( !Identify(poOpenInfo) )
         return NULL;
 
-    if (poOpenInfo->eAccess == GA_Update)
+    if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
         return NULL;
@@ -381,9 +382,13 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int bNativeOrder = TRUE;
     if( EQUAL(osByteOrder, "little") )
+    {
         bNativeOrder = CPL_IS_LSB;
+    }
     else if( EQUAL(osByteOrder, "big") )
+    {
         bNativeOrder = !CPL_IS_LSB;
+    }
     else if( !EQUAL(osByteOrder, "") )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -399,7 +404,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         nPixelOffset = nPixelSize;
         if( l_nBands != 0 && nPixelSize != 0 &&
-            nCols > INT_MAX / (l_nBands * nPixelSize ) )
+            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
             return NULL;
@@ -410,7 +415,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUAL( osBandOrder, "BIP" ) )
     {
         if( l_nBands != 0 && nPixelSize != 0 &&
-            nCols > INT_MAX / (l_nBands * nPixelSize ) )
+            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
             return NULL;
@@ -419,7 +424,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         nLineOffset = nPixelSize * nCols * l_nBands;
         nBandOffset = nPixelSize;
     }
-    else if ( EQUAL( osBandOrder, "BSQ" ) )
+    else if( EQUAL( osBandOrder, "BSQ" ) )
     {
         if( nPixelSize != 0 && nCols > INT_MAX / nPixelSize )
         {
