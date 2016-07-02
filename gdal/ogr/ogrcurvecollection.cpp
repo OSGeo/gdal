@@ -31,7 +31,7 @@
 #include "ogr_p.h"
 #include <assert.h>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRCurveCollection()                         */
