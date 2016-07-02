@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: sdedataset.cpp 10804 2007-02-08 23:24:59Z hobu $
+ * $Id$
  *
  * Project:  ESRI ArcSDE Raster reader
  * Purpose:  Rasterband implementation for ESRI ArcSDE Rasters

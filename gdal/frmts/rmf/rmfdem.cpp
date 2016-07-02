@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: rmflzw.cpp 11865 2007-08-09 11:53:57Z warmerdam $
+ * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Implementation of the ad-hoc compression algorithm used in

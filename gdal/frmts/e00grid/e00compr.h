@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: e00compr.h,v 1.10 2009-02-24 20:03:50 aboudreault Exp $
+ * $Id$
  *
  * Name:     e00compr.h
  * Project:  Compressed E00 Read/Write library

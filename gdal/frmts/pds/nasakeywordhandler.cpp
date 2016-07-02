@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: pdsdataset.cpp 12658 2007-11-07 23:14:33Z warmerdam $
+ * $Id$
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of NASAKeywordHandler - a class to read

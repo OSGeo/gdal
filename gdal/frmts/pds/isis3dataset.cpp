@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: isis3dataset.cpp 10646 2007-01-18 02:38:10Z warmerdam $
+ * $Id$
  *
  * Project:  ISIS Version 3 Driver
  * Purpose:  Implementation of ISIS3Dataset
@@ -46,7 +46,7 @@ static const double NULL3 = -3.4028226550889044521e+38;
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
+CPL_CVSID("$Id$");
 
 class ISIS3Dataset;
 
