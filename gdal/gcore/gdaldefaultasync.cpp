@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdaldataset.cpp 16796 2009-04-17 23:35:04Z normanb $
+ * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALDefaultAsyncReader and the
@@ -30,7 +30,7 @@
 
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id: gdaldataset.cpp 16796 2009-04-17 23:35:04Z normanb $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 GDALAsyncReader *
