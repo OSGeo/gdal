@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Generic Binary format driver (.hdr but not ESRI .hdr!)
@@ -33,7 +33,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $");
+CPL_CVSID("$Id$");
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */

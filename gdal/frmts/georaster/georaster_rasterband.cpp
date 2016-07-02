@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     georaster_rasterband.cpp
  * Project:  Oracle Spatial GeoRaster Driver

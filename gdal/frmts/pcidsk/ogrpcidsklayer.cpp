@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrcsvlayer.cpp 17496 2009-08-02 11:54:23Z rouault $
+ * $Id$
  *
  * Project:  PCIDSK Translator
  * Purpose:  Implements OGRPCIDSKLayer class.

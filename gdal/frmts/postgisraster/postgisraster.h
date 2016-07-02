@@ -7,7 +7,7 @@
  *
  * Author:	 David Zwarg, dzwarg@azavea.com
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg

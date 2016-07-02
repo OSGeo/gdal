@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     oci_wrapper.h
  * Project:  Oracle Spatial GeoRaster Driver

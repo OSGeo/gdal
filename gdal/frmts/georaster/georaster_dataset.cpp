@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     georaster_dataset.cpp
  * Project:  Oracle Spatial GeoRaster Driver

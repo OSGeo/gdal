@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL 
  * Purpose:  ECWAsyncReader implementation
@@ -30,7 +30,7 @@
 
 #include "gdal_ecw.h"
 
-CPL_CVSID("$Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $");
+CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && (ECWSDK_VERSION >= 40)
 

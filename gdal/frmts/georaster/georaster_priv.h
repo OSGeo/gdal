@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
