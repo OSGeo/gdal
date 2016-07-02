@@ -269,7 +269,7 @@ Advanced options :
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
                [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
-               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]
+               [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 \endverbatim
 
