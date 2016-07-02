@@ -31,7 +31,7 @@
 #include "gdal_alg.h"
 #include "gdal_simplesurf.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /**
  * @file
