@@ -34,7 +34,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id: gdal_misc.cpp 25494 2013-01-13 12:55:17Z etourigny $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
