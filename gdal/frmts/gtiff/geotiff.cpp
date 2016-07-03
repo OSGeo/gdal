@@ -7022,6 +7022,77 @@ void GTiffDataset::FillEmptyTiles()
 /* -------------------------------------------------------------------- */
 /*      Check all blocks, writing out data for uninitialized blocks.    */
 /* -------------------------------------------------------------------- */
+
+    if( nCompression == COMPRESSION_NONE && (nBitsPerSample % 8) == 0 )
+    {
+        // Try to create non-sparse file w.r.t TIFF spec ... as a sparse
+        // file w.r.t filesystem, ie by seeking to end of file instead of
+        // writing zero blocks.
+
+        // Only use libtiff to write the first sparse block to ensure that it will
+        // serialize offset and count arrays back to disk.
+        int nCountBlocksToZero = 0;
+        for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+        {
+            if( panByteCounts[iBlock] == 0 )
+            {
+                if( nCountBlocksToZero == 0 )
+                {
+                    if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
+                        break;
+                }
+                nCountBlocksToZero ++;
+            }
+        }
+        CPLFree( pabyData );
+
+        --nCountBlocksToZero;
+
+        // And then seek to end of file for other ones.
+        if( nCountBlocksToZero > 0 )
+        {
+            toff_t *panByteOffsets = NULL;
+
+            if( TIFFIsTiled( hTIFF ) )
+                TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panByteOffsets );
+            else
+                TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panByteOffsets );
+
+            if( panByteOffsets == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "FillEmptyTiles() failed because panByteOffsets == NULL" );
+                return;
+            }
+
+            VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
+            VSIFSeekL( fpTIF, 0, SEEK_END );
+            vsi_l_offset nOffset = VSIFTellL(fpTIF);
+
+            int iBlockToZero = 0;
+            for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+            {
+                if( panByteCounts[iBlock] == 0 )
+                {
+                    panByteOffsets[iBlock] = nOffset + iBlockToZero * nBlockBytes;
+                    panByteCounts[iBlock] = nBlockBytes;
+                    iBlockToZero ++;
+                }
+            }
+            CPLAssert( iBlockToZero == nCountBlocksToZero );
+
+            if( VSIFSeekL( fpTIF, static_cast<vsi_l_offset>(nCountBlocksToZero)
+                                          * nBlockBytes - 1, SEEK_CUR ) != 0 ||
+                VSIFWriteL( "", 1, 1, fpTIF) != 1 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot initialize empty blocks");
+            }
+        }
+
+        return;
+    }
+
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
     {
         if( panByteCounts[iBlock] == 0 )
