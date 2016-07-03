@@ -204,15 +204,15 @@ The best way to get familiar with something is by example.
   A point symbol:
      "SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")"
 
-  A text label, taking the text string from the "text_string"
+  A text label, taking the text string from the "text_attribute"
   attribute field:
-     "LABEL(f:"Times New Roman",s:12pt,t:{text_string})"</PRE>
+     "LABEL(f:"Times New Roman",s:12pt,t:{text_attribute})"</PRE>
 Here is what a style table that contains all the above styles could look
 like:
 <PRE>    road:      PEN(c:#FF0000,w:5px)
     lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
     campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
-    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
+    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_attribute})</PRE>
 
 And then individual features could refer to styles from the table above
 using the "@" character followed by the style name in their style property.
@@ -753,7 +753,7 @@ it is escaped with a antislash (\) character before it.
 <BR>
       LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World with escaped double-quote(\") character!")
 <BR>
-      LABEL(f:"Arial, Helvetica", s:12pt, t:{text_value})</TD>
+      LABEL(f:"Arial, Helvetica", s:12pt, t:{text_attribute})</TD>
   </TR>
 
   <TR>
@@ -902,7 +902,7 @@ This would apply to formats like ArcView Shapes.
     road:      PEN(c:#FF0000,w:5px)
     lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
     campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
-    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
+    label:     LABEL(f:"Times New Roman",s:12pt,t:{text_attribute})</PRE>
 
 <P>
 <P>The first line is a signature with a version number.  Must be present
