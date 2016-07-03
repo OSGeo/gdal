@@ -140,16 +140,29 @@ static void test_raw_auto(int bFileMapping)
     GIntBig nLineSpace1;
     int nPixelSpace2;
     GIntBig nLineSpace2;
+    if( !bFileMapping )
+    {
+        char** papszOptions = CSLSetNameValue(NULL, "USE_DEFAULT_IMPLEMENTATION", "NO" );
+        assert( GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
+                                                    GF_Write,
+                                                    &nPixelSpace1,
+                                                    &nLineSpace1,
+                                                    papszOptions) == NULL );
+        CSLDestroy(papszOptions);
+    }
     CPLVirtualMem* pVMem1 = GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
                                                   GF_Write,
                                                   &nPixelSpace1,
                                                   &nLineSpace1,
                                                   NULL);
+    char** papszOptions = CSLSetNameValue(NULL, "USE_DEFAULT_IMPLEMENTATION",
+                                          (bFileMapping) ? "NO" : "YES");
     CPLVirtualMem* pVMem2 = GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 2),
                                                   GF_Write,
                                                   &nPixelSpace2,
                                                   &nLineSpace2,
-                                                  NULL);
+                                                  papszOptions);
+    CSLDestroy(papszOptions);
     assert(pVMem1 != NULL);
     assert(pVMem2 != NULL);
     assert(CPLVirtualMemIsFileMapping(pVMem1) == bFileMapping);
