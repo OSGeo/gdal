@@ -5227,7 +5227,7 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
 
 /** \brief Create a CPLVirtualMem object from a GDAL raster band object.
  *
- * Only supported on Linux for now.
+ * Only supported on Linux and Unix systems with mmap() for now.
  *
  * This method allows creating a virtual memory object for a GDALRasterBand,
  * that exposes the whole image data as a virtual array.
@@ -5270,6 +5270,9 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
  * @param papszOptions NULL terminated list of options.
  *                     If a specialized implementation exists, defining USE_DEFAULT_IMPLEMENTATION=YES
  *                     will cause the default implementation to be used.
+ *                     On the contrary, starting with GDAL 2.2, defining USE_DEFAULT_IMPLEMENTATION=NO
+ *                     will prevent the default implementation from being used (thus only allowing
+ *                     efficient implementations to be used).
  *                     When requiring or falling back to the default implementation, the following
  *                     options are available : CACHE_SIZE (in bytes, defaults to 40 MB),
  *                     PAGE_SIZE_HINT (in bytes),
@@ -5286,6 +5289,14 @@ CPLVirtualMem  *GDALRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                    GIntBig *pnLineSpace,
                                                    char **papszOptions )
 {
+    const char* pszImpl = CSLFetchNameValueDef(
+            papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
+    if( EQUAL(pszImpl, "NO") || EQUAL(pszImpl, "OFF") ||
+        EQUAL(pszImpl, "0") || EQUAL(pszImpl, "FALSE") )
+    {
+        return NULL;
+    }
+
     const int nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
     const GIntBig nLineSpace = static_cast<GIntBig>(nRasterXSize) * nPixelSpace;
     if( pnPixelSpace )

@@ -1607,18 +1607,28 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                    GIntBig *pnLineSpace,
                                                    char **papszOptions )
 {
-    if( !CPLTestBool(CSLFetchNameValueDef( papszOptions,
-                                           "USE_DEFAULT_IMPLEMENTATION",
-                                           "NO")) )
+    const char* pszImpl = CSLFetchNameValueDef(
+            papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
+    if( EQUAL(pszImpl, "YES") || EQUAL(pszImpl, "ON") ||
+        EQUAL(pszImpl, "1") || EQUAL(pszImpl, "TRUE") )
     {
-        CPLVirtualMem *psRet
-            = GetVirtualMemAutoInternal( eRWFlag, pnPixelSpace, pnLineSpace,
-                                         papszOptions );
-        if( psRet != NULL )
-        {
-            CPLDebug("GTiff", "GetVirtualMemAuto(): Using memory file mapping");
-            return psRet;
-        }
+        return GDALRasterBand::GetVirtualMemAuto( eRWFlag, pnPixelSpace,
+                                                  pnLineSpace, papszOptions );
+    }
+
+    CPLVirtualMem *psRet
+        = GetVirtualMemAutoInternal( eRWFlag, pnPixelSpace, pnLineSpace,
+                                      papszOptions );
+    if( psRet != NULL )
+    {
+        CPLDebug("GTiff", "GetVirtualMemAuto(): Using memory file mapping");
+        return psRet;
+    }
+
+    if( EQUAL(pszImpl, "NO") || EQUAL(pszImpl, "OFF") ||
+        EQUAL(pszImpl, "0") || EQUAL(pszImpl, "FALSE") )
+    {
+        return NULL;
     }
 
     CPLDebug("GTiff", "GetVirtualMemAuto(): Defaulting to base implementation");
