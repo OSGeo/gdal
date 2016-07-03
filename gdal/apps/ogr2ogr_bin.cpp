@@ -33,6 +33,7 @@
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
 #include <vector>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
