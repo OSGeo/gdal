@@ -13,7 +13,7 @@ that is released under an <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#Wh
 Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
 Geospatial Foundation</a>.  As a library, it presents a
 \link gdal_datamodel.html single raster abstract data model\endlink and
-\link ogr_arch.html vector abstract data model\endlink  
+\link ogr_arch.html single vector abstract data model\endlink  
 to the calling application for all supported formats.  It also comes with a variety
 of useful command line utilities
 for data translation and processing.  The 
