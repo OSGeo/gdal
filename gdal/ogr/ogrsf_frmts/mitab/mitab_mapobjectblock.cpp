@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.23 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id$
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library

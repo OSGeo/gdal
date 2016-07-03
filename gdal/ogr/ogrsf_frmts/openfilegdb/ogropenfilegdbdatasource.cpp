@@ -31,7 +31,7 @@
 #include "ogr_mem.h"
 #include <map>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                      OGROpenFileGDBDataSource()                      */

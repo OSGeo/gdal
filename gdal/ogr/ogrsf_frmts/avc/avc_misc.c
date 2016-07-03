@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_misc.c,v 1.9 2005/06/03 03:49:59 daniel Exp $
+ * $Id$
  *
  * Name:     avc_misc.c
  * Project:  Arc/Info vector coverage (AVC)  BIN<->E00 conversion library

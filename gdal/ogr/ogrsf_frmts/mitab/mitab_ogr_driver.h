@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.14 2007-03-22 20:01:36 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support

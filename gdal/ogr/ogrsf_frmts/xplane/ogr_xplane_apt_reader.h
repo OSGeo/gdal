@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_apt_reader.h
+ * $Id: ogr_xplane_apt_reader.h$
  *
  * Project:  X-Plane apt.dat file reader headers
  * Purpose:  Definition of classes for X-Plane apt.dat file reader

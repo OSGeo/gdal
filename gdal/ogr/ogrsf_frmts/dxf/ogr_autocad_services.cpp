@@ -31,7 +31,7 @@
 #include "ogr_autocad_services.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           ACTextUnescape()                           */

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_idfile.cpp,v 1.8 2006-11-28 18:49:08 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_idfile.cpp
  * Project:  MapInfo TAB Read/Write library

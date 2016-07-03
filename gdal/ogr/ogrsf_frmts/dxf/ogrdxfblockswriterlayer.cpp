@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxfwriterlayer.cpp 20670 2010-09-22 00:21:17Z warmerdam $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFBlocksWriterLayer used for capturing block
@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "ogr_featurestyle.h"
 
-CPL_CVSID("$Id: ogrdxfwriterlayer.cpp 20670 2010-09-22 00:21:17Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                      OGRDXFBlocksWriterLayer()                       */

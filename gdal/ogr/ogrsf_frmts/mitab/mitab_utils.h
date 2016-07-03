@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.10 2004-06-30 20:29:04 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library

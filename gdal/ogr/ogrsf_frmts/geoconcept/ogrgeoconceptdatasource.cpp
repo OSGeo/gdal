@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgeoconceptdatasource.cpp
+ * $Id: ogrgeoconceptdatasource.cpp$
  *
  * Name:     ogrgeoconceptdatasource.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -34,7 +34,7 @@
 #include "ogrgeoconceptdatasource.h"
 #include "ogrgeoconceptlayer.h"
 
-CPL_CVSID("$Id: ogrgeoconceptdatasource.cpp 00000 2007-11-03 11:49:22Z drichard $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRGeoconceptDataSource()                    */

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxfdatasource.cpp 22009 2011-03-22 20:01:34Z warmerdam $
+ * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGDataSource class
@@ -37,7 +37,7 @@
 #include "DbLinetypeTable.h"
 #include "DbLinetypeTableRecord.h"
 
-CPL_CVSID("$Id: ogrdxfdatasource.cpp 22009 2011-03-22 20:01:34Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRDWGDataSource()                          */

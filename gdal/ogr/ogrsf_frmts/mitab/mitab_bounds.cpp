@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.8 2008-01-29 20:53:10 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library

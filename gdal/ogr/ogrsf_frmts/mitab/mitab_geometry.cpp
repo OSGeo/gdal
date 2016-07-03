@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_geometry.cpp,v 1.5 2004-06-30 20:29:04 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_geometry.cpp
  * Project:  MapInfo TAB Read/Write library

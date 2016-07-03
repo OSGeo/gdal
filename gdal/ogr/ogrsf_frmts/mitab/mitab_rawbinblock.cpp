@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.11 2007-06-11 14:40:03 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library

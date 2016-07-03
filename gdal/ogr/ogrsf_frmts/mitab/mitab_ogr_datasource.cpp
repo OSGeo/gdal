@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.12 2007-03-22 20:01:36 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support

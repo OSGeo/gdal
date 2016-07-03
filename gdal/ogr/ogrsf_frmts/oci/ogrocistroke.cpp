@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: ntfstroke.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                   OGROCIArcCenterFromEdgePoints()                    */

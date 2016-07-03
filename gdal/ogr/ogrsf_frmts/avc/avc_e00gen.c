@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00gen.c,v 1.18 2008/07/23 20:51:38 dmorissette Exp $
+ * $Id$
  *
  * Name:     avc_e00gen.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library

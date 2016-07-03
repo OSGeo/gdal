@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements low level DXF reading with caching and parsing of
@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-CPL_CVSID("$Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDXFReader()                            */

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwaspdatasource.cpp 25307 2012-12-15 09:04:40Z rouault $
+ * $Id$
  *
  * Project:  WAsP Translator
  * Purpose:  Implements OGRWAsPDataSource class

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalktool.cpp
+ * $Id: ogrwalktool.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Walk Binary Data to Walk Geometry and OGC WKB
