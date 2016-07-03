@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc.h,v 1.25 2008/07/23 20:51:38 dmorissette Exp $
+ * $Id$
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library

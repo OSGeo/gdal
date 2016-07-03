@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_fix_reader.cpp
+ * $Id: ogr_xplane_fix_reader.cpp$
  *
  * Project:  X-Plane fix.dat file reader
  * Purpose:  Implements OGRXPlaneFixReader class

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrbnadriver.cpp
+ * $Id$
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNADriver.

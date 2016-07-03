@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.26 2011-06-16 15:53:12 fwarmerdam Exp $
+ * $Id$
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library

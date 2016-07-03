@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_sxfdatasource.cpp  $
+ * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Definition of classes for OGR SXF Datasource.
@@ -40,7 +40,7 @@
 #include <map>
 #include <string>
 
-CPL_CVSID("$Id: ogrsxfdatasource.cpp  $");
+CPL_CVSID("$Id$");
 
 static const long aoVCS[] =
 {

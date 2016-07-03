@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalktablelayer.cpp
+ * $Id: ogrwalktablelayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkTableLayer class, access to an existing table.

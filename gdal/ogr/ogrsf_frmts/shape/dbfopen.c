@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $
+ * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -170,7 +170,7 @@
 #define CPLsprintf sprintf
 #endif
 
-SHP_CVSID("$Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $")
+SHP_CVSID("$Id$")
 
 #ifndef FALSE
 #  define FALSE		0

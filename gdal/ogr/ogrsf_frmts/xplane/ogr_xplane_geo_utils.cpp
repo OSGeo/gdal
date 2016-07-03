@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_geo_utils.cpp
+ * $Id: ogr_xplane_geo_utils.cpp$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Geo-computations

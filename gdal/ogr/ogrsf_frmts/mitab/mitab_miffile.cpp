@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.58 2011-09-22 21:57:46 dmorissette Exp $
+ * $Id$
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalkselectlayer.cpp
+ * $Id: ogrwalkselectlayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkSelectLayer class, layer access to the results

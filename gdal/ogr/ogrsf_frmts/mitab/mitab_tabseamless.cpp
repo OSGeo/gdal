@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.10 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id$
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library

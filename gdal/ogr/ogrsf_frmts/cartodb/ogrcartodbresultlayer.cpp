@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id
+ * $Id$
  *
  * Project:  CartoDB Translator
  * Purpose:  Implements OGRCARTODBResultLayer class.
@@ -29,7 +29,7 @@
 
 #include "ogr_cartodb.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRCARTODBResultLayer()                     */
