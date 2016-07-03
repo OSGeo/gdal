@@ -7069,20 +7069,21 @@ void GTiffDataset::FillEmptyTiles()
             VSIFSeekL( fpTIF, 0, SEEK_END );
             vsi_l_offset nOffset = VSIFTellL(fpTIF);
 
-            int iBlockToZero = 0;
+            vsi_l_offset iBlockToZero = 0;
             for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
             {
                 if( panByteCounts[iBlock] == 0 )
                 {
-                    panByteOffsets[iBlock] = nOffset + iBlockToZero * nBlockBytes;
+                    panByteOffsets[iBlock] = static_cast<toff_t>(
+                                        nOffset + iBlockToZero * nBlockBytes);
                     panByteCounts[iBlock] = nBlockBytes;
                     iBlockToZero ++;
                 }
             }
-            CPLAssert( iBlockToZero == nCountBlocksToZero );
+            CPLAssert( iBlockToZero ==
+                              static_cast<vsi_l_offset>(nCountBlocksToZero) );
 
-            if( VSIFSeekL( fpTIF, static_cast<vsi_l_offset>(nCountBlocksToZero)
-                                          * nBlockBytes - 1, SEEK_CUR ) != 0 ||
+            if( VSIFSeekL( fpTIF, iBlockToZero * nBlockBytes - 1, SEEK_CUR ) != 0 ||
                 VSIFWriteL( "", 1, 1, fpTIF) != 1 )
             {
                 CPLError(CE_Failure, CPLE_FileIO,
