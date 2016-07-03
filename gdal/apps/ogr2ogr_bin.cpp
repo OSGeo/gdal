@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -290,6 +291,11 @@ static void Usage(int bShort)
     Usage(NULL, bShort);
 }
 
+static bool StringCISortFunction(const CPLString& a, const CPLString& b)
+{
+    return STRCASECMP(a.c_str(), b.c_str()) < 0;
+}
+
 static void Usage(const char* pszAdditionalMsg, int bShort)
 
 {
@@ -339,12 +345,18 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
     printf("\n -f format_name: output file format name, possible values are:\n");
 
+    std::vector<CPLString> aoSetDrivers;
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
 
         if( CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
-            printf( "     -f \"%s\"\n", poDriver->GetDescription() );
+            aoSetDrivers.push_back( poDriver->GetDescription() );
+    }
+    std::sort (aoSetDrivers.begin(), aoSetDrivers.end(), StringCISortFunction);
+    for( size_t i = 0; i < aoSetDrivers.size(); i++ )
+    {
+        printf( "     -f \"%s\"\n", aoSetDrivers[i].c_str() );
     }
 
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
