@@ -31,6 +31,7 @@
 #include <iostream>
 #include "cadlayer.h"
 #include "cadfile.h"
+#include <cassert>
 
 CADLayer::CADLayer(CADFile * const file) : frozen(false), on(true),
     frozenByDefault(false), locked(false), plotting(false), lineWeight(1),
@@ -141,49 +142,70 @@ void CADLayer::setHandle(long value)
 
 void CADLayer::addHandle(long handle, CADObject::ObjectType type)
 {
-    if(isGeometryType (type))
+#ifdef _DEBUG
+    cout << "addHandle: " << handle << " type: " << type << endl;
+#endif //_DEBUG
+    if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
-        {
-            unique_ptr< CADObject > geometry( pCADFile->getObject ( handle, false ) );
-            if ( geometry.get() == nullptr ) return;
+        unique_ptr< CADObject > geometry( pCADFile->getObject ( handle, false ) );
 
-            switch( geometry->getType () )
-            {
-                case CADObject::ATTRIB:
-                {
-                    auto attrib = ( CADAttribObject* ) geometry.get();
-                    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
-                    {
-                        if ( i->first == attrib->stChed.hOwner.getAsLong () )
-                        {
-                            i->second.insert ( make_pair ( attrib->sTag, handle ) );
-                            return;
-                        }
-                    }
-                    break;
-                }
+        if(addAttribute(geometry.get()))
+            return;
+    }
 
-                case CADObject::ATTDEF:
-                {
-                    auto attrib = ( CADAttdefObject* ) geometry.get();
-                    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
-                    {
-                        if ( i->first == attrib->stChed.hOwner.getAsLong () )
-                        {
-                            i->second.insert ( make_pair( attrib->sTag, handle ) );
-                            return;
-                        }
-                    }
-                    break;
-                }
+    if( type == CADObject::INSERT){
+        // TODO: transform insert to block of objects (do we need to transform
+        // coordinates according to insert point)?
+        unique_ptr< CADObject > insert( pCADFile->getObject ( handle, false ) );
+        CADInsertObject *pInsert = static_cast<CADInsertObject *>(insert.get ());
+        if(nullptr != pInsert){
+            unique_ptr< CADObject > blockHeader(
+                        pCADFile->getObject (
+                            pInsert->hBlockHeader.getAsLong (), false ));
+            CADBlockHeaderObject *pBlockHeader =
+                    static_cast<CADBlockHeaderObject *>(blockHeader.get ());
+            if(nullptr != pBlockHeader){
+#ifdef _DEBUG
+               if(pBlockHeader->bBlkisXRef){
+                   assert(0);
+               }
+#endif //_DEBUG
+               for(CADHandle entHandle : pBlockHeader->hEntities){
+                   unique_ptr< CADObject > entity(
+                               pCADFile->getObject ( entHandle.getAsLong (),
+                                                     false ) );
+                   if(nullptr == entity)
+                       continue;
+                   addHandle(entHandle.getAsLong (), entity->getType ());
+                   // add shift/scale/rotate to transform map
+                   transformations[entHandle.getAsLong ()] =
+                        {pInsert->vertInsertionPoint,
+                         pInsert->vertScales,
+                         pInsert->dfRotation};
+               }
             }
-        }
 
+            // TODO: what todo with attributes of insertion?
+            //for (CADHandle attr : pInsert->hAtrribs) {
+            //    addHandle(attr.getAsLong (), CADObject::ATTRIB);
+            //}
+        }
+        return;
+    }
+
+    if( type == CADObject::BLOCK || type == CADObject::IMAGE  ||
+            type == CADObject::IMAGEDEF || type == CADObject::IMAGEDEFREACTOR) {
+#ifdef _DEBUG
+        assert(0);
+#endif //_DEBUG
+    }
+
+    if(isCommonEntityType (type))
+    {
         geometryHandles.push_back( handle );
         if( geometryType == -2 ) // if not inited set type for first geometry
             geometryType = type;
-        else if( geometryType != type ) // if type differs from previous geometry this is geometry bag
+        else if( geometryType != type ) // if type differs from previous geometry this is geometry bag (geometry type any)
             geometryType = -1;
     }
 }
@@ -195,5 +217,24 @@ size_t CADLayer::getGeometryCount() const
 
 CADGeometry *CADLayer::getGeometry(size_t index)
 {
+    // TODO: transform geometry if geometryHandles[index] is in transformations
     return pCADFile->getGeometry(geometryHandles[index]);
+}
+
+bool CADLayer::addAttribute(const CADObject *pObject)
+{
+    if(nullptr == pObject)
+        return true;
+
+    auto attrib = static_cast<const CADAttribObject*>(pObject);
+    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
+    {
+        if ( i->first == attrib->stChed.hOwner.getAsLong () )
+        {
+            i->second.insert ( make_pair( attrib->sTag, handle ) );
+            return true;
+        }
+    }
+
+    return false;
 }

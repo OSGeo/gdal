@@ -81,6 +81,7 @@ public:
     DWGFileR2000(CADFileIO* poFileIO);
     virtual ~DWGFileR2000();
 
+    string getESRISpatialRef() override;
 protected:
     virtual int readSectionLocator() override;
     virtual int readHeader(enum OpenOptions eOptions) override;
@@ -89,6 +90,7 @@ protected:
 
     CADObject * getObject(long index, bool bHandlesOnly = false) override;
     CADGeometry * getGeometry(long index) override;
+
 protected:
     CADBlockObject *getBlock(long dObjectSize, CADCommonED stCommonEntityData,
                              const char *pabyInput, size_t &nBitOffsetFromStart);
@@ -130,9 +132,14 @@ protected:
     CADEntityObject *getEntity(int dObjectType, long dObjectSize,
                                CADCommonED stCommonEntityData,
                                const char *pabyInput, size_t &nBitOffsetFromStart);
+    CADInsertObject *getInsert(int dObjectType, long dObjectSize,
+                               CADCommonED stCommonEntityData,
+                               const char *pabyInput, size_t &nBitOffsetFromStart);
     CADDictionaryObject *getDictionary(long dObjectSize,
                                const char *pabyInput, size_t &nBitOffsetFromStart);
-    CADLayerObject *getLayer(long dObjectSize,
+    CADXRecordObject *getXRecord(long dObjectSize,
+                                const char *pabyInput, size_t &nBitOffsetFromStart);
+    CADLayerObject *getLayerObject(long dObjectSize,
                                const char *pabyInput, size_t &nBitOffsetFromStart);
     CADLayerControlObject *getLayerControl(long dObjectSize,
                                const char *pabyInput, size_t &nBitOffsetFromStart);
@@ -169,6 +176,8 @@ protected:
     CADImageDefReactorObject *getImageDefReactor(long dObjectSize,
                                                  const char *pabyInput,
                                                  size_t &nBitOffsetFromStart);
+    void fillCommonEntityHandleData(CADEntityObject *pEnt, const char *pabyInput,
+                                    size_t &nBitOffsetFromStart);
 protected:
     int imageSeeker;
     std::vector<SectionLocatorRecord> sectionLocatorRecords;

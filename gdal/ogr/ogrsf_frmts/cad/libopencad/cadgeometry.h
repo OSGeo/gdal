@@ -37,9 +37,6 @@
 
 using namespace std;
 
-class CADAttrib;
-class CADAttdef;
-
 /**
  * @brief Base CAD geometry class
  */
@@ -82,16 +79,16 @@ class CADGeometry
     RGBColor getColor() const;
     void setColor(int ACIColorIndex);// TODO: in 2004+ ACI is not the only way to set the color.
 
+    vector< string > getEED();
+    void        setEED( vector< string > eed );
+
     virtual void print () const = 0;
 
-    void addAttribute( CADAttdef* );
-    void addAttribute( CADAttrib* );
-    map< string, CADAttdef> getAttributes();
 protected:
+    vector< string >  asEED;
     enum GeometryType geometryType;
     double          thickness;
     RGBColor        geometry_color;
-    map< string, CADAttdef> mapstAttributes;
 };
 
 /**
@@ -301,9 +298,9 @@ protected:
     double fitTollerance;
     long degree;
 
-    std::vector < double > ctrlPointsWeight;
-    std::vector < CADVector > avertCtrlPoints;
-    std::vector < CADVector > averFitPoints;
+    vector < double > ctrlPointsWeight;
+    vector < CADVector > avertCtrlPoints;
+    vector < CADVector > averFitPoints;
 };
 
 /**
@@ -544,8 +541,8 @@ protected:
 //class EXTERN LineType
 //{
 //public:
-//    std::string sEntryName;
-//    std::string sDescription;
+//    string sEntryName;
+//    string sDescription;
 //    double dfPatternLen;
 //    char dAlignment;
 //    char nNumDashes;
@@ -559,8 +556,8 @@ protected:
 //        double dfRotation;
 //        short dShapeflag;
 //    };
-//    std::vector < char > abyTextArea; // TODO: what is it?
-//    std::vector < CADHandle > hShapefiles; // TODO: one for each dash?
+//    vector < char > abyTextArea; // TODO: what is it?
+//    vector < CADHandle > hShapefiles; // TODO: one for each dash?
 //};
 
 //class EXTERN Block
@@ -571,11 +568,11 @@ protected:
 //        pstCADFile_m = pCADFile;
 //    }
 //
-//    std::string sBlockName;
+//    string sBlockName;
 //
 //    CADFile * pstCADFile_m;
 //
-//    std::vector < std::pair < long long, short > > astAttachedGeometries;
+//    vector < pair < long long, short > > astAttachedGeometries;
 //};
 
 

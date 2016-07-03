@@ -33,6 +33,7 @@
 #include "opencad_api.h"
 
 #include <memory>
+#include <cassert>
 
 using namespace std;
 
@@ -71,12 +72,14 @@ CADLayer& CADTables::getLayer(size_t index)
     return layers[index];
 }
 
+CADHandle CADTables::getTableHandle ( enum TableType type )
+{
+    // FIXME: need to add try/catch to prevent crashes on not found elem.
+    return tableMap[type];
+}
+
 int CADTables::readLayersTable( CADFile  * const file, long index)
 {
-    auto it = tableMap.find (BlockRecordModelSpace);
-    if(it == tableMap.end ())
-        return CADErrorCodes::TABLE_READ_FAILED;
-
     // Reading Layer Control obj, and layers.
     unique_ptr<CADLayerControlObject> layerControl(
                 static_cast<CADLayerControlObject*>(file->getObject (index)));
@@ -89,7 +92,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
         {
             CADLayer layer(file);
 
-            //TODO: store objLayer in CADLayer or get propertis
+            // Init CADLayer from objLayer properties
             unique_ptr<CADLayerObject> objLayer(
                         static_cast<CADLayerObject*>(file->getObject (
                                         layerControl->hLayers[i].getAsLong ())));
@@ -108,6 +111,10 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
         }
     }
 
+    auto it = tableMap.find (BlockRecordModelSpace);
+    if(it == tableMap.end ())
+        return CADErrorCodes::TABLE_READ_FAILED;
+
     unique_ptr<CADBlockHeaderObject> pstModelSpace (
             static_cast<CADBlockHeaderObject *>(file->getObject (
                                                     it->second.getAsLong ())));
@@ -117,25 +124,37 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
     while ( true )
     {
         unique_ptr<CADEntityObject> ent( static_cast<CADEntityObject *>(
-                                          file->getObject (dCurrentEntHandle, true))); // true = read CED && handles only
+                                          file->getObject (dCurrentEntHandle,
+                                                           true))); // true = read CED && handles only
 
         /* TODO: this check is excessive, but if something goes wrong way -
          * some part of geometries will be parsed. */
-        if ( ent == nullptr )
-            break;
-        fillLayer(ent.get ());
+        if ( ent != nullptr ) {
+            fillLayer(ent.get ());
 
-        if ( ent->stCed.bNoLinks )
-            ++dCurrentEntHandle;
-        else
-            dCurrentEntHandle = ent->stChed.hNextEntity.getAsLong (
-                        ent->stCed.hObjectHandle);
+            if ( ent->stCed.bNoLinks )
+                ++dCurrentEntHandle;
+            else
+                dCurrentEntHandle = ent->stChed.hNextEntity.getAsLong (
+                            ent->stCed.hObjectHandle);
+        }
+        else{
+#ifdef _DEBUG
+            assert(0);
+#endif //_DEBUG
+        }
 
         if ( dCurrentEntHandle == dLastEntHandle )
         {
             ent.reset (static_cast<CADEntityObject *>(
                            file->getObject (dCurrentEntHandle, true) ) );
-            fillLayer(ent.get ());
+            if(nullptr != ent)
+                fillLayer(ent.get ());
+            else{
+    #ifdef _DEBUG
+                assert(0);
+    #endif //_DEBUG
+            }
             break;
         }
     }

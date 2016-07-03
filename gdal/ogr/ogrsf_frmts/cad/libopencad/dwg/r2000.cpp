@@ -550,7 +550,6 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
     CADHandle stNamedObjectsDict = ReadHANDLE (pabyBuf, nBitOffsetFromStart);
     tables.addTable (CADTables::NamedObjectsDict, stNamedObjectsDict);
 
-
     if(eOptions == OpenOptions::READ_ALL)
     {
         header.addValue(CADHeader::TSTACKALIGN, ReadBITSHORT (pabyBuf,
@@ -683,7 +682,7 @@ int DWGFileR2000::readClasses (enum OpenOptions eOptions)
 
         while ( ( nBitOffsetFromStart / 8 ) + 1 < dSectionSize )
         {
-            struct CADClass stClass;
+            CADClass stClass;
             stClass.dClassNum = ReadBITSHORT (pabySectionContent,
                                               nBitOffsetFromStart);
             stClass.dProxyCapFlag = ReadBITSHORT (pabySectionContent,
@@ -800,7 +799,8 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
     size_t nSectionSize = dObjectSize + nBitOffsetFromStart/8 + 2;
-    char * pabySectionContent = new char[nSectionSize + 4];
+    unique_ptr<char[]> sectionContentPtr(new char[nSectionSize + 4]);
+    char* pabySectionContent = sectionContentPtr.get ();
     fileIO->Seek (objectsMap[index], CADFileIO::SeekOrigin::BEG);
     fileIO->Read (pabySectionContent, nSectionSize);
 
@@ -808,10 +808,23 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     dObjectSize = ReadMSHORT (pabySectionContent, nBitOffsetFromStart);
     short dObjectType = ReadBITSHORT (pabySectionContent, nBitOffsetFromStart);
 
+    if(dObjectType >= 500){
+        CADClass cadClass = classes.getClassByNum (dObjectType);
+        if(cadClass.sCppClassName == "AcDbRasterImage"){
+            dObjectType = CADObject::IMAGE;
+        }
+        else if(cadClass.sCppClassName == "AcDbRasterImageDef"){
+            dObjectType = CADObject::IMAGEDEF;
+        }
+        else if(cadClass.sCppClassName == "AcDbRasterImageDefReactor"){
+            dObjectType = CADObject::IMAGEDEFREACTOR;
+        }
+    }
+
     // Entities handling
-    if ( isGeometryType(dObjectType) )
-        {
-        struct CADCommonED stCommonEntityData; // common for all entities ofc.
+    if ( isCommonEntityType(dObjectType) )
+    {
+        struct CADCommonED stCommonEntityData; // common for all entities
 
         stCommonEntityData.nObjectSizeInBits = ReadRAWLONG (pabySectionContent,
                                                             nBitOffsetFromStart);
@@ -838,6 +851,13 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
 
         stCommonEntityData.bGraphicsPresented = ReadBIT (pabySectionContent,
                                                          nBitOffsetFromStart);
+        if(stCommonEntityData.bGraphicsPresented){
+            size_t nGraphicsDataSize = static_cast<size_t>(ReadRAWLONG (
+                                                    pabySectionContent,
+                                                    nBitOffsetFromStart));
+            // skip read graphics data
+            nBitOffsetFromStart += nGraphicsDataSize * 8;
+        }
         stCommonEntityData.bbEntMode = Read2B (pabySectionContent,
                                                nBitOffsetFromStart);
         stCommonEntityData.nNumReactors = ReadBITLONG (pabySectionContent,
@@ -969,6 +989,10 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
             return getDimension (dObjectType, dObjectSize, stCommonEntityData,
                                    pabySectionContent, nBitOffsetFromStart);
 
+        case CADObject::INSERT:
+            return getInsert(dObjectType, dObjectSize, stCommonEntityData,
+                             pabySectionContent, nBitOffsetFromStart);
+
         default:
             return getEntity(dObjectType, dObjectSize, stCommonEntityData,
                              pabySectionContent, nBitOffsetFromStart);
@@ -983,7 +1007,7 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
                                  nBitOffsetFromStart);
 
         case CADObject::LAYER:
-            return getLayer(dObjectSize, pabySectionContent,
+            return getLayerObject(dObjectSize, pabySectionContent,
                             nBitOffsetFromStart);
 
         case CADObject::LAYER_CONTROL_OBJ:
@@ -1013,6 +1037,10 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
         case CADObject::IMAGEDEFREACTOR:
             return getImageDefReactor (dObjectSize, pabySectionContent,
                                        nBitOffsetFromStart);
+
+        case CADObject::XRECORD:
+            return getXRecord (dObjectSize, pabySectionContent,
+                                nBitOffsetFromStart);
             }
         }
 
@@ -1021,10 +1049,122 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
 
 CADGeometry *DWGFileR2000::getGeometry(long index)
 {
-    unique_ptr<CADObject> readedObject( getObject(index) );
+    unique_ptr<CADEntityObject> readedObject( ( CADEntityObject* ) getObject(index) );
 
     if(nullptr == readedObject)
         return nullptr;
+
+    // Casting object's EED to a vector of strings
+    vector< string > asEED;
+    for( auto citer = readedObject->stCed.aEED.cbegin();
+         citer != readedObject->stCed.aEED.cend(); ++citer )
+    {
+        string sEED = "";
+        // Detect the type of EED entity
+        switch(citer->acData[0])
+        {
+            case 0: // string
+            {
+                unsigned char nStrSize = citer->acData[1];
+                // +2 = skip CodePage, no idea how to use it anyway
+                for( size_t i = 0; i < nStrSize; ++i )
+                {
+                    sEED += citer->acData[i + 4];
+                }
+                break;
+            }
+            case 1: // invalid
+            {
+                DebugMsg("Error: EED obj type is 1, error in R2000::getGeometry()");
+                break;
+            }
+            case 2: // { or }
+            {
+                sEED += citer->acData[1] == 0 ? '{' : '}';
+                break;
+            }
+            case 3: // layer table ref
+            {
+                // FIXME: get CADHandle and return getAsLong() result.
+                sEED += "Layer table ref (handle):";
+                for( size_t i = 0; i < 8; ++i )
+                {
+                    sEED += citer->acData[i+1];
+                }
+                break;
+            }
+            case 4: // binary chunk
+            {
+                unsigned char nChunkSize = citer->acData[1];
+                sEED += "Binary chunk (chars):";
+                for( size_t i = 0; i < nChunkSize; ++i )
+                {
+                    sEED += citer->acData[i + 2];
+                }
+                break;
+            }
+            case 5: // entity handle ref
+            {
+                // FIXME: get CADHandle and return getAsLong() result.
+                sEED += "Entity handle ref (handle):";
+                for( size_t i = 0; i < 8; ++i )
+                {
+                    sEED += citer->acData[i+1];
+                }
+                break;
+            }
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            {
+                sEED += "Point: {";
+                double dfX = 0, dfY = 0, dfZ = 0;
+                memcpy( &dfX, citer->acData.data() + 1, 8);
+                memcpy( &dfY, citer->acData.data() + 9, 8);
+                memcpy( &dfZ, citer->acData.data() + 17, 8);
+                sEED += to_string( dfX );
+                sEED += ';';
+                sEED += to_string( dfY );
+                sEED += ';';
+                sEED += to_string( dfZ );
+                sEED += '}';
+                break;
+            }
+            case 40:
+            case 41:
+            case 42:
+            {
+                sEED += "Double:";
+                double dfVal = 0;
+                memcpy( &dfVal, citer->acData.data() + 1, 8);
+                sEED += to_string( dfVal );
+                break;
+            }
+            case 70:
+            {
+                sEED += "Short:";
+                short dVal = 0;
+                memcpy( &dVal, citer->acData.data() + 1, 2 );
+                sEED += to_string( dVal );
+                break;
+            }
+            case 71:
+            {
+                sEED += "Long Int:";
+                long dVal = 0;
+                memcpy( &dVal, citer->acData.data() + 1, 4 );
+                sEED += to_string( dVal );
+                break;
+            }
+            default:
+            {
+                DebugMsg("Error in parsing geometry EED: undefined typecode: %d",
+                         (int)citer->acData[0]);
+            }
+        }
+        asEED.emplace_back( sEED );
+    }
 
     switch ( readedObject->getType() )
     {
@@ -1041,6 +1181,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         arc->setThickness(cadArc->dfThickness);
         arc->setStartingAngle (cadArc->dfStartAngle);
         arc->setEndingAngle (cadArc->dfEndAngle);
+        arc->setEED( asEED );
 
         return arc;
     }
@@ -1056,6 +1197,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         point->setExtrusion (cadPoint->vectExtrusion);
         point->setXAxisAng (cadPoint->dfXAxisAng);
         point->setThickness(cadPoint->dfThickness);
+        point->setEED( asEED );
 
         return point;
     }
@@ -1067,6 +1209,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
                     readedObject.get ());
 
         polyline->setColor (cadPolyline3D->stCed.nCMColor);
+        polyline->setEED( asEED );
         // TODO: code can be much simplified if CADHandle will be used.
         // to do so, == and ++ operators should be implemented.
         unique_ptr<CADVertex3DObject> vertex;
@@ -1116,6 +1259,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
             lwPolyline->addVertex (vertex);
         lwPolyline->setVectExtrusion (cadlwPolyline->vectExtrusion);
         lwPolyline->setWidths (cadlwPolyline->astWidths);
+        lwPolyline->setEED( asEED );
 
         return lwPolyline;
     }
@@ -1131,6 +1275,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         circle->setExtrusion (cadCircle->vectExtrusion);
         circle->setRadius (cadCircle->dfRadius);
         circle->setThickness(cadCircle->dfThickness);
+        circle->setEED( asEED );
 
         return circle;
     }
@@ -1153,6 +1298,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         attrib->setTag (cadAttrib->sTag);
         attrib->setTextValue (cadAttrib->sTextValue);
         attrib->setThickness (cadAttrib->dfThickness);
+        attrib->setEED( asEED );
 
         return attrib;
     }
@@ -1175,6 +1321,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         attdef->setTag (cadAttrib->sTag);
         attdef->setTextValue (cadAttrib->sTextValue);
         attdef->setThickness (cadAttrib->dfThickness);
+        attdef->setEED( asEED );
 
         return attdef;
     }
@@ -1191,6 +1338,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         ellipse->setAxisRatio (cadEllipse->dfAxisRatio);
         ellipse->setEndingAngle (cadEllipse->dfEndAngle);
         ellipse->setStartingAngle (cadEllipse->dfBegAngle);
+        ellipse->setEED( asEED );
 
         return ellipse;
     }
@@ -1205,6 +1353,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
 
         CADLine * line = new CADLine(ptBeg, ptEnd);
         line->setColor (cadLine->stCed.nCMColor);
+        line->setEED( asEED );
+
         return line;
     }
 
@@ -1217,6 +1367,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         ray->setColor (cadRay->stCed.nCMColor);
         ray->setVectVector (cadRay->vectVector);
         ray->setPosition (cadRay->vertPosition);
+        ray->setEED( asEED );
 
         return ray;
     }
@@ -1231,6 +1382,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         spline->setColor (cadSpline->stCed.nCMColor);
         spline->setScenario (cadSpline->dScenario);
         spline->setDegree( cadSpline->dDegree );
+        spline->setEED( asEED );
         if ( spline->getScenario() == 2 )
         {
             spline->setFitTollerance (cadSpline->dfFitTol);
@@ -1266,6 +1418,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         text->setObliqueAngle (cadText->dfObliqueAng);
         text->setThickness(cadText->dfThickness);
         text->setHeight (cadText->dfElevation);
+        text->setEED( asEED );
 
         return text;
     }
@@ -1282,6 +1435,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         for(const CADVector& corner : cadSolid->avertCorners)
             solid->addAverCorner (corner) ;
         solid->setExtrusion (cadSolid->vectExtrusion);
+        solid->setEED( asEED );
 
         return solid;
     }
@@ -1319,6 +1473,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         {
             image->addClippingPoint(clipPt);
         }
+        image->setEED( asEED );
+
         return image;
     }
 
@@ -1333,6 +1489,8 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         mline->setOpened (cadmLine->dOpenClosed == 1 ? true : false);
         for (  const CADMLineVertex &vertex : cadmLine->avertVertexes )
             mline->addVertex (vertex.vertPosition);
+        mline->setEED( asEED );
+
         return mline;
     }
 
@@ -1354,7 +1512,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         mtext->setRectWidth(cadmText->dfRectWidth);
         mtext->setExtents(cadmText->dfExtents);
         mtext->setExtentsWidth(cadmText->dfExtentsWidth);
-
+        mtext->setEED( asEED );
 
         return mtext;
     }
@@ -1367,6 +1525,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         // TODO: code can be much simplified if CADHandle will be used.
         // to do so, == and ++ operators should be implemented.
         polyline->setColor (cadpolyPface->stCed.nCMColor);
+        polyline->setEED( asEED );
         unique_ptr<CADVertexPFaceObject> vertex;
         auto dCurrentEntHandle = cadpolyPface->hVertexes[0].getAsLong ();
         auto dLastEntHandle    = cadpolyPface->hVertexes[1].getAsLong ();
@@ -1416,6 +1575,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         xline->setColor (cadxLine->stCed.nCMColor);
         xline->setVectVector (cadxLine->vectVector);
         xline->setPosition (cadxLine->vertPosition);
+        xline->setEED( asEED );
 
         return xline;
     }
@@ -1429,6 +1589,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         for(const CADVector& corner : cad3DFace->avertCorners)
             face->addCorner (corner);
         face->setInvisFlags (cad3DFace->dInvisFlags);
+        face->setEED( asEED );
 
         return face;
     }
@@ -1454,36 +1615,15 @@ CADBlockObject *DWGFileR2000::getBlock(long dObjectSize,
 
     pBlock->sBlockName = ReadTV (pabyInput, nBitOffsetFromStart);
 
-    if (pBlock->stCed.bbEntMode == 0 )
-        pBlock->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(pBlock, pabyInput, nBitOffsetFromStart);
 
-    for ( long i = 0; i < pBlock->stCed.nNumReactors; ++i )
-        pBlock->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                        nBitOffsetFromStart));
-
-    pBlock->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !pBlock->stCed.bNoLinks )
-                {
-        pBlock->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        pBlock->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                }
-
-    pBlock->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( pBlock->stCed.bbLTypeFlags == 0x03 )
-        pBlock->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( pBlock->stCed.bbPlotStyleFlags == 0x03 )
-        pBlock->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     pBlock->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
 
 #ifdef _DEBUG
-                if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
-                    DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
-                              __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
+    if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
+        DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
+            __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
 #endif // _DEBUG
 
     return pBlock;
@@ -1515,36 +1655,15 @@ CADEllipseObject *DWGFileR2000::getEllipse(long dObjectSize,
     ellipse->dfBegAngle = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
     ellipse->dfEndAngle = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-    if ( ellipse->stCed.bbEntMode == 0 )
-        ellipse->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(ellipse, pabyInput, nBitOffsetFromStart);
 
-    for ( long i = 0; i < ellipse->stCed.nNumReactors; ++i )
-        ellipse->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                         nBitOffsetFromStart));
-
-    ellipse->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !ellipse->stCed.bNoLinks )
-                {
-        ellipse->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        ellipse->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                }
-
-    ellipse->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( ellipse->stCed.bbLTypeFlags == 0x03 )
-        ellipse->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( ellipse->stCed.bbPlotStyleFlags == 0x03 )
-        ellipse->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     ellipse->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
 
 #ifdef _DEBUG
-                if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
-                    DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
-                              __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
+    if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
+        DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
+            __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
 #endif // _DEBUG
 
     return ellipse;
@@ -1583,30 +1702,10 @@ CADSolidObject *DWGFileR2000::getSolid(long dObjectSize,
         solid->vectExtrusion = vectExtrusion;
     }
 
-    if ( solid->stCed.bbEntMode == 0 )
-        solid->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
-    for ( long i = 0; i < solid->stCed.nNumReactors; ++i )
-        solid->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                       nBitOffsetFromStart));
+    fillCommonEntityHandleData(solid, pabyInput, nBitOffsetFromStart);
 
-    solid->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !solid->stCed.bNoLinks )
-                {
-        solid->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        solid->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                }
-
-    solid->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( solid->stCed.bbLTypeFlags == 0x03 )
-        solid->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( solid->stCed.bbPlotStyleFlags == 0x03 )
-        solid->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     solid->setCRC( ReadRAWSHORT (pabyInput, nBitOffsetFromStart) );
 
 #ifdef _DEBUG
@@ -1648,28 +1747,7 @@ CADPointObject *DWGFileR2000::getPoint(long dObjectSize,
 
     point->dfXAxisAng = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-    if ( point->stCed.bbEntMode == 0 )
-        point->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < point->stCed.nNumReactors; ++i )
-        point->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                       nBitOffsetFromStart));
-
-    point->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !point->stCed.bNoLinks )
-    {
-        point->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        point->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    point->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( point->stCed.bbLTypeFlags == 0x03 )
-        point->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( point->stCed.bbPlotStyleFlags == 0x03 )
-        point->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(point, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     point->setCRC( ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -1696,28 +1774,7 @@ CADPolyline3DObject *DWGFileR2000::getPolyLine3D(long dObjectSize,
     polyline->SplinedFlags = ReadCHAR (pabyInput, nBitOffsetFromStart);
     polyline->ClosedFlags = ReadCHAR (pabyInput, nBitOffsetFromStart);
 
-    if ( polyline->stCed.bbEntMode == 0 )
-        polyline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < polyline->stCed.nNumReactors; ++i )
-        polyline->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                          nBitOffsetFromStart));
-
-    polyline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !polyline->stCed.bNoLinks )
-    {
-        polyline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        polyline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    polyline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbLTypeFlags == 0x03 )
-        polyline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbPlotStyleFlags == 0x03 )
-        polyline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(polyline, pabyInput, nBitOffsetFromStart);
 
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // 1st vertex
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // last vertex
@@ -1753,29 +1810,9 @@ CADRayObject *DWGFileR2000::getRay(long dObjectSize,
     CADVector vectVector = ReadVector(pabyInput, nBitOffsetFromStart);
     ray->vectVector = vectVector;
 
-    if ( ray->stCed.bbEntMode == 0 )
-        ray->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(ray, pabyInput, nBitOffsetFromStart);
 
-    for ( long i = 0; i < ray->stCed.nNumReactors; ++i )
-        ray->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    ray->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !ray->stCed.bNoLinks )
-    {
-        ray->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        ray->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    ray->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( ray->stCed.bbLTypeFlags == 0x03 )
-        ray->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( ray->stCed.bbPlotStyleFlags == 0x03 )
-        ray->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     ray->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
 
 #ifdef _DEBUG
@@ -1804,27 +1841,7 @@ CADXLineObject *DWGFileR2000::getXLine(long dObjectSize,
     CADVector vectVector = ReadVector(pabyInput, nBitOffsetFromStart);
     xline->vectVector = vectVector;
 
-    if ( xline->stCed.bbEntMode == 0 )
-        xline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < xline->stCed.nNumReactors; ++i )
-        xline->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    xline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !xline->stCed.bNoLinks )
-    {
-        xline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        xline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    xline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( xline->stCed.bbLTypeFlags == 0x03 )
-        xline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( xline->stCed.bbPlotStyleFlags == 0x03 )
-        xline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(xline, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     xline->setCRC( ReadRAWSHORT (pabyInput, nBitOffsetFromStart) );
@@ -1881,31 +1898,7 @@ CADLineObject *DWGFileR2000::getLine(long dObjectSize,
         line->vectExtrusion = vectExtrusion;
     }
 
-    if ( line->stCed.bbEntMode == 0 )
-        line->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < line->stCed.nNumReactors; ++i )
-        line->stChed.hReactors.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) );
-
-    line->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !line->stCed.bNoLinks )
-    {
-        line->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        line->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    line->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( line->stCed.bbLTypeFlags == 0x03 )
-    {
-        line->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( line->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        line->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(line, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     line->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -1981,27 +1974,7 @@ CADTextObject *DWGFileR2000::getText(long dObjectSize,
     if ( !( text->DataFlags & 0x80 ) )
         text->dVertAlign = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
 
-    if ( text->stCed.bbEntMode == 0 )
-        text->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < text->stCed.nNumReactors; ++i )
-        text->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    text->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !text->stCed.bNoLinks )
-    {
-        text->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        text->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    text->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( text->stCed.bbLTypeFlags == 0x03 )
-        text->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( text->stCed.bbPlotStyleFlags == 0x03 )
-        text->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(text, pabyInput, nBitOffsetFromStart);
 
     text->hStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
@@ -2032,28 +2005,7 @@ CADVertex3DObject *DWGFileR2000::getVertex3D(long dObjectSize,
     CADVector vertPosition = ReadVector(pabyInput, nBitOffsetFromStart);;
     vertex->vertPosition = vertPosition;
 
-    if ( vertex->stCed.bbEntMode == 0 )
-        vertex->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < vertex->stCed.nNumReactors; ++i )
-        vertex->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                        nBitOffsetFromStart));
-
-    vertex->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !vertex->stCed.bNoLinks )
-    {
-        vertex->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        vertex->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    vertex->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbLTypeFlags == 0x03 )
-        vertex->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbPlotStyleFlags == 0x03 )
-        vertex->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(vertex, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     vertex->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2092,31 +2044,7 @@ CADCircleObject *DWGFileR2000::getCircle(long dObjectSize,
         circle->vectExtrusion = vectExtrusion;
     }
 
-    if ( circle->stCed.bbEntMode == 0 )
-        circle->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < circle->stCed.nNumReactors; ++i )
-        circle->stChed.hReactors.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) );
-
-    circle->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !circle->stCed.bNoLinks )
-    {
-        circle->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        circle->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    circle->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( circle->stCed.bbLTypeFlags == 0x03 )
-    {
-        circle->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( circle->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        circle->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(circle, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     circle->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2139,27 +2067,7 @@ CADEndblkObject *DWGFileR2000::getEndBlock(long dObjectSize,
     endblk->setSize(dObjectSize);
     endblk->stCed = stCommonEntityData;
 
-    if ( endblk->stCed.bbEntMode == 0 )
-        endblk->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < endblk->stCed.nNumReactors; ++i )
-        endblk->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    endblk->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !endblk->stCed.bNoLinks )
-    {
-        endblk->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        endblk->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    endblk->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( endblk->stCed.bbLTypeFlags == 0x03 )
-        endblk->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( endblk->stCed.bbPlotStyleFlags == 0x03 )
-        endblk->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(endblk, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     endblk->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2203,27 +2111,7 @@ CADPolyline2DObject *DWGFileR2000::getPolyline2D(long dObjectSize,
         polyline->vectExtrusion = vectExtrusion;
     }
 
-    if ( polyline->stCed.bbEntMode == 0 )
-        polyline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < polyline->stCed.nNumReactors; ++i )
-        polyline->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    polyline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !polyline->stCed.bNoLinks )
-    {
-        polyline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        polyline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    polyline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbLTypeFlags == 0x03 )
-        polyline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbPlotStyleFlags == 0x03 )
-        polyline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(polyline, pabyInput, nBitOffsetFromStart);
 
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // 1st vertex
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // last vertex
@@ -2301,36 +2189,17 @@ CADAttribObject *DWGFileR2000::getAttributes(long dObjectSize,
     attrib->nFieldLength = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
     attrib->nFlags = ReadCHAR (pabyInput, nBitOffsetFromStart);
 
-    if (attrib->stCed.bbEntMode == 0 )
-        attrib->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < attrib->stCed.nNumReactors; ++i )
-        attrib->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    attrib->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !attrib->stCed.bNoLinks )
-    {
-        attrib->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        attrib->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    attrib->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( attrib->stCed.bbLTypeFlags == 0x03 )
-        attrib->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    if ( attrib->stCed.bbPlotStyleFlags == 0x03 )
-        attrib->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(attrib, pabyInput, nBitOffsetFromStart);
 
     attrib->hStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
-                nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     attrib->setCRC(ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
 
 #ifdef _DEBUG
     if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
         DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
-                  __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
+            __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
 #endif //_DEBUG
     return attrib;
 }
@@ -2394,26 +2263,7 @@ CADAttdefObject *DWGFileR2000::getAttributesDefn(long dObjectSize,
 
     attdef->sPrompt = ReadTV (pabyInput, nBitOffsetFromStart);
 
-    if (attdef->stCed.bbEntMode == 0 )
-        attdef->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < attdef->stCed.nNumReactors; ++i )
-        attdef->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    attdef->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !attdef->stCed.bNoLinks )
-    {
-        attdef->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        attdef->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    attdef->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( attdef->stCed.bbLTypeFlags == 0x03 )
-        attdef->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    if ( attdef->stCed.bbPlotStyleFlags == 0x03 )
-        attdef->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(attdef, pabyInput, nBitOffsetFromStart);
 
     attdef->hStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
 
@@ -2496,31 +2346,7 @@ CADLWPolylineObject *DWGFileR2000::getLWPolyLine(long dObjectSize,
         polyline->astWidths.push_back ( make_pair ( dfStartWidth, dfEndWidth ) );
     }
 
-    if (polyline->stCed.bbEntMode == 0 )
-        polyline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < polyline->stCed.nNumReactors; ++i )
-        polyline->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    polyline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !polyline->stCed.bNoLinks )
-    {
-        polyline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        polyline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    polyline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbLTypeFlags == 0x03 )
-    {
-        polyline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( polyline->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        polyline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(polyline, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     polyline->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2561,31 +2387,7 @@ CADArcObject *DWGFileR2000::getArc(long dObjectSize,
     arc->dfStartAngle = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
     arc->dfEndAngle   = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-    if (arc->stCed.bbEntMode == 0 )
-        arc->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < arc->stCed.nNumReactors; ++i )
-        arc->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    arc->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !arc->stCed.bNoLinks )
-    {
-        arc->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        arc->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    arc->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( arc->stCed.bbLTypeFlags == 0x03 )
-    {
-        arc->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( arc->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        arc->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(arc, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     arc->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2650,32 +2452,7 @@ CADSplineObject *DWGFileR2000::getSpline(long dObjectSize,
         spline->averFitPoints.push_back ( vertex );
     }
 
-    if (spline->stCed.bbEntMode == 0 )
-        spline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < spline->stCed.nNumReactors; ++i )
-        spline->stChed.hReactors.push_back (
-                    ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    spline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !spline->stCed.bNoLinks )
-    {
-        spline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        spline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    spline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( spline->stCed.bbLTypeFlags == 0x03 )
-    {
-        spline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( spline->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        spline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(spline, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     spline->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2703,31 +2480,7 @@ CADEntityObject *DWGFileR2000::getEntity(int dObjectType,
     nBitOffsetFromStart = static_cast<size_t>(
                 entity->stCed.nObjectSizeInBits + 16);
 
-    if (entity->stCed.bbEntMode == 0 )
-        entity->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < entity->stCed.nNumReactors; ++i )
-        entity->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    entity->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !entity->stCed.bNoLinks )
-    {
-        entity->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        entity->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    entity->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( entity->stCed.bbLTypeFlags == 0x03 )
-    {
-        entity->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( entity->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        entity->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(entity, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     entity->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -2737,6 +2490,62 @@ CADEntityObject *DWGFileR2000::getEntity(int dObjectType,
                   __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
 #endif //_DEBUG
     return entity;
+}
+
+CADInsertObject *DWGFileR2000::getInsert(int dObjectType, long dObjectSize,
+                                         CADCommonED stCommonEntityData,
+                                         const char *pabyInput,
+                                         size_t &nBitOffsetFromStart)
+{
+    CADInsertObject * insert = new CADInsertObject();
+
+    insert->setType (static_cast<CADObject::ObjectType>(dObjectType));
+    insert->setSize (dObjectSize);
+    insert->stCed = stCommonEntityData;
+
+    insert->vertInsertionPoint = ReadVector(pabyInput, nBitOffsetFromStart);
+    unsigned char dataFlags = Read2B(pabyInput, nBitOffsetFromStart);
+    double val41 = 1.0;
+    double val42 = 1.0;
+    double val43 = 1.0;
+    if(dataFlags == 0){
+        val41 = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+        val42 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
+        val43 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
+    }
+    else if(dataFlags == 1){
+        val41 = 1.0;
+        val42 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
+        val43 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
+    }
+    else if(dataFlags == 2){
+        val41 = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+        val42 = val41;
+        val43 = val41;
+    }
+    insert->vertScales = CADVector(val41, val42, val43);
+    insert->dfRotation = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
+    insert->vectExtrusion = ReadVector (pabyInput, nBitOffsetFromStart);
+    insert->bHasAttribs = ReadBIT (pabyInput, nBitOffsetFromStart);
+
+    fillCommonEntityHandleData(insert, pabyInput, nBitOffsetFromStart);
+
+    insert->hBlockHeader = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    if(insert->bHasAttribs){
+        insert->hAtrribs.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
+        insert->hAtrribs.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
+        insert->hSeqend = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    }
+
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    insert->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
+#ifdef _DEBUG
+    if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
+        DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
+                  __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
+#endif //_DEBUG
+
+    return insert;
 }
 
 CADDictionaryObject *DWGFileR2000::getDictionary(long dObjectSize,
@@ -2775,7 +2584,6 @@ CADDictionaryObject *DWGFileR2000::getDictionary(long dObjectSize,
     dictionary->dCloningFlag = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
     dictionary->dHardOwnerFlag = ReadCHAR (pabyInput, nBitOffsetFromStart);
 
-    dictionary->sDictionaryEntryName = ReadTV (pabyInput, nBitOffsetFromStart);
     for ( long i = 0; i < dictionary->nNumItems; ++i )
         dictionary->sItemNames.push_back ( ReadTV (pabyInput,
                                                    nBitOffsetFromStart) );
@@ -2801,7 +2609,7 @@ CADDictionaryObject *DWGFileR2000::getDictionary(long dObjectSize,
     return dictionary;
 }
 
-CADLayerObject *DWGFileR2000::getLayer(long dObjectSize,
+CADLayerObject *DWGFileR2000::getLayerObject(long dObjectSize,
                                        const char *pabyInput,
                                        size_t &nBitOffsetFromStart)
 {
@@ -3250,28 +3058,7 @@ CADPolylinePFaceObject *DWGFileR2000::getPolylinePFace(long dObjectSize,
     polyline->nNumVertexes = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
     polyline->nNumFaces = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
 
-    if ( polyline->stCed.bbEntMode == 0 )
-        polyline->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < polyline->stCed.nNumReactors; ++i )
-        polyline->stChed.hReactors.push_back (
-                    ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    polyline->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !polyline->stCed.bNoLinks )
-    {
-        polyline->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        polyline->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    polyline->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbLTypeFlags == 0x03 )
-        polyline->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( polyline->stCed.bbPlotStyleFlags == 0x03 )
-        polyline->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(polyline, pabyInput, nBitOffsetFromStart);
 
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // 1st vertex
     polyline->hVertexes.push_back ( ReadHANDLE (pabyInput, nBitOffsetFromStart) ); // last vertex
@@ -3340,28 +3127,7 @@ CADImageObject *DWGFileR2000::getImage(long dObjectSize,
         }
     }
 
-    if ( image->stCed.bbEntMode == 0 )
-        image->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < image->stCed.nNumReactors; ++i )
-        image->stChed.hReactors.push_back (
-                    ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    image->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !image->stCed.bNoLinks )
-    {
-        image->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        image->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    image->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( image->stCed.bbLTypeFlags == 0x03 )
-        image->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( image->stCed.bbPlotStyleFlags == 0x03 )
-        image->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(image, pabyInput, nBitOffsetFromStart);
 
     image->hImageDef = ReadHANDLE (pabyInput, nBitOffsetFromStart);
     image->hImageDefReactor = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3415,28 +3181,7 @@ CAD3DFaceObject *DWGFileR2000::get3DFace(long dObjectSize,
     if ( !face->bHasNoFlagInd )
         face->dInvisFlags = ReadBITSHORT (pabyInput, nBitOffsetFromStart);
 
-    if ( face->stCed.bbEntMode == 0 )
-        face->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < face->stCed.nNumReactors; ++i )
-        face->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
-                                                      nBitOffsetFromStart));
-
-    face->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !face->stCed.bNoLinks )
-    {
-        face->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        face->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    face->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( face->stCed.bbLTypeFlags == 0x03 )
-        face->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( face->stCed.bbPlotStyleFlags == 0x03 )
-        face->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(face, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     face->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -3463,27 +3208,7 @@ CADVertexMeshObject *DWGFileR2000::getVertexMesh(long dObjectSize,
     CADVector vertPosition = ReadVector(pabyInput, nBitOffsetFromStart);
     vertex->vertPosition = vertPosition;
 
-    if ( vertex->stCed.bbEntMode == 0 )
-        vertex->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < vertex->stCed.nNumReactors; ++i )
-        vertex->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    vertex->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !vertex->stCed.bNoLinks )
-    {
-        vertex->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        vertex->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    vertex->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbLTypeFlags == 0x03 )
-        vertex->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbPlotStyleFlags == 0x03 )
-        vertex->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(vertex, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     vertex->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -3510,27 +3235,7 @@ CADVertexPFaceObject *DWGFileR2000::getVertexPFace(long dObjectSize,
     CADVector vertPosition = ReadVector(pabyInput, nBitOffsetFromStart);
     vertex->vertPosition = vertPosition;
 
-    if ( vertex->stCed.bbEntMode == 0 )
-        vertex->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < vertex->stCed.nNumReactors; ++i )
-        vertex->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    vertex->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !vertex->stCed.bNoLinks )
-    {
-        vertex->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        vertex->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    vertex->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbLTypeFlags == 0x03 )
-        vertex->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( vertex->stCed.bbPlotStyleFlags == 0x03 )
-        vertex->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    fillCommonEntityHandleData(vertex, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
     vertex->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -3572,31 +3277,7 @@ CADMTextObject *DWGFileR2000::getMText(long dObjectSize,
     text->dLineSpacingFactor = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
     text->bUnknownBit = ReadBIT (pabyInput, nBitOffsetFromStart);
 
-    if (text->stCed.bbEntMode == 0 )
-        text->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    for ( long i = 0; i < text->stCed.nNumReactors; ++i )
-        text->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-    text->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( !text->stCed.bNoLinks )
-    {
-        text->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-        text->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    text->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-    if ( text->stCed.bbLTypeFlags == 0x03 )
-    {
-        text->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
-
-    if ( text->stCed.bbPlotStyleFlags == 0x03 )
-    {
-        text->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    }
+    fillCommonEntityHandleData(text, pabyInput, nBitOffsetFromStart);
 
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     text->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
@@ -3663,32 +3344,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
 
             dimension->Flags2 = ReadCHAR (pabyInput, nBitOffsetFromStart);
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (
-                            ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3723,33 +3379,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
             dimension->dfExtLnRot = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
             dimension->dfDimRot = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner =
-                        ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (
-                            ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3785,34 +3415,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
             dimension->dfExtLnRot =
                     ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner =
-                        ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (
-                            ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary =
-                    ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3848,31 +3451,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
             CADVector vert15pt = ReadVector(pabyInput, nBitOffsetFromStart);
             dimension->vert15pt = vert15pt;
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3911,31 +3490,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
             CADVector vert10pt = ReadVector(pabyInput, nBitOffsetFromStart);
             dimension->vert10pt = vert10pt;
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -3967,32 +3522,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
 
             dimension->dfLeaderLen = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (
-                            ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -4024,31 +3554,7 @@ CADDimensionObject *DWGFileR2000::getDimension(short dObjectType,long dObjectSiz
 
             dimension->dfLeaderLen = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
 
-            if (dimension->stCed.bbEntMode == 0 )
-                dimension->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            for ( long i = 0; i < dimension->stCed.nNumReactors; ++i )
-                dimension->stChed.hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
-
-            dimension->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( !dimension->stCed.bNoLinks )
-            {
-                dimension->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-                dimension->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            dimension->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-
-            if ( dimension->stCed.bbLTypeFlags == 0x03 )
-            {
-                dimension->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
-
-            if ( dimension->stCed.bbPlotStyleFlags == 0x03 )
-            {
-                dimension->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-            }
+            fillCommonEntityHandleData(dimension, pabyInput, nBitOffsetFromStart);
 
             dimension->hDimstyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
             dimension->hAnonymousBlock = ReadHANDLE (pabyInput, nBitOffsetFromStart);
@@ -4170,6 +3676,118 @@ CADImageDefReactorObject *DWGFileR2000::getImageDefReactor(long dObjectSize,
     return imagedefreactor;
 }
 
+CADXRecordObject *DWGFileR2000::getXRecord(long dObjectSize,
+                                           const char *pabyInput,
+                                           size_t &nBitOffsetFromStart)
+
+{
+    CADXRecordObject * xrecord = new CADXRecordObject();
+
+    xrecord->setSize (dObjectSize);
+    xrecord->nObjectSizeInBits = ReadRAWLONG( pabyInput, nBitOffsetFromStart );
+    xrecord->hObjectHandle = ReadHANDLE8BLENGTH( pabyInput, nBitOffsetFromStart );
+
+    short dEEDSize = 0;
+    CADEed dwgEed;
+    while ( (dEEDSize = ReadBITSHORT( pabyInput, nBitOffsetFromStart ) ) != 0 )
+    {
+        dwgEed.dLength = dEEDSize;
+        dwgEed.hApplication = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+        for ( short i = 0; i < dEEDSize; ++i )
+        {
+            dwgEed.acData.push_back( ReadCHAR (pabyInput, nBitOffsetFromStart) );
+        }
+
+        xrecord->aEED.push_back (dwgEed);
+    }
+
+    xrecord->nNumReactors = ReadBITLONG( pabyInput, nBitOffsetFromStart );
+    xrecord->nNumDataBytes = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+
+    for( size_t i = 0; i < xrecord->nNumDataBytes; ++i )
+    {
+        xrecord->abyDataBytes.push_back( ReadCHAR(pabyInput, nBitOffsetFromStart) );
+    }
+
+    xrecord->dCloningFlag = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
+
+    short dIndicatorNumber = ReadRAWSHORT( pabyInput, nBitOffsetFromStart );
+    if( dIndicatorNumber == 1 )
+    {
+        unsigned char nStringSize = ReadCHAR ( pabyInput, nBitOffsetFromStart );
+        char dCodePage   = ReadCHAR ( pabyInput, nBitOffsetFromStart );
+        for ( unsigned char i = 0; i < nStringSize; ++i )
+        {
+            ReadCHAR ( pabyInput, nBitOffsetFromStart );
+        }
+    }
+    else if ( dIndicatorNumber == 70 )
+    {
+        ReadRAWSHORT (pabyInput, nBitOffsetFromStart);
+    }
+    else if ( dIndicatorNumber == 10 )
+    {
+        ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+        ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+        ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+    }
+    else if ( dIndicatorNumber == 40 )
+    {
+        ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
+    }
+
+    xrecord->hParentHandle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    for ( long i = 0; i < xrecord->nNumReactors; ++i )
+        xrecord->hReactors.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart) );
+
+    xrecord->hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    while( nBitOffsetFromStart / 8 < (dObjectSize + 4) )
+    {
+        xrecord->hObjIdHandles.push_back( ReadHANDLE(pabyInput, nBitOffsetFromStart) );
+    }
+
+    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
+    xrecord->setCRC (ReadRAWSHORT (pabyInput, nBitOffsetFromStart));
+#ifdef _DEBUG
+    if ( (nBitOffsetFromStart/8) != (dObjectSize + 4) )
+        DebugMsg ("Assertion failed at %d in %s\nSize difference: %d\n",
+                  __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
+#endif
+
+    return xrecord;
+}
+
+void DWGFileR2000::fillCommonEntityHandleData(CADEntityObject* pEnt,
+                                              const char *pabyInput,
+                                              size_t &nBitOffsetFromStart)
+{
+    if (pEnt->stCed.bbEntMode == 0 )
+        pEnt->stChed.hOwner = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    for ( long i = 0; i < pEnt->stCed.nNumReactors; ++i )
+        pEnt->stChed.hReactors.push_back (ReadHANDLE (pabyInput,
+                                                        nBitOffsetFromStart));
+
+    pEnt->stChed.hXDictionary = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    if ( !pEnt->stCed.bNoLinks )
+    {
+        pEnt->stChed.hPrevEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+        pEnt->stChed.hNextEntity = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+    }
+
+    pEnt->stChed.hLayer = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    if ( pEnt->stCed.bbLTypeFlags == 0x03 )
+        pEnt->stChed.hLType = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+
+    if ( pEnt->stCed.bbPlotStyleFlags == 0x03 )
+        pEnt->stChed.hPlotStyle = ReadHANDLE (pabyInput, nBitOffsetFromStart);
+}
+
 DWGFileR2000::DWGFileR2000(CADFileIO* poFileIO) : CADFile(poFileIO)
 {
     header.addValue(CADHeader::OPENCADVER, CADVersions::DWG_R2000);
@@ -4223,4 +3841,50 @@ int DWGFileR2000::readSectionLocator()
     }
 
     return CADErrorCodes::SUCCESS;
+}
+
+// TODO: code is really bad. Just for test purposes only, will fix later.
+string DWGFileR2000::getESRISpatialRef()
+{
+    unique_ptr< CADDictionaryObject > spoNamedDictObj( ( CADDictionaryObject* )
+                                                               getObject (tables.getTableHandle (CADTables::NamedObjectsDict).getAsLong () ) );
+
+    for( size_t i = 0; i < spoNamedDictObj->sItemNames.size(); ++i )
+    {
+        if ( !strcmp ("ESRI_PRJ", spoNamedDictObj->sItemNames[i].c_str()) )
+        {
+            unique_ptr<CADXRecordObject> spoXRecordObj (
+                    ( CADXRecordObject * ) getObject (spoNamedDictObj->hItemHandles[i].getAsLong ()));
+
+            if( spoXRecordObj.get() == nullptr ) return string("");
+
+            size_t esri_prj_begins = 10000;
+            for( size_t j = 0; j < spoXRecordObj->abyDataBytes.size(); ++j )
+            {
+                if( spoXRecordObj->abyDataBytes[j] == 'G' )
+                {
+                    if( spoXRecordObj->abyDataBytes[j+1] == 'E' )
+                    {
+                        esri_prj_begins = j;
+                        break;
+                    }
+                }
+            }
+
+            if( esri_prj_begins > spoXRecordObj->abyDataBytes.size() )
+            {
+                return string("");
+            }
+
+            string esri_prj;
+            for( size_t j = esri_prj_begins; j < spoXRecordObj->abyDataBytes.size(); ++j )
+            {
+                esri_prj.push_back( spoXRecordObj->abyDataBytes[j] );
+            }
+
+            return esri_prj;
+        }
+    }
+
+    return string("");
 }

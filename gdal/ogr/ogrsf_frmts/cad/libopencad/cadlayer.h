@@ -39,6 +39,12 @@ class CADFile;
 
 using namespace std;
 
+typedef struct _TransformData{
+    CADVector vertInsertionPoint;
+    CADVector vertScales;
+    double dfRotation;
+} CADTransformData;
+
 class OCAD_EXTERN CADLayer
 {
 public:
@@ -79,6 +85,8 @@ public:
     CADGeometry* getGeometry(size_t index);
 
 protected:
+    bool addAttribute(const CADObject* pObject);
+protected:
     string layerName;
     bool frozen;
     bool on;
@@ -93,6 +101,7 @@ protected:
 
     vector<long> geometryHandles;
     vector< pair< long, map< string, long > > > geometryAttributes;
+    map<long, CADTransformData> transformations;
 
     CADFile * const pCADFile;
 };
