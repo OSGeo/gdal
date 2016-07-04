@@ -68,6 +68,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_vrt
     GDALRegister_VRT();
+    GDALRegister_ComplexDerived();
 #endif
 
 #ifdef FRMT_gtiff
