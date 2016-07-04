@@ -166,8 +166,7 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
      proxyDS->Dereference();     
      }
 
-   // TODO: do this earlier ?
-   delete poTmpDS;
+   GDALClose(poTmpDS);
 
    return poDS;
 }
@@ -185,8 +184,8 @@ void GDALRegister_ComplexDerived()
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Complex derived bands" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_sentinel2.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "TODO" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
     poDriver->pfnOpen = ComplexDerivedDataset::Open;
     poDriver->pfnIdentify = ComplexDerivedDataset::Identify;
