@@ -42,6 +42,13 @@ def ogr_ogdi_1():
 
     ogrtest.ogdi_ds = None
 
+    # Skip tests when -fsanitize is used because of memleaks in libogdi
+    if 'TRAVIS_BRANCH' in os.environ and \
+       os.environ['TRAVIS_BRANCH'].find('sanitize') >= 0:
+       print('Skipping because of memory leaks in OGDI')
+       ogrtest.ogdi_drv = None 
+       return 'skip'
+
     try:
         ogrtest.ogdi_drv = ogr.GetDriverByName('OGDI')
     except:
