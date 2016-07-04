@@ -29,7 +29,7 @@
 #include "ogr_cad.h"
 #include "cpl_conv.h"
 
-OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
+OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
 	poCADLayer( poCADLayer_ )
 {
 	nNextFID = 0;
@@ -45,11 +45,28 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_ ) :
     OGRFieldDefn  oColorField( "Color (RGB)", OFTIntegerList );
     poFeatureDefn->AddFieldDefn( &oColorField );
 
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
+    OGRFieldDefn  oExtendedField( "ExtendedEntityData", OFTString );
     poFeatureDefn->AddFieldDefn( &oExtendedField );
 
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
+
+
+    // Applying spatial ref info
+    char ** papszPRJ = new char*[1];
+    papszPRJ[0] = new char[sESRISpatRef.size()];
+    memcpy( papszPRJ[0], sESRISpatRef.data(), sESRISpatRef.size() );
+    if ( sESRISpatRef.size() != 0 )
+    {
+        poSpatialRef = new OGRSpatialReference();
+        if ( poSpatialRef->importFromESRI( papszPRJ ) != OGRERR_NONE )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                        "Failed to parse PRJ section, ignoring." );
+            delete( poSpatialRef );
+            delete[] papszPRJ;
+        }
+    }
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -99,6 +116,20 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( static_cast<int>( nFID ) );
     poFeature->SetField( "Thickness", spoCADGeometry->getThickness() );
+
+    if( spoCADGeometry->getEED().size() != 0 )
+    {
+        std::string sEEDAsOneString = "";
+        for ( auto iter = spoCADGeometry->getEED().cbegin();
+              iter != spoCADGeometry->getEED().cend(); ++iter )
+        {
+            sEEDAsOneString += *iter;
+            sEEDAsOneString += '\n';
+        }
+
+        poFeature->SetField( "ExtendedEntityData", sEEDAsOneString.c_str() );
+    }
+    
     RGBColor stRGB = spoCADGeometry->getColor();
     GIntBig adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
     poFeature->SetField( "Color (RGB)", 3, adRGB);

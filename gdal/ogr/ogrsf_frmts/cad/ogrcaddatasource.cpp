@@ -66,9 +66,31 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
     nLayers = spoCADFile->getLayersCount();
     papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
 
+    // Reading content of .prj file, or extracting it from CAD if not present
+    std::string sESRISpatRef = "";
+    size_t nFilenameLength = strlen( pszFilename );
+    char * pszPRJFilename = new char( nFilenameLength );
+    pszPRJFilename[nFilenameLength-1] = 'j';
+    pszPRJFilename[nFilenameLength-2] = 'r';
+    pszPRJFilename[nFilenameLength-3] = 'p';
+    VSILFILE *fpPRJ = VSIFOpenL( pszPRJFilename, "r" );
+    if( fpPRJ != NULL )
+    {
+        const char * cabyPRJData = CPLReadLineL( fpPRJ );
+        for( size_t i = 0; i < strlen(cabyPRJData); ++i )
+        {
+            sESRISpatRef.push_back( cabyPRJData[i] );
+        }
+    }
+    else // extract .prj from CAD
+    {
+        sESRISpatRef = spoCADFile->getESRISpatialRef();
+    }
+    
+
     for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
     {
-        papoLayers[iIndex] = new OGRCADLayer( spoCADFile->getLayer( iIndex ) );
+        papoLayers[iIndex] = new OGRCADLayer( spoCADFile->getLayer( iIndex ), sESRISpatRef );
     }
     
     return( TRUE );
