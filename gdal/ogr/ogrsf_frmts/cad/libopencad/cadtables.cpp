@@ -157,6 +157,9 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
             }
             break;
         }
+
+        if( dCurrentEntHandle == 0 ) // it means we have reached the end, object with 0 handle does not exist.
+            break;
     }
 
     DebugMsg ("Readed layers using LayerControl object count: %d\n",

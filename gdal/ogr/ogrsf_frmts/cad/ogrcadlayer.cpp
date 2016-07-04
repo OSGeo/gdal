@@ -33,6 +33,7 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
 	poCADLayer( poCADLayer_ )
 {
 	nNextFID = 0;
+    poSpatialRef = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
 
@@ -64,9 +65,10 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
             CPLError( CE_Warning, CPLE_AppDefined,
                         "Failed to parse PRJ section, ignoring." );
             delete( poSpatialRef );
-            delete[] papszPRJ;
+            poSpatialRef = NULL;
         }
     }
+    delete[] papszPRJ;
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -124,7 +126,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
               iter != spoCADGeometry->getEED().cend(); ++iter )
         {
             sEEDAsOneString += *iter;
-            sEEDAsOneString += '\n';
+            sEEDAsOneString += ' ';
         }
 
         poFeature->SetField( "ExtendedEntityData", sEEDAsOneString.c_str() );
@@ -327,6 +329,21 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poEllipse );
             poFeature->SetField( "Geometry", "CADEllipse" );
+            return poFeature;
+        }
+        
+        case CADGeometry::ATTDEF:
+        {
+            CADAttdef * const poCADAttdef = ( CADAttdef* ) spoCADGeometry.get();
+
+            OGRPoint * poPoint = new OGRPoint( poCADAttdef->getPosition().getX(),
+                                               poCADAttdef->getPosition().getY(),
+                                               poCADAttdef->getPosition().getZ() );
+
+            poFeature->SetField( "Text", poCADAttdef->getTag().c_str() );
+
+            poFeature->SetGeometryDirectly( poPoint );
+            poFeature->SetField( "Geometry", "CADAttdef" );
             return poFeature;
         }
 
