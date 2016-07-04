@@ -228,6 +228,19 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             int         i;
             const ecs_LayerCapabilities *psLayerCap;
 
+            // Call cln_UpdateDictionary so as to be able to report errors
+            // since cln_GetLayerCapabilities() cannot do that
+            // Help in the case of DNC17/COA17A that has a missing env/fcs file
+            char* szEmpty = CPLStrdup("");
+            psResult = cln_UpdateDictionary( m_nClientID, szEmpty );
+            CPLFree(szEmpty);
+            if( ECSERROR(psResult) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "%s", psResult->message );
+                return FALSE;
+            }
+
             for( i = 0;
                 (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
                  i++ )
