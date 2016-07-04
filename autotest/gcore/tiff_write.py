@@ -1576,8 +1576,10 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
 
     ds = gdal.Open( tmpfilename )
     bnd = ds.GetRasterBand(1)
-    if bnd.Checksum() != 4672:
+    cs = bnd.Checksum()
+    if cs != 4672:
         gdaltest.post_reason( 'Didnt get expected checksum on band 1')
+        print(cs)
         return 'fail'
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
     if md['NBITS'] != str(nbits):
@@ -6700,6 +6702,29 @@ def tiff_write_151():
     return 'success'
 
 ###############################################################################
+# Test flushing of blocks in a contig multi band file with Create()
+
+def tiff_write_152():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_152.tif', 1, 1, 2, options = ['NBITS=2'])
+    ds.GetRasterBand(2).SetNoDataValue(3)
+    ds.GetRasterBand(2).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_152.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_152.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6880,10 +6905,11 @@ gdaltest_list = [
     tiff_write_149,
     tiff_write_150,
     tiff_write_151,
+    tiff_write_152,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_151 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_152 ]
 
 if __name__ == '__main__':
 
