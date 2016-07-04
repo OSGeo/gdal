@@ -61,11 +61,20 @@ void CADClasses::addClass(CADClass stClass)
               stClass.bIsEntity);
 }
 
+CADClass CADClasses::getClassByNum(short num) const
+{
+    for(CADClass cadClass : classes){
+        if(cadClass.dClassNum == num)
+            return cadClass;
+    }
+    return {};
+}
+
 void CADClasses::print() const
 {
     cout << "============ CLASSES Section ============" << endl;
 
-    for(struct CADClass stClass : classes)
+    for(CADClass stClass : classes)
     {
         cout << "Class: " << endl;
         cout << "  Class Number: " << stClass.dClassNum << endl;

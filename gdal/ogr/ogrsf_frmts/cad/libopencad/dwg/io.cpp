@@ -543,8 +543,6 @@ unsigned int ReadMSHORT( const char * pabyInput, size_t& nBitOffsetFromStart )
     if( MShortBytesCount == 2 )
     {
         aMShortBytes[0] &= 0b01111111; // drop high order flag bit.
-        SwapEndianness ( aMShortBytes, MShortBytesCount ); // MSB to LSB
-        memcpy ( &result, aMShortBytes, 2 );
     }
     else if ( MShortBytesCount == 4 )
     {
@@ -555,11 +553,9 @@ unsigned int ReadMSHORT( const char * pabyInput, size_t& nBitOffsetFromStart )
         aMShortBytes[1]  = ( aMShortBytes[1] >> 1 );
         aMShortBytes[1] |= ( aMShortBytes[0] << 7 );
         aMShortBytes[0]  = ( aMShortBytes[0] >> 1 );
-
-        SwapEndianness ( aMShortBytes, MShortBytesCount );; // MSB to LSB
-        memcpy ( &result, aMShortBytes, 4 );
     }
-
+    SwapEndianness ( aMShortBytes, MShortBytesCount ); // MSB to LSB
+    memcpy ( &result, aMShortBytes, MShortBytesCount );
     return result;
 }
 

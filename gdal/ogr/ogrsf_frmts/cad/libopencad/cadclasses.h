@@ -38,7 +38,7 @@
 
 using namespace std;
 
-struct CADClass
+typedef struct _class
 {
     string sCppClassName;       /**< TV, C++ class name */
     string sApplicationName;    /**< TV, Application name */
@@ -49,7 +49,7 @@ struct CADClass
     bool bIsEntity;             /**< BITSHORT, Is-an-entity flag, 281 */
     short dClassNum;            // BITSHORT
     short dClassVersion;        // BITSHORT
-};
+}CADClass;
 
 class OCAD_EXTERN CADClasses
 {
@@ -57,11 +57,12 @@ public:
     CADClasses();
 
 public:
-    void addClass(struct CADClass stClass);
+    void addClass(CADClass stClass);
+    CADClass getClassByNum(short num) const;
     void print() const;
 
 protected:
-    vector<struct CADClass> classes;
+    vector<CADClass> classes;
 };
 
 #endif // CADCLASSES_H

@@ -40,11 +40,13 @@ class OGRCADLayer : public OGRLayer
 {
     OGRFeatureDefn  *poFeatureDefn;
     
+    OGRSpatialReference * poSpatialRef;
+
     GIntBig         nNextFID;
 
     CADLayer        &poCADLayer;
 public:
-    OGRCADLayer( CADLayer &poCADLayer );
+    OGRCADLayer( CADLayer &poCADLayer, std::string sESRISpatRef );
     ~OGRCADLayer();
     
     void            ResetReading();
@@ -53,6 +55,7 @@ public:
     GIntBig         GetFeatureCount( int bForce );
     
     
+    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
     OGRFeatureDefn  *GetLayerDefn() { return poFeatureDefn; }
     
     int             TestCapability( const char * ) { return( FALSE ); }

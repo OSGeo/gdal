@@ -418,7 +418,7 @@ CADSplineObject::CADSplineObject() : nNumFitPts(0),
 
 //------------------------------------------------------------------------------
 
-const vector<char> CADGeometryObjectTypes
+const vector<char> CADCommonEntityObjectTypes
 {
       CADObject::POINT, CADObject::ARC, CADObject::TEXT,
       CADObject::ELLIPSE, CADObject::CIRCLE, CADObject::LINE,
@@ -431,11 +431,11 @@ const vector<char> CADGeometryObjectTypes
       CADObject::VERTEX_PFACE, CADObject::VERTEX_PFACE_FACE
 };
 
-bool isGeometryType(short nType)
+bool isCommonEntityType(short nType)
 {
-    return std::find(CADGeometryObjectTypes.begin(),
-                     CADGeometryObjectTypes.end (), (nType))
-            != CADGeometryObjectTypes.end();
+    return std::find(CADCommonEntityObjectTypes.begin(),
+                     CADCommonEntityObjectTypes.end (), (nType))
+            != CADCommonEntityObjectTypes.end();
 }
 
 const map <char, string > CADObjectNames
@@ -691,4 +691,13 @@ CAD3DFaceObject::CAD3DFaceObject()
 CADPolylinePFaceObject::CADPolylinePFaceObject()
 {
     type = POLYLINE_PFACE;
+}
+
+//------------------------------------------------------------------------------
+// CADXRecordObject
+//------------------------------------------------------------------------------
+
+CADXRecordObject::CADXRecordObject ()
+{
+    type = XRECORD;
 }

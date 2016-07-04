@@ -74,27 +74,14 @@ void CADGeometry::setColor(int ACIColorIndex)
     geometry_color = CADACIColors[ACIColorIndex];
 }
 
-map< string, CADAttdef> CADGeometry::getAttributes ()
+vector< string > CADGeometry::getEED()
 {
-    return mapstAttributes;
+    return asEED;
 }
 
-void CADGeometry::addAttribute( CADAttrib* attrib )
+void CADGeometry::setEED( vector< string > eed )
 {
-    // FIXME: very dangerous. should be casted to attdef
-    // manually
-    if ( attrib != nullptr )
-    {
-        mapstAttributes.insert( make_pair( attrib->getTag (), *( CADAttdef* ) attrib ) );
-    }
-}
-
-void CADGeometry::addAttribute( CADAttdef* attdef )
-{
-    if( attdef != nullptr )
-    {
-        mapstAttributes.insert ( make_pair( attdef->getTag (), *attdef ) );
-    }
+    asEED = eed;
 }
 
 //------------------------------------------------------------------------------
@@ -317,7 +304,7 @@ void CADPolyline3D::print() const
     cout << "|------Polyline3D-----|" << endl;
     for ( size_t i = 0; i < vertexes.size(); ++i ){
         cout << "  #" << i
-             << "X: " << vertexes[i].getX()
+             << ". X: " << vertexes[i].getX()
              << ", Y: " << vertexes[i].getY() << std::endl;
     }
     cout << endl;
@@ -337,7 +324,7 @@ void CADLWPolyline::print() const
     cout << "|------LWPolyline-----|" << endl;
     for ( size_t i = 0; i < vertexes.size(); ++i ){
         cout << "  #" << i
-             << "X: " << vertexes[i].getX()
+             << ". X: " << vertexes[i].getX()
              << ", Y: " << vertexes[i].getY() << std::endl;
     }
     cout << endl;
@@ -543,7 +530,7 @@ void CADSpline::print() const
     for ( size_t j = 0; j < avertCtrlPoints.size(); ++j )
     {
         cout << "  #" << j
-             << "\t" << avertCtrlPoints[j].getX()
+             << ".\t" << avertCtrlPoints[j].getX()
              << "\t" << avertCtrlPoints[j].getY()
              << "\t" << avertCtrlPoints[j].getZ() << "\t";
         if ( weight == true )
@@ -556,7 +543,7 @@ void CADSpline::print() const
     for ( size_t j = 0; j < averFitPoints.size(); ++j )
     {
         cout << "  #" << j
-             << "\t" << averFitPoints[j].getX()
+             << ".\t" << averFitPoints[j].getX()
              << "\t" << averFitPoints[j].getY()
              << "\t" << averFitPoints[j].getZ()
              << endl;
@@ -654,7 +641,7 @@ void CADSolid::print() const
     for ( size_t i = 0; i < avertCorners.size(); ++i )
     {
         cout << "  #" << i
-             << "\t" << avertCorners[i].getX()
+             << ".\t" << avertCorners[i].getX()
              << "\t" << avertCorners[i].getY()
              << "\n  Elevation: " << elevation << "\n";
     }
@@ -778,8 +765,8 @@ void CADImage::print() const
          << endl;
     for ( size_t i = 0; i < avertClippingPolygon.size(); ++i )
     {
-        cout << "  #" << i << "\tX: "
-             << avertClippingPolygon[i].getX() << " Y: "
+        cout << "  #" << i << ". X: "
+             << avertClippingPolygon[i].getX() << ", Y: "
              << avertClippingPolygon[i].getY() << std::endl;
     }
     cout << endl;
@@ -866,7 +853,7 @@ void CADFace3D::print() const
     for ( size_t i = 0; i < avertCorners.size(); ++i )
     {
         cout << "  #" << i
-             << " X: " << avertCorners[i].getX() << "\t"
+             << ". X: " << avertCorners[i].getX() << "\t"
              << "Y: " << avertCorners[i].getY() << "\t"
              << "Z: " << avertCorners[i].getZ() << "\n";
     }
@@ -897,7 +884,7 @@ void CADPolylinePFace::print() const
     cout << "|---------PolylinePface---------|\n";
     for ( size_t i = 0; i < vertexes.size(); ++i )
     {
-        cout << "  #" << i << "\t"
+        cout << "  #" << i << ".\t"
              << vertexes[i].getX() << "\t"
              << vertexes[i].getY() << "\t"
              << vertexes[i].getZ() << "\n";
@@ -952,7 +939,7 @@ void CADMLine::print() const
          << "Vertexes:\n";
     for ( size_t i = 0; i < avertVertexes.size(); ++i )
     {
-        cout << "  #" << i << "\t"
+        cout << "  #" << i << ".\t"
              << avertVertexes[i].getX() << "\t"
              << avertVertexes[i].getY() << "\t"
              << avertVertexes[i].getZ() << "\n";
