@@ -47,7 +47,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         return( NULL );
     
     OGRCADDataSource *poDS = new OGRCADDataSource();
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo ) )
     {
         delete poDS;
         return( NULL );
@@ -68,14 +68,22 @@ void RegisterOGRCAD()
     {
         poDriver = new GDALDriver();
         poDriver->SetDescription( "CAD" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                  "AutoCAD Driver" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD Driver" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                  "drv_cad.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );        
+        
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='MODE' type='int' min='1' max='3' description='Open mode. 1 - read all data (slow), 2 - read main data (fast), 3 - read less data' default='2'/>"
+"</OpenOptionList>"); 
+
+        
         poDriver->pfnOpen = OGRCADDriverOpen;
         poDriver->pfnIdentify = OGRCADDriverIdentify;
+        
+        
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

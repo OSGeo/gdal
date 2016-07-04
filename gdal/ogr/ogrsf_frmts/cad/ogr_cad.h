@@ -2,11 +2,13 @@
  *  Project: OGR CAD Driver
  *  Purpose: Implements driver based on libopencad
  *  Author: Alexandr Borzykh, mush3d at gmail.com
+ *  Author: Dmitry Baryshnikov, polimax@mail.ru
  *  Language: C++
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 Alexandr Borzykh
+ *  Copyright (c) 2016 Alexandr Borzykh 
+ *  Copyright (c) 2016, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -66,13 +68,14 @@ class OGRCADDataSource : public GDALDataset
     std::unique_ptr<CADFile>    spoCADFile;
     
     OGRCADLayer                 **papoLayers;
+    char              **m_papszSubDatasets;
     int                         nLayers;
     
 public:
     OGRCADDataSource();
     ~OGRCADDataSource();
     
-    int             Open( const char * pszFilename, int bUpdate );
+    int             Open( GDALOpenInfo* poOpenInfo );
     
     int             GetLayerCount() { return nLayers; }
     OGRLayer        *GetLayer( int );

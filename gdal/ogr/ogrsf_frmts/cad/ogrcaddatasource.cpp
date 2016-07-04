@@ -2,11 +2,13 @@
  *  Project: OGR CAD Driver
  *  Purpose: Implements driver based on libopencad
  *  Author: Alexandr Borzykh, mush3d at gmail.com
+ *  Author: Dmitry Baryshnikov, polimax@mail.ru
  *  Language: C++
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 Alexandr Borzykh
+ *  Copyright (c) 2016 Alexandr Borzykh 
+ *  Copyright (c) 2016, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -43,9 +45,11 @@ OGRCADDataSource::~OGRCADDataSource()
 }
 
 
-int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
+int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo )
 {
-    if ( bUpdate )
+    SetDescription( poOpenInfo->pszFilename );
+   
+    if ( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                  "Update access not supported by CAD Driver." );
@@ -53,7 +57,7 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
     }
 
     spoCADFile = std::unique_ptr<CADFile>(
-                                          OpenCADFile( pszFilename, CADFile::OpenOptions::READ_FAST ) );
+                                          OpenCADFile( poOpenInfo->pszFilename, CADFile::OpenOptions::READ_FAST ) );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -62,13 +66,18 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
                   "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
         return( FALSE );
     }
+    
+    // fill metadata
+    //spoCADFile
+    
+    // get layers
 
     nLayers = spoCADFile->getLayersCount();
     papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
 
     // Reading content of .prj file, or extracting it from CAD if not present
     std::string sESRISpatRef = "";
-    size_t nFilenameLength = strlen( pszFilename );
+    size_t nFilenameLength = strlen( poOpenInfo->pszFilename );
     char * pszPRJFilename = new char( nFilenameLength );
     pszPRJFilename[nFilenameLength-1] = 'j';
     pszPRJFilename[nFilenameLength-2] = 'r';
