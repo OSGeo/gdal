@@ -254,6 +254,13 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
     psResult = cln_GetNextObject(m_nClientID);
     if (! ECSSUCCESS(psResult))
     {
+        if( ECSERROR( psResult ) &&
+            strstr(psResult->message, "End of selection") == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Access to next object of layer '%s' failed: %s\n",
+                      m_pszOGDILayerName, psResult->message );
+        }
         // We probably reached EOF... keep track of shape count.
         m_nTotalShapeCount = m_iNextShapeId - m_nFilteredOutShapes;
         return NULL;
