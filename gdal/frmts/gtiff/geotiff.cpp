@@ -6642,6 +6642,7 @@ int GTiffDataset::Finalize()
 /*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
 /* -------------------------------------------------------------------- */
     GDALPamDataset::FlushCache();
+    FlushBlockBuf();
 
 /* -------------------------------------------------------------------- */
 /*      Fill in missing blocks with empty data.                         */
