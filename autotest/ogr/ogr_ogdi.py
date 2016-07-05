@@ -225,6 +225,18 @@ def ogr_ogdi_4():
         print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
+    ds = None
+
+    # Test opening one single layer
+    ds = ogr.Open(url_name +':polbnda@bnd(*):area')
+    if ds is None:
+        gdaltest.post_reason('cannot open dataset')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        print(ds.GetLayerCount())
+        gdaltest.post_reason('did not get expected layer count')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
