@@ -657,7 +657,7 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
 
 int DWGFileR2000::readClasses (enum OpenOptions eOptions)
 {
-    if(eOptions == OpenOptions::READ_ALL){
+    if(eOptions == OpenOptions::READ_ALL || eOptions == OpenOptions::READ_FAST ){
         char    *pabySectionContent;
         char    buffer[255];
         size_t dSectionSize = 0;
@@ -807,9 +807,10 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     nBitOffsetFromStart = 0;
     dObjectSize = ReadMSHORT (pabySectionContent, nBitOffsetFromStart);
     short dObjectType = ReadBITSHORT (pabySectionContent, nBitOffsetFromStart);
-
+    
     if(dObjectType >= 500){
         CADClass cadClass = classes.getClassByNum (dObjectType);
+        
         if(cadClass.sCppClassName == "AcDbRasterImage"){
             dObjectType = CADObject::IMAGE;
         }

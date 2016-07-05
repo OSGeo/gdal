@@ -125,7 +125,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
     {
         unique_ptr<CADEntityObject> ent( static_cast<CADEntityObject *>(
                                           file->getObject (dCurrentEntHandle,
-                                                           true))); // true = read CED && handles only
+                                                           true))); // true = read CED && handles only        
 
         /* TODO: this check is excessive, but if something goes wrong way -
          * some part of geometries will be parsed. */
@@ -154,12 +154,14 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
     #ifdef _DEBUG
                 assert(0);
     #endif //_DEBUG
-            }
+            }            
             break;
         }
 
         if( dCurrentEntHandle == 0 ) // it means we have reached the end, object with 0 handle does not exist.
+        {
             break;
+        }
     }
 
     DebugMsg ("Readed layers using LayerControl object count: %d\n",
@@ -169,7 +171,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
 }
 
 void CADTables::fillLayer(const CADEntityObject *ent)
-{
+{    
     for ( CADLayer &layer : layers )
     {
         if ( ent->stChed.hLayer.getAsLong (ent->stCed.hObjectHandle) ==

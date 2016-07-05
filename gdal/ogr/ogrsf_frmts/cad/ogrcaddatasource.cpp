@@ -79,7 +79,19 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
         CSLDestroy(papszTokens);
     }
     
-    poCADFile = OpenCADFile( pFileIO, CADFile::OpenOptions::READ_FAST );
+    int nMode = atoi(CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", "2"));
+    
+    enum CADFile::OpenOptions openOpts = CADFile::OpenOptions::READ_FAST;
+    if(nMode == 1)
+    {
+        openOpts = CADFile::OpenOptions::READ_ALL;
+    }
+    else if(nMode == 3)
+    {
+        openOpts = CADFile::OpenOptions::READ_FASTEST;
+    }
+    
+    poCADFile = OpenCADFile( pFileIO, openOpts );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -159,7 +171,6 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
 
         if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
         {
-            //DEBUG: CPLError( CE_Failure, CPLE_NotSupported, "Layer %d, raster count %d, vector count %d", i, oLayer.getImageCount(), oLayer.getGeometryCount());      
             for( j = 0; j < oLayer.getImageCount(); ++j )
             {
                 SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
@@ -167,8 +178,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
                         "SUBDATASETS");
                 SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", nRasters),
                     CPLSPrintf("%s - %ld", oLayer.getName().c_str(), j), 
-                        "SUBDATASETS");
-                CPLError( CE_Failure, CPLE_NotSupported, "Add raster %d",  nRasters);      
+                        "SUBDATASETS");     
                         
                 nRasters++;
             }
