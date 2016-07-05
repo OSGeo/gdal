@@ -31,9 +31,11 @@
 #include "ogr_cad.h"
 #include "cpl_conv.h"
 
+#include "vsilfileio.h"
+
 OGRCADDataSource::OGRCADDataSource()
 {
-    papoLayers = nullptr;
+    papoLayers = NULL;
     nLayers    = 0;
 }
 
@@ -42,6 +44,7 @@ OGRCADDataSource::~OGRCADDataSource()
     for( size_t i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+    delete( poCADFile );
 }
 
 
@@ -56,9 +59,8 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
                  "Update access not supported by CAD Driver." );
         return( FALSE );
     }
-
-    spoCADFile = std::unique_ptr<CADFile>(
-                                          OpenCADFile( pFileIO, CADFile::OpenOptions::READ_FAST ) );
+    
+    poCADFile = OpenCADFile( pFileIO, CADFile::OpenOptions::READ_FAST );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -67,7 +69,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
                   "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
         return( FALSE );
     }
-    
+
     // fill metadata
     const CADHeader& header = spoCADFile->getHeader();
     for(i = 0; i < header.getSize(); ++i)
@@ -76,29 +78,24 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
         const CADVariant& oVal = header.getValue(nCode);
         SetMetadataItem(header.getValueName(nCode), oVal.getString());
     }
-        
+
     // Reading content of .prj file, or extracting it from CAD if not present
-    std::string sESRISpatRef = "";
-    size_t nFilenameLength = strlen( poOpenInfo->pszFilename );
-    char * pszPRJFilename = new char( nFilenameLength );
-    pszPRJFilename[nFilenameLength-1] = 'j';
-    pszPRJFilename[nFilenameLength-2] = 'r';
-    pszPRJFilename[nFilenameLength-3] = 'p';
-    VSILFILE *fpPRJ = VSIFOpenL( pszPRJFilename, "r" );
-    if( fpPRJ != NULL )
-    {
-        const char * cabyPRJData = CPLReadLineL( fpPRJ );
-        for( size_t i = 0; i < strlen(cabyPRJData); ++i )
-        {
-            sESRISpatRef.push_back( cabyPRJData[i] );
-        }
-    }
-    else // extract .prj from CAD
-    {
-        sESRISpatRef = spoCADFile->getESRISpatialRef();
-    }
     
-    // get layers
+    CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
+    if(sESRISpatRef.empty())
+    {
+        // TODO: do we need *.PRJ too?
+        const char * pszPRJFilename = CPLResetExtension(poOpenInfo->pszFilename, "prj");
+        char **cabyPRJData = CSLLoad(pszPRJFilename);
+        if( cabyPRJData && CSLCount(cabyPRJData) > 0 )
+        {
+            sESRISpatRef = cabyPRJData[0];
+        }
+        
+        if(cabyPRJData)
+            CSLDestroy( cabyPRJData );
+    }   
+
     /*std::vector<CADLayer&> vector, raster;
     for(i = 0; i < spoCADFile->getLayersCount(); ++i)
     {
@@ -115,7 +112,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
     papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
     for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
     {
-        papoLayers[iIndex] = new OGRCADLayer( spoCADFile->getLayer( iIndex ), sESRISpatRef );
+        papoLayers[iIndex] = new OGRCADLayer( poCADFile->getLayer( iIndex ), sESRISpatRef );
     }
     
     return( TRUE );
@@ -124,7 +121,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
 OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
 {
     if ( iLayer < 0 || iLayer >= nLayers )
-        return( nullptr );
+        return( NULL );
     else
-        return papoLayers[iLayer];
+        return( papoLayers[iLayer] );
 }

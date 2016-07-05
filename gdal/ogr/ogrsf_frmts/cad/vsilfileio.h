@@ -28,18 +28,18 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  ******************************************************************************/
-#ifndef CADFILESTREAMIO_H
-#define CADFILESTREAMIO_H
+#ifndef VSILFILEIO_H
+#define VSILFILEIO_H
 
-#include "cadfileio.h"
+#include "libopencad/cadfileio.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
-#include <fstream>
-
-class CADFileStreamIO : public CADFileIO
+class VSILFileIO : public CADFileIO
 {
 public:
-    CADFileStreamIO(const char* pszFilePath);
-    virtual ~CADFileStreamIO();
+    VSILFileIO(const char* pszFilePath);
+    virtual ~VSILFileIO();
     virtual const char* ReadLine() override;
     virtual bool Eof() override;
     virtual bool Open(int mode) override;
@@ -50,7 +50,7 @@ public:
     virtual size_t Write(void* ptr, size_t size) override;
     virtual void Rewind() override;
 protected:
-    std::ifstream m_oFileStream;
+    VSILFILE *m_oFileStream;
 };
 
-#endif // CADFILESTREAMIO_H
+#endif // VSILFILEIO_H

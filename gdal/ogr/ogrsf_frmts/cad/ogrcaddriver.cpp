@@ -30,14 +30,15 @@
  *******************************************************************************/
 #include "ogr_cad.h"
 
+#include "vsilfileio.h"
+
 /************************************************************************/
 /*                           OGRCADDriverIdentify()                     */
 /************************************************************************/
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
-    // TODO: change to new CADVSILFileIO(poOpenInfo->pszFilename)
-    return IdentifyCADFile( GetDefaultFileIO(poOpenInfo->pszFilename) ) == 0 ? 0 : 1;
+    return IdentifyCADFile( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 0 : 1;
 }
 
 /************************************************************************/
@@ -46,8 +47,7 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    // TODO: change to new CADVSILFileIO(poOpenInfo->pszFilename)
-    CADFileIO* pFileIO = GetDefaultFileIO(poOpenInfo->pszFilename);
+    CADFileIO* pFileIO = new VSILFileIO( poOpenInfo->pszFilename);
     if ( !IdentifyCADFile( pFileIO, false ) )
     {
         delete pFileIO;
