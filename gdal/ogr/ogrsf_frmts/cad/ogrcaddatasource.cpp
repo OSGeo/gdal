@@ -33,24 +33,25 @@
 
 #include "vsilfileio.h"
 
-OGRCADDataSource::OGRCADDataSource()
+OGRCADDataSource::OGRCADDataSource() : papoLayers(NULL),
+    nLayers(0), poCADFile(NULL)
 {
-    papoLayers = NULL;
-    nLayers    = 0;
+
 }
 
 OGRCADDataSource::~OGRCADDataSource()
 {
-    for( size_t i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
-    delete( poCADFile );
+    if(poCADFile)
+        delete( poCADFile );
 }
 
 
 int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
 {
-    int i;
+    size_t i, j;
     SetDescription( poOpenInfo->pszFilename );
    
     if ( poOpenInfo->eAccess == GA_Update )
@@ -58,6 +59,24 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
         CPLError( CE_Failure, CPLE_OpenFailed,
                  "Update access not supported by CAD Driver." );
         return( FALSE );
+    }
+    
+    CPLString osFilename( poOpenInfo->pszFilename );
+    short nSubdatasetIndex = -1, nSubdatasetTableIndex = -1;    
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
+    {
+        char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
+        if( CSLCount(papszTokens) != 4 )
+        {
+            CSLDestroy(papszTokens);
+            return FALSE;
+        }
+
+        osFilename = papszTokens[1];
+        nSubdatasetTableIndex = atoi(papszTokens[2]);
+        nSubdatasetIndex = atoi(papszTokens[3]);
+
+        CSLDestroy(papszTokens);
     }
     
     poCADFile = OpenCADFile( pFileIO, CADFile::OpenOptions::READ_FAST );
@@ -69,14 +88,23 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
                   "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
         return( FALSE );
     }
+    
+    if ( GetLastErrorCode() != CADErrorCodes::SUCCESS )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "libopencad %s does not support this version of CAD file.\n", 
+                  GetVersionString(), GetCADFormats() );
+        return( FALSE );
+    }
+    
 
     // fill metadata
-    const CADHeader& header = spoCADFile->getHeader();
+    const CADHeader& header = poCADFile->getHeader();
     for(i = 0; i < header.getSize(); ++i)
     {
         short nCode = header.getCode(i);
         const CADVariant& oVal = header.getValue(nCode);
-        SetMetadataItem(header.getValueName(nCode), oVal.getString());
+        SetMetadataItem(header.getValueName(nCode), oVal.getString().c_str());
     }
 
     // Reading content of .prj file, or extracting it from CAD if not present
@@ -86,7 +114,9 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
     {
         // TODO: do we need *.PRJ too?
         const char * pszPRJFilename = CPLResetExtension(poOpenInfo->pszFilename, "prj");
+        CPLPushErrorHandler( CPLQuietErrorHandler );
         char **cabyPRJData = CSLLoad(pszPRJFilename);
+        CPLPopErrorHandler();
         if( cabyPRJData && CSLCount(cabyPRJData) > 0 )
         {
             sESRISpatRef = cabyPRJData[0];
@@ -94,26 +124,56 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
         
         if(cabyPRJData)
             CSLDestroy( cabyPRJData );
-    }   
-
-    /*std::vector<CADLayer&> vector, raster;
-    for(i = 0; i < spoCADFile->getLayersCount(); ++i)
+    }  
+    
+    // get raster by index
+    if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER && nSubdatasetIndex > -1 && 
+        nSubdatasetTableIndex > -1)
     {
-        if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+        CADLayer &oLayer = poCADFile->getLayer(nSubdatasetTableIndex);
+        CADImage* pImage = oLayer.getImage(nSubdatasetIndex);
+        if(pImage)
         {
+            // TODO: open raster
+        
+            delete pImage;
+            return TRUE;
+        }
+        
+        return FALSE;
+    } 
+    
+    nLayers = 0;
+    int nRasters = 0;
+    // FIXME: we allocate extra data, do we need more strict policy here?
+    papoLayers = ( OGRCADLayer** ) CPLMalloc(sizeof(OGRCADLayer*) * 
+                                                poCADFile->getLayersCount());
+
+    for(i = 0; i < poCADFile->getLayersCount(); ++i)
+    {
+        CADLayer &oLayer = poCADFile->getLayer( i );
+        if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR && oLayer.getGeometryCount() > 0)
+        {
+            papoLayers[nLayers++] = new OGRCADLayer( oLayer, sESRISpatRef );
         }
 
         if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
         {
+            //DEBUG: CPLError( CE_Failure, CPLE_NotSupported, "Layer %d, raster count %d, vector count %d", i, oLayer.getImageCount(), oLayer.getGeometryCount());      
+            for( j = 0; j < oLayer.getImageCount(); ++j )
+            {
+                SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
+                    CPLSPrintf("CAD:%s:%ld:%ld", poOpenInfo->pszFilename, i, j), 
+                        "SUBDATASETS");
+                SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", nRasters),
+                    CPLSPrintf("%s - %ld", oLayer.getName().c_str(), j), 
+                        "SUBDATASETS");
+                CPLError( CE_Failure, CPLE_NotSupported, "Add raster %d",  nRasters);      
+                        
+                nRasters++;
+            }
         }
-    }*/
-    
-    nLayers = spoCADFile->getLayersCount();
-    papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
-    for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
-    {
-        papoLayers[iIndex] = new OGRCADLayer( poCADFile->getLayer( iIndex ), sESRISpatRef );
-    }
+    }   
     
     return( TRUE );
 }
@@ -125,3 +185,18 @@ OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
     else
         return( papoLayers[iLayer] );
 }
+
+int OGRCADDataSource::TestCapability( const char * pszCap )
+{
+    if ( EQUAL(pszCap,ODsCCreateLayer) ||
+         EQUAL(pszCap,ODsCDeleteLayer) )
+    {
+         return FALSE;
+    }
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    return FALSE;
+}
+

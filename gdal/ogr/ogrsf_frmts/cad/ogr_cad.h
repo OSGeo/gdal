@@ -65,22 +65,18 @@ public:
 
 class OGRCADDataSource : public GDALDataset
 {
-    CADFile                     *poCADFile;
-    
-    OGRCADLayer                 **papoLayers;
-    char              **m_papszSubDatasets;
-    int                         nLayers;
+    CADFile       *poCADFile;    
+    OGRCADLayer  **papoLayers;
+    int            nLayers;
     
 public:
     OGRCADDataSource();
     ~OGRCADDataSource();
     
-    int             Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );
-    
-    int             GetLayerCount() { return nLayers; }
-    OGRLayer        *GetLayer( int );
-    
-    int             TestCapability( const char * ) { return( FALSE ); }
+    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );    
+    int            GetLayerCount() { return nLayers; }
+    OGRLayer      *GetLayer( int );    
+    int            TestCapability( const char * );        
 };
 
 #endif

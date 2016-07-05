@@ -38,7 +38,11 @@
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
-    return IdentifyCADFile( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 0 : 1;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
+        return TRUE;
+        
+    return IdentifyCADFile( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 
+        FALSE : TRUE;
 }
 
 /************************************************************************/
@@ -48,7 +52,7 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     CADFileIO* pFileIO = new VSILFileIO( poOpenInfo->pszFilename);
-    if ( !IdentifyCADFile( pFileIO, false ) )
+    if ( IdentifyCADFile( pFileIO, false ) == FALSE)
     {
         delete pFileIO;
         return( NULL );
