@@ -437,6 +437,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool        m_bHasGotSiblingFiles;
     char      **GetSiblingFiles();
 
+    void        FlushCacheInternal( bool bFlushDirectory );
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -6183,44 +6185,32 @@ int GTiffDataset::Finalize()
     psVirtualMemIOMapping = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Ensure any blocks write cached by GDAL gets pushed through libtiff.*/
-/* -------------------------------------------------------------------- */
-    GDALPamDataset::FlushCache();
-    FlushBlockBuf();
-
-/* -------------------------------------------------------------------- */
 /*      Fill in missing blocks with empty data.                         */
 /* -------------------------------------------------------------------- */
     if( bFillEmptyTiles )
     {
+/* -------------------------------------------------------------------- */
+/*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
+/* -------------------------------------------------------------------- */
+        FlushCacheInternal( false /* do not call FlushDirectory */ );
+
         FillEmptyTiles();
-        bFillEmptyTiles = FALSE;
+        bFillEmptyTiles = false;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Force a complete flush, including either rewriting(moving)      */
 /*      of writing in place the current directory.                      */
 /* -------------------------------------------------------------------- */
-    FlushCache();
+    FlushCacheInternal( true );
 
-    // Finish compression
+    // Destroy compression pool
     if( poCompressThreadPool )
     {
-        poCompressThreadPool->WaitCompletion();
         delete poCompressThreadPool;
 
-        // Flush remaining data
-        for(int i=0;i<(int)asCompressionJobs.size();i++)
+        for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
         {
-            if( asCompressionJobs[i].bReady )
-            {
-                if( asCompressionJobs[i].nCompressedBufferSize )
-                {
-                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
-                                   asCompressionJobs[i].pabyCompressedBuffer,
-                                   asCompressionJobs[i].nCompressedBufferSize );
-                }
-            }
             CPLFree(asCompressionJobs[i].pabyBuffer);
             if( asCompressionJobs[i].pszTmpFilename )
             {
@@ -7709,8 +7699,14 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 /*      cache if need be.                                               */
 /************************************************************************/
 
+
 void GTiffDataset::FlushCache()
 
+{
+    FlushCacheInternal( true );
+}
+
+void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
 {
     if (bIsFinalized || ppoActiveDSRef == NULL)
         return;
@@ -7723,11 +7719,38 @@ void GTiffDataset::FlushCache()
     CPLFree( pabyBlockBuf );
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
-    bLoadedBlockDirty = FALSE;
+    bLoadedBlockDirty = false;
 
-    if (!SetDirectory())
-        return;
-    FlushDirectory();
+    // Finish compression
+    if( poCompressThreadPool )
+    {
+        poCompressThreadPool->WaitCompletion();
+
+        // Flush remaining data
+        for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
+        {
+            if( asCompressionJobs[i].bReady )
+            {
+                if( asCompressionJobs[i].nCompressedBufferSize )
+                {
+                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
+                                   asCompressionJobs[i].pabyCompressedBuffer,
+                                   asCompressionJobs[i].nCompressedBufferSize );
+                }
+                asCompressionJobs[i].pabyCompressedBuffer = NULL;
+                asCompressionJobs[i].nBufferSize = 0;
+                asCompressionJobs[i].bReady = false;
+                asCompressionJobs[i].nStripOrTile = -1;
+            }
+        }
+    }
+
+    if( bFlushDirectory )
+    {
+        if( !SetDirectory() )
+            return;
+        FlushDirectory();
+    }
 }
 
 /************************************************************************/
