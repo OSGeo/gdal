@@ -470,26 +470,23 @@ def vrtwarp_10():
 
 def vrtwarp_11():
 
-    src_ds = gdal.Open('../gcore/data/byte.tif')
-    tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_11.tif', src_ds)
-    tmp_ds.BuildOverviews( 'NEAR', overviewlist = [2] )
-    tmp_ds = None
-
-    ds = gdal.Warp('tmp/vrtwarp_11.vrt', 'tmp/vrtwarp_11.tif', options = '-dstalpha -of VRT')
-    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    ds = gdal.Open('data/bug6581.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
     ds = None
 
-    gdal.Unlink('tmp/vrtwarp_11.tif')
-    gdal.Unlink('tmp/vrtwarp_11.vrt')
-
-    if cs1 != 1087 or cs2 != 1218:
+    if cs1 != 22122 or cs2 != 56685 or cs3 != 22122:
         gdaltest.post_reason('fail')
         print(cs1)
         print(cs2)
+        print(cs3)
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test different nodata values on bands and partial blocks (#6581)
 
 gdaltest_list = [
     vrtwarp_1,
