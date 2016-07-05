@@ -28,90 +28,94 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
 *******************************************************************************/
-#include "cadfilestreamio.h"
+#include "vsilfileio.h"
 
-CADFileStreamIO::CADFileStreamIO(const char* pszFilePath) : CADFileIO(pszFilePath)
+#include <string>
+
+VSILFileIO::VSILFileIO(const char* pszFilePath) : CADFileIO(pszFilePath)
 {
 
 }
 
-CADFileStreamIO::~CADFileStreamIO()
+VSILFileIO::~VSILFileIO()
 {
 
 }
 
-const char* CADFileStreamIO::ReadLine()
+const char* VSILFileIO::ReadLine()
 {
     // TODO: getline
     return nullptr;
 }
 
-bool CADFileStreamIO::Eof()
+bool VSILFileIO::Eof()
 {
-    return m_oFileStream.eof();
+    return VSIFEofL( m_oFileStream ) == 0 ? false : true;
 }
 
-bool CADFileStreamIO::Open(int mode)
+bool VSILFileIO::Open(int mode)
 {
-    auto io_mode = std::ios_base::in; // as we use ifstream
+    std::string sOpenMode = "r";
     if(mode & OpenMode::binary)
-        io_mode |= std::ios_base::binary;
+        sOpenMode = "r+b";
 
     if(mode & OpenMode::write)
-        //io_mode |= std::ios_base::out;
+    {
+        sOpenMode = "w+b";
         return false;
+    }
 
-    m_oFileStream.open( m_pszFilePath, io_mode );
+    m_oFileStream = VSIFOpenL( m_pszFilePath, sOpenMode.c_str() );
 
-    if(m_oFileStream.is_open())
+    if( m_oFileStream != NULL )
         m_bIsOpened = true;
 
     return m_bIsOpened;
 }
 
-bool CADFileStreamIO::Close()
+bool VSILFileIO::Close()
 {
-    m_oFileStream.close();
-    return CADFileIO::Close();
+    return VSIFCloseL( m_oFileStream ) == 0 ? true : false;
 }
 
-int CADFileStreamIO::Seek(long offset, CADFileIO::SeekOrigin origin)
+int VSILFileIO::Seek(long offset, CADFileIO::SeekOrigin origin)
 {
-    std::ios_base::seekdir direction;
+    int nWhence = 0;
     switch (origin) {
     case SeekOrigin::CUR:
-        direction = std::ios_base::cur;
+        nWhence = SEEK_CUR;
         break;
     case SeekOrigin::END:
-        direction = std::ios_base::end;
+        nWhence = SEEK_END;
         break;
     case SeekOrigin::BEG:
-        direction = std::ios_base::beg;
+        nWhence = SEEK_SET;
         break;
     }
 
-    return m_oFileStream.seekg(offset, direction).good() ? 0 : 1;
+    return VSIFSeekL( m_oFileStream, offset, nWhence) == 0 ? 0 : 1;
 }
 
-long CADFileStreamIO::Tell()
+long VSILFileIO::Tell()
 {
-    return m_oFileStream.tellg();
+    return VSIFTellL( m_oFileStream );
 }
 
-size_t CADFileStreamIO::Read(void* ptr, size_t size)
+size_t VSILFileIO::Read(void* ptr, size_t size)
 {
-    return static_cast<size_t>(m_oFileStream.read(
-                                   static_cast<char*>(ptr),
-                                   static_cast<long>(size)).gcount());
+    return VSIFReadL( static_cast<char*>(ptr),
+                     1,
+                     size,
+                     m_oFileStream );
 }
 
-size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
+size_t VSILFileIO::Write(void* /*ptr*/, size_t /*size*/)
 {
     // unsupported
     return 0;
 }
 
-void CADFileStreamIO::Rewind()
+void VSILFileIO::Rewind()
 {
-    m_oFileStream.seekg(0, std::ios_base::beg);
+    VSIRewindL ( m_oFileStream );
 }

@@ -29,6 +29,8 @@
 #include "ogr_cad.h"
 #include "cpl_conv.h"
 
+#include "vsilfileio.h"
+
 OGRCADDataSource::OGRCADDataSource()
 {
     papoLayers = NULL;
@@ -53,7 +55,8 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    poCADFile = OpenCADFile( pszFilename, CADFile::OpenOptions::READ_FAST );
+    VSILFileIO *poVSLFileIO = new VSILFileIO( pszFilename );
+    poCADFile = OpenCADFile( poVSLFileIO, CADFile::OpenOptions::READ_FAST );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
