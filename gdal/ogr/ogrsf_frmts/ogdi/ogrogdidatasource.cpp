@@ -131,7 +131,6 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
         psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
-        CPLFree( pszWorkingName );
 
         if( ECSERROR( psResult ) )
         {
@@ -141,6 +140,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                           "OGDI DataSource Open Failed: %s\n",
                           psResult->message );
             }
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -154,6 +154,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", psResult->message );
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -164,6 +165,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", psResult->message );
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -186,6 +188,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", psResult->message );
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -214,6 +217,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                               "Invalid or unsupported family name (%s) in URL %s\n",
                               pszFamily, m_pszFullName);
                 }
+                CPLFree( pszWorkingName );
                 return FALSE;
             }
 
@@ -238,6 +242,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "%s", psResult->message );
+                CPLFree( pszWorkingName );
                 return FALSE;
             }
 
@@ -255,6 +260,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                     IAddLayer( psLayerCap->name, Text );
             }
         }
+
+        CPLFree( pszWorkingName );
 
         return TRUE;
 }
