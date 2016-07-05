@@ -80,7 +80,7 @@ OGROGDIDataSource::~OGROGDIDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
+int OGROGDIDataSource::Open( const char * pszNewName )
 
 {
     ecs_Result *psResult;
@@ -134,12 +134,9 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 
         if( ECSERROR( psResult ) )
         {
-            if (!bTestOpen)
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "OGDI DataSource Open Failed: %s\n",
-                          psResult->message ? psResult->message : "(no message string)");
-            }
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "OGDI DataSource Open Failed: %s\n",
+                      psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;
         }
@@ -214,12 +211,9 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                 eFamily = Text;
             else
             {
-                if (!bTestOpen)
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "Invalid or unsupported family name (%s) in URL %s\n",
-                              pszFamily, m_pszFullName);
-                }
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Invalid or unsupported family name (%s) in URL %s\n",
+                          pszFamily, m_pszFullName);
                 CPLFree( pszWorkingName );
                 return FALSE;
             }
