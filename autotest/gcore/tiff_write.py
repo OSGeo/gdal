@@ -6026,12 +6026,27 @@ def tiff_write_137():
 
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137_src.tif', 4000, 4000)
     src_ds.GetRasterBand(1).Fill(1)
+    data = src_ds.GetRasterBand(1).ReadRaster()
     expected_cs = src_ds.GetRasterBand(1).Checksum()
 
     # Test NUM_THREADS as creation option
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
         options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    # Test NUM_THREADS as creation option with Create()
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, 1, \
+        options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+    ds.GetRasterBand(1).WriteRaster(0,0,4000,4000,data)
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
     cs = ds.GetRasterBand(1).Checksum()
