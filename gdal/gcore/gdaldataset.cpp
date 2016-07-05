@@ -581,7 +581,14 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
                      "Cannot allocate band array");
             return;
         }
+
         papoBands = papoNewBands;
+
+        // TODO: Filter on complex bands only
+        SetMetadataItem("DERIVED_SUBDATASET_1_NAME",CPLSPrintf("DERIVED_SUBDATASET:COMPLEX_AMPLITUDE:%s",GetDescription()),"DERIVED_SUBDATASETS");
+
+        CPLString osDesc(CPLSPrintf("Complex amplitude of bands from %s",GetDescription()));
+        SetMetadataItem("DERIVED_SUBDATASET_1_DESC",osDesc.c_str(),"DERIVED_SUBDATASETS");
 
         for( int i = nBands; i < nNewBand; ++i )
             papoBands[i] = NULL;
