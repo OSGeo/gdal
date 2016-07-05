@@ -52,7 +52,7 @@ public:
     void            ResetReading();
     OGRFeature      *GetNextFeature();
     OGRFeature      *GetFeature( GIntBig nFID );
-    GIntBig         GetFeatureCount( int bForce );
+    GIntBig         GetFeatureCount( int /* bForce */ );
     
     
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
@@ -63,7 +63,7 @@ public:
 
 class OGRCADDataSource : public GDALDataset
 {
-    std::unique_ptr<CADFile>    spoCADFile;
+    CADFile                     *poCADFile;
     
     OGRCADLayer                 **papoLayers;
     int                         nLayers;

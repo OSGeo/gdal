@@ -31,7 +31,7 @@
 
 OGRCADDataSource::OGRCADDataSource()
 {
-    papoLayers = nullptr;
+    papoLayers = NULL;
     nLayers    = 0;
 }
 
@@ -40,6 +40,7 @@ OGRCADDataSource::~OGRCADDataSource()
     for( size_t i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+    delete( poCADFile );
 }
 
 
@@ -52,8 +53,7 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    spoCADFile = std::unique_ptr<CADFile>(
-                                          OpenCADFile( pszFilename, CADFile::OpenOptions::READ_FAST ) );
+    poCADFile = OpenCADFile( pszFilename, CADFile::OpenOptions::READ_FAST );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -63,7 +63,7 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
         return( FALSE );
     }
 
-    nLayers = spoCADFile->getLayersCount();
+    nLayers = poCADFile->getLayersCount();
     papoLayers = ( OGRCADLayer** ) CPLMalloc( sizeof( void* ) );
 
     // Reading content of .prj file, or extracting it from CAD if not present
@@ -84,13 +84,13 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
     }
     else // extract .prj from CAD
     {
-        sESRISpatRef = spoCADFile->getESRISpatialRef();
+        sESRISpatRef = poCADFile->getESRISpatialRef();
     }
     
 
     for ( size_t iIndex = 0; iIndex < nLayers; ++iIndex )
     {
-        papoLayers[iIndex] = new OGRCADLayer( spoCADFile->getLayer( iIndex ), sESRISpatRef );
+        papoLayers[iIndex] = new OGRCADLayer( poCADFile->getLayer( iIndex ), sESRISpatRef );
     }
     
     return( TRUE );
@@ -99,7 +99,7 @@ int OGRCADDataSource::Open( const char *pszFilename, int bUpdate )
 OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
 {
     if ( iLayer < 0 || iLayer >= nLayers )
-        return( nullptr );
+        return( NULL );
     else
-        return papoLayers[iLayer];
+        return( papoLayers[iLayer] );
 }

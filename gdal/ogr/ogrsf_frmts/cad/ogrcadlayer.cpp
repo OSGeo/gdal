@@ -37,19 +37,19 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
 
-    OGRFieldDefn  oClassField( "Geometry", OFTString );
+    OGRFieldDefn  oClassField( "cadgeom_type", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
     
-    OGRFieldDefn  oLinetypeField( "Thickness", OFTReal );
+    OGRFieldDefn  oLinetypeField( "thickness", OFTReal );
     poFeatureDefn->AddFieldDefn( &oLinetypeField );
   
-    OGRFieldDefn  oColorField( "Color (RGB)", OFTIntegerList );
+    OGRFieldDefn  oColorField( "color", OFTIntegerList );
     poFeatureDefn->AddFieldDefn( &oColorField );
 
-    OGRFieldDefn  oExtendedField( "ExtendedEntityData", OFTString );
+    OGRFieldDefn  oExtendedField( "extentity_data", OFTString );
     poFeatureDefn->AddFieldDefn( &oExtendedField );
 
-    OGRFieldDefn  oTextField( "Text", OFTString );
+    OGRFieldDefn  oTextField( "text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
 
@@ -74,9 +74,8 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
     poFeatureDefn->Reference();
 }
 
-GIntBig OGRCADLayer::GetFeatureCount( int bForce )
+GIntBig OGRCADLayer::GetFeatureCount( int /* bForce */ )
 {
-    bForce = false; // FIXME: fix warning only
     return poCADLayer.getGeometryCount();
 }
 
@@ -99,59 +98,59 @@ OGRFeature *OGRCADLayer::GetNextFeature()
 
 OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 {
-    if( (int)poCADLayer.getGeometryCount() <= nFID )
+    if( poCADLayer.getGeometryCount() <= nFID )
     {
         return NULL;
     }
     
     OGRFeature  *poFeature = NULL;
-    std::unique_ptr<CADGeometry> spoCADGeometry(poCADLayer.getGeometry( nFID ) );
+    CADGeometry *poCADGeometry = poCADLayer.getGeometry( nFID );
     
     if( GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                 "Failed to get geometry with ID = %d from layer \"%s\". Libopencad errorcode: %d",
-                 (int)nFID, poCADLayer.getName().c_str(), GetLastErrorCode() );
+                 "Failed to get geometry with ID = %lld from layer \"%s\". Libopencad errorcode: %d",
+                 nFID, poCADLayer.getName().c_str(), GetLastErrorCode() );
         return NULL;
     }
     
     poFeature = new OGRFeature( poFeatureDefn );
-    poFeature->SetFID( static_cast<int>( nFID ) );
-    poFeature->SetField( "Thickness", spoCADGeometry->getThickness() );
+    poFeature->SetFID( nFID );
+    poFeature->SetField( "thickness", poCADGeometry->getThickness() );
 
-    if( spoCADGeometry->getEED().size() != 0 )
+    if( poCADGeometry->getEED().size() != 0 )
     {
         std::string sEEDAsOneString = "";
-        for ( auto iter = spoCADGeometry->getEED().cbegin();
-              iter != spoCADGeometry->getEED().cend(); ++iter )
+        for ( auto iter = poCADGeometry->getEED().cbegin();
+              iter != poCADGeometry->getEED().cend(); ++iter )
         {
             sEEDAsOneString += *iter;
             sEEDAsOneString += ' ';
         }
 
-        poFeature->SetField( "ExtendedEntityData", sEEDAsOneString.c_str() );
+        poFeature->SetField( "extentity_data", sEEDAsOneString.c_str() );
     }
     
-    RGBColor stRGB = spoCADGeometry->getColor();
+    RGBColor stRGB = poCADGeometry->getColor();
     GIntBig adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
-    poFeature->SetField( "Color (RGB)", 3, adRGB);
+    poFeature->SetField( "color", 3, adRGB);
     
-    switch( spoCADGeometry->getType() )
+    switch( poCADGeometry->getType() )
     {
         case CADGeometry::POINT:
         {
-            CADPoint3D * const poCADPoint = ( CADPoint3D* ) spoCADGeometry.get();
+            CADPoint3D * const poCADPoint = ( CADPoint3D* ) poCADGeometry;
             CADVector stPositionVector = poCADPoint->getPosition();
             
             poFeature->SetGeometryDirectly( new OGRPoint( stPositionVector.getX(),
                                                          stPositionVector.getY(), stPositionVector.getZ() ) );
-            poFeature->SetField( "Geometry", "CADPoint" );
+            poFeature->SetField( "cadgeom_type", "CADPoint" );
             return poFeature;
         }
         
         case CADGeometry::LINE:
         {
-            CADLine * const poCADLine = ( CADLine* ) spoCADGeometry.get();
+            CADLine * const poCADLine = ( CADLine* ) poCADGeometry;
             OGRLineString *poLS = new OGRLineString();
             poLS->addPoint( poCADLine->getStart().getPosition().getX(),
                            poCADLine->getStart().getPosition().getY(),
@@ -161,13 +160,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                            poCADLine->getEnd().getPosition().getZ() );
             
             poFeature->SetGeometryDirectly( poLS );
-            poFeature->SetField( "Geometry", "CADLine" );
+            poFeature->SetField( "cadgeom_type", "CADLine" );
             return poFeature;
         }
 
         case CADGeometry::CIRCLE:
         {
-            CADCircle * const poCADCircle = ( CADCircle* ) spoCADGeometry.get();
+            CADCircle * const poCADCircle = ( CADCircle* ) poCADGeometry;
             OGRGeometry *poCircle = OGRGeometryFactory::approximateArcAngles(
                     poCADCircle->getPosition().getX(), poCADCircle->getPosition().getY(),
                     poCADCircle->getPosition().getZ(),
@@ -176,13 +175,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                     0.0 );
             poFeature->SetGeometryDirectly( poCircle );
             
-            poFeature->SetField( "Geometry", "CADCircle" );
+            poFeature->SetField( "cadgeom_type", "CADCircle" );
             return poFeature;
         }
         
         case CADGeometry::ARC:
         {
-            CADArc * const poCADArc = ( CADArc* ) spoCADGeometry.get();
+            CADArc * const poCADArc = ( CADArc* ) poCADGeometry;
             OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
                 poCADArc->getPosition().getX(), poCADArc->getPosition().getY(),
                 poCADArc->getPosition().getZ(),
@@ -194,13 +193,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poArc );
 
-            poFeature->SetField( "Geometry", "CADArc" );
+            poFeature->SetField( "cadgeom_type", "CADArc" );
             return poFeature;
         }
 
         case CADGeometry::FACE3D:
         {
-            CADFace3D * const poCADFace = ( CADFace3D* ) spoCADGeometry.get();
+            CADFace3D * const poCADFace = ( CADFace3D* ) poCADGeometry;
             OGRPolygon * poPoly = new OGRPolygon();
             OGRLinearRing * poLR = new OGRLinearRing();
 
@@ -224,14 +223,14 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poPoly->closeRings();
             poFeature->SetGeometryDirectly( poPoly );
 
-            poFeature->SetField( "Geometry", "CADFace3D" );
+            poFeature->SetField( "cadgeom_type", "CADFace3D" );
             return poFeature;
         }
 
         // TODO: unsupported smooth lines
         case CADGeometry::LWPOLYLINE:
         {
-            CADLWPolyline * const poCADLWPolyline = ( CADLWPolyline* ) spoCADGeometry.get();
+            CADLWPolyline * const poCADLWPolyline = ( CADLWPolyline* ) poCADGeometry;
             OGRLineString * poLS = new OGRLineString();
 
             for( size_t i = 0; i < poCADLWPolyline->getVertexCount(); ++i )
@@ -244,14 +243,14 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             }
 
             poFeature->SetGeometryDirectly( poLS );
-            poFeature->SetField( "Geometry", "CADLWPolyline" );
+            poFeature->SetField( "cadgeom_type", "CADLWPolyline" );
             return poFeature;
         }
 
         // TODO: unsupported smooth lines
         case CADGeometry::POLYLINE3D:
         {
-            CADPolyline3D * const poCADPolyline3D = ( CADPolyline3D* ) spoCADGeometry.get();
+            CADPolyline3D * const poCADPolyline3D = ( CADPolyline3D* ) poCADGeometry;
             OGRLineString * poLS = new OGRLineString();
 
             for( size_t i = 0; i < poCADPolyline3D->getVertexCount(); ++i )
@@ -264,39 +263,39 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             }
             
             poFeature->SetGeometryDirectly( poLS );
-            poFeature->SetField( "Geometry", "CADPolyline3D" );
+            poFeature->SetField( "cadgeom_type", "CADPolyline3D" );
             return poFeature;
         }
 
         case CADGeometry::TEXT:
         {
-            CADText * const poCADText = ( CADText * ) spoCADGeometry.get();
+            CADText * const poCADText = ( CADText * ) poCADGeometry;
             OGRPoint * poPoint = new OGRPoint( poCADText->getPosition().getX(),
                                                poCADText->getPosition().getY(),
                                                poCADText->getPosition().getZ() );
-            poFeature->SetField( "Text", poCADText->getTextValue().c_str() );
+            poFeature->SetField( "text", poCADText->getTextValue().c_str() );
 
             poFeature->SetGeometryDirectly( poPoint );
-            poFeature->SetField( "Geometry", "CADText" );
+            poFeature->SetField( "cadgeom_type", "CADText" );
             return poFeature;
         }
 
         case CADGeometry::MTEXT:
         {
-            CADMText * const poCADMText = ( CADMText * ) spoCADGeometry.get();
+            CADMText * const poCADMText = ( CADMText * ) poCADGeometry;
             OGRPoint * poPoint = new OGRPoint( poCADMText->getPosition().getX(),
                                                poCADMText->getPosition().getY(),
                                                poCADMText->getPosition().getZ() );
-            poFeature->SetField( "Text", poCADMText->getTextValue().c_str() );
+            poFeature->SetField( "text", poCADMText->getTextValue().c_str() );
 
             poFeature->SetGeometryDirectly( poPoint );
-            poFeature->SetField( "Geometry", "CADMText" );
+            poFeature->SetField( "cadgeom_type", "CADMText" );
             return poFeature;
         }
 
         case CADGeometry::ELLIPSE:
         {
-            CADEllipse * const poCADEllipse = ( CADEllipse* ) spoCADGeometry.get();
+            CADEllipse * const poCADEllipse = ( CADEllipse* ) poCADGeometry;
 
             // FIXME: start/end angles should be swapped to work exactly as DXF driver.
             // is it correct?
@@ -328,41 +327,31 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                     dfStartAngle, dfEndAngle, 0.0 );
 
             poFeature->SetGeometryDirectly( poEllipse );
-            poFeature->SetField( "Geometry", "CADEllipse" );
+            poFeature->SetField( "cadgeom_type", "CADEllipse" );
             return poFeature;
         }
         
         case CADGeometry::ATTDEF:
         {
-            CADAttdef * const poCADAttdef = ( CADAttdef* ) spoCADGeometry.get();
+            CADAttdef * const poCADAttdef = ( CADAttdef* ) poCADGeometry;
 
             OGRPoint * poPoint = new OGRPoint( poCADAttdef->getPosition().getX(),
                                                poCADAttdef->getPosition().getY(),
                                                poCADAttdef->getPosition().getZ() );
 
-            poFeature->SetField( "Text", poCADAttdef->getTag().c_str() );
+            poFeature->SetField( "text", poCADAttdef->getTag().c_str() );
 
             poFeature->SetGeometryDirectly( poPoint );
-            poFeature->SetField( "Geometry", "CADAttdef" );
+            poFeature->SetField( "cadgeom_type", "CADAttdef" );
             return poFeature;
         }
-
-        // case CADGeometry::SPLINE:
-        // {
-        //     CADSpline * const poCADSpline = ( CADSpline* ) spoCADGeometry.get();
-        //     OGRLineString * poLS = new OGRLineString();
-
-        //     poFeature->SetGeometryDirectly( poLS );
-        //     poFeature->SetField( "Geometry", "CADSpline" );
-        //     return poFeature;
-        // }
             
         default:
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
+            CPLError( CE_Warning, CPLE_NotSupported,
                      "Unhandled feature. Skipping it." );
             
-            poFeature->SetField( "Geometry", "Unhandled" );
+            poFeature->SetField( "cadgeom_type", "Unhandled" );
             return poFeature;
         }
     }
