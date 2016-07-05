@@ -1350,11 +1350,19 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
     int iBand;
     GByte *pabyDstBuffer;
-    int   nDstBufferSize;
     int   nWordSize = (GDALGetDataTypeSize(psWO->eWorkingDataType) / 8);
 
-    // FIXME? : risk of overflow in multiplication if nBlockXSize or nBlockYSize are very large
-    nDstBufferSize = nBlockXSize * nBlockYSize * psWO->nBandCount * nWordSize;
+    int nReqXSize = nBlockXSize;
+    if( iBlockX * nBlockXSize + nReqXSize > nRasterXSize )
+        nReqXSize = nRasterXSize - iBlockX * nBlockXSize;
+    int nReqYSize = nBlockYSize;
+    if( iBlockY * nBlockYSize + nReqYSize > nRasterYSize )
+        nReqYSize = nRasterYSize - iBlockY * nBlockYSize;
+
+    // FIXME? : risk of overflow in multiplication if nReqXSize or
+    // nReqYSize are very large.
+    const int nDstBufferSize
+        = nReqXSize * nReqYSize * psWO->nBandCount * nWordSize;
 
     pabyDstBuffer = (GByte *) VSIMalloc(nDstBufferSize);
 
@@ -1382,12 +1390,12 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         char **papszInitValues = 
             CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
         int nInitCount = CSLCount(papszInitValues);
-                                                           
+        const int nBandSize = nReqXSize * nReqYSize * nWordSize;
+
         for( iBand = 0; iBand < psWO->nBandCount; iBand++ )
         {
             double adfInitRealImag[2];
             GByte *pBandData;
-            int nBandSize = nBlockXSize * nBlockYSize * nWordSize;
             const char *pszBandInit = papszInitValues[MIN(iBand,nInitCount-1)];
 
             if( EQUAL(pszBandInit,"NO_DATA")
@@ -1417,13 +1425,13 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
             {
                 GDALCopyWords( &adfInitRealImag, GDT_Float64, 0, 
                                pBandData,psWO->eWorkingDataType,nWordSize,
-                               nBlockXSize * nBlockYSize );
+                               nReqXSize * nReqYSize );
             }
             else
             {
                 GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0, 
                                pBandData,psWO->eWorkingDataType,nWordSize,
-                               nBlockXSize * nBlockYSize );
+                               nReqXSize * nReqYSize );
             }
         }
 
@@ -1434,13 +1442,6 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
-    
-    int nReqXSize = nBlockXSize;
-    if( iBlockX * nBlockXSize + nReqXSize > nRasterXSize )
-        nReqXSize = nRasterXSize - iBlockX * nBlockXSize;
-    int nReqYSize = nBlockYSize;
-    if( iBlockY * nBlockYSize + nReqYSize > nRasterYSize )
-        nReqYSize = nRasterYSize - iBlockY * nBlockYSize;
 
     eErr = 
         poWarper->WarpRegionToBuffer( 
