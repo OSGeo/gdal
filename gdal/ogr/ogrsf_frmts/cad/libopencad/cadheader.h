@@ -705,6 +705,8 @@ public:
                                const CADVariant& val = CADVariant()) const;
     const char* getValueName(short code) const;
     void print() const;
+    size_t getSize() const;
+    short getCode(int index) const;
 protected:
     std::map<short, CADVariant> valuesMap;
 };

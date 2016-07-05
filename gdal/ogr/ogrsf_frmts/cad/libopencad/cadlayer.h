@@ -83,6 +83,8 @@ public:
 
     size_t getGeometryCount () const;
     CADGeometry* getGeometry(size_t index);
+    size_t getImageCount () const;
+    CADImage* getImage(size_t index);
 
 protected:
     bool addAttribute(const CADObject* pObject);
@@ -100,6 +102,7 @@ protected:
     short geometryType; // if all geometry is same type set this type or -1
 
     vector<long> geometryHandles;
+    vector<long> imageHandles;
     vector< pair< long, map< string, long > > > geometryAttributes;
     map<long, CADTransformData> transformations;
 

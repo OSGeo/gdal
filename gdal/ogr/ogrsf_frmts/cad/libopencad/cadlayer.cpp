@@ -193,16 +193,21 @@ void CADLayer::addHandle(long handle, CADObject::ObjectType type)
         return;
     }
 
+/*
     if( type == CADObject::BLOCK || type == CADObject::IMAGE  ||
             type == CADObject::IMAGEDEF || type == CADObject::IMAGEDEFREACTOR) {
 #ifdef _DEBUG
         assert(0);
 #endif //_DEBUG
     }
+*/
 
     if(isCommonEntityType (type))
     {
-        geometryHandles.push_back( handle );
+        if(type == CADObject::IMAGE)
+            imageHandles.push_back( handle );
+        else
+            geometryHandles.push_back( handle );
         if( geometryType == -2 ) // if not inited set type for first geometry
             geometryType = type;
         else if( geometryType != type ) // if type differs from previous geometry this is geometry bag (geometry type any)
@@ -219,6 +224,16 @@ CADGeometry *CADLayer::getGeometry(size_t index)
 {
     // TODO: transform geometry if geometryHandles[index] is in transformations
     return pCADFile->getGeometry(geometryHandles[index]);
+}
+
+size_t CADLayer::getImageCount() const
+{
+    return imageHandles.size ();
+}
+
+CADImage *CADLayer::getImage(size_t index)
+{
+    return static_cast<CADImage*>(pCADFile->getGeometry(imageHandles[index]));
 }
 
 bool CADLayer::addAttribute(const CADObject *pObject)

@@ -142,10 +142,11 @@ CADFileIO* GetDefaultFileIO ( const char *pszFileName )
  * @return positive number for dwg version, negative for dxf version, 0 if error
  * occured
  */
-int IdentifyCADFile( CADFileIO* pCADFileIO )
+int IdentifyCADFile( CADFileIO* pCADFileIO, bool own )
 {
     int result = CheckCADFile(pCADFileIO);
-    delete pCADFileIO;
+    if(own)
+        delete pCADFileIO;
     return result;
 }
 

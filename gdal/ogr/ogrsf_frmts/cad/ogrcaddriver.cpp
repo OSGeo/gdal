@@ -2,11 +2,13 @@
  *  Project: OGR CAD Driver
  *  Purpose: Implements driver based on libopencad
  *  Author: Alexandr Borzykh, mush3d at gmail.com
+ *  Author: Dmitry Baryshnikov, polimax@mail.ru
  *  Language: C++
  *******************************************************************************
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
+ *  Copyright (c) 2016, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +36,7 @@
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
+    // TODO: change to new CADVSILFileIO(poOpenInfo->pszFilename)
     return IdentifyCADFile( GetDefaultFileIO(poOpenInfo->pszFilename) ) == 0 ? 0 : 1;
 }
 
@@ -43,11 +46,16 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if ( !OGRCADDriverIdentify ( poOpenInfo ) )
+    // TODO: change to new CADVSILFileIO(poOpenInfo->pszFilename)
+    CADFileIO* pFileIO = GetDefaultFileIO(poOpenInfo->pszFilename);
+    if ( !IdentifyCADFile( pFileIO, false ) )
+    {
+        delete pFileIO;
         return( NULL );
+    }
     
     OGRCADDataSource *poDS = new OGRCADDataSource();
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo, pFileIO ) )
     {
         delete poDS;
         return( NULL );
@@ -68,12 +76,18 @@ void RegisterOGRCAD()
     {
         poDriver = new GDALDriver();
         poDriver->SetDescription( "CAD" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                  "AutoCAD Driver" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD Driver" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                  "drv_cad.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );        
+        
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='MODE' type='int' min='1' max='3' description='Open mode. 1 - read all data (slow), 2 - read main data (fast), 3 - read less data' default='2'/>"
+"</OpenOptionList>"); 
+
+        
         poDriver->pfnOpen = OGRCADDriverOpen;
         poDriver->pfnIdentify = OGRCADDriverIdentify;
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
