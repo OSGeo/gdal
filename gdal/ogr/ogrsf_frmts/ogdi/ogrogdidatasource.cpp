@@ -138,7 +138,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "OGDI DataSource Open Failed: %s\n",
-                          psResult->message );
+                          psResult->message ? psResult->message : "(no message string)");
             }
             CPLFree( pszWorkingName );
             return FALSE;
@@ -153,7 +153,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "GetGlobalBound failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;
         }
@@ -164,7 +165,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "GetServerProjection failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;
         }
@@ -175,7 +177,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
                       "untranslatable PROJ.4 projection: %s\n",
-                      ECSTEXT(psResult) );
+                      ECSTEXT(psResult) ? ECSTEXT(psResult): "(no mesage string)" );
             delete m_poSpatialRef;
             m_poSpatialRef = NULL;
         }
@@ -187,7 +189,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "SelectRegion failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;
         }
@@ -241,7 +244,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             if( ECSERROR(psResult) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "%s", psResult->message );
+                          "UpdateDictionay failed: %s",
+                          psResult->message ? psResult->message : "(no message string)");
                 CPLFree( pszWorkingName );
                 return FALSE;
             }
