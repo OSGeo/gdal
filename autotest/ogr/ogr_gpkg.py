@@ -2117,6 +2117,32 @@ def ogr_gpkg_32():
     return 'success'
 
 ###############################################################################
+# Test OGR_CURRENT_DATE
+
+def ogr_gpkg_33():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_CURRENT_DATE', '2000-01-01T:00:00:00.000Z')
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_33.gpkg')
+    ds.CreateLayer('test', geom_type = ogr.wkbNone )
+    ds = None
+    gdal.SetConfigOption('OGR_CURRENT_DATE', None)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_33.gpkg')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE last_change = '2000-01-01T:00:00:00.000Z'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_32.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -2206,6 +2232,7 @@ gdaltest_list = [
     ogr_gpkg_30,
     ogr_gpkg_31,
     ogr_gpkg_32,
+    ogr_gpkg_33,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
