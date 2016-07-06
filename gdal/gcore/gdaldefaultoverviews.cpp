@@ -560,7 +560,6 @@ GDALDefaultOverviews::BuildOverviews(
 
 {
     CPLErr       eErr;
-    int          i;
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
@@ -634,7 +633,7 @@ GDALDefaultOverviews::BuildOverviews(
 
     int nNewOverviews = 0;
     int *panNewOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
-    for( i = 0; i < nOverviews && poBand != NULL; i++ )
+    for( int i = 0; i < nOverviews && poBand != NULL; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
         {
@@ -664,7 +663,7 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     GDALRasterBand **pahBands
         = (GDALRasterBand **) CPLCalloc(sizeof(GDALRasterBand *),nBands);
-    for( i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBands; i++ )
         pahBands[i] = poDS->GetRasterBand( panBandList[i] );
 
 /* -------------------------------------------------------------------- */
@@ -750,7 +749,7 @@ GDALDefaultOverviews::BuildOverviews(
         poBand = poDS->GetRasterBand( panBandList[iBand] );
 
         nNewOverviews = 0;
-        for( i = 0; i < nOverviews && poBand != NULL; i++ )
+        for( int i = 0; i < nOverviews && poBand != NULL; i++ )
         {
             for( int j = 0; j < poBand->GetOverviewCount(); j++ )
             {
