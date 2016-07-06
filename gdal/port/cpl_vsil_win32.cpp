@@ -34,6 +34,8 @@ CPL_CVSID("$Id$");
 #if defined(WIN32)
 
 #include <windows.h>
+#include <winioctl.h> // for FSCTL_SET_SPARSE
+
 #include "cpl_string.h"
 
 #include <sys/types.h>
@@ -345,6 +347,13 @@ int VSIWin32Handle::Eof()
 int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
 {
     vsi_l_offset nCur = Tell();
+    Seek( 0, SEEK_END );
+    if( nNewSize > Tell() )
+    {
+        // Enable sparse files if growing size
+        DWORD dwTemp;
+        DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL);
+    }
     Seek( nNewSize, SEEK_SET );
     BOOL bRes = SetEndOfFile( hFile );
     Seek( nCur, SEEK_SET );
