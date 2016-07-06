@@ -1696,6 +1696,45 @@ def warp_52():
 
     return 'success'
 
+###############################################################################
+# Test Grey+Alpha
+
+def warp_53():
+
+    for typestr in ('Byte', 'UInt16', 'Int16'):
+        src_ds = gdal.Translate('', '../gcore/data/byte.tif',
+                                options = '-of MEM -b 1 -b 1 -ot ' + typestr)
+        src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        src_ds.GetRasterBand(2).Fill(255)
+        import struct
+        zero = struct.pack('B' * 1, 0)
+        src_ds.GetRasterBand(2).WriteRaster(10,10,1,1,zero,
+                                            buf_type = gdal.GDT_Byte)
+        dst_ds = gdal.Translate('', src_ds,
+                                options = '-of MEM -a_srs EPSG:32611')
+
+        for option in ( '-wo USE_GENERAL_CASE=TRUE', '' ):
+            for alg_name, expected_cs in ( ('near', 3781),
+                                           ('cubic',3942),
+                                           ('cubicspline',3874),
+                                           ('bilinear',4019) ):
+                dst_ds.GetRasterBand(1).Fill(0)
+                dst_ds.GetRasterBand(2).Fill(0)
+                gdal.Warp(dst_ds, src_ds,
+                          options = '-r ' + alg_name + ' ' + option)
+                cs1 = dst_ds.GetRasterBand(1).Checksum()
+                cs2 = dst_ds.GetRasterBand(2).Checksum()
+                if cs1 != expected_cs or cs2 != 3903:
+                    gdaltest.post_reason('fail')
+                    print(typestr)
+                    print(option)
+                    print(alg_name)
+                    print(cs1)
+                    print(cs2)
+                    return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     warp_1,
     warp_1_short,
@@ -1765,9 +1804,10 @@ gdaltest_list = [
     warp_49,
     warp_50,
     warp_51,
-    warp_52
+    warp_52,
+    warp_53
     ]
-
+#gdaltest_list = [ warp_53 ]
 
 if __name__ == '__main__':
 
