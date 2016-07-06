@@ -15816,9 +15816,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /************************************************************************/
 
 char **GTiffDataset::GetMetadataDomainList()
-{
-  CPLDebug("GTiffDataset", "GetMetadataDomainList");
-  
+{  
     LoadGeoreferencingAndPamIfNeeded();
 
     char ** domainlist = CSLDuplicate(oGTiffMDMD.GetDomainList());
