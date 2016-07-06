@@ -140,11 +140,26 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 
    // Transfer metadata
    poDS->SetMetadata(poTmpDS->GetMetadata());
+
+   // Transfer projection
+   poDS->SetProjection(poTmpDS->GetProjectionRef());
    
+   // Transfer geotransform
+   double padfTransform[6];
+   bool transformOk = poTmpDS->GetGeoTransform(padfTransform);
+   if(transformOk)
+     {
+     poDS->SetGeoTransform(padfTransform);
+     }
+   
+   // Transfer GCPs
+   const char * gcpProjection = poTmpDS->GetGCPProjection();
+   int nbGcps = poTmpDS->GetGCPCount();
+   poDS->SetGCPs(nbGcps,poTmpDS->GetGCPs(),gcpProjection);
+
+   // Map bands
    for(int nBand = 1; nBand <= nbBands; ++nBand)
      {
-
-
      VRTDerivedRasterBand * poBand;    
 
      GDALDataType type  = GDT_Float64;
