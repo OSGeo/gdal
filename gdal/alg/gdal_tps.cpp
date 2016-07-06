@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Thin Plate Spline transformer (GDAL wrapper portion)

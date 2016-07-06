@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implementation of the GDALWarpOperation class.

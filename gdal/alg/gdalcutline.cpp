@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implement cutline/blend mask generator.

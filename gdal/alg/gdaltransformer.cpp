@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Implementation of one or more GDALTrasformerFunc types, including

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Warp API
  * Purpose:  Implemenentation of 2D Thin Plate Spline transformer.
@@ -37,6 +36,8 @@
 #endif
 
 #include "thinplatespline.h"
+
+CPL_CVSID("$Id$");
 
 //////////////////////////////////////////////////////////////////////////////
 //// vizGeorefSpline2D

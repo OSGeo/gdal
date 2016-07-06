@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Simple (source in memory) warp algorithm.

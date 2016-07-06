@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Includes internal qhull headers

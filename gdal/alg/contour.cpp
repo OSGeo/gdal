@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Contour Generation
  * Purpose:  Core algorithm implementation for contour line generation.

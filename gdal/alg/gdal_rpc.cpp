@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Image Warper
  * Purpose:  Implements a rational polynomial (RPC) based transformer.
