@@ -30,6 +30,94 @@
 #include <math.h>
 #include <gdal.h>
 
+CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr ComplexPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize,
+                       GDALDataType eSrcType, GDALDataType eBufType,
+                        int nPixelSpace, int nLineSpace);
+
+CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize,
+                       GDALDataType eSrcType, GDALDataType eBufType,
+                       int nPixelSpace, int nLineSpace);
+
+CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
+                      int nXSize, int nYSize,
+                      GDALDataType eSrcType, GDALDataType eBufType,
+                      int nPixelSpace, int nLineSpace);
+
+CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
+                    int nXSize, int nYSize,
+                    GDALDataType eSrcType, GDALDataType eBufType,
+                    int nPixelSpace, int nLineSpace);
+
+CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
+                    int nXSize, int nYSize,
+                    GDALDataType eSrcType, GDALDataType eBufType,
+                    int nPixelSpace, int nLineSpace);
+
+CPLErr CMulPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
+                    int nXSize, int nYSize,
+                    GDALDataType eSrcType, GDALDataType eBufType,
+                    int nPixelSpace, int nLineSpace);
+
+CPLErr IntensityPixelFunc(void **papoSources, int nSources, void *pData,
+                          int nXSize, int nYSize,
+                          GDALDataType eSrcType, GDALDataType eBufType,
+                          int nPixelSpace, int nLineSpace);
+
+CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
+                     int nXSize, int nYSize,
+                     GDALDataType eSrcType, GDALDataType eBufType,
+                     int nPixelSpace, int nLineSpace);
+
+CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
+                      int nXSize, int nYSize,
+                      GDALDataType eSrcType, GDALDataType eBufType,
+                      int nPixelSpace, int nLineSpace);
+
+CPLErr dB2AmpPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize,
+                       GDALDataType eSrcType, GDALDataType eBufType,
+                       int nPixelSpace, int nLineSpace);
+
+CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize,
+                       GDALDataType eSrcType, GDALDataType eBufType,
+                       int nPixelSpace, int nLineSpace);
+
+CPLErr PowPixelFuncHelper(void **papoSources, int nSources, void *pData,
+                          int nXSize, int nYSize,
+                          GDALDataType eSrcType, GDALDataType eBufType,
+                          int nPixelSpace, int nLineSpace,
+                          double base, double fact);
+
+CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc();
+
 
 CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
                      int nXSize, int nYSize,
