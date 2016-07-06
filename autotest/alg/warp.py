@@ -1714,17 +1714,18 @@ def warp_53():
                                 options = '-of MEM -a_srs EPSG:32611')
 
         for option in ( '-wo USE_GENERAL_CASE=TRUE', '' ):
-            for alg_name, expected_cs in ( ('near', 3781),
-                                           ('cubic',3942),
-                                           ('cubicspline',3874),
-                                           ('bilinear',4019) ):
+            # First checksum is proj 4.8, second proj 4.9.2
+            for alg_name, expected_cs in ( ('near', [3781,3843]),
+                                           ('cubic',[3942,4133]),
+                                           ('cubicspline',[3874,4076]),
+                                           ('bilinear',[4019,3991]) ):
                 dst_ds.GetRasterBand(1).Fill(0)
                 dst_ds.GetRasterBand(2).Fill(0)
                 gdal.Warp(dst_ds, src_ds,
                           options = '-r ' + alg_name + ' ' + option)
                 cs1 = dst_ds.GetRasterBand(1).Checksum()
                 cs2 = dst_ds.GetRasterBand(2).Checksum()
-                if cs1 != expected_cs or cs2 != 3903:
+                if (not cs1 in expected_cs) or (not cs2 in [3903, 4138]):
                     gdaltest.post_reason('fail')
                     print(typestr)
                     print(option)
