@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode_stub.cpp
  * Project:  CPL - Common Portability Library

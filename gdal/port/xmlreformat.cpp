@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  XML Reformatting - mostly for testing minixml implementation.
@@ -29,6 +28,8 @@
 
 #include "cpl_minixml.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id:");
 
 int main( int argc, char **argv )
 

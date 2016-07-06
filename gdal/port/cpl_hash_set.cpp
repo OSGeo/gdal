@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_hash_set.cpp
  * Project:  CPL - Common Portability Library
@@ -31,6 +30,8 @@
 #include "cpl_conv.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
+
+CPL_CVSID("$Id:");
 
 struct _CPLHashSet
 {
