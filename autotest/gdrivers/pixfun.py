@@ -36,12 +36,6 @@ sys.path.append('../pymod')
 
 import gdaltest
 
-# @TODO: remove in non-plugin configuration
-#gdal.SetConfigOption('CPL_DEBUG', 'PIXFUN')
-gdal.SetConfigOption('GDAL_DRIVER_PATH', '../..')
-gdal.AllRegister()
-
-
 ###############################################################################
 # Verify real part extraction from a complex dataset.
 
