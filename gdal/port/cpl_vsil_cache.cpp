@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implementation of caching IO layer.

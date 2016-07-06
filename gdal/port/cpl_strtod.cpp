@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Functions to convert ASCII string to floating point number.

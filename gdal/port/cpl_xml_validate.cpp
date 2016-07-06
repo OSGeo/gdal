@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement XML validation against XSD schema

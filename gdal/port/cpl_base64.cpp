@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Encoding/Decoding Base64 strings

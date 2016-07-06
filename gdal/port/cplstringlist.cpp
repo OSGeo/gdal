@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  CPLStringList implementation.

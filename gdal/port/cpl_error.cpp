@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_error.cpp
  * Project:  CPL - Common Portability Library

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for stdin
