@@ -15817,10 +15817,22 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 
 char **GTiffDataset::GetMetadataDomainList()
 {
+  CPLDebug("GTiffDataset", "GetMetadataDomainList");
+  
     LoadGeoreferencingAndPamIfNeeded();
 
+    char ** domainlist = CSLDuplicate(oGTiffMDMD.GetDomainList());
+    char ** baselist = GDALDataset::GetMetadataDomainList();
+
+    int nbBaseDomains = CSLCount(baselist);
+
+    for(int domainId = 0; domainId<nbBaseDomains;++domainId)
+      domainlist = CSLAddString(domainlist,baselist[domainId]);
+    
+    CSLDestroy(baselist);
+    
     return BuildMetadataDomainList(
-        CSLDuplicate(oGTiffMDMD.GetDomainList()),
+        domainlist,
         TRUE,
         "", "ProxyOverviewRequest", MD_DOMAIN_RPC, MD_DOMAIN_IMD,
         "SUBDATASETS", "EXIF",
@@ -15841,6 +15853,11 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadata( pszDomain );
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"DERIVED_SUBDATASETS"))
+      {
+      return GDALDataset::GetMetadata(pszDomain);
+      }
 
     else if( pszDomain != NULL && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
                                    EQUAL(pszDomain, MD_DOMAIN_IMD) ||
