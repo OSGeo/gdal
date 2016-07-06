@@ -37,9 +37,6 @@
 
 CPL_CVSID("$Id$");
 
-// Required to register pixel functions
-extern CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc();
-
 
 /************************************************************************/
 /*                             VRTDriver()                              */
