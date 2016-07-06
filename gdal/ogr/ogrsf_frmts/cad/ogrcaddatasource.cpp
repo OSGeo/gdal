@@ -48,36 +48,124 @@ OGRCADDataSource::~OGRCADDataSource()
         delete( poCADFile );
 }
 
+GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
+{
+    CPLString osFilename( pszOpenPath );
+    short nSubdatasetIndex = -1, nSubdatasetTableIndex = -1;    
+    char** papszTokens = CSLTokenizeString2(pszOpenPath, ":", 0);
+    if( CSLCount(papszTokens) != 4 )
+    {
+        CSLDestroy(papszTokens);
+        return FALSE;
+    }
+
+    osFilename = papszTokens[1];
+    nSubdatasetTableIndex = atoi(papszTokens[2]);
+    nSubdatasetIndex = atoi(papszTokens[3]);
+
+    CSLDestroy(papszTokens);
+    
+    poCADFile = OpenCADFile( new VSILFileIO(osFilename), CADFile::OpenOptions::READ_FAST );
+    if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "libopencad %s does not support this version of CAD file.\n"
+                  "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
+        return NULL;
+    }
+    
+    if ( GetLastErrorCode() != CADErrorCodes::SUCCESS )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "libopencad %s does not support this version of CAD file.\n", 
+                  GetVersionString(), GetCADFormats() );
+        return NULL;
+    }
+    
+    // Reading content of .prj file, or extracting it from CAD if not present
+    OGRSpatialReference oSRS;
+    // FIXME: set oSRS from cad file
+    CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
+    if(sESRISpatRef.empty())
+    {
+        // TODO: do we need *.PRJ too?
+        const char * pszPRJFilename = CPLResetExtension(osFilename, "prj");
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        char **cabyPRJData = CSLLoad(pszPRJFilename);
+        CPLPopErrorHandler();
+        oSRS.importFromESRI(cabyPRJData);
+        
+        if(cabyPRJData)
+            CSLDestroy( cabyPRJData );
+    }
+    
+    // get raster by index
+    if( nSubdatasetIndex > -1 && nSubdatasetTableIndex > -1)
+    {
+        CADLayer &oLayer = poCADFile->getLayer(nSubdatasetTableIndex);
+        CADImage* pImage = oLayer.getImage(nSubdatasetIndex);
+        if(pImage)
+        {
+            GDALDataset* poRasterDataset = NULL;
+            
+            // TODO: add support clippin region
+            CPLString osImgFilename = pImage->getFilePath();
+            poRasterDataset = reinterpret_cast<GDALDataset *>(
+                                        GDALOpen( osImgFilename, GA_ReadOnly ) );
+            if(poRasterDataset == NULL)
+            {
+                return NULL;
+            }
+            if(poRasterDataset->GetRasterCount() == 0)
+            {
+                delete poRasterDataset;
+                return NULL;
+            }
+            
+            char *pszWKT = NULL; 
+            oSRS.exportToWkt( &pszWKT );
+            poRasterDataset->SetProjection( pszWKT );
+            CPLFree( pszWKT );
+            
+            double adfGeoTransform[6];
+            CADVector oInsPt = pImage->getVertInsertionPoint();
+            adfGeoTransform[0] = oInsPt.getX();
+            adfGeoTransform[3] = oInsPt.getY();
+            adfGeoTransform[2] = 0;
+            adfGeoTransform[4] = 0;
+            /* not used CADVector oSizePt = pImage->getImageSizeInPx(); */
+            unsigned char nResUnits = pImage->getResolutionUnits();
+            CADVector osSizeUnitsPt = pImage->getPixelSizeInACADUnits();
+            double dfMultiply(1);
+            
+            switch(nResUnits)// 0 == none, 2 == centimeters, 5 == inches;
+            {
+                case 2:
+                    dfMultiply = 100 / oSRS.GetLinearUnits(); // meters to linear units
+                case 5: 
+                    dfMultiply = 0.0254 / oSRS.GetLinearUnits();   
+                case 0:                
+                default:
+                    dfMultiply = 1;
+            }
+            
+            adfGeoTransform[1] = osSizeUnitsPt.getX() * dfMultiply;
+            adfGeoTransform[5] = -osSizeUnitsPt.getY() * dfMultiply;
+            
+            poRasterDataset->SetGeoTransform (adfGeoTransform);
+
+            delete pImage;
+            return poRasterDataset;
+        }
+    } 
+    return NULL;
+}
+
 
 int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
 {
     size_t i, j;
     SetDescription( poOpenInfo->pszFilename );
-   
-    if ( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                 "Update access not supported by CAD Driver." );
-        return( FALSE );
-    }
-    
-    CPLString osFilename( poOpenInfo->pszFilename );
-    short nSubdatasetIndex = -1, nSubdatasetTableIndex = -1;    
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
-    {
-        char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
-        if( CSLCount(papszTokens) != 4 )
-        {
-            CSLDestroy(papszTokens);
-            return FALSE;
-        }
-
-        osFilename = papszTokens[1];
-        nSubdatasetTableIndex = atoi(papszTokens[2]);
-        nSubdatasetIndex = atoi(papszTokens[3]);
-
-        CSLDestroy(papszTokens);
-    }
     
     int nMode = atoi(CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", "2"));
     
@@ -138,26 +226,9 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
             CSLDestroy( cabyPRJData );
     }  
     
-    // get raster by index
-    if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER && nSubdatasetIndex > -1 && 
-        nSubdatasetTableIndex > -1)
-    {
-        CADLayer &oLayer = poCADFile->getLayer(nSubdatasetTableIndex);
-        CADImage* pImage = oLayer.getImage(nSubdatasetIndex);
-        if(pImage)
-        {
-            // TODO: open raster
-        
-            delete pImage;
-            return TRUE;
-        }
-        
-        return FALSE;
-    } 
-    
     nLayers = 0;
-    int nRasters = 0;
-    // FIXME: we allocate extra data, do we need more strict policy here?
+    int nRasters = 1;
+    // FIXME: we allocate extra memory, do we need more strict policy here?
     papoLayers = ( OGRCADLayer** ) CPLMalloc(sizeof(OGRCADLayer*) * 
                                                 poCADFile->getLayersCount());
 
@@ -209,4 +280,5 @@ int OGRCADDataSource::TestCapability( const char * pszCap )
         return TRUE;
     return FALSE;
 }
+
 

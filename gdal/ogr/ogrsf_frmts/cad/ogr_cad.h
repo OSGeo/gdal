@@ -73,10 +73,12 @@ public:
     OGRCADDataSource();
     ~OGRCADDataSource();
     
-    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );    
+    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );  
+    GDALDataset   *OpenRaster( const char * pszOpenPath ); 
     int            GetLayerCount() { return nLayers; }
     OGRLayer      *GetLayer( int );    
-    int            TestCapability( const char * );        
+    int            TestCapability( const char * ); 
+    // TODO: add filelist       
 };
 
 #endif
