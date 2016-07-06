@@ -1375,6 +1375,36 @@ void VSICleanupFileManager()
 }
 
 /************************************************************************/
+/*                            Truncate()                                */
+/************************************************************************/
+
+int VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
+{
+    vsi_l_offset nOriginalPos = Tell();
+    if( Seek(0, SEEK_END) == 0 && nNewSize >= Tell() )
+    {
+        // Fill with zeroes
+        std::vector<GByte> aoBytes(4096,0);
+        vsi_l_offset nCurOffset = nOriginalPos;
+        while( nCurOffset < nNewSize )
+        {
+            const int nSize = static_cast<int>(MIN( 4096, nNewSize - nCurOffset ));
+            if( Write(&aoBytes[0], nSize, 1) != 1 )
+            {
+                Seek( nOriginalPos, SEEK_SET );
+                return -1;
+            }
+            nCurOffset += nSize;
+        }
+        return ( Seek( nOriginalPos, SEEK_SET ) == 0) ? 0 : -1;
+    }
+
+    CPLDebug("VSI", "Truncation is not supported in generic implementation of Truncate()");
+    Seek( nOriginalPos, SEEK_SET );
+    return -1;
+}
+
+/************************************************************************/
 /*                           ReadMultiRange()                           */
 /************************************************************************/
 
