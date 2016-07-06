@@ -36,7 +36,8 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
     poSpatialRef = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
-
+    //poFeatureDefn = new OGRFeatureDefn( CPLP 
+//getId
     OGRFieldDefn  oClassField( "cadgeom_type", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
     
@@ -91,7 +92,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     OGRFeature  *poFeature = NULL;
     CADGeometry *poCADGeometry = poCADLayer.getGeometry( nFID );
     
-    if( GetLastErrorCode() != CADErrorCodes::SUCCESS )
+    if( NULL == poCADGeometry || GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                  "Failed to get geometry with ID = %lld from layer \"%s\". Libopencad errorcode: %d",
