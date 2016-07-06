@@ -27,19 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
-#include "cpl_string.h"
-#include "gdalgrid.h"
+#include <cstdlib>
 #include <float.h>
 #include <limits.h>
 #include <map>
+
+#include "cpl_vsi.h"
+#include "cpl_string.h"
 #include "cpl_worker_thread_pool.h"
+#include "gdalgrid.h"
 #include "gdalgrid_priv.h"
-#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
-#define TO_RADIANS (M_PI / 180.0)
+static const double TO_RADIANS = M_PI / 180.0;
 
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
@@ -55,11 +56,11 @@ CPL_CVSID("$Id$");
 
 static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
 {
-    GDALGridPoint* psPoint = (GDALGridPoint*) hFeature;
+    const GDALGridPoint* psPoint = static_cast<const GDALGridPoint*>(hFeature);
     GDALGridXYArrays* psXYArrays = psPoint->psXYArrays;
-    int i = psPoint->i;
-    double dfX = psXYArrays->padfX[i];
-    double dfY = psXYArrays->padfY[i];
+    const int i = psPoint->i;
+    const double dfX = psXYArrays->padfX[i];
+    const double dfY = psXYArrays->padfY[i];
     pBounds->minx = dfX;
     pBounds->miny = dfY;
     pBounds->maxx = dfX;
@@ -117,94 +118,91 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  */
 
 CPLErr
-GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
+GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
                                  const double *padfX, const double *padfY,
                                  const double *padfZ,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue,
-                                 CPL_UNUSED void* hExtraParamsIn )
+                                 void* /* hExtraParamsIn */ )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
 
-    // Pre-compute search ellipse parameters
-    double      dfRadius1 =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfRadius1;
-    double      dfRadius2 =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfRadius2;
-    double  dfR12;
+    const GDALGridInverseDistanceToAPowerOptions * const poOptions =
+        static_cast<const GDALGridInverseDistanceToAPowerOptions *>(
+            poOptionsIn);
 
-    dfRadius1 *= dfRadius1;
-    dfRadius2 *= dfRadius2;
-    dfR12 = dfRadius1 * dfRadius2;
+    // Pre-compute search ellipse parameters
+    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfR12 = dfRadius1 * dfRadius2;
 
     // Compute coefficients for coordinate system rotation.
-    double      dfCoeff1 = 0.0, dfCoeff2 = 0.0;
-    const double dfAngle = TO_RADIANS
-        * ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfAngle;
-    const bool  bRotated = ( dfAngle == 0.0 ) ? false : true;
+    const double dfAngle = TO_RADIANS * poOptions->dfAngle;
+    const bool bRotated = dfAngle != 0.0;
+
+    double dfCoeff1 = 0.0;
+    double dfCoeff2 = 0.0;
     if ( bRotated )
     {
         dfCoeff1 = cos(dfAngle);
         dfCoeff2 = sin(dfAngle);
     }
 
-    const double    dfPowerDiv2 =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower / 2;
-    const double    dfSmoothing =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
-    const GUInt32   nMaxPoints =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMaxPoints;
-    double  dfNominator = 0.0, dfDenominator = 0.0;
-    GUInt32 i, n = 0;
+    const double dfPowerDiv2 = poOptions->dfPower / 2;
+    const double dfSmoothing = poOptions->dfSmoothing;
+    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    double  dfNominator = 0.0;
+    double dfDenominator = 0.0;
+    GUInt32 n = 0;
 
-    for ( i = 0; i < nPoints; i++ )
+    for( GUInt32 i = 0; i < nPoints; i++ )
     {
-        double  dfRX = padfX[i] - dfXPoint;
-        double  dfRY = padfY[i] - dfYPoint;
+        double dfRX = padfX[i] - dfXPoint;
+        double dfRY = padfY[i] - dfYPoint;
         const double dfR2 =
             dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
-        if ( bRotated )
+        if( bRotated )
         {
-            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+            const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
 
             dfRX = dfRXRotated;
             dfRY = dfRYRotated;
         }
 
         // Is this point located inside the search ellipse?
-        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             // If the test point is close to the grid node, use the point
             // value directly as a node value to avoid singularity.
-            if ( dfR2 < 0.0000000000001 )
+            if( dfR2 < 0.0000000000001 )
             {
-                (*pdfValue) = padfZ[i];
+                *pdfValue = padfZ[i];
                 return CE_None;
             }
             else
             {
                 const double dfW = pow( dfR2, dfPowerDiv2 );
-                double dfInvW = 1.0 / dfW;
+                const double dfInvW = 1.0 / dfW;
                 dfNominator += dfInvW * padfZ[i];
                 dfDenominator += dfInvW;
                 n++;
-                if ( nMaxPoints > 0 && n > nMaxPoints )
+                if( nMaxPoints > 0 && n > nMaxPoints )
                     break;
             }
         }
     }
 
-    if ( n < ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMinPoints
-         || dfDenominator == 0.0 )
+    if( n < poOptions->nMinPoints || dfDenominator == 0.0 )
     {
-        (*pdfValue) =
-            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+        *pdfValue = poOptions->dfNoDataValue;
     }
     else
-        (*pdfValue) = dfNominator / dfDenominator;
+    {
+        *pdfValue = dfNominator / dfDenominator;
+    }
 
     return CE_None;
 }
