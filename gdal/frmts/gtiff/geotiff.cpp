@@ -1842,13 +1842,8 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
             // Now simulate the writing of other blocks.
             vsi_l_offset nDataSize = (vsi_l_offset)nBlockSize * nBlocks;
-            if( VSIFSeekL(fp, nBaseOffset + nDataSize - 1, SEEK_SET) != 0 )
+            if( VSIFTruncateL(fp, nBaseOffset + nDataSize) != 0 )
                 return NULL;
-            char ch = 0;
-            if( VSIFWriteL(&ch, 1, 1, fp) != 1 )
-            {
-                return NULL;
-            }
 
             for( i = 1; i < nBlocks; ++i)
             {
@@ -7074,8 +7069,7 @@ void GTiffDataset::FillEmptyTiles()
             CPLAssert( iBlockToZero ==
                               static_cast<vsi_l_offset>(nCountBlocksToZero) );
 
-            if( VSIFSeekL( fpTIF, iBlockToZero * nBlockBytes - 1, SEEK_CUR ) != 0 ||
-                VSIFWriteL( "", 1, 1, fpTIF) != 1 )
+            if( VSIFTruncateL( fpTIF, nOffset + iBlockToZero * nBlockBytes ) != 0 )
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Cannot initialize empty blocks");
