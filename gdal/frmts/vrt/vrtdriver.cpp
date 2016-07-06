@@ -37,6 +37,10 @@
 
 CPL_CVSID("$Id$");
 
+// Required to register pixel functions
+extern CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc();
+
+
 /************************************************************************/
 /*                             VRTDriver()                              */
 /************************************************************************/
@@ -356,6 +360,9 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
+    // First register the pixel functions
+    GDALRegisterDefaultPixelFunc();
+  
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
 
