@@ -1484,7 +1484,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     for( CPLXMLNode* psKeyword = psKeywords->psChild;
                          psKeyword != NULL; psKeyword = psKeyword->psNext )
                     {
-                        if( psKeyword->eType == CXT_Element )
+                        if( psKeyword->eType == CXT_Element && psKeyword->psChild != NULL )
                         {
                             poLayer->SetMetadataItem(CPLSPrintf("KEYWORD_%d", nKeywordCounter),
                                                      psKeyword->psChild->pszValue);
