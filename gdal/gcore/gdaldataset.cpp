@@ -208,6 +208,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
     bIsInternal = TRUE;
     bSuppressOnClose = FALSE;
     papszOpenOptions = NULL;
+    papoDerivedMetadataList = new CPLStringList();
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
@@ -328,6 +329,9 @@ GDALDataset::~GDALDataset()
     CPLFree(psPrivate);
 
     CSLDestroy( papszOpenOptions );
+
+    CPLFree(papoDerivedMetadataList);
+    papoDerivedMetadataList = NULL;
 }
 
 /************************************************************************/
@@ -583,12 +587,6 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         }
 
         papoBands = papoNewBands;
-
-        // TODO: Filter on complex bands only
-        SetMetadataItem("DERIVED_SUBDATASET_1_NAME",CPLSPrintf("DERIVED_SUBDATASET:COMPLEX_AMPLITUDE:%s",GetDescription()),"DERIVED_SUBDATASETS");
-
-        CPLString osDesc(CPLSPrintf("Complex amplitude of bands from %s",GetDescription()));
-        SetMetadataItem("DERIVED_SUBDATASET_1_DESC",osDesc.c_str(),"DERIVED_SUBDATASETS");
 
         for( int i = nBands; i < nNewBand; ++i )
             papoBands[i] = NULL;
@@ -3296,6 +3294,50 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
         CPLErrorV( eErrClass, err_no, fmt, args );
     }
     va_end(args);
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+char ** GDALDataset::GetMetadata(const char * pszDomain)
+{
+  if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
+    {
+    papoDerivedMetadataList->Clear();
+
+    // First condition: at least one raster band
+    if(GetRasterCount()>0)
+      {
+      papoDerivedMetadataList->SetNameValue("DERIVED_SUBDATASET_1_NAME",CPLSPrintf("DERIVED_SUBDATASET:COMPLEX_AMPLITUDE:%s",GetDescription()));
+
+      CPLString osDesc(CPLSPrintf("Complex amplitude of bands from %s",GetDescription()));
+      papoDerivedMetadataList->SetNameValue("DERIVED_SUBDATASET_1_DESC",osDesc.c_str());
+      }
+    
+    return papoDerivedMetadataList->List();
+    }
+	else
+		return GDALMajorObject::GetMetadata(pszDomain);
+}
+
+
+/************************************************************************/
+/*                            GetMetadataDomainList()                   */
+/************************************************************************/
+char ** GDALDataset::GetMetadataDomainList()
+{
+  CPLDebug("GDALDataset","GetMetadataDomainList");
+  char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
+  currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+
+  int nb_domains = CSLCount(currentDomainList);
+
+  CPLDebug("GDALDataset","Found %i domains",nb_domains);
+
+  for(int i = 0; i< nb_domains;++i)
+    CPLDebug("GDALDataset","Domain %i: %s",i,currentDomainList[i]);
+      
+  return currentDomainList;
 }
 
 /************************************************************************/
