@@ -38,7 +38,11 @@
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
+    if (poOpenInfo->nHeaderBytes < 6)
+        return FALSE;
+
+    if (poOpenInfo->pabyHeader[0] != 'A' ||
+        poOpenInfo->pabyHeader[1] != 'C')
         return TRUE;
         
     return IdentifyCADFile( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 
@@ -51,25 +55,49 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    CADFileIO* pFileIO = new VSILFileIO( poOpenInfo->pszFilename);
-    if ( IdentifyCADFile( pFileIO, false ) == FALSE)
+    CADFileIO* pFileIO = new VSILFileIO( poOpenInfo->pszFilename );
+    if ( !STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
     {
-        delete pFileIO;
-        return( NULL );
+        if ( IdentifyCADFile( pFileIO, false ) == FALSE)
+        {
+            delete pFileIO;
+            return( NULL );
+        }
     }
     
-    OGRCADDataSource *poDS = new OGRCADDataSource();
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The CAD driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
+    
+    GDALCADDataset *poDS = new GDALCADDataset();
+    // raster subdataset
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
+    {
+        GDALDataset* poRasterDataset = poDS->OpenRaster(poOpenInfo->pszFilename);
+        delete poDS;
+        return poRasterDataset;
+    }
+    
+    // vector datasource or raster dataset
     if( !poDS->Open( poOpenInfo, pFileIO ) )
     {
         delete poDS;
-        return( NULL );
+        return NULL;
     }
     else
-        return( poDS );
+        return poDS;
 }
 
 /************************************************************************/
-/*                           RegisterOGRCAD()                           */
+/*                           RegisterGDALCAD()                          */
 /************************************************************************/
 
 void RegisterOGRCAD()

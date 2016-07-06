@@ -809,9 +809,10 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     nBitOffsetFromStart = 0;
     dObjectSize = ReadMSHORT (pabySectionContent, nBitOffsetFromStart);
     short dObjectType = ReadBITSHORT (pabySectionContent, nBitOffsetFromStart);
-
+    
     if(dObjectType >= 500){
         CADClass cadClass = classes.getClassByNum (dObjectType);
+        
         if(cadClass.sCppClassName == "AcDbRasterImage"){
             dObjectType = CADObject::IMAGE;
         }

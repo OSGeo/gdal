@@ -63,21 +63,24 @@ public:
     int             TestCapability( const char * ) { return( FALSE ); }
 };
 
-class OGRCADDataSource : public GDALDataset
+class GDALCADDataset : public GDALDataset
 {
+    CPLString      osCADFilename;
     CADFile       *poCADFile;    
     OGRCADLayer  **papoLayers;
     int            nLayers;
     
 public:
-    OGRCADDataSource();
-    ~OGRCADDataSource();
+    GDALCADDataset();
+    ~GDALCADDataset();
     
-    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );    
+    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );  
+    GDALDataset   *OpenRaster( const char * pszOpenPath ); 
     int            GetLayerCount() { return nLayers; }
     OGRLayer      *GetLayer( int );    
     int            TestCapability( const char * );
     OGRSpatialReference *GetSpatialReference(const char* const pszFilename);
+    char         **GetFileList();
 };
 
 #endif

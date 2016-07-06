@@ -44,10 +44,7 @@ static int CheckCADFile(CADFileIO* pCADFileIO)
 {
     if(NULL == pCADFileIO)
         return 0;
-
-    if(!pCADFileIO->IsOpened())
-        pCADFileIO->Open(CADFileIO::OpenMode::read | CADFileIO::OpenMode::binary);
-
+    
     const char* pszFilePath = pCADFileIO->GetFilePath();
     size_t nPathLen = strlen(pszFilePath);
     if(toupper(pszFilePath[nPathLen - 3]) == 'D' &&
@@ -56,15 +53,29 @@ static int CheckCADFile(CADFileIO* pCADFileIO)
     {
         //TODO: "AutoCAD Binary DXF"
         std::cerr << "DXF ASCII and binary is not supported yet";
+        return 0;
     }
-    else
+    
+    if(!(toupper(pszFilePath[nPathLen - 3]) == 'D' &&
+       toupper(pszFilePath[nPathLen - 2]) == 'W' &&
+       toupper(pszFilePath[nPathLen - 1]) == 'G'))
     {
         char pabyDWGVersion[DWG_VERSION_STR_SIZE + 1] = {0};
         pCADFileIO->Rewind ();
         pCADFileIO->Read( pabyDWGVersion, DWG_VERSION_STR_SIZE);
         return atoi(pabyDWGVersion + 2);
     }
-    return 0;
+    
+    if(!pCADFileIO->IsOpened())
+        pCADFileIO->Open(CADFileIO::OpenMode::read | CADFileIO::OpenMode::binary);
+
+    if(!pCADFileIO->IsOpened())
+        return 0;
+    
+    char pabyDWGVersion[DWG_VERSION_STR_SIZE + 1] = {0};
+    pCADFileIO->Rewind();
+    pCADFileIO->Read( pabyDWGVersion, DWG_VERSION_STR_SIZE);
+    return atoi(pabyDWGVersion + 2);
 }
 
 /**

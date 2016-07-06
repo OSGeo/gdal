@@ -5,7 +5,7 @@ SUBDIRS-yes := libopencad
 
 OBJ	= \
 	ogrcaddriver.o \
-	ogrcaddatasource.o \
+	gdalcaddataset.o \
 	ogrcadlayer.o \
 	vsilfileio.o
 
