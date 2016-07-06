@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CIETMap Phase 2
  * Purpose:  Use median cut algorithm to generate an near-optimal PCT for a

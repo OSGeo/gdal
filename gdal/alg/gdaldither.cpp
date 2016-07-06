@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CIETMap Phase 2
  * Purpose:  Convert RGB (24bit) to a pseudo-colored approximation using
