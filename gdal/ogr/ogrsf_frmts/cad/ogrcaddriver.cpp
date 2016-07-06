@@ -77,7 +77,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     
     
-    OGRCADDataSource *poDS = new OGRCADDataSource();
+    GDALCADDataset *poDS = new GDALCADDataset();
     // raster subdataset
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
     {
@@ -97,7 +97,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                           RegisterOGRCAD()                           */
+/*                           RegisterGDALCAD()                          */
 /************************************************************************/
 
 void RegisterOGRCAD()

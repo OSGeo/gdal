@@ -33,13 +33,13 @@
 
 #include "vsilfileio.h"
 
-OGRCADDataSource::OGRCADDataSource() : papoLayers(NULL),
+GDALCADDataset::GDALCADDataset() : papoLayers(NULL),
     nLayers(0), poCADFile(NULL)
 {
 
 }
 
-OGRCADDataSource::~OGRCADDataSource()
+GDALCADDataset::~GDALCADDataset()
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -48,9 +48,8 @@ OGRCADDataSource::~OGRCADDataSource()
         delete( poCADFile );
 }
 
-GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
+GDALDataset *GDALCADDataset::OpenRaster( const char * pszOpenPath )
 {
-    CPLString osFilename( pszOpenPath );
     short nSubdatasetIndex = -1, nSubdatasetTableIndex = -1;    
     char** papszTokens = CSLTokenizeString2(pszOpenPath, ":", 0);
     if( CSLCount(papszTokens) != 4 )
@@ -59,13 +58,14 @@ GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
         return FALSE;
     }
 
-    osFilename = papszTokens[1];
+    
+    osCADFilename = papszTokens[1];
     nSubdatasetTableIndex = atoi(papszTokens[2]);
     nSubdatasetIndex = atoi(papszTokens[3]);
 
     CSLDestroy(papszTokens);
     
-    poCADFile = OpenCADFile( new VSILFileIO(osFilename), CADFile::OpenOptions::READ_FAST );
+    poCADFile = OpenCADFile( new VSILFileIO(osCADFilename), CADFile::OpenOptions::READ_FAST );
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -89,7 +89,7 @@ GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
     if(sESRISpatRef.empty())
     {
         // TODO: do we need *.PRJ too?
-        const char * pszPRJFilename = CPLResetExtension(osFilename, "prj");
+        const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
         CPLPushErrorHandler( CPLQuietErrorHandler );
         char **cabyPRJData = CSLLoad(pszPRJFilename);
         CPLPopErrorHandler();
@@ -108,7 +108,7 @@ GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
         {
             GDALDataset* poRasterDataset = NULL;
             
-            // TODO: add support clippin region
+            // TODO: add support clipping region
             CPLString osImgFilename = pImage->getFilePath();
             poRasterDataset = reinterpret_cast<GDALDataset *>(
                                         GDALOpen( osImgFilename, GA_ReadOnly ) );
@@ -162,10 +162,11 @@ GDALDataset *OGRCADDataSource::OpenRaster( const char * pszOpenPath )
 }
 
 
-int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
+int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
 {
     size_t i, j;
     SetDescription( poOpenInfo->pszFilename );
+    osCADFilename = poOpenInfo->pszFilename;
     
     int nMode = atoi(CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", "2"));
     
@@ -259,7 +260,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
     return( TRUE );
 }
 
-OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
+OGRLayer *GDALCADDataset::GetLayer( int iLayer )
 {
     if ( iLayer < 0 || iLayer >= nLayers )
         return( NULL );
@@ -267,7 +268,7 @@ OGRLayer *OGRCADDataSource::GetLayer( int iLayer )
         return( papoLayers[iLayer] );
 }
 
-int OGRCADDataSource::TestCapability( const char * pszCap )
+int GDALCADDataset::TestCapability( const char * pszCap )
 {
     if ( EQUAL(pszCap,ODsCCreateLayer) ||
          EQUAL(pszCap,ODsCDeleteLayer) )
@@ -281,4 +282,36 @@ int OGRCADDataSource::TestCapability( const char * pszCap )
     return FALSE;
 }
 
+char** GDALCADDataset::GetFileList()
+{
+    int i, j;
+    char **papszFileList = GDALDataset::GetFileList();
 
+    /* duplicated papszFileList = CSLAddString( papszFileList, osCADFilename );*/
+    const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
+    if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
+        papszFileList = CSLAddString( papszFileList, pszPRJFilename );
+    else
+    {
+        pszPRJFilename = CPLResetExtension(osCADFilename, "PRJ");
+        if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
+            papszFileList = CSLAddString( papszFileList, pszPRJFilename );
+    }    
+    
+    for(i = 0; i < poCADFile->getLayersCount(); ++i)
+    {
+        CADLayer &oLayer = poCADFile->getLayer( i );
+        for( j = 0; j < oLayer.getImageCount(); ++j )
+        {
+            CADImage* pImage = oLayer.getImage(j);
+            if(pImage)
+            {                
+                CPLString osImgFilename = pImage->getFilePath(); 
+                if ( CPLCheckForFile ((char*)osImgFilename.c_str(), NULL) == TRUE)
+                    papszFileList = CSLAddString( papszFileList, osImgFilename );
+            }
+        }
+    }
+    
+    return papszFileList;
+}
