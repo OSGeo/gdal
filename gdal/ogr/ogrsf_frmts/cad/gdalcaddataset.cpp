@@ -83,21 +83,7 @@ GDALDataset *GDALCADDataset::OpenRaster( const char * pszOpenPath )
     }
     
     // Reading content of .prj file, or extracting it from CAD if not present
-    OGRSpatialReference oSRS;
-    // FIXME: set oSRS from cad file
-    CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
-    if(sESRISpatRef.empty())
-    {
-        // TODO: do we need *.PRJ too?
-        const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
-        CPLPushErrorHandler( CPLQuietErrorHandler );
-        char **cabyPRJData = CSLLoad(pszPRJFilename);
-        CPLPopErrorHandler();
-        oSRS.importFromESRI(cabyPRJData);
-        
-        if(cabyPRJData)
-            CSLDestroy( cabyPRJData );
-    }
+    OGRSpatialReference oSRS = *(GetSpatialReference(osCADFilename));
     
     // get raster by index
     if( nSubdatasetIndex > -1 && nSubdatasetTableIndex > -1)
