@@ -94,7 +94,7 @@ int ComplexDerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
 }
 
 GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
-{
+{ 
   if( !Identify(poOpenInfo) )
     {
     return NULL;
@@ -132,6 +132,12 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
      return NULL;
 
    int nbBands = poTmpDS->GetRasterCount();
+  
+   if(nbBands == 0)
+     {
+     GDALClose(poTmpDS);
+     return NULL;
+     }
 
    int nRows = poTmpDS->GetRasterYSize();
    int nCols = poTmpDS->GetRasterXSize();
@@ -165,20 +171,23 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
      GDALDataType type  = GDT_Float64;
      
      poBand = new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
+     poDS->SetBand(nBand,poBand);
+     
      poBand->SetPixelFunctionName("mod");
      poBand->SetSourceTransferType(poTmpDS->GetRasterBand(nBand)->GetRasterDataType());
-     poDS->SetBand(nBand,poBand);
-
+ 
      GDALProxyPoolDataset* proxyDS;
      proxyDS = new GDALProxyPoolDataset(         odFilename,
                                                  poDS->nRasterXSize,
                                                  poDS->nRasterYSize,
                                                  GA_ReadOnly,
                                                  TRUE);
-     proxyDS->AddSrcBandDescription(poTmpDS->GetRasterBand(nBand)->GetRasterDataType(), 128, 128);
-     
+     for(int j=0;j<nbBands;++j)
+       proxyDS->AddSrcBandDescription(poTmpDS->GetRasterBand(nBand)->GetRasterDataType(), 128, 128);
+
      poBand->AddComplexSource(proxyDS->GetRasterBand(nBand),0,0,nCols,nRows,0,0,nCols,nRows);
-     proxyDS->Dereference();     
+          
+     proxyDS->Dereference();
      }
 
    GDALClose(poTmpDS);
