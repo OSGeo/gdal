@@ -48,7 +48,7 @@ class OGRCADLayer : public OGRLayer
 
     CADLayer        &poCADLayer;
 public:
-    OGRCADLayer( CADLayer &poCADLayer, std::string sESRISpatRef );
+    OGRCADLayer( CADLayer &poCADLayer, OGRSpatialReference *poSR );
     ~OGRCADLayer();
     
     void            ResetReading();
@@ -76,7 +76,8 @@ public:
     int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );    
     int            GetLayerCount() { return nLayers; }
     OGRLayer      *GetLayer( int );    
-    int            TestCapability( const char * );        
+    int            TestCapability( const char * );
+    OGRSpatialReference *GetSpatialReference(const char* const pszFilename);
 };
 
 #endif

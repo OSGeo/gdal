@@ -108,23 +108,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
     }
 
     // Reading content of .prj file, or extracting it from CAD if not present
-    
-    CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
-    if(sESRISpatRef.empty())
-    {
-        // TODO: do we need *.PRJ too?
-        const char * pszPRJFilename = CPLResetExtension(poOpenInfo->pszFilename, "prj");
-        CPLPushErrorHandler( CPLQuietErrorHandler );
-        char **cabyPRJData = CSLLoad(pszPRJFilename);
-        CPLPopErrorHandler();
-        if( cabyPRJData && CSLCount(cabyPRJData) > 0 )
-        {
-            sESRISpatRef = cabyPRJData[0];
-        }
-        
-        if(cabyPRJData)
-            CSLDestroy( cabyPRJData );
-    }  
+    OGRSpatialReference *poSpatialRef = GetSpatialReference(poOpenInfo->pszFilename);
     
     // get raster by index
     if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER && nSubdatasetIndex > -1 && 
@@ -154,7 +138,7 @@ int OGRCADDataSource::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
         CADLayer &oLayer = poCADFile->getLayer( i );
         if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR && oLayer.getGeometryCount() > 0)
         {
-            papoLayers[nLayers++] = new OGRCADLayer( oLayer, sESRISpatRef );
+            papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSpatialRef );
         }
 
         if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
@@ -200,3 +184,49 @@ int OGRCADDataSource::TestCapability( const char * pszCap )
     return FALSE;
 }
 
+OGRSpatialReference *OGRCADDataSource::GetSpatialReference(const char * const pszFilename)
+{
+    OGRSpatialReference *poSpatialRef = NULL;
+    if( poCADFile != NULL )
+    {
+        poSpatialRef = new OGRSpatialReference();
+        CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
+
+        if( !sESRISpatRef.empty() )
+        {
+            char** papszPRJData = new char*[1];
+            papszPRJData[0] = new char[sESRISpatRef.size()];
+            std::copy( sESRISpatRef.begin(), sESRISpatRef.end(), papszPRJData[0] ); // FIXME: pretty dirty trick
+
+            if( poSpatialRef->importFromESRI( papszPRJData ) != OGRERR_NONE )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Failed to parse PRJ section, ignoring." );
+                delete( poSpatialRef );
+                poSpatialRef = NULL;
+            }
+
+            CSLDestroy( papszPRJData );
+        }
+        else
+        {
+            const char * pszPRJFilename = CPLResetExtension(pszFilename, "prj");
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+            char **cabyPRJData = CSLLoad(pszPRJFilename);
+            CPLPopErrorHandler();
+
+            if( poSpatialRef->importFromESRI( cabyPRJData ) != OGRERR_NONE )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Failed to parse PRJ section, ignoring." );
+                delete( poSpatialRef );
+                poSpatialRef = NULL;
+            }
+
+            if(cabyPRJData)
+                CSLDestroy( cabyPRJData );
+        }
+    }
+
+    return poSpatialRef;
+}

@@ -42,13 +42,14 @@ public:
     CADHandle(unsigned char codeIn = 0);
     CADHandle(const CADHandle& other);
     CADHandle& operator = (const CADHandle& other);
-    void addOffset(unsigned char val);
-    bool isNull() const;
-    long getAsLong() const;
-    long getAsLong(const CADHandle &ref_handle ) const;
+
+    void                addOffset(unsigned char val);
+    bool                isNull() const;
+    long                getAsLong() const;
+    long                getAsLong(const CADHandle &ref_handle ) const;
 protected:
-    unsigned char code;
-    std::vector<unsigned char> handleOrOffset;
+    unsigned char               code;
+    std::vector<unsigned char>  handleOrOffset;
 };
 
 class OCAD_EXTERN CADVariant final
@@ -79,23 +80,23 @@ public:
     CADVariant(const CADVariant& orig);
     CADVariant& operator = (const CADVariant& orig);
 public:
-    long getDecimal() const;
-    double getReal() const;
-    const std::string &getString() const;
-    enum DataType getType() const;
-    double getX() const;
-    double getY() const;
-    double getZ() const;
-    const CADHandle &getHandle() const;
+    long                getDecimal() const;
+    double              getReal() const;
+    const std::string&  getString() const;
+    enum DataType       getType() const;
+    double              getX() const;
+    double              getY() const;
+    double              getZ() const;
+    const CADHandle&    getHandle() const;
 protected:
-    enum DataType type;
-    long decimalVal;
-    double xVal;
-    double yVal;
-    double zVal;
-    std::string stringVal;
-    CADHandle handleVal;
-    time_t dateTimeVal;
+    enum DataType       type;
+    long                decimalVal;
+    double              xVal;
+    double              yVal;
+    double              zVal;
+    std::string         stringVal;
+    CADHandle           handleVal;
+    time_t              dateTimeVal;
 };
 
 
@@ -703,10 +704,10 @@ public:
     int getGroupCode(short code) const;
     const CADVariant& getValue(short code,
                                const CADVariant& val = CADVariant()) const;
-    const char* getValueName(short code) const;
-    void print() const;
-    size_t getSize() const;
-    short getCode(int index) const;
+    const char*     getValueName(short code) const;
+    void            print() const;
+    size_t          getSize() const;
+    short           getCode(int index) const;
 protected:
     std::map<short, CADVariant> valuesMap;
 };

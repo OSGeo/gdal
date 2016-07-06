@@ -58,17 +58,17 @@ public:
 
 public:
     CADFile (CADFileIO* poFileIO);
-    virtual ~CADFile();
+    virtual                 ~CADFile();
 
 public:
-    const CADHeader& getHeader() const;
-    const CADClasses& getClasses() const;
-    const CADTables& getTables() const;
+    const CADHeader&        getHeader() const;
+    const CADClasses&       getClasses() const;
+    const CADTables&        getTables() const;
 
 public:
-    virtual int parseFile(enum OpenOptions eOptions);
-    virtual size_t getLayersCount() const;
-    virtual CADLayer &getLayer(size_t index);
+    virtual int             parseFile(enum OpenOptions eOptions);
+    virtual size_t          getLayersCount() const;
+    virtual CADLayer&       getLayer(size_t index);
 //    virtual size_t GetBlocksCount();
 //    virtual CADBlockObject * GetBlock( size_t index );
 
@@ -76,7 +76,7 @@ public:
     * @brief returns ESRI SpatialReference as string.
     * @return string, containing ESRI SpatRef (data of .prj file if not presented). If none, return string with 0-length.
     */
-    virtual std::string getESRISpatialRef() = 0;
+    virtual std::string     getESRISpatialRef() = 0;
 protected:
     /**
      * @brief Get CAD Object from file
@@ -84,56 +84,56 @@ protected:
      * @param bHandlesOnly set TRUE if object data should be skipped, and only object handles should be read.
      * @return pointer to CADObject or nullptr. User have to free returned pointer.
      */
-    virtual CADObject * getObject( long index, bool bHandlesOnly = false ) = 0;
+    virtual CADObject *     getObject( long index, bool bHandlesOnly = false ) = 0;
 
     /**
      * @brief read geometry from CAD file
      * @param handle Handle of CAD object
      * @return NULL if failed or pointer which mast be feed by user
      */
-    virtual CADGeometry * getGeometry( long index ) = 0;
+    virtual CADGeometry *   getGeometry( long index ) = 0;
 
     /**
      * @brief initially read some basic values and section locator
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int readSectionLocator() = 0;
+    virtual int             readSectionLocator() = 0;
 
     /**
      * @brief Read header from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int readHeader(enum OpenOptions eOptions) = 0;
+    virtual int             readHeader(enum OpenOptions eOptions) = 0;
 
     /**
      * @brief Read classes from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int readClasses(enum OpenOptions eOptions) = 0;
+    virtual int             readClasses(enum OpenOptions eOptions) = 0;
 
     /**
      * @brief Create the file map for fast access to CAD objects
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int createFileMap() = 0;
+    virtual int             createFileMap() = 0;
 
     /**
      * @brief Read tables from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int readTables(enum OpenOptions eOptions);
+    virtual int             readTables(enum OpenOptions eOptions);
 
 protected:
-    CADFileIO* fileIO;
-    CADHeader header;
-    CADClasses classes;
-    CADTables tables;
+    CADFileIO*              fileIO;
+    CADHeader               header;
+    CADClasses              classes;
+    CADTables               tables;
 
 protected:
-    std::map<long, long> objectsMap; // object index <-> file offset
+    std::map<long, long>    objectsMap; // object index <-> file offset
 };
 
 

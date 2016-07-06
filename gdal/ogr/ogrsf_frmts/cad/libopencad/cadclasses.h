@@ -40,16 +40,16 @@ using namespace std;
 
 typedef struct _class
 {
-    string sCppClassName;       /**< TV, C++ class name */
-    string sApplicationName;    /**< TV, Application name */
-    string sDXFRecordName;      /**< TV, Class DXF record name */
-    int dProxyCapFlag;          /**< BITSHORT, Proxy capabilities flag, 90 */
-    unsigned short dInstanceCount;/**< BITSHORT, Instance count for a custom class, 91 */
-    bool bWasZombie;            /**< BIT, Was-a-proxy flag, 280*/
-    bool bIsEntity;             /**< BITSHORT, Is-an-entity flag, 281 */
-    short dClassNum;            // BITSHORT
-    short dClassVersion;        // BITSHORT
-}CADClass;
+    string          sCppClassName;       /**< TV, C++ class name */
+    string          sApplicationName;    /**< TV, Application name */
+    string          sDXFRecordName;      /**< TV, Class DXF record name */
+    int             dProxyCapFlag;       /**< BITSHORT, Proxy capabilities flag, 90 */
+    unsigned short  dInstanceCount;      /**< BITSHORT, Instance count for a custom class, 91 */
+    bool            bWasZombie;          /**< BIT, Was-a-proxy flag, 280*/
+    bool            bIsEntity;           /**< BITSHORT, Is-an-entity flag, 281 */
+    short           dClassNum;            // BITSHORT
+    short           dClassVersion;        // BITSHORT
+} CADClass;
 
 class OCAD_EXTERN CADClasses
 {
@@ -57,12 +57,12 @@ public:
     CADClasses();
 
 public:
-    void addClass(CADClass stClass);
-    CADClass getClassByNum(short num) const;
-    void print() const;
+    void                addClass(CADClass stClass);
+    CADClass            getClassByNum(short num) const;
+    void                print() const;
 
 protected:
-    vector<CADClass> classes;
+    vector<CADClass>    classes;
 };
 
 #endif // CADCLASSES_H

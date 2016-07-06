@@ -36,60 +36,60 @@
 
 struct SectionLocatorRecord
 {
-    char byRecordNumber = 0;
-    int  dSeeker        = 0;
-    int  dSize          = 0;
+    char        byRecordNumber = 0;
+    int         dSeeker        = 0;
+    int         dSize          = 0;
 };
 
 struct DWG2000Ced
 {
-    long      dLength;
-    short     dType;
-    int       dObjSizeInBits;
+    long        dLength;
+    short       dType;
+    int         dObjSizeInBits;
     CADHandle   hHandle;
     CADEedArray eEED;
     bool        bGraphicPresentFlag;
 
-    char      dEntMode;
-    int       dNumReactors;
+    char        dEntMode;
+    int         dNumReactors;
 
     bool        bNoLinks;
-    short     dCMColorIndex;
+    short       dCMColorIndex;
     double      dfLtypeScale;
 
-    char      ltype_flags;
-    char      plotstyle_flags;
+    char        ltype_flags;
+    char        plotstyle_flags;
 
-    short     dInvisibility;
-    char      cLineWeight;
+    short       dInvisibility;
+    char        cLineWeight;
 };
 
 struct DWG2000Cehd
 {
-    CADHandle hOwner;
-    CADHandle hReactors;
-    CADHandle hxdibobjhandle;
-    CADHandle hprev_entity, hnext_entity;
-    CADHandle hlayer;
-    CADHandle hltype;
-    CADHandle hplotstyle;
+    CADHandle   hOwner;
+    CADHandle   hReactors;
+    CADHandle   hxdibobjhandle;
+    CADHandle   hprev_entity, hnext_entity;
+    CADHandle   hlayer;
+    CADHandle   hltype;
+    CADHandle   hplotstyle;
 };
 
 class DWGFileR2000 : public CADFile
 {
 public:
     DWGFileR2000(CADFileIO* poFileIO);
-    virtual ~DWGFileR2000();
+    virtual             ~DWGFileR2000();
 
-    string getESRISpatialRef() override;
+    string              getESRISpatialRef() override;
 protected:
-    virtual int readSectionLocator() override;
-    virtual int readHeader(enum OpenOptions eOptions) override;
-    virtual int readClasses(enum OpenOptions eOptions) override;
-    virtual int createFileMap() override;
+    virtual int         readSectionLocator() override;
+    virtual int         readHeader(enum OpenOptions eOptions) override;
+    virtual int 	    readClasses(enum OpenOptions eOptions) override;
+    virtual int         createFileMap() override;
 
-    CADObject * getObject(long index, bool bHandlesOnly = false) override;
-    CADGeometry * getGeometry(long index) override;
+    CADObject *         getObject(long index, bool bHandlesOnly = false) override;
+    CADGeometry *       getGeometry(long index) override;
 
 protected:
     CADBlockObject *getBlock(long dObjectSize, CADCommonED stCommonEntityData,
@@ -179,8 +179,8 @@ protected:
     void fillCommonEntityHandleData(CADEntityObject *pEnt, const char *pabyInput,
                                     size_t &nBitOffsetFromStart);
 protected:
-    int imageSeeker;
-    std::vector<SectionLocatorRecord> sectionLocatorRecords;
+    int                                 imageSeeker;
+    std::vector<SectionLocatorRecord>   sectionLocatorRecords;
 };
 
 #endif // DWG_R2000_H_H

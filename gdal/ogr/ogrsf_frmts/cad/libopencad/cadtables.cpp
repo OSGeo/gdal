@@ -49,14 +49,15 @@ void CADTables::addTable(TableType eType, CADHandle hHandle)
 
 int CADTables::readTable( CADFile * const file, CADTables::TableType eType)
 {
-    auto it = tableMap.find (eType);
-    if(it == tableMap.end ())
+    auto iter = tableMap.find (eType);
+    if( iter == tableMap.end () )
         return CADErrorCodes::TABLE_READ_FAILED;
 
     // TODO: read different tables
-    switch (eType) {
-    case LayersTable:
-        return readLayersTable(file, it->second.getAsLong ());
+    switch (eType)
+    {
+        case LayersTable:
+            return readLayersTable(file, iter->second.getAsLong ());
     }
 
     return CADErrorCodes::SUCCESS;
@@ -127,9 +128,25 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
                                           file->getObject (dCurrentEntHandle,
                                                            true))); // true = read CED && handles only
 
+        if ( dCurrentEntHandle == dLastEntHandle )
+        {
+            ent.reset (static_cast<CADEntityObject *>(
+                               file->getObject (dCurrentEntHandle, true) ) );
+            if(nullptr != ent)
+                fillLayer(ent.get ());
+            else
+            {
+#ifdef _DEBUG
+                assert(0);
+#endif //_DEBUG
+            }
+            break;
+        }
+
         /* TODO: this check is excessive, but if something goes wrong way -
          * some part of geometries will be parsed. */
-        if ( ent != nullptr ) {
+        if ( ent != nullptr )
+        {
             fillLayer(ent.get ());
 
             if ( ent->stCed.bNoLinks )
@@ -138,28 +155,12 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
                 dCurrentEntHandle = ent->stChed.hNextEntity.getAsLong (
                             ent->stCed.hObjectHandle);
         }
-        else{
+        else
+        {
 #ifdef _DEBUG
             assert(0);
 #endif //_DEBUG
         }
-
-        if ( dCurrentEntHandle == dLastEntHandle )
-        {
-            ent.reset (static_cast<CADEntityObject *>(
-                           file->getObject (dCurrentEntHandle, true) ) );
-            if(nullptr != ent)
-                fillLayer(ent.get ());
-            else{
-    #ifdef _DEBUG
-                assert(0);
-    #endif //_DEBUG
-            }
-            break;
-        }
-
-        if( dCurrentEntHandle == 0 ) // it means we have reached the end, object with 0 handle does not exist.
-            break;
     }
 
     DebugMsg ("Readed layers using LayerControl object count: %d\n",

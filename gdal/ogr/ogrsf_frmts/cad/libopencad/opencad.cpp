@@ -60,7 +60,7 @@ static int CheckCADFile(CADFileIO* pCADFileIO)
     else
     {
         char pabyDWGVersion[DWG_VERSION_STR_SIZE + 1] = {0};
-        pCADFileIO->Rewind();
+        pCADFileIO->Rewind ();
         pCADFileIO->Read( pabyDWGVersion, DWG_VERSION_STR_SIZE);
         return atoi(pabyDWGVersion + 2);
     }

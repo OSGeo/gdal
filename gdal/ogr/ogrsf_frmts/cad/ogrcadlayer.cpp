@@ -29,7 +29,7 @@
 #include "ogr_cad.h"
 #include "cpl_conv.h"
 
-OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
+OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
 	poCADLayer( poCADLayer_ )
 {
 	nNextFID = 0;
@@ -52,23 +52,8 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, std::string sESRISpatRef ) :
     OGRFieldDefn  oTextField( "text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-
     // Applying spatial ref info
-    char ** papszPRJ = new char*[1];
-    papszPRJ[0] = new char[sESRISpatRef.size()];
-    memcpy( papszPRJ[0], sESRISpatRef.data(), sESRISpatRef.size() );
-    if ( sESRISpatRef.size() != 0 )
-    {
-        poSpatialRef = new OGRSpatialReference();
-        if ( poSpatialRef->importFromESRI( papszPRJ ) != OGRERR_NONE )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                        "Failed to parse PRJ section, ignoring." );
-            delete( poSpatialRef );
-            poSpatialRef = NULL;
-        }
-    }
-    delete[] papszPRJ;
+    poSpatialRef = poSR;
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();

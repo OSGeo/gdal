@@ -631,16 +631,14 @@ void CADHeader::print() const
     }
 }
 
-
 size_t CADHeader::getSize() const
 {
     return valuesMap.size();
 }
-    
+
 short CADHeader::getCode(int index) const
 {
     auto it = valuesMap.begin();
     advance( it, index );
     return it->first;
 }
-
