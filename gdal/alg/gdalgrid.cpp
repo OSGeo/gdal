@@ -1185,7 +1185,9 @@ GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
             ((GDALGridDataMetricsOptions *)poOptions)->dfNoDataValue;
     }
     else
-        (*pdfValue) = (double)n;
+    {
+        *pdfValue = n;
+    }
 
     return CE_None;
 }
