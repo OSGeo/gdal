@@ -126,7 +126,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
     {
         unique_ptr<CADEntityObject> ent( static_cast<CADEntityObject *>(
                                           file->getObject (dCurrentEntHandle,
-                                                           true))); // true = read CED && handles only        
+                                                           true))); // true = read CED && handles only
 
         if ( dCurrentEntHandle == dLastEntHandle )
         {
@@ -170,7 +170,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
 }
 
 void CADTables::fillLayer(const CADEntityObject *ent)
-{    
+{
     for ( CADLayer &layer : layers )
     {
         if ( ent->stChed.hLayer.getAsLong (ent->stCed.hObjectHandle) ==

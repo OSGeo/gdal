@@ -107,7 +107,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     if( poCADGeometry->getEED().size() != 0 )
     {
         std::string sEEDAsOneString = "";
-        for ( auto iter = poCADGeometry->getEED().cbegin();
+        for ( auto iter = poCADGeometry->getEED().cbegin(); // TODO: replace auto with explicit type name.
               iter != poCADGeometry->getEED().cend(); ++iter )
         {
             sEEDAsOneString += *iter;

@@ -86,6 +86,12 @@ public:
     size_t getImageCount () const;
     CADImage* getImage(size_t index);
 
+    /**
+     * @brief returns geometry type of this layer. -2 if geometry type is undefined,
+     * -1 if there are more than 1 type of geometries, or geometry type (dwg code).
+     */
+    short getGeometryType();
+
 protected:
     bool addAttribute(const CADObject* pObject);
 protected:
