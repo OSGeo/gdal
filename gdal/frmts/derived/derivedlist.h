@@ -28,15 +28,22 @@
 #ifndef DERIVEDLIST_H_INCLUDED
 #define DERIVEDLIST_H_INCLUDED
 
+#include "cpl_port.h"
+
+CPL_C_START
+
 typedef struct
 {
   const char * pszDatasetName;
   const char * pszDatasetDescritpion;
   const char * pszPixelFunction;
+  const char * pszTargetPixelType;
 } DerivedDatasetDescription;
 
-const DerivedDatasetDescription* GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount);
+const DerivedDatasetDescription* CPL_DLL CPL_STDCALL GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount);
 
-unsigned int GDALGetNumberOfDerivedDatasetDecriptions(void);
+unsigned int CPL_DLL CPL_STDCALL GDALGetNumberOfDerivedDatasetDecriptions(void);
+
+CPL_C_END
 
 #endif

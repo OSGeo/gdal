@@ -28,20 +28,22 @@
 #include "derivedlist.h"
 #include "gdal.h"
 
+CPL_C_START
+
 static const DerivedDatasetDescription asDDSDesc [] =
 {
-  { "AMPLITUDE", "Amplitude of input bands", "mod"},
-  { "PHASE", "Phase of input bands", "phase"},
-  { "REAL", "Real part of input bands", "real"},
-  { "IMAG", "Imaginary part of input bands", "imag"},
-  { "CONJ", "Conjugate of input bands", "conj"},
-  { "INTENSITY", "Intensity (squared amplitude) of input bands", "intensity"},
-  { "LOGAMPLITUDE", "log10 of amplitude of input bands", "log10"}
+  { "AMPLITUDE", "Amplitude of input bands", "mod", "complex"},
+  { "PHASE", "Phase of input bands", "phase", "complex"},
+  { "REAL", "Real part of input bands", "real", "complex"},
+  { "IMAG", "Imaginary part of input bands", "imag", "complex"},
+  { "CONJ", "Conjugate of input bands", "conj", "complex"},
+  { "INTENSITY", "Intensity (squared amplitude) of input bands", "intensity", "complex"},
+  { "LOGAMPLITUDE", "log10 of amplitude of input bands", "log10", "all"}
 };
 
 #define NB_DERIVED_DATASETS (sizeof(asDDSDesc)/sizeof(asDDSDesc[0]))
 
-const DerivedDatasetDescription* GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount)
+const DerivedDatasetDescription* CPL_DLL CPL_STDCALL GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount)
 {
   if(*pnDescriptionCount < (int)NB_DERIVED_DATASETS)
     {
@@ -50,7 +52,9 @@ const DerivedDatasetDescription* GDALGetDerivedDatasetDescription(const unsigned
   return NULL;
 }
 
-unsigned int GDALGetNumberOfDerivedDatasetDecriptions(void)
+unsigned int CPL_DLL CPL_STDCALL GDALGetNumberOfDerivedDatasetDecriptions(void)
 {
   return (unsigned int)NB_DERIVED_DATASETS;
 }
+
+CPL_C_END
