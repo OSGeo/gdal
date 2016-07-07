@@ -36,17 +36,17 @@
  * Public (C callable) entry points for virtual GDAL dataset objects.
  */
 
-#include "gdal.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_port.h"
+#include "gdal.h"
 
 #define VRT_NODATA_UNSET -1234.56
 
 CPL_C_START
 
 void GDALRegister_VRT();
-CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc(void);
+CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc( void );
 
 typedef CPLErr
 (*VRTImageReadFunc)( void *hCBData,
