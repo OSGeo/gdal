@@ -40,7 +40,7 @@
 #include "ograpispy.h"
 #include "ogrunionlayer.h"
 #include "swq.h"
-#include "../frmts/cderived/derivedlist.h"
+#include "../frmts/derived/derivedlist.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"

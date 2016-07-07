@@ -39,7 +39,7 @@ import gdaltest
 # Test opening a L1C product
 
 
-def cderived_test():
+def derived_test():
     filename = "data/cfloat64.tif"
     gdal.ErrorReset()
     ds = gdal.Open(filename)
@@ -86,7 +86,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'cderived' )
+    gdaltest.setup_run( 'derived' )
 
     gdaltest.run_tests( gdaltest_list )
 

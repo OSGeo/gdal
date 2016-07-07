@@ -30,27 +30,27 @@
 #include "gdal_proxy.h"
 #include "derivedlist.h"
 
-class ComplexDerivedDataset : public VRTDataset
+class DerivedDataset : public VRTDataset
 {
   public:
-  ComplexDerivedDataset(int nXSize, int nYSize);
-  ~ComplexDerivedDataset();
+  DerivedDataset(int nXSize, int nYSize);
+  ~DerivedDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
 
-ComplexDerivedDataset::ComplexDerivedDataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+DerivedDataset::DerivedDataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
 {
   poDriver = NULL;
   SetWritable(FALSE);
 }
 
-ComplexDerivedDataset::~ComplexDerivedDataset()
+DerivedDataset::~DerivedDataset()
 {
 }
 
-GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
+GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 {
   /* Try to open original dataset */
   CPLString filename(poOpenInfo->pszFilename);
@@ -75,7 +75,7 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 
   CPLString odDerivedName = filename.substr(dsds_pos+nPrefixLen,alg_pos-dsds_pos-nPrefixLen);
 
-  CPLDebug("ComplexDerivedDataset::Open","Derived dataset requested: %s",odDerivedName.c_str());
+  CPLDebug("DerivedDataset::Open","Derived dataset requested: %s",odDerivedName.c_str());
 
   CPLString pixelFunctionName = "";
   bool datasetFound = false;
@@ -116,7 +116,7 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
    int nRows = poTmpDS->GetRasterYSize();
    int nCols = poTmpDS->GetRasterXSize();
 
-   ComplexDerivedDataset * poDS = new ComplexDerivedDataset(nCols,nRows);
+   DerivedDataset * poDS = new DerivedDataset(nCols,nRows);
 
    // Transfer metadata
    poDS->SetMetadata(poTmpDS->GetMetadata());
@@ -169,24 +169,24 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
    return poDS;
 }
 
-void GDALRegister_ComplexDerived()
+void GDALRegister_Derived()
 {
-    if( GDALGetDriverByName( "COMPLEXDERIVED" ) != NULL )
+    if( GDALGetDriverByName( "DERIVED" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "COMPLEXDERIVED" );
+    poDriver->SetDescription( "DERIVED" );
 #ifdef GDAL_DCAP_RASTER
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Complex derived bands" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Derived datasets using VRT pixel functions" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "TODO" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
-    poDriver->pfnOpen = ComplexDerivedDataset::Open;
-    poDriver->pfnIdentify = ComplexDerivedDataset::Identify;
+    poDriver->pfnOpen = DerivedDataset::Open;
+    poDriver->pfnIdentify = DerivedDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
