@@ -3305,16 +3305,31 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
       // First condition: at least one raster band
       if(GetRasterCount()>0)
       {
+          // Check if there is at least one complex band
+          bool hasAComplexBand = false;
+      
+          for(int rasterId = 1; rasterId <= GetRasterCount();++rasterId)
+          {
+              if(GDALDataTypeIsComplex(GetRasterBand(rasterId)->GetRasterDataType()))
+              {
+                  hasAComplexBand = true;
+                  break;
+              }
+          }
+
           const unsigned int nbSupportedDerivedDS = GDALGetNumberOfDerivedDatasetDecriptions();
       
           for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
           {
-
               const DerivedDatasetDescription * poCurrentDerivedDatasetDescription = GDALGetDerivedDatasetDescription(&derivedId);
-              oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",poCurrentDerivedDatasetDescription->pszDatasetName,GetDescription()));
+              
+              if(hasAComplexBand || CPLString(poCurrentDerivedDatasetDescription->pszTargetPixelType) != "complex")
+              {
+                  oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",poCurrentDerivedDatasetDescription->pszDatasetName,GetDescription()));
 
-              CPLString osDesc(CPLSPrintf("%s from %s",poCurrentDerivedDatasetDescription->pszDatasetDescritpion,GetDescription()));
-              oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+                  CPLString osDesc(CPLSPrintf("%s from %s",poCurrentDerivedDatasetDescription->pszDatasetDescritpion,GetDescription()));
+                  oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+              }
           }
       }
       return oDerivedMetadataList.List();
