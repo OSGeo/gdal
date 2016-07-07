@@ -29,6 +29,7 @@
 
 #include <math.h>
 #include <gdal.h>
+#include <gdal_vrt.h>
 
 static CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
                      int nXSize, int nYSize,
