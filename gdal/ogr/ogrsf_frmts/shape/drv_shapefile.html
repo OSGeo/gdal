@@ -51,7 +51,8 @@ analysis based on topological relationships of the parts of the polygons so
 that the resulting polygons are correctly
 defined in the OGC Simple Feature convention. </p>
 
-<p>An attempt is made to read the LDID/codepage setting from the .dbf file
+<p>An attempt is made to read the code page setting in the .cpg file, or as a
+fallback in the LDID/codepage setting from the .dbf file,
 and use it to translate string fields to UTF-8 on read, and back when writing.
 LDID "87 / 0x57" is treated as ISO8859_1 which may not be appropriate.
 The SHAPE_ENCODING <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
