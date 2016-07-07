@@ -253,3 +253,8 @@ bool CADLayer::addAttribute(const CADObject *pObject)
 
     return false;
 }
+
+short CADLayer::getGeometryType ()
+{
+    return geometryType;
+}

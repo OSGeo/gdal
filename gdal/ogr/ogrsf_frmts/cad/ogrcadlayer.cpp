@@ -38,6 +38,36 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
     //poFeatureDefn = new OGRFeatureDefn( CPLP 
 //getId
+    // Setting up layer geometry type
+    OGRwkbGeometryType eGeomType;
+    switch( poCADLayer.getGeometryType() )
+    {
+        case CADObject::ATTDEF:
+        case CADObject::TEXT:
+        case CADObject::MTEXT:
+        case CADObject::POINT:
+            eGeomType = wkbPoint;
+            break;
+        case CADObject::ELLIPSE:
+        case CADObject::ARC:
+        case CADObject::CIRCLE:
+        case CADObject::POLYLINE3D:
+        case CADObject::POLYLINE2D:
+        case CADObject::LWPOLYLINE:
+        case CADObject::LINE:
+            eGeomType = wkbLineString;
+            break;
+        case CADObject::FACE3D:
+            eGeomType = wkbPolygon;
+            break;
+        case -2: // FIXME: -2 should be a signal that error occured?
+        case -1: 
+        default:
+            eGeomType = wkbUnknown;
+            break;
+    }
+    poFeatureDefn->SetGeomType(eGeomType);
+
     OGRFieldDefn  oClassField( "cadgeom_type", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
     
@@ -107,7 +137,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     if( poCADGeometry->getEED().size() != 0 )
     {
         std::string sEEDAsOneString = "";
-        for ( auto iter = poCADGeometry->getEED().cbegin();
+        for ( auto iter = poCADGeometry->getEED().cbegin(); // TODO: replace auto with explicit type name.
               iter != poCADGeometry->getEED().cend(); ++iter )
         {
             sEEDAsOneString += *iter;
