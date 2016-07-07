@@ -360,7 +360,7 @@ def pixfun_sum_c():
             if refds is None:
                 gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
                 return 'fail'
-        refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+            refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
 
         if not numpy.alltrue(data == refdata):
             return 'fail'
@@ -452,7 +452,7 @@ def pixfun_mul_r():
             if refds is None:
                 gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
                 return 'fail'
-        refdata *= refds.GetRasterBand(1).ReadAsArray()
+            refdata *= refds.GetRasterBand(1).ReadAsArray()
 
         if not numpy.alltrue(data == refdata):
             return 'fail'
