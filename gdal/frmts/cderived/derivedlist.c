@@ -25,18 +25,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
-#ifndef DERIVEDLIST_H_INCLUDED
-#define DERIVEDLIST_H_INCLUDED
+#include "derivedlist.h"
+#include "gdal.h"
 
-typedef struct
+static const DerivedDatasetDescription asDDSDesc [] =
 {
-  const char * pszDatasetName;
-  const char * pszDatasetDescritpion;
-  const char * pszPixelFunction;
-} DerivedDatasetDescription;
+  { "AMPLITUDE", "Amplitude of input bands", "mod"},
+  { "PHASE", "Phase of input bands", "phase"},
+  { "REAL", "Real part of input bands", "real"},
+  { "IMAG", "Imaginary part of input bands", "imag"},
+  { "CONJ", "Conjugate of input bands", "conj"},
+  { "INTENSITY", "Intensity (squared amplitude) of input bands", "intensity"},
+  { "LOGAMPLITUDE", "log10 of amplitude of input bands", "log10"}
+};
 
-const DerivedDatasetDescription* GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount);
+#define NB_DERIVED_DATASETS (sizeof(asDDSDesc)/sizeof(asDDSDesc[0]))
 
-unsigned int GDALGetNumberOfDerivedDatasetDecriptions(void);
+const DerivedDatasetDescription* GDALGetDerivedDatasetDescription(const unsigned int * pnDescriptionCount)
+{
+  if(*pnDescriptionCount < (int)NB_DERIVED_DATASETS)
+    {
+      return &asDDSDesc[*pnDescriptionCount];
+    }
+  return NULL;
+}
 
-#endif
+unsigned int GDALGetNumberOfDerivedDatasetDecriptions(void)
+{
+  return (unsigned int)NB_DERIVED_DATASETS;
+}

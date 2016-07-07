@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	cderiveddataset.o
+OBJ	=	cderiveddataset.o derivedlist.o
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

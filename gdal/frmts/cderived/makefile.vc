@@ -1,5 +1,5 @@
 
-OBJ = cderiveddataset.obj
+OBJ = cderiveddataset.obj derivedlist.obj
 
 GDAL_ROOT	=	..\..
 
