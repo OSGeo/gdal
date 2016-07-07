@@ -6749,8 +6749,7 @@ def tiff_write_153():
     if gdal.VSISupportsSparseFiles(target_dir) == 0:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create(target_dir+'/tiff_write_153.tif', 500, 500)
-    ds = None
+    gdaltest.tiff_drv.Create(target_dir+'/tiff_write_153.tif', 500, 500)
 
     f = gdal.VSIFOpenL(target_dir+'/tiff_write_153.tif', 'rb')
     ret = gdal.VSIFGetRangeStatusL(f, 500 * 500, 1)
