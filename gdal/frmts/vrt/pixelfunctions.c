@@ -917,7 +917,7 @@ static CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
  *
  * @return CE_None, invalid (NULL) parameters are currently ignored.
  */
-CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc()
+CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc(void)
 {
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
