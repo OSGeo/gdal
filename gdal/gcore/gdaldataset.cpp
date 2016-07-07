@@ -3300,20 +3300,20 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
 {
   if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
   {
-      papoDerivedMetadataList.Clear();
+      oDerivedMetadataList.Clear();
       
       // First condition: at least one raster band
       if(GetRasterCount()>0)
       {
           for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
           {          
-              papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
+              oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
               CPLString osDesc(CPLSPrintf("%s from %s",asDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
-              papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+              oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
           }
       }
-      return papoDerivedMetadataList.List();
+      return oDerivedMetadataList.List();
   }
 	else
 		return GDALMajorObject::GetMetadata(pszDomain);

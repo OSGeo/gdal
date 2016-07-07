@@ -499,7 +499,7 @@ private:
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
-    CPLStringList papoDerivedMetadataList;
+    CPLStringList oDerivedMetadataList;
   public:
 
     virtual int         GetLayerCount();
