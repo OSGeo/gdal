@@ -1,9 +1,9 @@
 #include "../vrt/vrtdataset.h"
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
+#include "derivedlist.h"
 
 #include <iostream>
-
 
 class ComplexDerivedDatasetContainer: public GDALPamDataset
 {
@@ -19,7 +19,6 @@ class ComplexDerivedDataset : public VRTDataset
   ~ComplexDerivedDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
 };
 
 
@@ -33,26 +32,11 @@ ComplexDerivedDataset::~ComplexDerivedDataset()
 {
 }
 
-int ComplexDerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
-{
-  if(STARTS_WITH_CI(poOpenInfo->pszFilename, "DERIVED_SUBDATASET:COMPLEX_AMPLITUDE:"))
-    return TRUE;
-  
-  return FALSE;
-}
-
 GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
-{ 
-  if( !Identify(poOpenInfo) )
-    {
-    return NULL;
-    }
-
+{
   /* Try to open original dataset */
   CPLString filename(poOpenInfo->pszFilename);
-
-  // TODO: check starts with
-  
+ 
   /* DERIVED_SUBDATASET should be first domain */
   size_t dsds_pos = filename.find("DERIVED_SUBDATASET:");
 
@@ -62,14 +46,35 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     return NULL;
     }
 
-  /* DERIVED_SUBDATASET should be first domain */
+  /* Next, we need to now which derived dataset to compute */
   size_t alg_pos = filename.find(":",dsds_pos+20);
   if (alg_pos == std::string::npos)
     {
-    /* Unable to Open in this case */
+    /* Unable to Open if we do not find the name of the derived dataset */
     return NULL;
     }
- 
+
+  CPLString odDerivedName = filename.substr(dsds_pos+19,alg_pos-dsds_pos-19);
+
+  CPLDebug("ComplexDerivedDataset::Open","Derived dataset identified: %s",odDerivedName.c_str());
+
+  CPLString pixelFunctionName = "";
+  bool datasetFound = false;
+  
+  for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
+    {
+    if(odDerivedName == asDDSDesc[derivedId].pszDatasetName)
+      {
+      datasetFound = true;
+      pixelFunctionName = asDDSDesc[derivedId].pszPixelFunction;
+      }
+    }
+
+  if(!datasetFound)
+    {
+    return NULL;
+    }
+  
   CPLString odFilename = filename.substr(alg_pos+1,filename.size() - alg_pos);
 
   GDALDataset * poTmpDS = (GDALDataset*)GDALOpen(odFilename, GA_ReadOnly);

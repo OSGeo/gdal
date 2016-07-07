@@ -40,6 +40,7 @@
 #include "ograpispy.h"
 #include "ogrunionlayer.h"
 #include "swq.h"
+#include "../frmts/cderived/derivedlist.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
@@ -3305,13 +3306,19 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
     {
     papoDerivedMetadataList->Clear();
 
+
+    
     // First condition: at least one raster band
     if(GetRasterCount()>0)
       {
-      papoDerivedMetadataList->SetNameValue("DERIVED_SUBDATASET_1_NAME",CPLSPrintf("DERIVED_SUBDATASET:COMPLEX_AMPLITUDE:%s",GetDescription()));
+      CPLDebug("GDALDataset::GetMetadata","Number of derived datasets to report: %i",(int)NB_DERIVED_DATASETS);
+        for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
+          {          
+          papoDerivedMetadataList->SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
-      CPLString osDesc(CPLSPrintf("Complex amplitude of bands from %s",GetDescription()));
-      papoDerivedMetadataList->SetNameValue("DERIVED_SUBDATASET_1_DESC",osDesc.c_str());
+          CPLString osDesc(CPLSPrintf("%s from %s",asDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
+          papoDerivedMetadataList->SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+          }
       }
     
     return papoDerivedMetadataList->List();
