@@ -209,7 +209,6 @@ void GDALDataset::Init(int bForceCachedIOIn)
     bIsInternal = TRUE;
     bSuppressOnClose = FALSE;
     papszOpenOptions = NULL;
-    papoDerivedMetadataList = new CPLStringList();
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
@@ -330,9 +329,6 @@ GDALDataset::~GDALDataset()
     CPLFree(psPrivate);
 
     CSLDestroy( papszOpenOptions );
-
-    CPLFree(papoDerivedMetadataList);
-    papoDerivedMetadataList = NULL;
 }
 
 /************************************************************************/
@@ -3304,7 +3300,7 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
 {
   if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
     {
-    papoDerivedMetadataList->Clear();
+    papoDerivedMetadataList.Clear();
 
 
     
@@ -3314,14 +3310,14 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
       CPLDebug("GDALDataset::GetMetadata","Number of derived datasets to report: %i",(int)NB_DERIVED_DATASETS);
         for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
           {          
-          papoDerivedMetadataList->SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
+          papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
           CPLString osDesc(CPLSPrintf("%s from %s",asDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
-          papoDerivedMetadataList->SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+          papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
           }
       }
     
-    return papoDerivedMetadataList->List();
+    return papoDerivedMetadataList.List();
     }
 	else
 		return GDALMajorObject::GetMetadata(pszDomain);
