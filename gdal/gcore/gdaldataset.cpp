@@ -3299,25 +3299,22 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
 char ** GDALDataset::GetMetadata(const char * pszDomain)
 {
   if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
-    {
-    papoDerivedMetadataList.Clear();
-
-
-    
-    // First condition: at least one raster band
-    if(GetRasterCount()>0)
+  {
+      papoDerivedMetadataList.Clear();
+      
+      // First condition: at least one raster band
+      if(GetRasterCount()>0)
       {
-        for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
+          for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
           {          
-          papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
+              papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
-          CPLString osDesc(CPLSPrintf("%s from %s",asDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
-          papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
+              CPLString osDesc(CPLSPrintf("%s from %s",asDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
+              papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
           }
       }
-    
-    return papoDerivedMetadataList.List();
-    }
+      return papoDerivedMetadataList.List();
+  }
 	else
 		return GDALMajorObject::GetMetadata(pszDomain);
 }
