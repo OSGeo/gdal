@@ -5,7 +5,7 @@
  * Author:   Julien Michel <julien dot michel at cnes dot fr>
  *
  ******************************************************************************
- * Copyright (c) 2008-2014 Antonio Valentino <antonio.valentino@tiscali.it>
+ * Copyright (c) 2016 Julien Michel <julien dot michel at cnes dot fr>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
