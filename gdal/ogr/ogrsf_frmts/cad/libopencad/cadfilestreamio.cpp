@@ -61,7 +61,7 @@ bool CADFileStreamIO::Open(int mode)
         //io_mode |= std::ios_base::out;
         return false;
 
-    m_oFileStream.open( m_pszFilePath, io_mode );
+    m_oFileStream.open( m_soFilePath, io_mode );
 
     if(m_oFileStream.is_open())
         m_bIsOpened = true;

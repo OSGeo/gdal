@@ -33,7 +33,7 @@
 
 CADFileIO::CADFileIO(const char* pszFileName)
 {
-    m_pszFilePath = pszFileName;
+    m_soFilePath = pszFileName;
     m_bIsOpened = false;
 }
 
@@ -55,5 +55,5 @@ bool CADFileIO::Close()
 
 const char* CADFileIO::GetFilePath() const
 {
-    return m_pszFilePath;
+    return m_soFilePath.c_str();
 }

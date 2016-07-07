@@ -30,17 +30,47 @@
  *******************************************************************************/
 #include "ogr_cad.h"
 #include "cpl_conv.h"
+#include "gdal_proxy.h"
+#include "gdal_pam.h"
 
 #include "vsilfileio.h"
 
-GDALCADDataset::GDALCADDataset() : papoLayers(NULL),
-    nLayers(0), poCADFile(NULL)
+class CADWrapperRasterBand : public GDALProxyRasterBand
 {
+  GDALRasterBand* poBaseBand;
 
+  protected:
+    virtual GDALRasterBand* RefUnderlyingRasterBand() { return poBaseBand; }
+
+  public:
+    explicit CADWrapperRasterBand( GDALRasterBand* poBaseBandIn )
+    {
+        this->poBaseBand = poBaseBandIn;
+        eDataType = poBaseBand->GetRasterDataType();
+        poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    }
+    ~CADWrapperRasterBand() {}
+};
+
+GDALCADDataset::GDALCADDataset() : poCADFile(NULL), papoLayers(NULL), nLayers(0),
+    poRasterDS(NULL)
+{
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 GDALCADDataset::~GDALCADDataset()
 {
+    if (poRasterDS != NULL)
+    {
+        GDALClose( poRasterDS );
+        poRasterDS = NULL;
+    }
+    
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
@@ -48,136 +78,56 @@ GDALCADDataset::~GDALCADDataset()
         delete( poCADFile );
 }
 
-GDALDataset *GDALCADDataset::OpenRaster( const char * pszOpenPath )
+void GDALCADDataset::FillTransform(CADImage* pImage, double dfUnits)
 {
-    short nSubdatasetIndex = -1, nSubdatasetTableIndex = -1;    
-    char** papszTokens = CSLTokenizeString2(pszOpenPath, ":", 0);
-    if( CSLCount(papszTokens) != 4 )
+    unsigned char nResUnits = pImage->getResolutionUnits();
+    double dfMultiply(1);
+    
+    switch(nResUnits)// 0 == none, 2 == centimeters, 5 == inches;
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        case 2:
+            dfMultiply = 100 / dfUnits; // meters to linear units
+            break;
+        case 5: 
+            dfMultiply = 0.0254 / dfUnits;   
+            break;
+        case 0:                
+        default:
+            dfMultiply = 1;
     }
+    
+    CADVector oSizePt = pImage->getImageSizeInPx();
+    CADVector oInsPt = pImage->getVertInsertionPoint();
+    CADVector osSizeUnitsPt = pImage->getPixelSizeInACADUnits();
+    adfGeoTransform[0] = oInsPt.getX();
+    adfGeoTransform[3] = oInsPt.getY() + oSizePt.getY() * osSizeUnitsPt.getX() * dfMultiply;
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[4] = 0;
 
-    
-    osCADFilename = papszTokens[1];
-    nSubdatasetTableIndex = atoi(papszTokens[2]);
-    nSubdatasetIndex = atoi(papszTokens[3]);
-
-    CSLDestroy(papszTokens);
-    
-    poCADFile = OpenCADFile( new VSILFileIO(osCADFilename), CADFile::OpenOptions::READ_FAST );
-    if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "libopencad %s does not support this version of CAD file.\n"
-                  "Supported formats are:\n%s", GetVersionString(), GetCADFormats() );
-        return NULL;
-    }
-    
-    if ( GetLastErrorCode() != CADErrorCodes::SUCCESS )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "libopencad %s does not support this version of CAD file.\n", 
-                  GetVersionString(), GetCADFormats() );
-        return NULL;
-    }
-    
-    // Reading content of .prj file, or extracting it from CAD if not present
-    OGRSpatialReference oSRS;
-    // FIXME: set oSRS from cad file
-    CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
-    if(sESRISpatRef.empty())
-    {
-        // TODO: do we need *.PRJ too?
-        const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
-        CPLPushErrorHandler( CPLQuietErrorHandler );
-        char **cabyPRJData = CSLLoad(pszPRJFilename);
-        CPLPopErrorHandler();
-        oSRS.importFromESRI(cabyPRJData);
-        
-        if(cabyPRJData)
-            CSLDestroy( cabyPRJData );
-    }
-    
-    // get raster by index
-    if( nSubdatasetIndex > -1 && nSubdatasetTableIndex > -1)
-    {
-        CADLayer &oLayer = poCADFile->getLayer(nSubdatasetTableIndex);
-        CADImage* pImage = oLayer.getImage(nSubdatasetIndex);
-        if(pImage)
-        {
-            GDALDataset* poRasterDataset = NULL;
-            
-            // TODO: add support clipping region
-            CPLString osImgFilename = pImage->getFilePath();
-            poRasterDataset = reinterpret_cast<GDALDataset *>(
-                                        GDALOpen( osImgFilename, GA_ReadOnly ) );
-            if(poRasterDataset == NULL)
-            {
-                return NULL;
-            }
-            if(poRasterDataset->GetRasterCount() == 0)
-            {
-                delete poRasterDataset;
-                return NULL;
-            }
-            
-            char *pszWKT = NULL; 
-            oSRS.exportToWkt( &pszWKT );
-            poRasterDataset->SetProjection( pszWKT );
-            CPLFree( pszWKT );
-            
-            double adfGeoTransform[6];
-            CADVector oInsPt = pImage->getVertInsertionPoint();
-            adfGeoTransform[0] = oInsPt.getX();
-            adfGeoTransform[3] = oInsPt.getY();
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[4] = 0;
-            /* not used CADVector oSizePt = pImage->getImageSizeInPx(); */
-            unsigned char nResUnits = pImage->getResolutionUnits();
-            CADVector osSizeUnitsPt = pImage->getPixelSizeInACADUnits();
-            double dfMultiply(1);
-            
-            switch(nResUnits)// 0 == none, 2 == centimeters, 5 == inches;
-            {
-                case 2:
-                    dfMultiply = 100 / oSRS.GetLinearUnits(); // meters to linear units
-                case 5: 
-                    dfMultiply = 0.0254 / oSRS.GetLinearUnits();   
-                case 0:                
-                default:
-                    dfMultiply = 1;
-            }
-            
-            adfGeoTransform[1] = osSizeUnitsPt.getX() * dfMultiply;
-            adfGeoTransform[5] = -osSizeUnitsPt.getY() * dfMultiply;
-            
-            poRasterDataset->SetGeoTransform (adfGeoTransform);
-
-            delete pImage;
-            return poRasterDataset;
-        }
-    } 
-    return NULL;
+    adfGeoTransform[1] = osSizeUnitsPt.getX() * dfMultiply;
+    adfGeoTransform[5] = -osSizeUnitsPt.getY() * dfMultiply;    
 }
 
-
-int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
+int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
+                                    long nSubRasterLayer, long nSubRasterFID )
 {
     size_t i, j;
+    int nRasters = 1;
+
+    osCADFilename = pFileIO->GetFilePath();
     SetDescription( poOpenInfo->pszFilename );
-    osCADFilename = poOpenInfo->pszFilename;
+    // raster subdataset
+    int nMode = atoi(CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", 
+                                                                           "2"));
     
-    int nMode = atoi(CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", "2"));
-    
-    enum CADFile::OpenOptions openOpts = CADFile::OpenOptions::READ_FAST;
+    enum CADFile::OpenOptions openOpts = CADFile::READ_FAST;
     if(nMode == 1)
     {
-        openOpts = CADFile::OpenOptions::READ_ALL;
+        openOpts = CADFile::READ_ALL;
     }
     else if(nMode == 3)
     {
-        openOpts = CADFile::OpenOptions::READ_FASTEST;
+        openOpts = CADFile::READ_FASTEST;
     }
     
     poCADFile = OpenCADFile( pFileIO, openOpts );
@@ -193,55 +143,121 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO )
     if ( GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "libopencad %s does not support this version of CAD file.\n", 
+                  "libopencad %s does not support this version of CAD file.\nSupported formats: %s", 
                   GetVersionString(), GetCADFormats() );
         return( FALSE );
     }
     
-
-    // fill metadata
-    const CADHeader& header = poCADFile->getHeader();
-    for(i = 0; i < header.getSize(); ++i)
-    {
-        short nCode = header.getCode(i);
-        const CADVariant& oVal = header.getValue(nCode);
-        SetMetadataItem(header.getValueName(nCode), oVal.getString().c_str());
-    }
-
     // Reading content of .prj file, or extracting it from CAD if not present
-    OGRSpatialReference *poSpatialRef = GetSpatialReference( poOpenInfo->pszFilename );
-    
-    nLayers = 0;
-    int nRasters = 1;
-    // FIXME: we allocate extra memory, do we need more strict policy here?
-    papoLayers = ( OGRCADLayer** ) CPLMalloc(sizeof(OGRCADLayer*) * 
-                                                poCADFile->getLayersCount());
+    OGRSpatialReference *poSpatialRef = GetSpatialReference( );
 
-    for(i = 0; i < poCADFile->getLayersCount(); ++i)
+    if( nSubRasterLayer != -1 && nSubRasterFID != -1 )
     {
-        CADLayer &oLayer = poCADFile->getLayer( i );
-        if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR && oLayer.getGeometryCount() > 0)
+        nRasters = 2;
+    }
+    else
+    {    
+        // fill metadata
+        const CADHeader& header = poCADFile->getHeader();
+        for(i = 0; i < header.getSize(); ++i)
         {
-            papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSpatialRef );
+            short nCode = header.getCode(i);
+            const CADVariant& oVal = header.getValue(nCode);
+            GDALDataset::SetMetadataItem(header.getValueName(nCode), oVal.getString().c_str());
         }
 
-        if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
+        
+        nLayers = 0;
+        // FIXME: we allocate extra memory, do we need more strict policy here?
+        papoLayers = ( OGRCADLayer** ) CPLMalloc(sizeof(OGRCADLayer*) * 
+                                                    poCADFile->getLayersCount());
+
+        for(i = 0; i < poCADFile->getLayersCount(); ++i)
         {
-            for( j = 0; j < oLayer.getImageCount(); ++j )
+            CADLayer &oLayer = poCADFile->getLayer( i );
+            if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR && oLayer.getGeometryCount() > 0)
             {
-                SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
-                    CPLSPrintf("CAD:%s:%ld:%ld", poOpenInfo->pszFilename, i, j), 
-                        "SUBDATASETS");
-                SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", nRasters),
-                    CPLSPrintf("%s - %ld", oLayer.getName().c_str(), j), 
-                        "SUBDATASETS");     
-                        
-                nRasters++;
+                papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSpatialRef );
             }
+
+            if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
+            {
+                for( j = 0; j < oLayer.getImageCount(); ++j )
+                {
+                    nSubRasterLayer = i;
+                    nSubRasterFID = j;
+                    GDALDataset::SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
+                        CPLSPrintf("CAD:%s:%ld:%ld", osCADFilename.c_str(), i, j), 
+                            "SUBDATASETS");
+                    GDALDataset::SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", nRasters),
+                        CPLSPrintf("%s - %ld", oLayer.getName().c_str(), j), 
+                            "SUBDATASETS");     
+                            
+                    nRasters++;
+                }
+            }
+        }   
+    }
+        
+    if( nRasters == 2 )
+    {
+        CADLayer &oLayer = poCADFile->getLayer( nSubRasterLayer );
+        CADImage* pImage = oLayer.getImage(nSubRasterFID);
+        if(pImage)
+        {
+            // TODO: add support clipping region in neatline
+            CPLString osImgFilename = pImage->getFilePath();
+            CPLString osImgPath = CPLGetPath(osImgFilename);
+            if(osImgPath.empty ())
+            {
+                osImgFilename = CPLFormFilename(CPLGetPath(osCADFilename),
+                                                osImgFilename, NULL);
+            }
+
+            if ( CPLCheckForFile ((char*)osImgFilename.c_str (), NULL) == FALSE)
+                return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
+
+            poRasterDS = reinterpret_cast<GDALDataset *>(
+                                GDALOpen( osImgFilename, poOpenInfo->eAccess ) );
+            if(poRasterDS == NULL)
+            {
+                delete pImage;
+                return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
+            }
+            if(poRasterDS->GetRasterCount() == 0)
+            {
+                delete pImage;
+                GDALClose( poRasterDS );
+                return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
+            }
+            
+            if(poRasterDS->GetGeoTransform(adfGeoTransform) != CE_None)
+            {
+                // external world file have priority
+                double dfUnits = 1;
+                if(NULL != poSpatialRef)
+                    dfUnits = poSpatialRef->GetLinearUnits();
+                FillTransform(pImage, dfUnits);
+            }
+            delete pImage;
+            
+            nRasterXSize = poRasterDS->GetRasterXSize();
+            nRasterYSize = poRasterDS->GetRasterYSize();
+            if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+            {
+                GDALClose( poRasterDS );
+                return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
+            }
+
+            for( int iBand = 1; iBand <= poRasterDS->GetRasterCount(); iBand++ )
+                SetBand( iBand,
+                    new CADWrapperRasterBand( poRasterDS->GetRasterBand( 
+                        iBand )) );
+
         }
-    }   
+    }
     
-    return( TRUE );
+    return TRUE;
 }
 
 OGRLayer *GDALCADDataset::GetLayer( int iLayer )
@@ -272,16 +288,10 @@ char** GDALCADDataset::GetFileList()
     char **papszFileList = GDALDataset::GetFileList();
 
     /* duplicated papszFileList = CSLAddString( papszFileList, osCADFilename );*/
-    const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
-    if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
+    const char * pszPRJFilename = GetPrjFilePath();
+    if(NULL != pszPRJFilename)
         papszFileList = CSLAddString( papszFileList, pszPRJFilename );
-    else
-    {
-        pszPRJFilename = CPLResetExtension(osCADFilename, "PRJ");
-        if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
-            papszFileList = CSLAddString( papszFileList, pszPRJFilename );
-    }    
-    
+        
     for(i = 0; i < poCADFile->getLayersCount(); ++i)
     {
         CADLayer &oLayer = poCADFile->getLayer( i );
@@ -297,11 +307,14 @@ char** GDALCADDataset::GetFileList()
         }
     }
     
+    if(NULL != poRasterDS)
+    {
+        papszFileList = CSLMerge(papszFileList, poRasterDS->GetFileList());
+    }
     return papszFileList;
 }
 
-
-OGRSpatialReference *GDALCADDataset::GetSpatialReference(const char * const pszFilename)
+OGRSpatialReference *GDALCADDataset::GetSpatialReference()
 {
     OGRSpatialReference *poSpatialRef = NULL;
     if( poCADFile != NULL )
@@ -311,10 +324,8 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference(const char * const pszF
 
         if( !sESRISpatRef.empty() )
         {
-            char** papszPRJData = new char*[1];
-            papszPRJData[0] = new char[sESRISpatRef.size()];
-            std::copy( sESRISpatRef.begin(), sESRISpatRef.end(), papszPRJData[0] ); // FIXME: pretty dirty trick
-
+            char** papszPRJData = NULL;
+            papszPRJData = CSLAddString(papszPRJData, sESRISpatRef);
             if( poSpatialRef->importFromESRI( papszPRJData ) != OGRERR_NONE )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
@@ -327,23 +338,112 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference(const char * const pszF
         }
         else
         {
-            const char * pszPRJFilename = CPLResetExtension(pszFilename, "prj");
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            char **cabyPRJData = CSLLoad(pszPRJFilename);
-            CPLPopErrorHandler();
-
-            if( poSpatialRef->importFromESRI( cabyPRJData ) != OGRERR_NONE )
+            const char * pszPRJFilename = GetPrjFilePath();
+            if(NULL != pszPRJFilename)
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                        "Failed to parse PRJ section, ignoring." );
-                delete( poSpatialRef );
-                poSpatialRef = NULL;
-            }
+                CPLPushErrorHandler( CPLQuietErrorHandler );
+                char **cabyPRJData = CSLLoad(pszPRJFilename);
+                CPLPopErrorHandler();
 
-            if(cabyPRJData)
-                CSLDestroy( cabyPRJData );
+                if( poSpatialRef->importFromESRI( cabyPRJData ) != OGRERR_NONE )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Failed to parse PRJ section, ignoring." );
+                    delete( poSpatialRef );
+                    poSpatialRef = NULL;
+                }
+
+                if(cabyPRJData)
+                    CSLDestroy( cabyPRJData );
+            }
         }
     }
 
+    char *pszProjection = NULL;
+    poSpatialRef->exportToWkt( &pszProjection );
+    soWKT = pszProjection;
+    CPLFree( pszProjection );
     return poSpatialRef;
 }
+
+const char* GDALCADDataset::GetPrjFilePath()
+{
+    const char * pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
+    if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
+        return pszPRJFilename;
+    
+    pszPRJFilename = CPLResetExtension(osCADFilename, "PRJ");
+    if ( CPLCheckForFile ((char*)pszPRJFilename, NULL) == TRUE)
+        return pszPRJFilename;
+    
+    return NULL;
+}
+
+const char *GDALCADDataset::GetProjectionRef(void)
+{
+    return soWKT;
+}
+
+CPLErr GDALCADDataset::GetGeoTransform( double* padfGeoTransform )
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    return CE_None;
+}
+                       
+int GDALCADDataset::GetGCPCount()
+{
+    if(NULL == poRasterDS)
+        return 0;
+    return poRasterDS->GetGCPCount();
+}
+
+const char *GDALCADDataset::GetGCPProjection()
+{
+    if(NULL == poRasterDS)
+        return NULL;
+    return poRasterDS->GetGCPProjection();    
+}
+
+const GDAL_GCP *GDALCADDataset::GetGCPs()
+{
+    if(NULL == poRasterDS)
+        return NULL;
+    return poRasterDS->GetGCPs();    
+} 
+
+char **GDALCADDataset::GetMetadataDomainList()
+{
+    if(NULL == poRasterDS)
+        return GDALDataset::GetMetadataDomainList();
+    return CSLMerge(GDALDataset::GetMetadataDomainList(), 
+                                    poRasterDS->GetMetadataDomainList());    
+}
+    
+char **GDALCADDataset::GetMetadata( const char * pszDomain  )
+{
+    if(NULL == poRasterDS)
+        return GDALDataset::GetMetadata(pszDomain);
+    return CSLMerge(GDALDataset::GetMetadata(pszDomain), 
+                                    poRasterDS->GetMetadata(pszDomain));    
+}
+
+const char *GDALCADDataset::GetMetadataItem( const char * pszName, const char * pszDomain )
+{
+    const char* pszRet = GDALDataset::GetMetadataItem(pszName, pszDomain);
+    if(NULL == pszRet && NULL != poRasterDS)
+        pszRet = poRasterDS->GetMetadataItem(pszName, pszDomain);
+    return pszRet;
+}
+    
+int GDALCADDataset::CloseDependentDatasets()
+{
+    int bRet = GDALDataset::CloseDependentDatasets();
+    if (poRasterDS != NULL)
+    {
+        GDALClose( poRasterDS );
+        poRasterDS = NULL;
+        bRet = TRUE;
+    }
+    return bRet;
+}                                     
+                                        

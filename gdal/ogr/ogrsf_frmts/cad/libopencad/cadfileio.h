@@ -32,6 +32,7 @@
 #define CADFILEIO_H
 
 #include <cstddef>
+#include <string>
 
 /**
  * @brief The CADFileIO class provides in/out file operations as read, write,
@@ -71,7 +72,7 @@ public:
     const char*             GetFilePath() const;
 
 protected:
-    const char*             m_pszFilePath;
+    std::string             m_soFilePath;
     bool                    m_bIsOpened;
 };
 

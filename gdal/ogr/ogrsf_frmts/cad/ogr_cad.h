@@ -67,20 +67,41 @@ class GDALCADDataset : public GDALDataset
 {
     CPLString      osCADFilename;
     CADFile       *poCADFile;    
+    // vector
     OGRCADLayer  **papoLayers;
     int            nLayers;
+    // raster
+    CPLString      soWKT;
+    double         adfGeoTransform[6];
+    GDALDataset   *poRasterDS;
     
 public:
     GDALCADDataset();
-    ~GDALCADDataset();
+    virtual ~GDALCADDataset();
     
-    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO );  
-    GDALDataset   *OpenRaster( const char * pszOpenPath ); 
+    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO, 
+                            long nSubRasterLayer = -1, long nSubRasterFID = -1 );  
     int            GetLayerCount() { return nLayers; }
     OGRLayer      *GetLayer( int );    
     int            TestCapability( const char * );
-    OGRSpatialReference *GetSpatialReference(const char* const pszFilename);
-    char         **GetFileList();
+    virtual char **GetFileList();
+    virtual const char  *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );    
+    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs(); 
+    virtual int CloseDependentDatasets();
+                   
+protected:    
+    OGRSpatialReference *GetSpatialReference();    
+    const char* GetPrjFilePath();
+    void FillTransform(CADImage* pImage, double dfUnits);
+private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALCADDataset);    
 };
 
 #endif

@@ -65,7 +65,7 @@ bool VSILFileIO::Open(int mode)
         return false;
     }
 
-    m_oFileStream = VSIFOpenL( m_pszFilePath, sOpenMode.c_str() );
+    m_oFileStream = VSIFOpenL( m_soFilePath.c_str(), sOpenMode.c_str() );
 
     if( m_oFileStream != NULL )
         m_bIsOpened = true;

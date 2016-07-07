@@ -55,16 +55,36 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    CADFileIO* pFileIO = new VSILFileIO( poOpenInfo->pszFilename );
-    if ( !STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
+    long nSubRasterLayer = -1, nSubRasterFID = -1;
+
+    CADFileIO* pFileIO;
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
     {
-        if ( IdentifyCADFile( pFileIO, false ) == FALSE)
+        char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
+        if( CSLCount(papszTokens) != 4 )
         {
-            delete pFileIO;
-            return( NULL );
+            CSLDestroy(papszTokens);
+            return FALSE;
         }
+
+        pFileIO = new VSILFileIO( papszTokens[1] ); 
+        nSubRasterLayer = atol(papszTokens[2]);
+        nSubRasterFID = atol(papszTokens[3]);
+        
+        CSLDestroy(papszTokens);
+    }
+    else
+    {
+        pFileIO = new VSILFileIO( poOpenInfo->pszFilename );    
     }
     
+    if ( IdentifyCADFile( pFileIO, false ) == FALSE)
+    {
+        delete pFileIO;
+        return NULL;
+    }
+        
+        
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -73,21 +93,12 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The CAD driver does not support update access to existing"
                   " datasets.\n" );
+        delete pFileIO;
         return NULL;
     }
-    
-    
-    GDALCADDataset *poDS = new GDALCADDataset();
-    // raster subdataset
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CAD:") )
-    {
-        GDALDataset* poRasterDataset = poDS->OpenRaster(poOpenInfo->pszFilename);
-        delete poDS;
-        return poRasterDataset;
-    }
-    
-    // vector datasource or raster dataset
-    if( !poDS->Open( poOpenInfo, pFileIO ) )
+         
+    GDALCADDataset *poDS = new GDALCADDataset();    
+    if( !poDS->Open( poOpenInfo, pFileIO, nSubRasterLayer, nSubRasterFID ) )
     {
         delete poDS;
         return NULL;
