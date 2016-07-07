@@ -157,7 +157,11 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
                                                  GA_ReadOnly,
                                                  TRUE);
      for(int j=0;j<nbBands;++j)
-       proxyDS->AddSrcBandDescription(poTmpDS->GetRasterBand(nBand)->GetRasterDataType(), 128, 128);
+     {
+           int blockXSize, blockYSize;
+           poTmpDS->GetRasterBand(nBand)->GetBlockSize(&blockXSize,&blockYSize);
+           proxyDS->AddSrcBandDescription(poTmpDS->GetRasterBand(nBand)->GetRasterDataType(), blockXSize, blockYSize);
+     }
 
      poBand->AddComplexSource(proxyDS->GetRasterBand(nBand),0,0,nCols,nRows,0,0,nCols,nRows);
           
