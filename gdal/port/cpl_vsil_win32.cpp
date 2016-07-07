@@ -371,8 +371,15 @@ int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
 /*                           GetRangeStatus()                           */
 /************************************************************************/
 
-VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset nOffset,
-                                                 vsi_l_offset nLength )
+VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset
+#ifdef FSCTL_QUERY_ALLOCATED_RANGES
+                                                        nOffset
+#endif
+                                               ,vsi_l_offset
+#ifdef FSCTL_QUERY_ALLOCATED_RANGES
+                                                        nLength
+#endif
+                                              )
 {
     // Not available on mingw includes
 #ifdef FSCTL_QUERY_ALLOCATED_RANGES
