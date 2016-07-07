@@ -6740,6 +6740,33 @@ def tiff_write_152():
     return 'success'
 
 ###############################################################################
+# Test that empty blocks are created in a filesystem sparse way
+
+def tiff_write_153():
+
+    target_dir = 'tmp'
+
+    if gdal.VSISupportsSparseFiles(target_dir) == 0:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create(target_dir+'/tiff_write_153.tif', 500, 500)
+    ds = None
+
+    f = gdal.VSIFOpenL(target_dir+'/tiff_write_153.tif', 'rb')
+    ret = gdal.VSIFGetRangeStatusL(f, 500 * 500, 1)
+    gdal.VSIFCloseL(f)
+
+    gdaltest.tiff_drv.Delete(target_dir+'/tiff_write_153.tif')
+
+    if ret == gdal.VSI_RANGE_STATUS_DATA:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6921,10 +6948,11 @@ gdaltest_list = [
     tiff_write_150,
     tiff_write_151,
     tiff_write_152,
+    tiff_write_153,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_152 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_153 ]
 
 if __name__ == '__main__':
 

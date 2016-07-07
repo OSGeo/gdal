@@ -68,6 +68,7 @@ public:
     virtual int      IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return FALSE; }
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
+    virtual int SupportsSparseFiles( const char* pszPath );
 };
 
 /************************************************************************/
@@ -91,6 +92,8 @@ class VSIWin32Handle CPL_FINAL : public VSIVirtualHandle
     virtual int       Close();
     virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() { return (void*) hFile; }
+	virtual VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
+                                             vsi_l_offset nLength );
 };
 
 /************************************************************************/
@@ -362,6 +365,46 @@ int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
         return 0;
     else
         return -1;
+}
+
+/************************************************************************/
+/*                           GetRangeStatus()                           */
+/************************************************************************/
+
+VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset nOffset,
+                                                 vsi_l_offset nLength )
+{
+    // Not available on mingw includes
+#ifdef FSCTL_QUERY_ALLOCATED_RANGES
+    FILE_ALLOCATED_RANGE_BUFFER sQueryRange;
+    FILE_ALLOCATED_RANGE_BUFFER asOutputRange[1];
+    DWORD nOutputBytes = 0;
+
+    sQueryRange.FileOffset.QuadPart = nOffset;
+    sQueryRange.Length.QuadPart = nOffset + nLength;
+
+    if( !DeviceIoControl(hFile, FSCTL_QUERY_ALLOCATED_RANGES,
+                        &sQueryRange, sizeof(sQueryRange),
+                        asOutputRange, sizeof(asOutputRange),
+                        &nOutputBytes, NULL) )
+    {
+        if( GetLastError() == ERROR_MORE_DATA )
+        {
+            return VSI_RANGE_STATUS_DATA;
+        }
+        else
+        {
+            return VSI_RANGE_STATUS_UNKNOWN;
+        }
+    }
+
+    if( nOutputBytes )
+        return VSI_RANGE_STATUS_DATA;
+    else
+        return VSI_RANGE_STATUS_HOLE;
+#else
+    return VSI_RANGE_STATUS_UNKNOWN;
+#endif
 }
 
 /************************************************************************/
@@ -899,6 +942,31 @@ GIntBig VSIWin32FilesystemHandler::GetDiskFreeSpace( const char* pszDirname )
         nRet = static_cast<GIntBig>(nFreeBytesAvailable.QuadPart);
     }
     return nRet;
+}
+
+/************************************************************************/
+/*                      SupportsSparseFiles()                           */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::SupportsSparseFiles( const char* pszPath )
+{
+    CPLString osPath(pszPath);
+    DWORD dwVolFlags = 0;
+    if( CPLIsFilenameRelative(pszPath) )
+    {
+        char* pszTmp = CPLGetCurrentDir();
+        osPath = pszTmp;
+        CPLFree(pszTmp);
+    }
+    if( osPath.size() >= 3 && osPath[1] == ':' &&
+        (osPath[2] == '/' || osPath[2] == '\\') )
+    {
+        osPath.resize(3);
+    }
+
+    GetVolumeInformation(osPath.c_str(), NULL, 0, NULL,
+                         NULL, &dwVolFlags, NULL, 0);
+    return (dwVolFlags & FILE_SUPPORTS_SPARSE_FILES);
 }
 
 /************************************************************************/

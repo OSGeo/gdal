@@ -143,6 +143,7 @@ public:
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
+    virtual int SupportsSparseFiles( const char* pszPath );
 
 #ifdef VSI_COUNT_BYTES_READ
     void             AddToTotal(vsi_l_offset nBytes);
@@ -181,6 +182,8 @@ class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
     virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() {
         return reinterpret_cast<void *>(static_cast<size_t>(fileno(fp))); }
+    virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
+                                            vsi_l_offset nLength );
 };
 
 
@@ -471,6 +474,70 @@ int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
     return VSI_FTRUNCATE64( fileno(fp), nNewSize );
 }
 
+/************************************************************************/
+/*                          GetRangeStatus()                            */
+/************************************************************************/
+
+#ifdef __linux
+#include <linux/fs.h> /* FS_IOC_FIEMAP */
+#ifdef FS_IOC_FIEMAP
+#include <linux/fiemap.h> /* struct fiemap */
+#endif
+#include <sys/ioctl.h>
+#include <errno.h>
+#endif
+
+VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
+#ifdef FS_IOC_FIEMAP
+                                                                nOffset
+#endif
+                                                     , vsi_l_offset
+#ifdef FS_IOC_FIEMAP
+                                                                nLength
+#endif
+                                                    )
+{
+#ifdef FS_IOC_FIEMAP
+    // fiemap IOCTL documented at https://www.kernel.org/doc/Documentation/filesystems/fiemap.txt
+
+    GByte abyBuffer[sizeof(struct fiemap) + sizeof(struct fiemap_extent)];
+    int fd = fileno(fp);
+    struct fiemap *psExtentMap = (struct fiemap *)&abyBuffer;
+    memset(psExtentMap, 0, sizeof(struct fiemap) + sizeof(struct fiemap_extent));
+    psExtentMap->fm_start = nOffset;
+    psExtentMap->fm_length = nLength;
+    psExtentMap->fm_extent_count = 1;
+    int ret = ioctl(fd, FS_IOC_FIEMAP, psExtentMap);
+    if( ret < 0 )
+        return VSI_RANGE_STATUS_UNKNOWN;
+    if( psExtentMap->fm_mapped_extents == 0 )
+        return VSI_RANGE_STATUS_HOLE;
+    // In case there is one extent with unknown status, retry after having
+    // asked the kernel to sync the file
+    if( psExtentMap->fm_mapped_extents == 1 &&
+        (psExtentMap->fm_extents[0].fe_flags & FIEMAP_EXTENT_UNKNOWN) != 0 )
+    {
+        psExtentMap->fm_flags = FIEMAP_FLAG_SYNC;
+        psExtentMap->fm_start = nOffset;
+        psExtentMap->fm_length = nLength;
+        psExtentMap->fm_extent_count = 1;
+        ret = ioctl(fd, FS_IOC_FIEMAP, psExtentMap);
+        if( ret < 0 )
+            return VSI_RANGE_STATUS_UNKNOWN;
+        if( psExtentMap->fm_mapped_extents == 0 )
+            return VSI_RANGE_STATUS_HOLE;
+    }
+    return VSI_RANGE_STATUS_DATA;
+#else
+    static bool bMessageEmitted = false;
+    if( !bMessageEmitted )
+    {
+        CPLDebug("VSI", "Sorry: GetExtentStatus() not implemented for this operating system");
+        bMessageEmitted = true;
+    }
+    return VSI_RANGE_STATUS_UNKNOWN;
+#endif
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -665,6 +732,66 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char*
     }
 #endif
     return nRet;
+}
+
+/************************************************************************/
+/*                      SupportsSparseFiles()                           */
+/************************************************************************/
+
+#ifdef __linux
+#include <sys/vfs.h>
+#endif
+
+int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char* 
+#ifdef __linux
+                                                        pszPath
+#endif
+                                                        )
+{
+#ifdef __linux
+    struct statfs sStatFS;
+    if( statfs( pszPath, &sStatFS ) == 0 )
+    {
+        // Add here any missing filesystem supporting sparse files
+        // See http://en.wikipedia.org/wiki/Comparison_of_file_systems
+        switch( sStatFS.f_type )
+        {
+            // Codes from http://man7.org/linux/man-pages/man2/statfs.2.html
+            case 0xef53: // ext2,3,4 
+            case 0x52654973: // reiser
+            case 0x58465342: // xfs
+            case 0x3153464a: // jfs
+            case 0x5346544e: // ntfs
+            case 0x9123683e: // brfs
+            case 0x6969: // nfs: NFS < 4.2 supports creating sparse files (but reading them not efficiently)
+            case 0x01021994: // tmpfs
+                return TRUE;
+
+            case 0x4d44: /* msdos */
+                return FALSE;
+
+            default:
+                static bool bUnknownFSEmitted = false;
+                if( !bUnknownFSEmitted )
+                {
+                    CPLDebug("VSI", "Filesystem with type %X unknown. "
+                             "Assuming it does not support sparse files", 
+                             static_cast<int>(sStatFS.f_type) );
+                    bUnknownFSEmitted = true;
+                }
+                return FALSE;
+        }
+    }
+    return FALSE;
+#else
+    static bool bMessageEmitted = false;
+    if( !bMessageEmitted )
+    {
+        CPLDebug("VSI", "Sorry: SupportsSparseFiles() not implemented for this operating system");
+        bMessageEmitted = true;
+    }
+    return FALSE;
+#endif
 }
 
 #ifdef VSI_COUNT_BYTES_READ

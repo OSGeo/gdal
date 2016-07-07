@@ -8606,6 +8606,117 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_VSISupportsSparseFiles(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:VSISupportsSparseFiles",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)VSISupportsSparseFiles((char const *)arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VSIFGetRangeStatusL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VSILFILE *arg1 = (VSILFILE *) 0 ;
+  GIntBig arg2 ;
+  GIntBig arg3 ;
+  int res1 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:VSIFGetRangeStatusL",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFGetRangeStatusL" "', argument " "1"" of type '" "VSILFILE *""'"); 
+  }
+  {
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse(obj1,"L",&val) ) {
+      PyErr_SetString(PyExc_TypeError, "not an integer");
+      SWIG_fail;
+    }
+    arg2 = (GIntBig)val;
+  }
+  {
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse(obj2,"L",&val) ) {
+      PyErr_SetString(PyExc_TypeError, "not an integer");
+      SWIG_fail;
+    }
+    arg3 = (GIntBig)val;
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)VSIFGetRangeStatusL(arg1,arg2,arg3);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   int arg1 ;
@@ -29213,6 +29324,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE * fp, GIntBig offset, int whence) -> int"},
 	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE * fp) -> GIntBig"},
 	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"},
+	 { (char *)"VSISupportsSparseFiles", _wrap_VSISupportsSparseFiles, METH_VARARGS, (char *)"VSISupportsSparseFiles(char const * utf8_path) -> int"},
+	 { (char *)"VSIFGetRangeStatusL", _wrap_VSIFGetRangeStatusL, METH_VARARGS, (char *)"VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"},
 	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"},
 	 { (char *)"ParseCommandLine", _wrap_ParseCommandLine, METH_VARARGS, (char *)"ParseCommandLine(char const * utf8_path) -> char **"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char const *"},
@@ -30550,6 +30663,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "VSI_STAT_EXISTS_FLAG",SWIG_From_int(static_cast< int >(0x1)));
   SWIG_Python_SetConstant(d, "VSI_STAT_NATURE_FLAG",SWIG_From_int(static_cast< int >(0x2)));
   SWIG_Python_SetConstant(d, "VSI_STAT_SIZE_FLAG",SWIG_From_int(static_cast< int >(0x4)));
+  SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_UNKNOWN",SWIG_From_int(static_cast< int >(0)));
+  SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_DATA",SWIG_From_int(static_cast< int >(1)));
+  SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_HOLE",SWIG_From_int(static_cast< int >(2)));
   
 #if PY_VERSION_HEX >= 0x03000000
   return m;
