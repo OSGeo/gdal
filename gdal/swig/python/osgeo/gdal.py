@@ -1354,6 +1354,17 @@ def VSIFTruncateL(*args):
   """VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"""
   return _gdal.VSIFTruncateL(*args)
 
+def VSISupportsSparseFiles(*args):
+  """VSISupportsSparseFiles(char const * utf8_path) -> int"""
+  return _gdal.VSISupportsSparseFiles(*args)
+VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
+VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
+VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
+
+def VSIFGetRangeStatusL(*args):
+  """VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"""
+  return _gdal.VSIFGetRangeStatusL(*args)
+
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
   return _gdal.VSIFWriteL(*args)

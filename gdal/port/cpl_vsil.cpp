@@ -513,6 +513,33 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
 }
 
 /************************************************************************/
+/*                       VSISupportsSparseFiles()                       */
+/************************************************************************/
+
+/**
+ * \brief Returns if the filesystem supports sparse files.
+ *
+ * Only supported on Linux (and no other Unix derivatives) and Windows.
+ * On Linux, the answer depends on a few hardcoded signatures for common
+ * filesystems. Other filesystems will be considered as not supporting sparse files.
+ *
+ * @param pszPath the path of the filesystem object to be tested.  UTF-8 encoded.
+ *
+ * @return TRUE if the file system is known to support sparse files. FALSE may
+ *              be returned both in cases where it is known to not support them,
+ *              or when it is unknown.
+ *
+ * @since GDAL 2.2
+ */
+int VSISupportsSparseFiles( const char* pszPath )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->SupportsSparseFiles( pszPath );
+}
+
+/************************************************************************/
 /*                             VSIFOpenL()                              */
 /************************************************************************/
 
@@ -960,6 +987,37 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 {
     unsigned char cChar = static_cast<unsigned char>(nChar);
     return static_cast<int>(VSIFWriteL(&cChar, 1, 1, fp));
+}
+
+/************************************************************************/
+/*                        VSIFGetRangeStatusL()                        */
+/************************************************************************/
+
+/**
+ * \brief Return if a given file range contains data or holes filled with zeroes
+ *
+ * This uses the filesystem capabilities of querying which regions of a sparse
+ * file are allocated or not. This is currently only implemented for Linux (and no
+ * other Unix derivatives) and Windows.
+ *
+ * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the exte,t is filled
+ * with zeroes ! It must be interpreted as "may contain non-zero data".
+ *
+ * @param fp file handle opened with VSIFOpenL().
+ * @param nOffset offset of the start of the extent.
+ * @param nLength extent length.
+ *
+ * @return extent status: VSI_RANGE_STATUS_UNKNOWN, VSI_RANGE_STATUS_DATA or
+ *         VSI_RANGE_STATUS_HOLE
+ * @since GDAL 2.2
+ */
+
+VSIRangeStatus VSIFGetRangeStatusL( VSILFILE * fp, vsi_l_offset nOffset,
+                                    vsi_l_offset nLength )
+{
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
+
+    return poFileHandle->GetRangeStatus(nOffset, nLength);
 }
 
 /************************************************************************/
