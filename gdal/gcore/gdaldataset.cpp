@@ -3307,7 +3307,6 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
     // First condition: at least one raster band
     if(GetRasterCount()>0)
       {
-      CPLDebug("GDALDataset::GetMetadata","Number of derived datasets to report: %i",(int)NB_DERIVED_DATASETS);
         for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
           {          
           papoDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",asDDSDesc[derivedId].pszDatasetName,GetDescription()));
@@ -3329,17 +3328,8 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
 /************************************************************************/
 char ** GDALDataset::GetMetadataDomainList()
 {
-  CPLDebug("GDALDataset","GetMetadataDomainList");
   char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
   currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
-
-  int nb_domains = CSLCount(currentDomainList);
-
-  CPLDebug("GDALDataset","Found %i domains",nb_domains);
-
-  for(int i = 0; i< nb_domains;++i)
-    CPLDebug("GDALDataset","Domain %i: %s",i,currentDomainList[i]);
-      
   return currentDomainList;
 }
 
