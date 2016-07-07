@@ -35,6 +35,8 @@ ECW driver:
 
 GTiff driver:
  * fix RasterIO() reported when downsampling a RGBA JPEG compressed TIFF file (#6943)
+ * fix suboptimal behaviour before regarding flushing of working buffer (#6580)
+ * fix race between empty block filling logic and background compression threads when using Create() interface and NUM_THREADS creation option (#6582)
  * Internal libtiff: fix 1.11 regression that prevents from reading one-strip files that have no StripByteCounts tag (#6490)
 
 ISCE driver:
@@ -56,6 +58,7 @@ SAFE driver:
 
 VRT driver:
   * avoid useless floating point values in SrcRect / DstRect (#6568)
+  * VRT warp: fix issue with partial blocks at the right/bottom and dest nodata values that are different per band (#6581)
 
 == OGR core ==
  * Fix assertion in OGRGeometryFactory::GetCurveParmeters() on degnerated CIRCULARSTRING (#6553)
@@ -119,6 +122,7 @@ SOSI driver:
 
 WFS driver:
  * invalidate underlying layer when SetIgnoredFields() is called (QGIS #15112)
+ * don't crash on empty <Keyword/> declaration (#6586)
 
 == Perl bindings ==
  * Fix GetGeomFieldIndex()
