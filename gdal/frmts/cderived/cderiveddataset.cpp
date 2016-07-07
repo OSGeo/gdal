@@ -4,58 +4,6 @@
 
 #include <iostream>
 
-CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
-                       int nXSize, int nYSize,
-                       GDALDataType eSrcType, GDALDataType eBufType,
-                       int nPixelSpace, int nLineSpace)
-{
-    int ii, iLine, iCol;
-    double dfPixVal;
-  
-    /* ---- Init ---- */
-    if (nSources != 1) return CE_Failure;
-
-    if (GDALDataTypeIsComplex( eSrcType ))
-    {
-         double dfReal, dfImag;
-        void *pReal = papoSources[0];
-        void *pImag = ((GByte *)papoSources[0])
-                    + GDALGetDataTypeSize( eSrcType ) / 8 / 2;
-
-        /* ---- Set pixels ---- */
-        for( iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-
-                /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
-                
-                dfPixVal = sqrt( dfReal * dfReal + dfImag * dfImag );
-                
-                GDALCopyWords(&dfPixVal, GDT_Float64, 0,
-                              ((GByte *)pData) + nLineSpace * iLine +
-                              iCol * nPixelSpace, eBufType, nPixelSpace, 1);
-            }
-        }
-    } else {
-        /* ---- Set pixels ---- */
-        for( iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-
-                /* Source raster pixels may be obtained with SRCVAL macro */
-                dfPixVal = fabs(SRCVAL(papoSources[0], eSrcType, ii));
-
-                GDALCopyWords(&dfPixVal, GDT_Float64, 0,
-                              ((GByte *)pData) + nLineSpace * iLine +
-                              iCol * nPixelSpace, eBufType, nPixelSpace, 1);
-            }
-        }
-    }
-
-    /* ---- Return success ---- */
-    return CE_None;
-} /* ModulePixelFunc */
-
 
 class ComplexDerivedDatasetContainer: public GDALPamDataset
 {
@@ -121,9 +69,7 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     /* Unable to Open in this case */
     return NULL;
     }
-
-  VRTDerivedRasterBand::AddPixelFunction("mod",ModulePixelFunc);
-  
+ 
   CPLString odFilename = filename.substr(alg_pos+1,filename.size() - alg_pos);
 
   GDALDataset * poTmpDS = (GDALDataset*)GDALOpen(odFilename, GA_ReadOnly);
