@@ -325,7 +325,7 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
                 dfReal = SRCVAL(pReal, eSrcType, ii);
                 dfPixVal = (dfReal < 0) ? pi : 0;
 
-                GDALCopyWords(&dfPixVal, GDT_Float64, dfPixVal,
+                GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           ((GByte *)pData) + nLineSpace * iLine +
                           iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
