@@ -30,15 +30,6 @@
 #include "gdal_proxy.h"
 #include "derivedlist.h"
 
-#include <iostream>
-
-class ComplexDerivedDatasetContainer: public GDALPamDataset
-{
-    public:
-        ComplexDerivedDatasetContainer() {}
-};
-
-
 class ComplexDerivedDataset : public VRTDataset
 {
   public:
