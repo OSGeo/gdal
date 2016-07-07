@@ -83,13 +83,13 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 
   CPLString odDerivedName = filename.substr(dsds_pos+19,alg_pos-dsds_pos-19);
 
-  CPLDebug("ComplexDerivedDataset::Open","Derived dataset identified: %s",odDerivedName.c_str());
+  CPLDebug("ComplexDerivedDataset::Open","Derived dataset requested: %s",odDerivedName.c_str());
 
   CPLString pixelFunctionName = "";
   bool datasetFound = false;
   
   for(unsigned int derivedId = 0; derivedId<NB_DERIVED_DATASETS;++derivedId)
-    {
+    {   
     if(odDerivedName == asDDSDesc[derivedId].pszDatasetName)
       {
       datasetFound = true;
@@ -151,7 +151,7 @@ GDALDataset * ComplexDerivedDataset::Open(GDALOpenInfo * poOpenInfo)
      poBand = new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
      poDS->SetBand(nBand,poBand);
      
-     poBand->SetPixelFunctionName("mod");
+     poBand->SetPixelFunctionName(pixelFunctionName);
      poBand->SetSourceTransferType(poTmpDS->GetRasterBand(nBand)->GetRasterDataType());
  
      GDALProxyPoolDataset* proxyDS;
