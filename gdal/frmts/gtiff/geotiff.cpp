@@ -13550,7 +13550,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                      "whereas " CPL_FRMT_GIB " are at least necessary.",
+                      "whereas " CPL_FRMT_GIB " are at least necessary. ",
+                      "You can disable this check by defining the CHECK_DISK_FREE_SPACE "
+                      "configuration option to FALSE."
                       nFreeDiskSpace,
                       static_cast<GIntBig>(dfUncompressedImageSize) );
             return NULL;
