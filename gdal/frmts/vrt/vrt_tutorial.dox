@@ -808,7 +808,7 @@ calling the pixel function, and the imaginary portion would be lost.
 
 <h3> Default Pixel Functions </h3>
 
-Starting with GDAL 2.0, GDAL provides a set of default pixel functions that can be used without writing new code:
+Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can be used without writing new code:
 
 <ul>
 <li><b>"real": </b> extract real part from a single raster band (just a copy if the input is non-complex)
