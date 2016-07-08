@@ -500,6 +500,9 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
 #ifdef FS_IOC_FIEMAP
     // fiemap IOCTL documented at https://www.kernel.org/doc/Documentation/filesystems/fiemap.txt
 
+    // The fiemap struct contains a "variable length" array at its end
+    // As we are interested in only one extent, we allocate the base size of
+    // fiemap + one fiemap_extent
     GByte abyBuffer[sizeof(struct fiemap) + sizeof(struct fiemap_extent)];
     int fd = fileno(fp);
     struct fiemap *psExtentMap = (struct fiemap *)&abyBuffer;
@@ -514,8 +517,9 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
         return VSI_RANGE_STATUS_HOLE;
     // In case there is one extent with unknown status, retry after having
     // asked the kernel to sync the file
+    const fiemap_extent* pasExtent = &(psExtentMap->fm_extents[0]);
     if( psExtentMap->fm_mapped_extents == 1 &&
-        (psExtentMap->fm_extents[0].fe_flags & FIEMAP_EXTENT_UNKNOWN) != 0 )
+        (pasExtent[0].fe_flags & FIEMAP_EXTENT_UNKNOWN) != 0 )
     {
         psExtentMap->fm_flags = FIEMAP_FLAG_SYNC;
         psExtentMap->fm_start = nOffset;
