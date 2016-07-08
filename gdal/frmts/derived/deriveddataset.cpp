@@ -81,6 +81,7 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
   bool datasetFound = false;
 
   unsigned int nbSupportedDerivedDS(0);
+  GDALDataType type  = GDT_Float64;
   
   const DerivedDatasetDescription * poDDSDesc = GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
   
@@ -90,6 +91,7 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
       {
       datasetFound = true;
       pixelFunctionName = poDDSDesc[derivedId].pszPixelFunction;
+      type = GDALGetDataTypeByName(poDDSDesc[derivedId].pszOutputPixelType);
       }
     }
 
@@ -142,8 +144,6 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
    for(int nBand = 1; nBand <= nbBands; ++nBand)
      {
      VRTDerivedRasterBand * poBand;    
-
-     GDALDataType type  = GDT_Float64;
      
      poBand = new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
      poDS->SetBand(nBand,poBand);

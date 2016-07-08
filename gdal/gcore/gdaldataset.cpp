@@ -3322,7 +3322,7 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
           for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
           {
                             
-              if(hasAComplexBand || CPLString(poDDSDesc[derivedId].pszTargetPixelType) != "complex")
+              if(hasAComplexBand || CPLString(poDDSDesc[derivedId].pszInputPixelType) != "complex")
               {
                   oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",poDDSDesc[derivedId].pszDatasetName,GetDescription()));
 

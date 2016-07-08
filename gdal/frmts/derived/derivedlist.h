@@ -37,7 +37,8 @@ typedef struct
   const char * pszDatasetName;
   const char * pszDatasetDescritpion;
   const char * pszPixelFunction;
-  const char * pszTargetPixelType;
+  const char * pszInputPixelType;
+  const char * pszOutputPixelType;
 } DerivedDatasetDescription;
 
 const DerivedDatasetDescription* CPL_DLL CPL_STDCALL GDALGetDerivedDatasetDescriptions(unsigned int * pnDescriptionCount);
