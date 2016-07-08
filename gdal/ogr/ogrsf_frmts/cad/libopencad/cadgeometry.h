@@ -284,6 +284,10 @@ public:
     bool                getClosed() const;
     void                setClosed(bool value);
 
+    vector<CADVector>&  getControlPoints();
+    vector<CADVector>&  getFitPoints();
+    vector<double>&     getControlPointsWeights();
+
     void                addControlPointsWeight(double weight);
     void                addControlPoint(const CADVector& point);
     void                addFitPoint(const CADVector& point);

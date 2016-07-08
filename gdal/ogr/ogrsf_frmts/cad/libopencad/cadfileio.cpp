@@ -55,5 +55,5 @@ bool CADFileIO::Close()
 
 const char* CADFileIO::GetFilePath() const
 {
-    return m_soFilePath.c_str();
+    return m_soFilePath.c_str ();
 }

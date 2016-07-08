@@ -161,7 +161,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( new OGRPoint( stPositionVector.getX(),
                                                          stPositionVector.getY(), stPositionVector.getZ() ) );
             poFeature->SetField( "cadgeom_type", "CADPoint" );
-            return poFeature;
+            break;
         }
         
         case CADGeometry::LINE:
@@ -177,7 +177,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             
             poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "cadgeom_type", "CADLine" );
-            return poFeature;
+            break;
         }
 
         case CADGeometry::CIRCLE:
@@ -192,7 +192,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( poCircle );
             
             poFeature->SetField( "cadgeom_type", "CADCircle" );
-            return poFeature;
+            break;
         }
         
         case CADGeometry::ARC:
@@ -210,7 +210,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( poArc );
 
             poFeature->SetField( "cadgeom_type", "CADArc" );
-            return poFeature;
+            break;
         }
 
         case CADGeometry::FACE3D:
@@ -240,7 +240,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( poPoly );
 
             poFeature->SetField( "cadgeom_type", "CADFace3D" );
-            return poFeature;
+            break;
         }
 
         // TODO: unsupported smooth lines
@@ -260,7 +260,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "cadgeom_type", "CADLWPolyline" );
-            return poFeature;
+            break;
         }
 
         // TODO: unsupported smooth lines
@@ -280,7 +280,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             
             poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "cadgeom_type", "CADPolyline3D" );
-            return poFeature;
+            break;
         }
 
         case CADGeometry::TEXT:
@@ -293,7 +293,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADText" );
-            return poFeature;
+            break;
         }
 
         case CADGeometry::MTEXT:
@@ -306,7 +306,24 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADMText" );
-            return poFeature;
+            break;
+        }
+
+        case CADGeometry::SPLINE:
+        {
+            CADSpline * const poCADSpline = ( CADSpline * ) poCADGeometry;
+            OGRLineString * poLS = new OGRLineString();
+
+            for( size_t i = 0; i < poCADSpline->getControlPoints().size(); ++i )
+            {
+                poLS->addPoint( poCADSpline->getControlPoints()[i].getX(),
+                                poCADSpline->getControlPoints()[i].getY(),
+                                poCADSpline->getControlPoints()[i].getZ() );
+            }
+            
+            poFeature->SetGeometryDirectly( poLS );
+            poFeature->SetField( "cadgeom_type", "CADSpline" );
+            break;
         }
 
         case CADGeometry::ELLIPSE:
@@ -344,7 +361,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poEllipse );
             poFeature->SetField( "cadgeom_type", "CADEllipse" );
-            return poFeature;
+            break;
         }
         
         case CADGeometry::ATTDEF:
@@ -359,7 +376,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADAttdef" );
-            return poFeature;
+            break;
         }
             
         default:
@@ -368,9 +385,10 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                      "Unhandled feature. Skipping it." );
             
             poFeature->SetField( "cadgeom_type", "Unhandled" );
-            return poFeature;
+            break;
         }
     }
     
-    return NULL;
+    delete( poCADGeometry );
+    return poFeature;
 }

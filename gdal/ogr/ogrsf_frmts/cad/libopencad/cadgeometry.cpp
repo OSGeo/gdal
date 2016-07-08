@@ -626,6 +626,21 @@ void CADSpline::setDegree(long value)
     degree = value;
 }
 
+vector<CADVector>& CADSpline::getControlPoints()
+{
+    return avertCtrlPoints;
+}
+
+vector<CADVector>& CADSpline::getFitPoints()
+{
+    return averFitPoints;
+}
+
+vector<double>& CADSpline::getControlPointsWeights()
+{
+    return ctrlPointsWeight;
+}
+
 //------------------------------------------------------------------------------
 // CADSolid
 //------------------------------------------------------------------------------
