@@ -3344,7 +3344,12 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
 char ** GDALDataset::GetMetadataDomainList()
 {
   char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
-  currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+
+  // Ensure that we do not duplicate DERIVED domain
+  if(CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
+  {
+      currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+  }
   return currentDomainList;
 }
 
