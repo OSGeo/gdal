@@ -7014,15 +7014,12 @@ void GTiffDataset::FillEmptyTiles()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check all blocks, writing out data for uninitialized blocks.    */
+/*      When we must fill with zeroes, try to create non-sparse file    */
+/*      w.r.t TIFF spec ... as a sparse file w.r.t filesystem, ie by    */
+/*      seeking to end of file instead of writing zero blocks.          */
 /* -------------------------------------------------------------------- */
-
-    if( nCompression == COMPRESSION_NONE && (nBitsPerSample % 8) == 0 )
+    else if( nCompression == COMPRESSION_NONE && (nBitsPerSample % 8) == 0  )
     {
-        // Try to create non-sparse file w.r.t TIFF spec ... as a sparse
-        // file w.r.t filesystem, ie by seeking to end of file instead of
-        // writing zero blocks.
-
         // Only use libtiff to write the first sparse block to ensure that it will
         // serialize offset and count arrays back to disk.
         int nCountBlocksToZero = 0;
@@ -7090,6 +7087,10 @@ void GTiffDataset::FillEmptyTiles()
 
         return;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check all blocks, writing out data for uninitialized blocks.    */
+/* -------------------------------------------------------------------- */
 
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
     {
