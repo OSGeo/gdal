@@ -28,20 +28,19 @@
 
 #include <string>
 
-using kmldom::KmlFactory;
-using kmldom::StyleSelectorPtr;
-using kmldom::StylePtr;
-using kmldom::StyleMapPtr;
-using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
+using kmldom::DocumentPtr;
 using kmldom::FeaturePtr;
+using kmldom::KmlFactory;
+using kmldom::StyleMapPtr;
+using kmldom::StylePtr;
+using kmldom::StyleSelectorPtr;
 
 StylePtr addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
     KmlFactory *poKmlFactory,
     FeaturePtr poKmlFeature );
-
 
 
 /******************************************************************************

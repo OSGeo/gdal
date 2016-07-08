@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-using kmldom::SimpleFieldPtr;
-using kmldom::SchemaPtr;
-using kmldom::KmlFactory;
 using kmldom::FeaturePtr;
+using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;
+using kmldom::SchemaPtr;
+using kmldom::SimpleFieldPtr;
 
 /******************************************************************************
  function to output ogr fields in kml

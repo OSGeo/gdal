@@ -33,25 +33,25 @@
 #include <ogr_geometry.h>
 #include "gdal.h"
 
-using kmldom::KmlFactory;
-using kmldom::PlacemarkPtr;
-using kmldom::ElementPtr;
-using kmldom::GeometryPtr;
-using kmldom::Geometry;
-using kmldom::GroundOverlayPtr;
+using kmldom::AliasPtr;
 using kmldom::CameraPtr;
-using kmldom::ModelPtr;
+using kmldom::ElementPtr;
+using kmldom::Geometry;
+using kmldom::GeometryPtr;
+using kmldom::GroundOverlayPtr;
+using kmldom::IconPtr;
+using kmldom::ImagePyramidPtr;
+using kmldom::KmlFactory;
 using kmldom::LinkPtr;
 using kmldom::LocationPtr;
-using kmldom::OrientationPtr;
-using kmldom::ScalePtr;
-using kmldom::ResourceMapPtr;
-using kmldom::AliasPtr;
+using kmldom::ModelPtr;
 using kmldom::NetworkLinkPtr;
+using kmldom::OrientationPtr;
 using kmldom::PhotoOverlayPtr;
-using kmldom::IconPtr;
+using kmldom::PlacemarkPtr;
+using kmldom::ResourceMapPtr;
+using kmldom::ScalePtr;
 using kmldom::ViewVolumePtr;
-using kmldom::ImagePyramidPtr;
 
 #include "ogr_libkml.h"
 
