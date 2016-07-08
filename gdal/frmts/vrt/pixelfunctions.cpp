@@ -315,7 +315,7 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
         }
         */
         /* ---- Set pixels ---- */
-        double pi = atan2(0, -1);
+        double pi = atan2(0.0, -1.0);
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
             for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
 
