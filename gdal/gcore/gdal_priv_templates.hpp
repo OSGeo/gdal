@@ -268,7 +268,7 @@ inline void GDALCopyWord(const float fValueIn, int &nValueOut)
     }
     else
     {
-        nValueOut = static_cast<int>(fValueIn > 0.0f ? 
+        nValueOut = static_cast<int>(fValueIn > 0.0f ?
             fValueIn + 0.5f : fValueIn - 0.5f);
     }
 }

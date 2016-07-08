@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Fetch a function pointer from a shared library / DLL.

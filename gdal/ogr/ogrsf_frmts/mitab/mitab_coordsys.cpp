@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.42 2011-06-11 00:35:00 fwarmerdam Exp $
+ * $Id$
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library

@@ -53,6 +53,19 @@ const char *OGROGDIDriver::GetName()
 }
 
 /************************************************************************/
+/*                         MyOGDIReportErrorFunction()                  */
+/************************************************************************/
+
+#if OGDI_RELEASEDATE >= 20160705
+static int MyOGDIReportErrorFunction(int errorcode, const char *error_message)
+{
+    CPLError(CE_Failure, CPLE_AppDefined, "OGDI error %d: %s",
+             errorcode, error_message);
+    return FALSE; // go on
+}
+#endif
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -65,9 +78,15 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
     if( !STARTS_WITH_CI(pszFilename, "gltp:") )
         return NULL;
 
+#if OGDI_RELEASEDATE >= 20160705
+    // Available only in post OGDI 3.2.0beta2
+    // and only called if env variable OGDI_STOP_ON_ERROR is set to NO
+    ecs_SetReportErrorFunction( MyOGDIReportErrorFunction );
+#endif
+
     poDS = new OGROGDIDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE ) )
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         poDS = NULL;

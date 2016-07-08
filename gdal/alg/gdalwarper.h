@@ -130,7 +130,7 @@ typedef struct {
     GDALDataType        eWorkingDataType;
 
     /*! Source image dataset. */
-    GDALDatasetH	hSrcDS;
+    GDALDatasetH        hSrcDS;
 
     /*! Destination image dataset - may be NULL if only using GDALWarpOperation::WarpRegionToBuffer(). */
     GDALDatasetH        hDstDS;
@@ -280,7 +280,7 @@ class CPL_DLL GDALWarpKernel
 public:
     char              **papszWarpOptions;
 
-    GDALResampleAlg	eResample;
+    GDALResampleAlg     eResample;
     GDALDataType        eWorkingDataType;
     int                 nBands;
 

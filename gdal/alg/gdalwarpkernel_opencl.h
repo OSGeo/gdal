@@ -127,7 +127,7 @@ struct oclWarper {
     cl_channel_order imgChOrder1;
     unsigned int imgChSize4;
     cl_channel_order imgChOrder4;
-	char    useVec;
+    char    useVec;
 
     cl_mem useBandSrcValidCL;
     char *useBandSrcValid;

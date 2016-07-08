@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Thin Plate Spline transformer (GDAL wrapper portion)
@@ -393,7 +392,7 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
         CPLString().Printf( "%d", psInfo->bReversed ) );
 
 /* -------------------------------------------------------------------- */
-/*	Attach GCP List. 						*/
+/*      Attach GCP List.                                                */
 /* -------------------------------------------------------------------- */
     if( psInfo->nGCPCount > 0 )
     {

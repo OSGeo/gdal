@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Implementation of one or more GDALTrasformerFunc types, including
@@ -833,7 +832,7 @@ retry:
 
 /************************************************************************/
 /* ==================================================================== */
-/*			 GDALGenImgProjTransformer                      */
+/*                       GDALGenImgProjTransformer                      */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -2244,7 +2243,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			 GDALReprojectionTransformer                    */
+/*                       GDALReprojectionTransformer                    */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -2492,7 +2491,7 @@ typedef struct
 
     GDALTransformerFunc pfnBaseTransformer;
     void             *pBaseCBData;
-    double	      dfMaxError;
+    double dfMaxError;
 
     int               bOwnSubtransformer;
 } ApproxTransformInfo;
@@ -2611,7 +2610,7 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
                                    void *pBaseTransformArg, double dfMaxError)
 
 {
-    ApproxTransformInfo	*psATInfo;
+    ApproxTransformInfo *psATInfo;
 
     psATInfo = (ApproxTransformInfo*) CPLMalloc(sizeof(ApproxTransformInfo));
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
@@ -2636,7 +2635,7 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 
 {
-    ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
+    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
 
     psATInfo->bOwnSubtransformer = bOwnFlag;
 }
@@ -2660,7 +2659,7 @@ void GDALDestroyApproxTransformer( void * pCBData )
     if( pCBData == NULL)
         return;
 
-    ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
+    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
 
     if( psATInfo->bOwnSubtransformer )
         GDALDestroyTransformer( psATInfo->pBaseCBData );

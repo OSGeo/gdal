@@ -150,6 +150,15 @@ int CPL_DLL     VSIFFlushL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL     VSIFPutcL( int, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
+typedef enum 
+{
+    VSI_RANGE_STATUS_UNKNOWN,
+    VSI_RANGE_STATUS_DATA,
+    VSI_RANGE_STATUS_HOLE
+} VSIRangeStatus;
+
+VSIRangeStatus CPL_DLL VSIFGetRangeStatusL( VSILFILE * fp, vsi_l_offset nStart, vsi_l_offset nLength );
+
 int CPL_DLL     VSIIngestFile( VSILFILE* fp,
                                const char* pszFilename,
                                GByte** ppabyRet,
@@ -172,6 +181,8 @@ int CPL_DLL     VSIStatL( const char *, VSIStatBufL * ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
+
+int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
 
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 

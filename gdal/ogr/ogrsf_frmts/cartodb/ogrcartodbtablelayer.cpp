@@ -1433,14 +1433,11 @@ OGRErr OGRCARTODBTableLayer::RunDeferredCreationIfNecessary()
             (OGRCartoDBGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
         nSRID = poFieldDefn->nSRID;
 
-        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s, %s GEOMETRY(%s, %d),",
+        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s,",
                  "the_geom",
                  osGeomType.c_str(),
                  nSRID,
-                 (!poFieldDefn->IsNullable()) ? " NOT NULL" : "",
-                 "the_geom_webmercator",
-                 osGeomType.c_str(),
-                 3857);
+                 (!poFieldDefn->IsNullable()) ? " NOT NULL" : "");
     }
 
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -1471,6 +1468,9 @@ OGRErr OGRCARTODBTableLayer::RunDeferredCreationIfNecessary()
     osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s CASCADE", osSeqName.c_str());
     osSQL += ";";
     osSQL += CPLSPrintf("CREATE SEQUENCE %s START 1", osSeqName.c_str());
+    osSQL += ";";
+    osSQL += CPLSPrintf("ALTER SEQUENCE %s OWNED BY %s.%s", osSeqName.c_str(),
+                        OGRCARTODBEscapeIdentifier(osName).c_str(), osFIDColName.c_str());
     osSQL += ";";
     osSQL += CPLSPrintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('%s')",
                         OGRCARTODBEscapeIdentifier(osName).c_str(),

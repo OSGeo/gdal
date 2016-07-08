@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implementation of the GDALWarpOperation class.
@@ -32,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "ogr_api.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -1357,15 +1357,29 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      If we aren't doing fixed initialization of the output buffer    */
 /*      then read it from disk so we can overlay on existing imagery.   */
 /* -------------------------------------------------------------------- */
+    GDALDataset* poDstDS = reinterpret_cast<GDALDataset*>(psOptions->hDstDS);
     if( pszInitDest == NULL )
     {
-        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Read,
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poDstDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                  GF_Read,
+                  nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                  pDstBuffer, nDstXSize, nDstYSize,
+                  psOptions->eWorkingDataType,
+                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poDstDS->RasterIO( GF_Read,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     pDstBuffer, nDstXSize, nDstYSize,
                                     psOptions->eWorkingDataType,
                                     psOptions->nBandCount,
                                     psOptions->panDstBands,
-                                    0, 0, 0 );
+                                    0, 0, 0, NULL );
+        }
 
         if( eErr != CE_None )
         {
@@ -1390,13 +1404,27 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Write,
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poDstDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                  GF_Write,
+                  nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                  pDstBuffer, nDstXSize, nDstYSize,
+                  psOptions->eWorkingDataType,
+                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poDstDS->RasterIO( GF_Write,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     pDstBuffer, nDstXSize, nDstYSize,
                                     psOptions->eWorkingDataType,
                                     psOptions->nBandCount,
                                     psOptions->panDstBands,
-                                    0, 0, 0 );
+                                    0, 0, 0, NULL );
+        }
+
         if( eErr == CE_None &&
             CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH",
                              FALSE ) )
@@ -1583,13 +1611,29 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             + nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * i;
 
     if( eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0 )
-        eErr =
-            GDALDatasetRasterIO( psOptions->hSrcDS, GF_Read,
-                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                 oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
-                                 psOptions->eWorkingDataType,
-                                 psOptions->nBandCount, psOptions->panSrcBands,
-                                 0, 0, nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) );
+    {
+        GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(psOptions->hSrcDS);
+        if( psOptions->nBandCount == 1 )
+        {
+            // Particular case to simplify the stack a bit...
+            eErr = poSrcDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+                                  GF_Read,
+                                  nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                                  oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
+                                  psOptions->eWorkingDataType,
+                                  0, 0, NULL );
+        }
+        else
+        {
+            eErr = poSrcDS->RasterIO( GF_Read,
+                  nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                  oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
+                  psOptions->eWorkingDataType,
+                  psOptions->nBandCount, psOptions->panSrcBands,
+                  0, 0, nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS),
+                  NULL );
+        }
+    }
 
     ReportTiming( "Input buffer read" );
 
@@ -1660,7 +1704,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
             if( eErr == CE_None )
             {
-                for( int j = oWK.nSrcXSize * oWK.nSrcYSize - 1; j >= 0; j-- )
+                for( int j = 0; j < oWK.nSrcXSize * oWK.nSrcYSize; j++ )
                     oWK.pafUnifiedSrcDensity[j] = 1.0;
             }
         }
@@ -1705,7 +1749,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.papanBandSrcValid == NULL );
 
-        int bAllBandsAllValid = TRUE;
+        bool bAllBandsAllValid = false;
         for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
         {
             eErr = CreateKernelMask( &oWK, i, "BandSrcValid" );
@@ -1726,7 +1770,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                           FALSE, oWK.papanBandSrcValid[i],
                                           &bAllValid );
                 if( !bAllValid )
-                    bAllBandsAllValid = FALSE;
+                    bAllBandsAllValid = false;
             }
         }
 
@@ -1788,6 +1832,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     if( eErr == CE_None
         && oWK.pafUnifiedSrcDensity == NULL
+        && psOptions->nSrcAlphaBand <= 0
         && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) &&
         nSrcXSize > 0 && nSrcYSize > 0 )
 
@@ -1992,6 +2037,7 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
     void **ppMask;
     int  nXSize, nYSize, nBitsPerPixel, nDefault;
     int  nExtraElts = 0;
+    bool bDoMemset = true;
 
 /* -------------------------------------------------------------------- */
 /*      Get particulars of mask to be updated.                          */
@@ -2026,6 +2072,7 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         nYSize = poKernel->nSrcYSize;
         nBitsPerPixel = 32;
         nDefault = 0;
+        bDoMemset = false;
     }
     else if( EQUAL(pszType,"DstValid") )
     {
@@ -2042,6 +2089,7 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         nYSize = poKernel->nDstYSize;
         nBitsPerPixel = 32;
         nDefault = 0;
+        bDoMemset = false;
     }
     else
     {
@@ -2061,14 +2109,17 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         if( nBitsPerPixel == 32 )
             nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts) * 4;
         else
-            nBytes = (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
+            nBytes =
+                (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
         const size_t nByteSize_t = static_cast<size_t>(nBytes);
 #if SIZEOF_VOIDP != 8
         if( static_cast<GIntBig>(nByteSize_t) != nBytes )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
-                      nBytes );
+            CPLError(
+                CE_Failure, CPLE_OutOfMemory,
+                "Cannot allocate " CPL_FRMT_GIB " bytes",
+                nBytes );
             return CE_Failure;
         }
 #endif
@@ -2080,7 +2131,8 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
             return CE_Failure;
         }
 
-        memset( *ppMask, nDefault, nByteSize_t );
+        if( bDoMemset )
+            memset( *ppMask, nDefault, nByteSize_t );
     }
 
     return CE_None;

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.46 2010-07-07 19:00:15 aboudreault Exp $
+ * $Id$
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library

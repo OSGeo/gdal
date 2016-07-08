@@ -49,7 +49,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( poDSIn->GetRasterXSize(),
                                poDSIn->GetRasterYSize() );
@@ -68,7 +68,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataType eType,
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -86,7 +86,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -198,7 +198,11 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+    if( bSkipBufferInitialization )
+    {
+        // Do nothing
+    }
+    else if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
          (!m_bNoDataValueSet || (!CPLIsNan(m_dfNoDataValue) &&
                                  m_dfNoDataValue == 0)) )
     {
@@ -217,7 +221,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
         }
     }
-    else if( !bEqualAreas || m_bNoDataValueSet )
+    else if( m_bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )
@@ -735,11 +739,16 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
 
     reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
-    if( poNewSource->IsSimpleSource() &&
-        GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
+    if( poNewSource->IsSimpleSource() )
     {
-        reinterpret_cast<VRTSimpleSource*>( poNewSource )->SetMaxValue(
-                (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>( poNewSource );
+        if( GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
+        {
+            poSS->SetMaxValue(
+                    (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+        }
+
+        CheckSource( poSS );
     }
 
     return CE_None;
@@ -855,6 +864,31 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
 }
 
 /************************************************************************/
+/*                            CheckSource()                             */
+/************************************************************************/
+
+void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
+{
+/* -------------------------------------------------------------------- */
+/*      Check if we can avoid buffer initialization.                    */
+/* -------------------------------------------------------------------- */
+
+    // Note: if one day we do alpha compositing, we will need to check that.
+    if( strcmp(poSS->GetType(), "SimpleSource") == 0 &&
+        poSS->m_dfSrcXOff >= 0.0 &&
+        poSS->m_dfSrcYOff >= 0.0 &&
+        poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= poSS->m_poRasterBand->GetXSize() &&
+        poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= poSS->m_poRasterBand->GetYSize() &&
+        poSS->m_dfDstXOff <= 0.0 &&
+        poSS->m_dfDstYOff <= 0.0 &&
+        poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
+        poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+    {
+        bSkipBufferInitialization = TRUE;
+    }
+}
+
+/************************************************************************/
 /*                          ConfigureSource()                           */
 /************************************************************************/
 
@@ -896,12 +930,7 @@ void VRTSourcedRasterBand::ConfigureSource( VRTSimpleSource *poSimpleSource,
     poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
                                   dfDstXSize, dfDstYSize );
 
-/* -------------------------------------------------------------------- */
-/*      Default source and dest rectangles.                             */
-/* -------------------------------------------------------------------- */
-    if( dfSrcXOff == dfDstXOff && dfSrcYOff == dfDstYOff &&
-        dfSrcXSize == dfDstXSize && dfSrcYSize == nRasterYSize )
-        bEqualAreas = TRUE;
+    CheckSource( poSimpleSource );
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/

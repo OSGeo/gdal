@@ -207,7 +207,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
         {
             fprintf(stderr,
                 "Layer %s not found, and CreateLayer not supported by driver.\n",
-                pszNewLayerName);
+                szLayerName.c_str());
             return NULL;
         }
 
@@ -220,7 +220,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
             eGType = wkbNone;
         }
 
-        poDstLayer = poDstDS->CreateLayer(pszNewLayerName, poOutputSRS,
+        poDstLayer = poDstDS->CreateLayer(szLayerName, poOutputSRS,
             (OGRwkbGeometryType)eGType,
             papszLCO);
 
@@ -243,7 +243,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
     else
     {
         fprintf(stderr, "FAILED: Layer %s already exists.\n",
-            pszNewLayerName);
+            szLayerName.c_str ());
         return NULL;
     }
 
@@ -320,7 +320,7 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
                                                { "bna"    , "BNA" },
                                                { "csv"    , "CSV" },
                                                { "gml"    , "GML" },
-                                               { "kml"    , "KML/LIBKML" },
+                                               { "kml"    , "KML" },
                                                { "kmz"    , "LIBKML" },
                                                { "json"   , "GeoJSON" },
                                                { "geojson", "GeoJSON" },

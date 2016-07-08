@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  * Project:  GDAL
  * Purpose:  Raster to Polygon Converter
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -37,7 +36,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /* ==================================================================== */
 /*                               RPolygon                               */
-/*									*/
+/*                                                                      */
 /*      This is a helper class to hold polygons while they are being    */
 /*      formed in memory, and to provide services to coalesce a much    */
 /*      of edge sections into complete rings.                           */

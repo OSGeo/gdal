@@ -1,6 +1,5 @@
 
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALJP2Metadata - Read GeoTIFF and/or GML georef info.

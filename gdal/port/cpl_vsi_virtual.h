@@ -57,8 +57,12 @@ class CPL_DLL VSIVirtualHandle {
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
-    virtual int       Truncate( CPL_UNUSED vsi_l_offset nNewSize ) { return -1; }
+    virtual int       Truncate( vsi_l_offset nNewSize ); // base implementation that only supports file extension
     virtual void     *GetNativeFileDescriptor() { return NULL; }
+    virtual VSIRangeStatus GetRangeStatus( vsi_l_offset /*nOffset*/,
+                                             vsi_l_offset /*nLength */)
+                                          { return VSI_RANGE_STATUS_UNKNOWN; }
+
     virtual           ~VSIVirtualHandle() { }
 };
 
@@ -94,6 +98,7 @@ public:
     virtual int IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return TRUE; }
     virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
+    virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
 };
 
 /************************************************************************/

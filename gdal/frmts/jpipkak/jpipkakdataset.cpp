@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
+ * $Id$
  *
  * Project:  jpip read driver
  * Purpose:  GDAL bindings for JPIP.

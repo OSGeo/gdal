@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_sxflayer.cpp  $
+ * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Definition of classes for OGR SXF Layers.
@@ -38,7 +38,7 @@
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id: ogrsxflayer.cpp $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        OGRSXFLayer()                                 */

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalkdriver.cpp
+ * $Id: ogrwalkdriver.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkDriver class.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Alternatve simplified implementation VSI*L File API that just

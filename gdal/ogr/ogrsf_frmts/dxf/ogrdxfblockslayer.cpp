@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFBlocksLayer class.
@@ -30,7 +30,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRDXFBlocksLayer()                          */

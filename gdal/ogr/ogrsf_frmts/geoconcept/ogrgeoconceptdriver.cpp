@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgeoconceptdriver.cpp
+ * $Id: ogrgeoconceptdriver.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptDriver class.
@@ -33,7 +33,7 @@
 #include "ogrgeoconceptdatasource.h"
 #include "ogrgeoconceptdriver.h"
 
-CPL_CVSID("$Id: ogrgeoconceptdriver.cpp 00000 2007-11-03 10:42:48Z drichard $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRGeoconceptDriver()                      */

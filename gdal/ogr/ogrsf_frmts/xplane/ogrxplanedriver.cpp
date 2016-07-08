@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrxplanedriver.cpp
+ * $Id: ogrxplanedriver.cpp$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Implements OGRXPlaneDriver.

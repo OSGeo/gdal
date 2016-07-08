@@ -1363,14 +1363,20 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     SoftStartTransaction();
 
-    pszSQL = sqlite3_mprintf("INSERT INTO gpkg_contents "
-        "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,srs_id) VALUES "
-        "('%q','tiles','%q','%q',%.18g,%.18g,%.18g,%.18g,%d)",
+    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+    CPLString osInsertGpkgContentsFormatting("INSERT INTO gpkg_contents "
+            "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,last_change,srs_id) VALUES "
+            "('%q','tiles','%q','%q',%.18g,%.18g,%.18g,%.18g,");
+    osInsertGpkgContentsFormatting += ( pszCurrentDate ) ? "'%q'" : "%s";
+    osInsertGpkgContentsFormatting += ",%d)";
+    pszSQL = sqlite3_mprintf(osInsertGpkgContentsFormatting.c_str(),
         m_osRasterTable.c_str(),
         m_osIdentifier.c_str(),
         m_osDescription.c_str(),
         dfGDALMinX, dfGDALMinY, dfGDALMaxX, dfGDALMaxY,
+        pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)",
         m_nSRID);
+
     eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     if ( eErr != OGRERR_NONE )

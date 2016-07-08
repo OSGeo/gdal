@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalklayer.cpp
+ * $Id: ogrwalklayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkLayer class.

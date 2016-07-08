@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDAL Wrapper for image matching via correlation algorithm.
@@ -31,7 +30,7 @@
 #include "gdal_alg.h"
 #include "gdal_simplesurf.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /**
  * @file

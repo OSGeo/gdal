@@ -279,12 +279,16 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( nPixelSpace == typesize &&
+    if( bSkipBufferInitialization )
+    {
+        // Do nothing
+    }
+    else if( nPixelSpace == typesize &&
         (!m_bNoDataValueSet || m_dfNoDataValue == 0) ) {
         memset( pData, 0,
                 static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
     }
-    else if( !bEqualAreas || m_bNoDataValueSet )
+    else if( m_bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )

@@ -80,7 +80,7 @@ OGROGDIDataSource::~OGROGDIDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
+int OGROGDIDataSource::Open( const char * pszNewName )
 
 {
     ecs_Result *psResult;
@@ -131,16 +131,13 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
         psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
-        CPLFree( pszWorkingName );
 
         if( ECSERROR( psResult ) )
         {
-            if (!bTestOpen)
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "OGDI DataSource Open Failed: %s\n",
-                          psResult->message );
-            }
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "OGDI DataSource Open Failed: %s\n",
+                      psResult->message ? psResult->message : "(no message string)");
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -153,7 +150,9 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "GetGlobalBound failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -163,7 +162,9 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "GetServerProjection failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -173,7 +174,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
                       "untranslatable PROJ.4 projection: %s\n",
-                      ECSTEXT(psResult) );
+                      ECSTEXT(psResult) ? ECSTEXT(psResult): "(no mesage string)" );
             delete m_poSpatialRef;
             m_poSpatialRef = NULL;
         }
@@ -185,7 +186,9 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "SelectRegion failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
+            CPLFree( pszWorkingName );
             return FALSE;
         }
 
@@ -208,12 +211,10 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                 eFamily = Text;
             else
             {
-                if (!bTestOpen)
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "Invalid or unsupported family name (%s) in URL %s\n",
-                              pszFamily, m_pszFullName);
-                }
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Invalid or unsupported family name (%s) in URL %s\n",
+                          pszFamily, m_pszFullName);
+                CPLFree( pszWorkingName );
                 return FALSE;
             }
 
@@ -227,6 +228,21 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             int         i;
             const ecs_LayerCapabilities *psLayerCap;
+
+            // Call cln_UpdateDictionary so as to be able to report errors
+            // since cln_GetLayerCapabilities() cannot do that
+            // Help in the case of DNC17/COA17A that has a missing env/fcs file
+            char* szEmpty = CPLStrdup("");
+            psResult = cln_UpdateDictionary( m_nClientID, szEmpty );
+            CPLFree(szEmpty);
+            if( ECSERROR(psResult) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "UpdateDictionay failed: %s",
+                          psResult->message ? psResult->message : "(no message string)");
+                CPLFree( pszWorkingName );
+                return FALSE;
+            }
 
             for( i = 0;
                 (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
@@ -242,6 +258,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                     IAddLayer( psLayerCap->name, Text );
             }
         }
+
+        CPLFree( pszWorkingName );
 
         return TRUE;
 }

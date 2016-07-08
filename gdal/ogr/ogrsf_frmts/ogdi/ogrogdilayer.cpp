@@ -158,7 +158,8 @@ void OGROGDILayer::ResetReading()
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Access to layer '%s' Failed: %s\n",
-                  m_pszOGDILayerName, psResult->message );
+                  m_pszOGDILayerName,
+                  psResult->message ? psResult->message : "(no message string)" );
         return;
     }
 
@@ -178,7 +179,8 @@ void OGROGDILayer::ResetReading()
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "SelectRegion failed: %s",
+                      psResult->message ? psResult->message : "(no message string)" );
             return;
         }
     }
@@ -189,7 +191,8 @@ void OGROGDILayer::ResetReading()
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
+                      "SelectRegion failed: %s",
+                      psResult->message ? psResult->message : "(no message string)");
             return;
         }
     }
@@ -254,6 +257,15 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
     psResult = cln_GetNextObject(m_nClientID);
     if (! ECSSUCCESS(psResult))
     {
+        if( ECSERROR( psResult ) &&
+            (psResult->message == NULL ||
+             strstr(psResult->message, "End of selection") == NULL) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Access to next object of layer '%s' failed: %s\n",
+                      m_pszOGDILayerName,
+                      psResult->message ? psResult->message : "(no error string)" );
+        }
         // We probably reached EOF... keep track of shape count.
         m_nTotalShapeCount = m_iNextShapeId - m_nFilteredOutShapes;
         return NULL;
@@ -568,7 +580,8 @@ void OGROGDILayer::BuildFeatureDefn()
     if( ECSERROR( psResult ) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "ECSERROR: %s\n", psResult->message);
+                 "ECSERROR: %s\n",
+                 psResult->message ? psResult->message : "(no message string)");
         return;
     }
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Implementation of CPLKeywordParser - a class for parsing
@@ -34,7 +33,7 @@
 #include "cpl_string.h"
 #include "cplkeywordparser.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

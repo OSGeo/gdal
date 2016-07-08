@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrxplanedatasource.cpp
+ * $Id: ogrxplanedatasource.cpp$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Implements OGRXPlaneDataSource class

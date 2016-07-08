@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.55 2011-06-11 00:35:00 fwarmerdam Exp $
+ * $Id$
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library

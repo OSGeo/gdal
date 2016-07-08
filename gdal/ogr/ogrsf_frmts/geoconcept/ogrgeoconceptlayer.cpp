@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgeoconceptlayer.cpp
+ * $Id: ogrgeoconceptlayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptLayer class.
@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "ogrgeoconceptlayer.h"
 
-CPL_CVSID("$Id: ogrgeoconceptlayer.cpp 00000 2007-11-03 16:08:14Z drichard $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRGeoconceptLayer()                         */

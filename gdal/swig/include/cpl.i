@@ -509,6 +509,14 @@ VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
 GIntBig    VSIFTellL( VSILFILE* fp );
 int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
+
+int     VSISupportsSparseFiles( const char* utf8_path );
+
+#define VSI_RANGE_STATUS_UNKNOWN    0
+#define VSI_RANGE_STATUS_DATA       1
+#define VSI_RANGE_STATUS_HOLE       2
+
+int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
 #else
 VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
 long    VSIFTellL( VSILFILE* fp );

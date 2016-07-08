@@ -2532,12 +2532,19 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
         const char* pszDescription = GetMetadataItem("DESCRIPTION");
         if( pszDescription == NULL )
             pszDescription = "";
+        const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+        CPLString osInsertGpkgContentsFormatting("INSERT INTO gpkg_contents "
+                 "(table_name,data_type,identifier,description,last_change,srs_id) VALUES "
+                "('%q','%q','%q','%q',");
+        osInsertGpkgContentsFormatting += ( pszCurrentDate ) ? "'%q'" : "%s";
+        osInsertGpkgContentsFormatting += ",%d)";
+
         pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_contents "
-            "(table_name,data_type,identifier,description,last_change,srs_id)"
-            " VALUES "
-            "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
-            pszLayerName, (bIsSpatial ? "features": "aspatial"), pszIdentifier, pszDescription, m_iSrs);
+            osInsertGpkgContentsFormatting.c_str(),
+            pszLayerName, (bIsSpatial ? "features": "aspatial"),
+            pszIdentifier, pszDescription,
+            pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)",
+            m_iSrs);
 
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);

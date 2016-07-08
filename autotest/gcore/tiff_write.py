@@ -1576,8 +1576,10 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
 
     ds = gdal.Open( tmpfilename )
     bnd = ds.GetRasterBand(1)
-    if bnd.Checksum() != 4672:
+    cs = bnd.Checksum()
+    if cs != 4672:
         gdaltest.post_reason( 'Didnt get expected checksum on band 1')
+        print(cs)
         return 'fail'
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
     if md['NBITS'] != str(nbits):
@@ -6024,12 +6026,27 @@ def tiff_write_137():
 
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137_src.tif', 4000, 4000)
     src_ds.GetRasterBand(1).Fill(1)
+    data = src_ds.GetRasterBand(1).ReadRaster()
     expected_cs = src_ds.GetRasterBand(1).Checksum()
 
     # Test NUM_THREADS as creation option
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
         options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    # Test NUM_THREADS as creation option with Create()
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, 1, \
+        options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+    ds.GetRasterBand(1).WriteRaster(0,0,4000,4000,data)
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
     cs = ds.GetRasterBand(1).Checksum()
@@ -6651,6 +6668,104 @@ def tiff_write_149():
     return 'success'
 
 ###############################################################################
+# Test failure when loading block from disk in IWriteBlock()
+
+def tiff_write_150():
+
+    shutil.copy('data/tiled_bad_offset.tif', 'tmp/tiled_bad_offset.tif')
+    ds = gdal.Open('tmp/tiled_bad_offset.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds.FlushCache()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('tmp/tiled_bad_offset.tif')
+
+    return 'success'
+
+###############################################################################
+# Test IWriteBlock() with more than 10 bands
+
+def tiff_write_151():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_151.tif', 1, 1, 11)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).Checksum()
+    ds.GetRasterBand(2).Fill(1)
+    ds.GetRasterBand(3).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_151.tif')
+    if ds.GetRasterBand(1).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_151.tif')
+
+    return 'success'
+
+###############################################################################
+# Test flushing of blocks in a contig multi band file with Create()
+
+def tiff_write_152():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_152.tif', 1, 1, 2, options = ['NBITS=2'])
+    ds.GetRasterBand(2).SetNoDataValue(3)
+    ds.GetRasterBand(2).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_152.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_152.tif')
+
+    return 'success'
+
+###############################################################################
+# Test that empty blocks are created in a filesystem sparse way
+
+def tiff_write_153():
+
+    target_dir = 'tmp'
+
+    if gdal.VSISupportsSparseFiles(target_dir) == 0:
+        return 'skip'
+
+    gdaltest.tiff_drv.Create(target_dir+'/tiff_write_153.tif', 500, 500)
+
+    f = gdal.VSIFOpenL(target_dir+'/tiff_write_153.tif', 'rb')
+    ret = gdal.VSIFGetRangeStatusL(f, 500 * 500, 1)
+    gdal.VSIFCloseL(f)
+
+    gdaltest.tiff_drv.Delete(target_dir+'/tiff_write_153.tif')
+
+    if ret == gdal.VSI_RANGE_STATUS_DATA:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6829,10 +6944,14 @@ gdaltest_list = [
     tiff_write_147,
     tiff_write_148,
     tiff_write_149,
+    tiff_write_150,
+    tiff_write_151,
+    tiff_write_152,
+    tiff_write_153,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_149 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_153 ]
 
 if __name__ == '__main__':
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalkdatasource.cpp
+ * $Id: ogrwalkdatasource.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkDatasource class.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BAG Driver
  * Purpose:  Implements code to parse ISO 19115 metadata to extract a

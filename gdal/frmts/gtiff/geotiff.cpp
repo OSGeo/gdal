@@ -297,7 +297,9 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-    bool        IsBlockAvailable( int nBlockId );
+    bool        IsBlockAvailable( int nBlockId,
+                                  vsi_l_offset* pnOffset = NULL,
+                                  vsi_l_offset* pnSize = NULL );
 
     bool        bGeoTIFFInfoChanged;
     bool        bForceUnsetGTOrGCPs;
@@ -459,6 +461,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     int         m_nWORLDFILEGeorefSrcIndex;
     int         m_nGeoTransformGeorefSrcIndex;
     //int         m_nProjectionGeorefSrcIndex;
+
+    void        FlushCacheInternal( bool bFlushDirectory );
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -737,7 +741,9 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // Make sure it is available.
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId) )
+    vsi_l_offset nOffset = 0;
+    vsi_l_offset nByteCount = 0;
+    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId, &nOffset, &nByteCount) )
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize );
         return CE_None;
@@ -746,33 +752,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int nScaleFactor = 1 << poGDS->nOverviewLevel;
     if( poGDS->poJPEGDS == NULL || nBlockId != poGDS->nBlockId )
     {
-        toff_t *panByteCounts = NULL;
-        toff_t *panOffsets = NULL;
-        vsi_l_offset nOffset = 0;
-        vsi_l_offset nByteCount = 0;
-
-        // Find offset and size of the JPEG tile/strip.
-        TIFF* hTIFF = poGDS->poParentDS->hTIFF;
-        if( (( TIFFIsTiled( hTIFF )
-            && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts )
-            && TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
-            || ( !TIFFIsTiled( hTIFF )
-            && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
-            && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) )) &&
-            panByteCounts != NULL && panOffsets != NULL )
-        {
-            if( panByteCounts[nBlockId] < 2 )
-                return CE_Failure;
-            nOffset = panOffsets[nBlockId] + 2;  // Skip leading 0xFF 0xF8.
-            nByteCount = panByteCounts[nBlockId] - 2;
-        }
-        else
-        {
+        if( nByteCount < 2 )
             return CE_Failure;
-        }
+        nOffset += 2;  // Skip leading 0xFF 0xF8.
+        nByteCount -= 2;
 
         // Special case for last strip that might be smaller than other strips
         // In which case we must invalidate the dataset.
+        TIFF* hTIFF = poGDS->poParentDS->hTIFF;
         if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
             (nBlockYOff + 1 ==
              static_cast<int>(
@@ -1622,18 +1609,28 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                    GIntBig *pnLineSpace,
                                                    char **papszOptions )
 {
-    if( !CPLTestBool(CSLFetchNameValueDef( papszOptions,
-                                           "USE_DEFAULT_IMPLEMENTATION",
-                                           "NO")) )
+    const char* pszImpl = CSLFetchNameValueDef(
+            papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
+    if( EQUAL(pszImpl, "YES") || EQUAL(pszImpl, "ON") ||
+        EQUAL(pszImpl, "1") || EQUAL(pszImpl, "TRUE") )
     {
-        CPLVirtualMem *psRet
-            = GetVirtualMemAutoInternal( eRWFlag, pnPixelSpace, pnLineSpace,
-                                         papszOptions );
-        if( psRet != NULL )
-        {
-            CPLDebug("GTiff", "GetVirtualMemAuto(): Using memory file mapping");
-            return psRet;
-        }
+        return GDALRasterBand::GetVirtualMemAuto( eRWFlag, pnPixelSpace,
+                                                  pnLineSpace, papszOptions );
+    }
+
+    CPLVirtualMem *psRet
+        = GetVirtualMemAutoInternal( eRWFlag, pnPixelSpace, pnLineSpace,
+                                      papszOptions );
+    if( psRet != NULL )
+    {
+        CPLDebug("GTiff", "GetVirtualMemAuto(): Using memory file mapping");
+        return psRet;
+    }
+
+    if( EQUAL(pszImpl, "NO") || EQUAL(pszImpl, "OFF") ||
+        EQUAL(pszImpl, "0") || EQUAL(pszImpl, "FALSE") )
+    {
+        return NULL;
     }
 
     CPLDebug("GTiff", "GetVirtualMemAuto(): Defaulting to base implementation");
@@ -1845,13 +1842,8 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
             // Now simulate the writing of other blocks.
             vsi_l_offset nDataSize = (vsi_l_offset)nBlockSize * nBlocks;
-            if( VSIFSeekL(fp, nBaseOffset + nDataSize - 1, SEEK_SET) != 0 )
+            if( VSIFTruncateL(fp, nBaseOffset + nDataSize) != 0 )
                 return NULL;
-            char ch = 0;
-            if( VSIFWriteL(&ch, 1, 1, fp) != 1 )
-            {
-                return NULL;
-            }
 
             for( i = 1; i < nBlocks; ++i)
             {
@@ -3980,7 +3972,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Handle the case of a strip or tile that doesn't exist yet.      */
 /*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
-    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId) )
+    vsi_l_offset nOffset = 0;
+    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId, &nOffset) )
     {
         NullBlock( pImage );
         return CE_None;
@@ -3991,20 +3984,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
           nBlockId == poGDS->nLoadedBlock) )
     {
-        toff_t* panOffsets = NULL;
-        TIFFGetField( poGDS->hTIFF,
-                      TIFFIsTiled( poGDS->hTIFF ) ?
-                      TIFFTAG_TILEOFFSETS : TIFFTAG_STRIPOFFSETS,
-                      &panOffsets );
-        if( panOffsets == NULL )
-            return CE_Failure;
-        if( panOffsets[nBlockId] < VSIFTellL(poGDS->fpL) )
+        if( nOffset < VSIFTellL(poGDS->fpL) )
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Trying to load block %d at offset " CPL_FRMT_GUIB
                       " whereas current pos is " CPL_FRMT_GUIB
                       " (backward read not supported)",
-                      nBlockId, (GUIntBig)panOffsets[nBlockId],
+                      nBlockId, (GUIntBig)nOffset,
                       (GUIntBig)VSIFTellL(poGDS->fpL) );
             return CE_Failure;
         }
@@ -4213,20 +4199,72 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
 /* -------------------------------------------------------------------- */
-    {
-        const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+     // Why 10 ? Somewhat arbitrary
+#define MAX_BANDS_FOR_DIRTY_CHECK 10
+    GDALRasterBlock* apoBlocks[MAX_BANDS_FOR_DIRTY_CHECK];
+    const int nBands = poGDS->nBands;
+    bool bAllBlocksDirty = false;
 
-        const CPLErr eErr = poGDS->LoadBlockBuf( nBlockId );
-        if( eErr != CE_None )
-            return eErr;
+
+/* -------------------------------------------------------------------- */
+/*     If all blocks are cached and dirty then we do not need to reload */
+/*     the tile/strip from disk                                         */
+/* -------------------------------------------------------------------- */
+    if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+    {
+        bAllBlocksDirty = true;
+        for( int iBand = 0; iBand < nBands; ++iBand )
+        {
+            if( iBand+1 != nBand )
+            {
+                apoBlocks[iBand] =
+                    reinterpret_cast<GTiffRasterBand *>(
+                        poGDS->GetRasterBand( iBand+1 ))
+                            ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
+
+                if( apoBlocks[iBand] == NULL )
+                {
+                    bAllBlocksDirty = false;
+                }
+                else if( !apoBlocks[iBand]->GetDirty() )
+                {
+                    apoBlocks[iBand]->DropLock();
+                    apoBlocks[iBand] = NULL;
+                    bAllBlocksDirty = false;
+                }
+            }
+            else
+                apoBlocks[iBand] = NULL;
+        }
+#if 0
+        if( bAllBlocksDirty )
+            CPLDebug("GTIFF", "Saved reloading block %d", nBlockId);
+        else
+            CPLDebug("GTIFF", "Must reload block %d", nBlockId);
+#endif
     }
+
+    CPLErr eErr = poGDS->LoadBlockBuf( nBlockId, !bAllBlocksDirty );
+    if( eErr != CE_None )
+    {
+        if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+        {
+            for( int iBand = 0; iBand < nBands; ++iBand )
+            {
+                if( apoBlocks[iBand] != NULL )
+                    apoBlocks[iBand]->DropLock();
+            }
+        }
+        return eErr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      On write of pixel interleaved data, we might as well flush      */
 /*      out any other bands that are dirty in our cache.  This is       */
 /*      especially helpful when writing compressed blocks.              */
 /* -------------------------------------------------------------------- */
     const int nWordBytes = poGDS->nBitsPerSample / 8;
-    const int nBands = poGDS->nBands;
 
     for( int iBand = 0; iBand < nBands; ++iBand )
     {
@@ -4239,8 +4277,10 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            poBlock =
-                reinterpret_cast<GTiffRasterBand *>(
+            if( nBands <= MAX_BANDS_FOR_DIRTY_CHECK )
+                poBlock = apoBlocks[iBand];
+            else
+                poBlock = reinterpret_cast<GTiffRasterBand *>(
                     poGDS->GetRasterBand( iBand+1 ))
                         ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
 
@@ -4269,9 +4309,20 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    poGDS->bLoadedBlockDirty = true;
+    if( bAllBlocksDirty )
+    {
+        // We can synchronously write the block now
+        eErr =
+            poGDS->WriteEncodedTileOrStrip(nBlockId, poGDS->pabyBlockBuf, true);
+        poGDS->bLoadedBlockDirty = false;
+        return eErr;
+    }
+    else
+    {
+        poGDS->bLoadedBlockDirty = true;
 
-    return CE_None;
+        return CE_None;
+    }
 }
 
 /************************************************************************/
@@ -4508,24 +4559,13 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
             }
 
-            if( !poGDS->IsBlockAvailable(nBlockId) )
+            vsi_l_offset nOffset = 0;
+            if( !poGDS->IsBlockAvailable(nBlockId, &nOffset) )
             {
                 return NULL;
             }
 
-            toff_t *panOffsets = NULL;
-            TIFF* hTIFF = poGDS->hTIFF;
-            if( (( TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
-                || ( !TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) ))
-                && panOffsets != NULL )
-            {
-                return CPLSPrintf( CPL_FRMT_GUIB,
-                                   (GUIntBig)panOffsets[nBlockId] );
-            }
-
-            return NULL;
+            return CPLSPrintf( CPL_FRMT_GUIB, (GUIntBig)nOffset );
         }
 
         if( sscanf( pszName, "BLOCK_SIZE_%d_%d",
@@ -4548,26 +4588,13 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
             }
 
-            if( !poGDS->IsBlockAvailable(nBlockId) )
+            vsi_l_offset nByteCount = 0;
+            if( !poGDS->IsBlockAvailable(nBlockId, NULL, &nByteCount) )
             {
                 return NULL;
             }
 
-            toff_t *panByteCounts = NULL;
-            TIFF* hTIFF = poGDS->hTIFF;
-            if( (( TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS,
-                                 &panByteCounts ) )
-                || ( !TIFFIsTiled( hTIFF )
-                && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS,
-                                 &panByteCounts ) )) &&
-                panByteCounts != NULL )
-            {
-                return CPLSPrintf( CPL_FRMT_GUIB,
-                                   (GUIntBig)panByteCounts[nBlockId] );
-            }
-
-            return NULL;
+            return CPLSPrintf( CPL_FRMT_GUIB, (GUIntBig)nByteCount );
         }
     }
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
@@ -6609,15 +6636,15 @@ int GTiffDataset::Finalize()
     psVirtualMemIOMapping = NULL;
 
 /* -------------------------------------------------------------------- */
-/*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
-/* -------------------------------------------------------------------- */
-    GDALPamDataset::FlushCache();
-
-/* -------------------------------------------------------------------- */
 /*      Fill in missing blocks with empty data.                         */
 /* -------------------------------------------------------------------- */
     if( bFillEmptyTiles )
     {
+/* -------------------------------------------------------------------- */
+/*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
+/* -------------------------------------------------------------------- */
+        FlushCacheInternal( false /* do not call FlushDirectory */ );
+
         FillEmptyTiles();
         bFillEmptyTiles = false;
     }
@@ -6626,26 +6653,15 @@ int GTiffDataset::Finalize()
 /*      Force a complete flush, including either rewriting(moving)      */
 /*      of writing in place the current directory.                      */
 /* -------------------------------------------------------------------- */
-    FlushCache();
+    FlushCacheInternal( true );
 
-    // Finish compression
+    // Destroy compression pool
     if( poCompressThreadPool )
     {
-        poCompressThreadPool->WaitCompletion();
         delete poCompressThreadPool;
 
-        // Flush remaining data
         for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
         {
-            if( asCompressionJobs[i].bReady )
-            {
-                if( asCompressionJobs[i].nCompressedBufferSize )
-                {
-                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
-                                   asCompressionJobs[i].pabyCompressedBuffer,
-                                   asCompressionJobs[i].nCompressedBufferSize );
-                }
-            }
             CPLFree(asCompressionJobs[i].pabyBuffer);
             if( asCompressionJobs[i].pszTmpFilename )
             {
@@ -6992,6 +7008,77 @@ void GTiffDataset::FillEmptyTiles()
 /* -------------------------------------------------------------------- */
 /*      Check all blocks, writing out data for uninitialized blocks.    */
 /* -------------------------------------------------------------------- */
+
+    if( nCompression == COMPRESSION_NONE && (nBitsPerSample % 8) == 0 )
+    {
+        // Try to create non-sparse file w.r.t TIFF spec ... as a sparse
+        // file w.r.t filesystem, ie by seeking to end of file instead of
+        // writing zero blocks.
+
+        // Only use libtiff to write the first sparse block to ensure that it will
+        // serialize offset and count arrays back to disk.
+        int nCountBlocksToZero = 0;
+        for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+        {
+            if( panByteCounts[iBlock] == 0 )
+            {
+                if( nCountBlocksToZero == 0 )
+                {
+                    if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
+                        break;
+                }
+                nCountBlocksToZero ++;
+            }
+        }
+        CPLFree( pabyData );
+
+        --nCountBlocksToZero;
+
+        // And then seek to end of file for other ones.
+        if( nCountBlocksToZero > 0 )
+        {
+            toff_t *panByteOffsets = NULL;
+
+            if( TIFFIsTiled( hTIFF ) )
+                TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panByteOffsets );
+            else
+                TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panByteOffsets );
+
+            if( panByteOffsets == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "FillEmptyTiles() failed because panByteOffsets == NULL" );
+                return;
+            }
+
+            VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
+            VSIFSeekL( fpTIF, 0, SEEK_END );
+            vsi_l_offset nOffset = VSIFTellL(fpTIF);
+
+            vsi_l_offset iBlockToZero = 0;
+            for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+            {
+                if( panByteCounts[iBlock] == 0 )
+                {
+                    panByteOffsets[iBlock] = static_cast<toff_t>(
+                                        nOffset + iBlockToZero * nBlockBytes);
+                    panByteCounts[iBlock] = nBlockBytes;
+                    iBlockToZero ++;
+                }
+            }
+            CPLAssert( iBlockToZero ==
+                              static_cast<vsi_l_offset>(nCountBlocksToZero) );
+
+            if( VSIFTruncateL( fpTIF, nOffset + iBlockToZero * nBlockBytes ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot initialize empty blocks");
+            }
+        }
+
+        return;
+    }
+
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
     {
         if( panByteCounts[iBlock] == 0 )
@@ -8141,7 +8228,9 @@ void GTiffCacheOffsetOrCount(VSILFILE* fp,
 /*      zero then the block has never been committed to disk.           */
 /************************************************************************/
 
-bool GTiffDataset::IsBlockAvailable( int nBlockId )
+bool GTiffDataset::IsBlockAvailable( int nBlockId,
+                                     vsi_l_offset* pnOffset,
+                                     vsi_l_offset* pnSize )
 
 {
 #ifdef INTERNAL_LIBTIFF
@@ -8262,20 +8351,31 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId )
                 return false;
             }
         }
+        if( pnOffset )
+            *pnOffset = hTIFF->tif_dir.td_stripoffset[nBlockId];
+        if( pnSize )
+            *pnSize = hTIFF->tif_dir.td_stripbytecount[nBlockId];
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
 #endif  // DEFER_STRILE_LOAD
 #endif  // INTERNAL_LIBTIFF
     toff_t *panByteCounts = NULL;
+    toff_t *panOffsets = NULL;
 
     if( ( TIFFIsTiled( hTIFF )
-          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
+          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) 
+          && (pnOffset == NULL || TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets )) )
         || ( !TIFFIsTiled( hTIFF )
-          && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) ) )
+          && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
+          && (pnOffset == NULL || TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets )) ) )
     {
-        if( panByteCounts == NULL )
+        if( panByteCounts == NULL || (pnOffset != NULL && panOffsets == NULL) )
             return false;
 
+        if( pnOffset )
+            *pnOffset = panOffsets[nBlockId];
+        if( pnSize )
+            *pnSize = panByteCounts[nBlockId];
         return panByteCounts[nBlockId] != 0;
     }
 
@@ -8292,6 +8392,11 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId )
 void GTiffDataset::FlushCache()
 
 {
+    FlushCacheInternal( true );
+}
+
+void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
+{
     if( bIsFinalized || ppoActiveDSRef == NULL )
         return;
 
@@ -8305,9 +8410,36 @@ void GTiffDataset::FlushCache()
     nLoadedBlock = -1;
     bLoadedBlockDirty = false;
 
-    if( !SetDirectory() )
-        return;
-    FlushDirectory();
+    // Finish compression
+    if( poCompressThreadPool )
+    {
+        poCompressThreadPool->WaitCompletion();
+
+        // Flush remaining data
+        for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
+        {
+            if( asCompressionJobs[i].bReady )
+            {
+                if( asCompressionJobs[i].nCompressedBufferSize )
+                {
+                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
+                                   asCompressionJobs[i].pabyCompressedBuffer,
+                                   asCompressionJobs[i].nCompressedBufferSize );
+                }
+                asCompressionJobs[i].pabyCompressedBuffer = NULL;
+                asCompressionJobs[i].nBufferSize = 0;
+                asCompressionJobs[i].bReady = false;
+                asCompressionJobs[i].nStripOrTile = -1;
+            }
+        }
+    }
+
+    if( bFlushDirectory )
+    {
+        if( !SetDirectory() )
+            return;
+        FlushDirectory();
+    }
 }
 
 /************************************************************************/
@@ -13418,7 +13550,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                      "whereas " CPL_FRMT_GIB " are at least necessary.",
+                      "whereas " CPL_FRMT_GIB " are at least necessary. "
+                      "You can disable this check by defining the CHECK_DISK_FREE_SPACE "
+                      "configuration option to FALSE.",
                       nFreeDiskSpace,
                       static_cast<GIntBig>(dfUncompressedImageSize) );
             return NULL;

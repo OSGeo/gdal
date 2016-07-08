@@ -1,6 +1,4 @@
-
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_string.cpp
  * Project:  CPL - Common Portability Library

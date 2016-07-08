@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrxplanelayer.cpp
+ * $Id: ogrxplanelayer.cpp$
  *
  * Project:  XPlane Translator
  * Purpose:  Implements OGRXPlaneLayer class.
