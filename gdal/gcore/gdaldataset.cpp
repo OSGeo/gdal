@@ -3346,7 +3346,7 @@ char ** GDALDataset::GetMetadataDomainList()
   char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
 
   // Ensure that we do not duplicate DERIVED domain
-  if(CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
+  if(GetRasterCount()>0 && CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
   {
       currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
   }
