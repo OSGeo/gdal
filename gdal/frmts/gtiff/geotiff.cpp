@@ -330,13 +330,20 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                                    int bPreserveDataBuffer);
     bool         WriteEncodedStrip( uint32 strip, GByte* pabyData,
                                     int bPreserveDataBuffer);
+    template<class T>
+    bool         HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
+                                int nLineStride, int nComponents );
+    bool         HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
+                                int nLineStride, int nComponents );
+    inline bool  IsFirstPixelEqualToNoData( const void* pBuffer );
 
     GTiffDataset* poMaskDS;
     GTiffDataset* poBaseDS;
 
     CPLString    osFilename;
 
-    bool         bFillEmptyTiles;
+    bool         bWriteEmptyTiles;
+    bool         bFillEmptyTilesAtClosing;
     void         FillEmptyTiles(void);
 
     void         FlushDirectory();
@@ -6525,7 +6532,8 @@ GTiffDataset::GTiffDataset() :
     nTempWriteBufferSize(0),
     poMaskDS(NULL),
     poBaseDS(NULL),
-    bFillEmptyTiles(false),
+    bWriteEmptyTiles(true),
+    bFillEmptyTilesAtClosing(false),
     nLastLineRead(-1),
     nLastBandRead(-1),
     bTreatAsSplit(false),
@@ -6638,7 +6646,7 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
 /*      Fill in missing blocks with empty data.                         */
 /* -------------------------------------------------------------------- */
-    if( bFillEmptyTiles )
+    if( bFillEmptyTilesAtClosing )
     {
 /* -------------------------------------------------------------------- */
 /*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
@@ -6646,7 +6654,7 @@ int GTiffDataset::Finalize()
         FlushCacheInternal( false /* do not call FlushDirectory */ );
 
         FillEmptyTiles();
-        bFillEmptyTiles = false;
+        bFillEmptyTilesAtClosing = false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -7024,7 +7032,11 @@ void GTiffDataset::FillEmptyTiles()
             {
                 if( nCountBlocksToZero == 0 )
                 {
-                    if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
+                    const bool bWriteEmptyTilesBak = bWriteEmptyTiles;
+                    bWriteEmptyTiles = true;
+                    const bool bOK = ( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) == CE_None );
+                    bWriteEmptyTiles = bWriteEmptyTilesBak;
+                    if( !bOK )
                         break;
                 }
                 nCountBlocksToZero ++;
@@ -7092,6 +7104,159 @@ void GTiffDataset::FillEmptyTiles()
 }
 
 /************************************************************************/
+/*                         HasOnlyNoData()                              */
+/************************************************************************/
+
+template<class T> 
+static inline bool IsEqualToNoData( T value, T noDataValue )
+{
+    return value == noDataValue;
+}
+
+template<> bool IsEqualToNoData<float>( float value, float noDataValue )
+{
+    return CPLIsNan(noDataValue) ? CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
+}
+
+template<> bool IsEqualToNoData<double>( double value, double noDataValue )
+{
+    return CPLIsNan(noDataValue) ? CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
+}
+
+
+template<class T>
+bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
+                                  int nLineStride, int nComponents )
+{
+    const T noDataValue = static_cast<T>((bNoDataSet) ? dfNoDataValue : 0.0);
+    // Fast test: check the 4 corners and the middle pixel
+    for(int iBand = 0; iBand < nComponents; iBand++ )
+    {
+        if( !(IsEqualToNoData(pBuffer[(nWidth-1) * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[(nHeight-1) * nLineStride * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[((nHeight-1) * nLineStride + nWidth - 1) * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[((nHeight-1)/2 * nLineStride + (nWidth - 1)/2) * nComponents + iBand], noDataValue)) )
+        {
+            return false;
+        }
+    }
+
+    // Test all pixels now
+    for(int iY = 0; iY < nHeight; iY++ )
+    {
+        for(int iX = 0; iX < nWidth * nComponents; iX++ )
+        {
+            if( !IsEqualToNoData(pBuffer[iY * nLineStride * nComponents + iX], noDataValue) )
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
+                                  int nLineStride, int nComponents )
+{
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    if( nBitsPerSample == 8 )
+    {
+        if( nSampleFormat == SAMPLEFORMAT_INT )
+        {
+            return HasOnlyNoDataT(reinterpret_cast<const signed char*>(pBuffer),
+                                  nWidth, nHeight, nLineStride, nComponents);
+        }
+        return HasOnlyNoDataT(reinterpret_cast<const GByte*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 16 && eDT == GDT_UInt16 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const GUInt16*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 16 && eDT== GDT_Int16 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const GInt16*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_UInt32 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const GUInt32*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_Int32 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const GInt32*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_Float32 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const float*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 64 && eDT == GDT_Float64 )
+    {
+        return HasOnlyNoDataT(reinterpret_cast<const double*>(pBuffer),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                     IsFirstPixelEqualToNoData()                      */
+/************************************************************************/
+
+inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
+{
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    const double dfEffectiveNoData = (bNoDataSet) ? dfNoDataValue : 0.0;
+    if( nBitsPerSample == 8 )
+    {
+        if( nSampleFormat == SAMPLEFORMAT_INT )
+        {
+            return *(reinterpret_cast<const signed char*>(pBuffer)) ==
+                        static_cast<signed char>(dfEffectiveNoData);
+        }
+        return *(reinterpret_cast<const GByte*>(pBuffer)) ==
+                        static_cast<GByte>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 16 && eDT == GDT_UInt16 )
+    {
+        return *(reinterpret_cast<const GUInt16*>(pBuffer)) ==
+                        static_cast<GUInt16>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 16 && eDT == GDT_Int16 )
+    {
+        return *(reinterpret_cast<const GInt16*>(pBuffer)) ==
+                        static_cast<GInt16>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_UInt32 )
+    {
+        return *(reinterpret_cast<const GUInt32*>(pBuffer)) ==
+                        static_cast<GUInt32>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_Int32 )
+    {
+        return *(reinterpret_cast<const GInt32*>(pBuffer)) ==
+                        static_cast<GInt32>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 32 && eDT == GDT_Float32 )
+    {
+        if( CPLIsNan(dfNoDataValue) )
+            return CPL_TO_BOOL(CPLIsNan(*(reinterpret_cast<const float*>(pBuffer))));
+        return *(reinterpret_cast<const float*>(pBuffer)) ==
+                        static_cast<float>(dfEffectiveNoData);
+    }
+    if( nBitsPerSample == 64 && eDT == GDT_Float64 )
+    {
+        if( CPLIsNan(dfEffectiveNoData) )
+            return CPL_TO_BOOL(CPLIsNan(*(reinterpret_cast<const double*>(pBuffer))));
+        return *(reinterpret_cast<const double*>(pBuffer)) == dfEffectiveNoData;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                        WriteEncodedTile()                            */
 /************************************************************************/
 
@@ -7104,6 +7269,35 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
     int iColumn = 0;
     int nBlocksPerRow = 1;
     int nBlocksPerColumn = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Don't write empty blocks in some cases.                         */
+/* -------------------------------------------------------------------- */
+    if( !bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData) )
+    {
+        // WaitCompletionForBlock(tile); // not needed since threaded I/O is for compressed only
+        if( !IsBlockAvailable(tile) )
+        {
+            const int nComponents =
+                nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
+            nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+            nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+
+            iColumn = (tile % nBlocksPerBand) % nBlocksPerRow;
+            iRow = (tile % nBlocksPerBand) / nBlocksPerRow;
+
+            int nActualBlockWidth = ( iColumn == nBlocksPerColumn - 1 ) ?
+                                nRasterXSize - iColumn * nBlockXSize : nBlockXSize;
+            int nActualBlockHeight = ( iRow == nBlocksPerRow - 1 ) ?
+                                nRasterYSize - iRow * nBlockYSize : nBlockYSize;
+
+            if( HasOnlyNoData(pabyData,
+                  nActualBlockWidth, nActualBlockHeight, nBlockXSize, nComponents ) )
+            {
+                return true;
+            }
+        }
+    }
 
     // Do we need to spread edge values right or down for a partial
     // JPEG encoded tile?  We do this to avoid edge artifacts.
@@ -7255,6 +7449,25 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
         cc = (cc / nRowsPerStrip) * nStripHeight;
         CPLDebug( "GTiff", "Adjusted bytes to write from %d to %d.",
                   static_cast<int>(TIFFStripSize(hTIFF)), cc );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Don't write empty blocks in some cases.                         */
+/* -------------------------------------------------------------------- */
+    if( !bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData) )
+    {
+        // WaitCompletionForBlock(strip); // not needed since threaded I/O is for compressed only
+        if( !IsBlockAvailable(strip) )
+        {
+            const int nComponents =
+                nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
+
+            if( HasOnlyNoData(pabyData,
+                  nBlockXSize, nStripHeight, nBlockXSize, nComponents ) )
+            {
+                return true;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -10904,6 +11117,11 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    // Do we want blocks that are set to zero and that haven't yet being
+    // allocated as tile/strip to remain implicit ?
+    if( CSLFetchBoolean( poOpenInfo->papszOpenOptions, "SPARSE_OK", FALSE ) )
+        poDS->bWriteEmptyTiles = false;
+
     if( poOpenInfo->eAccess == GA_Update )
     {
         poDS->InitCreationOrOpenOptions(poOpenInfo->papszOpenOptions);
@@ -14434,7 +14652,20 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      avoid sparse files?                                             */
 /* -------------------------------------------------------------------- */
     if( !CSLFetchBoolean( papszParmList, "SPARSE_OK", FALSE ) )
-        poDS->bFillEmptyTiles = true;
+        poDS->bFillEmptyTilesAtClosing = true;
+
+    poDS->bWriteEmptyTiles = bStreaming ||
+        (poDS->nCompression != COMPRESSION_NONE &&
+         poDS->bFillEmptyTilesAtClosing);
+    // Only required for people writing non-compressed stripped files in the right
+    // order and wanting all tstrips to be written in the same order
+    // so that the end result can be memory mapped without knowledge of each
+    // strip offset
+    if( CPLTestBool( CSLFetchNameValueDef( papszParmList,
+                              "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+    {
+        poDS->bWriteEmptyTiles = true;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Preserve creation options for consulting later (for instance    */
@@ -15680,6 +15911,26 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             papszCopyWholeRasterOptions[0] =
                 const_cast<char *>("INTERLEAVE=BAND");
         }
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we want to ensure all blocks get written out on close to     */
+    /*      avoid sparse files?                                             */
+    /* -------------------------------------------------------------------- */
+        if( !CSLFetchBoolean( papszOptions, "SPARSE_OK", FALSE ) )
+            poDS->bFillEmptyTilesAtClosing = true;
+
+        poDS->bWriteEmptyTiles = bStreaming ||
+            (poDS->nCompression != COMPRESSION_NONE && poDS->bFillEmptyTilesAtClosing);
+        // Only required for people writing non-compressed stripped files in the right
+        // order and wanting all tstrips to be written in the same order
+        // so that the end result can be memory mapped without knowledge of each
+        // strip offset
+        if( CPLTestBool( CSLFetchNameValueDef( papszOptions,
+                                  "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+        {
+            poDS->bWriteEmptyTiles = true;
+        }
+
         eErr = GDALDatasetCopyWholeRaster(
             /* (GDALDatasetH) */ poSrcDS,
             /* (GDALDatasetH) */ poDS,
@@ -16845,7 +17096,7 @@ void GDALRegister_GTiff()
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
 "   </Option>"
-"   <Option name='SPARSE_OK' type='boolean' description='Can newly created files have missing blocks?' default='FALSE'/>"
+"   <Option name='SPARSE_OK' type='boolean' description='Should empty blocks be omitted on disk?' default='FALSE'/>"
 "   <Option name='ALPHA' type='string-select' description='Mark first extrasample as being alpha'>"
 "       <Value>NON-PREMULTIPLIED</Value>"
 "       <Value>PREMULTIPLIED</Value>"
@@ -16916,6 +17167,7 @@ void GDALRegister_GTiff()
 "       <Value>ESRI_PE</Value>"
 "   </Option>"
 "   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/TABFILE/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,INTERNAL,TABFILE,WORLDFILE'/>"
+"   <Option name='SPARSE_OK' type='boolean' description='Should empty blocks be omitted on disk?' default='FALSE'/>"
 "</OpenOptionList>" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
