@@ -80,16 +80,16 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
   CPLString pixelFunctionName = "";
   bool datasetFound = false;
 
-  const unsigned int nbSupportedDerivedDS = GDALGetNumberOfDerivedDatasetDecriptions();
+  unsigned int nbSupportedDerivedDS(0);
+  
+  const DerivedDatasetDescription * poDDSDesc = GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
   
   for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
-    {
-      const DerivedDatasetDescription * poCurrentDerivedDatasetDescription = GDALGetDerivedDatasetDescription(&derivedId);
-      
-    if(poCurrentDerivedDatasetDescription != NULL && odDerivedName == poCurrentDerivedDatasetDescription->pszDatasetName)
+    {     
+    if(odDerivedName == poDDSDesc[derivedId].pszDatasetName)
       {
       datasetFound = true;
-      pixelFunctionName = poCurrentDerivedDatasetDescription->pszPixelFunction;
+      pixelFunctionName = poDDSDesc[derivedId].pszPixelFunction;
       }
     }
 

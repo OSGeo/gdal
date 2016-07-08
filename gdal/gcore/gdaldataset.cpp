@@ -3316,17 +3316,17 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
               }
           }
 
-          const unsigned int nbSupportedDerivedDS = GDALGetNumberOfDerivedDatasetDecriptions();
+          unsigned int nbSupportedDerivedDS;
+          const DerivedDatasetDescription * poDDSDesc = GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
       
           for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
           {
-              const DerivedDatasetDescription * poCurrentDerivedDatasetDescription = GDALGetDerivedDatasetDescription(&derivedId);
-              
-              if(hasAComplexBand || CPLString(poCurrentDerivedDatasetDescription->pszTargetPixelType) != "complex")
+                            
+              if(hasAComplexBand || CPLString(poDDSDesc[derivedId].pszTargetPixelType) != "complex")
               {
-                  oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",poCurrentDerivedDatasetDescription->pszDatasetName,GetDescription()));
+                  oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_NAME",derivedId),CPLSPrintf("DERIVED_SUBDATASET:%s:%s",poDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
-                  CPLString osDesc(CPLSPrintf("%s from %s",poCurrentDerivedDatasetDescription->pszDatasetDescritpion,GetDescription()));
+                  CPLString osDesc(CPLSPrintf("%s from %s",poDDSDesc[derivedId].pszDatasetDescritpion,GetDescription()));
                   oDerivedMetadataList.SetNameValue(CPLSPrintf("DERIVED_SUBDATASET_%i_DESC",derivedId),osDesc.c_str());
               }
           }
