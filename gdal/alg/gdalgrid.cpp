@@ -1520,7 +1520,7 @@ struct _GDALGridJob
 static int GDALGridProgressMultiThread(GDALGridJob* psJob)
 {
     CPLAcquireMutex(psJob->hCondMutex, 1.0);
-    *psJob->pnCounter++;
+    ++(*psJob->pnCounter);
     CPLCondSignal(psJob->hCond);
     const int bStop = *psJob->pbStop;
     CPLReleaseMutex(psJob->hCondMutex);
