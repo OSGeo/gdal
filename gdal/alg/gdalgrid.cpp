@@ -1520,9 +1520,9 @@ struct _GDALGridJob
 static int GDALGridProgressMultiThread(GDALGridJob* psJob)
 {
     CPLAcquireMutex(psJob->hCondMutex, 1.0);
-    (*(psJob->pnCounter)) ++;
+    *psJob->pnCounter++;
     CPLCondSignal(psJob->hCond);
-    int bStop = *(psJob->pbStop);
+    const int bStop = *psJob->pbStop;
     CPLReleaseMutex(psJob->hCondMutex);
 
     return bStop;
@@ -1535,12 +1535,12 @@ static int GDALGridProgressMultiThread(GDALGridJob* psJob)
 /* Return TRUE if the computation must be interrupted */
 static int GDALGridProgressMonoThread(GDALGridJob* psJob)
 {
-    int nCounter = ++(*(psJob->pnCounter));
-    if( !psJob->pfnRealProgress( (nCounter / (double) psJob->nYSize),
+    const int nCounter = ++(*psJob->pnCounter);
+    if( !psJob->pfnRealProgress( nCounter / static_cast<double>(psJob->nYSize),
                                  "", psJob->pRealProgressArg ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        *(psJob->pbStop) = TRUE;
+        *psJob->pbStop = TRUE;
         return TRUE;
     }
     return FALSE;
@@ -1552,67 +1552,68 @@ static int GDALGridProgressMonoThread(GDALGridJob* psJob)
 
 static void GDALGridJobProcess(void* user_data)
 {
-    GDALGridJob* psJob = (GDALGridJob*)user_data;
-    GUInt32 nXPoint, nYPoint;
-
-    const GUInt32 nYStart = psJob->nYStart;
-    const GUInt32 nYStep = psJob->nYStep;
-    GByte *pabyData = psJob->pabyData;
-
-    const GUInt32 nXSize = psJob->nXSize;
-    const GUInt32 nYSize = psJob->nYSize;
-    const double dfXMin = psJob->dfXMin;
-    const double dfYMin = psJob->dfYMin;
-    const double dfDeltaX = psJob->dfDeltaX;
-    const double dfDeltaY = psJob->dfDeltaY;
-    GUInt32 nPoints = psJob->nPoints;
-    const double* padfX = psJob->padfX;
-    const double* padfY = psJob->padfY;
-    const double* padfZ = psJob->padfZ;
-    const void *poOptions = psJob->poOptions;
-    GDALGridFunction  pfnGDALGridMethod = psJob->pfnGDALGridMethod;
-    // Have a local copy of sExtraParameters since we want to modify
-    // nInitialFacetIdx
-    GDALGridExtraParameters sExtraParameters = *(psJob->psExtraParameters);
-    GDALDataType eType = psJob->eType;
+    GDALGridJob* const psJob = static_cast<GDALGridJob *>(user_data);
     int (*pfnProgress)(GDALGridJob* psJob) = psJob->pfnProgress;
-
-    int         nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
-    int         nLineSpace = nXSize * nDataTypeSize;
+    const GUInt32 nXSize = psJob->nXSize;
 
     /* -------------------------------------------------------------------- */
     /*  Allocate a buffer of scanline size, fill it with gridded values     */
     /*  and use GDALCopyWords() to copy values into output data array with  */
     /*  appropriate data type conversion.                                   */
     /* -------------------------------------------------------------------- */
-    double      *padfValues = (double *)VSI_MALLOC2_VERBOSE( sizeof(double), nXSize );
+    double *padfValues =
+        static_cast<double *>(VSI_MALLOC2_VERBOSE( sizeof(double), nXSize ));
     if( padfValues == NULL )
     {
         *(psJob->pbStop) = TRUE;
         if( pfnProgress != NULL )
-            pfnProgress(psJob); /* to notify the main thread */
+            pfnProgress(psJob);  // To notify the main thread.
         return;
     }
 
-    for ( nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep )
-    {
-        const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+    const GUInt32 nYStart = psJob->nYStart;
+    const GUInt32 nYStep = psJob->nYStep;
+    GByte *pabyData = psJob->pabyData;
 
-        for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
+    const GUInt32 nYSize = psJob->nYSize;
+    const double dfXMin = psJob->dfXMin;
+    const double dfYMin = psJob->dfYMin;
+    const double dfDeltaX = psJob->dfDeltaX;
+    const double dfDeltaY = psJob->dfDeltaY;
+    const GUInt32 nPoints = psJob->nPoints;
+    const double* padfX = psJob->padfX;
+    const double* padfY = psJob->padfY;
+    const double* padfZ = psJob->padfZ;
+    const void *poOptions = psJob->poOptions;
+    GDALGridFunction pfnGDALGridMethod = psJob->pfnGDALGridMethod;
+    // Have a local copy of sExtraParameters since we want to modify
+    // nInitialFacetIdx.
+    GDALGridExtraParameters sExtraParameters = *psJob->psExtraParameters;
+    const GDALDataType eType = psJob->eType;
+
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
+    const int nLineSpace = nXSize * nDataTypeSize;
+
+    for ( GUInt32 nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep )
+    {
+        const double dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+
+        for ( GUInt32 nXPoint = 0; nXPoint < nXSize; nXPoint++ )
         {
-            const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
+            const double dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
 
             if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
                                        dfXPoint, dfYPoint,
-                                       padfValues + nXPoint, &sExtraParameters ) != CE_None )
+                                       padfValues + nXPoint,
+                                       &sExtraParameters ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
-                          (long unsigned int)nXPoint,
-                          (long unsigned int)nYPoint );
-                *(psJob->pbStop) = TRUE;
+                          static_cast<long unsigned int>(nXPoint),
+                          static_cast<long unsigned int>(nYPoint) );
+                *psJob->pbStop = TRUE;
                 if( pfnProgress != NULL )
-                    pfnProgress(psJob); /* to notify the main thread */
+                    pfnProgress(psJob);  // To notify the main thread.
                 break;
             }
         }
@@ -1621,7 +1622,7 @@ static void GDALGridJobProcess(void* user_data)
                        pabyData + nYPoint * nLineSpace, eType, nDataTypeSize,
                        nXSize );
 
-        if( *(psJob->pbStop) || (pfnProgress != NULL && pfnProgress(psJob)) )
+        if( *psJob->pbStop || (pfnProgress != NULL && pfnProgress(psJob)) )
             break;
     }
 
@@ -1646,7 +1647,7 @@ struct GDALGridContext
     double*             padfX;
     double*             padfY;
     double*             padfZ;
-    int                 bFreePadfXYZArrays;
+    bool                bFreePadfXYZArrays;
 
     void               *pabyX;
     void               *pabyY;
@@ -1692,7 +1693,8 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  *        Setting to TRUE prevent them from being duplicated in the context.
  *        If unsure, set to FALSE.
  *
- * @return the context (to be freed with GDALGridContextFree()) or NULL in case or error
+ * @return the context (to be freed with GDALGridContextFree()) or NULL in case
+ *         or error.
  *
  * @since GDAL 2.1
  */
@@ -1700,43 +1702,46 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
 GDALGridContext*
 GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                        GUInt32 nPoints,
-                       const double *padfX, const double *padfY, const double *padfZ,
+                       const double *padfX, const double *padfY,
+                       const double *padfZ,
                        int bCallerWillKeepPointArraysAlive )
 {
-    GDALGridFunction    pfnGDALGridMethod = NULL;
     CPLAssert( poOptions );
     CPLAssert( padfX );
     CPLAssert( padfY );
     CPLAssert( padfZ );
-    int bCreateQuadTree = FALSE;
+    bool bCreateQuadTree = false;
 
-    /* Potentially unaligned pointers */
+    // Potentially unaligned pointers.
     void* pabyX = NULL;
     void* pabyY = NULL;
     void* pabyZ = NULL;
 
-    /* Starting address aligned on 16-byte boundary */
+    // Starting address aligned on 16-byte boundary.
     float* pafXAligned = NULL;
     float* pafYAligned = NULL;
     float* pafZAligned = NULL;
 
     void *poOptionsNew = NULL;
 
+    GDALGridFunction pfnGDALGridMethod = NULL;
+
     switch ( eAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
-            poOptionsNew = CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerOptions));
-            memcpy(poOptionsNew, poOptions, sizeof(GDALGridInverseDistanceToAPowerOptions));
+        {
+            poOptionsNew =
+                CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerOptions));
+            memcpy(poOptionsNew, poOptions,
+                   sizeof(GDALGridInverseDistanceToAPowerOptions));
 
-            if ( ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
-                 dfRadius1 == 0.0 &&
-                 ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
-                 dfRadius2 == 0.0 )
+            const GDALGridInverseDistanceToAPowerOptions * const poPower =
+                static_cast<const GDALGridInverseDistanceToAPowerOptions *>(
+                    poOptions);
+            if ( poPower->dfRadius1 == 0.0 && poPower->dfRadius2 == 0.0 )
             {
-                const double    dfPower =
-                    ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
-                const double    dfSmoothing =
-                    ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
+                const double dfPower = poPower->dfPower;
+                const double dfSmoothing = poPower->dfSmoothing;
 
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNoSearch;
                 if( dfPower == 2.0 && dfSmoothing == 0.0 )
@@ -1745,25 +1750,31 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
 #define ALIGN32(x)  (((char*)(x)) + ((32 - (((size_t)(x)) % 32)) % 32))
 
-                    if( CPLTestBool(CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
+                    if( CPLTestBool(
+                            CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
                         CPLHaveRuntimeAVX() )
                     {
-                        pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
-                        pabyY = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
-                        pabyZ = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
-                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
+                        pabyX = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
+                        pabyY = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
+                        pabyZ = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
+                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL )
                         {
                             CPLDebug("GDAL_GRID", "Using AVX optimized version");
-                            pafXAligned = (float*) ALIGN32(pabyX);
-                            pafYAligned = (float*) ALIGN32(pabyY);
-                            pafZAligned = (float*) ALIGN32(pabyZ);
+                            pafXAligned =
+                                reinterpret_cast<float *>(ALIGN32(pabyX));
+                            pafYAligned =
+                                reinterpret_cast<float *>(ALIGN32(pabyY));
+                            pafZAligned =
+                                reinterpret_cast<float *>(ALIGN32(pabyZ));
                             pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
-                            GUInt32 i;
-                            for(i=0;i<nPoints;i++)
+                            for( GUInt32 i = 0; i < nPoints; i++ )
                             {
-                                pafXAligned[i] = (float) padfX[i];
-                                pafYAligned[i] = (float) padfY[i];
-                                pafZAligned[i] = (float) padfZ[i];
+                                pafXAligned[i] = static_cast<float>(padfX[i]);
+                                pafYAligned[i] = static_cast<float>(padfY[i]);
+                                pafZAligned[i] = static_cast<float>(padfZ[i]);
                             }
                         }
                         else
@@ -1771,7 +1782,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             VSIFree(pabyX);
                             VSIFree(pabyY);
                             VSIFree(pabyZ);
-                            pabyX = pabyY = pabyZ = NULL;
+                            pabyX = NULL;
+                            pabyY = NULL;
+                            pabyZ = NULL;
                         }
                     }
 #endif
@@ -1784,9 +1797,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         CPLTestBool(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
-                        pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
-                        pabyY = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
-                        pabyZ = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
+                        pabyX = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
+                        pabyY = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
+                        pabyZ = static_cast<float *>(
+                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
                         if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
                         {
                             CPLDebug("GDAL_GRID", "Using SSE optimized version");
@@ -1794,12 +1810,11 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             pafYAligned = (float*) ALIGN16(pabyY);
                             pafZAligned = (float*) ALIGN16(pabyZ);
                             pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
-                            GUInt32 i;
-                            for(i=0;i<nPoints;i++)
+                            for( GUInt32 i = 0; i < nPoints; i++ )
                             {
-                                pafXAligned[i] = (float) padfX[i];
-                                pafYAligned[i] = (float) padfY[i];
-                                pafZAligned[i] = (float) padfZ[i];
+                                pafXAligned[i] = static_cast<float>(padfX[i]);
+                                pafYAligned[i] = static_cast<float>(padfY[i]);
+                                pafZAligned[i] = static_cast<float>(padfZ[i]);
                             }
                         }
                         else
@@ -1807,90 +1822,108 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             VSIFree(pabyX);
                             VSIFree(pabyY);
                             VSIFree(pabyZ);
-                            pabyX = pabyY = pabyZ = NULL;
+                            pabyX = NULL;
+                            pabyY = NULL;
+                            pabyZ = NULL;
                         }
                     }
 #endif // HAVE_SSE_AT_COMPILE_TIME
                 }
             }
             else
+            {
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
+            }
             break;
-
+        }
         case GGA_InverseDistanceToAPowerNearestNeighbor:
-            poOptionsNew = CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
-            memcpy(poOptionsNew, poOptions, sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
+        {
+            poOptionsNew = CPLMalloc(
+                sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
+            memcpy(poOptionsNew, poOptions,
+                   sizeof(
+                       GDALGridInverseDistanceToAPowerNearestNeighborOptions));
 
             pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNearestNeighbor;
             bCreateQuadTree = TRUE;
             break;
-
+        }
         case GGA_MovingAverage:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridMovingAverageOptions));
 
             pfnGDALGridMethod = GDALGridMovingAverage;
             break;
-
+        }
         case GGA_NearestNeighbor:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridNearestNeighborOptions));
-            memcpy(poOptionsNew, poOptions, sizeof(GDALGridNearestNeighborOptions));
+            memcpy(poOptionsNew, poOptions,
+                   sizeof(GDALGridNearestNeighborOptions));
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
             bCreateQuadTree = (nPoints > 100 &&
                 (((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1 ==
                 ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2));
             break;
-
+        }
         case GGA_MetricMinimum:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
             break;
-
+        }
         case GGA_MetricMaximum:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
             break;
-
+        }
         case GGA_MetricRange:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricRange;
             break;
-
+        }
         case GGA_MetricCount:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricCount;
             break;
-
+        }
         case GGA_MetricAverageDistance:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
             break;
-
+        }
         case GGA_MetricAverageDistancePts:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
             break;
-
+        }
         case GGA_Linear:
+        {
             poOptionsNew = CPLMalloc(sizeof(GDALGridLinearOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridLinearOptions));
 
             pfnGDALGridMethod = GDALGridLinear;
             break;
-
+        }
         default:
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "GDAL does not support gridding method %d", eAlgorithm );
@@ -1901,9 +1934,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         bCallerWillKeepPointArraysAlive = TRUE;
     if( !bCallerWillKeepPointArraysAlive )
     {
-        double* padfXNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
-        double* padfYNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
-        double* padfZNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
+        double* padfXNew =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
+        double* padfYNew =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
+        double* padfZNew =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
         if( padfXNew == NULL || padfYNew == NULL || padfZNew == NULL )
         {
             VSIFree(padfXNew);
@@ -1919,7 +1955,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         padfY = padfYNew;
         padfZ = padfZNew;
     }
-    GDALGridContext* psContext = (GDALGridContext*)CPLCalloc(1, sizeof(GDALGridContext));
+    GDALGridContext* psContext =
+        static_cast<GDALGridContext *>(CPLCalloc(1, sizeof(GDALGridContext)));
     psContext->eAlgorithm = eAlgorithm;
     psContext->poOptions = poOptionsNew;
     psContext->pfnGDALGridMethod = pfnGDALGridMethod;
@@ -1934,9 +1971,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->sExtraParameters.pafZ = pafZAligned;
     psContext->sExtraParameters.psTriangulation = NULL;
     psContext->sExtraParameters.nInitialFacetIdx = 0;
-    psContext->padfX = pafXAligned ? NULL : (double*)padfX;
-    psContext->padfY = pafXAligned ? NULL : (double*)padfY;
-    psContext->padfZ = pafXAligned ? NULL : (double*)padfZ;
+    psContext->padfX = pafXAligned ? NULL : const_cast<double *>(padfX);
+    psContext->padfY = pafXAligned ? NULL : const_cast<double *>(padfY);
+    psContext->padfZ = pafXAligned ? NULL : const_cast<double *>(padfZ);
     psContext->bFreePadfXYZArrays = !bCallerWillKeepPointArraysAlive;
     psContext->pabyX = pabyX;
     psContext->pabyY = pabyY;
@@ -2014,23 +2051,21 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
 void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
 {
-    GUInt32 nPoints = psContext->nPoints;
-    psContext->pasGridPoints = (GDALGridPoint*)
-            VSI_MALLOC2_VERBOSE(nPoints, sizeof(GDALGridPoint));
+    const GUInt32 nPoints = psContext->nPoints;
+    psContext->pasGridPoints = static_cast<GDALGridPoint *>(
+            VSI_MALLOC2_VERBOSE(nPoints, sizeof(GDALGridPoint)) );
     if( psContext->pasGridPoints != NULL )
     {
-        const double* padfX = psContext->padfX;
-        const double* padfY = psContext->padfY;
+        const double * const padfX = psContext->padfX;
+        const double * const padfY = psContext->padfY;
 
+        // Determine point extents.
         CPLRectObj sRect;
-        GUInt32 i;
-
-        /* Determine point extents */
         sRect.minx = padfX[0];
         sRect.miny = padfY[0];
         sRect.maxx = padfX[0];
         sRect.maxy = padfY[0];
-        for(i = 1; i < nPoints; i++)
+        for( GUInt32 i = 1; i < nPoints; i++ )
         {
             if( padfX[i] < sRect.minx ) sRect.minx = padfX[i];
             if( padfY[i] < sRect.miny ) sRect.miny = padfY[i];
@@ -2041,13 +2076,13 @@ void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
         /* Initial value for search radius is the typical dimension of a */
         /* "pixel" of the point array (assuming rather uniform distribution) */
         psContext->sExtraParameters.dfInitialSearchRadius =
-                                sqrt((sRect.maxx - sRect.minx) *
-                                        (sRect.maxy - sRect.miny) / nPoints);
+            sqrt((sRect.maxx - sRect.minx) *
+                 (sRect.maxy - sRect.miny) / nPoints);
 
         psContext->sExtraParameters.hQuadTree =
-                    CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
+            CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
 
-        for(i = 0; i < nPoints; i++)
+        for( GUInt32 i = 0; i < nPoints; i++ )
         {
             psContext->pasGridPoints[i].psXYArrays = &(psContext->sXYArrays);
             psContext->pasGridPoints[i].i = i;
@@ -2122,10 +2157,11 @@ void GDALGridContextFree(GDALGridContext* psContext)
  * @since GDAL 2.1
  */
 
-CPLErr GDALGridContextProcess(GDALGridContext* psContext,
-                              double dfXMin, double dfXMax, double dfYMin, double dfYMax,
-                              GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
-                              GDALProgressFunc pfnProgress, void *pProgressArg )
+CPLErr GDALGridContextProcess(
+    GDALGridContext* psContext,
+    double dfXMin, double dfXMax, double dfYMin, double dfYMax,
+    GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
+    GDALProgressFunc pfnProgress, void *pProgressArg )
 {
     CPLAssert( psContext );
     CPLAssert( pData );
@@ -2137,58 +2173,66 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         return CE_Failure;
     }
 
-    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    const double dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
+    const double dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
     // For linear, check if we will need to fallback to nearest neighbour
-    // by sampling along the edges (if all points on edges are within triangles,
-    // then interior points will also be!)
+    // by sampling along the edges.  If all points on edges are within
+    // triangles, then interior points will also be.
     if( psContext->eAlgorithm == GGA_Linear &&
         psContext->sExtraParameters.hQuadTree == NULL )
     {
-        int bNeedNearest = FALSE;
-        int nStartLeft = 0, nStartRight = 0;
-        const double    dfXPointMin = dfXMin + ( 0 + 0.5 ) * dfDeltaX;
-        const double    dfXPointMax = dfXMin + ( nXSize - 1 + 0.5 ) * dfDeltaX;
-        for ( GUInt32 nYPoint = 0; !bNeedNearest && nYPoint < nYSize; nYPoint ++ )
+        bool bNeedNearest = false;
+        int nStartLeft = 0;
+        int nStartRight = 0;
+        const double dfXPointMin = dfXMin + ( 0 + 0.5 ) * dfDeltaX;
+        const double dfXPointMax = dfXMin + ( nXSize - 1 + 0.5 ) * dfDeltaX;
+        for( GUInt32 nYPoint = 0; !bNeedNearest && nYPoint < nYSize; nYPoint++ )
         {
-            const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+            const double dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
 
-            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
-                                                     nStartLeft,
-                                                     dfXPointMin, dfYPoint,
-                                                     &nStartLeft) )
+            if( !GDALTriangulationFindFacetDirected(
+                psContext->sExtraParameters.psTriangulation,
+                nStartLeft,
+                dfXPointMin, dfYPoint,
+                &nStartLeft) )
             {
-                bNeedNearest = TRUE;
+                bNeedNearest = true;
             }
-            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
-                                                     nStartRight,
-                                                     dfXPointMax, dfYPoint,
-                                                     &nStartRight) )
+            if( !GDALTriangulationFindFacetDirected(
+                psContext->sExtraParameters.psTriangulation,
+                nStartRight,
+                dfXPointMax, dfYPoint,
+                &nStartRight) )
             {
-                bNeedNearest = TRUE;
+                bNeedNearest = true;
             }
         }
-        int nStartTop = 0, nStartBottom = 0;
-        const double    dfYPointMin = dfYMin + ( 0 + 0.5 ) * dfDeltaY;
-        const double    dfYPointMax = dfYMin + ( nYSize - 1 + 0.5 ) * dfDeltaY;
-        for ( GUInt32 nXPoint = 1; !bNeedNearest && nXPoint + 1 < nXSize; nXPoint ++ )
+        int nStartTop = 0;
+        int nStartBottom = 0;
+        const double dfYPointMin = dfYMin + ( 0 + 0.5 ) * dfDeltaY;
+        const double dfYPointMax = dfYMin + ( nYSize - 1 + 0.5 ) * dfDeltaY;
+        for( GUInt32 nXPoint = 1;
+             !bNeedNearest && nXPoint + 1 < nXSize;
+             nXPoint++ )
         {
-            const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
+            const double dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
 
-            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
-                                                     nStartTop,
-                                                     dfXPoint, dfYPointMin,
-                                                     &nStartTop) )
+            if( !GDALTriangulationFindFacetDirected(
+                psContext->sExtraParameters.psTriangulation,
+                nStartTop,
+                dfXPoint, dfYPointMin,
+                &nStartTop) )
             {
-                bNeedNearest = TRUE;
+                bNeedNearest = true;
             }
-            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
-                                                     nStartBottom,
-                                                     dfXPoint, dfYPointMax,
-                                                     &nStartBottom) )
+            if( !GDALTriangulationFindFacetDirected(
+                psContext->sExtraParameters.psTriangulation,
+                nStartBottom,
+                dfXPoint, dfYPointMax,
+                &nStartBottom) )
             {
-                bNeedNearest = TRUE;
+                bNeedNearest = true;
             }
         }
         if( bNeedNearest )
@@ -2202,7 +2246,7 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
     volatile int bStop = FALSE;
     GDALGridJob sJob;
     sJob.nYStart = 0;
-    sJob.pabyData = (GByte*) pData;
+    sJob.pabyData = static_cast<GByte *>(pData);
     sJob.nYStep = 1;
     sJob.nXSize = nXSize;
     sJob.nYSize = nYSize;
@@ -2228,16 +2272,19 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
 
     if( psContext->poWorkerThreadPool == NULL )
     {
-        if( sJob.pfnRealProgress != NULL && sJob.pfnRealProgress != GDALDummyProgress )
+        if( sJob.pfnRealProgress != NULL &&
+            sJob.pfnRealProgress != GDALDummyProgress )
+        {
             sJob.pfnProgress = GDALGridProgressMonoThread;
+        }
 
         GDALGridJobProcess(&sJob);
     }
     else
     {
         int nThreads  = psContext->poWorkerThreadPool->GetThreadCount();
-        GDALGridJob* pasJobs = (GDALGridJob*) CPLMalloc(sizeof(GDALGridJob) * nThreads);
-        int i;
+        GDALGridJob* pasJobs = static_cast<GDALGridJob *>(
+            CPLMalloc(sizeof(GDALGridJob) * nThreads) );
 
         sJob.nYStep = nThreads;
         sJob.hCondMutex = CPLCreateMutex(); /* and  implicitly take the mutex */
@@ -2247,18 +2294,18 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
 /* -------------------------------------------------------------------- */
 /*      Start threads.                                                  */
 /* -------------------------------------------------------------------- */
-        for(i = 0; i < nThreads && !bStop; i++)
+        for( int i = 0; i < nThreads && !bStop; i++ )
         {
             memcpy(&pasJobs[i], &sJob, sizeof(GDALGridJob));
             pasJobs[i].nYStart = i;
             psContext->poWorkerThreadPool->SubmitJob( GDALGridJobProcess,
-                                                      (void*) &pasJobs[i] );
+                                                      &pasJobs[i] );
         }
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        while(nCounter < (int)nYSize && !bStop)
+        while( nCounter < (int)nYSize && !bStop )
         {
             CPLCondWait(sJob.hCond, sJob.hCondMutex);
 
@@ -2266,7 +2313,8 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
             CPLReleaseMutex(sJob.hCondMutex);
 
             if( pfnProgress != NULL &&
-                !pfnProgress( nLocalCounter / (double) nYSize, "", pProgressArg ) )
+                !pfnProgress( nLocalCounter / static_cast<double>(nYSize),
+                              "", pProgressArg ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 bStop = TRUE;
@@ -2275,8 +2323,8 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
             CPLAcquireMutex(sJob.hCondMutex, 1.0);
         }
 
-        /* Release mutex before joining threads, otherwise they will dead-lock */
-        /* forever in GDALGridProgressMultiThread() */
+        // Release mutex before joining threads, otherwise they will dead-lock
+        // forever in GDALGridProgressMultiThread().
         CPLReleaseMutex(sJob.hCondMutex);
 
 /* -------------------------------------------------------------------- */
@@ -2422,8 +2470,9 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
         *peAlgorithm = GGA_Linear;
     else
     {
-        fprintf( stderr, "Unsupported gridding method \"%s\".\n",
-                 papszParms[0] );
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Unsupported gridding method \"%s\"",
+                  papszParms[0] );
         CSLDestroy( papszParms );
         return CE_Failure;
     }
@@ -2431,162 +2480,170 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 /* -------------------------------------------------------------------- */
 /*      Parse algorithm parameters and assign defaults.                 */
 /* -------------------------------------------------------------------- */
-    const char  *pszValue;
-
     switch ( *peAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
         default:
+        {
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridInverseDistanceToAPowerOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "power" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfPower = (pszValue) ? CPLAtofM(pszValue) : 2.0;
+            GDALGridInverseDistanceToAPowerOptions * const poPowerOpts =
+                static_cast<GDALGridInverseDistanceToAPowerOptions *>(
+                    *ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "power" );
+            poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
             pszValue = CSLFetchNameValue( papszParms, "smoothing" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfSmoothing = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poPowerOpts->dfSmoothing = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius1" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poPowerOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius2" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poPowerOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "angle" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poPowerOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "max_points" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                nMaxPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
+            poPowerOpts->nMaxPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
+            poPowerOpts->nMinPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
+
             break;
-
+        }
         case GGA_InverseDistanceToAPowerNearestNeighbor:
+        {
             *ppOptions =
-                CPLMalloc( sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions) );
+                CPLMalloc( sizeof(
+                    GDALGridInverseDistanceToAPowerNearestNeighborOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "power" );
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
-                dfPower = (pszValue) ? CPLAtofM(pszValue) : 2.0;
+            GDALGridInverseDistanceToAPowerNearestNeighborOptions * const
+                poPowerOpts =
+                    static_cast<
+                    GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
+                        *ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "power" );
+            poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius" );
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
-                dfRadius = (pszValue) ? CPLAtofM(pszValue) : 1.0;
+            poPowerOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : 1.0;
 
             pszValue = CSLFetchNameValue( papszParms, "max_points" );
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
-                nMaxPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 12);
+            poPowerOpts->nMaxPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 12);
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
-                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
+            poPowerOpts->nMinPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
-            break;
+            poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            break;
+        }
         case GGA_MovingAverage:
+        {
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridMovingAverageOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "radius1" );
-            ((GDALGridMovingAverageOptions *)*ppOptions)->
-                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            GDALGridMovingAverageOptions * const poAverageOpts =
+                static_cast<GDALGridMovingAverageOptions *>(*ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            poAverageOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius2" );
-            ((GDALGridMovingAverageOptions *)*ppOptions)->
-                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poAverageOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "angle" );
-            ((GDALGridMovingAverageOptions *)*ppOptions)->
-                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poAverageOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
-            ((GDALGridMovingAverageOptions *)*ppOptions)->
-                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
+            poAverageOpts->nMinPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridMovingAverageOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
-            break;
+            poAverageOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            break;
+        }
         case GGA_NearestNeighbor:
+        {
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridNearestNeighborOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "radius1" );
-            ((GDALGridNearestNeighborOptions *)*ppOptions)->
-                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            GDALGridNearestNeighborOptions * const poNeighborOpts =
+                static_cast<GDALGridNearestNeighborOptions *>(*ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            poNeighborOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius2" );
-            ((GDALGridNearestNeighborOptions *)*ppOptions)->
-                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poNeighborOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "angle" );
-            ((GDALGridNearestNeighborOptions *)*ppOptions)->
-                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poNeighborOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridNearestNeighborOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poNeighborOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
-
+        }
         case GGA_MetricMinimum:
         case GGA_MetricMaximum:
         case GGA_MetricRange:
         case GGA_MetricCount:
         case GGA_MetricAverageDistance:
         case GGA_MetricAverageDistancePts:
+        {
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "radius1" );
-            ((GDALGridDataMetricsOptions *)*ppOptions)->
-                dfRadius1 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            GDALGridDataMetricsOptions * const poMetricsOptions =
+                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius2" );
-            ((GDALGridDataMetricsOptions *)*ppOptions)->
-                dfRadius2 = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "angle" );
-            ((GDALGridDataMetricsOptions *)*ppOptions)->
-                dfAngle = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
-            ((GDALGridDataMetricsOptions *)*ppOptions)->
-                nMinPoints = (pszValue) ? atoi(pszValue) : 0;
+            poMetricsOptions->nMinPoints = pszValue ? atoi(pszValue) : 0;
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridDataMetricsOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poMetricsOptions->dfNoDataValue =
+                pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
-
+        }
         case GGA_Linear:
+        {
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridLinearOptions) );
 
-            pszValue = CSLFetchNameValue( papszParms, "radius" );
-            ((GDALGridLinearOptions *)*ppOptions)->
-                dfRadius = (pszValue) ? CPLAtofM(pszValue) : -1.0;
+            GDALGridLinearOptions * const poLinearOpts =
+                static_cast<GDALGridLinearOptions *>(*ppOptions);
+
+            const char *pszValue = CSLFetchNameValue( papszParms, "radius" );
+            poLinearOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : -1.0;
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
-            ((GDALGridLinearOptions *)*ppOptions)->
-                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            poLinearOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
-   }
+         }
+    }
 
     CSLDestroy( papszParms );
     return CE_None;
@@ -2611,7 +2668,7 @@ int CPLHaveRuntimeSSE()
 
 int CPLHaveRuntimeSSE()
 {
-    int cpuinfo[4] = {0,0,0,0};
+    int cpuinfo[4] = { 0, 0, 0, 0 };
     GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
     return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
 }
@@ -2619,7 +2676,7 @@ int CPLHaveRuntimeSSE()
 #elif defined(_MSC_VER) && defined(_M_IX86)
 
 #if _MSC_VER <= 1310
-static void inline __cpuid(int cpuinfo[4], int level)
+static void inline __cpuid( int cpuinfo[4], int level )
 {
     __asm
     {
@@ -2644,7 +2701,7 @@ static void inline __cpuid(int cpuinfo[4], int level)
 
 int CPLHaveRuntimeSSE()
 {
-    int cpuinfo[4] = {0,0,0,0};
+    int cpuinfo[4] = { 0, 0, 0, 0 };
     __cpuid(cpuinfo, 1);
     return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
 }
