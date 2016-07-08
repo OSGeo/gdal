@@ -36,20 +36,20 @@
 
 #include <string>
 
-using kmldom::KmlFactory;
-using kmldom::DocumentPtr;
-using kmldom::FolderPtr;
-using kmldom::FeaturePtr;
-using kmldom::NetworkLinkPtr;
-using kmldom::StyleSelectorPtr;
-using kmldom::LinkPtr;
-using kmldom::SchemaPtr;
-using kmldom::NetworkLinkControlPtr;
-using kmldom::LinkSnippetPtr;
-using kmlbase::File;
-using kmldom::KmlPtr;
-using kmldom::SnippetPtr;
 using kmlbase::Attributes;
+using kmlbase::File;
+using kmldom::DocumentPtr;
+using kmldom::FeaturePtr;
+using kmldom::FolderPtr;
+using kmldom::KmlFactory;
+using kmldom::KmlPtr;
+using kmldom::LinkPtr;
+using kmldom::LinkSnippetPtr;
+using kmldom::NetworkLinkControlPtr;
+using kmldom::NetworkLinkPtr;
+using kmldom::SchemaPtr;
+using kmldom::SnippetPtr;
+using kmldom::StyleSelectorPtr;
 
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"

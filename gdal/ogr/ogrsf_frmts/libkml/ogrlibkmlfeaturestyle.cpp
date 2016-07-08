@@ -35,14 +35,14 @@
 #include <iostream>
 using namespace std;
 
-using kmldom::KmlFactory;;
 using kmldom::IconStylePtr;
-using kmldom::PolyStylePtr;
-using kmldom::LineStylePtr;
+using kmldom::KmlFactory;;
 using kmldom::LabelStylePtr;
-using kmldom::StylePtr;
+using kmldom::LineStylePtr;
+using kmldom::PolyStylePtr;
 using kmldom::Style;
 using kmldom::StyleMapPtr;
+using kmldom::StylePtr;
 using kmldom::StyleSelectorPtr;
 
 

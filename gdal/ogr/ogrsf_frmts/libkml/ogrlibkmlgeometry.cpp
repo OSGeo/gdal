@@ -32,24 +32,22 @@
 #include <ogr_geometry.h>
 #include "ogr_p.h"
 
-using kmldom::KmlFactory;
+using kmlbase::Vec3;
 using kmldom::CoordinatesPtr;
-using kmldom::PointPtr;
-using kmldom::LatLonBoxPtr;
-using kmldom::LineStringPtr;
-using kmldom::LinearRingPtr;
-using kmldom::OuterBoundaryIsPtr;
-using kmldom::InnerBoundaryIsPtr;
-using kmldom::PolygonPtr;
-using kmldom::MultiGeometryPtr;
-using kmldom::GeometryPtr;
 using kmldom::ElementPtr;
 using kmldom::GeometryPtr;
 using kmldom::GxLatLonQuadPtr;
-using kmldom::GxTrackPtr;
 using kmldom::GxMultiTrackPtr;
-
-using kmlbase::Vec3;
+using kmldom::GxTrackPtr;
+using kmldom::InnerBoundaryIsPtr;
+using kmldom::KmlFactory;
+using kmldom::LatLonBoxPtr;
+using kmldom::LinearRingPtr;
+using kmldom::LineStringPtr;
+using kmldom::MultiGeometryPtr;
+using kmldom::OuterBoundaryIsPtr;
+using kmldom::PointPtr;
+using kmldom::PolygonPtr;
 
 #include "ogrlibkmlgeometry.h"
 

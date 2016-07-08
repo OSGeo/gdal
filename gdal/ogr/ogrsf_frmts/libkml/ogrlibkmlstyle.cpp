@@ -34,28 +34,27 @@
 
 #include "ogr_featurestyle.h"
 
-
-using kmldom::KmlFactory;;
-using kmldom::ElementPtr;
-using kmldom::ObjectPtr;
-using kmldom::FeaturePtr;
-using kmldom::StylePtr;
-using kmldom::StyleMapPtr;
-using kmldom::STYLESTATE_NORMAL;
-using kmldom::STYLESTATE_HIGHLIGHT;
-using kmldom::StyleSelectorPtr;
-using kmldom::LineStylePtr;
-using kmldom::PolyStylePtr;
-using kmldom::IconStylePtr;
-using kmldom::IconStyleIconPtr;
-using kmldom::LabelStylePtr;
-using kmldom::BalloonStylePtr;
-using kmldom::HotSpotPtr;
 using kmlbase::Color32;
-using kmldom::PairPtr;
-using kmldom::KmlPtr;
-using kmldom::ListStylePtr;
+using kmldom::BalloonStylePtr;
+using kmldom::ElementPtr;
+using kmldom::FeaturePtr;
+using kmldom::HotSpotPtr;
 using kmldom::ItemIconPtr;
+using kmldom::IconStyleIconPtr;
+using kmldom::IconStylePtr;
+using kmldom::KmlFactory;;
+using kmldom::KmlPtr;
+using kmldom::LabelStylePtr;
+using kmldom::LineStylePtr;
+using kmldom::ListStylePtr;
+using kmldom::ObjectPtr;
+using kmldom::PairPtr;
+using kmldom::PolyStylePtr;
+using kmldom::StyleMapPtr;
+using kmldom::StylePtr;
+using kmldom::StyleSelectorPtr;
+using kmldom::STYLESTATE_HIGHLIGHT;
+using kmldom::STYLESTATE_NORMAL;
 
 #include "ogrlibkmlstyle.h"
 #include "ogr_libkml.h"

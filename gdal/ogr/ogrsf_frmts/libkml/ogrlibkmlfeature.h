@@ -31,8 +31,8 @@
 
 #include "ogr_libkml.h"
 
-using kmldom::KmlFactory;
 using kmldom::FeaturePtr;
+using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;
 
 /******************************************************************************

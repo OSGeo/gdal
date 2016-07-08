@@ -32,10 +32,10 @@
 #include "libkml_headers.h"
 
 using kmldom::ElementPtr;
-using kmldom::KmlFactory;
 using kmldom::GeometryPtr;
-using kmldom::LatLonBoxPtr;
 using kmldom::GxLatLonQuadPtr;
+using kmldom::KmlFactory;
+using kmldom::LatLonBoxPtr;
 
 /*******************************************************************************
 	function to write out a ogr geometry to km

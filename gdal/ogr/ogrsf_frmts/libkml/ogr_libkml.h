@@ -34,18 +34,15 @@
 
 #include "libkml_headers.h"
 
+using kmldom::ContainerPtr;
+using kmldom::DocumentPtr;
+using kmldom::ElementPtr;
 using kmldom::KmlFactory;
 using kmldom::KmlPtr;
-using kmldom::DocumentPtr;
-using kmldom::ContainerPtr;
-using kmldom::ElementPtr;
 using kmldom::SchemaPtr;
 using kmldom::UpdatePtr;
 using kmlengine::KmzFile;
 using kmlengine::KmzFilePtr;
-
-using kmlengine::KmlFile;
-using kmlengine::KmlFilePtr;
 
 class OGRLIBKMLDataSource;
 
