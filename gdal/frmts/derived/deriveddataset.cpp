@@ -126,8 +126,9 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
    
    // Transfer geotransform
    double padfTransform[6];
-   bool transformOk = poTmpDS->GetGeoTransform(padfTransform);
-   if(transformOk)
+   CPLErr transformOk = poTmpDS->GetGeoTransform(padfTransform);
+   
+   if(transformOk == CE_None)
      {
      poDS->SetGeoTransform(padfTransform);
      }
