@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test cderived driver
+# Purpose:  Test derived driver
 # Author:   Julien Michel <julien dot michel at cnes dot fr>
 #
 ###############################################################################
@@ -81,7 +81,7 @@ def derived_test():
 
 
 gdaltest_list = [
-    cderived_test
+    derived_test
     ]
 
 if __name__ == '__main__':
