@@ -7209,10 +7209,10 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
     // Fast test: check the 4 corners and the middle pixel
     for(int iBand = 0; iBand < nComponents; iBand++ )
     {
-        if( !(IsEqualToNoData(pBuffer[(nWidth-1) * nComponents + iBand], noDataValue) &&
-              IsEqualToNoData(pBuffer[(nHeight-1) * nLineStride * nComponents + iBand], noDataValue) &&
-              IsEqualToNoData(pBuffer[((nHeight-1) * nLineStride + nWidth - 1) * nComponents + iBand], noDataValue) &&
-              IsEqualToNoData(pBuffer[((nHeight-1)/2 * nLineStride + (nWidth - 1)/2) * nComponents + iBand], noDataValue)) )
+        if( !(IsEqualToNoData(pBuffer[(size_t)(nWidth-1) * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[(size_t)(nHeight-1) * nLineStride * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[((size_t)(nHeight-1) * nLineStride + nWidth - 1) * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[((size_t)(nHeight-1)/2 * nLineStride + (nWidth - 1)/2) * nComponents + iBand], noDataValue)) )
         {
             return false;
         }
@@ -7223,7 +7223,7 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
     {
         for(int iX = 0; iX < nWidth * nComponents; iX++ )
         {
-            if( !IsEqualToNoData(pBuffer[iY * nLineStride * nComponents + iX], noDataValue) )
+            if( !IsEqualToNoData(pBuffer[iY * (size_t)nLineStride * nComponents + iX], noDataValue) )
             {
                 return false;
             }
