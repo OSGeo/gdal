@@ -574,6 +574,43 @@ def vsifile_11():
 
     return 'success'
 
+###############################################################################
+# Test regular file system sparse file support
+
+def vsifile_12():
+
+    target_dir = 'tmp'
+
+    if gdal.VSISupportsSparseFiles(target_dir) == 0:
+        return 'skip'
+
+    # Minimum value to make it work on NTFS
+    block_size = 65536
+    f = gdal.VSIFOpenL(target_dir+'/vsifile_12', 'wb')
+    gdal.VSIFWriteL('a', 1, 1, f)
+    if gdal.VSIFTruncateL(f, block_size*2) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = gdal.VSIFGetRangeStatusL(f, 0, 1)
+    # We could get unknown on nfs
+    if ret == gdal.VSI_RANGE_STATUS_UNKNOWN:
+        print('Range status unknown')
+    else:
+        if ret != gdal.VSI_RANGE_STATUS_DATA:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+        ret = gdal.VSIFGetRangeStatusL(f, block_size*2-1,1)
+        if ret != gdal.VSI_RANGE_STATUS_HOLE:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink(target_dir+'/vsifile_12')
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -584,7 +621,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_8,
                   vsifile_9,
                   vsifile_10,
-                  vsifile_11 ]
+                  vsifile_11,
+                  vsifile_12 ]
 
 if __name__ == '__main__':
 
