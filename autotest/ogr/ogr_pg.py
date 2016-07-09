@@ -1097,9 +1097,8 @@ def ogr_pg_21_3d_geometries():
 
     if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
-        
+
     connection_string = "dbname=autotest"
-    dr = ogr.GetDriverByName ('PostgreSQL')
 
     gdaltest.pg_ds = ogr.Open( 'PG:' + connection_string, update = 1 )
 
