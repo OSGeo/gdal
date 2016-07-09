@@ -5629,28 +5629,56 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
+        int iPixel = 0;
+
+        // Small optimization in 1 bit case.
+        if( poGDS->nBitsPerSample == 1 )
+        {
+            for( int iY = 0; iY < nBlockYSize; ++iY, iPixel += nBlockXSize )
+            {
+                int iBitOffset = iY * nBitsPerLine;
+
+                int iX;
+                const GByte* pabySrc = static_cast<const GByte*>(pImage) + iPixel;
+                int iByteOffset = iBitOffset / 8;
+                for( iX = 0; iX + 7 < nBlockXSize; iX += 8, iByteOffset ++ )
+                {
+                    int nRes = (!(!pabySrc[iX+0])) << 7;
+                    nRes |= (!(!pabySrc[iX+1])) << 6;
+                    nRes |= (!(!pabySrc[iX+2])) << 5;
+                    nRes |= (!(!pabySrc[iX+3])) << 4;
+                    nRes |= (!(!pabySrc[iX+4])) << 3;
+                    nRes |= (!(!pabySrc[iX+5])) << 2;
+                    nRes |= (!(!pabySrc[iX+6])) << 1;
+                    nRes |= (!(!pabySrc[iX+7])) << 0;
+                    poGDS->pabyBlockBuf[iByteOffset] = nRes;
+                }
+                iBitOffset = iByteOffset * 8;
+                if( iX < nBlockXSize )
+                {
+                    int nRes = 0;
+                    for( ; iX < nBlockXSize; ++iX )
+                    {
+                        if( pabySrc[iX] )
+                            nRes |= (0x80 >>(iBitOffset & 7) );
+                        ++iBitOffset;
+                    }
+                    poGDS->pabyBlockBuf[iBitOffset>>3] = nRes;
+                }
+            }
+
+            poGDS->bLoadedBlockDirty = true;
+
+            return CE_None;
+        }
+
         // Initialize to zero as we set the buffer with binary or operations.
         if( poGDS->nBitsPerSample != 24 )
             memset(poGDS->pabyBlockBuf, 0, (nBitsPerLine / 8) * nBlockYSize);
 
-        int iPixel = 0;
         for( int iY = 0; iY < nBlockYSize; ++iY )
         {
             int iBitOffset = iY * nBitsPerLine;
-
-            // Small optimization in 1 bit case.
-            if( poGDS->nBitsPerSample == 1 )
-            {
-                for( int iX = 0; iX < nBlockXSize; ++iX )
-                {
-                    if( static_cast<GByte *>(pImage)[iPixel++] )
-                        poGDS->pabyBlockBuf[iBitOffset>>3] |=
-                            (0x80 >>(iBitOffset & 7) );
-                    ++iBitOffset;
-                }
-
-                continue;
-            }
 
             if( poGDS->nBitsPerSample == 12 )
             {
@@ -5966,6 +5994,42 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
+static void ExpandPacked8ToByte1( const GByte * const CPL_RESTRICT pabySrc,
+                                  GByte* const CPL_RESTRICT pabyDest,
+                                  int nBytes )
+{
+    for( int i=0, j=0; i < nBytes; i++, j+= 8 )
+    {
+        const GByte byVal = pabySrc[i];
+        pabyDest[j+0] = (byVal >> 7) & 0x1;
+        pabyDest[j+1] = (byVal >> 6) & 0x1;
+        pabyDest[j+2] = (byVal >> 5) & 0x1;
+        pabyDest[j+3] = (byVal >> 4) & 0x1;
+        pabyDest[j+4] = (byVal >> 3) & 0x1;
+        pabyDest[j+5] = (byVal >> 2) & 0x1;
+        pabyDest[j+6] = (byVal >> 1) & 0x1;
+        pabyDest[j+7] = (byVal >> 0) & 0x1;
+    }
+}
+
+static void ExpandPacked8ToByte255( const GByte * const CPL_RESTRICT pabySrc,
+                                    GByte* const CPL_RESTRICT pabyDest,
+                                    int nBytes )
+{
+    for( int i=0, j=0; i < nBytes; i++, j+= 8 )
+    {
+        const GByte byVal = pabySrc[i];
+        pabyDest[j+0] = (signed char)(byVal << 0) >> 7;
+        pabyDest[j+1] = (signed char)(byVal << 1) >> 7;
+        pabyDest[j+2] = (signed char)(byVal << 2) >> 7;
+        pabyDest[j+3] = (signed char)(byVal << 3) >> 7;
+        pabyDest[j+4] = (signed char)(byVal << 4) >> 7;
+        pabyDest[j+5] = (signed char)(byVal << 5) >> 7;
+        pabyDest[j+6] = (signed char)(byVal << 6) >> 7;
+        pabyDest[j+7] = (signed char)(byVal << 7) >> 7;
+    }
+}
+
 CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
@@ -6006,20 +6070,32 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Translate 1bit data to eight bit.                               */
 /* -------------------------------------------------------------------- */
         int iDstOffset=0, iLine;
-        const GByte * const pabyBlockBuf = poGDS->pabyBlockBuf;
+        const GByte * const CPL_RESTRICT pabyBlockBuf = poGDS->pabyBlockBuf;
+        GByte* CPL_RESTRICT pabyDest = static_cast<GByte *>(pImage);
 
         for( iLine = 0; iLine < nBlockYSize; ++iLine )
         {
-            int iSrcOffset, iPixel;
+            int iSrcOffsetByte = ((nBlockXSize+7) >> 3) * iLine;
 
-            iSrcOffset = ((nBlockXSize+7) >> 3) * 8 * iLine;
-
-            GByte bSetVal = poGDS->bPromoteTo8Bits ? 255 : 1;
-
-            for( iPixel = 0; iPixel < nBlockXSize; ++iPixel, ++iSrcOffset )
+            if( !poGDS->bPromoteTo8Bits )
             {
-                if( pabyBlockBuf[iSrcOffset >>3] &
-                    (0x80 >> (iSrcOffset & 0x7)) )
+                ExpandPacked8ToByte1( pabyBlockBuf + iSrcOffsetByte,
+                                      pabyDest + iDstOffset,
+                                      nBlockXSize / 8 );
+            }
+            else
+            {
+                ExpandPacked8ToByte255( pabyBlockBuf + iSrcOffsetByte,
+                                        pabyDest + iDstOffset,
+                                        nBlockXSize / 8 );
+            }
+            int iSrcOffsetBit = (iSrcOffsetByte + nBlockXSize / 8) * 8;
+            iDstOffset += nBlockXSize & ~0x7;
+            const GByte bSetVal = poGDS->bPromoteTo8Bits ? 255 : 1;
+            for( int iPixel = nBlockXSize & ~0x7 ; iPixel < nBlockXSize; ++iPixel, ++iSrcOffsetBit )
+            {
+                if( pabyBlockBuf[iSrcOffsetBit >>3] &
+                    (0x80 >> (iSrcOffsetBit & 0x7)) )
                     static_cast<GByte *>(pImage)[iDstOffset++] = bSetVal;
                 else
                     static_cast<GByte *>(pImage)[iDstOffset++] = 0;
