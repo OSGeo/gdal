@@ -101,6 +101,11 @@ static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
                       GDALDataType eSrcType, GDALDataType eBufType,
                       int nPixelSpace, int nLineSpace);
 
+static CPLErr DBPixelFunc(void **papoSources, int nSources, void *pData,
+                      int nXSize, int nYSize,
+                      GDALDataType eSrcType, GDALDataType eBufType,
+                      int nPixelSpace, int nLineSpace);
+
 static CPLErr dB2AmpPixelFunc(void **papoSources, int nSources, void *pData,
                        int nXSize, int nYSize,
                        GDALDataType eSrcType, GDALDataType eBufType,
@@ -127,7 +132,7 @@ static CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
     /* ---- Init ---- */
     if (nSources != 1) return CE_Failure;
 
-    nPixelSpaceSrc = GDALGetDataTypeSize( eSrcType ) / 8;
+    nPixelSpaceSrc = GDALGetDataTypeSizeBytes( eSrcType );
     nLineSpaceSrc = nPixelSpaceSrc * nXSize;
 
     /* ---- Set pixels ---- */
@@ -155,16 +160,17 @@ static CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
 
     if (GDALDataTypeIsComplex( eSrcType ))
     {
-        int nPixelSpaceSrc = GDALGetDataTypeSize( eSrcType ) / 8;
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nPixelSpaceSrc = GDALGetDataTypeSizeBytes( eSrcType );
         int nLineSpaceSrc = nPixelSpaceSrc * nXSize;
 
         void* pImag = ((GByte *)papoSources[0])
-                    + GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+                    + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
         for( iLine = 0; iLine < nYSize; ++iLine ) {
             GDALCopyWords(((GByte *)pImag) + nLineSpaceSrc * iLine,
-                          eSrcType, nPixelSpaceSrc,
+                          eSrcBaseType, nPixelSpaceSrc,
                           ((GByte *)pData) + nLineSpace * iLine,
                           eBufType, nPixelSpace, nXSize);
         }
@@ -232,17 +238,19 @@ static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
     if (GDALDataTypeIsComplex( eSrcType ))
     {
         double dfReal, dfImag;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0])
-                    + GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+                    + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
+                dfReal = SRCVAL(pReal, eSrcBaseType, ii);
+                dfImag = SRCVAL(pImag, eSrcBaseType, ii);
 
                 dfPixVal = sqrt( dfReal * dfReal + dfImag * dfImag );
 
@@ -285,17 +293,19 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
     if (GDALDataTypeIsComplex( eSrcType ))
     {
         double dfImag;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0])
-                    + GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+                    + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
+                dfReal = SRCVAL(pReal, eSrcBaseType, ii);
+                dfImag = SRCVAL(pImag, eSrcBaseType, ii);
 
                 dfPixVal = atan2(dfImag, dfReal);
 
@@ -349,17 +359,19 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
     {
         int iLine, iCol, ii;
         double adfPixVal[2];
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                adfPixVal[0] = +SRCVAL(pReal, eSrcType, ii); /* re */
-                adfPixVal[1] = -SRCVAL(pImag, eSrcType, ii); /* im */
+                adfPixVal[0] = +SRCVAL(pReal, eSrcBaseType, ii); /* re */
+                adfPixVal[1] = -SRCVAL(pImag, eSrcBaseType, ii); /* im */
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -392,11 +404,13 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     {
         double adfSum[2];
         void *pReal, *pImag;
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
                 adfSum[0] = 0;
                 adfSum[1] = 0;
 
@@ -405,8 +419,8 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                     pImag = ((GByte *)pReal) + nOffset;
 
                     /* Source raster pixels may be obtained with SRCVAL macro */
-                    adfSum[0] += SRCVAL(pReal, eSrcType, ii);
-                    adfSum[1] += SRCVAL(pImag, eSrcType, ii);
+                    adfSum[0] += SRCVAL(pReal, eSrcBaseType, ii);
+                    adfSum[1] += SRCVAL(pImag, eSrcBaseType, ii);
                 }
 
                 GDALCopyWords(adfSum, GDT_CFloat64, 0,
@@ -452,9 +466,10 @@ static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
 
     if (GDALDataTypeIsComplex( eSrcType ))
     {
-
         double adfPixVal[2];
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal0 = papoSources[0];
         void *pImag0 = ((GByte *)papoSources[0]) + nOffset;
         void *pReal1 = papoSources[1];
@@ -462,13 +477,13 @@ static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                adfPixVal[0] = SRCVAL(pReal0, eSrcType, ii)
-                             - SRCVAL(pReal1, eSrcType, ii);
-                adfPixVal[1] = SRCVAL(pImag0, eSrcType, ii)
-                             - SRCVAL(pImag1, eSrcType, ii);
+                adfPixVal[0] = SRCVAL(pReal0, eSrcBaseType, ii)
+                             - SRCVAL(pReal1, eSrcBaseType, ii);
+                adfPixVal[1] = SRCVAL(pImag0, eSrcBaseType, ii)
+                             - SRCVAL(pImag1, eSrcBaseType, ii);
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -514,11 +529,13 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
     {
         double adfPixVal[2], dfOldR, dfOldI, dfNewR, dfNewI;
         void *pReal, *pImag;
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
                 adfPixVal[0] = 1.;
                 adfPixVal[1] = 0.;
 
@@ -530,8 +547,8 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
                     dfOldI = adfPixVal[1];
 
                     /* Source raster pixels may be obtained with SRCVAL macro */
-                    dfNewR = SRCVAL(pReal, eSrcType, ii);
-                    dfNewI = SRCVAL(pImag, eSrcType, ii);
+                    dfNewR = SRCVAL(pReal, eSrcBaseType, ii);
+                    dfNewI = SRCVAL(pImag, eSrcBaseType, ii);
 
                     adfPixVal[0] = dfOldR * dfNewR - dfOldI * dfNewI;
                     adfPixVal[1] = dfOldR * dfNewI + dfOldI * dfNewR;
@@ -583,22 +600,23 @@ static CPLErr CMulPixelFunc(void **papoSources, int nSources, void *pData,
     {
         double adfPixVal[2], dfReal0, dfImag0, dfReal1, dfImag1;
 
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal0 = papoSources[0];
         void *pImag0 = ((GByte *)papoSources[0]) + nOffset;
         void *pReal1 = papoSources[1];
         void *pImag1 = ((GByte *)papoSources[1]) + nOffset;
 
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal0 = SRCVAL(pReal0, eSrcType, ii);
-                dfReal1 = SRCVAL(pReal1, eSrcType, ii);
-                dfImag0 = SRCVAL(pImag0, eSrcType, ii);
-                dfImag1 = SRCVAL(pImag1, eSrcType, ii);
-                adfPixVal[0]  = dfReal0 * dfReal1 + dfImag0 * dfImag1;
-                adfPixVal[1]  = dfReal1 * dfImag0 - dfReal0 * dfImag1;
+                dfReal0 = SRCVAL(pReal0, eSrcBaseType, ii);
+                dfReal1 = SRCVAL(pReal1, eSrcBaseType, ii);
+                dfImag0 = SRCVAL(pImag0, eSrcBaseType, ii);
+                dfImag1 = SRCVAL(pImag1, eSrcBaseType, ii);
+                adfPixVal[0] = dfReal0 * dfReal1 + dfImag0 * dfImag1;
+                adfPixVal[1] = dfReal1 * dfImag0 - dfReal0 * dfImag1;
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -643,16 +661,17 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
     {
         double adfPixVal[2], dfReal, dfImag, dfAux;
 
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0]) + nOffset;
 
         for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
+                dfReal = SRCVAL(pReal, eSrcBaseType, ii);
+                dfImag = SRCVAL(pImag, eSrcBaseType, ii);
                 dfAux = dfReal * dfReal + dfImag * dfImag;
                 adfPixVal[0]  = +dfReal / dfAux;
                 adfPixVal[1]  = -dfImag / dfAux;
@@ -699,17 +718,19 @@ static CPLErr IntensityPixelFunc(void **papoSources, int nSources, void *pData,
     if (GDALDataTypeIsComplex( eSrcType ))
     {
         double dfReal, dfImag;
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
+                dfReal = SRCVAL(pReal, eSrcBaseType, ii);
+                dfImag = SRCVAL(pImag, eSrcBaseType, ii);
 
                 dfPixVal = dfReal * dfReal + dfImag * dfImag;
 
@@ -769,10 +790,10 @@ static CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
 } /* SqrtPixelFunc */
 
 
-static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
+static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources, void *pData,
                       int nXSize, int nYSize,
                       GDALDataType eSrcType, GDALDataType eBufType,
-                      int nPixelSpace, int nLineSpace)
+                      int nPixelSpace, int nLineSpace, double fact)
 {
     int ii, iLine, iCol;
 
@@ -783,19 +804,21 @@ static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
     {
         /* complex input datatype */
         double dfReal, dfImag, dfPixVal;
-        int nOffset = GDALGetDataTypeSize( eSrcType ) / 8 / 2;
+
+        GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
+        int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
         void *pReal = papoSources[0];
         void *pImag = ((GByte *)papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
         for( iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
-            for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            for( iCol = 0; iCol < nXSize; ++iCol, ii+=2 ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfReal = SRCVAL(pReal, eSrcType, ii);
-                dfImag = SRCVAL(pImag, eSrcType, ii);
+                dfReal = SRCVAL(pReal, eSrcBaseType, ii);
+                dfImag = SRCVAL(pImag, eSrcBaseType, ii);
 
-                dfPixVal = log10( dfReal * dfReal + dfImag * dfImag );
+                dfPixVal = fact * log10( sqrt( dfReal * dfReal + dfImag * dfImag ) );
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -811,7 +834,7 @@ static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
                 dfPixVal = SRCVAL(papoSources[0], eSrcType, ii);
-                dfPixVal = log10( fabs( dfPixVal ) );
+                dfPixVal = fact * log10( fabs( dfPixVal ) );
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -822,7 +845,29 @@ static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
 
     /* ---- Return success ---- */
     return CE_None;
+} /* Log10PixelFuncHelper */
+
+
+static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
+                      int nXSize, int nYSize,
+                      GDALDataType eSrcType, GDALDataType eBufType,
+                      int nPixelSpace, int nLineSpace)
+{
+    return Log10PixelFuncHelper(papoSources, nSources, pData,
+                            nXSize, nYSize, eSrcType, eBufType,
+                            nPixelSpace, nLineSpace, 1.);
 } /* Log10PixelFunc */
+
+
+static CPLErr DBPixelFunc(void **papoSources, int nSources, void *pData,
+                      int nXSize, int nYSize,
+                      GDALDataType eSrcType, GDALDataType eBufType,
+                      int nPixelSpace, int nLineSpace)
+{
+    return Log10PixelFuncHelper(papoSources, nSources, pData,
+                                nXSize, nYSize, eSrcType, eBufType,
+                                nPixelSpace, nLineSpace, 20.);
+} /* DBPixelFunc */
 
 
 static CPLErr PowPixelFuncHelper(void **papoSources, int nSources, void *pData,
@@ -893,7 +938,7 @@ static CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
  * - "complex": make a complex band merging two bands used as real and
  *              imag values
  * - "mod": extract module from a single raster band (real or complex)
- * - "phase": extract phase from a single raster band (0 for non-complex)
+ * - "phase": extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
  * - "conj": computes the complex conjugate of a single raster band (just a
  *           copy if the input is non-complex)
  * - "sum": sum 2 or more raster bands
@@ -906,6 +951,8 @@ static CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
  * - "sqrt": perform the square root of a single raster band (real only)
  * - "log10": compute the logarithm (base 10) of the abs of a single raster
  *            band (real or complex): log10( abs( x ) )
+ * - "dB": perform conversion to dB of the abs of a single raster
+ *         band (real or complex): 20. * log10( abs( x ) )
  * - "dB2amp": perform scale conversion from logarithmic to linear
  *             (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster
  *                 band (real only)
@@ -933,6 +980,7 @@ CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc(void)
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
     GDALAddDerivedBandPixelFunc("sqrt", SqrtPixelFunc);
     GDALAddDerivedBandPixelFunc("log10", Log10PixelFunc);
+    GDALAddDerivedBandPixelFunc("dB", DBPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);
 

@@ -816,7 +816,7 @@ Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can 
     extract imaginary part from a single raster band (0 for non-complex)
 <li><b> "complex":   </b> make a complex band merging two bands used as real and imag values
 <li><b> "mod":       </b> extract module from a single raster band (real or complex)
-<li><b> "phase":     </b> extract phase from a single raster band (0 for non-complex)
+<li><b> "phase":     </b> extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
 <li><b> "conj":      </b> computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
 <li><b> "sum":       </b> sum 2 or more raster bands
 <li><b> "diff":      </b> computes the difference between 2 raster bands (b1 - b2)
@@ -826,6 +826,7 @@ Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can 
 <li><b> "intensity": </b> computes the intensity Re(x*conj(x)) of a single raster band (real or complex)
 <li><b> "sqrt":      </b> perform the square root of a single raster band (real only)
 <li><b> "log10":     </b> compute the logarithm (base 10) of the abs of a single raster band (real or complex): log10( abs( x ) )
+<li><b> "dB":        </b> perform conversion to dB of the abs of a single raster band (real or complex): 20. * log10( abs( x ) )
 <li><b> "dB2amp":    </b> perform scale conversion from logarithmic to linear (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster band (real only)
 <li><b> "dB2pow":    </b> perform scale conversion from logarithmic to linear (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster band (real only)
 </ul>
