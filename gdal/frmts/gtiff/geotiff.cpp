@@ -5651,7 +5651,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     nRes |= (!(!pabySrc[iX+5])) << 2;
                     nRes |= (!(!pabySrc[iX+6])) << 1;
                     nRes |= (!(!pabySrc[iX+7])) << 0;
-                    poGDS->pabyBlockBuf[iByteOffset] = nRes;
+                    poGDS->pabyBlockBuf[iByteOffset] = static_cast<GByte>(nRes);
                 }
                 iBitOffset = iByteOffset * 8;
                 if( iX < nBlockXSize )
@@ -5663,7 +5663,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                             nRes |= (0x80 >>(iBitOffset & 7) );
                         ++iBitOffset;
                     }
-                    poGDS->pabyBlockBuf[iBitOffset>>3] = nRes;
+                    poGDS->pabyBlockBuf[iBitOffset>>3] = static_cast<GByte>(nRes);
                 }
             }
 
