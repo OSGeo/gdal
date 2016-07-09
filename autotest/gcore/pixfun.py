@@ -47,6 +47,9 @@ import gdaltest
 
 def pixfun_real_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_real_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -61,7 +64,7 @@ def pixfun_real_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == refdata.real):
+    if not numpy.alltrue(data == refdata.real):
         return 'fail'
 
     return 'success'
@@ -71,6 +74,9 @@ def pixfun_real_c():
 # Verify real part extraction from a complex dataset.
 
 def pixfun_real_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_real_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -86,7 +92,7 @@ def pixfun_real_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == refdata.real):
+    if not numpy.alltrue(data == refdata.real):
         return 'fail'
 
     return 'success'
@@ -96,6 +102,9 @@ def pixfun_real_r():
 # Verify imaginary part extraction from a complex dataset.
 
 def pixfun_imag_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_imag_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -111,7 +120,7 @@ def pixfun_imag_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == refdata.imag):
+    if not numpy.alltrue(data == refdata.imag):
         return 'fail'
 
     return 'success'
@@ -122,6 +131,9 @@ def pixfun_imag_c():
 
 def pixfun_imag_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_imag_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -129,7 +141,7 @@ def pixfun_imag_r():
         return 'fail'
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == 0):
+    if not numpy.alltrue(data == 0):
         return 'fail'
 
     return 'success'
@@ -139,6 +151,9 @@ def pixfun_imag_r():
 # Verify imaginary part extraction from a real dataset.
 
 def pixfun_complex():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_complex.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -154,7 +169,7 @@ def pixfun_complex():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.allclose(data, refdata + 1j * refdata):
+    if not numpy.allclose(data, refdata + 1j * refdata):
         return 'fail'
 
     return 'success'
@@ -164,6 +179,9 @@ def pixfun_complex():
 # Verify modulus extraction from a complex (float) dataset.
 
 def pixfun_mod_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_mod_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -179,7 +197,7 @@ def pixfun_mod_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.abs(refdata)):
+    if not numpy.alltrue(data == numpy.abs(refdata)):
         return 'fail'
 
     return 'success'
@@ -189,6 +207,9 @@ def pixfun_mod_c():
 # Verify modulus extraction from a real (integer type) dataset.
 
 def pixfun_mod_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_mod_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -204,7 +225,7 @@ def pixfun_mod_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.abs(refdata)):
+    if not numpy.alltrue(data == numpy.abs(refdata)):
         return 'fail'
 
     return 'success'
@@ -214,6 +235,9 @@ def pixfun_mod_r():
 # Verify phase extraction from a complex dataset.
 
 def pixfun_phase_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_phase_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -231,7 +255,7 @@ def pixfun_phase_c():
     refdata = refdata.astype('complex128')
 
     #if not numpy.allclose(data, numpy.arctan2(refdata.imag, refdata.real)):
-    if numpy_available and not numpy.alltrue(data == numpy.arctan2(refdata.imag, refdata.real)):
+    if not numpy.alltrue(data == numpy.arctan2(refdata.imag, refdata.real)):
         return 'fail'
 
     return 'success'
@@ -241,6 +265,9 @@ def pixfun_phase_c():
 # Verify phase extraction from a real dataset.
 
 def pixfun_phase_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_phase_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -256,7 +283,7 @@ def pixfun_phase_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.arctan2(0, refdata)):
+    if not numpy.alltrue(data == numpy.arctan2(0, refdata)):
         return 'fail'
 
     return 'success'
@@ -266,6 +293,9 @@ def pixfun_phase_r():
 # Verify cmplex conjugare computation on a complex dataset.
 
 def pixfun_conj_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_conj_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -281,7 +311,7 @@ def pixfun_conj_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.conj(refdata)):
+    if not numpy.alltrue(data == numpy.conj(refdata)):
         return 'fail'
 
     return 'success'
@@ -291,6 +321,9 @@ def pixfun_conj_c():
 # Verify cmplex conjugare computation on a real dataset.
 
 def pixfun_conj_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_conj_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -306,7 +339,7 @@ def pixfun_conj_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.conj(refdata)):
+    if not numpy.alltrue(data == numpy.conj(refdata)):
         return 'fail'
 
     return 'success'
@@ -316,6 +349,9 @@ def pixfun_conj_r():
 # Verify the sum of 3 (real) datasets.
 
 def pixfun_sum_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_sum_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -345,6 +381,9 @@ def pixfun_sum_r():
 
 def pixfun_sum_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_sum_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -373,6 +412,9 @@ def pixfun_sum_c():
 
 def pixfun_diff_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_diff_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -394,7 +436,7 @@ def pixfun_diff_r():
         return 'fail'
     refdata2 = refds.GetRasterBand(1).ReadAsArray(10, 10, 5, 6)
 
-    if numpy_available and not numpy.alltrue(data == refdata1-refdata2):
+    if not numpy.alltrue(data == refdata1-refdata2):
         return 'fail'
 
     return 'success'
@@ -404,6 +446,9 @@ def pixfun_diff_r():
 # Verify the difference of 2 (complex) datasets.
 
 def pixfun_diff_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_diff_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -426,7 +471,7 @@ def pixfun_diff_c():
         return 'fail'
     refdata2 = refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
 
-    if numpy_available and not numpy.alltrue(data == refdata1-refdata2):
+    if not numpy.alltrue(data == refdata1-refdata2):
         return 'fail'
 
     return 'success'
@@ -436,6 +481,9 @@ def pixfun_diff_c():
 # Verify the product of 3 (real) datasets.
 
 def pixfun_mul_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_mul_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -465,6 +513,9 @@ def pixfun_mul_r():
 
 def pixfun_mul_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_mul_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -479,7 +530,7 @@ def pixfun_mul_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == refdata*refdata):
+    if not numpy.alltrue(data == refdata*refdata):
         return 'fail'
 
     return 'success'
@@ -489,6 +540,9 @@ def pixfun_mul_c():
 # Verify the product with complex conjugate of a complex datasets.
 
 def pixfun_cmul_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_cmul_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -504,7 +558,7 @@ def pixfun_cmul_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == refdata*refdata.conj()):
+    if not numpy.alltrue(data == refdata*refdata.conj()):
         return 'fail'
 
     return 'success'
@@ -514,6 +568,9 @@ def pixfun_cmul_c():
 # Verify the product with complex conjugate of two real datasets.
 
 def pixfun_cmul_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_cmul_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -538,7 +595,7 @@ def pixfun_cmul_r():
     refdata2 = refds.GetRasterBand(1).ReadAsArray()
     refdata2 = refdata2.astype('float64')
 
-    if numpy_available and not numpy.alltrue(data == refdata1 * refdata2.conj()):
+    if not numpy.alltrue(data == refdata1 * refdata2.conj()):
         return 'fail'
 
     return 'success'
@@ -548,6 +605,9 @@ def pixfun_cmul_r():
 # Verify computation of the inverse of a real datasets.
 
 def pixfun_inv_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_inv_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -564,7 +624,7 @@ def pixfun_inv_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('float64')
 
-    if numpy_available and not numpy.alltrue(data == 1./refdata):
+    if not numpy.alltrue(data == 1./refdata):
         return 'fail'
 
     return 'success'
@@ -574,6 +634,9 @@ def pixfun_inv_r():
 # Verify computation of the inverse of a complex datasets.
 
 def pixfun_inv_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_inv_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -591,9 +654,9 @@ def pixfun_inv_c():
     refdata = refdata.astype('complex')
     delta = data - 1./refdata
 
-    if numpy_available and not numpy.alltrue(abs(delta.real) < 1e-13):
+    if not numpy.alltrue(abs(delta.real) < 1e-13):
         return 'fail'
-    if numpy_available and not numpy.alltrue(abs(delta.imag) < 1e-13):
+    if not numpy.alltrue(abs(delta.imag) < 1e-13):
         return 'fail'
 
     return 'success'
@@ -603,6 +666,9 @@ def pixfun_inv_c():
 # Verify intensity computation of a complex dataset.
 
 def pixfun_intensity_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_intensity_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -618,7 +684,7 @@ def pixfun_intensity_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == (refdata*refdata.conj()).real):
+    if not numpy.alltrue(data == (refdata*refdata.conj()).real):
         return 'fail'
 
     return 'success'
@@ -628,6 +694,9 @@ def pixfun_intensity_c():
 # Verify intensity computation of real dataset.
 
 def pixfun_intensity_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_intensity_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -643,7 +712,7 @@ def pixfun_intensity_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == (refdata*refdata.conj()).real):
+    if not numpy.alltrue(data == (refdata*refdata.conj()).real):
         return 'fail'
 
     return 'success'
@@ -653,6 +722,9 @@ def pixfun_intensity_r():
 # Verify square root computation.
 
 def pixfun_sqrt():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_sqrt.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -668,7 +740,7 @@ def pixfun_sqrt():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.sqrt(refdata)):
+    if not numpy.alltrue(data == numpy.sqrt(refdata)):
         return 'fail'
 
     return 'success'
@@ -678,6 +750,9 @@ def pixfun_sqrt():
 # Verify logarithm computation of real dataset.
 
 def pixfun_log10_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_log10_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -693,7 +768,7 @@ def pixfun_log10_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.alltrue(data == numpy.log10(refdata)):
+    if not numpy.alltrue(data == numpy.log10(refdata)):
         return 'fail'
 
     return 'success'
@@ -703,6 +778,9 @@ def pixfun_log10_r():
 # Verify logarithm computation of imag dataset.
 
 def pixfun_log10_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_log10_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -717,7 +795,7 @@ def pixfun_log10_c():
         gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
-    if numpy_available and not numpy.allclose(data, numpy.log10(numpy.abs(refdata))):
+    if not numpy.allclose(data, numpy.log10(numpy.abs(refdata))):
         return 'fail'
 
     return 'success'
@@ -727,6 +805,9 @@ def pixfun_log10_c():
 # Verify dB computation of real dataset.
 
 def pixfun_dB_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -742,7 +823,7 @@ def pixfun_dB_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available and not numpy.allclose(data, 20. * numpy.log10(refdata)):
+    if not numpy.allclose(data, 20. * numpy.log10(refdata)):
         return 'fail'
 
     return 'success'
@@ -752,6 +833,9 @@ def pixfun_dB_r():
 # Verify dB computation of imag dataset.
 
 def pixfun_dB_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -766,7 +850,7 @@ def pixfun_dB_c():
         gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
-    if numpy_available and not numpy.allclose(data, 20. * numpy.log10(numpy.abs(refdata))):
+    if not numpy.allclose(data, 20. * numpy.log10(numpy.abs(refdata))):
         return 'fail'
 
     return 'success'
@@ -776,6 +860,9 @@ def pixfun_dB_c():
 # Verify conversion from dB to amplitude.
 
 def pixfun_dB2amp():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB2amp.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -792,7 +879,7 @@ def pixfun_dB2amp():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     #if not numpy.alltrue(data == 10.**(refdata/20.)):
-    if numpy_available and not numpy.allclose(data, 10.**(refdata/20.)):
+    if not numpy.allclose(data, 10.**(refdata/20.)):
         return 'fail'
 
     return 'success'
@@ -802,6 +889,9 @@ def pixfun_dB2amp():
 # Verify conversion from dB to power.
 
 def pixfun_dB2pow():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB2pow.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -819,7 +909,7 @@ def pixfun_dB2pow():
     refdata = refdata.astype('float64')
 
     #if not numpy.allclose(data, 10.**(refdata/10.)):
-    if numpy_available and not numpy.alltrue(data == 10.**(refdata/10.)):
+    if not numpy.alltrue(data == 10.**(refdata/10.)):
         return 'fail'
 
     return 'success'
