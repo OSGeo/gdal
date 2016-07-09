@@ -1091,6 +1091,61 @@ def ogr_pg_21_subgeoms():
     return 'success'
 
 ###############################################################################
+# Check if the 3d geometries of TIN, Triangle and POLYHEDRALSURFACE are valid
+
+def ogr_pg_21_3d_geometries():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
+        return 'skip'
+        
+    connection_string = "dbname=autotest"
+    dr = ogr.GetDriverByName ('PostgreSQL')
+
+    gdaltest.pg_ds = ogr.Open( 'PG:' + connection_string, update = 1 )
+
+    gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE zgeoms (field_no integer)" )
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','zgeoms','wkb_geometry',-1,'GEOMETRY',3)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    wkt_list = ['POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))',
+                'TIN (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
+                'TRIANGLE ((48 36 84,32 54 64,86 11 54,48 36 84))' ]
+
+    wkt_expected = ['POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))',
+                    'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
+                    'TRIANGLE Z ((48 36 84,32 54 64,86 11 54,48 36 84))' ]
+
+    for i in range(0,3):
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO zgeoms (field_no, wkb_geometry) VALUES (%d,GeomFromEWKT('%s'))" % ( i, wkt_list[i] ) )
+
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = None
+
+    try:
+        gdaltest.pg_ds = ogr.Open( 'PG:' + connection_string, update = 1 )
+    except:
+        gdaltest.pg_ds = None
+        gdaltest.post_reason( 'Cannot open the dataset' )
+        return 'fail'
+
+    layer = gdaltest.pg_ds.GetLayerByName( 'zgeoms' )
+    if layer is None:
+        gdaltest.post_reason( 'No layer received' )
+        return 'fail'
+
+    for i in range (0, 3):
+        feat = layer.GetFeature(i)
+        geom = feat.GetGeometryRef()
+
+        wkt = geom.ExportToIsoWkt()
+
+        if (wkt != wkt_expected[i]):
+            gdaltest.post_reason( 'Unexpected WKT, expected %s and got %s' % ( wkt_expected[i], wkt) )
+            return 'fail'
+
+    gdaltest.pg_ds.ExecuteSQL( "DROP TABLE zgeoms" )
+    return 'success'
+
+###############################################################################
 # Create table from data/poly.shp under specified SCHEMA
 # This test checks if schema support and schema name quoting works well.
 
@@ -5511,6 +5566,7 @@ gdaltest_list_internal = [
     ogr_pg_20,
     ogr_pg_21,
     ogr_pg_21_subgeoms,
+    ogr_pg_21_3d_geometries,
     ogr_pg_22,
     ogr_pg_23,
     ogr_pg_24,
