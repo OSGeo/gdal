@@ -7209,10 +7209,11 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
     // Fast test: check the 4 corners and the middle pixel
     for(int iBand = 0; iBand < nComponents; iBand++ )
     {
-        if( !(IsEqualToNoData(pBuffer[(size_t)(nWidth-1) * nComponents + iBand], noDataValue) &&
+        if( !(IsEqualToNoData(pBuffer[iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[(size_t)(nWidth-1) * nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(pBuffer[((size_t)(nHeight-1)/2 * nLineStride + (nWidth - 1)/2) * nComponents + iBand], noDataValue) &&
               IsEqualToNoData(pBuffer[(size_t)(nHeight-1) * nLineStride * nComponents + iBand], noDataValue) &&
-              IsEqualToNoData(pBuffer[((size_t)(nHeight-1) * nLineStride + nWidth - 1) * nComponents + iBand], noDataValue) &&
-              IsEqualToNoData(pBuffer[((size_t)(nHeight-1)/2 * nLineStride + (nWidth - 1)/2) * nComponents + iBand], noDataValue)) )
+              IsEqualToNoData(pBuffer[((size_t)(nHeight-1) * nLineStride + nWidth - 1) * nComponents + iBand], noDataValue) ) )
         {
             return false;
         }
@@ -7363,9 +7364,9 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
             iColumn = (tile % nBlocksPerBand) % nBlocksPerRow;
             iRow = (tile % nBlocksPerBand) / nBlocksPerRow;
 
-            int nActualBlockWidth = ( iColumn == nBlocksPerColumn - 1 ) ?
+            int nActualBlockWidth = ( iColumn == nBlocksPerRow - 1 ) ?
                                 nRasterXSize - iColumn * nBlockXSize : nBlockXSize;
-            int nActualBlockHeight = ( iRow == nBlocksPerRow - 1 ) ?
+            int nActualBlockHeight = ( iRow ==  nBlocksPerColumn - 1 ) ?
                                 nRasterYSize - iRow * nBlockYSize : nBlockYSize;
 
             if( HasOnlyNoData(pabyData,
