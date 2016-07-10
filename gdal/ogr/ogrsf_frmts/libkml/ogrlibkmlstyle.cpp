@@ -1209,8 +1209,8 @@ void styletable2kml (
             poKmlStyleMap->add_pair(poKmlPairNormal);
 
             PairPtr poKmlPairHighlight = poKmlFactory->CreatePair (  );
-            poKmlPairHightlight->set_key(STYLESTATE_HIGHLIGHT);
-            poKmlPairHightlight->set_styleurl(CPLSPrintf("#%s_highlight", osStyleName.c_str()));
+            poKmlPairHighlight->set_key(STYLESTATE_HIGHLIGHT);
+            poKmlPairHighlight->set_styleurl(CPLSPrintf("#%s_highlight", osStyleName.c_str()));
             poKmlStyleMap->add_pair(poKmlPairHighlight);
 
             /***** add the style to the container *****/
