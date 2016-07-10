@@ -322,6 +322,27 @@ rm -f atomicbuiltins.* atomicbuiltins
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if GCC bswap builtins are available
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether GCC bswap builtins are available])
+
+rm -f bswapbuiltins.c
+echo '#include <x86intrin.h>' > bswapbuiltins.c
+echo 'int main(int argc, char** argv) { __builtin_bswap32(0); __builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
+if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
+    HAVE_GCC_BSWAP=yes
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_GCC_BSWAP,1, [Define to 1 if GCC bswap builtins are available])
+else
+    HAVE_GCC_BSWAP=no
+    AC_MSG_RESULT([no])
+fi
+rm -f bswapbuiltins.* bswapbuiltins
+
+AC_SUBST(HAVE_GCC_BSWAP,$HAVE_GCC_BSWAP)
+
+dnl ---------------------------------------------------------------------------
 dnl Check SSE availability
 dnl ---------------------------------------------------------------------------
 
