@@ -12482,23 +12482,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /*      can.                                                            */
 /* -------------------------------------------------------------------- */
 #if defined(BIGTIFF_SUPPORT)
-    tmsize_t nChunkSize = 0;
+    uint64 nChunkSize = 0;
     if( bTreatAsRGBA )
     {
-        nChunkSize = 4 * static_cast<tmsize_t>(nBlockXSize) * nBlockYSize;
+        nChunkSize = 4 * static_cast<uint64>(nBlockXSize) * nBlockYSize;
     }
     else if( bTreatAsSplit || bTreatAsSplitBitmap )
     {
-        nChunkSize = TIFFScanlineSize( hTIFF );
+        nChunkSize = TIFFScanlineSize64( hTIFF );
     }
     else
     {
         if( TIFFIsTiled(hTIFF) )
-            nChunkSize = TIFFTileSize( hTIFF );
+            nChunkSize = TIFFTileSize64( hTIFF );
         else
-            nChunkSize = TIFFStripSize( hTIFF );
+            nChunkSize = TIFFStripSize64( hTIFF );
     }
-    if( nChunkSize > INT_MAX )
+    if( nChunkSize > static_cast<uint64>(INT_MAX) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                 "Scanline/tile/strip size bigger than 2GB." );
