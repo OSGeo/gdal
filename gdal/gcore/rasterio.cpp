@@ -1707,51 +1707,50 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         CPLAssert( nWordSkip >= 2 || nWordCount == 1 );
         for( int i = 0; i < nWordCount; i++ )
         {
-            GByte byTemp = pabyData[0];
-            pabyData[0] = pabyData[1];
-            pabyData[1] = byTemp;
-
+            CPL_SWAP16PTR(pabyData);
             pabyData += nWordSkip;
         }
         break;
 
       case 4:
         CPLAssert( nWordSkip >= 4 || nWordCount == 1 );
-        for( int i = 0; i < nWordCount; i++ )
+        if( (((size_t)pabyData) % 4) == 0 && (nWordSkip % 4) == 0 )
         {
-            GByte byTemp = pabyData[0];
-            pabyData[0] = pabyData[3];
-            pabyData[3] = byTemp;
-
-            byTemp = pabyData[1];
-            pabyData[1] = pabyData[2];
-            pabyData[2] = byTemp;
-
-            pabyData += nWordSkip;
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                *((GUInt32*)pabyData) = CPL_SWAP32(*((GUInt32*)pabyData));
+                pabyData += nWordSkip;
+            }
+        }
+        else
+        {
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                CPL_SWAP32PTR(pabyData);
+                pabyData += nWordSkip;
+            }
         }
         break;
 
       case 8:
         CPLAssert( nWordSkip >= 8 || nWordCount == 1 );
-        for( int i = 0; i < nWordCount; i++ )
+#ifdef CPL_SWAP64
+        if( (((size_t)pabyData) % 8) == 0 && (nWordSkip % 8) == 0 )
         {
-            GByte byTemp = pabyData[0];
-            pabyData[0] = pabyData[7];
-            pabyData[7] = byTemp;
-
-            byTemp = pabyData[1];
-            pabyData[1] = pabyData[6];
-            pabyData[6] = byTemp;
-
-            byTemp = pabyData[2];
-            pabyData[2] = pabyData[5];
-            pabyData[5] = byTemp;
-
-            byTemp = pabyData[3];
-            pabyData[3] = pabyData[4];
-            pabyData[4] = byTemp;
-
-            pabyData += nWordSkip;
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                *((GUIntBig*)pabyData) = CPL_SWAP64(*((GUIntBig*)pabyData));
+                pabyData += nWordSkip;
+            }
+        }
+        else
+#endif
+        {
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                CPL_SWAP64PTR(pabyData);
+                pabyData += nWordSkip;
+            }
         }
         break;
 

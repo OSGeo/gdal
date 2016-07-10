@@ -614,10 +614,27 @@ template<> struct CPLStaticAssert<true>
  *        Little endian <==> big endian byte swap macros.
  *--------------------------------------------------------------------*/
 
-#define CPL_SWAP16(x) \
-        ((GUInt16)( \
-            (((GUInt16)(x) & 0x00ffU) << 8) | \
-            (((GUInt16)(x) & 0xff00U) >> 8) ))
+#define CPL_SWAP16(x) ((GUInt16)( ((GUInt16)(x) << 8) | ((GUInt16)(x) >> 8) ))
+
+#if __GNUC__ >= 4 && (defined(__i386__) || defined(__x86_64__))
+/* Could potentially be extended to other architectures but must be checked */
+/* that the intrinsic is indeed efficient */
+#include <immintrin.h>
+#define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
+/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
+#define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
+#elif defined(_MSC_VER)
+#define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
+/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
+#define CPL_SWAP64(x) ((GUIntBig)(_byteswap_uint64((GUIntBig)(x))))
+#else
+#define CPL_SWAP32(x) \
+        ((GUInt32)( \
+            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
+            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
+            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
+            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+#endif
 
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
@@ -628,13 +645,6 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
 }
-
-#define CPL_SWAP32(x) \
-        ((GUInt32)( \
-            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
-            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
-            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
-            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
