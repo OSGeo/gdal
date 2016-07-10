@@ -2647,7 +2647,7 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 /*            GWKCubicResampleSrcMaskIsDensity4SampleRealT()            */
 /************************************************************************/
 
-// Note: if USE_SSE_CUBIC_IMPL, only instanciate that for Byte and UInt16,
+// Note: if USE_SSE_CUBIC_IMPL, only instantiate that for Byte and UInt16,
 // because there are a few assumptions above those types.
 
 template<class T>

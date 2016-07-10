@@ -174,7 +174,7 @@ int OGROGDIDataSource::Open( const char * pszNewName )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
                       "untranslatable PROJ.4 projection: %s\n",
-                      ECSTEXT(psResult) ? ECSTEXT(psResult): "(no mesage string)" );
+                      ECSTEXT(psResult) ? ECSTEXT(psResult): "(no message string)" );
             delete m_poSpatialRef;
             m_poSpatialRef = NULL;
         }

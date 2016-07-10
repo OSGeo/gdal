@@ -1397,7 +1397,7 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
  *     (Known to work with OSM and MapQuest Nominatim)
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the
  *     returned feature with the raw XML content.
- * <li>EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET
+ * <li>EXTRA_QUERY_PARAMETERS=params: additional parameters for the GET
  *     request.
  * </ul>
  *
@@ -1532,7 +1532,7 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
  *     Nominatim service.
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the
  *     returned feature with the raw XML content.
- * <li>EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET request
+ * <li>EXTRA_QUERY_PARAMETERS=params: additional parameters for the GET request
  *     for reverse geocoding.
  * </ul>
  *
