@@ -616,10 +616,11 @@ template<> struct CPLStaticAssert<true>
 
 #define CPL_SWAP16(x) ((GUInt16)( ((GUInt16)(x) << 8) | ((GUInt16)(x) >> 8) ))
 
-#if __GNUC__ >= 4 && (defined(__i386__) || defined(__x86_64__))
+#if defined(HAVE_GCC_BSWAP) && (defined(__i386__) || defined(__x86_64__))
 /* Could potentially be extended to other architectures but must be checked */
 /* that the intrinsic is indeed efficient */
-#include <immintrin.h>
+/* GCC (at least 4.6  or above) need that include */
+#include <x86intrin.h>
 #define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
 /* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
 #define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
