@@ -312,14 +312,13 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        const double pi = atan2(0, -1);  // TODO(schwehr): Replace with const.
         for( int iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 const void * const pReal = papoSources[0];
 
                 // Source raster pixels may be obtained with SRCVAL macro.
                 const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfPixVal = (dfReal < 0) ? pi : 0;
+                const double dfPixVal = (dfReal < 0) ? M_PI : 0.0;
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
