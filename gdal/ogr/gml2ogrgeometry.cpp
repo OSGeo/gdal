@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Code to translate between GML and OGR geometry forms.
@@ -47,6 +46,8 @@
 #include <ctype.h>
 #include "ogr_p.h"
 #include "ogrsf_frmts/xplane/ogr_xplane_geo_utils.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        GMLGetCoordTokenPos()                         */

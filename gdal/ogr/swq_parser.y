@@ -34,6 +34,8 @@
 #include "ogr_geometry.h"
 #include "swq.h"
 
+CPL_CVSID("$Id$");
+
 #define YYSTYPE  swq_expr_node*
 
 /* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
