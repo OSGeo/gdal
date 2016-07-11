@@ -339,6 +339,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         if (poColorTable == NULL)
         {
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
+				dfXRatioDstToSrc == 2 && dfYRatioDstToSrc == 2 &&
                 pabyChunkNodataMask == NULL && (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16))
             {
                 /* Optimized case : no nodata, overview by a factor of 2 and regular x and y src spacing */
