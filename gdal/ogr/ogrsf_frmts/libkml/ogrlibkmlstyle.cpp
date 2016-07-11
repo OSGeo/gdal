@@ -36,6 +36,8 @@
 
 using kmlbase::Color32;
 using kmldom::BalloonStylePtr;
+using kmldom::ContainerPtr;
+using kmldom::DocumentPtr;
 using kmldom::ElementPtr;
 using kmldom::FeaturePtr;
 using kmldom::HotSpotPtr;
