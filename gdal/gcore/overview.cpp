@@ -609,7 +609,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
         int nSrcYOff = (int) (iDstLine * dfYRatioDstToSrc);
-        int nSrcYOff2 = (int) ceil((iDstLine+1) * dfYRatioDstToSrc) + 1;
+        int nSrcYOff2 = (int) ceil((iDstLine+1) * dfYRatioDstToSrc);
 
         if( nSrcYOff < nChunkYOff )
         {
@@ -644,7 +644,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
             int nSrcXOff = (int) (iDstPixel * dfXRatioDstToSrc);
-            int nSrcXOff2 = (int) ceil((iDstPixel+1) * dfXRatioDstToSrc) + 1;
+            int nSrcXOff2 = (int) ceil((iDstPixel+1) * dfXRatioDstToSrc);
 
             int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
