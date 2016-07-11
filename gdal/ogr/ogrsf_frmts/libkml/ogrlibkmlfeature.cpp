@@ -36,6 +36,7 @@
 using kmldom::AliasPtr;
 using kmldom::CameraPtr;
 using kmldom::ElementPtr;
+using kmldom::FeaturePtr;
 using kmldom::Geometry;
 using kmldom::GeometryPtr;
 using kmldom::GroundOverlayPtr;

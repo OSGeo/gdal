@@ -35,6 +35,7 @@
 #include <iostream>
 using namespace std;
 
+using kmldom::FeaturePtr;
 using kmldom::IconStylePtr;
 using kmldom::KmlFactory;;
 using kmldom::LabelStylePtr;
@@ -44,7 +45,6 @@ using kmldom::Style;
 using kmldom::StyleMapPtr;
 using kmldom::StylePtr;
 using kmldom::StyleSelectorPtr;
-
 
 #include "ogrlibkmlfeaturestyle.h"
 #include "ogrlibkmlstyle.h"

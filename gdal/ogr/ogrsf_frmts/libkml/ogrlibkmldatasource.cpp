@@ -38,7 +38,9 @@
 
 using kmlbase::Attributes;
 using kmlbase::File;
+using kmldom::ContainerPtr;
 using kmldom::DocumentPtr;
+using kmldom::ElementPtr;
 using kmldom::FeaturePtr;
 using kmldom::FolderPtr;
 using kmldom::KmlFactory;
