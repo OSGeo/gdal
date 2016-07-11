@@ -32,8 +32,6 @@
 #include <string>
 
 #include "ogr_libkml.h"
-//#include "cpl_conv.h"
-//#include "cpl_string.h"
 #include "cpl_error.h"
 
 using kmldom::CameraPtr;

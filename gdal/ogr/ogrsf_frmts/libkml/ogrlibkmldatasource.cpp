@@ -27,11 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-//#include "cpl_conv.h"
-//#include "cpl_string.h"
-//#include "cpl_error.h"
-// #include <iostream>
-//#include <sstream>
 #include "libkml_headers.h"
 
 #include <string>
