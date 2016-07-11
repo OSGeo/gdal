@@ -34,6 +34,8 @@
 
 #include <map>
 
+CPL_CVSID("$Id$");
+
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
 
 /************************************************************************/
