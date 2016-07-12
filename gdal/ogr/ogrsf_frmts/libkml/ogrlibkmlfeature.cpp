@@ -69,46 +69,67 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  OGRFeature * poOgrFeat,
                                  KmlFactory * poKmlFactory )
 {
-    int iCameraLongitudeField = poOgrFeat->GetFieldIndex(oFC.camera_longitude_field);
-    int iCameraLatitudeField = poOgrFeat->GetFieldIndex(oFC.camera_latitude_field);
-    int iCameraAltitudeField = poOgrFeat->GetFieldIndex(oFC.camera_altitude_field);
-    int iCameraAltitudeModeField = poOgrFeat->GetFieldIndex(oFC.camera_altitudemode_field);
-    if( iCameraLongitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraLongitudeField) &&
-        iCameraLatitudeField >= 0  && poOgrFeat->IsFieldSet(iCameraLatitudeField) &&
+    const int iCameraLongitudeField =
+        poOgrFeat->GetFieldIndex(oFC.camera_longitude_field);
+    const int iCameraLatitudeField =
+        poOgrFeat->GetFieldIndex(oFC.camera_latitude_field);
+    int iCameraAltitudeField =
+        poOgrFeat->GetFieldIndex(oFC.camera_altitude_field);
+    int iCameraAltitudeModeField =
+        poOgrFeat->GetFieldIndex(oFC.camera_altitudemode_field);
+
+    const bool bNeedCamera =
+        iCameraLongitudeField >= 0 &&
+        poOgrFeat->IsFieldSet(iCameraLongitudeField) &&
+        iCameraLatitudeField >= 0 &&
+        poOgrFeat->IsFieldSet(iCameraLatitudeField) &&
         ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
         (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
-        (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
-    {
-        CameraPtr camera = poKmlFactory->CreateCamera();
-        camera->set_latitude(poOgrFeat->GetFieldAsDouble(iCameraLatitudeField));
-        camera->set_longitude(poOgrFeat->GetFieldAsDouble(iCameraLongitudeField));
-        int isGX = FALSE;
-        int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
-        if( iCameraAltitudeModeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeModeField) )
-        {
-            nAltitudeMode = kmlAltitudeModeFromString(
-                poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
-            camera->set_altitudemode(nAltitudeMode);
-        }
-        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
-            CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
-        if( iCameraAltitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeField))
-            camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
-        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
-        {
-            CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
-            camera->set_altitude(0.0);
-        }
-        if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
-            camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
-        if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
-            camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
-        if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
-            camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
-        return camera;
-    }
-    else
+        (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)));
+
+    if( !bNeedCamera )
         return NULL;
+
+    CameraPtr camera = poKmlFactory->CreateCamera();
+    camera->set_latitude(poOgrFeat->GetFieldAsDouble(iCameraLatitudeField));
+    camera->set_longitude(poOgrFeat->GetFieldAsDouble(iCameraLongitudeField));
+    int isGX = FALSE;
+    int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+
+    if( iCameraAltitudeModeField >= 0 &&
+        poOgrFeat->IsFieldSet(iCameraAltitudeModeField) )
+    {
+        nAltitudeMode = kmlAltitudeModeFromString(
+            poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
+        camera->set_altitudemode(nAltitudeMode);
+    }
+    else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+    {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Camera should define altitudeMode != 'clampToGround'");
+    }
+
+    if( iCameraAltitudeField >= 0 &&
+        poOgrFeat->IsFieldSet(iCameraAltitudeField))
+    {
+        camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
+    }
+    else if( CPLTestBool(
+                 CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Camera should have an altitude/Z");
+        camera->set_altitude(0.0);
+    }
+
+    if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+        camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
+    if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+        camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
+    if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+        camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
+
+    return camera;
 }
 
 
