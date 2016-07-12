@@ -34,16 +34,6 @@
 
 #include "libkml_headers.h"
 
-using kmldom::ContainerPtr;
-using kmldom::DocumentPtr;
-using kmldom::ElementPtr;
-using kmldom::KmlFactory;
-using kmldom::KmlPtr;
-using kmldom::SchemaPtr;
-using kmldom::UpdatePtr;
-using kmlengine::KmzFile;
-using kmlengine::KmzFilePtr;
-
 class OGRLIBKMLDataSource;
 
 CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
@@ -62,15 +52,15 @@ class OGRLIBKMLLayer:public OGRLayer
     const char                *m_pszName;
     const char                *m_pszFileName;
 
-    ContainerPtr              m_poKmlLayer;
-    ElementPtr                m_poKmlLayerRoot;
-    UpdatePtr                 m_poKmlUpdate;
+    kmldom::ContainerPtr      m_poKmlLayer;
+    kmldom::ElementPtr        m_poKmlLayerRoot;
+    kmldom::UpdatePtr         m_poKmlUpdate;
 
-    DocumentPtr               m_poKmlDocument;
+    kmldom::DocumentPtr       m_poKmlDocument;
     //OGRStyleTable            *m_poStyleTable;
     OGRLIBKMLDataSource      *m_poOgrDS;
     OGRFeatureDefn           *m_poOgrFeatureDefn;
-    SchemaPtr                 m_poKmlSchema;
+    kmldom::SchemaPtr         m_poKmlSchema;
     OGRSpatialReference      *m_poOgrSRS;
 
     int                       m_bReadGroundOverlay;
@@ -97,9 +87,9 @@ class OGRLIBKMLLayer:public OGRLayer
                                 OGRSpatialReference * poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 OGRLIBKMLDataSource *poOgrDS,
-                                ElementPtr poKmlRoot,
-                                ContainerPtr poKmlContainer,
-                                UpdatePtr poKmlUpdate,
+                                kmldom::ElementPtr poKmlRoot,
+                                kmldom::ContainerPtr poKmlContainer,
+                                kmldom::UpdatePtr poKmlUpdate,
                                 const char *pszFileName,
                                 int bNew,
                                 int bUpdate);
@@ -117,7 +107,7 @@ class OGRLIBKMLLayer:public OGRLayer
     GIntBig                   GetFeatureCount ( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
                                           int bForce = TRUE );
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     //const char               *GetInfo ( const char * );
@@ -132,9 +122,9 @@ class OGRLIBKMLLayer:public OGRLayer
     void                      SetStyleTable ( OGRStyleTable * poStyleTable );
     const char               *GetName(  ) { return m_pszName; };
     int                       TestCapability ( const char * );
-    ContainerPtr              GetKmlLayer () { return m_poKmlLayer; };
-    ElementPtr                GetKmlLayerRoot () { return m_poKmlLayerRoot; };
-    SchemaPtr                 GetKmlSchema () { return m_poKmlSchema; };
+    kmldom::ContainerPtr      GetKmlLayer () { return m_poKmlLayer; };
+    kmldom::ElementPtr        GetKmlLayerRoot () { return m_poKmlLayerRoot; };
+    kmldom::SchemaPtr         GetKmlSchema () { return m_poKmlSchema; };
     const char               *GetFileName (  ) { return m_pszFileName; };
 
     void                      SetLookAt(const char* pszLookatLongitude,
@@ -180,8 +170,9 @@ class OGRLIBKMLLayer:public OGRLayer
     void                      SetListStyle(const char* pszListStyleType,
                                            const char* pszListStyleIconHref);
 
-    void                      Finalize(DocumentPtr poKmlDocument);
-    void                      SetUpdateIsFolder(int bUpdateIsFolder) { m_bUpdateIsFolder = bUpdateIsFolder; }
+    void                      Finalize( kmldom::DocumentPtr poKmlDocument );
+    void                      SetUpdateIsFolder(int bUpdateIsFolder)
+        { m_bUpdateIsFolder = bUpdateIsFolder; }
 };
 
 /******************************************************************************
@@ -193,7 +184,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
     char                     *pszName;
 
     /***** layers *****/
-
     OGRLIBKMLLayer          **papoLayers;
     int                       nLayers;
     int                       nAlloced;
@@ -206,16 +196,16 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     /***** for kml files *****/
     int                       m_isKml;
-    KmlPtr                    m_poKmlDSKml;
-    ContainerPtr              m_poKmlDSContainer;
-    UpdatePtr                 m_poKmlUpdate;
+    kmldom::KmlPtr            m_poKmlDSKml;
+    kmldom::ContainerPtr      m_poKmlDSContainer;
+    kmldom::UpdatePtr         m_poKmlUpdate;
 
     /***** for kmz files *****/
 
     int                       m_isKmz;
-    ContainerPtr              m_poKmlDocKml;
-    ElementPtr                m_poKmlDocKmlRoot;
-    ContainerPtr              m_poKmlStyleKml;
+    kmldom::ContainerPtr      m_poKmlDocKml;
+    kmldom::ElementPtr        m_poKmlDocKmlRoot;
+    kmldom::ContainerPtr      m_poKmlStyleKml;
     char               *pszStylePath;
 
     /***** for dir *****/
@@ -224,23 +214,25 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     /***** the kml factory *****/
 
-    KmlFactory               *m_poKmlFactory;
+    kmldom::KmlFactory       *m_poKmlFactory;
 
     /***** style table pointer *****/
 
-    void                      SetCommonOptions(ContainerPtr poKmlContainer,
-                                               char** papszOptions);
+    void                      SetCommonOptions(
+        kmldom::ContainerPtr poKmlContainer,
+        char** papszOptions);
 
-    void                      ParseDocumentOptions(KmlPtr poKml,
-                                                   DocumentPtr poKmlDocument);
+    void                      ParseDocumentOptions(
+        kmldom::KmlPtr poKml,
+        kmldom::DocumentPtr poKmlDocument);
 
   public:
-    OGRLIBKMLDataSource       ( KmlFactory *poKmlFactory );
+    OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
     ~OGRLIBKMLDataSource      (  );
 
-    const char               *GetName (  ) { return pszName; };
+    const char               *GetName() { return pszName; };
 
-    int                       GetLayerCount (  ) { return nLayers; }
+    int                       GetLayerCount() { return nLayers; }
     OGRLayer                 *GetLayer ( int );
     OGRLayer                 *GetLayerByName ( const char * );
     OGRErr                    DeleteLayer ( int );
@@ -263,7 +255,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      FlushCache (  );
     int                       TestCapability (const char * );
 
-    KmlFactory               *GetKmlFactory() { return m_poKmlFactory; };
+    kmldom::KmlFactory       *GetKmlFactory() { return m_poKmlFactory; };
 
     const char               *GetStylePath() {return pszStylePath; };
     int                       ParseIntoStyleTable ( std::string * oKmlStyleKml,
@@ -277,9 +269,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     void                      Updated() {bUpdated = TRUE;};
 
-    int                       ParseLayers ( ContainerPtr poKmlContainer,
+    int                       ParseLayers ( kmldom::ContainerPtr poKmlContainer,
                                             OGRSpatialReference *poOgrSRS );
-    SchemaPtr                 FindSchema ( const char *pszSchemaUrl);
+    kmldom::SchemaPtr         FindSchema ( const char *pszSchemaUrl);
 
   private:
 
@@ -332,8 +324,8 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                          OGRSpatialReference * poSpatialRef,
                                          OGRwkbGeometryType eGType,
                                          OGRLIBKMLDataSource * poOgrDS,
-                                         ElementPtr poKmlRoot,
-                                         ContainerPtr poKmlContainer,
+                                         kmldom::ElementPtr poKmlRoot,
+                                         kmldom::ContainerPtr poKmlContainer,
                                          const char *pszFileName,
                                          int bNew,
                                          int bUpdate,

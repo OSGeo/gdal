@@ -33,6 +33,13 @@
 #include <ogr_geometry.h>
 #include "gdal.h"
 
+#include "ogr_libkml.h"
+
+#include "ogrlibkmlgeometry.h"
+#include "ogrlibkmlfield.h"
+#include "ogrlibkmlfeaturestyle.h"
+#include "ogrlibkmlfeature.h"
+
 using kmldom::AliasPtr;
 using kmldom::CameraPtr;
 using kmldom::ElementPtr;
@@ -54,12 +61,6 @@ using kmldom::ResourceMapPtr;
 using kmldom::ScalePtr;
 using kmldom::ViewVolumePtr;
 
-#include "ogr_libkml.h"
-
-#include "ogrlibkmlgeometry.h"
-#include "ogrlibkmlfield.h"
-#include "ogrlibkmlfeaturestyle.h"
-#include "ogrlibkmlfeature.h"
 
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,

@@ -27,12 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-using kmldom::FeaturePtr;
-using kmldom::KmlFactory;
-using kmldom::PlacemarkPtr;
-using kmldom::SchemaPtr;
-using kmldom::SimpleFieldPtr;
-
 /******************************************************************************
  function to output ogr fields in kml
 
@@ -58,8 +52,8 @@ using kmldom::SimpleFieldPtr;
 void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
-    KmlFactory * poKmlFactory,
-    FeaturePtr poKmlPlacemark,
+    kmldom::KmlFactory * poKmlFactory,
+    kmldom::FeaturePtr poKmlPlacemark,
     int bUseSimpleField );
 
 /******************************************************************************
@@ -68,22 +62,22 @@ void field2kml (
 
 void kml2field (
     OGRFeature * poOgrFeat,
-    FeaturePtr poKmlFeature );
+    kmldom::FeaturePtr poKmlFeature );
 
 /******************************************************************************
  function create a simplefield from a FieldDefn
 ******************************************************************************/
 
-SimpleFieldPtr FieldDef2kml (
+kmldom::SimpleFieldPtr FieldDef2kml (
     OGRFieldDefn *poOgrFieldDef,
-    KmlFactory * poKmlFactory );
+    kmldom::KmlFactory * poKmlFactory );
 
 /******************************************************************************
  function to add the simpleFields in a schema to a featuredefn
 ******************************************************************************/
 
 void kml2FeatureDef (
-    SchemaPtr poKmlSchema,
+    kmldom::SchemaPtr poKmlSchema,
     OGRFeatureDefn *poOgrFeatureDefn);
 
 /*******************************************************************************
@@ -92,7 +86,7 @@ void kml2FeatureDef (
 *******************************************************************************/
 
 struct fieldconfig {
-	const char *namefield;
+    const char *namefield;
     const char *descfield;
     const char *tsfield;
     const char *beginfield;

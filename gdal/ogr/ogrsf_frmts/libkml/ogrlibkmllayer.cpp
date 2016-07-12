@@ -33,6 +33,9 @@
 
 #include "ogr_libkml.h"
 #include "cpl_error.h"
+#include "ogrlibkmlfeature.h"
+#include "ogrlibkmlfield.h"
+#include "ogrlibkmlstyle.h"
 
 using kmldom::CameraPtr;
 using kmldom::ChangePtr;
@@ -62,10 +65,6 @@ using kmldom::UpdatePtr;
 using kmlengine::Bbox;
 using kmlengine::KmlFile;
 using kmlengine::KmzFile;
-
-#include "ogrlibkmlfeature.h"
-#include "ogrlibkmlfield.h"
-#include "ogrlibkmlstyle.h"
 
 /************************************************************************/
 /*                    OGRLIBKMLGetSanitizedNCName()                     */
