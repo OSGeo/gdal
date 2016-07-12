@@ -104,4 +104,6 @@ private:
     CPL_DISALLOW_COPY_ASSIGN(GDALCADDataset);    
 };
 
+CPLString CADRecode( std::string sString, int CADEncoding );
+
 #endif

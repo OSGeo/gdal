@@ -35,7 +35,7 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
 	nNextFID = 0;
     poSpatialRef = NULL;
 
-    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( poCADLayer.getName().c_str() ) );
+    poFeatureDefn = new OGRFeatureDefn( CADRecode( poCADLayer_.getName(), 29 ) );
     //poFeatureDefn = new OGRFeatureDefn( CPLP 
 //getId
     // Setting up layer geometry type
