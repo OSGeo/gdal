@@ -117,7 +117,7 @@ def derived_test2():
                     'DERIVED_SUBDATASET_5_NAME' : 314,
                     'DERIVED_SUBDATASET_3_NAME' : 142,
                     'DERIVED_SUBDATASET_1_NAME' : 10,
-                    'DERIVED_SUBDATASET_6_NAME' : 99,
+                    'DERIVED_SUBDATASET_6_NAME' : 55,
                     'DERIVED_SUBDATASET_4_NAME' : 110,
                     'DERIVED_SUBDATASET_2_NAME' : 159}
 
