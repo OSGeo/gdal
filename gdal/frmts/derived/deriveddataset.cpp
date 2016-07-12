@@ -187,7 +187,7 @@ void GDALRegister_Derived()
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Derived datasets using VRT pixel functions" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "TODO" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_derived.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
     poDriver->pfnOpen = DerivedDataset::Open;
