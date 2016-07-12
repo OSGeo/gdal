@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GView
  * Purpose:  Implementation of Atlantis HKV labelled blob support

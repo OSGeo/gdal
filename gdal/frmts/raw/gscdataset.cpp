@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GSC Geogrid format driver.
  * Purpose:  Implements support for reading and writing GSC Geogrid format.

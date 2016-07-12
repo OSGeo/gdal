@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EOSAT FAST Format reader
  * Purpose:  Reads Landsat FAST-L7A, IRS 1C/1D

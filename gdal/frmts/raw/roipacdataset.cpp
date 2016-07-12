@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ROI_PAC Raster Reader
  * Purpose:  Implementation of the ROI_PAC raster reader
