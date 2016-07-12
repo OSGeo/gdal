@@ -675,6 +675,7 @@ FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 QHULL_SETTING
 GEOS_CONFIG
 GEOS_VERSION
@@ -29205,11 +29206,7 @@ fi
 
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/qhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -29270,11 +29267,7 @@ fi
 
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/libqhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/libqhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -29284,13 +29277,17 @@ fi
         as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
     else
         QHULL_SETTING=internal
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
     fi
   fi
 else
   QHULL_SETTING=internal
+  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 QHULL_SETTING=$QHULL_SETTING
+
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 
 
 
