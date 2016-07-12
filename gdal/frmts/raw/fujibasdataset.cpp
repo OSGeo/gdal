@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void GDALRegister_FujiBAS();
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              FujiBASDataset                          */
@@ -192,11 +188,11 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    const int bNativeOrder =
+    const bool bNativeOrder =
 #ifdef CPL_MSB
-    TRUE
+    true
 #else
-    FALSE
+    false
 #endif
         ;
     poDS->SetBand(
