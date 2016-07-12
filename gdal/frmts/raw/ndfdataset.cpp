@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NDF Driver
  * Purpose:  Implementation of NLAPS Data Format read support.

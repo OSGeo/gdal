@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  IDA Raster Driver
  * Purpose:  Implemenents IDA driver/dataset/rasterband.

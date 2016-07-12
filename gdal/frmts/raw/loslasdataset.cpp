@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Horizontal Datum Formats
  * Purpose:  Implementation of NOAA/NADCON los/las datum shift format.

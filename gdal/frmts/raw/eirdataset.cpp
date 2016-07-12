@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas EIR Raw Driver
  * Purpose:  Implementation of EIRDataset

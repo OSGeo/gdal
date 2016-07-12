@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implementation for ELAS DIPEx format variant.
