@@ -31,6 +31,7 @@
 
 #include <ogr_geometry.h>
 #include "ogr_p.h"
+#include "ogrlibkmlgeometry.h"
 
 using kmlbase::Vec3;
 using kmldom::CoordinatesPtr;
@@ -48,8 +49,6 @@ using kmldom::MultiGeometryPtr;
 using kmldom::OuterBoundaryIsPtr;
 using kmldom::PointPtr;
 using kmldom::PolygonPtr;
-
-#include "ogrlibkmlgeometry.h"
 
 /******************************************************************************
  function to write out a ogr geometry to kml

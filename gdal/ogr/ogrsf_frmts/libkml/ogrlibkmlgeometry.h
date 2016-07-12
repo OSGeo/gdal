@@ -31,29 +31,23 @@
 
 #include "libkml_headers.h"
 
-using kmldom::ElementPtr;
-using kmldom::GeometryPtr;
-using kmldom::GxLatLonQuadPtr;
-using kmldom::KmlFactory;
-using kmldom::LatLonBoxPtr;
-
 /*******************************************************************************
-	function to write out a ogr geometry to km
+ function to write out a ogr geometry to km
 
 args:
-						poOgrGeom		the ogr geometry
-						extra		used in recursion, just pass -1
-						poKmlFactory	pointer to the libkml dom factory
+            poOgrGeom     the ogr geometry
+            extra         used in recursion, just pass -1
+            poKmlFactory  pointer to the libkml dom factory
 
 returns:
-						ElementPtr to the geometry created
+            ElementPtr to the geometry created
 
 *******************************************************************************/
 
-ElementPtr geom2kml (
+kmldom::ElementPtr geom2kml (
     OGRGeometry * poOgrGeom,
     int extra,
-    KmlFactory * poKmlFactory );
+    kmldom::KmlFactory * poKmlFactory );
 
 
 /******************************************************************************
@@ -69,15 +63,15 @@ Returns:
 ******************************************************************************/
 
 OGRGeometry *kml2geom (
-    GeometryPtr poKmlGeometry,
+    kmldom::GeometryPtr poKmlGeometry,
     OGRSpatialReference *poOgrSRS);
 
 OGRGeometry *kml2geom_latlonbox (
-    LatLonBoxPtr poKmlLatLonBox,
+    kmldom::LatLonBoxPtr poKmlLatLonBox,
     OGRSpatialReference *poOgrSRS);
 
 OGRGeometry *kml2geom_latlonquad (
-    GxLatLonQuadPtr poKmlLatLonQuad,
+    kmldom::GxLatLonQuadPtr poKmlLatLonQuad,
     OGRSpatialReference *poOgrSRS);
 
 #endif /* OGR_LIBKML_GEOMETRY_H */

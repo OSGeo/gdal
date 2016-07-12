@@ -31,19 +31,15 @@
 
 #include "ogr_libkml.h"
 
-using kmldom::FeaturePtr;
-using kmldom::KmlFactory;
-using kmldom::PlacemarkPtr;
-
 /******************************************************************************
  function to output a ogr feature to a kml placemark
 ******************************************************************************/
 
-FeaturePtr feat2kml (
+kmldom::FeaturePtr feat2kml (
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory,
+    kmldom::KmlFactory * poKmlFactory,
     int bUseSimpleField );
 
 /******************************************************************************
@@ -51,14 +47,14 @@ FeaturePtr feat2kml (
 ******************************************************************************/
 
 OGRFeature *kml2feat (
-    PlacemarkPtr poKmlPlacemark,
+    kmldom::PlacemarkPtr poKmlPlacemark,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
     OGRSpatialReference *poOgrSRS);
 
 OGRFeature *kmlgroundoverlay2feat (
-    GroundOverlayPtr poKmlOverlay,
+    kmldom::GroundOverlayPtr poKmlOverlay,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
