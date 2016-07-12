@@ -213,7 +213,8 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  GSpacing nLineSpaceBuf,
                                  GDALRasterIOExtraArg* psExtraArg )
 {
-    if( nXSize != nBufXSize || nYSize != nBufYSize )
+    if( psExtraArg->bFloatingPointWindowValidity ||
+        nXSize != nBufXSize || nYSize != nBufYSize )
     {
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize,
