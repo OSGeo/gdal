@@ -1473,6 +1473,37 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
         m_papoLayers[i]->CreateSpatialIndexIfNecessary();
     }
 
+    // Update raster table last_change column in gpkg_contents if needed
+    if( m_bHasModifiedTiles )
+    {
+        const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+        char *pszSQL;
+
+        if( pszCurrentDate )
+        {
+            pszSQL = sqlite3_mprintf(
+                        "UPDATE gpkg_contents SET "
+                        "last_change = '%q'"
+                        "WHERE table_name = '%q' AND "
+                        "Lower(data_type) = 'tiles'",
+                        m_osRasterTable.c_str(), pszCurrentDate);
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                        "UPDATE gpkg_contents SET "
+                        "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP)"
+                        "WHERE table_name = '%q' AND "
+                        "Lower(data_type) = 'tiles'",
+                        m_osRasterTable.c_str());
+        }
+
+        CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
+        sqlite3_free(pszSQL);
+
+        m_bHasModifiedTiles = false;
+    }
+
     CPLErr eErr = FlushTiles();
 
     m_bInFlushCache = false;

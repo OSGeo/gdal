@@ -29,23 +29,26 @@
 ###############################################################################
 
 import sys
-import numpy
+
+try:
+    import numpy
+    numpy_available = True
+except ImportError:
+    numpy_available = False
+
 from osgeo import gdal
 
 sys.path.append('../pymod')
 
 import gdaltest
 
-# @TODO: remove in non-plugin configuration
-#gdal.SetConfigOption('CPL_DEBUG', 'PIXFUN')
-gdal.SetConfigOption('GDAL_DRIVER_PATH', '../..')
-gdal.AllRegister()
-
-
 ###############################################################################
 # Verify real part extraction from a complex dataset.
 
 def pixfun_real_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_real_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -72,6 +75,9 @@ def pixfun_real_c():
 
 def pixfun_real_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_real_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -96,6 +102,9 @@ def pixfun_real_r():
 # Verify imaginary part extraction from a complex dataset.
 
 def pixfun_imag_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_imag_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -122,6 +131,9 @@ def pixfun_imag_c():
 
 def pixfun_imag_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_imag_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -136,9 +148,40 @@ def pixfun_imag_r():
 
 
 ###############################################################################
+# Verify imaginary part extraction from a real dataset.
+
+def pixfun_complex():
+
+    if not numpy_available:
+        return 'skip'
+
+    filename = 'data/pixfun_complex.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    if refds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+        return 'fail'
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    if not numpy.allclose(data, refdata + 1j * refdata):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Verify modulus extraction from a complex (float) dataset.
 
 def pixfun_mod_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_mod_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -165,6 +208,9 @@ def pixfun_mod_c():
 
 def pixfun_mod_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_mod_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -189,6 +235,9 @@ def pixfun_mod_r():
 # Verify phase extraction from a complex dataset.
 
 def pixfun_phase_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_phase_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -217,6 +266,9 @@ def pixfun_phase_c():
 
 def pixfun_phase_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_phase_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -241,6 +293,9 @@ def pixfun_phase_r():
 # Verify cmplex conjugare computation on a complex dataset.
 
 def pixfun_conj_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_conj_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -267,6 +322,9 @@ def pixfun_conj_c():
 
 def pixfun_conj_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_conj_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -292,6 +350,9 @@ def pixfun_conj_r():
 
 def pixfun_sum_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_sum_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -299,17 +360,18 @@ def pixfun_sum_r():
         return 'fail'
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    refdata = numpy.zeros(data.shape, 'float')
-    for reffilename in ('data/uint16.tif', 'data/int32.tif',
-                        'data/float32.tif'):
-        refds = gdal.Open(reffilename)
-        if refds is None:
-            gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
-            return 'fail'
-        refdata += refds.GetRasterBand(1).ReadAsArray()
+    if numpy_available:
+        refdata = numpy.zeros(data.shape, 'float')
+        for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                            'data/float32.tif'):
+            refds = gdal.Open(reffilename)
+            if refds is None:
+                gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+                return 'fail'
+            refdata += refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == refdata):
-        return 'fail'
+        if not numpy.alltrue(data == refdata):
+            return 'fail'
 
     return 'success'
 
@@ -319,6 +381,9 @@ def pixfun_sum_r():
 
 def pixfun_sum_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_sum_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -326,17 +391,18 @@ def pixfun_sum_c():
         return 'fail'
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    refdata = numpy.zeros(data.shape, 'complex')
-    for reffilename in ('data/uint16.tif', 'data/cint_sar.tif',
-                        'data/cfloat64.tif'):
-        refds = gdal.Open(reffilename)
-        if refds is None:
-            gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
-            return 'fail'
-        refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+    if numpy_available:
+        refdata = numpy.zeros(data.shape, 'complex')
+        for reffilename in ('data/uint16.tif', 'data/cint_sar.tif',
+                            'data/cfloat64.tif'):
+            refds = gdal.Open(reffilename)
+            if refds is None:
+                gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+                return 'fail'
+            refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
 
-    if not numpy.alltrue(data == refdata):
-        return 'fail'
+        if not numpy.alltrue(data == refdata):
+            return 'fail'
 
     return 'success'
 
@@ -345,6 +411,9 @@ def pixfun_sum_c():
 # Verify the difference of 2 (real) datasets.
 
 def pixfun_diff_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_diff_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -378,6 +447,9 @@ def pixfun_diff_r():
 
 def pixfun_diff_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_diff_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -410,6 +482,9 @@ def pixfun_diff_c():
 
 def pixfun_mul_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_mul_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -417,17 +492,18 @@ def pixfun_mul_r():
         return 'fail'
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    refdata = numpy.ones(data.shape, 'float')
-    for reffilename in ('data/uint16.tif', 'data/int32.tif',
-                        'data/float32.tif'):
-        refds = gdal.Open(reffilename)
-        if refds is None:
-            gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
-            return 'fail'
-        refdata *= refds.GetRasterBand(1).ReadAsArray()
+    if numpy_available:
+        refdata = numpy.ones(data.shape, 'float')
+        for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                            'data/float32.tif'):
+            refds = gdal.Open(reffilename)
+            if refds is None:
+                gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+                return 'fail'
+            refdata *= refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == refdata):
-        return 'fail'
+        if not numpy.alltrue(data == refdata):
+            return 'fail'
 
     return 'success'
 
@@ -436,6 +512,9 @@ def pixfun_mul_r():
 # Verify the product of 2 (complex) datasets.
 
 def pixfun_mul_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_mul_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -462,6 +541,9 @@ def pixfun_mul_c():
 
 def pixfun_cmul_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_cmul_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -486,6 +568,9 @@ def pixfun_cmul_c():
 # Verify the product with complex conjugate of two real datasets.
 
 def pixfun_cmul_r():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_cmul_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -521,6 +606,9 @@ def pixfun_cmul_r():
 
 def pixfun_inv_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_inv_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -547,6 +635,9 @@ def pixfun_inv_r():
 
 def pixfun_inv_c():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_inv_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -562,7 +653,7 @@ def pixfun_inv_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('complex')
     delta = data - 1./refdata
-    
+
     if not numpy.alltrue(abs(delta.real) < 1e-13):
         return 'fail'
     if not numpy.alltrue(abs(delta.imag) < 1e-13):
@@ -575,6 +666,9 @@ def pixfun_inv_c():
 # Verify intensity computation of a complex dataset.
 
 def pixfun_intensity_c():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_intensity_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -601,6 +695,9 @@ def pixfun_intensity_c():
 
 def pixfun_intensity_r():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_intensity_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -626,6 +723,9 @@ def pixfun_intensity_r():
 
 def pixfun_sqrt():
 
+    if not numpy_available:
+        return 'skip'
+
     filename = 'data/pixfun_sqrt.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
@@ -647,11 +747,14 @@ def pixfun_sqrt():
 
 
 ###############################################################################
-# Verify logarithm computation.
+# Verify logarithm computation of real dataset.
 
-def pixfun_log10():
+def pixfun_log10_r():
 
-    filename = 'data/pixfun_log10.vrt'
+    if not numpy_available:
+        return 'skip'
+
+    filename = 'data/pixfun_log10_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
         gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
@@ -672,9 +775,94 @@ def pixfun_log10():
 
 
 ###############################################################################
+# Verify logarithm computation of imag dataset.
+
+def pixfun_log10_c():
+
+    if not numpy_available:
+        return 'skip'
+
+    filename = 'data/pixfun_log10_c.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/cint_sar.tif'
+    refds = gdal.Open(reffilename)
+    if refds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+        return 'fail'
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+    if not numpy.allclose(data, numpy.log10(numpy.abs(refdata))):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Verify dB computation of real dataset.
+
+def pixfun_dB_r():
+
+    if not numpy_available:
+        return 'skip'
+
+    filename = 'data/pixfun_dB_r.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/float32.tif'
+    refds = gdal.Open(reffilename)
+    if refds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+        return 'fail'
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    if not numpy.allclose(data, 20. * numpy.log10(refdata)):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Verify dB computation of imag dataset.
+
+def pixfun_dB_c():
+
+    if not numpy_available:
+        return 'skip'
+
+    filename = 'data/pixfun_dB_c.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/cint_sar.tif'
+    refds = gdal.Open(reffilename)
+    if refds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+        return 'fail'
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+    if not numpy.allclose(data, 20. * numpy.log10(numpy.abs(refdata))):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Verify conversion from dB to amplitude.
 
 def pixfun_dB2amp():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB2amp.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -701,6 +889,9 @@ def pixfun_dB2amp():
 # Verify conversion from dB to power.
 
 def pixfun_dB2pow():
+
+    if not numpy_available:
+        return 'skip'
 
     filename = 'data/pixfun_dB2pow.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
@@ -731,6 +922,7 @@ gdaltest_list = [
     pixfun_real_r,
     pixfun_imag_c,
     pixfun_imag_r,
+    pixfun_complex,
     pixfun_mod_c,
     pixfun_mod_r,
     pixfun_phase_c,
@@ -750,7 +942,10 @@ gdaltest_list = [
     pixfun_intensity_c,
     pixfun_intensity_r,
     pixfun_sqrt,
-    pixfun_log10,
+    pixfun_log10_r,
+    pixfun_log10_c,
+    pixfun_dB_r,
+    pixfun_dB_c,
     pixfun_dB2amp,
     pixfun_dB2pow,
 ]

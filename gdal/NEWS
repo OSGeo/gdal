@@ -1288,7 +1288,7 @@ Utilities:
  * ogr2ogr: add special case for -update and GPKG and input=output
  * ogr2ogr: when copying a layer that has a source integer/integer64 field with same name as target FID column, avoid creating it into target layer and use its content as the FID value (#5845)
  * ogr2ogr: in non-append mode, if target layer has a FID creation option, reuse source FID name and source FIDs, unless -unsetFid is specified (#5845)
- * ogr2ogr: copy source dataset and layer metadata, unless disabled by -nomd. Additionnal dataset metadata can be set with -mo KEY=VALUE
+ * ogr2ogr: copy source dataset and layer metadata, unless disabled by -nomd. Additional dataset metadata can be set with -mo KEY=VALUE
  * ogr2ogr: add -ds_transaction to force dataset transactions, mainly for FileGDB driver
  * ogr2ogr: fix crash with -clipdst when a reprojection fails before (#5973)
  * ogrlineref: fix project if reper lies on first point or last point of line
@@ -3310,7 +3310,7 @@ Port:
  * /vsicurl/ : fetch more info (size, date) when listing FTP or HTTP directories and save it in cache; use those info for ReadDir() and Stat()
  * /vsicurl/: accept 225 as a valid response code for FTP downloads (#4365)
  * /vsicurl/ : add CPL_VSIL_CURL_ALLOWED_EXTENSIONS configuration option that can be used to restrict files whose existence is going to be tested.
- * /vsitar/ : Recognize additionnal .tar files with slightly header differences
+ * /vsitar/ : Recognize additional .tar files with slightly header differences
  * /vsizip/ : wrap the returned file handle in a BufferedReader
  * /vsizip/ : fix 1900 year offset for year returned by VSIStatL()
  * /vsizip and /vsitar: remove leading './' pattern at the beginning of filenames contained in the archive
@@ -6234,7 +6234,7 @@ NITF driver:
  * Apply untested RPC00A remapping (#2040)
  * Fix #2135 by narrowing workaround test made for #1750
  * Prevent crash on NITF file without image segment (#2362)
- * Additionnal fix for handling 1-bit uncompressed NITF images with NITF_IC=NM  (#1854)
+ * Additional fix for handling 1-bit uncompressed NITF images with NITF_IC=NM  (#1854)
  * Set IREP=RGB implicitly when the first 3 channels of an image are R,G,B (#2343)
  * Allocate one extra byte for the NULL terminating character when reading TEXT data in NITF file (#2366)
  * Fix 'adding BLOCKA TRE precludes writing IGEOLO' (#2475)

@@ -41,6 +41,7 @@
 
 GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
     m_bNew(false),
+    m_bHasModifiedTiles(false),
     m_nZoomLevel(-1),
     m_pabyCachedTiles(NULL),
     m_nShiftXTiles(0),
@@ -2252,6 +2253,10 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
     {
         return CE_Failure;
     }
+    if( m_poTPD->m_poParentDS )
+        m_poTPD->m_poParentDS->m_bHasModifiedTiles = true;
+    else
+        m_poTPD->m_bHasModifiedTiles = true;
 
     int nRow = nBlockYOff + m_poTPD->m_nShiftYTiles;
     int nCol = nBlockXOff + m_poTPD->m_nShiftXTiles;

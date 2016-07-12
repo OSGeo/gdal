@@ -2131,22 +2131,37 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 
     CPLString osFilename(pszFilename);
     bool bGotFileList = true;
-    if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
+    bool bForceExistsCheck = false;
+    CachedFileProp* cachedFileProp = GetCachedFileProp(osFilename + strlen(GetFSPrefix()));
+    if( !(cachedFileProp != NULL && cachedFileProp->eExists == EXIST_YES) &&
+        strchr(CPLGetFilename(osFilename), '.') != NULL &&
         !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
         char** papszFileList = ReadDirInternal(CPLGetDirname(osFilename), 0, &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
-        CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
-            return NULL;
+            // Some file servers are case insensitive, so in case there is a
+            // match with case difference, do a full check just in case.
+            // e.g http://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/MEGA90N000CB.IMG
+            // that is queried by gdalinfo /vsicurl/http://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/mega90n000cb.lbl
+            if( CSLFindString(papszFileList, CPLGetFilename(osFilename)) != -1 )
+            {
+                bForceExistsCheck = true;
+            }
+            else
+            {
+                CSLDestroy(papszFileList);
+                return NULL;
+            }
         }
+        CSLDestroy(papszFileList);
     }
 
     VSICurlHandle* poHandle = CreateFileHandle(osFilename + strlen(GetFSPrefix()));
     if( poHandle == NULL )
         return NULL;
-    if (!bGotFileList)
+    if (!bGotFileList || bForceExistsCheck)
     {
         /* If we didn't get a filelist, check that the file really exists */
         if (!poHandle->Exists(bSetError))

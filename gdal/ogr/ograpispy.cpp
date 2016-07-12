@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGR C API "Spy"
@@ -41,6 +40,8 @@
 #include "ogr_feature.h"
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef OGRAPISPY_ENABLED
 

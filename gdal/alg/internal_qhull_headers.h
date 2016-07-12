@@ -974,22 +974,22 @@ static gdal_realT qh_stddev();
 #pragma warning( disable : 4306 )  /* e.g 'type cast' : conversion from 'long' to 'facetT *' of greater size */
 #endif
 
-#include "libqhull.h"
-#include "libqhull.c"
-#include "poly.c"
-#include "poly2.c"
-#include "mem.c"
-#include "user.c"
-#include "global.c"
+#include "libqhull/libqhull.h"
+#include "libqhull/libqhull.c"
+#include "libqhull/poly.c"
+#include "libqhull/poly2.c"
+#include "libqhull/mem.c"
+#include "libqhull/user.c"
+#include "libqhull/global.c"
 /*#include "userprintf.c"*/
-#include "random.c"
-#include "qset.c"
-#include "io.c"
-#include "usermem.c"
-#include "geom.c"
-#include "geom2.c"
-#include "stat.c"
-#include "merge.c"
+#include "libqhull/random.c"
+#include "libqhull/qset.c"
+#include "libqhull/io.c"
+#include "libqhull/usermem.c"
+#include "libqhull/geom.c"
+#include "libqhull/geom2.c"
+#include "libqhull/stat.c"
+#include "libqhull/merge.c"
 
 #ifdef _MSC_VER
 #pragma warning( pop )

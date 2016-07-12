@@ -33,32 +33,34 @@
 #include <ogr_geometry.h>
 #include "gdal.h"
 
-using kmldom::KmlFactory;
-using kmldom::PlacemarkPtr;
-using kmldom::ElementPtr;
-using kmldom::GeometryPtr;
-using kmldom::Geometry;
-using kmldom::GroundOverlayPtr;
-using kmldom::CameraPtr;
-using kmldom::ModelPtr;
-using kmldom::LinkPtr;
-using kmldom::LocationPtr;
-using kmldom::OrientationPtr;
-using kmldom::ScalePtr;
-using kmldom::ResourceMapPtr;
-using kmldom::AliasPtr;
-using kmldom::NetworkLinkPtr;
-using kmldom::PhotoOverlayPtr;
-using kmldom::IconPtr;
-using kmldom::ViewVolumePtr;
-using kmldom::ImagePyramidPtr;
-
 #include "ogr_libkml.h"
 
 #include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
 #include "ogrlibkmlfeature.h"
+
+using kmldom::AliasPtr;
+using kmldom::CameraPtr;
+using kmldom::ElementPtr;
+using kmldom::FeaturePtr;
+using kmldom::Geometry;
+using kmldom::GeometryPtr;
+using kmldom::GroundOverlayPtr;
+using kmldom::IconPtr;
+using kmldom::ImagePyramidPtr;
+using kmldom::KmlFactory;
+using kmldom::LinkPtr;
+using kmldom::LocationPtr;
+using kmldom::ModelPtr;
+using kmldom::NetworkLinkPtr;
+using kmldom::OrientationPtr;
+using kmldom::PhotoOverlayPtr;
+using kmldom::PlacemarkPtr;
+using kmldom::ResourceMapPtr;
+using kmldom::ScalePtr;
+using kmldom::ViewVolumePtr;
+
 
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,

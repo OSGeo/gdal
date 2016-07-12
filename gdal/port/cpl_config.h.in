@@ -199,6 +199,9 @@
 /* Define to 1 if GCC atomic builtins are available */
 #undef HAVE_GCC_ATOMIC_BUILTINS
 
+/* Define to 1 if GCC bswap builtins are available */
+#undef HAVE_GCC_BSWAP
+
 /* Define to name of 64bit fopen function */
 #undef VSI_FOPEN64
 

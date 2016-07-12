@@ -6766,6 +6766,108 @@ def tiff_write_153():
 
 
 ###############################################################################
+# Test empty block writing skipping and SPARSE_OK in CreateCopy() and Open()
+
+def tiff_write_154():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
+
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['BLOCKYSIZE=256'])
+    ds.FlushCache()
+    # At that point empty blocks have not yet been flushed
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    ds = None
+    # Now they are and that's done in a filesystem sparse way. TODO: check this
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 256162:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
+    ds.FlushCache()
+    # With compression, empty blocks are written right away
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 462:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 462:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+
+    # SPARSE_OK in CreateCopy(): blocks are not written
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256'])
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    # SPARSE_OK in Open()/update: blocks are not written
+    ds = gdal.OpenEx('/vsimem/tiff_write_154.tif', gdal.OF_UPDATE, open_options = ['SPARSE_OK=YES'])
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    ds = None
+    # Default behaviour in Open()/update: blocks are written
+    ds = gdal.OpenEx('/vsimem/tiff_write_154.tif', gdal.OF_UPDATE)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 250162:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+
+    # SPARSE_OK in CreateCopy() in compressed case (strips): blocks are not written
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 174:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+
+    # SPARSE_OK in CreateCopy() in compressed case (tiling): blocks are not written
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'TILED=YES'])
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 190:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+        return 'fail'
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+
+    # Test detection of 0 blocks for all data types
+    for dt in [ 'signedbyte', gdal.GDT_Int16, gdal.GDT_UInt16,
+                gdal.GDT_Int32, gdal.GDT_UInt32,
+                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+        # SPARSE_OK in CreateCopy(): blocks are not written
+        if dt == 'signedbyte':
+            src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, gdal.GDT_Byte)
+            ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'PIXELTYPE=SIGNEDBYTE'])
+        else:
+            src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, dt)
+            ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256'])
+        ds = None
+        if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
+            gdaltest.post_reason('fail')
+            print(dt)
+            print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6948,6 +7050,7 @@ gdaltest_list = [
     tiff_write_151,
     tiff_write_152,
     tiff_write_153,
+    tiff_write_154,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

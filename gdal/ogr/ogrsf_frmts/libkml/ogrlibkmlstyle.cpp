@@ -34,28 +34,29 @@
 
 #include "ogr_featurestyle.h"
 
-
-using kmldom::KmlFactory;;
-using kmldom::ElementPtr;
-using kmldom::ObjectPtr;
-using kmldom::FeaturePtr;
-using kmldom::StylePtr;
-using kmldom::StyleMapPtr;
-using kmldom::STYLESTATE_NORMAL;
-using kmldom::STYLESTATE_HIGHLIGHT;
-using kmldom::StyleSelectorPtr;
-using kmldom::LineStylePtr;
-using kmldom::PolyStylePtr;
-using kmldom::IconStylePtr;
-using kmldom::IconStyleIconPtr;
-using kmldom::LabelStylePtr;
-using kmldom::BalloonStylePtr;
-using kmldom::HotSpotPtr;
 using kmlbase::Color32;
-using kmldom::PairPtr;
-using kmldom::KmlPtr;
-using kmldom::ListStylePtr;
+using kmldom::BalloonStylePtr;
+using kmldom::ContainerPtr;
+using kmldom::DocumentPtr;
+using kmldom::ElementPtr;
+using kmldom::FeaturePtr;
+using kmldom::HotSpotPtr;
 using kmldom::ItemIconPtr;
+using kmldom::IconStyleIconPtr;
+using kmldom::IconStylePtr;
+using kmldom::KmlFactory;;
+using kmldom::KmlPtr;
+using kmldom::LabelStylePtr;
+using kmldom::LineStylePtr;
+using kmldom::ListStylePtr;
+using kmldom::ObjectPtr;
+using kmldom::PairPtr;
+using kmldom::PolyStylePtr;
+using kmldom::StyleMapPtr;
+using kmldom::StylePtr;
+using kmldom::StyleSelectorPtr;
+using kmldom::STYLESTATE_HIGHLIGHT;
+using kmldom::STYLESTATE_NORMAL;
 
 #include "ogrlibkmlstyle.h"
 #include "ogr_libkml.h"
@@ -1209,10 +1210,10 @@ void styletable2kml (
             poKmlPairNormal->set_styleurl(CPLSPrintf("#%s_normal", osStyleName.c_str()));
             poKmlStyleMap->add_pair(poKmlPairNormal);
 
-            PairPtr poKmlPairHightlight = poKmlFactory->CreatePair (  );
-            poKmlPairHightlight->set_key(STYLESTATE_HIGHLIGHT);
-            poKmlPairHightlight->set_styleurl(CPLSPrintf("#%s_highlight", osStyleName.c_str()));
-            poKmlStyleMap->add_pair(poKmlPairHightlight);
+            PairPtr poKmlPairHighlight = poKmlFactory->CreatePair (  );
+            poKmlPairHighlight->set_key(STYLESTATE_HIGHLIGHT);
+            poKmlPairHighlight->set_styleurl(CPLSPrintf("#%s_highlight", osStyleName.c_str()));
+            poKmlStyleMap->add_pair(poKmlPairHighlight);
 
             /***** add the style to the container *****/
             DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );

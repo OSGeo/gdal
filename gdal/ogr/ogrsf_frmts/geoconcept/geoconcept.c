@@ -1995,7 +1995,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         goto onError;
       }
     }
-    /* additionnal ring : either holes, or islands */
+    /* additional ring : either holes, or islands */
     if( i < nbtp-1 )
     {
       npo= atoi(pszFields[i]), i++;

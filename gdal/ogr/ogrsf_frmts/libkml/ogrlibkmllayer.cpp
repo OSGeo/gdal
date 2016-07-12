@@ -32,39 +32,39 @@
 #include <string>
 
 #include "ogr_libkml.h"
-//#include "cpl_conv.h"
-//#include "cpl_string.h"
 #include "cpl_error.h"
-
-using kmldom::KmlFactory;
-using kmldom::PlacemarkPtr;
-using kmldom::Placemark;
-using kmldom::DocumentPtr;
-using kmldom::ContainerPtr;
-using kmldom::FeaturePtr;
-using kmldom::GroundOverlayPtr;
-using kmldom::KmlPtr;
-using kmldom::Kml;
-using kmlengine::KmzFile;
-using kmlengine::KmlFile;
-using kmlengine::Bbox;
-using kmldom::ExtendedDataPtr;
-using kmldom::SchemaDataPtr;
-using kmldom::DataPtr;
-using kmldom::CameraPtr;
-using kmldom::LookAtPtr;
-using kmldom::RegionPtr;
-using kmldom::LatLonAltBoxPtr;
-using kmldom::LodPtr;
-using kmldom::ScreenOverlayPtr;
-using kmldom::IconPtr;
-using kmldom::CreatePtr;
-using kmldom::ChangePtr;
-using kmldom::DeletePtr;
-
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlstyle.h"
+
+using kmldom::CameraPtr;
+using kmldom::ChangePtr;
+using kmldom::CreatePtr;
+using kmldom::ContainerPtr;
+using kmldom::DataPtr;
+using kmldom::DeletePtr;
+using kmldom::DocumentPtr;
+using kmldom::ElementPtr;
+using kmldom::ExtendedDataPtr;
+using kmldom::FeaturePtr;
+using kmldom::GroundOverlayPtr;
+using kmldom::IconPtr;
+using kmldom::Kml;
+using kmldom::KmlFactory;
+using kmldom::KmlPtr;
+using kmldom::LatLonAltBoxPtr;
+using kmldom::LodPtr;
+using kmldom::LookAtPtr;
+using kmldom::Placemark;
+using kmldom::PlacemarkPtr;
+using kmldom::RegionPtr;
+using kmldom::SchemaDataPtr;
+using kmldom::ScreenOverlayPtr;
+using kmldom::SimpleFieldPtr;
+using kmldom::UpdatePtr;
+using kmlengine::Bbox;
+using kmlengine::KmlFile;
+using kmlengine::KmzFile;
 
 /************************************************************************/
 /*                    OGRLIBKMLGetSanitizedNCName()                     */

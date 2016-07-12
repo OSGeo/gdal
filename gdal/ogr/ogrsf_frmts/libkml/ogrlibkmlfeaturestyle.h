@@ -28,21 +28,19 @@
 
 #include "ogr_libkml.h"
 
-using kmldom::FeaturePtr;
-
 void featurestyle2kml (
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory,
-    FeaturePtr poKmlFeature );
+    kmldom::KmlFactory * poKmlFactory,
+    kmldom::FeaturePtr poKmlFeature );
 
 /******************************************************************************
  function to read a kml style into ogr's featurestyle
 ******************************************************************************/
 
 void kml2featurestyle (
-    FeaturePtr poKmlFeature,
+    kmldom::FeaturePtr poKmlFeature,
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature *poOgrFeat);

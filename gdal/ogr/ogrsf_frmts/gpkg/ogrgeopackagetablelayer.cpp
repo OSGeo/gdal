@@ -66,6 +66,50 @@ OGRErr OGRGeoPackageTableLayer::SaveExtent()
 }
 
 //----------------------------------------------------------------------
+// SaveTimestamp()
+//
+// Update the last_change column of the gpkg_contents metadata table.
+//
+OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
+{
+    if ( !m_poDS->GetUpdate() || !m_bContentChanged )
+        return OGRERR_NONE;
+
+    m_bContentChanged = false;
+
+    sqlite3* poDb = m_poDS->GetDB();
+
+    if ( ! poDb ) return OGRERR_FAILURE;
+
+    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+    char *pszSQL;
+
+    if( pszCurrentDate )
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = '%q'"
+                    "WHERE table_name = '%q' AND "
+                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    m_pszTableName, pszCurrentDate);
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP)"
+                    "WHERE table_name = '%q' AND "
+                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    m_pszTableName);
+    }
+
+    OGRErr err = SQLCommand(poDb, pszSQL);
+    sqlite3_free(pszSQL);
+
+    return err;
+}
+
+//----------------------------------------------------------------------
 // UpdateExtent()
 //
 // Expand the layer envelope if necessary to reflect the bounds
@@ -855,6 +899,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_iSrs = 0;
     m_poExtent = NULL;
     m_bExtentChanged = false;
+    m_bContentChanged = false;
     m_poQueryStatement = NULL;
     m_poUpdateStatement = NULL;
     m_bInsertStatementWithFID = false;
@@ -899,6 +944,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
     /* Save metadata back to the database */
     SaveExtent();
+    SaveTimestamp();
 
     /* Clean up resources in memory */
     if ( m_pszTableName )
@@ -1236,6 +1282,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         poFeature->SetFID(OGRNullFID);
     }
 
+    m_bContentChanged = true;
+
     /* All done! */
     return OGRERR_NONE;
 }
@@ -1367,6 +1415,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetGeomFieldRef(0)->getEnvelope(&oEnv);
             UpdateExtent(&oEnv);
         }
+
+        m_bContentChanged = true;
     }
 
     /* All done! */
@@ -1559,7 +1609,12 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
     OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
     if( eErr == OGRERR_NONE )
+    {
         eErr = (sqlite3_changes(m_poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+
+        if( eErr == OGRERR_NONE )
+            m_bContentChanged = true;
+    }
     return eErr;
 }
 
@@ -1573,6 +1628,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
         return OGRERR_FAILURE;
 
     SaveExtent();
+    SaveTimestamp();
     return OGRERR_NONE;
 }
 

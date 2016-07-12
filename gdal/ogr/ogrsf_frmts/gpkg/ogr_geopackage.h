@@ -299,6 +299,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_soFilter;
     CPLString                   osQuery;
     bool                        m_bExtentChanged;
+    bool                        m_bContentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
@@ -401,6 +402,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
   private:
     OGRErr              UpdateExtent( const OGREnvelope *poExtent );
     OGRErr              SaveExtent();
+    OGRErr              SaveTimestamp();
     OGRErr              BuildColumns();
     OGRBoolean          IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
