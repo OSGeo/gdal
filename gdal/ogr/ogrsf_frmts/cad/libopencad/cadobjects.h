@@ -853,6 +853,7 @@ class CADLWPolylineObject : public CADEntityObject
 public:
     CADLWPolylineObject();
 
+    bool   bClosed;
     double dfConstWidth;
     double dfElevation;
     double dfThickness;

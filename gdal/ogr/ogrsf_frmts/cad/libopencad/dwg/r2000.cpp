@@ -1261,6 +1261,7 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject*>(
                     readedObject.get ());
 
+		lwPolyline->setClosed(cadlwPolyline->bClosed);
         lwPolyline->setColor (cadlwPolyline->stCed.nCMColor);
         lwPolyline->setConstWidth (cadlwPolyline->dfConstWidth);
         lwPolyline->setElevation (cadlwPolyline->dfElevation);
@@ -2312,17 +2313,27 @@ CADLWPolylineObject *DWGFileR2000::getLWPolyLine(long dObjectSize,
     }
 
     vertixesCount = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+    polyline->avertVertexes.reserve( vertixesCount );
 
     if ( dataFlag & 16 )
     {
         nBulges = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+        polyline->adfBulges.reserve( nBulges );
     }
 
     // TODO: tell ODA that R2000 contains nNumWidths flag
     if ( dataFlag & 32 )
     {
         nNumWidths = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+        polyline->astWidths.reserve( nNumWidths );
     }
+    
+    if( dataFlag & 512 )
+    {
+	polyline->bClosed = true;
+    }
+    else
+	polyline->bClosed = false;
 
     // First of all, read first vertex.
     CADVector vertex = ReadRAWVector(pabyInput, nBitOffsetFromStart);
@@ -2426,7 +2437,9 @@ CADSplineObject *DWGFileR2000::getSpline(long dObjectSize,
         spline->vectBegTangDir = vectBegTangDir;
         CADVector vectEndTangDir = ReadVector(pabyInput, nBitOffsetFromStart);
         spline->vectEndTangDir = vectEndTangDir;
+
         spline->nNumFitPts = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+        spline->averFitPoints.reserve( spline->nNumFitPts );
     }
     else if ( spline->dScenario == 1 )
     {
@@ -2435,8 +2448,14 @@ CADSplineObject *DWGFileR2000::getSpline(long dObjectSize,
         spline->bPeriodic = ReadBIT (pabyInput, nBitOffsetFromStart);
         spline->dfKnotTol = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
         spline->dfCtrlTol = ReadBITDOUBLE (pabyInput, nBitOffsetFromStart);
+
         spline->nNumKnots = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+        spline->adfKnots.reserve( spline->nNumKnots );
+
         spline->nNumCtrlPts = ReadBITLONG (pabyInput, nBitOffsetFromStart);
+        spline->avertCtrlPoints.reserve( spline->nNumCtrlPts );
+        if( spline->bWeight ) spline->adfCtrlPointsWeight.reserve( spline->nNumCtrlPts );
+
         spline->bWeight = ReadBIT (pabyInput, nBitOffsetFromStart);
     }
 #ifdef _DEBUG
@@ -3714,7 +3733,7 @@ CADXRecordObject *DWGFileR2000::getXRecord(long dObjectSize,
     xrecord->nNumReactors = ReadBITLONG( pabyInput, nBitOffsetFromStart );
     xrecord->nNumDataBytes = ReadBITLONG (pabyInput, nBitOffsetFromStart);
 
-    for( size_t i = 0; i < xrecord->nNumDataBytes; ++i )
+    for( long i = 0; i < xrecord->nNumDataBytes; ++i )
     {
         xrecord->abyDataBytes.push_back( ReadCHAR(pabyInput, nBitOffsetFromStart) );
     }
@@ -3852,48 +3871,34 @@ int DWGFileR2000::readSectionLocator()
     return CADErrorCodes::SUCCESS;
 }
 
-// TODO: code is really bad. Just for test purposes only, will fix later.
-string DWGFileR2000::getESRISpatialRef()
+CADDictionary DWGFileR2000::getNOD()
 {
+    CADDictionary stNOD;
+
     unique_ptr< CADDictionaryObject > spoNamedDictObj( ( CADDictionaryObject* )
                                                                getObject (tables.getTableHandle (CADTables::NamedObjectsDict).getAsLong () ) );
 
     for( size_t i = 0; i < spoNamedDictObj->sItemNames.size(); ++i )
     {
-        if ( !strcmp ("ESRI_PRJ", spoNamedDictObj->sItemNames[i].c_str()) )
+        unique_ptr<CADObject> spoDictRecord( getObject( spoNamedDictObj->hItemHandles[i].getAsLong () ) );
+
+        if( spoDictRecord == nullptr ) continue; // skip unreaded objects
+
+        if( spoDictRecord->getType () == CADObject::ObjectType::DICTIONARY )
         {
-            unique_ptr<CADXRecordObject> spoXRecordObj (
-                    ( CADXRecordObject * ) getObject (spoNamedDictObj->hItemHandles[i].getAsLong ()));
+            // TODO: add implementation of DICTIONARY reading
+        }
+        else if( spoDictRecord->getType () == CADObject::ObjectType::XRECORD )
+        {
+            CADXRecord * cadxRecord = new CADXRecord();
+            CADXRecordObject * cadxRecordObject = ( CADXRecordObject* ) spoDictRecord.get();
 
-            if( spoXRecordObj.get() == nullptr ) return string("");
+            string xRecordData( cadxRecordObject->abyDataBytes.begin(), cadxRecordObject->abyDataBytes.end() );
+            cadxRecord->setRecordData (xRecordData);
 
-            size_t esri_prj_begins = 10000;
-            for( size_t j = 0; j < spoXRecordObj->abyDataBytes.size(); ++j )
-            {
-                if( spoXRecordObj->abyDataBytes[j] == 'G' )
-                {
-                    if( spoXRecordObj->abyDataBytes[j+1] == 'E' )
-                    {
-                        esri_prj_begins = j;
-                        break;
-                    }
-                }
-            }
-
-            if( esri_prj_begins > spoXRecordObj->abyDataBytes.size() )
-            {
-                return string("");
-            }
-
-            string esri_prj;
-            for( size_t j = esri_prj_begins; j < spoXRecordObj->abyDataBytes.size(); ++j )
-            {
-                esri_prj.push_back( spoXRecordObj->abyDataBytes[j] );
-            }
-
-            return esri_prj;
+            stNOD.addRecord ( make_pair( spoNamedDictObj->sItemNames[i], (CADDictionaryRecord*) cadxRecord ) );
         }
     }
 
-    return string("");
+    return stNOD;
 }

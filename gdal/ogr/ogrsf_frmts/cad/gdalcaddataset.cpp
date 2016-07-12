@@ -319,8 +319,26 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
     OGRSpatialReference *poSpatialRef = NULL;
     if( poCADFile != NULL )
     {
+	CPLString sESRISpatRef;
         poSpatialRef = new OGRSpatialReference();
-        CPLString sESRISpatRef = poCADFile->getESRISpatialRef();
+	CADDictionary oNOD = poCADFile->getNOD();
+	for( size_t i = 0; i < oNOD.getRecordsCount(); ++i )
+	{
+		if( !strcmp( oNOD.getRecord(i).first.c_str(), "ESRI_PRJ" ) )
+		{
+			size_t j = 0;
+			CADXRecord * poXRecord = ( CADXRecord* ) oNOD.getRecord(i).second;
+			// FIXME: optimize it with std::string::find() func
+			for( j = 0; j < poXRecord->getRecordData().size(); ++j )
+			{
+				if( poXRecord->getRecordData()[j] == 'G' ) break;
+			}
+
+			std::string sESRISpatRefData( poXRecord->getRecordData().begin() + j,
+						      poXRecord->getRecordData().end() );
+			sESRISpatRef = sESRISpatRefData;
+		}
+	}
 
         if( !sESRISpatRef.empty() )
         {

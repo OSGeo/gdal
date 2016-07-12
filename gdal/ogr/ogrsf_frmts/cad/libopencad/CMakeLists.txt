@@ -56,7 +56,8 @@ set(HHEADERS
     cadtables.h
     cadgeometry.h
     cadlayer.h
-    cadcolors.h)
+    cadcolors.h
+    caddictionary.h)
 
 set(HHEADER_PRIV
     cadobjects.h
@@ -74,7 +75,7 @@ set(CSOURCES
     cadgeometry.cpp
     cadobjects.cpp
     cadlayer.cpp
-    )
+    caddictionary.cpp)
 
 set(LIB_NAME)
 if(BUILD_SHARED_LIBS)

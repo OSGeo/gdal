@@ -257,6 +257,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                                 stVertex.getY(),
                                 stVertex.getZ() );
             }
+            
+            if( poCADLWPolyline->isClosed() )
+			{
+				poLS->addPoint( poCADLWPolyline->getVertex(0).getX(),
+								poCADLWPolyline->getVertex(0).getY(),
+								poCADLWPolyline->getVertex(0).getZ() );
+			}
 
             poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "cadgeom_type", "CADLWPolyline" );

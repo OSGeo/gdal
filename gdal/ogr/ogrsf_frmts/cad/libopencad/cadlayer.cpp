@@ -178,10 +178,11 @@ void CADLayer::addHandle(long handle, CADObject::ObjectType type)
                        continue;
                    addHandle(entHandle.getAsLong (), entity->getType ());
                    // add shift/scale/rotate to transform map
-                   transformations[entHandle.getAsLong ()] =
-                        {pInsert->vertInsertionPoint,
-                         pInsert->vertScales,
-                         pInsert->dfRotation};
+                   Matrix mat;
+                   mat.translate (pInsert->vertInsertionPoint);
+                   mat.scale (pInsert->vertScales);
+                   mat.rotate (pInsert->dfRotation);
+                   transformations[entHandle.getAsLong ()] = mat;
                }
             }
 
@@ -222,8 +223,17 @@ size_t CADLayer::getGeometryCount() const
 
 CADGeometry *CADLayer::getGeometry(size_t index)
 {
-    // TODO: transform geometry if geometryHandles[index] is in transformations
-    return pCADFile->getGeometry(geometryHandles[index]);
+    long nHandle = geometryHandles[index];
+    CADGeometry* pGeom = pCADFile->getGeometry(nHandle);
+    if(nullptr == pGeom)
+        return nullptr;
+    auto iter = transformations.find(nHandle);
+    if(iter != transformations.end())
+    {
+        // transform geometry if nHandle is in transformations
+        pGeom->transform (iter->second);
+    }
+    return pGeom;
 }
 
 size_t CADLayer::getImageCount() const

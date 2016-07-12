@@ -13,7 +13,8 @@ OBJ = \
 	cadfilestreamio.o \
 	cadgeometry.o \
 	cadheader.o \
-	opencad.o
+	opencad.o \
+	caddictionary.o
 
 O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 

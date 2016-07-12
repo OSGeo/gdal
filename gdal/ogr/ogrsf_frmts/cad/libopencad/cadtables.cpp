@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -58,6 +59,9 @@ int CADTables::readTable( CADFile * const file, CADTables::TableType eType)
     {
         case LayersTable:
             return readLayersTable(file, iter->second.getAsLong ());
+        default:
+            std::cerr << "Unsupported table";
+            break;
     }
 
     return CADErrorCodes::SUCCESS;
