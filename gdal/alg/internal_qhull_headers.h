@@ -974,22 +974,22 @@ static gdal_realT qh_stddev();
 #pragma warning( disable : 4306 )  /* e.g 'type cast' : conversion from 'long' to 'facetT *' of greater size */
 #endif
 
-#include "libqhull/libqhull.h"
-#include "libqhull/libqhull.c"
-#include "libqhull/poly.c"
-#include "libqhull/poly2.c"
-#include "libqhull/mem.c"
-#include "libqhull/user.c"
-#include "libqhull/global.c"
+#include "internal_libqhull/libqhull.h"
+#include "internal_libqhull/libqhull.c"
+#include "internal_libqhull/poly.c"
+#include "internal_libqhull/poly2.c"
+#include "internal_libqhull/mem.c"
+#include "internal_libqhull/user.c"
+#include "internal_libqhull/global.c"
 /*#include "userprintf.c"*/
-#include "libqhull/random.c"
-#include "libqhull/qset.c"
-#include "libqhull/io.c"
-#include "libqhull/usermem.c"
-#include "libqhull/geom.c"
-#include "libqhull/geom2.c"
-#include "libqhull/stat.c"
-#include "libqhull/merge.c"
+#include "internal_libqhull/random.c"
+#include "internal_libqhull/qset.c"
+#include "internal_libqhull/io.c"
+#include "internal_libqhull/usermem.c"
+#include "internal_libqhull/geom.c"
+#include "internal_libqhull/geom2.c"
+#include "internal_libqhull/stat.c"
+#include "internal_libqhull/merge.c"
 
 #ifdef _MSC_VER
 #pragma warning( pop )
