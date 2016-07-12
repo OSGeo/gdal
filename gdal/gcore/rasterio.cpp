@@ -957,8 +957,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
             else
                 nDstYCount = nBufYSize - nDstYOff;
 
-            int nChunkYOff = nYOff + (int) (nDstYOff * dfYRatioDstToSrc);
-            int nChunkYOff2 = nYOff + (int) ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
+            int nChunkYOff = (int) (dfYOff + nDstYOff * dfYRatioDstToSrc);
+            int nChunkYOff2 = (int) ceil(dfYOff + (nDstYOff + nDstYCount) * dfYRatioDstToSrc);
             if( nChunkYOff2 > nRasterYSize )
                 nChunkYOff2 = nRasterYSize;
             int nYCount = nChunkYOff2 - nChunkYOff;
@@ -985,8 +985,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 else
                     nDstXCount = nBufXSize - nDstXOff;
 
-                int nChunkXOff = nXOff + (int) (nDstXOff * dfXRatioDstToSrc);
-                int nChunkXOff2 = nXOff + (int) ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
+                int nChunkXOff = (int) (dfXOff + nDstXOff * dfXRatioDstToSrc);
+                int nChunkXOff2 = (int) ceil(dfXOff + (nDstXOff + nDstXCount) * dfXRatioDstToSrc);
                 if( nChunkXOff2 > nRasterXSize )
                     nChunkXOff2 = nRasterXSize;
                 int nXCount = nChunkXOff2 - nChunkXOff;
