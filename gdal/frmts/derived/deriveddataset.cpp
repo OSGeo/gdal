@@ -66,7 +66,7 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     }
 
   /* Next, we need to now which derived dataset to compute */
-  const size_t alg_pos = filename.find(":",dsds_pos+20);
+  const size_t alg_pos = filename.find(":",dsds_pos+nPrefixLen+1);
   if (alg_pos == std::string::npos)
     {
     /* Unable to Open if we do not find the name of the derived dataset */
