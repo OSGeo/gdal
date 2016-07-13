@@ -488,6 +488,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
+    virtual char ** GetMetadata(const char * pszDomain = "");
+
+    virtual char ** GetMetadataDomainList();
+    
 private:
     void           *m_hPrivateData;
 
@@ -495,7 +499,7 @@ private:
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
-
+    CPLStringList oDerivedMetadataList;
   public:
 
     virtual int         GetLayerCount();
