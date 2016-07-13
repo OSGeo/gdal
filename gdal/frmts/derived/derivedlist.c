@@ -43,7 +43,7 @@ static const DerivedDatasetDescription asDDSDesc [] =
 
 #define NB_DERIVED_DATASETS (sizeof(asDDSDesc)/sizeof(asDDSDesc[0]))
 
-const DerivedDatasetDescription* CPL_DLL CPL_STDCALL GDALGetDerivedDatasetDescriptions(unsigned int * pnDescriptionCount)
+const DerivedDatasetDescription* CPL_STDCALL GDALGetDerivedDatasetDescriptions(unsigned int * pnDescriptionCount)
 {
   *pnDescriptionCount = (unsigned int)NB_DERIVED_DATASETS;
   return asDDSDesc;
