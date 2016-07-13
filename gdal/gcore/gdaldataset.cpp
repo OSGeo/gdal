@@ -39,6 +39,7 @@
 #include "ograpispy.h"
 #include "ogrunionlayer.h"
 #include "swq.h"
+#include "../frmts/derived/derivedlist.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
@@ -580,6 +581,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
                      "Cannot allocate band array");
             return;
         }
+
         papoBands = papoNewBands;
 
         for( int i = nBands; i < nNewBand; ++i )
@@ -3288,6 +3290,77 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
         CPLErrorV( eErrClass, err_no, fmt, args );
     }
     va_end(args);
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+char ** GDALDataset::GetMetadata(const char * pszDomain)
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
+    {
+        oDerivedMetadataList.Clear();
+
+        // First condition: at least one raster band
+        if(GetRasterCount()>0)
+        {
+            // Check if there is at least one complex band
+            bool hasAComplexBand = false;
+
+            for(int rasterId = 1; rasterId <= GetRasterCount();++rasterId)
+            {
+                if(GDALDataTypeIsComplex(GetRasterBand(rasterId)->GetRasterDataType()))
+                {
+                    hasAComplexBand = true;
+                    break;
+                }
+            }
+
+            unsigned int nbSupportedDerivedDS;
+            const DerivedDatasetDescription * poDDSDesc =
+                GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
+
+            int nNumDataset = 1;
+            for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
+            {
+                if(hasAComplexBand ||
+                    CPLString(poDDSDesc[derivedId].pszInputPixelType) != "complex")
+                {
+                    oDerivedMetadataList.SetNameValue(
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_NAME",nNumDataset),
+                        CPLSPrintf("DERIVED_SUBDATASET:%s:%s",
+                                poDDSDesc[derivedId].pszDatasetName,GetDescription()));
+
+                    CPLString osDesc(CPLSPrintf("%s from %s",
+                                    poDDSDesc[derivedId].pszDatasetDescritpion,
+                                    GetDescription()));
+                    oDerivedMetadataList.SetNameValue(
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_DESC",nNumDataset),
+                        osDesc.c_str());
+
+                    nNumDataset ++;
+                }
+            }
+        }
+        return oDerivedMetadataList.List();
+    }
+    else
+        return GDALMajorObject::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                            GetMetadataDomainList()                   */
+/************************************************************************/
+char ** GDALDataset::GetMetadataDomainList()
+{
+    char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
+
+    // Ensure that we do not duplicate DERIVED domain
+    if(GetRasterCount()>0 && CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
+    {
+        currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+    }
+    return currentDomainList;
 }
 
 /************************************************************************/

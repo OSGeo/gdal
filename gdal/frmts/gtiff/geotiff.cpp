@@ -16282,8 +16282,18 @@ char **GTiffDataset::GetMetadataDomainList()
 {
     LoadGeoreferencingAndPamIfNeeded();
 
+    char ** papszDomainList = CSLDuplicate(oGTiffMDMD.GetDomainList());
+    char ** papszBaseList = GDALDataset::GetMetadataDomainList();
+
+    const int nbBaseDomains = CSLCount(papszBaseList);
+
+    for(int domainId = 0; domainId<nbBaseDomains;++domainId)
+        papszDomainList = CSLAddString(papszDomainList,papszBaseList[domainId]);
+
+    CSLDestroy(papszBaseList);
+
     return BuildMetadataDomainList(
-        CSLDuplicate(oGTiffMDMD.GetDomainList()),
+        papszDomainList,
         TRUE,
         "", "ProxyOverviewRequest", MD_DOMAIN_RPC, MD_DOMAIN_IMD,
         "SUBDATASETS", "EXIF",
@@ -16304,6 +16314,11 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 
     if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALPamDataset::GetMetadata( pszDomain );
+
+    if( pszDomain != NULL && EQUAL(pszDomain,"DERIVED_SUBDATASETS"))
+      {
+      return GDALDataset::GetMetadata(pszDomain);
+      }
 
     else if( pszDomain != NULL && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
                                    EQUAL(pszDomain, MD_DOMAIN_IMD) ||

@@ -1764,7 +1764,7 @@ def tiff_read_md1():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1813,7 +1813,7 @@ def tiff_read_md2():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1862,7 +1862,7 @@ def tiff_read_md3():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1911,7 +1911,7 @@ def tiff_read_md4():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1960,7 +1960,8 @@ def tiff_read_md5():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    print metadata
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2009,7 +2010,7 @@ def tiff_read_md6():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2058,7 +2059,7 @@ def tiff_read_md7():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2107,7 +2108,7 @@ def tiff_read_md8():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2156,7 +2157,7 @@ def tiff_read_md9():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2202,7 +2203,7 @@ def tiff_read_md10():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2251,7 +2252,7 @@ def tiff_read_md11():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2295,7 +2296,7 @@ def tiff_read_md12():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
