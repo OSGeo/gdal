@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PNM Driver
  * Purpose:  Portable anymap file format imlementation

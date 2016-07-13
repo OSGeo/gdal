@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Vertical Datum Transformation
  * Purpose:  Implementation of NOAA .gtx vertical datum shift file format.

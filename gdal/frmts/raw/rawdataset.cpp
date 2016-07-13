@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Generic Raw Binary Driver
  * Purpose:  Implementation of RawDataset and RawRasterBand classes.

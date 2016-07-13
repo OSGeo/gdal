@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISCE Raster Reader
  * Purpose:  Implementation of the ISCE raster reader

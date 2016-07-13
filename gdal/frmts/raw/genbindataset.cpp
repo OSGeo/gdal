@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Generic Binary format driver (.hdr but not ESRI .hdr!)

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Horizontal Datum Formats
  * Purpose:  Implementation of NTv2 datum shift format used in Canada, France,

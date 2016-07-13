@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ACE2 Driver
  * Purpose:  Implementation of ACE2 elevation format read support.
