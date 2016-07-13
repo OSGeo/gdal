@@ -41,7 +41,7 @@ typedef struct
   const char * pszOutputPixelType;
 } DerivedDatasetDescription;
 
-const DerivedDatasetDescription* CPL_DLL CPL_STDCALL GDALGetDerivedDatasetDescriptions(unsigned int * pnDescriptionCount);
+const DerivedDatasetDescription CPL_DLL * CPL_STDCALL GDALGetDerivedDatasetDescriptions(unsigned int * pnDescriptionCount);
 
 CPL_C_END
 
