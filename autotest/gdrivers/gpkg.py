@@ -2069,7 +2069,7 @@ def gpkg_21():
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     mddlist = out_ds.GetMetadataDomainList()
-    if len(mddlist) != 2:
+    if len(mddlist) != 3:
         gdaltest.post_reason('fail')
         print(mddlist)
         return 'fail'
