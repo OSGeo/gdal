@@ -3040,6 +3040,7 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
         {
             if( !EQUAL(*papszMDListIter, "") &&
                 !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszMDListIter, "DERIVED_SUBDATASETS") &&
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
                 !STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") &&
                 !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&

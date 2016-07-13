@@ -1964,7 +1964,7 @@ def ogr_geojson_39():
         feat.DumpReadable()
         return 'fail'
 
-    # postive and then negative id
+    # positive and then negative id
     ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
 { "type": "Feature", "id" : -1, "properties": { "foo": "bar" }, "geometry": null },
