@@ -140,9 +140,41 @@ def derived_test2():
 
     return 'success'
 
+# Error cases
+def derived_test3():
+
+    with gdaltest.error_handler():
+        # Missing filename
+        ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('DERIVED_SUBDATASET:invalid_alg:../gcore/data/byte.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        # Raster with zero band
+        ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:data/CSK_DGM.h5')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     derived_test1,
-    derived_test2
+    derived_test2,
+    derived_test3
     ]
 
 if __name__ == '__main__':
