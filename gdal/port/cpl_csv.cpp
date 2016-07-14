@@ -1037,7 +1037,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /* -------------------------------------------------------------------- */
     if( iKeyField >= 0
         && iKeyField < CSLCount(psTable->papszRecFields)
-        && CSVCompare(pszValue,psTable->papszRecFields[iKeyField],eCriteria)
+        && CSVCompare(pszValue, psTable->papszRecFields[iKeyField], eCriteria)
         && !psTable->bNonUniqueKey )
     {
         return psTable->papszRecFields;
@@ -1088,7 +1088,7 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
     char **papszFields = CSVReadParseLine( fp );
     for( int i = 0; papszFields != NULL && papszFields[i] != NULL; i++ )
     {
-        if( EQUAL(papszFields[i],pszFieldName) )
+        if( EQUAL(papszFields[i], pszFieldName) )
         {
             CSLDestroy( papszFields );
             return i;
@@ -1121,7 +1121,7 @@ int CSVGetFieldIdL( VSILFILE * fp, const char * pszFieldName )
     char **papszFields = CSVReadParseLineL( fp );
     for( int i = 0; papszFields != NULL && papszFields[i] != NULL; i++ )
     {
-        if( EQUAL(papszFields[i],pszFieldName) )
+        if( EQUAL(papszFields[i], pszFieldName) )
         {
             CSLDestroy( papszFields );
             return i;
@@ -1160,7 +1160,7 @@ int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
              && psTable->papszFieldNames[i] != NULL;
          i++ )
     {
-        if( EQUAL(psTable->papszFieldNames[i],pszFieldName) )
+        if( EQUAL(psTable->papszFieldNames[i], pszFieldName) )
         {
             return i;
         }
@@ -1228,7 +1228,7 @@ const char *CSVGetField( const char * pszFilename,
     if( iTargetField < 0 )
         return "";
 
-    for(int i=0; papszRecord[i] != NULL; ++i)
+    for( int i=0; papszRecord[i] != NULL; ++i )
     {
         if( i == iTargetField )
             return papszRecord[iTargetField];
