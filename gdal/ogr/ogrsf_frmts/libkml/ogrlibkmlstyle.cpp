@@ -1199,7 +1199,7 @@ void styletable2kml (
         int nR = 0;
         int nG = 0;
         int nB = 0;
-        int nA = =;
+        int nA = 0;
         OGRStylePen oStyleTool;
         if( (pszBalloonStyleBgColor != NULL &&
              oStyleTool.GetRGBFromString ( pszBalloonStyleBgColor,
