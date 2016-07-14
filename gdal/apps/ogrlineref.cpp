@@ -40,6 +40,8 @@
 #include "cpl_error.h"
 #include "ogr_geos.h"
 
+CPL_CVSID("$Id$");
+
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"

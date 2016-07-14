@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Dump overviews to external files.

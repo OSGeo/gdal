@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Common utility routines
@@ -40,7 +39,7 @@ CPL_CVSID("$Id$");
 static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
 {
     bool bRet = false;
-    const char* pszDriverExtensions = 
+    const char* pszDriverExtensions =
         GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, NULL );
     if( pszDriverExtensions )
     {
