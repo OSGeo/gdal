@@ -6367,6 +6367,42 @@ def tiff_write_141():
 
     return 'success'
 
+###############################################################################
+# Test reading and writing band description
+
+def tiff_write_155():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_155.tif', 1, 1)
+    ds.GetRasterBand(1).SetDescription('foo')
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/tiff_write_155.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_155.tif')
+    if ds.GetRasterBand(1).GetDescription() != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_155.tif')
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_155.tif', 1, 1, options = ['PROFILE=GeoTIFF'])
+    ds.GetRasterBand(1).SetDescription('foo')
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/tiff_write_155.tif.aux.xml') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_155.tif')
+    if ds.GetRasterBand(1).GetDescription() != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_155.tif')
+
+    return 'success'
 
 ###############################################################################
 # Test PixelIsPoint without SRS (#6225)
@@ -6746,6 +6782,7 @@ gdaltest_list = [
     tiff_write_147,
     tiff_write_148,
     tiff_write_152,
+    tiff_write_155,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
