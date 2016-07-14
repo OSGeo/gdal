@@ -169,7 +169,9 @@ static int IsPowerOf2( int nVal )
 {
     const unsigned int nTmp = static_cast<unsigned int>(nVal);
 
-    return (nTmp != 0) && !(nTmp & (nTmp - 1));
+    return
+        nTmp != 0 &&
+        (nTmp & (nTmp - 1)) != 0;
 }
 
 /************************************************************************/
