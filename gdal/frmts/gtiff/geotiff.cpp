@@ -4344,6 +4344,9 @@ void GTiffRasterBand::SetDescription( const char *pszDescription )
     if( pszDescription == NULL )
         pszDescription = "";
 
+    if( osDescription != pszDescription )
+        poGDS->bMetadataChanged = true;
+
     osDescription = pszDescription;
 }
 
@@ -10438,6 +10441,7 @@ void GTiffDataset::PushMetadataToPam()
                 GDALPamRasterBand::SetDescription( poBand->GetDescription() );
         }
     }
+    MarkPamDirty();
 }
 
 /************************************************************************/
@@ -13289,6 +13293,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 if( pszUnitType )
                     poBand->osUnitType = pszUnitType;
             }
+            if( poBand->osDescription.size() == 0 )
+                poBand->osDescription = poBand->GDALPamRasterBand::GetDescription();
 
             GDALColorInterp ePAMColorInterp =
                 poBand->GDALPamRasterBand::GetColorInterpretation();
