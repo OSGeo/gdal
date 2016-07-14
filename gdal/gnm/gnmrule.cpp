@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM rule class.
@@ -31,6 +30,7 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
+CPL_CVSID("$Id$");
 
 GNMRule::GNMRule()
 {
@@ -185,5 +185,3 @@ bool GNMRule::ParseRuleString()
 
     return true;
 }
-
-

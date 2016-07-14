@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM layer class.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 #include "gnm.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 /**
  * GNMGenericLayer
@@ -364,4 +365,3 @@ OGRFeatureDefn *GNMGenericLayer::GetLayerDefn()
     //TODO: hide GNM_SYSFIELD_GFID filed
     return m_poLayer->GetLayerDefn();
 }
-

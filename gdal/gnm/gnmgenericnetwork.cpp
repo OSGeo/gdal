@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM network class.
@@ -33,6 +32,8 @@
 #include "ogrsf_frmts.h"
 
 #include <set>
+
+CPL_CVSID("$Id$");
 
 GNMGenericNetwork::GNMGenericNetwork() :
     GNMNetwork(),

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM graph implementation.
@@ -33,6 +32,8 @@
 #include <algorithm>
 #include <limits>
 #include <set>
+
+CPL_CVSID("$Id$");
 
 GNMGraph::GNMGraph()
 {
