@@ -33,6 +33,8 @@
 #include <string>
 
 #include "ogr_featurestyle.h"
+#include "ogrlibkmlstyle.h"
+#include "ogr_libkml.h"
 
 using kmlbase::Color32;
 using kmldom::BalloonStylePtr;
@@ -58,9 +60,6 @@ using kmldom::StyleSelectorPtr;
 using kmldom::STYLESTATE_HIGHLIGHT;
 using kmldom::STYLESTATE_NORMAL;
 
-#include "ogrlibkmlstyle.h"
-#include "ogr_libkml.h"
-
 /******************************************************************************
  generic function to parse a stylestring and add to a kml style
 
@@ -80,183 +79,200 @@ StylePtr addstylestring2kml (
     KmlFactory * poKmlFactory,
     FeaturePtr poKmlFeature )
 {
+    /***** just bail now if stylestring is empty *****/
+    if ( !pszStyleString || !*pszStyleString )
+    {
+        return poKmlStyle;
+    }
 
     LineStylePtr poKmlLineStyle = NULL;
     PolyStylePtr poKmlPolyStyle = NULL;
     IconStylePtr poKmlIconStyle = NULL;
     LabelStylePtr poKmlLabelStyle = NULL;
 
-    /***** just bail now if stylestring is empty *****/
-
-    if ( !pszStyleString || !*pszStyleString ) {
-        return poKmlStyle;
-    }
-
     /***** create and init a style mamager with the style string *****/
-
-    OGRStyleMgr *poOgrSM = new OGRStyleMgr;
+    OGRStyleMgr * const poOgrSM = new OGRStyleMgr;
 
     poOgrSM->InitStyleString ( pszStyleString );
 
     /***** loop though the style parts *****/
+    for ( int i = 0; i < poOgrSM->GetPartCount( NULL ); i++ )
+    {
+        OGRStyleTool *poOgrST = poOgrSM->GetPart( i, NULL );
 
-    int i;
-
-    for ( i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ ) {
-        OGRStyleTool *poOgrST = poOgrSM->GetPart ( i, NULL );
-
-        if ( !poOgrST ) {
+        if( !poOgrST )
+        {
             continue;
         }
 
-        switch ( poOgrST->GetType (  ) ) {
-        case OGRSTCPen:
+        switch( poOgrST->GetType() )
+        {
+            case OGRSTCPen:
             {
-                GBool nullcheck;
+                poKmlLineStyle = poKmlFactory->CreateLineStyle();
 
-                poKmlLineStyle = poKmlFactory->CreateLineStyle (  );
-
-                OGRStylePen *poStylePen = ( OGRStylePen * ) poOgrST;
+                OGRStylePen *poStylePen = dynamic_cast<OGRStylePen *>(poOgrST);
+                if( poStylePen == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "dynamic_cast failed.");
+                    delete poOgrSM;
+                    return NULL;
+                }
 
                 /***** pen color *****/
+                GBool nullcheck = FALSE;
+                const char * const pszColor = poStylePen->Color( nullcheck );
 
-                int nR,
-                    nG,
-                    nB,
-                    nA;
-
-                const char *pszcolor = poStylePen->Color ( nullcheck );
-
-                if ( !nullcheck
-                     && poStylePen->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
-                    poKmlLineStyle->set_color ( Color32 ( static_cast<GByte>(nA),
-                                                          static_cast<GByte>(nB),
-                                                          static_cast<GByte>(nG),
-                                                          static_cast<GByte>(nR) ) );
+                int nR = 0;
+                int nG = 0;
+                int nB = 0;
+                int nA = 0;
+                if( !nullcheck &&
+                    poStylePen->GetRGBFromString( pszColor, nR, nG, nB, nA ) )
+                {
+                    poKmlLineStyle->set_color(
+                        Color32( static_cast<GByte>(nA),
+                                 static_cast<GByte>(nB),
+                                 static_cast<GByte>(nG),
+                                 static_cast<GByte>(nR) ) );
                 }
                 poStylePen->SetUnit(OGRSTUPixel);
-                double dfWidth = poStylePen->Width ( nullcheck );
+                double dfWidth = poStylePen->Width( nullcheck );
 
-                if ( nullcheck )
+                if( nullcheck )
                     dfWidth = 1.0;
 
-                poKmlLineStyle->set_width ( dfWidth );
+                poKmlLineStyle->set_width( dfWidth );
 
                 break;
             }
-        case OGRSTCBrush:
+            case OGRSTCBrush:
             {
-                GBool nullcheck;
-
-                OGRStyleBrush *poStyleBrush = ( OGRStyleBrush * ) poOgrST;
+                OGRStyleBrush * const poStyleBrush =
+                    dynamic_cast<OGRStyleBrush *>(poOgrST);
+                if( poStyleBrush == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "dynamic_cast failed.");
+                    delete poOgrSM;
+                    return NULL;
+                }
 
                 /***** brush color *****/
+                GBool nullcheck = FALSE;
+                const char *pszColor = poStyleBrush->ForeColor ( nullcheck );
 
-                int nR,
-                    nG,
-                    nB,
-                    nA;
-
-                const char *pszcolor = poStyleBrush->ForeColor ( nullcheck );
-
-                if ( !nullcheck
-                     && poStyleBrush->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
-                    poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
-                    poKmlPolyStyle->set_color ( Color32 ( static_cast<GByte>(nA),
-                                                          static_cast<GByte>(nB),
-                                                          static_cast<GByte>(nG),
-                                                          static_cast<GByte>(nR) ) );
+                int nR = 0;
+                int nG = 0;
+                int nB = 0;
+                int nA = 0;
+                if( !nullcheck &&
+                    poStyleBrush->GetRGBFromString( pszColor, nR, nG, nB, nA ) )
+                {
+                    poKmlPolyStyle = poKmlFactory->CreatePolyStyle();
+                    poKmlPolyStyle->set_color(
+                        Color32( static_cast<GByte>(nA),
+                                 static_cast<GByte>(nB),
+                                 static_cast<GByte>(nG),
+                                 static_cast<GByte>(nR) ) );
                 }
 
 
                 break;
             }
-        case OGRSTCSymbol:
+            case OGRSTCSymbol:
             {
-                GBool nullcheck;
-                GBool nullcheck2;
-
-                OGRStyleSymbol *poStyleSymbol = ( OGRStyleSymbol * ) poOgrST;
+                OGRStyleSymbol * const poStyleSymbol =
+                    dynamic_cast<OGRStyleSymbol *>(poOgrST);
+                if( poStyleSymbol == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "dynamic_cast failed.");
+                    delete poOgrSM;
+                    return NULL;
+                }
 
                 /***** id (kml icon) *****/
+                GBool nullcheck = FALSE;
+                const char *pszId = poStyleSymbol->Id( nullcheck );
 
-                const char *pszId = poStyleSymbol->Id ( nullcheck );
-
-                if ( !nullcheck ) {
-                    if ( !poKmlIconStyle)
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                if( !nullcheck )
+                {
+                    if( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
 
                     /***** split it at the ,'s *****/
-
                     char **papszTokens =
-                        CSLTokenizeString2 ( pszId, ",",
-                                             CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES |
-                                             CSLT_STRIPENDSPACES );
+                        CSLTokenizeString2(
+                            pszId, ",",
+                            CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES |
+                            CSLT_STRIPENDSPACES );
 
-                    if ( papszTokens ) {
-
-                        /***** for lack of a better solution just take the first one *****/
-                        //todo come up with a better idea
-
-                        if ( papszTokens[0] ) {
+                    if( papszTokens )
+                    {
+                        // Just take the first one.
+                        // TODO: Come up with a better idea.
+                        if( papszTokens[0] )
+                        {
                             IconStyleIconPtr poKmlIcon =
-                                poKmlFactory->CreateIconStyleIcon (  );
-                            poKmlIcon->set_href ( papszTokens[0] );
+                                poKmlFactory->CreateIconStyleIcon();
+                            poKmlIcon->set_href( papszTokens[0] );
                             poKmlIconStyle->set_icon ( poKmlIcon );
                         }
 
-                        CSLDestroy ( papszTokens );
-
+                        CSLDestroy( papszTokens );
                     }
-
-
                 }
 
                 /***** heading *****/
+                double heading = poStyleSymbol->Angle( nullcheck );
 
-                double heading = poStyleSymbol->Angle ( nullcheck );
-
-                if ( !nullcheck ) {
-                    if ( !poKmlIconStyle)
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                if( !nullcheck )
+                {
+                    if( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
                     poKmlIconStyle->set_heading ( heading );
                 }
 
                 /***** scale *****/
+                double dfScale = poStyleSymbol->Size( nullcheck );
 
-                double dfScale = poStyleSymbol->Size ( nullcheck );
+                if( !nullcheck )
+                {
+                    if( !poKmlIconStyle )
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
 
-                if ( !nullcheck ) {
-                    if ( !poKmlIconStyle)
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
-
-                    poKmlIconStyle->set_scale ( dfScale );
+                    poKmlIconStyle->set_scale( dfScale );
                 }
 
                 /***** color *****/
+                const char * const pszcolor =
+                    poStyleSymbol->Color ( nullcheck );
 
-                int nR,
-                    nG,
-                    nB,
-                    nA;
-
-                const char *pszcolor = poStyleSymbol->Color ( nullcheck );
-
-                if ( !nullcheck && poOgrST->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
-                    poKmlIconStyle->set_color ( Color32 ( static_cast<GByte>(nA),
-                                                          static_cast<GByte>(nB),
-                                                          static_cast<GByte>(nG),
-                                                          static_cast<GByte>(nR) ) );
+                int nR = 0;
+                int nG = 0;
+                int nB = 0;
+                int nA = 0;
+                if ( !nullcheck &&
+                     poOgrST->GetRGBFromString( pszcolor, nR, nG, nB, nA ) ) {
+                    poKmlIconStyle->set_color(
+                        Color32 ( static_cast<GByte>(nA),
+                                  static_cast<GByte>(nB),
+                                  static_cast<GByte>(nG),
+                                  static_cast<GByte>(nR) ) );
                 }
 
                 /***** hotspot *****/
 
                 double dfDx = poStyleSymbol->SpacingX ( nullcheck );
+                GBool nullcheck2 = FALSE;
                 double dfDy = poStyleSymbol->SpacingY ( nullcheck2 );
 
-                if ( !nullcheck && !nullcheck2 ) {
-                    if ( !poKmlIconStyle)
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
+                if ( !nullcheck && !nullcheck2 )
+                {
+                    if( !poKmlIconStyle)
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
 
                     HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot (  );
 
@@ -273,109 +289,119 @@ StylePtr addstylestring2kml (
                 GBool nullcheck;
                 GBool nullcheck2;
 
-                OGRStyleLabel *poStyleLabel = ( OGRStyleLabel * ) poOgrST;
+                OGRStyleLabel *poStyleLabel =
+                    dynamic_cast<OGRStyleLabel *>(poOgrST);
+                if( poStyleLabel == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "dynamic_cast failed.");
+                    delete poOgrSM;
+                    return NULL;
+                }
 
                 /***** color *****/
+                const char *pszcolor = poStyleLabel->ForeColor( nullcheck );
 
-                int nR,
-                    nG,
-                    nB,
-                    nA;
-
-                const char *pszcolor = poStyleLabel->ForeColor ( nullcheck );
-
-                if ( !nullcheck
-                     && poStyleLabel->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
+                int nR = 0;
+                int nG = 0;
+                int nB = 0;
+                int nA = 0;
+                if( !nullcheck &&
+                    poStyleLabel->GetRGBFromString( pszcolor, nR, nG, nB, nA ) )
+                {
                     if( poKmlLabelStyle == NULL )
-                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
-                    poKmlLabelStyle->set_color ( Color32 ( static_cast<GByte>(nA),
-                                                           static_cast<GByte>(nB),
-                                                           static_cast<GByte>(nG),
-                                                           static_cast<GByte>(nR) ) );
+                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
+                    poKmlLabelStyle->set_color (
+                        Color32 ( static_cast<GByte>(nA),
+                                  static_cast<GByte>(nB),
+                                  static_cast<GByte>(nG),
+                                  static_cast<GByte>(nR) ) );
                 }
 
                 /***** scale *****/
+                double dfScale = poStyleLabel->Stretch( nullcheck );
 
-                double dfScale = poStyleLabel->Stretch ( nullcheck );
-
-                if ( !nullcheck ) {
+                if( !nullcheck )
+                {
                     dfScale /= 100.0;
                     if( poKmlLabelStyle == NULL )
-                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
+                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
                     poKmlLabelStyle->set_scale ( dfScale );
                 }
 
                 /***** heading *****/
-
-                double heading = poStyleLabel->Angle ( nullcheck );
+                const double heading = poStyleLabel->Angle( nullcheck );
 
                 if ( !nullcheck ) {
                     if ( !poKmlIconStyle) {
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
-                        IconStyleIconPtr poKmlIcon = poKmlFactory->CreateIconStyleIcon (  );
-                        poKmlIconStyle->set_icon ( poKmlIcon );
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
+                        IconStyleIconPtr poKmlIcon =
+                            poKmlFactory->CreateIconStyleIcon();
+                        poKmlIconStyle->set_icon( poKmlIcon );
                     }
 
-                    poKmlIconStyle->set_heading ( heading );
+                    poKmlIconStyle->set_heading( heading );
                 }
 
                 /***** hotspot *****/
-
                 double dfDx = poStyleLabel->SpacingX ( nullcheck );
                 double dfDy = poStyleLabel->SpacingY ( nullcheck2 );
 
-                if ( !nullcheck && !nullcheck2 ) {
-                    if ( !poKmlIconStyle) {
-                        poKmlIconStyle = poKmlFactory->CreateIconStyle (  );
-                        IconStyleIconPtr poKmlIcon = poKmlFactory->CreateIconStyleIcon (  );
+                if( !nullcheck && !nullcheck2 )
+                {
+                    if ( !poKmlIconStyle)
+                    {
+                        poKmlIconStyle = poKmlFactory->CreateIconStyle();
+                        const IconStyleIconPtr poKmlIcon =
+                            poKmlFactory->CreateIconStyleIcon();
                         poKmlIconStyle->set_icon ( poKmlIcon );
                     }
 
-                    HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot (  );
+                    HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot();
 
-                    poKmlHotSpot->set_x ( dfDx );
-                    poKmlHotSpot->set_y ( dfDy );
+                    poKmlHotSpot->set_x( dfDx );
+                    poKmlHotSpot->set_y( dfDy );
 
-                    poKmlIconStyle->set_hotspot ( poKmlHotSpot );
+                    poKmlIconStyle->set_hotspot( poKmlHotSpot );
                 }
 
                 /***** label text *****/
+                const char * const pszText =
+                    poStyleLabel->TextString( nullcheck );
 
-                const char *pszText = poStyleLabel->TextString ( nullcheck );
-
-                if ( !nullcheck ) {
-                    if ( poKmlFeature ) {
-
+                if( !nullcheck && poKmlFeature != NULL )
+                {
                         poKmlFeature->set_name( pszText );
-                    }
                 }
 
                 break;
             }
-        case OGRSTCNone:
-        default:
-            break;
+            case OGRSTCNone:
+            default:
+            {
+                break;
+            }
         }
 
         delete poOgrST;
     }
 
-    if ( poKmlLineStyle || poKmlPolyStyle || poKmlIconStyle || poKmlLabelStyle )
+    if( poKmlLineStyle || poKmlPolyStyle || poKmlIconStyle || poKmlLabelStyle )
     {
         if( poKmlStyle == NULL )
-            poKmlStyle = poKmlFactory->CreateStyle (  );
+            poKmlStyle = poKmlFactory->CreateStyle();
 
-        if ( poKmlLineStyle )
-            poKmlStyle->set_linestyle ( poKmlLineStyle );
+        if( poKmlLineStyle )
+            poKmlStyle->set_linestyle( poKmlLineStyle );
 
-        if ( poKmlPolyStyle )
-            poKmlStyle->set_polystyle ( poKmlPolyStyle );
+        if( poKmlPolyStyle )
+            poKmlStyle->set_polystyle( poKmlPolyStyle );
 
-        if ( poKmlIconStyle )
-            poKmlStyle->set_iconstyle ( poKmlIconStyle );
+        if( poKmlIconStyle )
+            poKmlStyle->set_iconstyle( poKmlIconStyle );
 
-        if ( poKmlLabelStyle )
-            poKmlStyle->set_labelstyle ( poKmlLabelStyle );
+        if( poKmlLabelStyle )
+            poKmlStyle->set_labelstyle( poKmlLabelStyle );
     }
 
     delete poOgrSM;
