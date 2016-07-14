@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: gdalwarp.cpp 12380 2007-10-12 17:35:00Z rouault $
  *
  * Project:  GDAL
  * Purpose:  Command line point transformer.
@@ -32,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id: gdaltransform.cpp 12380 2007-10-12 17:35:00Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */
