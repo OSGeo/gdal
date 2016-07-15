@@ -29,6 +29,9 @@
 #include "ogr_cad.h"
 #include "cpl_conv.h"
 
+#include <sstream>
+#include <iomanip>
+
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
 	poCADLayer( poCADLayer_ )
 {
@@ -85,13 +88,17 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
 
     // Applying spatial ref info
     poSpatialRef = poSR;
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSR );
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 }
 
-GIntBig OGRCADLayer::GetFeatureCount( int /* bForce */ )
-{
+GIntBig OGRCADLayer::GetFeatureCount( int bForce )
+{   
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+        return OGRLayer::GetFeatureCount( bForce );
+    
     return poCADLayer.getGeometryCount();
 }
 
@@ -107,14 +114,23 @@ void OGRCADLayer::ResetReading()
 
 OGRFeature *OGRCADLayer::GetNextFeature()
 {
-    OGRFeature *apoFeature = GetFeature( nNextFID );
+    OGRFeature *poFeature = GetFeature( nNextFID );
     ++nNextFID;
-    return apoFeature;
+    
+    if( poFeature == NULL )
+        return( NULL );
+    
+    if( ( m_poFilterGeom == NULL ||  FilterGeometry( poFeature->GetGeometryRef() ) )
+        && ( m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature ) ) )
+    {
+        return poFeature;
+    }
 }
 
 OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 {
-    if( poCADLayer.getGeometryCount() <= nFID )
+    if( poCADLayer.getGeometryCount() <= nFID
+        || nFID < 0 )
     {
         return NULL;
     }
@@ -150,6 +166,12 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     RGBColor stRGB = poCADGeometry->getColor();
     GIntBig adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
     poFeature->SetField( "color", 3, adRGB);
+    
+    std::stringstream oStringStream;
+    oStringStream << "PEN(c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+    oStringStream << ",w:5px)" << std::dec;
+    
+    poFeature->SetStyleString( oStringStream.str().c_str() );
     
     switch( poCADGeometry->getType() )
     {
@@ -259,11 +281,11 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             }
             
             if( poCADLWPolyline->isClosed() )
-			{
-				poLS->addPoint( poCADLWPolyline->getVertex(0).getX(),
-								poCADLWPolyline->getVertex(0).getY(),
-								poCADLWPolyline->getVertex(0).getZ() );
-			}
+            {
+                poLS->addPoint( poCADLWPolyline->getVertex(0).getX(),
+                                poCADLWPolyline->getVertex(0).getY(),
+                                poCADLWPolyline->getVertex(0).getZ() );
+            }
 
             poFeature->SetGeometryDirectly( poLS );
             poFeature->SetField( "cadgeom_type", "CADLWPolyline" );
@@ -397,5 +419,6 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     }
     
     delete( poCADGeometry );
+    poFeature->GetGeometryRef()->assignSpatialReference( poSpatialRef );
     return poFeature;
 }

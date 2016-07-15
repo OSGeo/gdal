@@ -190,19 +190,24 @@ public:
     void                          setElevation(double value);
 
     CADVector                     getVectExtrusion() const;
-    void                          setVectExtrusion(const CADVector &value);
+    void                          setVectExtrusion(const CADVector& value);
 
     vector<pair<double, double> > getWidths() const;
-    void                          setWidths(const vector<pair<double, double> > &value);
+    void                          setWidths(const vector<pair<double, double> >& value);
 
-    bool 			  isClosed() const;
-    void 			  setClosed(bool state);
-    virtual void print () const override;
+    vector<double>                getBulges() const;
+    void                          setBulges(const vector<double>& value);
+    
+    bool                          isClosed() const;
+    void                          setClosed(bool state);
+    
+    virtual void                  print () const override;
 protected:
-    bool  			     bClosed;
+    bool                             bClosed;
     double                           constWidth;
     double                           elevation;
     CADVector                        vectExtrusion;
+    vector<double>                   bulges;
     vector< pair< double, double > > widths; // start, end.
 };
 

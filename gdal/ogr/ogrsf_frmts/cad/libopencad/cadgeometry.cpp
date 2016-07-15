@@ -273,17 +273,6 @@ void CADLine::transform(const Matrix &matrix)
 }
 
 //------------------------------------------------------------------------------
-// CADLWPolyline
-//------------------------------------------------------------------------------
-
-/*
-CADLWPolyline::CADLWPolyline() : dfConstWidth(0.0f), dfElevation(0.0f)
-{
-    eGeometryType = CADGeometry::LWPOLYLINE;
-}
-*/
-
-//------------------------------------------------------------------------------
 // CADCircle
 //------------------------------------------------------------------------------
 
@@ -458,6 +447,16 @@ vector<pair<double, double> > CADLWPolyline::getWidths() const
 void CADLWPolyline::setWidths(const vector<pair<double, double> > &value)
 {
     widths = value;
+}
+
+vector< double > CADLWPolyline::getBulges() const
+{
+	return bulges;
+}
+
+void CADLWPolyline::setBulges(const vector< double >& value)
+{
+	bulges = value;
 }
 
 bool CADLWPolyline::isClosed() const
