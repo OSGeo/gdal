@@ -1649,10 +1649,6 @@ struct GDALGridContext
     double*             padfZ;
     bool                bFreePadfXYZArrays;
 
-    void               *pabyX;
-    void               *pabyY;
-    void               *pabyZ;
-
     CPLWorkerThreadPool *poWorkerThreadPool;
 };
 
@@ -1712,12 +1708,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfZ );
     bool bCreateQuadTree = false;
 
-    // Potentially unaligned pointers.
-    void* pabyX = NULL;
-    void* pabyY = NULL;
-    void* pabyZ = NULL;
-
-    // Starting address aligned on 16-byte boundary.
+    // Starting address aligned on 32-byte boundary for AVX
     float* pafXAligned = NULL;
     float* pafYAligned = NULL;
     float* pafZAligned = NULL;
@@ -1748,27 +1739,19 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 {
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 
-#define ALIGN32(x)  (((char*)(x)) + ((32 - (((size_t)(x)) % 32)) % 32))
-
                     if( CPLTestBool(
                             CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
                         CPLHaveRuntimeAVX() )
                     {
-                        pabyX = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
-                        pabyY = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
-                        pabyZ = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31) );
-                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL )
+                        pafXAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        pafYAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        pafZAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        if( pafXAligned != NULL && pafYAligned != NULL && pafZAligned != NULL )
                         {
                             CPLDebug("GDAL_GRID", "Using AVX optimized version");
-                            pafXAligned =
-                                reinterpret_cast<float *>(ALIGN32(pabyX));
-                            pafYAligned =
-                                reinterpret_cast<float *>(ALIGN32(pabyY));
-                            pafZAligned =
-                                reinterpret_cast<float *>(ALIGN32(pabyZ));
                             pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
                             for( GUInt32 i = 0; i < nPoints; i++ )
                             {
@@ -1779,36 +1762,31 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         }
                         else
                         {
-                            VSIFree(pabyX);
-                            VSIFree(pabyY);
-                            VSIFree(pabyZ);
-                            pabyX = NULL;
-                            pabyY = NULL;
-                            pabyZ = NULL;
+                            VSIFree(pafXAligned);
+                            VSIFree(pafYAligned);
+                            VSIFree(pafZAligned);
+                            pafXAligned = NULL;
+                            pafYAligned = NULL;
+                            pafZAligned = NULL;
                         }
                     }
 #endif
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
-#define ALIGN16(x)  (((char*)(x)) + ((16 - (((size_t)(x)) % 16)) % 16))
-
                     if( pafXAligned == NULL &&
                         CPLTestBool(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
-                        pabyX = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
-                        pabyY = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
-                        pabyZ = static_cast<float *>(
-                            VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15));
-                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
+                        pafXAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        pafYAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        pafZAligned = static_cast<float *>(
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                        if( pafXAligned != NULL && pafYAligned != NULL && pafZAligned != NULL )
                         {
                             CPLDebug("GDAL_GRID", "Using SSE optimized version");
-                            pafXAligned = (float*) ALIGN16(pabyX);
-                            pafYAligned = (float*) ALIGN16(pabyY);
-                            pafZAligned = (float*) ALIGN16(pabyZ);
                             pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
                             for( GUInt32 i = 0; i < nPoints; i++ )
                             {
@@ -1819,12 +1797,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         }
                         else
                         {
-                            VSIFree(pabyX);
-                            VSIFree(pabyY);
-                            VSIFree(pabyZ);
-                            pabyX = NULL;
-                            pabyY = NULL;
-                            pabyZ = NULL;
+                            VSIFree(pafXAligned);
+                            VSIFree(pafYAligned);
+                            VSIFree(pafZAligned);
+                            pafXAligned = NULL;
+                            pafYAligned = NULL;
+                            pafZAligned = NULL;
                         }
                     }
 #endif // HAVE_SSE_AT_COMPILE_TIME
@@ -1930,9 +1908,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             return NULL;
     }
 
-    if( pafXAligned != NULL )
-        bCallerWillKeepPointArraysAlive = TRUE;
-    if( !bCallerWillKeepPointArraysAlive )
+    if( pafXAligned == NULL && !bCallerWillKeepPointArraysAlive )
     {
         double* padfXNew =
             static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
@@ -1974,10 +1950,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->padfX = pafXAligned ? NULL : const_cast<double *>(padfX);
     psContext->padfY = pafXAligned ? NULL : const_cast<double *>(padfY);
     psContext->padfZ = pafXAligned ? NULL : const_cast<double *>(padfZ);
-    psContext->bFreePadfXYZArrays = !bCallerWillKeepPointArraysAlive;
-    psContext->pabyX = pabyX;
-    psContext->pabyY = pabyY;
-    psContext->pabyZ = pabyZ;
+    psContext->bFreePadfXYZArrays = pafXAligned ? false : !bCallerWillKeepPointArraysAlive;
 
 /* -------------------------------------------------------------------- */
 /*  Create quadtree if requested and possible.                          */
@@ -2117,9 +2090,9 @@ void GDALGridContextFree(GDALGridContext* psContext)
             CPLFree(psContext->padfY);
             CPLFree(psContext->padfZ);
         }
-        CPLFree(psContext->pabyX);
-        CPLFree(psContext->pabyY);
-        CPLFree(psContext->pabyZ);
+        VSIFreeAligned(psContext->sExtraParameters.pafX);
+        VSIFreeAligned(psContext->sExtraParameters.pafY);
+        VSIFreeAligned(psContext->sExtraParameters.pafZ);
         if( psContext->sExtraParameters.psTriangulation )
             GDALTriangulationFree( psContext->sExtraParameters.psTriangulation );
         delete psContext->poWorkerThreadPool;
