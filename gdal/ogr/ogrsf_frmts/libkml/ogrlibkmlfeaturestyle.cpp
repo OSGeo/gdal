@@ -32,8 +32,8 @@
 #include <ogrsf_frmts.h>
 #include <ogr_featurestyle.h>
 #include <string>
-#include <iostream>
-using namespace std;
+#include "ogrlibkmlfeaturestyle.h"
+#include "ogrlibkmlstyle.h"
 
 using kmldom::FeaturePtr;
 using kmldom::IconStylePtr;
@@ -46,9 +46,6 @@ using kmldom::StyleMapPtr;
 using kmldom::StylePtr;
 using kmldom::StyleSelectorPtr;
 
-#include "ogrlibkmlfeaturestyle.h"
-#include "ogrlibkmlstyle.h"
-
 /******************************************************************************
  function to write out a features style to kml
 
@@ -56,142 +53,116 @@ args:
             poOgrLayer      the layer the feature is in
             poOgrFeat       the feature
             poKmlFactory    the kml dom factory
-            poKmlFeature  the placemark to add it to
+            poKmlFeature    the placemark to add it to
 
 returns:
             nothing
 ******************************************************************************/
 
-void featurestyle2kml (
+void featurestyle2kml(
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
     KmlFactory * poKmlFactory,
     FeaturePtr poKmlFeature )
 {
-
     /***** get the style table *****/
+    OGRStyleTable *poOgrSTBL = NULL;
 
-    OGRStyleTable *poOgrSTBL;
-
-    const char *pszStyleString = poOgrFeat->GetStyleString (  );
+    const char *pszStyleString = poOgrFeat->GetStyleString();
 
     /***** does the feature have style? *****/
-
-    if ( pszStyleString && pszStyleString[0] != '\0' ) {
-
+    if( pszStyleString && pszStyleString[0] != '\0' )
+    {
         /***** does it ref a style table? *****/
-
-        if ( *pszStyleString == '@' ) {
-
+        if( *pszStyleString == '@' )
+        {
             const char* pszStyleName = pszStyleString + 1;
 
-            /***** is the name in the layer style table *****/
+            /***** Is the name in the layer style table *****/
+            OGRStyleTable *hSTBLLayer = poOgrLayer->GetStyleTable();
+            const char *pszTest = (hSTBLLayer != NULL) ?
+                hSTBLLayer->Find( pszStyleName ) : NULL;
 
-            OGRStyleTable *hSTBLLayer = poOgrLayer->GetStyleTable (  );
-            const char *pszTest = NULL;
-
-            if ( hSTBLLayer != NULL )
-                pszTest = hSTBLLayer->Find ( pszStyleName );
-
-            if ( pszTest ) {
+            if( pszTest )
+            {
                 string oTmp = "#";
-
-                oTmp.append ( pszStyleName );
-
-                poKmlFeature->set_styleurl ( oTmp );
+                oTmp.append( pszStyleName );
+                poKmlFeature->set_styleurl( oTmp );
             }
+            /***** assume its a dataset style,
+                   maybe the user will add it later *****/
 
-
-            /***** assume its a dataset style, mayby the user will add it later *****/
-
-            else {
+            else
+            {
                 string oTmp;
 
-                if ( poOgrDS->GetStylePath (  ) )
-                    oTmp.append ( poOgrDS->GetStylePath (  ) );
-                oTmp.append ( "#" );
-                oTmp.append ( pszStyleName );
+                if( poOgrDS->GetStylePath() )
+                    oTmp.append( poOgrDS->GetStylePath() );
+                oTmp.append( "#" );
+                oTmp.append( pszStyleName );
 
-                poKmlFeature->set_styleurl ( oTmp );
+                poKmlFeature->set_styleurl( oTmp );
             }
         }
 
         /***** no style table ref *****/
-
-        else {
+        else
+        {
             /***** parse the style string *****/
-
-            StylePtr poKmlStyle = addstylestring2kml ( pszStyleString, NULL, poKmlFactory,
-                                 poKmlFeature );
+            StylePtr poKmlStyle =
+                addstylestring2kml( pszStyleString, NULL, poKmlFactory,
+                                    poKmlFeature );
 
             /***** add the style to the placemark *****/
             if( poKmlStyle != NULL )
-                poKmlFeature->set_styleselector ( poKmlStyle );
-
+                poKmlFeature->set_styleselector( poKmlStyle );
         }
     }
 
     /***** get the style table *****/
-
-    else if ( ( poOgrSTBL = poOgrFeat->GetStyleTable (  ) ) != NULL ) {
-
-
-        StylePtr poKmlStyle = NULL;
-
+    else if( ( poOgrSTBL = poOgrFeat->GetStyleTable() ) != NULL )
+    {
         /***** parse the style table *****/
+        poOgrSTBL->ResetStyleStringReading();
 
-        poOgrSTBL->ResetStyleStringReading (  );
-
-        while ( ( pszStyleString = poOgrSTBL->GetNextStyle (  ) ) != NULL ) {
-
-            if ( *pszStyleString == '@' ) {
-
+        while( ( pszStyleString = poOgrSTBL->GetNextStyle() ) != NULL )
+        {
+            if( *pszStyleString == '@' )
+            {
                 const char* pszStyleName = pszStyleString + 1;
 
                 /***** is the name in the layer style table *****/
+                OGRStyleTable *poOgrSTBLLayer = NULL;
 
-                OGRStyleTable *poOgrSTBLLayer;
-                // const char *pszTest = NULL;
-
-                if ( ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) != NULL )
-                    poOgrSTBLLayer->Find ( pszStyleName );
-
-                // if ( pszTest ) {
-                //     string oTmp = "#";
-                //     oTmp.append ( pszStyleName );
-                //     poKmlFeature->set_styleurl ( oTmp );
-                // }
-
-                /***** assume its a dataset style,      *****/
-                /***** mayby the user will add it later *****/
-
-                /* else */
+                if( ( poOgrSTBLLayer = poOgrLayer->GetStyleTable() )
+                    != NULL )
                 {
-                    string oTmp;
-
-                    if ( poOgrDS->GetStylePath (  ) )
-                        oTmp.append ( poOgrDS->GetStylePath (  ) );
-                    oTmp.append ( "#" );
-                    oTmp.append ( pszStyleName );
-
-                    poKmlFeature->set_styleurl ( oTmp );
+                    poOgrSTBLLayer->Find( pszStyleName );
                 }
+
+                /***** Assume its a dataset style,       *****/
+                /***** mayby the user will add it later. *****/
+
+                string oTmp;
+                if( poOgrDS->GetStylePath() )
+                    oTmp.append( poOgrDS->GetStylePath() );
+                oTmp.append( "#" );
+                oTmp.append( pszStyleName );
+
+                poKmlFeature->set_styleurl( oTmp );
             }
-
-            else {
-
+            else
+            {
                 /***** parse the style string *****/
-
-                poKmlStyle = addstylestring2kml ( pszStyleString, poKmlStyle,
+                const StylePtr poKmlStyle =
+                    addstylestring2kml( pszStyleString, poKmlStyle,
                                      poKmlFactory, poKmlFeature );
                 if( poKmlStyle != NULL )
                 {
-                    /***** add the style to the placemark *****/
-
-                    poKmlFeature->set_styleselector ( poKmlStyle );
+                    /***** Add the style to the placemark. *****/
+                    poKmlFeature->set_styleselector( poKmlStyle );
                 }
-
             }
         }
     }
@@ -208,90 +179,79 @@ void kml2featurestyle (
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat )
 {
-
     /***** does the placemark have a style url? *****/
-
-    if (    poKmlFeature->has_styleurl (  ) ) {
-
-        const string poKmlStyleUrl = poKmlFeature->get_styleurl (  );
+    if( poKmlFeature->has_styleurl() )
+    {
+        const string poKmlStyleUrl = poKmlFeature->get_styleurl();
 
         /***** is the name in the layer style table *****/
+        char *pszUrl = CPLStrdup( poKmlStyleUrl.c_str() );
 
-        char *pszUrl = CPLStrdup ( poKmlStyleUrl.c_str (  ) );
-
-        OGRStyleTable *poOgrSTBLLayer;
+        OGRStyleTable *poOgrSTBLLayer = NULL;
         const char *pszTest = NULL;
 
         /***** is it a layer style ? *****/
-
-        if ( *pszUrl == '#'
-             && ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) != NULL )
+        if( *pszUrl == '#' &&
+            ( poOgrSTBLLayer = poOgrLayer->GetStyleTable() ) != NULL )
         {
-             pszTest = poOgrSTBLLayer->Find ( pszUrl + 1 );
+             pszTest = poOgrSTBLLayer->Find( pszUrl + 1 );
         }
 
-        if ( pszTest ) {
+        if( pszTest )
+        {
 
             /***** should we resolve the style *****/
 
-            const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
+            const char *pszResolve =
+                CPLGetConfigOption( "LIBKML_RESOLVE_STYLE", "no" );
 
-            if (CPLTestBool(pszResolve)) {
-
-                poOgrFeat->SetStyleString ( pszTest );
+            if( CPLTestBool(pszResolve) )
+            {
+                poOgrFeat->SetStyleString( pszTest );
             }
-
-            else {
-
+            else
+            {
                 *pszUrl = '@';
-
                 poOgrFeat->SetStyleString( pszUrl );
-
             }
-
         }
 
         /***** is it a dataset style? *****/
+        else
+        {
+            int nPathLen = static_cast<int>(strlen( poOgrDS->GetStylePath() ));
 
-        else {
-
-            int nPathLen = static_cast<int>(strlen ( poOgrDS->GetStylePath (  ) ));
-
-            if (    nPathLen == 0
-                 || EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen ))
+            if( nPathLen == 0 ||
+                EQUALN( pszUrl, poOgrDS->GetStylePath(), nPathLen ) )
             {
-
                 /***** should we resolve the style *****/
+                const char *pszResolve =
+                    CPLGetConfigOption( "LIBKML_RESOLVE_STYLE", "no" );
 
-                const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
-
-                if ( CPLTestBool(pszResolve)
-                     && ( poOgrSTBLLayer = poOgrDS->GetStyleTable (  ) ) != NULL
-                     && ( pszTest = poOgrSTBLLayer->Find ( pszUrl + nPathLen + 1) ) != NULL
-                   )
+                if( CPLTestBool(pszResolve) &&
+                    ( poOgrSTBLLayer = poOgrDS->GetStyleTable() ) != NULL &&
+                    ( pszTest =
+                          poOgrSTBLLayer->Find(pszUrl + nPathLen + 1) ) != NULL
+                    )
                 {
-
-                    poOgrFeat->SetStyleString ( pszTest );
+                    poOgrFeat->SetStyleString( pszTest );
                 }
-
-                else {
-
+                else
+                {
                     pszUrl[nPathLen] = '@';
-                    poOgrFeat->SetStyleString ( pszUrl + nPathLen );
+                    poOgrFeat->SetStyleString( pszUrl + nPathLen );
                 }
-
             }
 
             /**** its someplace else *****/
+            else
+            {
+                const char *pszFetch =
+                    CPLGetConfigOption( "LIBKML_EXTERNAL_STYLE", "no" );
 
-            else {
-
-                const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
-
-                if ( CPLTestBool(pszFetch) ) {
-
+                if ( CPLTestBool(pszFetch) )
+                {
                     /***** load up the style table *****/
-
                     char *pszUrlTmp = CPLStrdup(pszUrl);
                     char *pszPound = strchr(pszUrlTmp, '#');
                     if (pszPound != NULL) {
@@ -299,28 +259,21 @@ void kml2featurestyle (
                     }
 
                     /***** try it as a url then a file *****/
-
                     VSILFILE *fp = NULL;
-
-                    if (    (fp = VSIFOpenL( CPLFormFilename( "/vsicurl/",
-                                                              pszUrlTmp,
-                                                              NULL),
-                                             "r" )) != NULL
-                        ||  (fp = VSIFOpenL( pszUrlTmp, "r" )) != NULL )
+                    if( (fp = VSIFOpenL(
+                             CPLFormFilename( "/vsicurl/", pszUrlTmp, NULL ),
+                              "r" )) != NULL ||
+                        (fp = VSIFOpenL( pszUrlTmp, "r" )) != NULL )
                     {
-
-                        char szbuf[1025];
+                        char szbuf[1025] = { '\0' };
                         std::string oStyle = "";
 
                         /***** loop, read and copy to a string *****/
-
-                        size_t nRead;
-
                         do {
+                            const size_t nRead =
+                                VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
 
-                            nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
-
-                            if (nRead == 0)
+                            if( nRead == 0 )
                                 break;
 
                             /***** copy buf to the string *****/
@@ -328,86 +281,76 @@ void kml2featurestyle (
                             szbuf[nRead] = '\0';
                             oStyle.append( szbuf );
 
-                        } while (!VSIFEofL(fp));
+                        } while( !VSIFEofL(fp) );
 
                         VSIFCloseL(fp);
 
                         /***** parse the kml into the ds style table *****/
 
-                        if ( poOgrDS->ParseIntoStyleTable (&oStyle, pszUrlTmp)) {
-
-                            kml2featurestyle (poKmlFeature,
+                        if( poOgrDS->ParseIntoStyleTable(&oStyle, pszUrlTmp) )
+                        {
+                            kml2featurestyle( poKmlFeature,
                                               poOgrDS,
                                               poOgrLayer,
                                               poOgrFeat );
                         }
-
-                        else {
-
+                        else
+                        {
                             /***** if failed just store the url *****/
-
-                            poOgrFeat->SetStyleString ( pszUrl );
+                            poOgrFeat->SetStyleString( pszUrl );
                         }
                     }
                     CPLFree(pszUrlTmp);
                 }
-
-                else {
-
-                    poOgrFeat->SetStyleString ( pszUrl );
+                else
+                {
+                    poOgrFeat->SetStyleString( pszUrl );
                 }
             }
-
         }
-        CPLFree ( pszUrl );
-
+        CPLFree( pszUrl );
     }
 
     /***** does the placemark have a style selector *****/
-
-   if ( poKmlFeature->has_styleselector (  ) ) {
-
+    if( poKmlFeature->has_styleselector() )
+    {
         StyleSelectorPtr poKmlStyleSelector =
-            poKmlFeature->get_styleselector (  );
+            poKmlFeature->get_styleselector();
 
         /***** is the style a style? *****/
-
-        if ( poKmlStyleSelector->IsA ( kmldom::Type_Style ) ) {
-            StylePtr poKmlStyle = AsStyle ( poKmlStyleSelector );
+        if( poKmlStyleSelector->IsA( kmldom::Type_Style ) )
+        {
+            StylePtr poKmlStyle = AsStyle( poKmlStyleSelector );
 
             OGRStyleMgr *poOgrSM = new OGRStyleMgr;
 
             /***** if were resolving style the feature *****/
             /***** might already have styling to add too *****/
-
-            const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
-            if (CPLTestBool(pszResolve)) {
-                 poOgrSM->InitFromFeature ( poOgrFeat );
+            const char *pszResolve =
+                CPLGetConfigOption( "LIBKML_RESOLVE_STYLE", "no" );
+            if( CPLTestBool(pszResolve) ) {
+                 poOgrSM->InitFromFeature( poOgrFeat );
             }
-            else {
-
-                /***** if featyurestyle gets a name tool this needs changed to the above *****/
-
-                poOgrSM->InitStyleString ( NULL );
+            else
+            {
+                /***** if featyurestyle gets a name tool this needs
+                       changed to the above *****/
+                poOgrSM->InitStyleString( NULL );
             }
 
             /***** read the style *****/
-
-            kml2stylestring ( poKmlStyle, poOgrSM );
+            kml2stylestring( poKmlStyle, poOgrSM );
 
             /***** add the style to the feature *****/
-
             poOgrFeat->SetStyleString(poOgrSM->GetStyleString(NULL));
 
             delete poOgrSM;
         }
 
         /***** is the style a stylemap? *****/
-
-        else if ( poKmlStyleSelector->IsA ( kmldom::Type_StyleMap ) ) {
-            /* todo need to figure out what to do with a style map */
+        else if( poKmlStyleSelector->IsA( kmldom::Type_StyleMap ) )
+        {
+            // TODO: Need to figure out what to do with a style map.
         }
-
-
     }
 }
