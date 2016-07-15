@@ -56,8 +56,6 @@ class OGRLIBKMLLayer:public OGRLayer
     kmldom::ElementPtr        m_poKmlLayerRoot;
     kmldom::UpdatePtr         m_poKmlUpdate;
 
-    kmldom::DocumentPtr       m_poKmlDocument;
-    //OGRStyleTable            *m_poStyleTable;
     OGRLIBKMLDataSource      *m_poOgrDS;
     OGRFeatureDefn           *m_poOgrFeatureDefn;
     kmldom::SchemaPtr         m_poKmlSchema;
@@ -92,86 +90,86 @@ class OGRLIBKMLLayer:public OGRLayer
                                 kmldom::UpdatePtr poKmlUpdate,
                                 const char *pszFileName,
                                 int bNew,
-                                int bUpdate);
-    ~OGRLIBKMLLayer           (  );
+                                int bUpdate );
+    virtual ~OGRLIBKMLLayer();
 
-    void                      ResetReading  (  ) { iFeature = 0; nFID = 1; };
-    OGRFeature               *GetNextFeature (  );
-    OGRFeature               *GetNextRawFeature (  );
-    OGRFeatureDefn           *GetLayerDefn (  ) { return m_poOgrFeatureDefn; };
+    void                      ResetReading() { iFeature = 0; nFID = 1; };
+    OGRFeature               *GetNextFeature();
+    OGRFeature               *GetNextRawFeature();
+    OGRFeatureDefn           *GetLayerDefn() { return m_poOgrFeatureDefn; };
     //OGRErr                    SetAttributeFilter (const char * );
     OGRErr                    ICreateFeature( OGRFeature * poOgrFeat );
     OGRErr                    ISetFeature( OGRFeature * poOgrFeat );
     OGRErr                    DeleteFeature( GIntBig nFID );
 
-    GIntBig                   GetFeatureCount ( int bForce = TRUE );
+    GIntBig                   GetFeatureCount( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
                                           int bForce = TRUE );
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    //const char               *GetInfo ( const char * );
+    //const char               *GetInfo( const char * );
 
-    OGRErr                    CreateField ( OGRFieldDefn * poField,
-                                            int bApproxOK = TRUE );
+    OGRErr                    CreateField( OGRFieldDefn * poField,
+                                           int bApproxOK = TRUE );
 
-    OGRErr                    SyncToDisk (  );
+    OGRErr                    SyncToDisk();
 
-    OGRStyleTable            *GetStyleTable (  );
-    void                      SetStyleTableDirectly ( OGRStyleTable * poStyleTable );
-    void                      SetStyleTable ( OGRStyleTable * poStyleTable );
-    const char               *GetName(  ) { return m_pszName; };
-    int                       TestCapability ( const char * );
-    kmldom::ContainerPtr      GetKmlLayer () { return m_poKmlLayer; };
-    kmldom::ElementPtr        GetKmlLayerRoot () { return m_poKmlLayerRoot; };
-    kmldom::SchemaPtr         GetKmlSchema () { return m_poKmlSchema; };
-    const char               *GetFileName (  ) { return m_pszFileName; };
+    OGRStyleTable            *GetStyleTable();
+    void                  SetStyleTableDirectly( OGRStyleTable * poStyleTable );
+    void                      SetStyleTable( OGRStyleTable * poStyleTable );
+    const char               *GetName() { return m_pszName; };
+    int                       TestCapability( const char * );
+    kmldom::ContainerPtr      GetKmlLayer() { return m_poKmlLayer; };
+    kmldom::ElementPtr        GetKmlLayerRoot() { return m_poKmlLayerRoot; };
+    kmldom::SchemaPtr         GetKmlSchema() { return m_poKmlSchema; };
+    const char               *GetFileName() { return m_pszFileName; };
 
-    void                      SetLookAt(const char* pszLookatLongitude,
-                                        const char* pszLookatLatitude,
-                                        const char* pszLookatAltitude,
-                                        const char* pszLookatHeading,
-                                        const char* pszLookatTilt,
-                                        const char* pszLookatRange,
-                                        const char* pszLookatAltitudeMode);
-    void                      SetCamera(const char* pszCameraLongitude,
-                                        const char* pszCameraLatitude,
-                                        const char* pszCameraAltitude,
-                                        const char* pszCameraHeading,
-                                        const char* pszCameraTilt,
-                                        const char* pszCameraRoll,
-                                        const char* pszCameraAltitudeMode);
+    void                      SetLookAt( const char* pszLookatLongitude,
+                                         const char* pszLookatLatitude,
+                                         const char* pszLookatAltitude,
+                                         const char* pszLookatHeading,
+                                         const char* pszLookatTilt,
+                                         const char* pszLookatRange,
+                                         const char* pszLookatAltitudeMode );
+    void                      SetCamera( const char* pszCameraLongitude,
+                                         const char* pszCameraLatitude,
+                                         const char* pszCameraAltitude,
+                                         const char* pszCameraHeading,
+                                         const char* pszCameraTilt,
+                                         const char* pszCameraRoll,
+                                         const char* pszCameraAltitudeMode );
 
-    static CPLString          LaunderFieldNames(CPLString osName);
+    static CPLString          LaunderFieldNames( CPLString osName );
 
-    void                      SetWriteRegion(double dfMinLodPixels,
-                                             double dfMaxLodPixels,
-                                             double dfMinFadeExtent,
-                                             double dfMaxFadeExtent);
-    void                      SetRegionBounds(double dfMinX, double dfMinY,
-                                              double dfMaxX, double dfMaxY);
+    void                      SetWriteRegion( double dfMinLodPixels,
+                                              double dfMaxLodPixels,
+                                              double dfMinFadeExtent,
+                                              double dfMaxFadeExtent );
+    void                      SetRegionBounds( double dfMinX, double dfMinY,
+                                               double dfMaxX, double dfMaxY );
 
-    void                      SetScreenOverlay(const char* pszSOHref,
-                                               const char* pszSOName,
-                                               const char* pszSODescription,
-                                               const char* pszSOOverlayX,
-                                               const char* pszSOOverlayY,
-                                               const char* pszSOOverlayXUnits,
-                                               const char* pszSOOverlayYUnits,
-                                               const char* pszSOScreenX,
-                                               const char* pszSOScreenY,
-                                               const char* pszSOScreenXUnits,
-                                               const char* pszSOScreenYUnits,
-                                               const char* pszSOSizeX,
-                                               const char* pszSOSizeY,
-                                               const char* pszSOSizeXUnits,
-                                               const char* pszSOSizeYUnits);
+    void                      SetScreenOverlay( const char* pszSOHref,
+                                                const char* pszSOName,
+                                                const char* pszSODescription,
+                                                const char* pszSOOverlayX,
+                                                const char* pszSOOverlayY,
+                                                const char* pszSOOverlayXUnits,
+                                                const char* pszSOOverlayYUnits,
+                                                const char* pszSOScreenX,
+                                                const char* pszSOScreenY,
+                                                const char* pszSOScreenXUnits,
+                                                const char* pszSOScreenYUnits,
+                                                const char* pszSOSizeX,
+                                                const char* pszSOSizeY,
+                                                const char* pszSOSizeXUnits,
+                                                const char* pszSOSizeYUnits );
 
-    void                      SetListStyle(const char* pszListStyleType,
-                                           const char* pszListStyleIconHref);
+    void                      SetListStyle( const char* pszListStyleType,
+                                            const char* pszListStyleIconHref );
 
     void                      Finalize( kmldom::DocumentPtr poKmlDocument );
-    void                      SetUpdateIsFolder(int bUpdateIsFolder)
+    void                      SetUpdateIsFolder( int bUpdateIsFolder )
         { m_bUpdateIsFolder = bUpdateIsFolder; }
 };
 
