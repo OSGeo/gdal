@@ -112,12 +112,12 @@
 /*      MinGW stuff                                                     */
 /* ==================================================================== */
 
-/* We need __MSVCRT_VERSION__ >= 0x0601 to have "struct __stat64" */
+/* We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc" */
 /* Latest versions of mingw32 define it, but with older ones, */
 /* we need to define it manually */
 #if defined(__MINGW32__)
 #ifndef __MSVCRT_VERSION__
-#define __MSVCRT_VERSION__ 0x0601
+#define __MSVCRT_VERSION__ 0x0700
 #endif
 #endif
 

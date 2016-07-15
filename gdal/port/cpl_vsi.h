@@ -196,6 +196,13 @@ void CPL_DLL    VSIFree( void * );
 void CPL_DLL   *VSIRealloc( void *, size_t ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL   *VSIStrdup( const char * ) CPL_WARN_UNUSED_RESULT;
 
+void CPL_DLL   *VSIMallocAligned( size_t nAlignment, size_t nSize ) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL   *VSIMallocAlignedAuto( size_t nSize ) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL    VSIFreeAligned( void* ptr );
+
+void CPL_DLL   *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_MALLOC_ALIGNED_AUTO_VERBOSE( size ) VSIMallocAlignedAutoVerbose(size,__FILE__,__LINE__)
+
 /**
  VSIMalloc2 allocates (nSize1 * nSize2) bytes.
  In case of overflow of the multiplication, or if memory allocation fails, a
