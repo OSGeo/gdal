@@ -70,30 +70,27 @@ using kmlengine::KmzFile;
 /*                    OGRLIBKMLGetSanitizedNCName()                     */
 /************************************************************************/
 
-CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
+CPLString OGRLIBKMLGetSanitizedNCName( const char* pszName )
 {
     CPLString osName(pszName);
-    /* (Approximate) validation rules for a valid NCName */
-    for(size_t i = 0; i < osName.size(); i++)
+    // (Approximate) validation rules for a valid NCName.
+    for( size_t i = 0; i < osName.size(); i++)
     {
         char ch = osName[i];
         if( (ch >= 'A' && ch <= 'Z') || ch == '_' || (ch >= 'a' && ch <= 'z') )
         {
             /* ok */
         }
-        else if ( i > 0 && (ch == '-' || ch == '.' || (ch >= '0' && ch <= '9')) )
+        else if ( i > 0 && (ch == '-' || ch == '.' ||
+                            (ch >= '0' && ch <= '9')) )
         {
             /* ok */
         }
-#if 0
-        /* Always false. */
-        else if ( ch > 127 )
-        {
-            /* ok : this is an approximation */
-        }
-#endif
+        // Always false: ch > 127.
         else
+        {
             osName[i] = '_';
+        }
     }
     return osName;
 }
@@ -124,190 +121,158 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                                  UpdatePtr poKmlUpdate,
                                  const char *pszFileName,
                                  int bNew,
-                                 int bUpdateIn )
+                                 int bUpdateIn ) :
+    bUpdate(bUpdateIn),
+    bUpdated(FALSE),
+    nFeatures(0),
+    iFeature(0),
+    nFID(1),
+    m_pszName(CPLStrdup(pszLayerName)),
+    m_pszFileName(CPLStrdup(pszFileName)),
+    m_poKmlLayer(poKmlContainer),  // Store the layers container.
+    m_poKmlLayerRoot(poKmlRoot),  // Store the root element pointer.
+    m_poKmlUpdate(poKmlUpdate),
+    m_poOgrDS(poOgrDS),
+    m_poOgrFeatureDefn(new OGRFeatureDefn(pszLayerName)),
+    m_poKmlSchema(NULL),
+    m_poOgrSRS(new OGRSpatialReference(NULL)),
+    m_bReadGroundOverlay(CPLTestBool(
+        CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"))),
+    m_bUseSimpleField(CPLTestBool(
+        CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"))),
+    m_bWriteRegion(FALSE),
+    m_bRegionBoundsAuto(FALSE),
+    m_dfRegionMinLodPixels(0),
+    m_dfRegionMaxLodPixels(-1),
+    m_dfRegionMinFadeExtent(0),
+    m_dfRegionMaxFadeExtent(0),
+    m_dfRegionMinX(200),
+    m_dfRegionMinY(200),
+    m_dfRegionMaxX(-200),
+    m_dfRegionMaxY(-200),
+    m_bUpdateIsFolder(FALSE)
 {
-
     m_poStyleTable = NULL;
-    iFeature = 0;
-    nFeatures = 0;
-    nFID = 1;
-
-    this->bUpdate = bUpdateIn;
-    bUpdated = FALSE;
-    m_pszName = CPLStrdup ( pszLayerName );
-    m_pszFileName = CPLStrdup ( pszFileName );
-    m_poOgrDS = poOgrDS;
-
-    m_poOgrSRS = new OGRSpatialReference ( NULL );
     m_poOgrSRS->SetWellKnownGeogCS ( "WGS84" );
 
-    m_poOgrFeatureDefn = new OGRFeatureDefn ( pszLayerName );
     SetDescription( m_poOgrFeatureDefn->GetName() );
-    m_poOgrFeatureDefn->Reference (  );
-    m_poOgrFeatureDefn->SetGeomType ( eGType );
+    m_poOgrFeatureDefn->Reference();
+    m_poOgrFeatureDefn->SetGeomType( eGType );
     if( m_poOgrFeatureDefn->GetGeomFieldCount() != 0 )
         m_poOgrFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poOgrSRS);
 
-    /***** store the root element pointer *****/
-
-    m_poKmlLayerRoot = poKmlRoot;
-
-    /***** store the layers container *****/
-
-    m_poKmlLayer = poKmlContainer;
-
-    /* update container */
-    m_poKmlUpdate = poKmlUpdate;
-
-    m_poKmlSchema = NULL;
-
-    /***** related to Region *****/
-
-    m_bWriteRegion = FALSE;
-    m_bRegionBoundsAuto = FALSE;
-    m_dfRegionMinLodPixels = 0;
-    m_dfRegionMaxLodPixels = -1;
-    m_dfRegionMinFadeExtent = 0;
-    m_dfRegionMaxFadeExtent = 0;
-    m_dfRegionMinX = 200;
-    m_dfRegionMinY = 200;
-    m_dfRegionMaxX = -200;
-    m_dfRegionMaxY = -200;
-
-
-    m_bReadGroundOverlay = CPLTestBool(
-        CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
-    m_bUseSimpleField = CPLTestBool(
-        CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
-
-    m_bUpdateIsFolder = FALSE;
-
     /***** was the layer created from a DS::Open *****/
-
-    if ( !bNew ) {
-
+    if( !bNew )
+    {
         /***** get the number of features on the layer *****/
-
-        nFeatures = static_cast<int>(m_poKmlLayer->get_feature_array_size (  ));
+        nFeatures = static_cast<int>(m_poKmlLayer->get_feature_array_size());
 
         /***** get the field config *****/
-
         struct fieldconfig oFC;
         get_fieldconfig( &oFC );
 
         /***** name field *****/
-
-        OGRFieldDefn oOgrFieldName ( oFC.namefield,OFTString );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
+        OGRFieldDefn oOgrFieldName( oFC.namefield,OFTString );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldName );
 
         /***** description field *****/
-
-        OGRFieldDefn oOgrFieldDesc ( oFC.descfield, OFTString );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDesc );
+        OGRFieldDefn oOgrFieldDesc( oFC.descfield, OFTString );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldDesc );
 
         /***** timestamp field *****/
-
-        OGRFieldDefn oOgrFieldTs ( oFC.tsfield, OFTDateTime );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTs );
+        OGRFieldDefn oOgrFieldTs( oFC.tsfield, OFTDateTime );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldTs );
 
         /*****  timespan begin field *****/
-
-        OGRFieldDefn oOgrFieldBegin ( oFC.beginfield, OFTDateTime );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldBegin );
+        OGRFieldDefn oOgrFieldBegin( oFC.beginfield, OFTDateTime );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldBegin );
 
         /*****  timespan end field *****/
-
-        OGRFieldDefn oOgrFieldEnd ( oFC.endfield, OFTDateTime );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldEnd );
+        OGRFieldDefn oOgrFieldEnd( oFC.endfield, OFTDateTime );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldEnd );
 
         /*****  altitudeMode field *****/
-
-        OGRFieldDefn oOgrFieldAltitudeMode ( oFC.altitudeModefield, OFTString );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldAltitudeMode );
+        OGRFieldDefn oOgrFieldAltitudeMode( oFC.altitudeModefield, OFTString );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldAltitudeMode );
 
         /***** tessellate field *****/
-
-        OGRFieldDefn oOgrFieldTessellate ( oFC.tessellatefield, OFTInteger );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTessellate );
+        OGRFieldDefn oOgrFieldTessellate( oFC.tessellatefield, OFTInteger );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldTessellate );
 
         /***** extrude field *****/
-
-        OGRFieldDefn oOgrFieldExtrude ( oFC.extrudefield, OFTInteger );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldExtrude );
+        OGRFieldDefn oOgrFieldExtrude( oFC.extrudefield, OFTInteger );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldExtrude );
 
         /***** visibility field *****/
-
-        OGRFieldDefn oOgrFieldVisibility ( oFC.visibilityfield, OFTInteger );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldVisibility );
+        OGRFieldDefn oOgrFieldVisibility( oFC.visibilityfield, OFTInteger );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldVisibility );
 
         /***** draw order field *****/
-
-        OGRFieldDefn oOgrFieldDrawOrder ( oFC.drawOrderfield, OFTInteger );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDrawOrder );
+        OGRFieldDefn oOgrFieldDrawOrder( oFC.drawOrderfield, OFTInteger );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldDrawOrder );
 
         /***** icon field *****/
-
-        OGRFieldDefn oOgrFieldIcon ( oFC.iconfield, OFTString );
-        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldIcon );
+        OGRFieldDefn oOgrFieldIcon( oFC.iconfield, OFTString );
+        m_poOgrFeatureDefn->AddFieldDefn( &oOgrFieldIcon );
 
         /***** get the styles *****/
-
-        if ( m_poKmlLayer->IsA ( kmldom::Type_Document ) )
-            ParseStyles ( AsDocument ( m_poKmlLayer ), &m_poStyleTable );
+        if( m_poKmlLayer->IsA ( kmldom::Type_Document ) )
+            ParseStyles( AsDocument ( m_poKmlLayer ), &m_poStyleTable );
 
         /***** get the schema if the layer is a Document *****/
+        if( m_poKmlLayer->IsA ( kmldom::Type_Document ) )
+        {
+            DocumentPtr poKmlDocument = AsDocument( m_poKmlLayer );
 
-        if ( m_poKmlLayer->IsA ( kmldom::Type_Document ) ) {
-            DocumentPtr poKmlDocument = AsDocument ( m_poKmlLayer );
-
-            if ( poKmlDocument->get_schema_array_size (  ) ) {
-                m_poKmlSchema = poKmlDocument->get_schema_array_at ( 0 );
-                kml2FeatureDef ( m_poKmlSchema, m_poOgrFeatureDefn );
+            if( poKmlDocument->get_schema_array_size() )
+            {
+                m_poKmlSchema = poKmlDocument->get_schema_array_at( 0 );
+                kml2FeatureDef( m_poKmlSchema, m_poOgrFeatureDefn );
             }
         }
 
         /***** the schema is somewhere else *****/
-
-        if (m_poKmlSchema == NULL) {
-
+        if( m_poKmlSchema == NULL )
+        {
             /***** try to find the correct schema *****/
-
-            int bHasHeading = FALSE, bHasTilt = FALSE, bHasRoll = FALSE;
-            int bHasSnippet = FALSE;
-            FeaturePtr poKmlFeature;
+            bool bHasHeading = false;
+            bool bHasTilt = false;
+            bool bHasRoll = false;
+            bool bHasSnippet = false;
+            FeaturePtr poKmlFeature = NULL;
 
             /***** find the first placemark *****/
-
             do {
-                if ( iFeature >= nFeatures )
+                if( iFeature >= nFeatures )
                     break;
 
                 poKmlFeature =
-                    m_poKmlLayer->get_feature_array_at ( iFeature++ );
+                    m_poKmlLayer->get_feature_array_at( iFeature++ );
 
                 if( poKmlFeature->Type() == kmldom::Type_Placemark )
                 {
-                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark( poKmlFeature );
                     if( !poKmlPlacemark->has_geometry (  ) &&
                         poKmlPlacemark->has_abstractview (  ) &&
                         poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) )
                     {
-                        const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
+                        const CameraPtr& camera =
+                            AsCamera(poKmlPlacemark->get_abstractview());
                         if( camera->has_heading() && !bHasHeading )
                         {
-                            bHasHeading = TRUE;
+                            bHasHeading = true;
                             OGRFieldDefn oOgrField ( oFC.headingfield, OFTReal );
                             m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                         }
                         if( camera->has_tilt() && !bHasTilt )
                         {
-                            bHasTilt = TRUE;
+                            bHasTilt = true;
                             OGRFieldDefn oOgrField ( oFC.tiltfield, OFTReal );
                             m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                         }
                         if( camera->has_roll() && !bHasRoll )
                         {
-                            bHasRoll = TRUE;
+                            bHasRoll = true;
                             OGRFieldDefn oOgrField ( oFC.rollfield, OFTReal );
                             m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                         }
@@ -315,79 +280,73 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                 }
                 if( !bHasSnippet && poKmlFeature->has_snippet() )
                 {
-                    bHasSnippet = TRUE;
+                    bHasSnippet = true;
                     OGRFieldDefn oOgrField ( oFC.snippetfield, OFTString );
                     m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                 }
-            } while ( poKmlFeature->Type (  ) != kmldom::Type_Placemark );
+            } while( poKmlFeature->Type() != kmldom::Type_Placemark );
 
-            if ( iFeature <= nFeatures && poKmlFeature &&
-                 poKmlFeature->Type (  ) == kmldom::Type_Placemark &&
-                 poKmlFeature->has_extendeddata (  ) ) {
+            if( iFeature <= nFeatures && poKmlFeature &&
+                poKmlFeature->Type() == kmldom::Type_Placemark &&
+                poKmlFeature->has_extendeddata() )
+            {
 
-                ExtendedDataPtr poKmlExtendedData = poKmlFeature->
-                    get_extendeddata (  );
+                const ExtendedDataPtr poKmlExtendedData =
+                    poKmlFeature->get_extendeddata();
 
-                if ( poKmlExtendedData->get_schemadata_array_size (  ) > 0 ) {
-                    SchemaDataPtr poKmlSchemaData = poKmlExtendedData->
-                        get_schemadata_array_at ( 0 );
+                if( poKmlExtendedData->get_schemadata_array_size() > 0 )
+                {
+                    const SchemaDataPtr poKmlSchemaData =
+                        poKmlExtendedData->get_schemadata_array_at( 0 );
 
-                    if ( poKmlSchemaData->has_schemaurl (  ) ) {
-
-                        std::string oKmlSchemaUrl = poKmlSchemaData->
-                            get_schemaurl (  );
-                        if ( ( m_poKmlSchema =
-                               m_poOgrDS->FindSchema ( oKmlSchemaUrl.
-                                                       c_str (  ) ) ) ) {
-                            kml2FeatureDef ( m_poKmlSchema,
-                                             m_poOgrFeatureDefn );
+                    if( poKmlSchemaData->has_schemaurl() )
+                    {
+                        std::string oKmlSchemaUrl =
+                            poKmlSchemaData->get_schemaurl();
+                        if( ( m_poKmlSchema = m_poOgrDS->FindSchema(
+                                  oKmlSchemaUrl.c_str() ) ) )
+                        {
+                            kml2FeatureDef( m_poKmlSchema, m_poOgrFeatureDefn );
                         }
                     }
                 }
-                else if ( poKmlExtendedData->get_data_array_size() > 0 )
+                else if( poKmlExtendedData->get_data_array_size() > 0 )
                 {
-                    /* Use the <Data> of the first placemark to build the feature definition */
-                    /* If others have different fields, too bad... */
-                    int bLaunderFieldNames =
-                        CPLTestBool(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
-                    size_t nDataArraySize = poKmlExtendedData->get_data_array_size();
-                    for(size_t i=0; i < nDataArraySize; i++)
+                    // Use the <Data> of the first placemark to build the
+                    // feature definition.  If others have different fields,
+                    // too bad...
+                    const bool bLaunderFieldNames =
+                        CPLTestBool(CPLGetConfigOption(
+                            "LIBKML_LAUNDER_FIELD_NAMES", "YES"));
+                    const size_t nDataArraySize =
+                        poKmlExtendedData->get_data_array_size();
+                    for( size_t i=0; i < nDataArraySize; i++ )
                     {
-                        const DataPtr& data = poKmlExtendedData->get_data_array_at(i);
-                        if (data->has_name())
+                        const DataPtr& data =
+                            poKmlExtendedData->get_data_array_at(i);
+                        if(data->has_name() )
                         {
                             CPLString osName = std::string(data->get_name());
-                            if (bLaunderFieldNames)
+                            if( bLaunderFieldNames )
                                 osName = LaunderFieldNames(osName);
-                            OGRFieldDefn oOgrField ( osName,
-                                                    OFTString );
-                            m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
+                            OGRFieldDefn oOgrField( osName, OFTString );
+                            m_poOgrFeatureDefn->AddFieldDefn( &oOgrField );
                         }
                     }
                 }
             }
-
             iFeature = 0;
-
         }
 
-
-
         /***** check if any features are another layer *****/
-
         m_poOgrDS->ParseLayers ( m_poKmlLayer, poSpatialRef );
-
     }
-
     /***** it was from a DS::CreateLayer *****/
-
-    else {
-
+    else
+    {
         /***** mark the layer as updated *****/
-
         bUpdated = TRUE;
     }
-
 }
 
 /******************************************************************************
@@ -399,16 +358,13 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
 ******************************************************************************/
 
-OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
+OGRLIBKMLLayer::~OGRLIBKMLLayer()
 {
-
-    CPLFree ( ( void * )m_pszName );
-    CPLFree ( ( void * )m_pszFileName );
+    CPLFree( const_cast<char *>(m_pszName) );
+    CPLFree( const_cast<char *>(m_pszFileName) );
     m_poOgrSRS->Release();
 
-    m_poOgrFeatureDefn->Release (  );
-
-
+    m_poOgrFeatureDefn->Release();
 }
 
 
@@ -423,21 +379,20 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
 ******************************************************************************/
 
 OGRFeature *OGRLIBKMLLayer::GetNextFeature()
-
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
         if( (m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
+        {
             return poFeature;
+        }
 
         delete poFeature;
     }
@@ -452,10 +407,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextFeature()
 
 ******************************************************************************/
 
-OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
-     )
+OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
 {
-    FeaturePtr poKmlFeature;
     OGRFeature *poOgrFeature = NULL;
 
     if( m_poKmlLayer == NULL )
@@ -469,7 +422,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
 
         /***** get the next kml feature in the container *****/
 
-        poKmlFeature = m_poKmlLayer->get_feature_array_at ( iFeature++ );
+        const FeaturePtr poKmlFeature =
+            m_poKmlLayer->get_feature_array_at ( iFeature++ );
 
         /***** what type of kml feature in the container? *****/
 
@@ -499,8 +453,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
     } while ( !poOgrFeature );
 
     /***** set the FID on the ogr feature *****/
-
-    if (poOgrFeature)
+    if( poOgrFeature )
         poOgrFeature->SetFID(nFID ++);
 
     return poOgrFeature;
@@ -516,10 +469,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::ICreateFeature (
-    OGRFeature * poOgrFeat )
+OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
 {
-
     if ( !bUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
 
@@ -535,11 +486,13 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
     }
 
     FeaturePtr poKmlFeature =
-        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ),
-                   m_bUseSimpleField );
+        feat2kml( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory(),
+                  m_bUseSimpleField );
 
     if( m_poKmlLayer != NULL )
+    {
         m_poKmlLayer->add_feature ( poKmlFeature );
+    }
     else
     {
         CPLAssert( m_poKmlUpdate != NULL );
@@ -557,7 +510,6 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
     }
 
     /***** update the layer class count of features  *****/
-
     if( m_poKmlLayer != NULL )
     {
         nFeatures++;
@@ -575,23 +527,27 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
             if( !bAlreadyWarned )
             {
                 bAlreadyWarned = TRUE;
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "It is recommended to define a FID when calling CreateFeature() in a update document");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "It is recommended to define a FID when calling "
+                    "CreateFeature() in a update document");
             }
         }
         else
         {
-            const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
-                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
+            const char* pszId =
+                CPLSPrintf(
+                    "%s." CPL_FRMT_GIB,
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(),
+                    poOgrFeat->GetFID());
             poOgrFeat->SetFID(nFeatures);
             poKmlFeature->set_id(pszId);
         }
     }
 
     /***** mark the layer as updated *****/
-
     bUpdated = TRUE;
-    m_poOgrDS->Updated (  );
+    m_poOgrDS->Updated();
 
     return OGRERR_NONE;
 }
@@ -615,11 +571,11 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
         return OGRERR_FAILURE;
 
     FeaturePtr poKmlFeature =
-        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ),
+        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory(),
                    m_bUseSimpleField );
 
-    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
-    ChangePtr poChange = poKmlFactory->CreateChange();
+    const KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory();
+    const ChangePtr poChange = poKmlFactory->CreateChange();
     poChange->add_object(poKmlFeature);
     m_poKmlUpdate->add_updateoperation(poChange);
 
@@ -628,9 +584,8 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
     poKmlFeature->set_targetid(pszId);
 
     /***** mark the layer as updated *****/
-
     bUpdated = TRUE;
-    m_poOgrDS->Updated (  );
+    m_poOgrDS->Updated();
 
     return OGRERR_NONE;
 }
@@ -650,7 +605,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
     if( !bUpdate || m_poKmlUpdate == NULL )
         return OGRERR_UNSUPPORTED_OPERATION;
 
-    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory();
     DeletePtr poDelete = poKmlFactory->CreateDelete();
     m_poKmlUpdate->add_updateoperation(poDelete);
     PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
@@ -661,9 +616,8 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
     poKmlPlacemark->set_targetid(pszId);
 
     /***** mark the layer as updated *****/
-
     bUpdated = TRUE;
-    m_poOgrDS->Updated (  );
+    m_poOgrDS->Updated();
 
     return OGRERR_NONE;
 }
@@ -680,17 +634,14 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
 
 ******************************************************************************/
 
-GIntBig OGRLIBKMLLayer::GetFeatureCount (
-                                     int bForce )
+GIntBig OGRLIBKMLLayer::GetFeatureCount ( int bForce )
 {
-
-
     int i = 0;
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL ) {
         i = static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
-
-    else if( m_poKmlLayer != NULL ) {
+    else if( m_poKmlLayer != NULL )
+    {
         size_t iKmlFeature;
         size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  );
         FeaturePtr poKmlFeature;
