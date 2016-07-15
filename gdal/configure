@@ -18099,6 +18099,17 @@ _ACEOF
 fi
 done
 
+for ac_func in posix_memalign
+do :
+  ac_fn_c_check_func "$LINENO" "posix_memalign" "ac_cv_func_posix_memalign"
+if test "x$ac_cv_func_posix_memalign" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_POSIX_MEMALIGN 1
+_ACEOF
+
+fi
+done
+
 for ac_func in vfork
 do :
   ac_fn_c_check_func "$LINENO" "vfork" "ac_cv_func_vfork"

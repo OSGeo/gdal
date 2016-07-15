@@ -40,6 +40,10 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#ifdef _WIN32
+#include <malloc.h> // For _aligned_malloc
+#endif
+
 /* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
 /* VSICalloc(), VSIFree(), VSIStrdup() */
 //#define DEBUG_VSIMALLOC
@@ -451,13 +455,19 @@ void *VSICalloc( size_t nCount, size_t nSize )
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* ptr = NULL;
-    size_t nPageSize = getpagesize();
-    posix_memalign((void**)&ptr, nPageSize, (3 * sizeof(void*) + nMul + nPageSize - 1) & ~(nPageSize - 1));
+    const size_t nPageSize = getpagesize();
+    const size_t nRequestedSize = (3 * sizeof(void*) + nMul + nPageSize - 1) & ~(nPageSize - 1);
+    if( nRequestedSize < nMul )
+        return NULL;
+    posix_memalign((void**)&ptr, nPageSize, nRequestedSize);
     if (ptr == NULL)
         return NULL;
     memset(ptr + 2 * sizeof(void*), 0, nMul);
 #else
-    char* ptr = (char*) calloc(1, 3 * sizeof(void*) + nMul);
+    const size_t nRequestedSize = 3 * sizeof(void*) + nMul;
+    if( nRequestedSize < nMul )
+        return NULL;
+    char* ptr = (char*) calloc(1, nRequestedSize);
     if (ptr == NULL)
         return NULL;
 #endif
@@ -545,10 +555,16 @@ void *VSIMalloc( size_t nSize )
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* ptr = NULL;
-    size_t nPageSize = getpagesize();
-    posix_memalign((void**)&ptr, nPageSize, (3 * sizeof(void*) + nSize + nPageSize - 1) & ~(nPageSize - 1));
+    const size_t nPageSize = getpagesize();
+    const size_t nRequestedSize = (3 * sizeof(void*) + nSize + nPageSize - 1) & ~(nPageSize - 1);
+    if( nRequestedSize < nSize )
+        return NULL;
+    posix_memalign((void**)&ptr, nPageSize, nRequestedSize );
 #else
-    char* ptr = (char*) malloc(3 * sizeof(void*) + nSize);
+    const size_t nRequestedSize = 3 * sizeof(void*) + nSize;
+    if( nRequestedSize < nSize )
+        return NULL;
+    char* ptr = (char*) malloc(nRequestedSize);
 #endif  // DEBUG_VSIMALLOC_MPROTECT
     if (ptr == NULL)
         return NULL;
@@ -658,8 +674,17 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* newptr = NULL;
-    size_t nPageSize = getpagesize();
-    posix_memalign((void**)&newptr, nPageSize, (nNewSize + 3 * sizeof(void*) + nPageSize - 1) & ~(nPageSize - 1));
+    const size_t nPageSize = getpagesize();
+    const size_t nRequestedSize = (nNewSize + 3 * sizeof(void*) + nPageSize - 1) & ~(nPageSize - 1);
+    if( nRequestedSize < nNewSize )
+    {
+        ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
+        ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
+        ptr[2 * sizeof(void*) + nOldSize + 2] = 'S';
+        ptr[2 * sizeof(void*) + nOldSize + 3] = 'I';
+        return NULL;
+    }
+    posix_memalign((void**)&newptr, nPageSize, nRequestedSize);
     if (newptr == NULL)
     {
         ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
@@ -679,7 +704,16 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     newptr[2] = 'I';
     newptr[3] = 'M';
 #else
-    void* newptr = realloc(ptr, nNewSize + 3 * sizeof(void*));
+    const size_t nRequestedSize = 3 * sizeof(void*) + nNewSize;
+    if( nRequestedSize < nNewSize )
+    {
+        ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
+        ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
+        ptr[2 * sizeof(void*) + nOldSize + 2] = 'S';
+        ptr[2 * sizeof(void*) + nOldSize + 3] = 'I';
+        return NULL;
+    }
+    void* newptr = realloc(ptr, nRequestedSize);
     if (newptr == NULL)
     {
         ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
@@ -787,6 +821,115 @@ void VSIFree( void * pData )
 #else
     if( pData != NULL )
         free( pData );
+#endif
+}
+
+/************************************************************************/
+/*                      VSIMallocAligned()                              */
+/************************************************************************/
+
+/** Allocates a buffer with an alignment constraint.
+ *
+ * The return value must be freed with VSIFreeAligned().
+ *
+ * @param nAlignment Must be a power of 2, multiple of sizeof(void*), and
+ *                   lesser than 256.
+ * @param nSize Size of the buffer to allocate.
+ * @return a buffer aligned on nAlignment and of size nSize, or NULL
+ * @since GDAL 2.2
+ */
+
+void* VSIMallocAligned( size_t nAlignment, size_t nSize )
+{
+#if defined(HAVE_POSIX_MEMALIGN) && !defined(DEBUG_VSIMALLOC)
+    void* pRet = NULL;
+    if( posix_memalign( &pRet, nAlignment, nSize ) != 0 )
+    {
+        pRet = NULL;
+    }
+    return pRet;
+#elif defined(_WIN32) && !defined(DEBUG_VSIMALLOC)
+    return _aligned_malloc( nSize, nAlignment );
+#else
+    // Check constraints on alignment
+    if( nAlignment < sizeof(void*) || nAlignment >= 256 ||
+        (nAlignment & (nAlignment - 1)) != 0 )
+        return NULL;
+    // Detect overflow
+    if( nSize + nAlignment < nSize )
+        return NULL;
+    GByte* pabyData = static_cast<GByte*>(VSIMalloc( nSize + nAlignment ));
+    if( pabyData == NULL )
+        return NULL;
+    size_t nShift = nAlignment - ((size_t)pabyData % nAlignment);
+    GByte* pabyAligned = pabyData + nShift;
+    // Guaranteed to fit on a byte since nAlignment < 256
+    pabyAligned[-1] = static_cast<GByte>(nShift);
+    return pabyAligned;
+#endif
+}
+
+/************************************************************************/
+/*                     VSIMallocAlignedAuto()                           */
+/************************************************************************/
+
+/** Allocates a buffer with an alignment constraint such that it can be
+ * used by the most demanding vector instruction set on that platform.
+ *
+ * The return value must be freed with VSIFreeAligned().
+ *
+ * @param nSize Size of the buffer to allocate.
+ * @return an aligned buffer of size nSize, or NULL
+ * @since GDAL 2.2
+ */
+
+void* VSIMallocAlignedAuto( size_t nSize )
+{
+    // We could potentially dynamically detect the capability of the CPU
+    // but to simplify use 64 for AVX512 requirements (we use only AVX256
+    // currently)
+    return VSIMallocAligned(64, nSize);
+}
+
+/************************************************************************/
+/*                        VSIMallocAlignedAutoVerbose()                 */
+/************************************************************************/
+
+void *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile, int nLine )
+{
+    void* pRet = VSIMallocAlignedAuto(nSize);
+    if( pRet == NULL && nSize != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)nSize);
+    }
+    return pRet;
+}
+
+/************************************************************************/
+/*                        VSIFreeAligned()                              */
+/************************************************************************/
+
+/** Free a buffer allocated with VSIMallocAligned().
+ *
+ * @param ptr Buffer to free.
+ * @since GDAL 2.2
+ */
+
+void VSIFreeAligned( void* ptr )
+{
+#if defined(HAVE_POSIX_MEMALIGN) && !defined(DEBUG_VSIMALLOC)
+    free(ptr);
+#elif defined(_WIN32) && !defined(DEBUG_VSIMALLOC)
+    _aligned_free(ptr);
+#else
+    if( ptr == NULL )
+        return;
+    GByte* pabyAligned = static_cast<GByte*>(ptr);
+    size_t nShift = pabyAligned[-1];
+    VSIFree( pabyAligned - nShift );
 #endif
 }
 
