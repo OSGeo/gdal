@@ -13172,6 +13172,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->bCrystalized = FALSE;
     poDS->nSamplesPerPixel = (uint16) nBands;
     poDS->osFilename = pszFilename;
+ 
+    // Don't try to load external metadata files (#6597)
+    poDS->bIMDRPCMetadataLoaded = TRUE;
 
     /* Avoid premature crystalization that will cause directory re-writing */
     /* if GetProjectionRef() or GetGeoTransform() are called on the newly created GeoTIFF */
@@ -14170,6 +14173,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->bForceUnsetGTOrGCPs = FALSE;
     poDS->bForceUnsetProjection = FALSE;
     poDS->bStreamingOut = bStreaming;
+
+    // Don't try to load external metadata files (#6597)
+    poDS->bIMDRPCMetadataLoaded = TRUE;
 
     /* We must re-set the compression level at this point, since it has */
     /* been lost a few lines above when closing the newly create TIFF file */
