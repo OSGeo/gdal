@@ -975,11 +975,15 @@ namespace tut
 
         VSIFreeAligned(NULL);
 
+#ifndef WIN32
+        // Illegal use of API. Returns non NULL on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(2, 1));
         ensure( ptr == NULL );
 
+        // Illegal use of API. Crashes on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(5, 1));
         ensure( ptr == NULL );
+#endif
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
         {
