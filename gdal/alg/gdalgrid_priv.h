@@ -46,9 +46,9 @@ typedef struct
 {
     CPLQuadTree* hQuadTree;
     double       dfInitialSearchRadius;
-    const float *pafX;
-    const float *pafY;
-    const float *pafZ;
+    float *pafX; // Aligned to be usable with AVX
+    float *pafY;
+    float *pafZ;
     GDALTriangulation* psTriangulation;
     int                nInitialFacetIdx;
     /*! Weighting power divided by 2 (pre-computation). */
