@@ -444,7 +444,7 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
         }
     }
 
-    VSIFree(poTarget->pData);
+    VSIFreeAligned(poTarget->pData);
     poTarget->pData = NULL;
     poTarget->GetBand()->AddBlockToFreeList(poTarget);
 
@@ -592,7 +592,7 @@ GDALRasterBlock::~GDALRasterBlock()
 
     if( pData != NULL )
     {
-        VSIFree( pData );
+        VSIFreeAligned( pData );
     }
 
     CPLAssert( nLockCount <= 0 );
@@ -945,7 +945,7 @@ CPLErr GDALRasterBlock::Internalize()
             }
             else
             {
-                VSIFree(poBlock->pData);
+                VSIFreeAligned(poBlock->pData);
             }
             poBlock->pData = NULL;
 
@@ -956,7 +956,7 @@ CPLErr GDALRasterBlock::Internalize()
 
     if( pNewData == NULL )
     {
-        pNewData = VSI_MALLOC_VERBOSE( nSizeInBytes );
+        pNewData = VSI_MALLOC_ALIGNED_AUTO_VERBOSE( nSizeInBytes );
         if( pNewData == NULL )
         {
             return( CE_Failure );
