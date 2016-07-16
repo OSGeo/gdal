@@ -493,6 +493,52 @@ def stats_dbl_min():
     return 'success'
 
 ###############################################################################
+# Test stats on a tiled Byte with partial tiles
+
+def stats_byte_partial_tiles():
+
+    ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
+                        creationOptions = ['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
+
+    expected_stats = [0.0, 255.0, 50.22115, 67.119029288849973]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test stats on uint16
+
+def stats_uint16():
+
+    ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
+                        outputType = gdal.GDT_UInt16,
+                        scaleParams = [[0, 255, 0, 65535]],
+                        creationOptions = ['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
+
+    expected_stats = [0.0, 65535.0, 50.22115 * 65535 / 255, 67.119029288849973 * 65535 / 255]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
+
+    return 'success'
+
+
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -515,7 +561,9 @@ gdaltest_list = [
     stats_stddev_huge_values,
     stats_square_shape,
     stats_flt_min,
-    stats_dbl_min
+    stats_dbl_min,
+    stats_byte_partial_tiles,
+    stats_uint16
     ]
 
 if __name__ == '__main__':

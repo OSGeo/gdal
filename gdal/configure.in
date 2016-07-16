@@ -344,6 +344,27 @@ rm -f bswapbuiltins.* bswapbuiltins
 AC_SUBST(HAVE_GCC_BSWAP,$HAVE_GCC_BSWAP)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if __uint128_t is available and usable
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for __uint128_t])
+AC_TRY_COMPILE(
+  [
+  ], [
+      unsigned long long v1 = 1024ULL;
+      unsigned long long v2 = 0x8000000000000000ULL;
+      __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
+      return u == 0;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_UINT128_T, 1,
+          [Define to 1 if the system has the type __uint128_t])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
+dnl ---------------------------------------------------------------------------
 dnl Check SSE availability
 dnl ---------------------------------------------------------------------------
 
