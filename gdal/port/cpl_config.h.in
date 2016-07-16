@@ -72,6 +72,9 @@
 /* Define to 1 if the system has the type `int8'. */
 #undef HAVE_INT8
 
+/* Define to 1 if the system has the type `__uint128_t'. */
+#undef HAVE_UINT128_T
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

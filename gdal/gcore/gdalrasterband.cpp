@@ -3581,6 +3581,207 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(
 }
 
 /************************************************************************/
+/*                         GDALUInt128                                  */
+/************************************************************************/
+
+#ifdef HAVE_UINT128_T
+class GDALUInt128
+{
+        __uint128_t val;
+
+        GDALUInt128(__uint128_t valIn) : val(valIn) {}
+
+    public:
+        static GDALUInt128 Mul(GUIntBig first, GUIntBig second)
+        {
+            // Evaluates to just a single mul on x86_64
+            return GDALUInt128((__uint128_t)first * second);
+        }
+
+        GDALUInt128 operator- (const GDALUInt128& other) const
+        {
+            return GDALUInt128(val - other.val);
+        }
+
+        operator double() const
+        {
+            return static_cast<double>(val);
+        }
+};
+#else
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#include <intrin.h>
+#endif
+
+class GDALUInt128
+{
+        GUIntBig low, high;
+
+        GDALUInt128(GUIntBig lowIn, GUIntBig highIn):
+                                        low(lowIn), high(highIn) {}
+
+    public:
+        static GDALUInt128 Mul(GUIntBig first, GUIntBig second)
+        {
+#if defined(_MSC_VER) && defined(_M_X64)
+            GUIntBig highRes;
+            GUIntBig lowRes = _umul128(first, second, &highRes);
+            return GDALUInt128(lowRes, highRes);
+#else
+            const GUInt32 firstLow = static_cast<GUInt32>(first);
+            const GUInt32 firstHigh = static_cast<GUInt32>(first >> 32);
+            const GUInt32 secondLow = static_cast<GUInt32>(second);
+            const GUInt32 secondHigh = static_cast<GUInt32>(second >> 32);
+            GUIntBig highRes = 0;
+            const GUIntBig firstLowSecondHigh =
+                    static_cast<GUIntBig>(firstLow) * secondHigh;
+            const GUIntBig firstHighSecondLow =
+                    static_cast<GUIntBig>(firstHigh) * secondLow;
+            const GUIntBig middleTerm = firstLowSecondHigh + firstHighSecondLow;
+            if( middleTerm < firstLowSecondHigh ) // check for overflow
+                highRes += ((GUIntBig)1) << 32;
+            const GUIntBig firstLowSecondLow =
+                    static_cast<GUIntBig>(firstLow) * secondLow;
+            GUIntBig lowRes = firstLowSecondLow + (middleTerm << 32);
+            if( lowRes < firstLowSecondLow ) // check for overflow
+                highRes ++;
+            highRes += (middleTerm >> 32) +
+                            static_cast<GUIntBig>(firstHigh) * secondHigh;
+            return GDALUInt128(lowRes, highRes);
+#endif
+        }
+
+        GDALUInt128 operator- (const GDALUInt128& other) const
+        {
+            GUIntBig highRes = high - other.high;
+            GUIntBig lowRes = low - other.low;
+            if (lowRes > low) // check for underflow
+                --highRes;
+            return GDALUInt128(lowRes, highRes);
+        }
+
+        operator double() const
+        {
+            const double twoPow64 = 18446744073709551616.0;
+            return high * twoPow64 + low;
+        }
+};
+#endif
+
+/************************************************************************/
+/*                    ComputeStatisticsInternal()                       */
+/************************************************************************/
+
+// Use with T = GDT_Byte or GDT_UInt16 only !
+template<class T>
+static void ComputeStatisticsInternal( int nXCheck,
+                                       int nBlockXSize,
+                                       int nYCheck,
+                                       const T* pData,
+                                       bool bHasNoData,
+                                       GUInt32 nNoDataValue,
+                                       GUInt32& nMin,
+                                       GUInt32& nMax,
+                                       GUIntBig& nSum,
+                                       GUIntBig& nSumSquare,
+                                       GUIntBig& nSampleCount )
+{
+    if( bHasNoData )
+    {
+        // General case
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            for( int iX = 0; iX < nXCheck; iX++ )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                if( nValue == nNoDataValue )
+                    continue;
+                nSampleCount ++;
+                if( nValue < nMin )
+                    nMin = nValue;
+                if( nValue > nMax )
+                    nMax = nValue;
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+            }
+        }
+    }
+    else if( nMin == std::numeric_limits<T>::min() &&
+             nMax == std::numeric_limits<T>::max() )
+    {
+        // Optimization when there is no nodata and we know we have already
+        // reached the min and max
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            int iX;
+            for( iX = 0; iX + 1 < nXCheck; iX+=2 )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                const GUInt32 nValue2 = pData[iOffset+1];
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+                nSum += nValue2;
+                nSumSquare += nValue2 * nValue2;
+            }
+            if( iX < nXCheck )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+            }
+        }
+        nSampleCount += nXCheck * nYCheck;
+    }
+    else
+    {
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            int iX;
+            for( iX = 0; iX + 1 < nXCheck; iX+=2 )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                const GUInt32 nValue2 = pData[iOffset+1];
+                if( nValue < nValue2 )
+                {
+                    if( nValue < nMin )
+                        nMin = nValue;
+                    if( nValue2 > nMax )
+                        nMax = nValue2;
+                }
+                else
+                {
+                    if( nValue2 < nMin )
+                        nMin = nValue2;
+                    if( nValue > nMax )
+                        nMax = nValue;
+                }
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+                nSum += nValue2;
+                nSumSquare += nValue2 * nValue2;
+            }
+            if( iX < nXCheck )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                if( nValue < nMin )
+                    nMin = nValue;
+                if( nValue > nMax )
+                    nMax = nValue;
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+            }
+        }
+        nSampleCount += nXCheck * nYCheck;
+    }
+}
+
+/************************************************************************/
 /*                         ComputeStatistics()                          */
 /************************************************************************/
 
@@ -3676,7 +3877,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     const bool bSignedByte =
         pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE");
 
-    GIntBig nSampleCount = 0;
+    GUIntBig nSampleCount = 0;
 
   if ( bApproxOK && HasArbitraryOverviews() )
     {
@@ -3821,6 +4022,143 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             // be padding only (#6378)
             if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
               nSampleRate += 1;
+        }
+
+        // Particular case for GDT_Byte that only use integral types for all
+        // intermediate computations. Only possible if the number of pixels
+        // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
+        // can fit on a uint64. Should be 99.99999% of cases.
+        // For GUInt16, this limits to raster of 4 giga pixels
+        if( (eDataType == GDT_Byte && !bSignedByte &&
+             static_cast<GUInt32>(nBlocksPerRow*nBlocksPerColumn/nSampleRate) <
+                GUINTBIG_MAX / (255U * 255U) /
+                        static_cast<GUInt32>(nBlockXSize * nBlockYSize)) ||
+            (eDataType == GDT_UInt16 &&
+             static_cast<GUInt32>(nBlocksPerRow*nBlocksPerColumn/nSampleRate) <
+                GUINTBIG_MAX / (65535U * 65535U) /
+                        static_cast<GUInt32>(nBlockXSize * nBlockYSize)) )
+        {
+            const GUInt32 nMaxValueType = (eDataType == GDT_Byte) ? 255 : 65535;
+            GUInt32 nMin = nMaxValueType;
+            GUInt32 nMax = 0;
+            GUIntBig nSum = 0;
+            GUIntBig nSumSquare = 0;
+            // If no valid nodata, map to invalid value (256 for Byte)
+            const GUInt32 nNoDataValue =
+                (bGotNoDataValue && dfNoDataValue >= 0 &&
+                 dfNoDataValue <= nMaxValueType &&
+                 fabs(dfNoDataValue -
+                      static_cast<GUInt32>(dfNoDataValue + 1e-10)) < 1e-10 ) ?
+                            static_cast<GUInt32>(dfNoDataValue + 1e-10) :
+                            nMaxValueType+1;
+
+            for( int iSampleBlock = 0;
+                iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+                iSampleBlock += nSampleRate )
+            {
+                const int iYBlock = iSampleBlock / nBlocksPerRow;
+                const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+
+                GDALRasterBlock * const poBlock =
+                    GetLockedBlockRef( iXBlock, iYBlock );
+                if( poBlock == NULL )
+                    continue;
+
+                void* const pData = poBlock->GetDataRef();
+
+                int nXCheck = nBlockXSize;
+                if( (iXBlock+1) * nBlockXSize > GetXSize() )
+                    nXCheck = GetXSize() - iXBlock * nBlockXSize;
+
+                int nYCheck = nBlockYSize;
+                if( (iYBlock+1) * nBlockYSize > GetYSize() )
+                    nYCheck = GetYSize() - iYBlock * nBlockYSize;
+
+                if( eDataType == GDT_Byte )
+                {
+                    ComputeStatisticsInternal( nXCheck,
+                                               nBlockXSize,
+                                               nYCheck,
+                                               static_cast<const GByte*>(pData),
+                                               nNoDataValue <= nMaxValueType,
+                                               nNoDataValue,
+                                               nMin, nMax, nSum,
+                                               nSumSquare,
+                                               nSampleCount );
+                }
+                else
+                {
+                    ComputeStatisticsInternal( nXCheck,
+                                               nBlockXSize,
+                                               nYCheck,
+                                               static_cast<const GUInt16*>(pData),
+                                               nNoDataValue <= nMaxValueType,
+                                               nNoDataValue,
+                                               nMin, nMax, nSum,
+                                               nSumSquare,
+                                               nSampleCount );
+                }
+
+                poBlock->DropLock();
+
+                if ( !pfnProgress( iSampleBlock
+                        / static_cast<double>(nBlocksPerRow*nBlocksPerColumn),
+                        "Compute Statistics", pProgressData) )
+                {
+                    ReportError( CE_Failure, CPLE_UserInterrupt,
+                                 "User terminated" );
+                    return CE_Failure;
+                }
+            }
+
+            if( !pfnProgress( 1.0, "Compute Statistics", pProgressData ) )
+            {
+                ReportError( CE_Failure, CPLE_UserInterrupt,
+                             "User terminated" );
+                return CE_Failure;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Save computed information.                                      */
+/* -------------------------------------------------------------------- */
+            if( nSampleCount )
+                dfMean = static_cast<double>(nSum) / nSampleCount;
+
+            // To avoid potential precision issues when doing the difference,
+            // we need to do that computation on 128 bit rather than casting
+            // to double
+            const GDALUInt128 nTmpForStdDev(
+                    GDALUInt128::Mul(nSumSquare,nSampleCount) -
+                    GDALUInt128::Mul(nSum,nSum));
+            const double dfStdDev =
+                nSampleCount > 0 ? 
+                    sqrt(static_cast<double>(nTmpForStdDev)) / nSampleCount :
+                    0.0;
+
+            if( nSampleCount > 0 )
+                SetStatistics( nMin, nMax, dfMean, dfStdDev );
+
+/* -------------------------------------------------------------------- */
+/*      Record results.                                                 */
+/* -------------------------------------------------------------------- */
+            if( pdfMin != NULL )
+                *pdfMin = nSampleCount ? nMin : 0;
+            if( pdfMax != NULL )
+                *pdfMax = nSampleCount ? nMax : 0;
+
+            if( pdfMean != NULL )
+                *pdfMean = dfMean;
+
+            if( pdfStdDev != NULL )
+                *pdfStdDev = dfStdDev;
+
+            if( nSampleCount > 0 )
+                return CE_None;
+
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Failed to compute statistics, no valid pixels found in sampling." );
+            return CE_Failure;
         }
 
         for( int iSampleBlock = 0;
