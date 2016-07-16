@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2016, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -3677,7 +3677,7 @@ class GDALUInt128
 
 // Use with T = GDT_Byte or GDT_UInt16 only !
 template<class T>
-static void ComputeStatisticsInternal( int nXCheck,
+static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        const T* pData,
@@ -3782,6 +3782,162 @@ static void ComputeStatisticsInternal( int nXCheck,
         nSampleCount += nXCheck * nYCheck;
     }
 }
+
+template<class T>
+static void ComputeStatisticsInternal( int nXCheck,
+                                       int nBlockXSize,
+                                       int nYCheck,
+                                       const T* pData,
+                                       bool bHasNoData,
+                                       GUInt32 nNoDataValue,
+                                       GUInt32& nMin,
+                                       GUInt32& nMax,
+                                       GUIntBig& nSum,
+                                       GUIntBig& nSumSquare,
+                                       GUIntBig& nSampleCount )
+{
+    ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
+                                      pData,
+                                      bHasNoData, nNoDataValue,
+                                      nMin, nMax, nSum, nSumSquare,
+                                      nSampleCount );
+}
+
+// SSE2 optimization for GByte case
+#if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
+
+#include <emmintrin.h>
+
+#if defined(__GNUC__)
+#define ALIGNED_16(x) x __attribute__ ((aligned (16)))
+#else
+#define ALIGNED_16(x) __declspec(align(16)) x
+#endif
+
+// Some convenience macros
+#define ZERO128                      _mm_setzero_si128()
+#define EXTEND_UINT8_TO_UINT16(reg)  _mm_unpacklo_epi8(reg, ZERO128)
+#define EXTEND_UINT16_TO_UINT32(reg) _mm_unpacklo_epi16(reg, ZERO128)
+#define EXTEND_UINT8_TO_UINT32(reg)  EXTEND_UINT16_TO_UINT32(EXTEND_UINT8_TO_UINT16(reg))
+#define GET_HIGH_64BIT(reg)          _mm_shuffle_epi32(reg, 2 | (3 << 2))
+
+template<>
+void ComputeStatisticsInternal<GByte>( int nXCheck,
+                                       int nBlockXSize,
+                                       int nYCheck,
+                                       // assumed to be aligned on 128 bits
+                                       const GByte* pData,
+                                       bool bHasNoData,
+                                       GUInt32 nNoDataValue,
+                                       GUInt32& nMin,
+                                       GUInt32& nMax,
+                                       GUIntBig& nSum,
+                                       GUIntBig& nSumSquare,
+                                       GUIntBig& nSampleCount )
+{
+    if( !bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 16 )
+    {
+        int i = 0;
+        // Make sure that sumSquare can fit on uint32
+        // * 4 since we can hold 4 sums per vector register
+        const int nMaxIterationsPerInnerLoop = 4 *
+                ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~15);
+        int nOuterLoops = (nXCheck * nYCheck) / nMaxIterationsPerInnerLoop;
+        if( ((nXCheck * nYCheck) % nMaxIterationsPerInnerLoop) != 0 )
+            nOuterLoops ++;
+        for( int k=0; k< nOuterLoops; k++ )
+        {
+            int iMax = i + nMaxIterationsPerInnerLoop;
+            if( iMax > nXCheck * nYCheck )
+                iMax = nXCheck * nYCheck;
+            __m128i xmm_min = _mm_load_si128((__m128i*)(pData + i));
+            __m128i xmm_max = xmm_min;
+            __m128i xmm_sum = ZERO128; // holds 4 uint32 sums
+            __m128i xmm_sumsquare = ZERO128; // holds 4 uint32 sums
+            for( ;i+15<iMax; i+=16 )
+            {
+                const __m128i xmm = _mm_load_si128((__m128i*)(pData + i));
+                xmm_min = _mm_min_epu8 (xmm_min, xmm);
+                xmm_max = _mm_max_epu8 (xmm_max, xmm);
+
+                // Extract the 8 lower bytes and extend them to uint16
+                const __m128i xmm_low = EXTEND_UINT8_TO_UINT16(xmm);
+                // Compute square of those 8 values
+                const __m128i xmm_low2 = _mm_mullo_epi16(xmm_low, xmm_low);
+                // Extract 4 low uint16 and extend them to uint32
+                const __m128i xmm_low_low = EXTEND_UINT16_TO_UINT32(xmm_low2);
+                // Extract 4 high uint16 and extend them to uint32
+                const __m128i xmm_low_high = EXTEND_UINT16_TO_UINT32(
+                                                    GET_HIGH_64BIT(xmm_low2));
+                // Add to the sumsquare accumulator
+                xmm_sumsquare = _mm_add_epi32(xmm_sumsquare, xmm_low_low);
+                xmm_sumsquare = _mm_add_epi32(xmm_sumsquare, xmm_low_high);
+
+                // Same with the 8 higher bytes
+                const __m128i xmm_high = EXTEND_UINT8_TO_UINT16(
+                                                        GET_HIGH_64BIT(xmm));
+                const __m128i xmm_high2 = _mm_mullo_epi16(xmm_high, xmm_high);
+                const __m128i xmm_high_low = EXTEND_UINT16_TO_UINT32(xmm_high2);
+                const __m128i xmm_high_high = EXTEND_UINT16_TO_UINT32(
+                                                    GET_HIGH_64BIT(xmm_high2));
+                xmm_sumsquare = _mm_add_epi32(xmm_sumsquare, xmm_high_low);
+                xmm_sumsquare = _mm_add_epi32(xmm_sumsquare, xmm_high_high);
+
+                // Now compute the sums
+                xmm_sum = _mm_add_epi32(xmm_sum,
+                                        EXTEND_UINT16_TO_UINT32(xmm_low));
+                xmm_sum = _mm_add_epi32(xmm_sum,
+                            EXTEND_UINT8_TO_UINT32(_mm_shuffle_epi32 (xmm, 1)));
+                xmm_sum = _mm_add_epi32(xmm_sum,
+                                        EXTEND_UINT16_TO_UINT32(xmm_high));
+                xmm_sum = _mm_add_epi32(xmm_sum,
+                            EXTEND_UINT8_TO_UINT32(_mm_shuffle_epi32 (xmm, 3)));
+            }
+
+            ALIGNED_16(GByte abyMin[16]);
+            ALIGNED_16(GByte abyMax[16]);
+            _mm_store_si128((__m128i*)abyMin, xmm_min);
+            _mm_store_si128((__m128i*)abyMax, xmm_max);
+            for(int j=0;j<16;j++)
+            {
+                if( abyMin[j] < nMin ) nMin = abyMin[j];
+                if( abyMax[j] > nMax ) nMax = abyMax[j];
+            }
+
+            ALIGNED_16(GUInt32 anSum[4]);
+            ALIGNED_16(GUInt32 anSumSquare[4]);
+            _mm_store_si128((__m128i*)anSum, xmm_sum);
+            _mm_store_si128((__m128i*)anSumSquare, xmm_sumsquare);
+
+            nSum += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
+                    anSum[2] + anSum[3];
+            nSumSquare += static_cast<GUIntBig>(anSumSquare[0]) +
+                          anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
+        }
+
+        for( ; i<nXCheck * nYCheck; i++)
+        {
+            const GUInt32 nValue = pData[i];
+            if( nValue < nMin )
+                nMin = nValue;
+            if( nValue > nMax )
+                nMax = nValue;
+            nSum += nValue;
+            nSumSquare += nValue * nValue;
+        }
+
+        nSampleCount += nXCheck * nYCheck;
+    }
+    else
+    {
+        ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
+                                          pData,
+                                          bHasNoData, nNoDataValue,
+                                          nMin, nMax, nSum, nSumSquare,
+                                          nSampleCount );
+    }
+}
+#endif
 
 /************************************************************************/
 /*                         ComputeStatistics()                          */
