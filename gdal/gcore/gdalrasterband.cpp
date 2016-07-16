@@ -32,6 +32,8 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
