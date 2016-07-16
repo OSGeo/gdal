@@ -202,8 +202,7 @@ class XMMReg2Double
         int i;
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
-        xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
-        xmm_i = _mm_srli_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|0|b|0|a */
+        xmm_i = _mm_unpacklo_epi16(xmm_i,_mm_setzero_si128()); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|0|b|0|a */
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
