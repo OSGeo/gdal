@@ -809,7 +809,58 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             goto error;
 
         size_t nSkip = 0;
-        if( pszSkipPrefix != NULL &&
+
+        // special case for OGRMultiSurface when the subgeometry is of TIN
+        if( EQUAL(getGeometryName(),"MULTISURFACE") &&
+            EQUAL(papoGeoms[iGeom]->getGeometryName(), "TIN") &&
+            EQUALN(papszGeoms[iGeom], "TIN", strlen("TIN")) &&
+            papszGeoms[iGeom][strlen("TIN")] == ' ' )
+        {
+            nSkip = strlen("TIN") + 1;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+                nSkip += 2;
+
+            /* skip empty subgeoms */
+            if( papszGeoms[iGeom][nSkip] != '(' )
+            {
+                CPLDebug( "OGR", "OGRGeometryCollection::exportToWkt() - skipping %s.",
+                          papszGeoms[iGeom] );
+                CPLFree( papszGeoms[iGeom] );
+                papszGeoms[iGeom] = NULL;
+                continue;
+            }
+        }
+
+        // special case for OGRMultiSurface when the subgeometry is of PolyhedralSurface
+        else if( EQUAL(getGeometryName(),"MULTISURFACE") &&
+            EQUAL(papoGeoms[iGeom]->getGeometryName(), "POLYHEDRALSURFACE") &&
+            EQUALN(papszGeoms[iGeom], "POLYHEDRALSURFACE", strlen("POLYHEDRALSURFACE")) &&
+            papszGeoms[iGeom][strlen("POLYHEDRALSURFACE")] == ' ' )
+        {
+            nSkip = strlen("POLYHEDRALSURFACE") + 1;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+                nSkip += 2;
+
+            /* skip empty subgeoms */
+            if( papszGeoms[iGeom][nSkip] != '(' )
+            {
+                CPLDebug( "OGR", "OGRGeometryCollection::exportToWkt() - skipping %s.",
+                          papszGeoms[iGeom] );
+                CPLFree( papszGeoms[iGeom] );
+                papszGeoms[iGeom] = NULL;
+                continue;
+            }
+        }
+
+        else if( pszSkipPrefix != NULL &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
@@ -831,6 +882,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
                 continue;
             }
         }
+
         else if( eWkbVariant != wkbVariantIso )
         {
             char *substr;
@@ -902,7 +954,38 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         bMustWriteComma = true;
 
         size_t nSkip = 0;
-        if( pszSkipPrefix != NULL &&
+
+        // special case for OGRMultiSurface when the subgeometry is of TIN
+        if( EQUAL(getGeometryName(),"MULTISURFACE") &&
+            EQUAL(papoGeoms[iGeom]->getGeometryName(), "TIN") &&
+            EQUALN(papszGeoms[iGeom], "TIN", strlen("TIN")) &&
+            papszGeoms[iGeom][strlen("TIN")] == ' ' )
+        {
+            nSkip = strlen("TIN") + 1;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+                nSkip += 2;
+        }
+
+        // special case for OGRMultiSurface when the subgeometry is of POLYHEDRALSURFACE
+        else if( EQUAL(getGeometryName(),"MULTISURFACE") &&
+            EQUAL(papoGeoms[iGeom]->getGeometryName(), "POLYHEDRALSURFACE") &&
+            EQUALN(papszGeoms[iGeom], "POLYHEDRALSURFACE", strlen("POLYHEDRALSURFACE")) &&
+            papszGeoms[iGeom][strlen("POLYHEDRALSURFACE")] == ' ' )
+        {
+            nSkip = strlen("POLYHEDRALSURFACE") + 1;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+                nSkip += 2;
+        }
+
+        else if( pszSkipPrefix != NULL &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
