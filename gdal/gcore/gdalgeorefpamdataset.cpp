@@ -72,6 +72,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
         CPLFree( pasGCPList );
     }
     CSLDestroy(m_papszMainMD);
+    CSLDestroy(m_papszRPC);
 }
 
 /************************************************************************/
