@@ -345,8 +345,10 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /* -------------------------------------------------------------------- */
     else if( psShape->nSHPType == SHPT_MULTIPATCH )
     {
+        OGRGeometryCollection *poGC = new OGRGeometryCollection();
         OGRMultiPolygon *poMP = new OGRMultiPolygon();
-        OGRTriangulatedSurface *poTIN = new OGRTriangulatedSurface();
+        OGRTriangulatedSurface *poTINStrip = new OGRTriangulatedSurface();
+        OGRTriangulatedSurface *poTINFan = new OGRTriangulatedSurface();
         int iPart;
         OGRPolygon *poLastPoly = NULL;
 
@@ -377,35 +379,29 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             {
                 if( poLastPoly != NULL )
                 {
-                    OGRErr eErr = poTIN->addGeometry(poLastPoly);
+                    poMP->addGeometryDirectly( poLastPoly );
                     poLastPoly = NULL;
-                    if (eErr != OGRERR_NONE)
-                        CPLDebug( "OGR", "Unrecognized parttype of type Polygon, ignored.");
                 }
 
                 for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
                 {
                     int iSrcVert = iBaseVert + nPartStart;
-                    OGRPoint *poPoint1 = new OGRPoint (psShape->padfX[iSrcVert],
-                                                       psShape->padfY[iSrcVert],
-                                                       psShape->padfZ[iSrcVert]);
+                    OGRPoint poPoint1 (psShape->padfX[iSrcVert],
+                                       psShape->padfY[iSrcVert],
+                                       psShape->padfZ[iSrcVert]);
 
-                    OGRPoint *poPoint2 = new OGRPoint (psShape->padfX[iSrcVert+1],
-                                                       psShape->padfY[iSrcVert+1],
-                                                       psShape->padfZ[iSrcVert+1]);
+                    OGRPoint poPoint2 (psShape->padfX[iSrcVert+1],
+                                       psShape->padfY[iSrcVert+1],
+                                       psShape->padfZ[iSrcVert+1]);
 
-                    OGRPoint *poPoint3 = new OGRPoint (psShape->padfX[iSrcVert+2],
-                                                       psShape->padfY[iSrcVert+2],
-                                                       psShape->padfZ[iSrcVert+2]);
+                    OGRPoint poPoint3 (psShape->padfX[iSrcVert+2],
+                                       psShape->padfY[iSrcVert+2],
+                                       psShape->padfZ[iSrcVert+2]);
 
-                    OGRTriangle *poTriangle = new OGRTriangle(*poPoint1, *poPoint2, *poPoint3);
+                    OGRTriangle *poTriangle = new OGRTriangle(poPoint1, poPoint2, poPoint3);
 
-                    poTIN->addGeometry( poTriangle );
-
-                    // delete poTriangle to avoid memory leakage
-                    delete poTriangle;
+                    poTINStrip->addGeometryDirectly( poTriangle );
                 }
-                poOGR = poTIN;
             }
 
             // expose TRIANGLE FAN as TIN
@@ -413,10 +409,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             {
                 if( poLastPoly != NULL )
                 {
-                    OGRErr eErr = poTIN->addGeometry(poLastPoly);
+                    poMP->addGeometryDirectly( poLastPoly );
                     poLastPoly = NULL;
-                    if (eErr != OGRERR_NONE)
-                        CPLDebug( "OGR", "Unrecognized parttype of type Polygon, ignored.");
                 }
 
                 for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
@@ -424,27 +418,25 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     const int iSrcVert = iBaseVert + nPartStart;
                     int iSrcVert = iBaseVert + nPartStart;
 
-                    OGRPoint *poPoint1 = new OGRPoint (psShape->padfX[iSrcVert],
-                                                       psShape->padfY[iSrcVert],
-                                                       psShape->padfZ[iSrcVert]);
+                    OGRPoint poPoint1 (psShape->padfX[iSrcVert],
+                                       psShape->padfY[iSrcVert],
+                                       psShape->padfZ[iSrcVert]);
 
-                    OGRPoint *poPoint2 = new OGRPoint (psShape->padfX[iSrcVert+1],
-                                                       psShape->padfY[iSrcVert+1],
-                                                       psShape->padfZ[iSrcVert+1]);
+                    OGRPoint poPoint2 (psShape->padfX[iSrcVert+1],
+                                       psShape->padfY[iSrcVert+1],
+                                       psShape->padfZ[iSrcVert+1]);
 
-                    OGRPoint *poPoint3 = new OGRPoint (psShape->padfX[iSrcVert+2],
-                                                       psShape->padfY[iSrcVert+2],
-                                                       psShape->padfZ[iSrcVert+2]);
+                    OGRPoint poPoint3 (psShape->padfX[iSrcVert+2],
+                                       psShape->padfY[iSrcVert+2],
+                                       psShape->padfZ[iSrcVert+2]);
 
-                    OGRTriangle *poTriangle = new OGRTriangle(*poPoint1, *poPoint2, *poPoint3);
 
-                    poTIN->addGeometry( poTriangle );
+                    OGRTriangle *poTriangle = new OGRTriangle(poPoint1, poPoint2, poPoint3);
 
-                    // delete poTriangle to avoid memory leakage
-                    delete poTriangle;
+                    poTINFan->addGeometryDirectly( poTriangle );
                 }
-                poOGR = poTIN;
             }
+
             else if( psShape->panPartType[iPart] == SHPP_OUTERRING
                      || psShape->panPartType[iPart] == SHPP_INNERRING
                      || psShape->panPartType[iPart] == SHPP_FIRSTRING
@@ -463,7 +455,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
                 poLastPoly->addRingDirectly(
                     CreateLinearRing( psShape, iPart, TRUE, TRUE ) );
-                poOGR = poMP;
             }
             else
             {
@@ -478,13 +469,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             poLastPoly = NULL;
         }
 
-        if( poLastPoly != NULL )
-        {
-            OGRErr eErr = poTIN->addGeometry(poLastPoly);
-            poLastPoly = NULL;
-            if (eErr != OGRERR_NONE)
-                CPLDebug( "OGR", "Unrecognized parttype of type Polygon, ignored.");
-        }
+        poGC->addGeometryDirectly(poTINStrip);
+        poGC->addGeometryDirectly(poTINFan);
+        poGC->addGeometryDirectly(poMP);
+
+        poOGR = poGC;
 
     }
 
@@ -851,10 +840,19 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         OGRLinearRing **papoRings = NULL;
         int nRings = 0;
 
-        // Collect list of rings.
-        if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon || wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
         {
-            OGRPolygon* poPoly =  (OGRPolygon *) poGeom;
+            OGRPolygon *poPoly;
+
+            // in case of Triangle
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
+            {
+                poPoly = ((OGRTriangle *)poGeom)->CastToPolygon();
+            }
+
+            // in case of Polygon
+            else
+                poPoly =  (OGRPolygon *) poGeom;
 
             if( poPoly->getExteriorRing() == NULL ||
                 poPoly->getExteriorRing()->IsEmpty() )
@@ -884,13 +882,37 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                             "shapefile writer." );
                 }
             }
+            // delete poPoly for wkbTriangle to prevent leakage
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
+            {
+                delete poPoly;
+            }
         }
         else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon ||
-                 wkbFlatten(poGeom->getGeometryType()) ==
-                     wkbGeometryCollection )
+                 wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection ||
+                 wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface ||
+                 wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
         {
-            OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+            OGRMultiPolygon *poMultiPolygon;
+            OGRGeometryCollection *poGC;
+            // for PolyhedralSurface
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
+            {
+                poMultiPolygon = ((OGRPolyhedralSurface *)poGeom)->CastToMultiPolygon();
+                poGC = (OGRGeometryCollection *)poMultiPolygon;
+            }
 
+            // for TIN
+            else if (wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
+            {
+                poMultiPolygon = ((OGRTriangulatedSurface *)poGeom)->CastToMultiPolygon();
+                poGC = (OGRGeometryCollection *)poMultiPolygon;
+            }
+
+            else
+                poGC = (OGRGeometryCollection *) poGeom;
+
+            int         iGeom;
             for( int iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
             {
                 OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
@@ -941,6 +963,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                             "Ignore LINEARRING EMPTY inside POLYGON in "
                             "shapefile writer." );
                 }
+            }
+
+            // delete poMultiPolygon for TIN and PolyhedralSurface to prevent leakage
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbTIN ||
+                wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface )
+            {
+                delete poMultiPolygon;
             }
         }
         else

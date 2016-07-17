@@ -192,7 +192,6 @@ void OGRPolyhedralSurface::getEnvelope( OGREnvelope3D * psEnvelope ) const
 OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
                                              int nSize,
                                              OGRwkbVariant eWkbVariant )
-
 {
     oMP.nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
@@ -208,7 +207,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    
+
     oMP.papoGeoms = (OGRGeometry **) VSI_CALLOC_VERBOSE(sizeof(void*), oMP.nGeomCount);
     if (oMP.nGeomCount != 0 && oMP.papoGeoms == NULL)
     {
