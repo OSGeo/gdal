@@ -345,10 +345,12 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /* -------------------------------------------------------------------- */
     else if( psShape->nSHPType == SHPT_MULTIPATCH )
     {
-        OGRMultiSurface *poMS = new OGRMultiSurface();
-        OGRPolygon *poPoly = new OGRPolygon();
+        OGRGeometryCollection *poGC = new OGRGeometryCollection();
+        OGRMultiPolygon *poMP = new OGRMultiPolygon();
         OGRTriangulatedSurface *poTINStrip = new OGRTriangulatedSurface();
         OGRTriangulatedSurface *poTINFan = new OGRTriangulatedSurface();
+        OGRPolygon *poLastPoly = NULL;
+
         int iPart;
 
         for( int iPart = 0; iPart < psShape->nParts; iPart++ )
@@ -445,8 +447,18 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                      || psShape->panPartType[iPart] == SHPP_FIRSTRING
                      || psShape->panPartType[iPart] == SHPP_RING )
             {
-                poPoly->addRingDirectly(
-                    CreateLinearRing( psShape, iPart, TRUE, TRUE ) );
+                if( poLastPoly != NULL
+                    && (psShape->panPartType[iPart] == SHPP_OUTERRING
+                        || psShape->panPartType[iPart] == SHPP_FIRSTRING) )
+                {
+                    poMP->addGeometryDirectly( poLastPoly );
+                    poLastPoly = NULL;
+                }
+
+                if( poLastPoly == NULL )
+                    poLastPoly = new OGRPolygon();
+
+                poLastPoly->addRingDirectly( CreateLinearRing( psShape, iPart, TRUE, TRUE ) );
             }
 
             else
@@ -456,23 +468,36 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             }
         }
 
+        if( poLastPoly != NULL )
+        {
+            poMP->addGeometryDirectly( poLastPoly );
+            poLastPoly = NULL;
+        }
+
         if (!poTINStrip->IsEmpty())
-            poMS->addGeometryDirectly(poTINStrip);
+            poGC->addGeometryDirectly(poTINStrip);
         else
             delete poTINStrip;
 
         if (!poTINFan->IsEmpty())
-            poMS->addGeometryDirectly(poTINFan);
+            poGC->addGeometryDirectly(poTINFan);
         else
             delete poTINFan;
 
-        if(!poPoly->IsEmpty())
-            poMS->addGeometryDirectly(poPoly);
+        if(!poMP->IsEmpty())
+            poGC->addGeometryDirectly(poMP);
         else
-            delete poPoly;
+            delete poMP;
 
-        poOGR = poMS;
+        if (poGC->getNumGeometries() == 1)
+        {
+            OGRGeometry *poResultGeom = (poGC->getGeometryRef(0))->clone();
+            delete poGC;
+            poOGR = poResultGeom;
+        }
 
+        else
+            poOGR = poGC;
     }
 
 /* -------------------------------------------------------------------- */
