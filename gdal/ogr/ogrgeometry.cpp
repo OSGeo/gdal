@@ -1941,7 +1941,7 @@ OGRBoolean
 OGRGeometry::IsValid(  ) const
 
 {
-    if (this->IsSFCGALCompatible())
+    if (this->IsSFCGALCompatible() || EQUAL(this->getGeometryName(), "GEOMETRYCOLLECTION") )
     {
     #ifndef HAVE_SFCGAL
 
