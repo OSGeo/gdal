@@ -126,7 +126,7 @@ const char * OGRMultiPolygon::getGeometryName() const
 
 OGRBoolean OGRMultiPolygon::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
-    return wkbFlatten(eGeomType) == wkbPolygon;
+    return wkbFlatten(eGeomType) == wkbPolygon || wkbFlatten(eGeomType) == wkbTriangle;
 }
 
 /************************************************************************/
