@@ -173,7 +173,6 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
                                   int nSize,
                                   OGRwkbVariant eWkbVariant )
-
 {
     OGRwkbByteOrder eByteOrder;
     int nDataOffset = 0;
@@ -695,7 +694,7 @@ OGRGeometry *OGRTriangle::Boundary() const
 /*                             CastToPolygon()                          */
 /************************************************************************/
 
-OGRGeometry* OGRTriangle::CastToPolygon()
+OGRPolygon* OGRTriangle::CastToPolygon()
 {
     OGRPolygon *poPolygon = new OGRPolygon();
     poPolygon->addRing((OGRCurve *)oCC.papoCurves[0]);

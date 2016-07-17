@@ -147,7 +147,6 @@ OGRGeometry* OGRTriangulatedSurface::clone() const
 OGRErr OGRTriangulatedSurface::importFromWkb ( unsigned char * pabyData,
                                                int nSize,
                                                OGRwkbVariant eWkbVariant )
-
 {
     oMP.nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
@@ -425,6 +424,11 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
 
 OGRErr OGRTriangulatedSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 {
+    if (!EQUAL(poNewGeom->getGeometryName(), "TRIANGLE"))
+    {
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
     if( poNewGeom->Is3D() && !Is3D() )
         set3D(TRUE);
 
