@@ -893,7 +893,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                  wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface ||
                  wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
         {
-            OGRMultiPolygon *poMultiPolygon;
+            OGRMultiPolygon *poMultiPolygon = NULL;
             OGRGeometryCollection *poGC;
             // for PolyhedralSurface
             if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
