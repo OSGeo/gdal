@@ -386,19 +386,20 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                 for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
                 {
                     int iSrcVert = iBaseVert + nPartStart;
-                    OGRPoint poPoint1 (psShape->padfX[iSrcVert],
+
+                    OGRPoint oPoint1  (psShape->padfX[iSrcVert],
                                        psShape->padfY[iSrcVert],
                                        psShape->padfZ[iSrcVert]);
 
-                    OGRPoint poPoint2 (psShape->padfX[iSrcVert+1],
+                    OGRPoint oPoint2  (psShape->padfX[iSrcVert+1],
                                        psShape->padfY[iSrcVert+1],
                                        psShape->padfZ[iSrcVert+1]);
 
-                    OGRPoint poPoint3 (psShape->padfX[iSrcVert+2],
+                    OGRPoint oPoint3  (psShape->padfX[iSrcVert+2],
                                        psShape->padfY[iSrcVert+2],
                                        psShape->padfZ[iSrcVert+2]);
 
-                    OGRTriangle *poTriangle = new OGRTriangle(poPoint1, poPoint2, poPoint3);
+                    OGRTriangle *poTriangle = new OGRTriangle(oPoint1, oPoint2, oPoint3);
 
                     poTINStrip->addGeometryDirectly( poTriangle );
                 }
@@ -418,20 +419,20 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     const int iSrcVert = iBaseVert + nPartStart;
                     int iSrcVert = iBaseVert + nPartStart;
 
-                    OGRPoint poPoint1 (psShape->padfX[iSrcVert],
-                                       psShape->padfY[iSrcVert],
-                                       psShape->padfZ[iSrcVert]);
+                    OGRPoint oPoint1  (psShape->padfX[nPartStart],
+                                       psShape->padfY[nPartStart],
+                                       psShape->padfZ[nPartStart]);
 
-                    OGRPoint poPoint2 (psShape->padfX[iSrcVert+1],
+                    OGRPoint oPoint2  (psShape->padfX[iSrcVert+1],
                                        psShape->padfY[iSrcVert+1],
                                        psShape->padfZ[iSrcVert+1]);
 
-                    OGRPoint poPoint3 (psShape->padfX[iSrcVert+2],
+                    OGRPoint oPoint3  (psShape->padfX[iSrcVert+2],
                                        psShape->padfY[iSrcVert+2],
                                        psShape->padfZ[iSrcVert+2]);
 
 
-                    OGRTriangle *poTriangle = new OGRTriangle(poPoint1, poPoint2, poPoint3);
+                    OGRTriangle *poTriangle = new OGRTriangle(oPoint1, oPoint2, oPoint3);
 
                     poTINFan->addGeometryDirectly( poTriangle );
                 }
@@ -469,9 +470,20 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             poLastPoly = NULL;
         }
 
-        poGC->addGeometryDirectly(poTINStrip);
-        poGC->addGeometryDirectly(poTINFan);
-        poGC->addGeometryDirectly(poMP);
+        if (!poTINStrip->IsEmpty())
+            poGC->addGeometryDirectly(poTINStrip);
+        else
+            delete poTINStrip;
+
+        if (!poTINFan->IsEmpty())
+            poGC->addGeometryDirectly(poTINFan);
+        else
+            delete poTINFan;
+
+        if(!poMP->IsEmpty())
+            poGC->addGeometryDirectly(poMP);
+        else
+            delete poMP;
 
         poOGR = poGC;
 
