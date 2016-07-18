@@ -545,14 +545,6 @@ def stats_byte_partial_tiles():
 
     return 'success'
 
-def stats_byte_partial_tiles_avx2_emul():
-
-    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', 'YES')
-    ret = stats_byte_partial_tiles()
-    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', None)
-    return ret
-
-
 ###############################################################################
 # Test stats on uint16
 
@@ -610,7 +602,6 @@ gdaltest_list = [
     stats_flt_min,
     stats_dbl_min,
     stats_byte_partial_tiles,
-    stats_byte_partial_tiles_avx2_emul,
     stats_uint16,
     stats_uint16_avx2_emul
     ]
