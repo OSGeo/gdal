@@ -4112,56 +4112,85 @@ void ComputeStatisticsInternal<GUInt16>
                                        GUIntBig& nSumSquare,
                                        GUIntBig& nSampleCount )
 {
-    if( !bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 8 )
+    if( !bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 16 )
     {
         int i = 0;
-        __m128i xmm_min = _mm_load_si128((__m128i*)(pData + i));
-        __m128i xmm_max = xmm_min;
-        GDALm256i ymm_sum = ZERO256; // holds 4 uint64 sums
+        GDALm256i ymm_min = GDALmm256_load_si256((GDALm256i*)(pData + i));
+        GDALm256i ymm_max = ymm_min;
         GDALm256i ymm_sumsquare = ZERO256; // holds 4 uint64 sums
-        for( ;i+7<nXCheck * nYCheck ; i+=8 )
+
+        // Make sure that sum can fit on uint32
+        // * 8 since we can hold 8 sums per vector register
+        const int nMaxIterationsPerInnerLoop = 8 *
+                ((std::numeric_limits<GUInt32>::max() / 65535) & ~15);
+        int nOuterLoops = (nXCheck * nYCheck) / nMaxIterationsPerInnerLoop;
+        if( ((nXCheck * nYCheck) % nMaxIterationsPerInnerLoop) != 0 )
+            nOuterLoops ++;
+
+        for( int k=0; k< nOuterLoops; k++ )
         {
-            const __m128i xmm = _mm_load_si128((__m128i*)(pData + i));
-            xmm_min = GDALmm_min_epu16 (xmm_min, xmm); // SSE4.1
-            xmm_max = GDALmm_max_epu16 (xmm_max, xmm);
+            int iMax = i + nMaxIterationsPerInnerLoop;
+            if( iMax > nXCheck * nYCheck )
+                iMax = nXCheck * nYCheck;
 
-            // Extend the 8 uint16 to uint32
-            const GDALm256i ymm = GDALmm256_cvtepu16_epi32(xmm);
-            // Compute square of those 8 values
-            const GDALm256i ymm2 = GDALmm256_mullo_epi32(ymm, ymm);
-            // Extract 4 low uint32 and extend them to uint64
-            const GDALm256i ymm2_low = GDALmm256_cvtepu32_epi64(
-                                        GDALmm256_extracti128_si256(ymm2, 0));
-            // Extract 4 high uint32 and extend them to uint64
-            const GDALm256i ymm2_high = GDALmm256_cvtepu32_epi64(
-                                         GDALmm256_extracti128_si256(ymm2, 1));
-            // Add to the sumsquare accumulator
-            ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm2_low);
-            ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm2_high);
+            GDALm256i ymm_sum = ZERO256; // holds 8 uint32 sums
+            for( ;i+15<iMax ; i+=16 )
+            {
+                const GDALm256i ymm = GDALmm256_load_si256((GDALm256i*)(pData + i));
+                ymm_min = GDALmm256_min_epu16 (ymm_min, ymm);
+                ymm_max = GDALmm256_max_epu16 (ymm_max, ymm);
 
-            // Now compute the sums
-            ymm_sum = GDALmm256_add_epi64(ymm_sum, GDALmm256_cvtepu16_epi64(xmm));
-            ymm_sum = GDALmm256_add_epi64(ymm_sum, GDALmm256_cvtepu16_epi64(
-                                                        GET_HIGH_64BIT(xmm)));
+                // Extend the 8 lower uint16 to uint32
+                const GDALm256i ymm_low = GDALmm256_cvtepu16_epi32(
+                                            GDALmm256_extracti128_si256(ymm, 0));
+                // Compute square of those 8 values
+                const GDALm256i ymm_low2 = GDALmm256_mullo_epi32(ymm_low, ymm_low);
+                // Extract 4 low uint32 and extend them to uint64
+                const GDALm256i ymm_low2_low = GDALmm256_cvtepu32_epi64(
+                                            GDALmm256_extracti128_si256(ymm_low2, 0));
+                // Extract 4 high uint32 and extend them to uint64
+                const GDALm256i ymm_low2_high = GDALmm256_cvtepu32_epi64(
+                                            GDALmm256_extracti128_si256(ymm_low2, 1));
+                // Add to the sumsquare accumulator
+                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_low);
+                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_high);
+
+                // Now compute the sums
+                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_low);
+
+                // Same with the 8 upper uint16
+                const GDALm256i ymm_high = GDALmm256_cvtepu16_epi32(
+                                            GDALmm256_extracti128_si256(ymm, 1));
+                const GDALm256i ymm_high2 = GDALmm256_mullo_epi32(ymm_high, ymm_high);
+                const GDALm256i ymm_high2_low = GDALmm256_cvtepu32_epi64(
+                                            GDALmm256_extracti128_si256(ymm_high2, 0));
+                const GDALm256i ymm_high2_high = GDALmm256_cvtepu32_epi64(
+                                            GDALmm256_extracti128_si256(ymm_high2, 1));
+                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_low);
+                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_high);
+                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_high);
+            }
+
+            GUInt32 anSum[8];
+            GDALmm256_storeu_si256((GDALm256i*)anSum, ymm_sum);
+            nSum += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
+                    anSum[2] + anSum[3] + anSum[4] + anSum[5] +
+                    anSum[6] + anSum[7];
+
         }
 
-        GUInt16 anMin[8];
-        GUInt16 anMax[8];
-        _mm_storeu_si128((__m128i*)anMin, xmm_min);
-        _mm_storeu_si128((__m128i*)anMax, xmm_max);
-        for(int j=0;j<8;j++)
+        GUInt16 anMin[16];
+        GUInt16 anMax[16];
+        GDALmm256_storeu_si256((GDALm256i*)anMin, ymm_min);
+        GDALmm256_storeu_si256((GDALm256i*)anMax, ymm_max);
+        for(int j=0;j<16;j++)
         {
             if( anMin[j] < nMin ) nMin = anMin[j];
             if( anMax[j] > nMax ) nMax = anMax[j];
         }
 
-        GUIntBig anSum[4];
         GUIntBig anSumSquare[4];
-        GDALmm256_storeu_si256((GDALm256i*)anSum, ymm_sum);
         GDALmm256_storeu_si256((GDALm256i*)anSumSquare, ymm_sumsquare);
-
-        nSum += anSum[0] + anSum[1] +
-                anSum[2] + anSum[3];
         nSumSquare += anSumSquare[0] +
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
 

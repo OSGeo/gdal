@@ -550,16 +550,46 @@ def stats_byte_partial_tiles():
 
 def stats_uint16():
 
-    ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
+    ds = gdal.Translate('/vsimem/stats_uint16_tiled.tif', '../gdrivers/data/small_world.tif',
                         outputType = gdal.GDT_UInt16,
                         scaleParams = [[0, 255, 0, 65535]],
                         creationOptions = ['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_tiled.tif')
 
     expected_stats = [0.0, 65535.0, 50.22115 * 65535 / 255, 67.119029288849973 * 65535 / 255]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
+
+    ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
+                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16' )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_untiled.tif')
+
+    expected_stats = [0.0, 65535.0, 12923.9921679198, 17259.703026841547]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
+
+    # Same but with nodata set but untiled and with non power of 16 block size
+    ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
+                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16' )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_untiled.tif')
+
+    expected_stats = [257.0, 65535.0, 50.378183963744554 * 65535 / 255, 67.184793517649453 * 65535 / 255]
     if stats != expected_stats:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
