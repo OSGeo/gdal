@@ -3880,8 +3880,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         // any non noData value in [min,max] would do.
         const __m256i ymm_neutral = _mm256_set1_epi8(
                                         static_cast<GByte>(nMin) );
-        __m256i ymm_min = ymm_nodata;
-        __m256i ymm_max = ymm_nodata;
+        __m256i ymm_min = ymm_neutral;
+        __m256i ymm_max = ymm_neutral;
 
         for( int k=0; k< nOuterLoops; k++ )
         {
