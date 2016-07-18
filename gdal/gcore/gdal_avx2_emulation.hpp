@@ -67,12 +67,11 @@ static inline __m128i GDALmm_max_epu16 (__m128i x, __m128i y)
 
 static inline __m128i GDALmm_mullo_epi32 (__m128i x, __m128i y)
 {
-    const __m128i mul02 = _mm_mul_epu32(x, y);
-    const __m128i mul13 = _mm_mul_epu32(_mm_srli_si128(x, 4),
-                                        _mm_srli_si128(y, 4));
-    return _mm_unpacklo_epi64(
-                _mm_unpacklo_epi32(mul02, mul13),
-                _mm_unpackhi_epi32(mul02, mul13));
+    const __m128i mul02 = _mm_shuffle_epi32(_mm_mul_epu32(x, y), 2 << 2);
+    const __m128i mul13 = _mm_shuffle_epi32(_mm_mul_epu32(_mm_srli_si128(x, 4),
+                                                          _mm_srli_si128(y, 4)),
+                                            2 << 2);
+    return _mm_unpacklo_epi32(mul02, mul13);;
 }
 #endif // __SSE4_1__
 
