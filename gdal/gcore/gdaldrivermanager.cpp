@@ -114,11 +114,11 @@ GDALDriverManager::GDALDriverManager() :
 /*      and we hope other mechanisms such as environment variables will */
 /*      have been employed.                                             */
 /* -------------------------------------------------------------------- */
+#ifdef INST_DATA
     if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
     {
         // This one is picked up automatically by finder initialization.
     }
-#ifdef INST_DATA
     else
     {
         CPLPushFinderLocation( INST_DATA );
