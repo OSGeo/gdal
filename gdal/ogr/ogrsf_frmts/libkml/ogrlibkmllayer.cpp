@@ -643,7 +643,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount( int bForce )
         const size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size();
 
         /***** loop over the kml features in the container *****/
-        for( int iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ )
+        for( size_t iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ )
         {
             FeaturePtr poKmlFeature =
                 m_poKmlLayer->get_feature_array_at( iKmlFeature );
