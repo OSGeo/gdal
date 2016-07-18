@@ -3878,9 +3878,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         __m256i ymm_min = _mm256_load_si256((__m256i*)(pData + i));
         __m256i ymm_max = ymm_min;
 
-        const __m256i ymm_nodata = _mm256_set1_epi8( nNoDataValue );
+        const __m256i ymm_nodata = _mm256_set1_epi8(
+                                        static_cast<GByte>(nNoDataValue) );
         // any non noData value in [min,max] would do.
-        const __m256i ymm_neutral = _mm256_set1_epi8( nMin );
+        const __m256i ymm_neutral = _mm256_set1_epi8(
+                                        static_cast<GByte>(nMin) );
 
         for( int k=0; k< nOuterLoops; k++ )
         {
@@ -4120,9 +4122,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             __m128i xmm_max = xmm_min;
             __m128i xmm_sum = ZERO128; // holds 2 uint32 sums in [0] and [2]
             __m128i xmm_sumsquare = ZERO128; // holds 4 uint32 sums
-            const __m128i xmm_nodata = _mm_set1_epi8( nNoDataValue );
+            const __m128i xmm_nodata = _mm_set1_epi8(
+                                    static_cast<GByte>(nNoDataValue) );
             // any non noData value in [min,max] would do.
-            const __m128i xmm_neutral = _mm_set1_epi8( nMin );
+            const __m128i xmm_neutral = _mm_set1_epi8(
+                                    static_cast<GByte>(nMin) );
             __m128i xmm_count_nodata_mul_255 = ZERO128;
             const int iInit = i;
             for( ;i+15<iMax; i+=16 )
