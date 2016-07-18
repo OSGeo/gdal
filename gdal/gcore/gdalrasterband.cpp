@@ -3826,10 +3826,8 @@ static void ComputeStatisticsInternal( int nXCheck,
 // Some convenience macros
 #define ZERO128                      _mm_setzero_si128()
 #ifdef __SSE4_1__
-#define EXTEND_UINT8_TO_UINT16(reg)  _mm_cvtepu8_epi16(reg)
 #define EXTEND_UINT16_TO_UINT32(reg) _mm_cvtepu16_epi32(reg)
 #else
-#define EXTEND_UINT8_TO_UINT16(reg)  _mm_unpacklo_epi8(reg, ZERO128)
 #define EXTEND_UINT16_TO_UINT32(reg) _mm_unpacklo_epi16(reg, ZERO128)
 #endif
 #define GET_HIGH_64BIT(reg)          _mm_shuffle_epi32(reg, 2 | (3 << 2))
