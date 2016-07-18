@@ -118,8 +118,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                                 const char *pszFileName,
                                 int bNew,
                                 int bUpdateIn ) :
-    bUpdate(bUpdateIn),
-    bUpdated(FALSE),
+    bUpdate(CPL_TO_BOOL(bUpdateIn)),
+    bUpdated(false),
     nFeatures(0),
     iFeature(0),
     nFID(1),
@@ -136,8 +136,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
         CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"))),
     m_bUseSimpleField(CPLTestBool(
         CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"))),
-    m_bWriteRegion(FALSE),
-    m_bRegionBoundsAuto(FALSE),
+    m_bWriteRegion(false),
+    m_bRegionBoundsAuto(false),
     m_dfRegionMinLodPixels(0),
     m_dfRegionMaxLodPixels(-1),
     m_dfRegionMinFadeExtent(0),
@@ -146,7 +146,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
     m_dfRegionMinY(200),
     m_dfRegionMaxX(-200),
     m_dfRegionMaxY(-200),
-    m_bUpdateIsFolder(FALSE)
+    m_bUpdateIsFolder(false)
 {
     m_poStyleTable = NULL;
     m_poOgrSRS->SetWellKnownGeogCS( "WGS84" );
@@ -317,7 +317,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                             "LIBKML_LAUNDER_FIELD_NAMES", "YES"));
                     const size_t nDataArraySize =
                         poKmlExtendedData->get_data_array_size();
-                    for( size_t i=0; i < nDataArraySize; i++ )
+                    for( size_t i = 0; i < nDataArraySize; i++ )
                     {
                         const DataPtr& data =
                             poKmlExtendedData->get_data_array_at(i);
@@ -342,7 +342,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
     else
     {
         /***** mark the layer as updated *****/
-        bUpdated = TRUE;
+        bUpdated = true;
     }
 }
 
@@ -366,13 +366,13 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer()
 
 
 /******************************************************************************
- Method to get the next feature on the layer
+ Method to get the next feature on the layer.
 
  Args:          none
 
  Returns:       The next feature, or NULL if there is no more
 
- this function copyed from the sqlite driver
+ This function copyed from the sqlite driver.
 ******************************************************************************/
 
 OGRFeature *OGRLIBKMLLayer::GetNextFeature()
@@ -396,7 +396,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextFeature()
 }
 
 /******************************************************************************
- Method to get the next feature on the layer
+ Method to get the next feature on the layer.
 
  Args:          none
 
@@ -455,7 +455,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
 }
 
 /******************************************************************************
- method to add a feature to a layer
+ Method to add a feature to a layer.
 
  Args:          poOgrFeat   pointer to the feature to add
 
@@ -543,7 +543,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     }
 
     /***** mark the layer as updated *****/
-    bUpdated = TRUE;
+    bUpdated = true;
     m_poOgrDS->Updated();
 
     return OGRERR_NONE;
@@ -551,7 +551,9 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
 
 
 /******************************************************************************
- method to update a feature to a layer. Only work on a NetworkLinkControl/Update
+ Method to update a feature to a layer.
+
+ Only work on a NetworkLinkControl/Update.
 
  Args:          poOgrFeat   pointer to the feature to update
 
@@ -581,14 +583,16 @@ OGRErr OGRLIBKMLLayer::ISetFeature( OGRFeature * poOgrFeat )
     poKmlFeature->set_targetid(pszId);
 
     /***** mark the layer as updated *****/
-    bUpdated = TRUE;
+    bUpdated = true;
     m_poOgrDS->Updated();
 
     return OGRERR_NONE;
 }
 
 /******************************************************************************
- method to delete a feature to a layer. Only work on a NetworkLinkControl/Update
+ Method to delete a feature to a layer.
+
+ Only work on a NetworkLinkControl/Update.
 
  Args:          nFID   id of the feature to delete
 
@@ -613,14 +617,14 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
     poKmlPlacemark->set_targetid(pszId);
 
     /***** mark the layer as updated *****/
-    bUpdated = TRUE;
+    bUpdated = true;
     m_poOgrDS->Updated();
 
     return OGRERR_NONE;
 }
 
 /******************************************************************************
- method to get the number of features on the layer
+ Method to get the number of features on the layer.
 
  Args:          bForce      no effect as of now
 
@@ -633,40 +637,42 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
 
 GIntBig OGRLIBKMLLayer::GetFeatureCount( int bForce )
 {
-    int i = 0;
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
     {
-        i = static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
+        return static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
-    else if( m_poKmlLayer != NULL )
+
+    if( m_poKmlLayer == NULL )
+      return 0;
+
+    int count = 0;
+
+    const size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size();
+
+    /***** loop over the kml features in the container *****/
+    for( size_t iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ )
     {
-        const size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size();
+        FeaturePtr poKmlFeature =
+            m_poKmlLayer->get_feature_array_at( iKmlFeature );
 
-        /***** loop over the kml features in the container *****/
-        for( size_t iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ )
+        /***** what type of kml feature? *****/
+        switch( poKmlFeature->Type() )
         {
-            FeaturePtr poKmlFeature =
-                m_poKmlLayer->get_feature_array_at( iKmlFeature );
+            case kmldom::Type_Placemark:
+                count++;
+                break;
 
-            /***** what type of kml feature? *****/
-            switch( poKmlFeature->Type() )
-            {
-                case kmldom::Type_Placemark:
-                    i++;
-                    break;
+            case kmldom::Type_GroundOverlay:
+                if( m_bReadGroundOverlay )
+                    count++;
+                break;
 
-                case kmldom::Type_GroundOverlay:
-                    if( m_bReadGroundOverlay )
-                        i++;
-                    break;
-
-                default:
-                    break;
-            }
+            default:
+                break;
         }
     }
 
-    return i;
+    return count;
 }
 
 /******************************************************************************
@@ -701,7 +707,7 @@ OGRErr OGRLIBKMLLayer::GetExtent( OGREnvelope * psExtent, int bForce )
 
 
 /******************************************************************************
- Method to create a field on a layer
+ Method to create a field on a layer.
 
  Args:          poField     pointer to the Field Definition to add
                 bApproxOK   no effect as of now
@@ -746,7 +752,7 @@ OGRErr OGRLIBKMLLayer::CreateField(
     m_poOgrFeatureDefn->AddFieldDefn( poField );
 
     /***** mark the layer as updated *****/
-    bUpdated = TRUE;
+    bUpdated = true;
     m_poOgrDS->Updated();
 
     return OGRERR_NONE;
@@ -754,7 +760,7 @@ OGRErr OGRLIBKMLLayer::CreateField(
 
 
 /******************************************************************************
- method to write the datasource to disk
+ Method to write the datasource to disk.
 
  Args:      none
 
@@ -768,7 +774,7 @@ OGRErr OGRLIBKMLLayer::SyncToDisk()
 }
 
 /******************************************************************************
- method to get a layers style table
+ Method to get a layers style table.
 
  Args:          none
 
@@ -783,7 +789,7 @@ OGRStyleTable *OGRLIBKMLLayer::GetStyleTable()
 }
 
 /******************************************************************************
- method to write a style table to a layer
+ Method to write a style table to a layer.
 
  Args:          poStyleTable    pointer to the style table to add
 
@@ -822,12 +828,12 @@ void OGRLIBKMLLayer::SetStyleTableDirectly( OGRStyleTable * poStyleTable )
     }
 
     /***** mark the layer as updated *****/
-    bUpdated = TRUE;
+    bUpdated = true;
     m_poOgrDS->Updated();
 }
 
 /******************************************************************************
- method to write a style table to a layer
+ Method to write a style table to a layer.
 
  Args:          poStyleTable    pointer to the style table to add
 
@@ -1016,8 +1022,8 @@ void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels,
                                     double dfMinFadeExtent,
                                     double dfMaxFadeExtent)
 {
-    m_bWriteRegion = TRUE;
-    m_bRegionBoundsAuto = TRUE;
+    m_bWriteRegion = true;
+    m_bRegionBoundsAuto = true;
     m_dfRegionMinLodPixels = dfMinLodPixels;
     m_dfRegionMaxLodPixels = dfMaxLodPixels;
     m_dfRegionMinFadeExtent = dfMinFadeExtent;
@@ -1031,7 +1037,7 @@ void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels,
 void OGRLIBKMLLayer::SetRegionBounds( double dfMinX, double dfMinY,
                                       double dfMaxX, double dfMaxY )
 {
-    m_bRegionBoundsAuto = FALSE;
+    m_bRegionBoundsAuto = false;
     m_dfRegionMinX = dfMinX;
     m_dfRegionMinY = dfMinY;
     m_dfRegionMaxX = dfMaxX;

@@ -45,7 +45,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
 class OGRLIBKMLLayer:public OGRLayer
 {
     int                       bUpdate;
-    int                       bUpdated;
+    bool                      bUpdated;
     int                       nFeatures;
     int                       iFeature;
     long                      nFID;
@@ -61,11 +61,11 @@ class OGRLIBKMLLayer:public OGRLayer
     kmldom::SchemaPtr         m_poKmlSchema;
     OGRSpatialReference      *m_poOgrSRS;
 
-    int                       m_bReadGroundOverlay;
-    int                       m_bUseSimpleField;
+    bool                      m_bReadGroundOverlay;
+    bool                      m_bUseSimpleField;
 
-    int                       m_bWriteRegion;
-    int                       m_bRegionBoundsAuto;
+    bool                      m_bWriteRegion;
+    bool                      m_bRegionBoundsAuto;
     double                    m_dfRegionMinLodPixels;
     double                    m_dfRegionMaxLodPixels;
     double                    m_dfRegionMinFadeExtent;
@@ -78,7 +78,7 @@ class OGRLIBKMLLayer:public OGRLayer
     CPLString                 osListStyleType;
     CPLString                 osListStyleIconHref;
 
-    int                       m_bUpdateIsFolder;
+    bool                      m_bUpdateIsFolder;
 
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
