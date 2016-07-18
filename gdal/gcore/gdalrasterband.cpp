@@ -3875,14 +3875,13 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         if( ((nXCheck * nYCheck) % nMaxIterationsPerInnerLoop) != 0 )
             nOuterLoops ++;
 
-        __m256i ymm_min = _mm256_load_si256((__m256i*)(pData + i));
-        __m256i ymm_max = ymm_min;
-
         const __m256i ymm_nodata = _mm256_set1_epi8(
                                         static_cast<GByte>(nNoDataValue) );
         // any non noData value in [min,max] would do.
         const __m256i ymm_neutral = _mm256_set1_epi8(
                                         static_cast<GByte>(nMin) );
+        __m256i ymm_min = ymm_nodata;
+        __m256i ymm_max = ymm_nodata;
 
         for( int k=0; k< nOuterLoops; k++ )
         {
@@ -4113,20 +4112,22 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         int nOuterLoops = (nXCheck * nYCheck) / nMaxIterationsPerInnerLoop;
         if( ((nXCheck * nYCheck) % nMaxIterationsPerInnerLoop) != 0 )
             nOuterLoops ++;
+
+        const __m128i xmm_nodata = _mm_set1_epi8(
+                                static_cast<GByte>(nNoDataValue) );
+        // any non noData value in [min,max] would do.
+        const __m128i xmm_neutral = _mm_set1_epi8(
+                                static_cast<GByte>(nMin) );
+        __m128i xmm_min = xmm_neutral;
+        __m128i xmm_max = xmm_neutral;
+
         for( int k=0; k< nOuterLoops; k++ )
         {
             int iMax = i + nMaxIterationsPerInnerLoop;
             if( iMax > nXCheck * nYCheck )
                 iMax = nXCheck * nYCheck;
-            __m128i xmm_min = _mm_load_si128((__m128i*)(pData + i));
-            __m128i xmm_max = xmm_min;
             __m128i xmm_sum = ZERO128; // holds 2 uint32 sums in [0] and [2]
             __m128i xmm_sumsquare = ZERO128; // holds 4 uint32 sums
-            const __m128i xmm_nodata = _mm_set1_epi8(
-                                    static_cast<GByte>(nNoDataValue) );
-            // any non noData value in [min,max] would do.
-            const __m128i xmm_neutral = _mm_set1_epi8(
-                                    static_cast<GByte>(nMin) );
             __m128i xmm_count_nodata_mul_255 = ZERO128;
             const int iInit = i;
             for( ;i+15<iMax; i+=16 )
@@ -4178,16 +4179,6 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             nSampleCount += (i - iInit) -
                         (anCoutNoDataMul255[0] + anCoutNoDataMul255[1]) / 255;
 
-            ALIGNED_16(GByte abyMin[16]);
-            ALIGNED_16(GByte abyMax[16]);
-            _mm_store_si128((__m128i*)abyMin, xmm_min);
-            _mm_store_si128((__m128i*)abyMax, xmm_max);
-            for(int j=0;j<16;j++)
-            {
-                if( abyMin[j] < nMin ) nMin = abyMin[j];
-                if( abyMax[j] > nMax ) nMax = abyMax[j];
-            }
-
             ALIGNED_16(GUInt32 anSum[4]);
             ALIGNED_16(GUInt32 anSumSquare[4]);
             _mm_store_si128((__m128i*)anSum, xmm_sum);
@@ -4196,6 +4187,16 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             nSum += anSum[0] + anSum[2];
             nSumSquare += static_cast<GUIntBig>(anSumSquare[0]) +
                           anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
+        }
+
+        ALIGNED_16(GByte abyMin[16]);
+        ALIGNED_16(GByte abyMax[16]);
+        _mm_store_si128((__m128i*)abyMin, xmm_min);
+        _mm_store_si128((__m128i*)abyMax, xmm_max);
+        for(int j=0;j<16;j++)
+        {
+            if( abyMin[j] < nMin ) nMin = abyMin[j];
+            if( abyMax[j] > nMax ) nMax = abyMax[j];
         }
 
         for( ; i<nXCheck * nYCheck; i++)
