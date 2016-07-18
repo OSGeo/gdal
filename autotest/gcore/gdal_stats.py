@@ -527,8 +527,31 @@ def stats_byte_partial_tiles():
         print(expected_stats)
         return 'fail'
 
+    # Same but with nodata set but untiled and with non power of 16 block size
+    ds = gdal.Translate('/vsimem/stats_byte_untiled.tif', '../gdrivers/data/small_world.tif',
+                        options = '-srcwin 0 0 399 200' )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_untiled.tif')
+
+    expected_stats = [1.0, 255.0, 50.378183963744554, 67.184793517649453]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
 
     return 'success'
+
+def stats_byte_partial_tiles_avx2_emul():
+
+    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', 'YES')
+    ret = stats_byte_partial_tiles()
+    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', None)
+    return ret
+
 
 ###############################################################################
 # Test stats on uint16
@@ -552,6 +575,13 @@ def stats_uint16():
         return 'fail'
 
     return 'success'
+
+def stats_uint16_avx2_emul():
+
+    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', 'YES')
+    ret = stats_uint16()
+    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', None)
+    return ret
 
 
 
@@ -580,7 +610,9 @@ gdaltest_list = [
     stats_flt_min,
     stats_dbl_min,
     stats_byte_partial_tiles,
-    stats_uint16
+    stats_byte_partial_tiles_avx2_emul,
+    stats_uint16,
+    stats_uint16_avx2_emul
     ]
 
 if __name__ == '__main__':

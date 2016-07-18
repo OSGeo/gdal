@@ -3834,14 +3834,28 @@ static void ComputeStatisticsInternal( int nXCheck,
 #endif
 #define GET_HIGH_64BIT(reg)          _mm_shuffle_epi32(reg, 2 | (3 << 2))
 
-#ifdef __AVX2__
+#if defined(DEBUG) && !defined(__AVX2__)
+#define GDAL_AVX2_EMULATION
+#endif
+
+#if defined(__AVX2__) || defined(GDAL_AVX2_EMULATION)
+
+#if defined(GDAL_AVX2_EMULATION)
+#include "gdal_avx2_emulation.hpp"
+#else
 #include <immintrin.h>
+#endif
 
 #define ZERO256                      _mm256_setzero_si256()
 
 // AVX2 optimization for GByte case
+#if defined(GDAL_AVX2_EMULATION)
+static void ComputeStatisticsInternalByteAVX2Emulation
+#else
 template<>
-void ComputeStatisticsInternal<GByte>( int nXCheck,
+void ComputeStatisticsInternal<GByte>
+#endif
+                                     ( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        // assumed to be aligned on 256 bits
@@ -4084,7 +4098,9 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
 }
 
-#else
+#endif
+
+#if !defined(__AVX2__)
 
 // SSE2 optimization for GByte case
 template<>
@@ -4101,6 +4117,18 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                        GUIntBig& nSumSquare,
                                        GUIntBig& nSampleCount )
 {
+#ifdef GDAL_AVX2_EMULATION
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_USE_AVX2_EMULATION", "NO") ) )
+    {
+        return ComputeStatisticsInternalByteAVX2Emulation(
+                                          nXCheck, nBlockXSize, nYCheck,
+                                          pData,
+                                          bHasNoData, nNoDataValue,
+                                          nMin, nMax, nSum, nSumSquare,
+                                          nSampleCount );
+    }
+#endif
+
     if( bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 16 &&
         nMin <= nMax )
     {
@@ -4313,12 +4341,22 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
 }
 #endif
 
-#if defined(__AVX2__) && defined(__SSE4_1__)
+#if (defined(__AVX2__) && defined(__SSE4_1__)) || defined(GDAL_AVX2_EMULATION)
+
+#if defined(GDAL_AVX2_EMULATION)
+#include "gdal_avx2_emulation.hpp"
+#else
 #include <immintrin.h>
+#endif
 
 // AVX2 optimization for GUInt16 case
+#if defined(GDAL_AVX2_EMULATION)
+static void ComputeStatisticsInternalUInt16AVX2Emulation
+#else
 template<>
-void ComputeStatisticsInternal<GUInt16>( int nXCheck,
+void ComputeStatisticsInternal<GUInt16>
+#endif
+                                      ( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        // assumed to be aligned on 128 bits
@@ -4406,7 +4444,10 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                                           nSampleCount );
     }
 }
-#else
+
+#endif
+
+#if !(defined(__AVX2__) && defined(__SSE4_1__))
 
 #ifndef __SSE4_1__
 
@@ -4462,6 +4503,18 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                                        GUIntBig& nSumSquare,
                                        GUIntBig& nSampleCount )
 {
+#ifdef GDAL_AVX2_EMULATION
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_USE_AVX2_EMULATION", "NO") ) )
+    {
+        return ComputeStatisticsInternalUInt16AVX2Emulation(
+                                          nXCheck, nBlockXSize, nYCheck,
+                                          pData,
+                                          bHasNoData, nNoDataValue,
+                                          nMin, nMax, nSum, nSumSquare,
+                                          nSampleCount );
+    }
+#endif
+
     if( !bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 8 )
     {
         int i = 0;
