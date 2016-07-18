@@ -30,136 +30,13 @@
 
 #include <emmintrin.h>
 
-typedef struct
-{
-    __m128i low;
-    __m128i high;
-} __m256i;
-
-static inline __m256i _mm256_set1_epi8(char c)
-{
-    __m256i reg;
-    reg.low = _mm_set1_epi8(c);
-    reg.high = _mm_set1_epi8(c);
-    return reg;
-}
-
-static inline __m256i _mm256_setzero_si256()
-{
-    __m256i reg;
-    reg.low = _mm_setzero_si128();
-    reg.high = _mm_setzero_si128();
-    return reg;
-}
-
-static inline __m256i _mm256_load_si256(__m256i const * p)
-{
-    __m256i reg;
-    reg.low = _mm_load_si128((__m128i const*)p);
-    reg.high = _mm_load_si128((__m128i const*)((char*)p+16));
-    return reg;
-}
-
-static inline void _mm256_store_si256(__m256i * p, __m256i reg)
-{
-    _mm_store_si128((__m128i*)p, reg.low);
-    _mm_store_si128((__m128i*)((char*)p+16), reg.high);
-}
-
-static inline void _mm256_storeu_si256(__m256i * p, __m256i reg)
-{
-    _mm_storeu_si128((__m128i*)p, reg.low);
-    _mm_storeu_si128((__m128i*)((char*)p+16), reg.high);
-}
-
-static inline __m256i _mm256_cmpeq_epi8(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_cmpeq_epi8(r1.low, r2.low);
-    reg.high = _mm_cmpeq_epi8(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_sad_epu8(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_sad_epu8(r1.low, r2.low);
-    reg.high = _mm_sad_epu8(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_add_epi32(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_add_epi32(r1.low, r2.low);
-    reg.high = _mm_add_epi32(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_andnot_si256(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_andnot_si128(r1.low, r2.low);
-    reg.high = _mm_andnot_si128(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_and_si256(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_and_si128(r1.low, r2.low);
-    reg.high = _mm_and_si128(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_or_si256(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_or_si128(r1.low, r2.low);
-    reg.high = _mm_or_si128(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_min_epu8(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_min_epu8(r1.low, r2.low);
-    reg.high = _mm_min_epu8(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m256i _mm256_max_epu8(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_max_epu8(r1.low, r2.low);
-    reg.high = _mm_max_epu8(r1.high, r2.high);
-    return reg;
-}
-
-static inline __m128i _mm256_extracti128_si256(__m256i reg, int index)
-{
-    return (index == 0) ? reg.low : reg.high;
-}
-
-static inline __m256i _mm256_cvtepu8_epi16(__m128i reg128)
-{
-    __m256i reg;
-    reg.low = _mm_unpacklo_epi8(reg128, _mm_setzero_si128());
-    reg.high = _mm_unpacklo_epi8(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
-                                 _mm_setzero_si128());
-    return reg;
-}
-
-static inline __m256i _mm256_madd_epi16(__m256i r1, __m256i r2)
-{
-    __m256i reg;
-    reg.low = _mm_madd_epi16(r1.low, r2.low);
-    reg.high = _mm_madd_epi16(r1.high, r2.high);
-    return reg;
-}
-
 #ifdef __SSE4_1__
 #include <smmintrin.h>
+
+#define GDALmm_min_epu16   _mm_min_epu16
+#define GDALmm_max_epu16   _mm_max_epu16
+#define GDALmm_mullo_epi32 _mm_mullo_epi32
+
 #else
 // Emulation of SSE4.1 _mm_min_epu16 and _mm_max_epu16 with SSE2 only
 
@@ -176,13 +53,13 @@ static inline __m128i GDALAVX2Emul_mm_ternary(__m128i mask,
                         _mm_andnot_si128(mask, else_reg));
 }
 
-static inline __m128i _mm_min_epu16 (__m128i x, __m128i y)
+static inline __m128i GDALmm_min_epu16 (__m128i x, __m128i y)
 {
     const __m128i mask = GDALAVX2Emul_mm_cmple_epu16(x, y);
     return GDALAVX2Emul_mm_ternary(mask, x, y);
 }
 
-static inline __m128i _mm_max_epu16 (__m128i x, __m128i y)
+static inline __m128i GDALmm_max_epu16 (__m128i x, __m128i y)
 {
     const __m128i mask = GDALAVX2Emul_mm_cmple_epu16(x, y);
     return GDALAVX2Emul_mm_ternary(mask, y, x);
@@ -197,7 +74,7 @@ static inline __m128i _mm_max_epu16 (__m128i x, __m128i y)
 #error "unsupported compiler"
 #endif
 
-static inline __m128i _mm_mullo_epi32 (__m128i x, __m128i y)
+static inline __m128i GDALmm_mullo_epi32 (__m128i x, __m128i y)
 {
     GDALAVX2EMUL_ALIGNED_16(unsigned int x_scalar[4]);
     GDALAVX2EMUL_ALIGNED_16(unsigned int y_scalar[4]);
@@ -209,37 +86,197 @@ static inline __m128i _mm_mullo_epi32 (__m128i x, __m128i y)
     x_scalar[3] = x_scalar[3] * y_scalar[3];
     return _mm_load_si128(  (__m128i*)x_scalar );
 }
-#endif
+#endif // __SSE4_1__
 
 
-static inline __m256i _mm256_min_epu16(__m256i r1, __m256i r2)
+#ifdef __AVX2__
+
+#include <immintrin.h>
+
+typedef __m256i GDALm256i;
+
+#define GDALmm256_set1_epi8             _mm256_set1_epi8
+#define GDALmm256_setzero_si256         _mm256_setzero_si256
+#define GDALmm256_load_si256            _mm256_load_si256
+#define GDALmm256_store_si256           _mm256_store_si256
+#define GDALmm256_storeu_si256          _mm256_storeu_si256
+#define GDALmm256_cmpeq_epi8            _mm256_cmpeq_epi8
+#define GDALmm256_sad_epu8              _mm256_sad_epu8
+#define GDALmm256_add_epi32             _mm256_add_epi32
+#define GDALmm256_andnot_si256          _mm256_andnot_si256
+#define GDALmm256_and_si256             _mm256_and_si256
+#define GDALmm256_or_si256              _mm256_or_si256
+#define GDALmm256_min_epu8              _mm256_min_epu8
+#define GDALmm256_max_epu8              _mm256_max_epu8
+#define GDALmm256_extracti128_si256     _mm256_extracti128_si256
+#define GDALmm256_cvtepu8_epi16         _mm256_cvtepu8_epi16
+#define GDALmm256_madd_epi16            _mm256_madd_epi16
+#define GDALmm256_min_epu16             _mm256_min_epu16
+#define GDALmm256_max_epu16             _mm256_max_epu16
+#define GDALmm256_cvtepu16_epi32        _mm256_cvtepu16_epi32
+#define GDALmm256_cvtepu16_epi64        _mm256_cvtepu16_epi64
+#define GDALmm256_cvtepu32_epi64        _mm256_cvtepu32_epi64
+#define GDALmm256_mullo_epi32           _mm256_mullo_epi32
+#define GDALmm256_add_epi64             _mm256_add_epi64
+
+#else
+
+typedef struct
 {
-    __m256i reg;
-    reg.low = _mm_min_epu16(r1.low, r2.low);
-    reg.high = _mm_min_epu16(r1.high, r2.high);
+    __m128i low;
+    __m128i high;
+} GDALm256i;
+
+static inline GDALm256i GDALmm256_set1_epi8(char c)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi8(c);
+    reg.high = _mm_set1_epi8(c);
     return reg;
 }
 
-static inline __m256i _mm256_max_epu16(__m256i r1, __m256i r2)
+static inline GDALm256i GDALmm256_setzero_si256()
 {
-    __m256i reg;
-    reg.low = _mm_max_epu16(r1.low, r2.low);
-    reg.high = _mm_max_epu16(r1.high, r2.high);
+    GDALm256i reg;
+    reg.low = _mm_setzero_si128();
+    reg.high = _mm_setzero_si128();
     return reg;
 }
 
-static inline __m256i _mm256_cvtepu16_epi32(__m128i reg128)
+static inline GDALm256i GDALmm256_load_si256(GDALm256i const * p)
 {
-    __m256i reg;
+    GDALm256i reg;
+    reg.low = _mm_load_si128((__m128i const*)p);
+    reg.high = _mm_load_si128((__m128i const*)((char*)p+16));
+    return reg;
+}
+
+static inline void GDALmm256_store_si256(GDALm256i * p, GDALm256i reg)
+{
+    _mm_store_si128((__m128i*)p, reg.low);
+    _mm_store_si128((__m128i*)((char*)p+16), reg.high);
+}
+
+static inline void GDALmm256_storeu_si256(GDALm256i * p, GDALm256i reg)
+{
+    _mm_storeu_si128((__m128i*)p, reg.low);
+    _mm_storeu_si128((__m128i*)((char*)p+16), reg.high);
+}
+
+static inline GDALm256i GDALmm256_cmpeq_epi8(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_cmpeq_epi8(r1.low, r2.low);
+    reg.high = _mm_cmpeq_epi8(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_sad_epu8(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_sad_epu8(r1.low, r2.low);
+    reg.high = _mm_sad_epu8(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_add_epi32(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_add_epi32(r1.low, r2.low);
+    reg.high = _mm_add_epi32(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_andnot_si256(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_andnot_si128(r1.low, r2.low);
+    reg.high = _mm_andnot_si128(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_and_si256(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_and_si128(r1.low, r2.low);
+    reg.high = _mm_and_si128(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_or_si256(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_or_si128(r1.low, r2.low);
+    reg.high = _mm_or_si128(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_min_epu8(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_min_epu8(r1.low, r2.low);
+    reg.high = _mm_min_epu8(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_max_epu8(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_max_epu8(r1.low, r2.low);
+    reg.high = _mm_max_epu8(r1.high, r2.high);
+    return reg;
+}
+
+static inline __m128i GDALmm256_extracti128_si256(GDALm256i reg, int index)
+{
+    return (index == 0) ? reg.low : reg.high;
+}
+
+static inline GDALm256i GDALmm256_cvtepu8_epi16(__m128i reg128)
+{
+    GDALm256i reg;
+    reg.low = _mm_unpacklo_epi8(reg128, _mm_setzero_si128());
+    reg.high = _mm_unpacklo_epi8(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
+                                 _mm_setzero_si128());
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_madd_epi16(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_madd_epi16(r1.low, r2.low);
+    reg.high = _mm_madd_epi16(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_min_epu16(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = GDALmm_min_epu16(r1.low, r2.low);
+    reg.high = GDALmm_min_epu16(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_max_epu16(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = GDALmm_max_epu16(r1.low, r2.low);
+    reg.high = GDALmm_max_epu16(r1.high, r2.high);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_cvtepu16_epi32(__m128i reg128)
+{
+    GDALm256i reg;
     reg.low = _mm_unpacklo_epi16(reg128, _mm_setzero_si128());
     reg.high = _mm_unpacklo_epi16(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
                                   _mm_setzero_si128());
     return reg;
 }
 
-static inline __m256i _mm256_cvtepu16_epi64(__m128i reg128)
+static inline GDALm256i GDALmm256_cvtepu16_epi64(__m128i reg128)
 {
-    __m256i reg;
+    GDALm256i reg;
     reg.low = _mm_unpacklo_epi32(_mm_unpacklo_epi16(reg128,
                                                     _mm_setzero_si128()),
                                  _mm_setzero_si128());
@@ -250,29 +287,31 @@ static inline __m256i _mm256_cvtepu16_epi64(__m128i reg128)
     return reg;
 }
 
-static inline __m256i _mm256_cvtepu32_epi64(__m128i reg128)
+static inline GDALm256i GDALmm256_cvtepu32_epi64(__m128i reg128)
 {
-    __m256i reg;
+    GDALm256i reg;
     reg.low = _mm_unpacklo_epi32(reg128, _mm_setzero_si128());
     reg.high = _mm_unpacklo_epi32(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
                                   _mm_setzero_si128());
     return reg;
 }
 
-static inline __m256i _mm256_mullo_epi32(__m256i r1, __m256i r2)
+static inline GDALm256i GDALmm256_mullo_epi32(GDALm256i r1, GDALm256i r2)
 {
-    __m256i reg;
-    reg.low = _mm_mullo_epi32(r1.low, r2.low);
-    reg.high = _mm_mullo_epi32(r1.high, r2.high);
+    GDALm256i reg;
+    reg.low = GDALmm_mullo_epi32(r1.low, r2.low);
+    reg.high = GDALmm_mullo_epi32(r1.high, r2.high);
     return reg;
 }
 
-static inline __m256i _mm256_add_epi64(__m256i r1, __m256i r2)
+static inline GDALm256i GDALmm256_add_epi64(GDALm256i r1, GDALm256i r2)
 {
-    __m256i reg;
+    GDALm256i reg;
     reg.low = _mm_add_epi64(r1.low, r2.low);
     reg.high = _mm_add_epi64(r1.high, r2.high);
     return reg;
 }
+
+#endif
 
 #endif /* GDAL_AVX2_EMULATION_H_INCLUDED */
