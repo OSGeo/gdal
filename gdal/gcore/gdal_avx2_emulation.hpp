@@ -83,6 +83,7 @@ static inline __m128i GDALmm_mullo_epi32 (__m128i x, __m128i y)
 typedef __m256i GDALm256i;
 
 #define GDALmm256_set1_epi8             _mm256_set1_epi8
+#define GDALmm256_set1_epi16            _mm256_set1_epi16
 #define GDALmm256_setzero_si256         _mm256_setzero_si256
 #define GDALmm256_load_si256            _mm256_load_si256
 #define GDALmm256_store_si256           _mm256_store_si256
@@ -105,6 +106,10 @@ typedef __m256i GDALm256i;
 #define GDALmm256_cvtepu32_epi64        _mm256_cvtepu32_epi64
 #define GDALmm256_mullo_epi32           _mm256_mullo_epi32
 #define GDALmm256_add_epi64             _mm256_add_epi64
+#define GDALmm256_add_epi16             _mm256_add_epi16
+#define GDALmm256_sub_epi16             _mm256_sub_epi16
+#define GDALmm256_min_epi16             _mm256_min_epi16
+#define GDALmm256_max_epi16             _mm256_max_epi16
 
 #else
 
@@ -119,6 +124,14 @@ static inline GDALm256i GDALmm256_set1_epi8(char c)
     GDALm256i reg;
     reg.low = _mm_set1_epi8(c);
     reg.high = _mm_set1_epi8(c);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_set1_epi16(short s)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi16(s);
+    reg.high = _mm_set1_epi16(s);
     return reg;
 }
 
@@ -172,6 +185,10 @@ DEFINE_BINARY_MM256(GDALmm256_min_epu16, GDALmm_min_epu16)
 DEFINE_BINARY_MM256(GDALmm256_max_epu16, GDALmm_max_epu16)
 DEFINE_BINARY_MM256(GDALmm256_mullo_epi32, GDALmm_mullo_epi32)
 DEFINE_BINARY_MM256(GDALmm256_add_epi64, _mm_add_epi64)
+DEFINE_BINARY_MM256(GDALmm256_add_epi16, _mm_add_epi16)
+DEFINE_BINARY_MM256(GDALmm256_sub_epi16, _mm_sub_epi16)
+DEFINE_BINARY_MM256(GDALmm256_min_epi16, _mm_min_epi16)
+DEFINE_BINARY_MM256(GDALmm256_max_epi16, _mm_max_epi16)
 
 static inline __m128i GDALmm256_extracti128_si256(GDALm256i reg, int index)
 {
