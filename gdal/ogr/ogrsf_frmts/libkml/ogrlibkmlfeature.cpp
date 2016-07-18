@@ -234,7 +234,7 @@ static void OGRLIBKMLGetMaxDimensions( const char* pszURL,
 /*                           feat2kml()                                 */
 /************************************************************************/
 
-FeaturePtr feat2kml (
+FeaturePtr feat2kml(
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
@@ -447,7 +447,7 @@ FeaturePtr feat2kml (
             if( bIsTiledPhotoOverlay )
             {
                 const ImagePyramidPtr poKmlImagePyramid =
-                    poKmlFactory->CreateImagePyramid( );
+                    poKmlFactory->CreateImagePyramid();
                 poKmlPhotoOverlay->set_imagepyramid(poKmlImagePyramid);
 
                 poKmlImagePyramid->set_tilesize(nTileSize);
@@ -771,7 +771,7 @@ FeaturePtr feat2kml (
             }
         }
 
-        poKmlPlacemark->set_geometry ( AsGeometry ( model ) );
+        poKmlPlacemark->set_geometry( AsGeometry( model ) );
     }
 
     // Camera.
@@ -840,7 +840,7 @@ FeaturePtr feat2kml (
 
         ElementPtr poKmlElement = geom2kml( poOgrGeom, -1, poKmlFactory );
 
-        poKmlPlacemark->set_geometry( AsGeometry ( poKmlElement ) );
+        poKmlPlacemark->set_geometry( AsGeometry( poKmlElement ) );
     }
 
     if( camera == NULL )
@@ -850,8 +850,8 @@ FeaturePtr feat2kml (
         poKmlFeature->set_abstractview(camera);
 
     /***** style *****/
-    featurestyle2kml ( poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
-                       poKmlFeature );
+    featurestyle2kml( poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
+                      poKmlFeature );
 
     /***** fields *****/
     OGRLIBKMLLayer * const poKmlLayer =
@@ -867,7 +867,7 @@ FeaturePtr feat2kml (
     return poKmlFeature;
 }
 
-OGRFeature *kml2feat (
+OGRFeature *kml2feat(
     PlacemarkPtr poKmlPlacemark,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
@@ -906,37 +906,37 @@ OGRFeature *kml2feat (
     }
 
     /***** fields *****/
-    kml2field( poOgrFeat, AsFeature ( poKmlPlacemark ) );
+    kml2field( poOgrFeat, AsFeature( poKmlPlacemark ) );
 
     return poOgrFeat;
 }
 
-OGRFeature *kmlgroundoverlay2feat (
+OGRFeature *kmlgroundoverlay2feat(
     GroundOverlayPtr poKmlOverlay,
     OGRLIBKMLDataSource * /* poOgrDS */,
     OGRLayer * /* poOgrLayer */,
     OGRFeatureDefn * poOgrFeatDefn,
     OGRSpatialReference *poOgrSRS)
 {
-    OGRFeature *poOgrFeat = new OGRFeature ( poOgrFeatDefn );
+    OGRFeature *poOgrFeat = new OGRFeature( poOgrFeatDefn );
 
     /***** geometry *****/
     if( poKmlOverlay->has_latlonbox() )
     {
         OGRGeometry *poOgrGeom =
             kml2geom_latlonbox( poKmlOverlay->get_latlonbox(), poOgrSRS );
-        poOgrFeat->SetGeometryDirectly ( poOgrGeom );
+        poOgrFeat->SetGeometryDirectly( poOgrGeom );
 
     }
     else if( poKmlOverlay->has_gx_latlonquad() )
     {
         OGRGeometry *poOgrGeom =
             kml2geom_latlonquad( poKmlOverlay->get_gx_latlonquad(), poOgrSRS );
-        poOgrFeat->SetGeometryDirectly ( poOgrGeom );
+        poOgrFeat->SetGeometryDirectly( poOgrGeom );
     }
 
     /***** fields *****/
-    kml2field( poOgrFeat, AsFeature ( poKmlOverlay ) );
+    kml2field( poOgrFeat, AsFeature( poKmlOverlay ) );
 
     return poOgrFeat;
 }

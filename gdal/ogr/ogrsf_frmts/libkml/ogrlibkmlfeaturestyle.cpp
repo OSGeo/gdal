@@ -173,7 +173,7 @@ void featurestyle2kml(
  function to read a kml style into ogr's featurestyle
 ******************************************************************************/
 
-void kml2featurestyle (
+void kml2featurestyle(
     FeaturePtr poKmlFeature,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
@@ -249,12 +249,13 @@ void kml2featurestyle (
                 const char *pszFetch =
                     CPLGetConfigOption( "LIBKML_EXTERNAL_STYLE", "no" );
 
-                if ( CPLTestBool(pszFetch) )
+                if( CPLTestBool(pszFetch) )
                 {
                     /***** load up the style table *****/
                     char *pszUrlTmp = CPLStrdup(pszUrl);
                     char *pszPound = strchr(pszUrlTmp, '#');
-                    if (pszPound != NULL) {
+                    if( pszPound != NULL )
+                    {
                         *pszPound = '\0';
                     }
 
