@@ -511,6 +511,23 @@ def stats_byte_partial_tiles():
         print(expected_stats)
         return 'fail'
 
+    # Same but with nodata set
+    ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
+                        creationOptions = ['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
+
+    expected_stats = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
+    if stats != expected_stats:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        print(expected_stats)
+        return 'fail'
+
+
     return 'success'
 
 ###############################################################################
