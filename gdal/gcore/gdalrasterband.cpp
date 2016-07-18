@@ -3883,6 +3883,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         GDALm256i ymm_min = ymm_neutral;
         GDALm256i ymm_max = ymm_neutral;
 
+        const bool bComputeMinMax = nMin > 0 || nMax < 255;
+
         for( int k=0; k< nOuterLoops; k++ )
         {
             int iMax = i + nMaxIterationsPerInnerLoop;
@@ -3914,14 +3916,19 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                 // and sumquare.
                 const GDALm256i ymm_nodata_by_zero =
                                 GDALmm256_andnot_si256(ymm_eq_nodata, ymm);
-                // Replace all nodata values by a neutral value for the purpose
-                // of min and max.
-                const GDALm256i ymm_nodata_by_neutral = GDALmm256_or_si256(
+                if( bComputeMinMax )
+                {
+                    // Replace all nodata values by a neutral value for the
+                    // purpose of min and max.
+                    const GDALm256i ymm_nodata_by_neutral = GDALmm256_or_si256(
                                 GDALmm256_and_si256(ymm_eq_nodata, ymm_neutral),
                                 ymm_nodata_by_zero);
 
-                ymm_min = GDALmm256_min_epu8 (ymm_min, ymm_nodata_by_neutral);
-                ymm_max = GDALmm256_max_epu8 (ymm_max, ymm_nodata_by_neutral);
+                    ymm_min = GDALmm256_min_epu8 (ymm_min,
+                                                  ymm_nodata_by_neutral);
+                    ymm_max = GDALmm256_max_epu8 (ymm_max,
+                                                  ymm_nodata_by_neutral);
+                }
 
                 // Extend lower 128 bits of ymm from uint8 to uint16
                 const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
@@ -3961,12 +3968,15 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                           panSumSquare[7];
         }
 
-        GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
-        GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
-        for(int j=0;j<32;j++)
+        if( bComputeMinMax )
         {
-            if( pabyMin[j] < nMin ) nMin = pabyMin[j];
-            if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
+            GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
+            for(int j=0;j<32;j++)
+            {
+                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
+                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            }
         }
 
         for( ; i<nXCheck * nYCheck; i++)
@@ -4006,6 +4016,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         GDALm256i ymm_min = GDALmm256_load_si256((GDALm256i*)(pData + i));
         GDALm256i ymm_max = ymm_min;
 
+        const bool bComputeMinMax = nMin > 0 || nMax < 255;
+
         for( int k=0; k< nOuterLoops; k++ )
         {
             int iMax = i + nMaxIterationsPerInnerLoop;
@@ -4018,8 +4030,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             for( ;i+31<iMax; i+=32 )
             {
                 const GDALm256i ymm = GDALmm256_load_si256((GDALm256i*)(pData + i));
-                ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
-                ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
+                if( bComputeMinMax )
+                {
+                    ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
+                    ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
+                }
 
                 // Extend lower 128 bits of ymm from uint8 to uint16
                 const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
@@ -4053,12 +4068,15 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                           panSumSquare[7];
         }
 
-        GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
-        GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
-        for(int j=0;j<32;j++)
+        if( bComputeMinMax )
         {
-            if( pabyMin[j] < nMin ) nMin = pabyMin[j];
-            if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
+            GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
+            for(int j=0;j<32;j++)
+            {
+                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
+                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            }
         }
 
         for( ; i<nXCheck * nYCheck; i++)
