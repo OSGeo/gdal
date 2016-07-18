@@ -598,15 +598,6 @@ def stats_uint16():
 
     return 'success'
 
-def stats_uint16_avx2_emul():
-
-    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', 'YES')
-    ret = stats_uint16()
-    gdal.SetConfigOption('GDAL_USE_AVX2_EMULATION', None)
-    return ret
-
-
-
 ###############################################################################
 # Run tests
 
@@ -632,8 +623,7 @@ gdaltest_list = [
     stats_flt_min,
     stats_dbl_min,
     stats_byte_partial_tiles,
-    stats_uint16,
-    stats_uint16_avx2_emul
+    stats_uint16
     ]
 
 if __name__ == '__main__':
