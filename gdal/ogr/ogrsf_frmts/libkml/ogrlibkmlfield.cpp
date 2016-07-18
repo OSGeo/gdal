@@ -63,7 +63,7 @@ using kmldom::TimeStampPtr;
 
 #include "ogrlibkmlfield.h"
 
-static void ogr2altitudemode_rec (
+static void ogr2altitudemode_rec(
     GeometryPtr poKmlGeometry,
     int iAltitudeMode,
     int isGX )
@@ -77,25 +77,26 @@ static void ogr2altitudemode_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() )
+    {
 
     case kmldom::Type_Point:
-        poKmlPoint = AsPoint ( poKmlGeometry );
+        poKmlPoint = AsPoint( poKmlGeometry );
 
-        if ( !isGX )
-            poKmlPoint->set_altitudemode ( iAltitudeMode );
+        if( !isGX )
+            poKmlPoint->set_altitudemode( iAltitudeMode );
         else
-            poKmlPoint->set_gx_altitudemode ( iAltitudeMode );
+            poKmlPoint->set_gx_altitudemode( iAltitudeMode );
 
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
+        poKmlLineString = AsLineString( poKmlGeometry );
 
-        if ( !isGX )
-            poKmlLineString->set_altitudemode ( iAltitudeMode );
+        if( !isGX )
+            poKmlLineString->set_altitudemode( iAltitudeMode );
         else
-            poKmlLineString->set_gx_altitudemode ( iAltitudeMode );
+            poKmlLineString->set_gx_altitudemode( iAltitudeMode );
 
         break;
 
@@ -103,23 +104,23 @@ static void ogr2altitudemode_rec (
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
 
-        if ( !isGX )
-            poKmlPolygon->set_altitudemode ( iAltitudeMode );
+        if( !isGX )
+            poKmlPolygon->set_altitudemode( iAltitudeMode );
         else
-            poKmlPolygon->set_gx_altitudemode ( iAltitudeMode );
+            poKmlPolygon->set_gx_altitudemode( iAltitudeMode );
 
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            ogr2altitudemode_rec ( poKmlMultiGeometry->
-                                   get_geometry_array_at ( i ), iAltitudeMode,
-                                   isGX );
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ ) {
+            ogr2altitudemode_rec( poKmlMultiGeometry->
+                                  get_geometry_array_at( i ), iAltitudeMode,
+                                  isGX );
         }
 
         break;
@@ -131,11 +132,8 @@ static void ogr2altitudemode_rec (
 
 }
 
-static void ogr2extrude_rec (
-    bool bExtrude,
-    GeometryPtr poKmlGeometry )
+static void ogr2extrude_rec( bool bExtrude, GeometryPtr poKmlGeometry )
 {
-
     PointPtr poKmlPoint;
     LineStringPtr poKmlLineString;
     PolygonPtr poKmlPolygon;
@@ -144,33 +142,35 @@ static void ogr2extrude_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() )
+    {
     case kmldom::Type_Point:
-        poKmlPoint = AsPoint ( poKmlGeometry );
-        poKmlPoint->set_extrude ( bExtrude );
+        poKmlPoint = AsPoint( poKmlGeometry );
+        poKmlPoint->set_extrude( bExtrude );
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
-        poKmlLineString->set_extrude ( bExtrude );
+        poKmlLineString = AsLineString( poKmlGeometry );
+        poKmlLineString->set_extrude( bExtrude );
         break;
 
     case kmldom::Type_LinearRing:
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
-        poKmlPolygon->set_extrude ( bExtrude );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
+        poKmlPolygon->set_extrude( bExtrude );
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            ogr2extrude_rec ( bExtrude,
-                              poKmlMultiGeometry->
-                              get_geometry_array_at ( i ) );
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ )
+        {
+            ogr2extrude_rec( bExtrude,
+                             poKmlMultiGeometry->
+                             get_geometry_array_at( i ) );
         }
         break;
 
@@ -180,11 +180,10 @@ static void ogr2extrude_rec (
     }
 }
 
-static void ogr2tessellate_rec (
+static void ogr2tessellate_rec(
     bool bTessellate,
     GeometryPtr poKmlGeometry )
 {
-
     LineStringPtr poKmlLineString;
     PolygonPtr poKmlPolygon;
     MultiGeometryPtr poKmlMultiGeometry;
@@ -192,33 +191,35 @@ static void ogr2tessellate_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() )
+    {
 
     case kmldom::Type_Point:
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
-        poKmlLineString->set_tessellate ( bTessellate );
+        poKmlLineString = AsLineString( poKmlGeometry );
+        poKmlLineString->set_tessellate( bTessellate );
         break;
 
     case kmldom::Type_LinearRing:
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
 
-        poKmlPolygon->set_tessellate ( bTessellate );
+        poKmlPolygon->set_tessellate( bTessellate );
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            ogr2tessellate_rec ( bTessellate,
-                                 poKmlMultiGeometry->
-                                 get_geometry_array_at ( i ) );
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ )
+        {
+            ogr2tessellate_rec( bTessellate,
+                                poKmlMultiGeometry->
+                                get_geometry_array_at( i ) );
         }
 
         break;
@@ -236,11 +237,11 @@ static void ogr2tessellate_rec (
 
 static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
 {
-    if (!CPLIsUTF8(pszString, -1) &&
-         CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
+    if( !CPLIsUTF8(pszString, -1) &&
+        CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
     {
         static int bFirstTime = TRUE;
-        if (bFirstTime)
+        if( bFirstTime )
         {
             bFirstTime = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -282,7 +283,7 @@ static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
 
 ******************************************************************************/
 
-void field2kml (
+void field2kml(
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
     KmlFactory * poKmlFactory,
@@ -295,19 +296,18 @@ void field2kml (
     SchemaDataPtr poKmlSchemaData = NULL;
     if( bUseSimpleField )
     {
-        poKmlSchemaData = poKmlFactory->CreateSchemaData (  );
-        SchemaPtr poKmlSchema = poOgrLayer->GetKmlSchema (  );
+        poKmlSchemaData = poKmlFactory->CreateSchemaData();
+        SchemaPtr poKmlSchema = poOgrLayer->GetKmlSchema();
 
         /***** set the url to the schema *****/
 
-        if ( poKmlSchema && poKmlSchema->has_id (  ) ) {
-            std::string oKmlSchemaID = poKmlSchema->get_id (  );
-
-
+        if( poKmlSchema && poKmlSchema->has_id() )
+        {
+            std::string oKmlSchemaID = poKmlSchema->get_id();
             std::string oKmlSchemaURL = "#";
-            oKmlSchemaURL.append ( oKmlSchemaID );
+            oKmlSchemaURL.append( oKmlSchemaID );
 
-            poKmlSchemaData->set_schemaurl ( oKmlSchemaURL );
+            poKmlSchemaData->set_schemaurl( oKmlSchemaURL );
         }
     }
 
@@ -318,38 +318,37 @@ void field2kml (
 
     TimeSpanPtr poKmlTimeSpan = NULL;
 
-    int nFields = poOgrFeat->GetFieldCount (  );
+    int nFields = poOgrFeat->GetFieldCount();
     int iSkip1 = -1;
     int iSkip2 = -1;
     int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
     int isGX = FALSE;
 
-    for ( i = 0; i < nFields; i++ ) {
-
+    for( i = 0; i < nFields; i++ )
+    {
         /***** if the field is set to skip, do so *****/
-
-        if ( i == iSkip1 || i == iSkip2 )
+        if( i == iSkip1 || i == iSkip2 )
             continue;
 
         /***** if the field isn't set just bail now *****/
 
-        if ( !poOgrFeat->IsFieldSet ( i ) )
+        if( !poOgrFeat->IsFieldSet( i ) )
             continue;
 
-        OGRFieldDefn *poOgrFieldDef = poOgrFeat->GetFieldDefnRef ( i );
-        OGRFieldType type = poOgrFieldDef->GetType (  );
-        const char *name = poOgrFieldDef->GetNameRef (  );
+        OGRFieldDefn *poOgrFieldDef = poOgrFeat->GetFieldDefnRef( i );
+        OGRFieldType type = poOgrFieldDef->GetType();
+        const char *name = poOgrFieldDef->GetNameRef();
 
         SimpleDataPtr poKmlSimpleData = NULL;
         DataPtr poKmlData = NULL;
         OGRField sFieldDT;
 
-        switch ( type ) {
-
+        switch( type )
+        {
         case OFTString:        //     String of ASCII chars
             {
                 char* pszUTF8String = OGRLIBKMLSanitizeUTF8String(
-                                        poOgrFeat->GetFieldAsString ( i ));
+                                        poOgrFeat->GetFieldAsString( i ));
                 if( pszUTF8String[0] == '\0' )
                 {
                     CPLFree( pszUTF8String );
@@ -358,36 +357,36 @@ void field2kml (
 
                 /***** name *****/
 
-                if ( EQUAL ( name, oFC.namefield ) ) {
-                    poKmlFeature->set_name ( pszUTF8String );
+                if( EQUAL( name, oFC.namefield ) ) {
+                    poKmlFeature->set_name( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
                 }
 
                 /***** description *****/
 
-                else if ( EQUAL ( name, oFC.descfield ) ) {
-                    poKmlFeature->set_description ( pszUTF8String );
+                else if( EQUAL( name, oFC.descfield ) ) {
+                    poKmlFeature->set_description( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
                 }
 
                 /***** altitudemode *****/
 
-                else if ( EQUAL ( name, oFC.altitudeModefield ) ) {
+                else if( EQUAL( name, oFC.altitudeModefield ) ) {
                     const char *pszAltitudeMode = pszUTF8String ;
 
                     iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
 
-                    if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
-                        PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
-                        if ( poKmlPlacemark->has_geometry (  ) ) {
+                    if( poKmlFeature->IsA( kmldom::Type_Placemark ) ) {
+                        PlacemarkPtr poKmlPlacemark = AsPlacemark( poKmlFeature );
+                        if( poKmlPlacemark->has_geometry() )
+                        {
                             GeometryPtr poKmlGeometry =
-                                poKmlPlacemark->get_geometry (  );
+                                poKmlPlacemark->get_geometry();
 
-                            ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
-                                                isGX );
-
+                            ogr2altitudemode_rec( poKmlGeometry, iAltitudeMode,
+                                                  isGX );
                         }
                     }
 
@@ -398,12 +397,12 @@ void field2kml (
 
                 /***** timestamp *****/
 
-                else if ( EQUAL ( name, oFC.tsfield ) ) {
-
+                else if( EQUAL( name, oFC.tsfield ) )
+                {
                     TimeStampPtr poKmlTimeStamp =
-                        poKmlFactory->CreateTimeStamp (  );
-                    poKmlTimeStamp->set_when ( pszUTF8String  );
-                    poKmlFeature->set_timeprimitive ( poKmlTimeStamp );
+                        poKmlFactory->CreateTimeStamp();
+                    poKmlTimeStamp->set_when( pszUTF8String );
+                    poKmlFeature->set_timeprimitive( poKmlTimeStamp );
 
                     CPLFree( pszUTF8String );
 
@@ -412,14 +411,15 @@ void field2kml (
 
                 /***** begin *****/
 
-                if ( EQUAL ( name, oFC.beginfield ) ) {
-
-                    if ( !poKmlTimeSpan ) {
-                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
+                if( EQUAL( name, oFC.beginfield ) )
+                {
+                    if( !poKmlTimeSpan )
+                    {
+                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan();
+                        poKmlFeature->set_timeprimitive( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_begin ( pszUTF8String );
+                    poKmlTimeSpan->set_begin( pszUTF8String );
 
                     CPLFree( pszUTF8String );
 
@@ -429,14 +429,15 @@ void field2kml (
 
                 /***** end *****/
 
-                else if ( EQUAL ( name, oFC.endfield ) ) {
-
-                    if ( !poKmlTimeSpan ) {
-                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
+                else if( EQUAL( name, oFC.endfield ) )
+                {
+                    if( !poKmlTimeSpan )
+                    {
+                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan();
+                        poKmlFeature->set_timeprimitive( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_end ( pszUTF8String );
+                    poKmlTimeSpan->set_end( pszUTF8String );
 
                     CPLFree( pszUTF8String );
 
@@ -445,32 +446,31 @@ void field2kml (
 
                 /***** snippet *****/
 
-                else if  ( EQUAL ( name, oFC.snippetfield ) ) {
+                else if( EQUAL( name, oFC.snippetfield ) ) {
 
-                    SnippetPtr snippet = poKmlFactory->CreateSnippet (  );
+                    SnippetPtr snippet = poKmlFactory->CreateSnippet();
                     snippet->set_text(pszUTF8String);
-                    poKmlFeature->set_snippet ( snippet );
+                    poKmlFeature->set_snippet( snippet );
 
                     CPLFree( pszUTF8String );
 
                     continue;
-
                 }
 
                 /***** other special fields *****/
 
-                else if (  EQUAL ( name, oFC.iconfield ) ||
-                           EQUAL ( name, oFC.modelfield ) ||
-                           EQUAL ( name, oFC.networklinkfield ) ||
-                           EQUAL ( name, oFC.networklink_refreshMode_field ) ||
-                           EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
-                           EQUAL ( name, oFC.networklink_viewFormat_field ) ||
-                           EQUAL ( name, oFC.networklink_httpQuery_field ) ||
-                           EQUAL ( name, oFC.camera_altitudemode_field ) ||
-                           EQUAL ( name, oFC.photooverlayfield ) ||
-                           EQUAL ( name, oFC.photooverlay_shape_field ) ||
-                           EQUAL ( name, oFC.imagepyramid_gridorigin_field ) ) {
-
+                else if( EQUAL( name, oFC.iconfield ) ||
+                         EQUAL( name, oFC.modelfield ) ||
+                         EQUAL( name, oFC.networklinkfield ) ||
+                         EQUAL( name, oFC.networklink_refreshMode_field ) ||
+                         EQUAL( name, oFC.networklink_viewRefreshMode_field ) ||
+                         EQUAL( name, oFC.networklink_viewFormat_field ) ||
+                         EQUAL( name, oFC.networklink_httpQuery_field ) ||
+                         EQUAL( name, oFC.camera_altitudemode_field ) ||
+                         EQUAL( name, oFC.photooverlayfield ) ||
+                         EQUAL( name, oFC.photooverlay_shape_field ) ||
+                         EQUAL( name, oFC.imagepyramid_gridorigin_field ) )
+                {
                     CPLFree( pszUTF8String );
 
                     continue;
@@ -480,15 +480,15 @@ void field2kml (
 
                 if( bUseSimpleField )
                 {
-                    poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                    poKmlSimpleData->set_name ( name );
-                    poKmlSimpleData->set_text ( pszUTF8String );
+                    poKmlSimpleData = poKmlFactory->CreateSimpleData();
+                    poKmlSimpleData->set_name( name );
+                    poKmlSimpleData->set_text( pszUTF8String );
                 }
                 else
                 {
-                    poKmlData = poKmlFactory->CreateData (  );
-                    poKmlData->set_name ( name );
-                    poKmlData->set_value ( pszUTF8String );
+                    poKmlData = poKmlFactory->CreateData();
+                    poKmlData->set_name( name );
+                    poKmlData->set_value( pszUTF8String );
                 }
 
                 CPLFree( pszUTF8String );
@@ -505,27 +505,28 @@ void field2kml (
 
                 int iTimeField;
 
-                for ( iTimeField = i + 1; iTimeField < nFields; iTimeField++ ) {
-                    if ( iTimeField == iSkip1 || iTimeField == iSkip2 )
+                for( iTimeField = i + 1; iTimeField < nFields; iTimeField++ )
+                {
+                    if( iTimeField == iSkip1 || iTimeField == iSkip2 )
                         continue;
 
                     OGRFieldDefn *poOgrFieldDef2 =
-                        poOgrFeat->GetFieldDefnRef ( i );
-                    OGRFieldType type2 = poOgrFieldDef2->GetType (  );
-                    const char *name2 = poOgrFieldDef2->GetNameRef (  );
+                        poOgrFeat->GetFieldDefnRef( i );
+                    OGRFieldType type2 = poOgrFieldDef2->GetType();
+                    const char *name2 = poOgrFieldDef2->GetNameRef();
 
-                    if ( EQUAL ( name2, name ) && type2 == OFTTime &&
-                         ( EQUAL ( name, oFC.tsfield ) ||
-                           EQUAL ( name, oFC.beginfield ) ||
-                           EQUAL ( name, oFC.endfield ) ) ) {
-
+                    if( EQUAL( name2, name ) && type2 == OFTTime &&
+                        ( EQUAL( name, oFC.tsfield ) ||
+                          EQUAL( name, oFC.beginfield ) ||
+                          EQUAL( name, oFC.endfield ) ) )
+                    {
                         const OGRField* psField2 = poOgrFeat->GetRawFieldRef(iTimeField);
                         sFieldDT.Date.Hour = psField2->Date.Hour;
                         sFieldDT.Date.Minute = psField2->Date.Minute;
                         sFieldDT.Date.Second = psField2->Date.Second;
                         sFieldDT.Date.TZFlag = psField2->Date.TZFlag;
 
-                        if ( 0 > iSkip1 )
+                        if( 0 > iSkip1 )
                             iSkip1 = iTimeField;
                         else
                             iSkip2 = iTimeField;
@@ -545,26 +546,27 @@ void field2kml (
 
                 int iTimeField;
 
-                for ( iTimeField = i + 1; iTimeField < nFields; iTimeField++ ) {
-                    if ( iTimeField == iSkip1 || iTimeField == iSkip2 )
+                for( iTimeField = i + 1; iTimeField < nFields; iTimeField++ )
+                {
+                    if( iTimeField == iSkip1 || iTimeField == iSkip2 )
                         continue;
 
                     OGRFieldDefn *poOgrFieldDef2 =
-                        poOgrFeat->GetFieldDefnRef ( i );
-                    OGRFieldType type2 = poOgrFieldDef2->GetType (  );
-                    const char *name2 = poOgrFieldDef2->GetNameRef (  );
+                        poOgrFeat->GetFieldDefnRef( i );
+                    OGRFieldType type2 = poOgrFieldDef2->GetType();
+                    const char *name2 = poOgrFieldDef2->GetNameRef();
 
-                    if ( EQUAL ( name2, name ) && type2 == OFTDate &&
-                         ( EQUAL ( name, oFC.tsfield ) ||
-                           EQUAL ( name, oFC.beginfield ) ||
-                           EQUAL ( name, oFC.endfield ) ) ) {
-
+                    if( EQUAL( name2, name ) && type2 == OFTDate &&
+                        ( EQUAL( name, oFC.tsfield ) ||
+                          EQUAL( name, oFC.beginfield ) ||
+                          EQUAL( name, oFC.endfield ) ) )
+                    {
                         const OGRField* psField2 = poOgrFeat->GetRawFieldRef(iTimeField);
                         sFieldDT.Date.Year = psField2->Date.Year;
                         sFieldDT.Date.Month = psField2->Date.Month;
                         sFieldDT.Date.Day = psField2->Date.Day;
 
-                        if ( 0 > iSkip1 )
+                        if( 0 > iSkip1 )
                             iSkip1 = iTimeField;
                         else
                             iSkip2 = iTimeField;
@@ -582,14 +584,14 @@ void field2kml (
               Do_DateTime:
                 /***** timestamp *****/
 
-                if ( EQUAL ( name, oFC.tsfield ) ) {
-
-                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
+                if( EQUAL( name, oFC.tsfield ) )
+                {
+                    char *timebuf = OGRGetXMLDateTime( &sFieldDT );
 
                     TimeStampPtr poKmlTimeStamp =
-                        poKmlFactory->CreateTimeStamp (  );
-                    poKmlTimeStamp->set_when ( timebuf );
-                    poKmlFeature->set_timeprimitive ( poKmlTimeStamp );
+                        poKmlFactory->CreateTimeStamp();
+                    poKmlTimeStamp->set_when( timebuf );
+                    poKmlFeature->set_timeprimitive( poKmlTimeStamp );
                     CPLFree( timebuf );
 
                     continue;
@@ -597,35 +599,34 @@ void field2kml (
 
                 /***** begin *****/
 
-                if ( EQUAL ( name, oFC.beginfield ) ) {
+                if( EQUAL( name, oFC.beginfield ) )
+                {
+                    char *timebuf = OGRGetXMLDateTime( &sFieldDT );
 
-                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
-
-                    if ( !poKmlTimeSpan ) {
-                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
+                    if( !poKmlTimeSpan ) {
+                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan();
+                        poKmlFeature->set_timeprimitive( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_begin ( timebuf );
+                    poKmlTimeSpan->set_begin( timebuf );
                     CPLFree( timebuf );
 
                     continue;
-
                 }
 
                 /***** end *****/
 
-                else if ( EQUAL ( name, oFC.endfield ) ) {
+                else if( EQUAL( name, oFC.endfield ) )
+                {
+                    char *timebuf = OGRGetXMLDateTime( &sFieldDT );
 
-                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
-
-
-                    if ( !poKmlTimeSpan ) {
-                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
+                    if( !poKmlTimeSpan )
+                    {
+                        poKmlTimeSpan = poKmlFactory->CreateTimeSpan();
+                        poKmlFeature->set_timeprimitive( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_end ( timebuf );
+                    poKmlTimeSpan->set_end( timebuf );
                     CPLFree( timebuf );
 
                     continue;
@@ -635,17 +636,17 @@ void field2kml (
 
                 if( bUseSimpleField )
                 {
-                    poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                    poKmlSimpleData->set_name ( name );
-                    poKmlSimpleData->set_text ( poOgrFeat->
-                                                GetFieldAsString ( i ) );
+                    poKmlSimpleData = poKmlFactory->CreateSimpleData();
+                    poKmlSimpleData->set_name( name );
+                    poKmlSimpleData->set_text( poOgrFeat->
+                                               GetFieldAsString( i ) );
                 }
                 else
                 {
-                    poKmlData = poKmlFactory->CreateData (  );
-                    poKmlData->set_name ( name );
-                    poKmlData->set_value ( poOgrFeat->
-                                                GetFieldAsString ( i ) );
+                    poKmlData = poKmlFactory->CreateData();
+                    poKmlData->set_name( name );
+                    poKmlData->set_value( poOgrFeat->
+                                          GetFieldAsString( i ) );
                 }
 
                 break;
@@ -655,13 +656,15 @@ void field2kml (
 
             /***** extrude *****/
 
-            if ( EQUAL ( name, oFC.extrudefield ) ) {
-
-                if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
-                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
-                    if ( poKmlPlacemark->has_geometry (  )
-                        && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                        int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
+            if( EQUAL( name, oFC.extrudefield ) )
+            {
+                if( poKmlFeature->IsA( kmldom::Type_Placemark ) )
+                {
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark( poKmlFeature );
+                    if( poKmlPlacemark->has_geometry()
+                        && -1 < poOgrFeat->GetFieldAsInteger( i ) )
+                    {
+                        int iExtrude = poOgrFeat->GetFieldAsInteger( i );
                         if( iExtrude &&
                             isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
                             CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
@@ -672,9 +675,9 @@ void field2kml (
                         else
                         {
                             GeometryPtr poKmlGeometry =
-                                poKmlPlacemark->get_geometry (  );
-                            ogr2extrude_rec ( CPL_TO_BOOL(iExtrude),
-                                            poKmlGeometry );
+                                poKmlPlacemark->get_geometry();
+                            ogr2extrude_rec( CPL_TO_BOOL(iExtrude),
+                                             poKmlGeometry );
                         }
                     }
                 }
@@ -683,14 +686,15 @@ void field2kml (
 
             /***** tessellate *****/
 
-
-            if ( EQUAL ( name, oFC.tessellatefield ) ) {
-
-                if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
-                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
-                    if ( poKmlPlacemark->has_geometry (  )
-                        && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                        int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
+            if( EQUAL( name, oFC.tessellatefield ) )
+            {
+                if( poKmlFeature->IsA( kmldom::Type_Placemark ) )
+                {
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark( poKmlFeature );
+                    if( poKmlPlacemark->has_geometry()
+                        && -1 < poOgrFeat->GetFieldAsInteger( i ) )
+                    {
+                        int iTesselate = poOgrFeat->GetFieldAsInteger( i );
                         if( iTesselate &&
                             !(isGX == FALSE && static_cast<kmldom::AltitudeModeEnum>(iAltitudeMode) == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
                             !(isGX == TRUE && static_cast<kmldom::GxAltitudeModeEnum>(iAltitudeMode) == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
@@ -704,12 +708,12 @@ void field2kml (
                         else
                         {
                             GeometryPtr poKmlGeometry =
-                                poKmlPlacemark->get_geometry (  );
-                            ogr2tessellate_rec ( CPL_TO_BOOL(iTesselate),
+                                poKmlPlacemark->get_geometry();
+                            ogr2tessellate_rec( CPL_TO_BOOL(iTesselate),
                                                 poKmlGeometry );
                             if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
-                                ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
-                                                    isGX );
+                                ogr2altitudemode_rec( poKmlGeometry, iAltitudeMode,
+                                                      isGX );
                         }
                     }
                 }
@@ -717,30 +721,29 @@ void field2kml (
                 continue;
             }
 
-
             /***** visibility *****/
 
-            if ( EQUAL ( name, oFC.visibilityfield ) ) {
-                if ( -1 < poOgrFeat->GetFieldAsInteger ( i ) )
-                    poKmlFeature->set_visibility ( CPL_TO_BOOL(poOgrFeat->
-                                                     GetFieldAsInteger ( i )) );
+            if( EQUAL( name, oFC.visibilityfield ) )
+            {
+                if( -1 < poOgrFeat->GetFieldAsInteger( i ) )
+                    poKmlFeature->set_visibility(
+                        CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger( i )) );
 
                 continue;
             }
 
-
             /***** other special fields *****/
 
-            else if (  EQUAL ( name, oFC.drawOrderfield ) ||
-                        EQUAL ( name, oFC.networklink_refreshvisibility_field ) ||
-                        EQUAL ( name, oFC.networklink_flytoview_field ) ||
-                        EQUAL ( name, oFC.networklink_refreshInterval_field ) ||
-                        EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
-                        EQUAL ( name, oFC.networklink_viewRefreshTime_field ) ||
-                        EQUAL ( name, oFC.imagepyramid_tilesize_field ) ||
-                        EQUAL ( name, oFC.imagepyramid_maxwidth_field ) ||
-                        EQUAL ( name, oFC.imagepyramid_maxheight_field ) ) {
-
+            else if( EQUAL( name, oFC.drawOrderfield ) ||
+                     EQUAL( name, oFC.networklink_refreshvisibility_field ) ||
+                     EQUAL( name, oFC.networklink_flytoview_field ) ||
+                     EQUAL( name, oFC.networklink_refreshInterval_field ) ||
+                     EQUAL( name, oFC.networklink_viewRefreshMode_field ) ||
+                     EQUAL( name, oFC.networklink_viewRefreshTime_field ) ||
+                     EQUAL( name, oFC.imagepyramid_tilesize_field ) ||
+                     EQUAL( name, oFC.imagepyramid_maxwidth_field ) ||
+                     EQUAL( name, oFC.imagepyramid_maxheight_field ) )
+            {
                 continue;
             }
 
@@ -748,15 +751,15 @@ void field2kml (
 
             if( bUseSimpleField )
             {
-                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+                poKmlSimpleData = poKmlFactory->CreateSimpleData();
+                poKmlSimpleData->set_name( name );
+                poKmlSimpleData->set_text( poOgrFeat->GetFieldAsString( i ) );
             }
             else
             {
-                poKmlData = poKmlFactory->CreateData (  );
-                poKmlData->set_name ( name );
-                poKmlData->set_value ( poOgrFeat->GetFieldAsString ( i ) );
+                poKmlData = poKmlFactory->CreateData();
+                poKmlData->set_name( name );
+                poKmlData->set_value( poOgrFeat->GetFieldAsString( i ) );
             }
 
             break;
@@ -786,19 +789,19 @@ void field2kml (
                 continue;
             }
 
-            char* pszStr = CPLStrdup( poOgrFeat->GetFieldAsString ( i ) );
+            char* pszStr = CPLStrdup( poOgrFeat->GetFieldAsString( i ) );
 
             if( bUseSimpleField )
             {
-                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( pszStr );
+                poKmlSimpleData = poKmlFactory->CreateSimpleData();
+                poKmlSimpleData->set_name( name );
+                poKmlSimpleData->set_text( pszStr );
             }
             else
             {
-                poKmlData = poKmlFactory->CreateData (  );
-                poKmlData->set_name ( name );
-                poKmlData->set_value ( pszStr );
+                poKmlData = poKmlFactory->CreateData();
+                poKmlData->set_name( name );
+                poKmlData->set_value( pszStr );
             }
 
             CPLFree(pszStr);
@@ -817,15 +820,15 @@ void field2kml (
 
             if( bUseSimpleField )
             {
-                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+                poKmlSimpleData = poKmlFactory->CreateSimpleData();
+                poKmlSimpleData->set_name( name );
+                poKmlSimpleData->set_text( poOgrFeat->GetFieldAsString( i ) );
             }
             else
             {
-                poKmlData = poKmlFactory->CreateData (  );
-                poKmlData->set_name ( name );
-                poKmlData->set_value ( poOgrFeat->GetFieldAsString ( i ) );
+                poKmlData = poKmlFactory->CreateData();
+                poKmlData->set_name( name );
+                poKmlData->set_value( poOgrFeat->GetFieldAsString( i ) );
             }
 
             break;
@@ -833,25 +836,26 @@ void field2kml (
 
         if( poKmlSimpleData )
         {
-            poKmlSchemaData->add_simpledata ( poKmlSimpleData );
+            poKmlSchemaData->add_simpledata( poKmlSimpleData );
         }
         else if( poKmlData )
         {
             if( poKmlExtendedData == NULL )
-                poKmlExtendedData = poKmlFactory->CreateExtendedData (  );
-            poKmlExtendedData->add_data ( poKmlData );
+                poKmlExtendedData = poKmlFactory->CreateExtendedData();
+            poKmlExtendedData->add_data( poKmlData );
         }
     }
 
     // Do not add it to the placemark unless there is data.
 
-    if ( bUseSimpleField && poKmlSchemaData->get_simpledata_array_size (  ) > 0 ) {
-        poKmlExtendedData = poKmlFactory->CreateExtendedData (  );
-        poKmlExtendedData->add_schemadata ( poKmlSchemaData );
+    if( bUseSimpleField && poKmlSchemaData->get_simpledata_array_size() > 0 )
+    {
+        poKmlExtendedData = poKmlFactory->CreateExtendedData();
+        poKmlExtendedData->add_schemadata( poKmlSchemaData );
     }
     if( poKmlExtendedData != NULL )
     {
-        poKmlFeature->set_extendeddata ( poKmlExtendedData );
+        poKmlFeature->set_extendeddata( poKmlExtendedData );
     }
 
     return;
@@ -861,7 +865,7 @@ void field2kml (
  recursive function to read altitude mode from the geometry
 ******************************************************************************/
 
-static int kml2altitudemode_rec (
+static int kml2altitudemode_rec(
     GeometryPtr poKmlGeometry,
     int *pnAltitudeMode,
     int *pbIsGX )
@@ -875,17 +879,18 @@ static int kml2altitudemode_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() )
+    {
 
     case kmldom::Type_Point:
-        poKmlPoint = AsPoint ( poKmlGeometry );
+        poKmlPoint = AsPoint( poKmlGeometry );
 
-        if ( poKmlPoint->has_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlPoint->get_altitudemode (  );
+        if( poKmlPoint->has_altitudemode() ) {
+            *pnAltitudeMode = poKmlPoint->get_altitudemode();
             return TRUE;
         }
-        else if ( poKmlPoint->has_gx_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlPoint->get_gx_altitudemode (  );
+        else if( poKmlPoint->has_gx_altitudemode() ) {
+            *pnAltitudeMode = poKmlPoint->get_gx_altitudemode();
             *pbIsGX = TRUE;
             return TRUE;
         }
@@ -893,14 +898,14 @@ static int kml2altitudemode_rec (
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
+        poKmlLineString = AsLineString( poKmlGeometry );
 
-        if ( poKmlLineString->has_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlLineString->get_altitudemode (  );
+        if( poKmlLineString->has_altitudemode() ) {
+            *pnAltitudeMode = poKmlLineString->get_altitudemode();
             return TRUE;
         }
-        else if ( poKmlLineString->has_gx_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlLineString->get_gx_altitudemode (  );
+        else if( poKmlLineString->has_gx_altitudemode() ) {
+            *pnAltitudeMode = poKmlLineString->get_gx_altitudemode();
             *pbIsGX = TRUE;
             return TRUE;
         }
@@ -910,14 +915,14 @@ static int kml2altitudemode_rec (
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
 
-        if ( poKmlPolygon->has_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlPolygon->get_altitudemode (  );
+        if( poKmlPolygon->has_altitudemode() ) {
+            *pnAltitudeMode = poKmlPolygon->get_altitudemode();
             return TRUE;
         }
-        else if ( poKmlPolygon->has_gx_altitudemode (  ) ) {
-            *pnAltitudeMode = poKmlPolygon->get_gx_altitudemode (  );
+        else if( poKmlPolygon->has_gx_altitudemode() ) {
+            *pnAltitudeMode = poKmlPolygon->get_gx_altitudemode();
             *pbIsGX = TRUE;
             return TRUE;
         }
@@ -925,13 +930,14 @@ static int kml2altitudemode_rec (
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            if ( kml2altitudemode_rec ( poKmlMultiGeometry->
-                                        get_geometry_array_at ( i ),
-                                        pnAltitudeMode, pbIsGX ) )
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ )
+        {
+            if( kml2altitudemode_rec( poKmlMultiGeometry->
+                                      get_geometry_array_at( i ),
+                                      pnAltitudeMode, pbIsGX ) )
                 return TRUE;
         }
 
@@ -949,11 +955,8 @@ static int kml2altitudemode_rec (
  recursive function to read extrude from the geometry
 ******************************************************************************/
 
-static int kml2extrude_rec (
-    GeometryPtr poKmlGeometry,
-    bool *pbExtrude )
+static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
 {
-
     PointPtr poKmlPoint;
     LineStringPtr poKmlLineString;
     PolygonPtr poKmlPolygon;
@@ -962,23 +965,24 @@ static int kml2extrude_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() ) {
 
     case kmldom::Type_Point:
-        poKmlPoint = AsPoint ( poKmlGeometry );
+        poKmlPoint = AsPoint( poKmlGeometry );
 
-        if ( poKmlPoint->has_extrude (  ) ) {
-            *pbExtrude = poKmlPoint->get_extrude (  );
+        if( poKmlPoint->has_extrude() )
+        {
+            *pbExtrude = poKmlPoint->get_extrude();
             return TRUE;
         }
 
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
+        poKmlLineString = AsLineString( poKmlGeometry );
 
-        if ( poKmlLineString->has_extrude (  ) ) {
-            *pbExtrude = poKmlLineString->get_extrude (  );
+        if( poKmlLineString->has_extrude() ) {
+            *pbExtrude = poKmlLineString->get_extrude();
             return TRUE;
         }
 
@@ -988,22 +992,23 @@ static int kml2extrude_rec (
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
 
-        if ( poKmlPolygon->has_extrude (  ) ) {
-            *pbExtrude = poKmlPolygon->get_extrude (  );
+        if( poKmlPolygon->has_extrude() ) {
+            *pbExtrude = poKmlPolygon->get_extrude();
             return TRUE;
         }
 
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            if ( kml2extrude_rec ( poKmlMultiGeometry->
-                                   get_geometry_array_at ( i ), pbExtrude ) )
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ )
+        {
+            if( kml2extrude_rec ( poKmlMultiGeometry->
+                                  get_geometry_array_at( i ), pbExtrude ) )
                 return TRUE;
         }
 
@@ -1021,7 +1026,7 @@ static int kml2extrude_rec (
  recursive function to read tessellate from the geometry
 ******************************************************************************/
 
-static int kml2tessellate_rec (
+static int kml2tessellate_rec(
     GeometryPtr poKmlGeometry,
     int *pnTessellate )
 {
@@ -1033,16 +1038,18 @@ static int kml2tessellate_rec (
     size_t nGeom;
     size_t i;
 
-    switch ( poKmlGeometry->Type (  ) ) {
+    switch( poKmlGeometry->Type() )
+    {
 
     case kmldom::Type_Point:
         break;
 
     case kmldom::Type_LineString:
-        poKmlLineString = AsLineString ( poKmlGeometry );
+        poKmlLineString = AsLineString( poKmlGeometry );
 
-        if ( poKmlLineString->has_tessellate (  ) ) {
-            *pnTessellate = poKmlLineString->get_tessellate (  );
+        if( poKmlLineString->has_tessellate() )
+        {
+            *pnTessellate = poKmlLineString->get_tessellate();
             return TRUE;
         }
 
@@ -1052,23 +1059,25 @@ static int kml2tessellate_rec (
         break;
 
     case kmldom::Type_Polygon:
-        poKmlPolygon = AsPolygon ( poKmlGeometry );
+        poKmlPolygon = AsPolygon( poKmlGeometry );
 
-        if ( poKmlPolygon->has_tessellate (  ) ) {
-            *pnTessellate = poKmlPolygon->get_tessellate (  );
+        if( poKmlPolygon->has_tessellate() )
+        {
+            *pnTessellate = poKmlPolygon->get_tessellate();
             return TRUE;
         }
 
         break;
 
     case kmldom::Type_MultiGeometry:
-        poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
+        poKmlMultiGeometry = AsMultiGeometry( poKmlGeometry );
 
-        nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            if ( kml2tessellate_rec ( poKmlMultiGeometry->
-                                      get_geometry_array_at ( i ),
-                                      pnTessellate ) )
+        nGeom = poKmlMultiGeometry->get_geometry_array_size();
+        for( i = 0; i < nGeom; i++ )
+        {
+            if( kml2tessellate_rec( poKmlMultiGeometry->
+                                    get_geometry_array_at( i ),
+                                    pnTessellate ) )
                 return TRUE;
         }
 
@@ -1089,8 +1098,10 @@ static int kml2tessellate_rec (
 static void ogrkmlSetAltitudeMode(OGRFeature* poOgrFeat, int iField,
                                   int nAltitudeMode, int bIsGX)
 {
-    if ( !bIsGX ) {
-        switch ( nAltitudeMode ) {
+    if( !bIsGX )
+    {
+        switch( nAltitudeMode )
+        {
         case kmldom::ALTITUDEMODE_CLAMPTOGROUND:
             poOgrFeat->SetField ( iField, "clampToGround" );
             break;
@@ -1135,7 +1146,7 @@ static const char* TrimSpaces(string& oText)
         oText.resize(oText.size()-1);
 
     /* Skip leading newline and spaces */
-    const char* pszText = oText.c_str (  );
+    const char* pszText = oText.c_str();
     if (pszText[0] == '\n')
         pszText ++;
     while (pszText[0] == ' ')
@@ -1157,7 +1168,7 @@ static void kmldatetime2ogr( OGRFeature* poOgrFeat,
     if ( iField > -1 ) {
         OGRField sField;
 
-        if ( OGRParseXMLDateTime( osKmlDateTime.c_str (  ), &sField ) )
+        if ( OGRParseXMLDateTime( osKmlDateTime.c_str(), &sField ) )
             poOgrFeat->SetField ( iField, &sField );
     }
 }
@@ -1178,27 +1189,27 @@ void kml2field (
 
     /***** name *****/
 
-    if ( poKmlFeature->has_name (  ) ) {
-        const std::string oKmlName = poKmlFeature->get_name (  );
+    if ( poKmlFeature->has_name() ) {
+        const std::string oKmlName = poKmlFeature->get_name();
         int iField = poOgrFeat->GetFieldIndex ( oFC.namefield );
 
         if ( iField > -1 )
-            poOgrFeat->SetField ( iField, oKmlName.c_str (  ) );
+            poOgrFeat->SetField ( iField, oKmlName.c_str() );
     }
 
     /***** description *****/
 
-    if ( poKmlFeature->has_description (  ) ) {
-        const std::string oKmlDesc = poKmlFeature->get_description (  );
+    if ( poKmlFeature->has_description() ) {
+        const std::string oKmlDesc = poKmlFeature->get_description();
         int iField = poOgrFeat->GetFieldIndex ( oFC.descfield );
 
         if ( iField > -1 )
-            poOgrFeat->SetField ( iField, oKmlDesc.c_str (  ) );
+            poOgrFeat->SetField ( iField, oKmlDesc.c_str() );
     }
 
-    if ( poKmlFeature->has_timeprimitive (  ) ) {
+    if ( poKmlFeature->has_timeprimitive() ) {
         TimePrimitivePtr poKmlTimePrimitive =
-            poKmlFeature->get_timeprimitive (  );
+            poKmlFeature->get_timeprimitive();
 
         /***** timestamp *****/
 
@@ -1208,8 +1219,8 @@ void kml2field (
             if( poKmlTimeStamp == NULL )
                 poKmlTimeStamp = AsGxTimeStamp ( poKmlTimePrimitive );
 
-            if ( poKmlTimeStamp && poKmlTimeStamp->has_when (  ) ) {
-                const std::string oKmlWhen = poKmlTimeStamp->get_when (  );
+            if ( poKmlTimeStamp && poKmlTimeStamp->has_when() ) {
+                const std::string oKmlWhen = poKmlTimeStamp->get_when();
                 kmldatetime2ogr(poOgrFeat, oFC.tsfield, oKmlWhen );
             }
         }
@@ -1224,15 +1235,15 @@ void kml2field (
 
             /***** begin *****/
 
-            if ( poKmlTimeSpan && poKmlTimeSpan->has_begin (  ) ) {
-                const std::string oKmlWhen = poKmlTimeSpan->get_begin (  );
+            if ( poKmlTimeSpan && poKmlTimeSpan->has_begin() ) {
+                const std::string oKmlWhen = poKmlTimeSpan->get_begin();
                 kmldatetime2ogr(poOgrFeat, oFC.beginfield, oKmlWhen );
             }
 
             /***** end *****/
 
-            if ( poKmlTimeSpan && poKmlTimeSpan->has_end (  ) ) {
-                const std::string oKmlWhen = poKmlTimeSpan->get_end (  );
+            if ( poKmlTimeSpan && poKmlTimeSpan->has_end() ) {
+                const std::string oKmlWhen = poKmlTimeSpan->get_end();
                 kmldatetime2ogr(poOgrFeat, oFC.endfield, oKmlWhen );
             }
         }
@@ -1242,8 +1253,8 @@ void kml2field (
 
     PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
     GroundOverlayPtr poKmlGroundOverlay = AsGroundOverlay ( poKmlFeature );
-    if ( poKmlPlacemark && poKmlPlacemark->has_geometry (  ) ) {
-        GeometryPtr poKmlGeometry = poKmlPlacemark->get_geometry (  );
+    if ( poKmlPlacemark && poKmlPlacemark->has_geometry() ) {
+        GeometryPtr poKmlGeometry = poKmlPlacemark->get_geometry();
 
         /***** altitudeMode *****/
 
@@ -1284,8 +1295,8 @@ void kml2field (
 
         /***** special case for gx:Track ******/
         /* we set the first timestamp as begin and the last one as end */
-        if ( poKmlGeometry->Type (  )  == kmldom::Type_GxTrack &&
-             !poKmlFeature->has_timeprimitive (  ) ) {
+        if ( poKmlGeometry->Type()  == kmldom::Type_GxTrack &&
+             !poKmlFeature->has_timeprimitive() ) {
             GxTrackPtr poKmlGxTrack = AsGxTrack ( poKmlGeometry );
             size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
             if( nCoords > 0 )
@@ -1299,10 +1310,10 @@ void kml2field (
 
         /***** special case for gx:MultiTrack ******/
         /* we set the first timestamp as begin and the last one as end */
-        else if ( poKmlGeometry->Type (  )  == kmldom::Type_GxMultiTrack &&
-             !poKmlFeature->has_timeprimitive (  ) ) {
+        else if ( poKmlGeometry->Type()  == kmldom::Type_GxMultiTrack &&
+             !poKmlFeature->has_timeprimitive() ) {
             GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack ( poKmlGeometry );
-            size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size (  );
+            size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size();
             if( nGeom >= 1 )
             {
                 GxTrackPtr poKmlGxTrack = poKmlGxMultiTrack->get_gx_track_array_at ( 0 );
@@ -1327,7 +1338,7 @@ void kml2field (
     /***** camera *****/
 
     else if ( poKmlPlacemark &&
-              poKmlPlacemark->has_abstractview (  ) &&
+              poKmlPlacemark->has_abstractview() &&
               poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) ) {
 
         const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
@@ -1359,12 +1370,12 @@ void kml2field (
 
         if ( iField > -1 ) {
 
-            if ( camera->has_altitudemode (  ) ) {
-                nAltitudeMode = camera->get_altitudemode (  );
+            if ( camera->has_altitudemode() ) {
+                nAltitudeMode = camera->get_altitudemode();
                 ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, FALSE);
             }
-            else if ( camera->has_gx_altitudemode (  ) ) {
-                nAltitudeMode = camera->get_gx_altitudemode (  );
+            else if ( camera->has_gx_altitudemode() ) {
+                nAltitudeMode = camera->get_gx_altitudemode();
                 ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, TRUE);
             }
         }
@@ -1379,10 +1390,10 @@ void kml2field (
         int iField = poOgrFeat->GetFieldIndex ( oFC.iconfield );
         if ( iField > -1 ) {
 
-            if ( poKmlGroundOverlay->has_icon (  ) ) {
-                IconPtr icon = poKmlGroundOverlay->get_icon (  );
-                if ( icon->has_href (  ) ) {
-                    poOgrFeat->SetField ( iField, icon->get_href (  ).c_str (  ) );
+            if ( poKmlGroundOverlay->has_icon() ) {
+                IconPtr icon = poKmlGroundOverlay->get_icon();
+                if ( icon->has_href() ) {
+                    poOgrFeat->SetField ( iField, icon->get_href().c_str() );
                 }
             }
         }
@@ -1393,8 +1404,8 @@ void kml2field (
         iField = poOgrFeat->GetFieldIndex ( oFC.drawOrderfield );
         if ( iField > -1 ) {
 
-            if ( poKmlGroundOverlay->has_draworder (  ) ) {
-                poOgrFeat->SetField ( iField, poKmlGroundOverlay->get_draworder (  ) );
+            if ( poKmlGroundOverlay->has_draworder() ) {
+                poOgrFeat->SetField ( iField, poKmlGroundOverlay->get_draworder() );
             }
         }
 
@@ -1404,8 +1415,8 @@ void kml2field (
 
         if ( iField > -1 ) {
 
-            if ( poKmlGroundOverlay->has_altitudemode (  ) ) {
-                switch ( poKmlGroundOverlay->get_altitudemode (  ) ) {
+            if ( poKmlGroundOverlay->has_altitudemode() ) {
+                switch ( poKmlGroundOverlay->get_altitudemode() ) {
                 case kmldom::ALTITUDEMODE_CLAMPTOGROUND:
                     poOgrFeat->SetField ( iField, "clampToGround" );
                     break;
@@ -1419,7 +1430,7 @@ void kml2field (
                     break;
 
                 }
-            } else if ( poKmlGroundOverlay->has_gx_altitudemode (  ) ) {
+            } else if ( poKmlGroundOverlay->has_gx_altitudemode() ) {
                 switch ( poKmlGroundOverlay->get_gx_altitudemode ( ) ) {
                 case kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR:
                     poOgrFeat->SetField ( iField, "relativeToSeaFloor" );
@@ -1438,8 +1449,8 @@ void kml2field (
 
     int nVisibility = -1;
 
-    if ( poKmlFeature->has_visibility (  ) )
-        nVisibility = poKmlFeature->get_visibility (  );
+    if ( poKmlFeature->has_visibility() )
+        nVisibility = poKmlFeature->get_visibility();
 
     int iField = poOgrFeat->GetFieldIndex ( oFC.visibilityfield );
 
@@ -1448,9 +1459,9 @@ void kml2field (
 
     /***** snippet *****/
 
-    if ( poKmlFeature->has_snippet (  ) )
+    if ( poKmlFeature->has_snippet() )
     {
-        string oText = poKmlFeature->get_snippet (  )->get_text();
+        string oText = poKmlFeature->get_snippet()->get_text();
 
         iField = poOgrFeat->GetFieldIndex ( oFC.snippetfield );
 
@@ -1461,12 +1472,12 @@ void kml2field (
     /***** extended schema *****/
     ExtendedDataPtr poKmlExtendedData = NULL;
 
-    if ( poKmlFeature->has_extendeddata (  ) ) {
-        poKmlExtendedData = poKmlFeature->get_extendeddata (  );
+    if ( poKmlFeature->has_extendeddata() ) {
+        poKmlExtendedData = poKmlFeature->get_extendeddata();
 
         /***** loop over the schemadata_arrays *****/
 
-        size_t nSchemaData = poKmlExtendedData->get_schemadata_array_size (  );
+        size_t nSchemaData = poKmlExtendedData->get_schemadata_array_size();
 
         size_t iSchemaData;
 
@@ -1477,7 +1488,7 @@ void kml2field (
             /***** loop over the simpledata array *****/
 
             size_t nSimpleData =
-                poKmlSchemaData->get_simpledata_array_size (  );
+                poKmlSchemaData->get_simpledata_array_size();
 
             size_t iSimpleData;
 
@@ -1489,17 +1500,17 @@ void kml2field (
 
                 iField = -1;
 
-                if ( poKmlSimpleData->has_name (  ) ) {
-                    const string oName = poKmlSimpleData->get_name (  );
-                    const char *pszName = oName.c_str (  );
+                if ( poKmlSimpleData->has_name() ) {
+                    const string oName = poKmlSimpleData->get_name();
+                    const char *pszName = oName.c_str();
 
                     iField = poOgrFeat->GetFieldIndex ( pszName );
                 }
 
                 /***** if it has trxt set the field *****/
 
-                if ( iField > -1 && poKmlSimpleData->has_text (  ) ) {
-                    string oText = poKmlSimpleData->get_text (  );
+                if ( iField > -1 && poKmlSimpleData->has_text() ) {
+                    string oText = poKmlSimpleData->get_text();
 
                     poOgrFeat->SetField ( iField, TrimSpaces(oText) );
                 }
@@ -1544,7 +1555,7 @@ SimpleFieldPtr FieldDef2kml (
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
 
-    const char *pszFieldName = poOgrFieldDef->GetNameRef (  );
+    const char *pszFieldName = poOgrFieldDef->GetNameRef();
 
     if ( EQUAL ( pszFieldName, oFC.namefield ) ||
          EQUAL ( pszFieldName, oFC.descfield ) ||
@@ -1594,13 +1605,13 @@ SimpleFieldPtr FieldDef2kml (
         return NULL;
     }
 
-    SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField (  );
+    SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField();
     poKmlSimpleField->set_name ( pszFieldName );
 
 
     SimpleDataPtr poKmlSimpleData = NULL;
 
-    switch ( poOgrFieldDef->GetType (  ) ) {
+    switch ( poOgrFieldDef->GetType() ) {
     case OFTInteger:
     case OFTIntegerList:
         poKmlSimpleField->set_type ( "int" );
@@ -1640,7 +1651,7 @@ void kml2FeatureDef (
     OGRFeatureDefn * poOgrFeatureDefn )
 {
 
-    size_t nSimpleFields = poKmlSchema->get_simplefield_array_size (  );
+    size_t nSimpleFields = poKmlSchema->get_simplefield_array_size();
     size_t iSimpleField;
 
     for ( iSimpleField = 0; iSimpleField < nSimpleFields; iSimpleField++ ) {
@@ -1651,10 +1662,10 @@ void kml2FeatureDef (
         string osName = "Unknown";
         string osType;
 
-        if ( poKmlSimpleField->has_type (  ) ) {
-            osType = poKmlSimpleField->get_type (  );
+        if ( poKmlSimpleField->has_type() ) {
+            osType = poKmlSimpleField->get_type();
 
-            pszType = osType.c_str (  );
+            pszType = osType.c_str();
         }
 
         /* FIXME? We cannot set displayname as the field name because in kml2field() we make the */
@@ -1663,12 +1674,12 @@ void kml2FeatureDef (
         /* may have HTML formatting, which makes it impractical when converting to other */
         /* drivers or to make requests */
         /* Example: http://www.jasonbirch.com/files/newt_combined.kml */
-        /*if ( poKmlSimpleField->has_displayname (  ) ) {
-            osName = poKmlSimpleField->get_displayname (  );
+        /*if ( poKmlSimpleField->has_displayname() ) {
+            osName = poKmlSimpleField->get_displayname();
         }
 
-        else*/ if ( poKmlSimpleField->has_name (  ) ) {
-            osName = poKmlSimpleField->get_name (  );
+        else*/ if ( poKmlSimpleField->has_name() ) {
+            osName = poKmlSimpleField->get_name();
         }
 
         if ( EQUAL ( pszType, "bool" ) ||
