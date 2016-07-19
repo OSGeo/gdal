@@ -235,20 +235,29 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         GIntBig nNewCacheMax;
         if( strchr(pszCacheMax, '%') != NULL )
         {
-            GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-            // For some reason, coverity pretends that this will overflow.
-            // "Multiply operation overflows on operands static_cast<double>(
-            // nUsagePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
-            // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
-            // static_cast<double>(nUsagePhysicalRAM) = -9223372036854775808."
-            // coverity[overflow]
-            double dfCacheMax =
-                static_cast<double>(nUsagePhysicalRAM) *
-                CPLAtof(pszCacheMax) / 100.0;
-            if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
-                nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+            GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+            if( nUsablePhysicalRAM > 0 )
+            {
+                // For some reason, coverity pretends that this will overflow.
+                // "Multiply operation overflows on operands static_cast<double>(
+                // nUsablePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
+                // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
+                // static_cast<double>(nUsablePhysicalRAM) = -9223372036854775808."
+                // coverity[overflow]
+                double dfCacheMax =
+                    static_cast<double>(nUsablePhysicalRAM) *
+                    CPLAtof(pszCacheMax) / 100.0;
+                if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
+                    nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                else
+                    nNewCacheMax = nCacheMax;
+            }
             else
+            {
+                CPLDebug("GDAL",
+                         "Cannot determine usable physical RAM.");
                 nNewCacheMax = nCacheMax;
+            }
         }
         else
         {
@@ -261,11 +270,15 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                         CE_Failure, CPLE_NotSupported,
                         "Invalid value for GDAL_CACHEMAX. "
                         "Using default value.");
-                    GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-                    if( nUsagePhysicalRAM )
-                        nNewCacheMax = nUsagePhysicalRAM / 20;
+                    GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                    if( nUsablePhysicalRAM )
+                        nNewCacheMax = nUsablePhysicalRAM / 20;
                     else
+                    {
+                        CPLDebug("GDAL",
+                                 "Cannot determine usable physical RAM.");
                         nNewCacheMax = nCacheMax;
+                    }
                 }
                 else
                 {
