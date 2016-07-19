@@ -46,11 +46,11 @@
 
 /* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
 /* VSICalloc(), VSIFree(), VSIStrdup() */
-#define DEBUG_VSIMALLOC
+//#define DEBUG_VSIMALLOC
 
 /* Uncomment to compute memory usage statistics. */
 /* DEBUG_VSIMALLOC must also be defined */
-#define DEBUG_VSIMALLOC_STATS
+//#define DEBUG_VSIMALLOC_STATS
 
 /* Highly experimental, and likely buggy. Do not use, except for fixing it! */
 /* DEBUG_VSIMALLOC must also be defined */
@@ -378,7 +378,7 @@ int VSIFPutc( int nChar, FILE * fp )
 #ifdef DEBUG_VSIMALLOC_STATS
 #include "cpl_multiproc.h"
 
-static CPLMutex* hMemStatMutex = 0;
+static CPLMutex* hMemStatMutex = NULL;
 static size_t nCurrentTotalAllocs = 0;
 static size_t nMaxTotalAllocs = 0;
 static GUIntBig nVSIMallocs = 0;
