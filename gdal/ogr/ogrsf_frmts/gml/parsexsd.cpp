@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLParseXSD()
@@ -35,6 +34,8 @@
 #include "cpl_string.h"
 #include "cpl_http.h"
 #include <set>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              StripNS()                               */

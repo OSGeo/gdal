@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReadState class.
@@ -31,6 +30,8 @@
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            GMLReadState()                            */

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLFeatureClass.
@@ -34,6 +33,8 @@
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */
