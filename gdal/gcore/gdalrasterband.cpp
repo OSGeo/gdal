@@ -4281,6 +4281,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         // Furthermore the shift is also needed to use madd_epi16
         const GDALm256i ymm_m32768 = GDALmm256_set1_epi16(-32768);
         GDALm256i ymm_min = GDALmm256_load_si256((GDALm256i*)(pData + i));
+        ymm_min = GDALmm256_add_epi16(ymm_min, ymm_m32768);
         GDALm256i ymm_max = ymm_min;
         GDALm256i ymm_sumsquare = ZERO256; // holds 4 uint64 sums
 
