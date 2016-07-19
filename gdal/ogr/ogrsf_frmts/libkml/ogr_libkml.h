@@ -170,7 +170,7 @@ class OGRLIBKMLLayer:public OGRLayer
 
     void                      Finalize( kmldom::DocumentPtr poKmlDocument );
     void                      SetUpdateIsFolder( int bUpdateIsFolder )
-        { m_bUpdateIsFolder = bUpdateIsFolder; }
+        { m_bUpdateIsFolder = CPL_TO_BOOL(bUpdateIsFolder); }
 };
 
 /******************************************************************************
