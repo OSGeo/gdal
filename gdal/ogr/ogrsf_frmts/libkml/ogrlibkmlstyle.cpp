@@ -73,7 +73,7 @@ returns:
 
 ******************************************************************************/
 
-StylePtr addstylestring2kml (
+StylePtr addstylestring2kml(
     const char *pszStyleString,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
@@ -93,7 +93,7 @@ StylePtr addstylestring2kml (
     /***** create and init a style mamager with the style string *****/
     OGRStyleMgr * const poOgrSM = new OGRStyleMgr;
 
-    poOgrSM->InitStyleString ( pszStyleString );
+    poOgrSM->InitStyleString( pszStyleString );
 
     /***** loop though the style parts *****/
     for( int i = 0; i < poOgrSM->GetPartCount( NULL ); i++ )
@@ -161,7 +161,7 @@ StylePtr addstylestring2kml (
 
                 /***** brush color *****/
                 GBool nullcheck = FALSE;
-                const char *pszColor = poStyleBrush->ForeColor ( nullcheck );
+                const char *pszColor = poStyleBrush->ForeColor( nullcheck );
 
                 int nR = 0;
                 int nG = 0;
@@ -218,7 +218,7 @@ StylePtr addstylestring2kml (
                             IconStyleIconPtr poKmlIcon =
                                 poKmlFactory->CreateIconStyleIcon();
                             poKmlIcon->set_href( papszTokens[0] );
-                            poKmlIconStyle->set_icon ( poKmlIcon );
+                            poKmlIconStyle->set_icon( poKmlIcon );
                         }
 
                         CSLDestroy( papszTokens );
@@ -232,7 +232,7 @@ StylePtr addstylestring2kml (
                 {
                     if( !poKmlIconStyle)
                         poKmlIconStyle = poKmlFactory->CreateIconStyle();
-                    poKmlIconStyle->set_heading ( heading );
+                    poKmlIconStyle->set_heading( heading );
                 }
 
                 /***** scale *****/
@@ -248,7 +248,7 @@ StylePtr addstylestring2kml (
 
                 /***** color *****/
                 const char * const pszcolor =
-                    poStyleSymbol->Color ( nullcheck );
+                    poStyleSymbol->Color( nullcheck );
 
                 int nR = 0;
                 int nG = 0;
@@ -266,21 +266,21 @@ StylePtr addstylestring2kml (
 
                 /***** hotspot *****/
 
-                double dfDx = poStyleSymbol->SpacingX ( nullcheck );
+                double dfDx = poStyleSymbol->SpacingX( nullcheck );
                 GBool nullcheck2 = FALSE;
-                double dfDy = poStyleSymbol->SpacingY ( nullcheck2 );
+                double dfDy = poStyleSymbol->SpacingY( nullcheck2 );
 
                 if( !nullcheck && !nullcheck2 )
                 {
                     if( !poKmlIconStyle)
                         poKmlIconStyle = poKmlFactory->CreateIconStyle();
 
-                    HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot (  );
+                    HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot();
 
-                    poKmlHotSpot->set_x ( dfDx );
-                    poKmlHotSpot->set_y ( dfDy );
+                    poKmlHotSpot->set_x( dfDx );
+                    poKmlHotSpot->set_y( dfDy );
 
-                    poKmlIconStyle->set_hotspot ( poKmlHotSpot );
+                    poKmlIconStyle->set_hotspot( poKmlHotSpot );
                 }
 
                 break;
@@ -312,7 +312,7 @@ StylePtr addstylestring2kml (
                 {
                     if( poKmlLabelStyle == NULL )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
-                    poKmlLabelStyle->set_color (
+                    poKmlLabelStyle->set_color(
                         Color32 ( static_cast<GByte>(nA),
                                   static_cast<GByte>(nB),
                                   static_cast<GByte>(nG),
@@ -327,7 +327,7 @@ StylePtr addstylestring2kml (
                     dfScale /= 100.0;
                     if( poKmlLabelStyle == NULL )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
-                    poKmlLabelStyle->set_scale ( dfScale );
+                    poKmlLabelStyle->set_scale( dfScale );
                 }
 
                 /***** heading *****/
@@ -347,8 +347,8 @@ StylePtr addstylestring2kml (
                 }
 
                 /***** hotspot *****/
-                const double dfDx = poStyleLabel->SpacingX ( nullcheck );
-                const double dfDy = poStyleLabel->SpacingY ( nullcheck2 );
+                const double dfDx = poStyleLabel->SpacingX( nullcheck );
+                const double dfDy = poStyleLabel->SpacingY( nullcheck2 );
 
                 if( !nullcheck && !nullcheck2 )
                 {
@@ -357,7 +357,7 @@ StylePtr addstylestring2kml (
                         poKmlIconStyle = poKmlFactory->CreateIconStyle();
                         const IconStyleIconPtr poKmlIcon =
                             poKmlFactory->CreateIconStyleIcon();
-                        poKmlIconStyle->set_icon ( poKmlIcon );
+                        poKmlIconStyle->set_icon( poKmlIcon );
                     }
 
                     HotSpotPtr poKmlHotSpot = poKmlFactory->CreateHotSpot();
@@ -439,7 +439,7 @@ OGRStylePen *kml2pen( LineStylePtr poKmlLineStyle, OGRStylePen *poOgrStylePen )
                   poKmlColor.get_green(),
                   poKmlColor.get_blue(),
                   poKmlColor.get_alpha() );
-        poOgrStylePen->SetColor ( szColor );
+        poOgrStylePen->SetColor( szColor );
     }
 
     return poOgrStylePen;
@@ -450,7 +450,7 @@ OGRStylePen *kml2pen( LineStylePtr poKmlLineStyle, OGRStylePen *poOgrStylePen )
 ******************************************************************************/
 
 static
-OGRStyleBrush *kml2brush (
+OGRStyleBrush *kml2brush(
     PolyStylePtr poKmlPolyStyle,
     OGRStyleBrush *poOgrStyleBrush )
 {
@@ -478,7 +478,7 @@ OGRStyleBrush *kml2brush (
 ******************************************************************************/
 
 static
-OGRStyleSymbol *kml2symbol (
+OGRStyleSymbol *kml2symbol(
     IconStylePtr poKmlIconStyle,
     OGRStyleSymbol *poOgrStyleSymbol )
 {
@@ -508,14 +508,15 @@ OGRStyleSymbol *kml2symbol (
         poOgrStyleSymbol->SetSize( poKmlIconStyle->get_scale() );
 
     /***** color *****/
-    if( poKmlIconStyle->has_color() ) {
+    if( poKmlIconStyle->has_color() )
+    {
         Color32 poKmlColor = poKmlIconStyle->get_color();
         char szColor[10] = {};
-        snprintf ( szColor, sizeof( szColor ), "#%02X%02X%02X%02X",
-                   poKmlColor.get_red(),
-                   poKmlColor.get_green(),
-                   poKmlColor.get_blue(),
-                   poKmlColor.get_alpha() );
+        snprintf( szColor, sizeof( szColor ), "#%02X%02X%02X%02X",
+                  poKmlColor.get_red(),
+                  poKmlColor.get_green(),
+                  poKmlColor.get_blue(),
+                  poKmlColor.get_alpha() );
         poOgrStyleSymbol->SetColor( szColor );
     }
 
@@ -538,7 +539,7 @@ OGRStyleSymbol *kml2symbol (
 ******************************************************************************/
 
 static
-OGRStyleLabel *kml2label (
+OGRStyleLabel *kml2label(
     LabelStylePtr poKmlLabelStyle,
     OGRStyleLabel *poOgrStyleLabel )
 {
@@ -550,15 +551,16 @@ OGRStyleLabel *kml2label (
     {
         Color32 poKmlColor = poKmlLabelStyle->get_color();
         char szColor[10] = {};
-        snprintf ( szColor, sizeof ( szColor ), "#%02X%02X%02X%02X",
-                   poKmlColor.get_red(),
-                   poKmlColor.get_green(),
-                   poKmlColor.get_blue(),
-                   poKmlColor.get_alpha() );
+        snprintf( szColor, sizeof( szColor ), "#%02X%02X%02X%02X",
+                  poKmlColor.get_red(),
+                  poKmlColor.get_green(),
+                  poKmlColor.get_blue(),
+                  poKmlColor.get_alpha() );
         poOgrStyleLabel->SetForColor( szColor );
     }
 
-    if( poKmlLabelStyle->has_scale() ) {
+    if( poKmlLabelStyle->has_scale() )
+    {
         double dfScale = poKmlLabelStyle->get_scale();
         dfScale *= 100.0;
 
@@ -597,8 +599,8 @@ static void kml2styletable(
     }
     else
     {
-        CPLError ( CE_Failure, CPLE_AppDefined,
-                   "ERROR parsing kml Style: No id" );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ERROR parsing kml Style: No id" );
     }
 
     return;
@@ -643,7 +645,7 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
         LineStylePtr poKmlLineStyle = poKmlStyle->get_linestyle();
 
         OGRStyleTool *poOgrTmpST = NULL;
-        for( int i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ )
+        for( int i = 0; i < poOgrSM->GetPartCount( NULL ); i++ )
         {
             OGRStyleTool *poOgrST = poOgrSM->GetPart( i, NULL );
 
@@ -734,8 +736,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
         }
 
         OGRStyleSymbol *poOgrStyleSymbol =
-            kml2symbol ( poKmlIconStyle,
-                         ( OGRStyleSymbol *) poOgrTmpST );
+            kml2symbol( poKmlIconStyle,
+                        ( OGRStyleSymbol *) poOgrTmpST );
 
         poOgrNewSM->AddPart( poOgrStyleSymbol );
 
@@ -751,7 +753,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
         LabelStylePtr poKmlLabelStyle = poKmlStyle->get_labelstyle();
 
         OGRStyleTool *poOgrTmpST = NULL;
-        for( int i = 0; i < poOgrSM->GetPartCount( NULL ); i++ ) {
+        for( int i = 0; i < poOgrSM->GetPartCount( NULL ); i++ )
+        {
             OGRStyleTool *poOgrST = poOgrSM->GetPart( i, NULL );
 
             if( !poOgrST )
@@ -791,34 +794,38 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
 
 ******************************************************************************/
 
-static ContainerPtr MyGetContainerFromRoot (
+static ContainerPtr MyGetContainerFromRoot(
     KmlFactory *m_poKmlFactory, ElementPtr poKmlRoot )
 {
     ContainerPtr poKmlContainer = NULL;
 
-    if ( poKmlRoot ) {
-
+    if( poKmlRoot )
+    {
         /***** skip over the <kml> we want the container *****/
+        if( poKmlRoot->IsA( kmldom::Type_kml ) )
+        {
+            KmlPtr poKmlKml = AsKml( poKmlRoot );
 
-        if ( poKmlRoot->IsA ( kmldom::Type_kml ) ) {
+            if( poKmlKml->has_feature() )
+            {
+                FeaturePtr poKmlFeat = poKmlKml->get_feature();
 
-            KmlPtr poKmlKml = AsKml ( poKmlRoot );
-
-            if ( poKmlKml->has_feature (  ) ) {
-                FeaturePtr poKmlFeat = poKmlKml->get_feature (  );
-
-                if ( poKmlFeat->IsA ( kmldom::Type_Container ) )
-                    poKmlContainer = AsContainer ( poKmlFeat );
-                else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) )
+                if( poKmlFeat->IsA( kmldom::Type_Container ) )
                 {
-                    poKmlContainer = m_poKmlFactory->CreateDocument (  );
-                    poKmlContainer->add_feature ( kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
+                    poKmlContainer = AsContainer( poKmlFeat );
+                }
+                else if( poKmlFeat->IsA( kmldom::Type_Placemark ) )
+                {
+                    poKmlContainer = m_poKmlFactory->CreateDocument();
+                    poKmlContainer->add_feature(
+                        kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
                 }
             }
         }
-
-        else if ( poKmlRoot->IsA ( kmldom::Type_Container ) )
-            poKmlContainer = AsContainer ( poKmlRoot );
+        else if( poKmlRoot->IsA( kmldom::Type_Container ) )
+        {
+            poKmlContainer = AsContainer( poKmlRoot );
+        }
     }
 
     return poKmlContainer;
@@ -829,67 +836,61 @@ static ContainerPtr MyGetContainerFromRoot (
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
     const string styleurl,
-    OGRStyleTable * poStyleTable)
+    OGRStyleTable * poStyleTable )
 {
-    // TODO:: Parse the styleURL
-
-    char *pszUrl = CPLStrdup ( styleurl.c_str (  ) );
-    char *pszStyleMapId = CPLStrdup ( stylemap->get_id().c_str (  ) );
+    // TODO:: Parse the styleURL.
+    char *pszUrl = CPLStrdup( styleurl.c_str() );
+    char *pszStyleMapId = CPLStrdup( stylemap->get_id().c_str() );
 
     /***** Is it an internal style ref that starts with a #? *****/
-
-    if ( *pszUrl == '#' && poStyleTable ) {
-
+    if( *pszUrl == '#' && poStyleTable )
+    {
         /***** Search the style table for the style we *****/
         /***** want and copy it back into the table.   *****/
-
-        const char *pszTest = NULL;
-        pszTest = poStyleTable->Find ( pszUrl + 1 );
-        if ( pszTest ) {
+        const char *pszTest = poStyleTable->Find( pszUrl + 1 );
+        if( pszTest )
+        {
             poStyleTable->AddStyle(pszStyleMapId, pszTest);
         }
     }
 
     /***** We have a real URL and need to go out and fetch it *****/
     /***** FIXME this could be a relative path in a kmz *****/
-
-    else if ( strchr(pszUrl, '#') ) {
-
-        const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
-        if ( CPLTestBool(pszFetch) ) {
-
+    else if( strchr(pszUrl, '#') )
+    {
+        const char *pszFetch =
+            CPLGetConfigOption( "LIBKML_EXTERNAL_STYLE", "no" );
+        if( CPLTestBool(pszFetch) )
+        {
             /***** Lets go out and fetch the style from the external URL *****/
-
             char *pszUrlTmp = CPLStrdup(pszUrl);
             char *pszPound = strchr(pszUrlTmp, '#');
             char *pszRemoteStyleName = NULL;
             // Chop off the stuff (style id) after the URL
-            if (pszPound != NULL) {
+            if( pszPound != NULL )
+            {
                 *pszPound = '\0';
                 pszRemoteStyleName = pszPound + 1;
             }
 
             /***** try it as a url then a file *****/
-
             VSILFILE *fp = NULL;
-            if ( (fp = VSIFOpenL( CPLFormFilename( "/vsicurl/",
+            if( (fp = VSIFOpenL( CPLFormFilename( "/vsicurl/",
                                                    pszUrlTmp,
-                                                  NULL), "r" )) != NULL
+                                                   NULL), "r" )) != NULL
                  ||  (fp = VSIFOpenL( pszUrlTmp, "r" )) != NULL )
             {
-                char szbuf[1025];
+                char szbuf[1025] = {};
                 std::string oStyle = "";
 
                 /***** loop, read and copy to a string *****/
-
-                size_t nRead;
                 do {
-                    nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
-                    if (nRead == 0)
+                    const size_t nRead =
+                        VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
+                    if(nRead == 0)
                         break;
 
                     /***** copy buf to the string *****/
-
                     szbuf[nRead] = '\0';
                     oStyle.append( szbuf );
                 } while (!VSIFEofL(fp));
@@ -897,44 +898,44 @@ static StyleSelectorPtr StyleFromStyleURL(
                 VSIFCloseL(fp);
 
                 /***** parse the kml into the dom *****/
-
                 std::string oKmlErrors;
-                ElementPtr poKmlRoot = kmldom::Parse ( oStyle, &oKmlErrors );
+                ElementPtr poKmlRoot = kmldom::Parse( oStyle, &oKmlErrors );
 
-                if ( !poKmlRoot ) {
-                    CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR parsing style kml %s :%s",
-                               pszUrlTmp, oKmlErrors.c_str (  ) );
+                if( !poKmlRoot )
+                {
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "ERROR parsing style kml %s :%s",
+                              pszUrlTmp, oKmlErrors.c_str() );
                     CPLFree(pszUrlTmp);
-                    CPLFree ( pszUrl );
-                    CPLFree ( pszStyleMapId );
+                    CPLFree(pszUrl);
+                    CPLFree(pszStyleMapId);
 
                     return NULL;
                 }
 
                 /***** get the root container *****/
-
+                kmldom::KmlFactory* poKmlFactory =
+                    kmldom::KmlFactory::GetFactory();
                 ContainerPtr poKmlContainer;
-                kmldom::KmlFactory* poKmlFactory = kmldom::KmlFactory::GetFactory();
-                if ( !( poKmlContainer = MyGetContainerFromRoot ( poKmlFactory, poKmlRoot ) ) ) {
+                if( !( poKmlContainer =
+                      MyGetContainerFromRoot( poKmlFactory, poKmlRoot ) ) )
+                {
                     CPLFree(pszUrlTmp);
-                    CPLFree ( pszUrl );
-                    CPLFree ( pszStyleMapId );
+                    CPLFree(pszUrl);
+                    CPLFree(pszStyleMapId);
 
                     return NULL;
                 }
 
                 /**** parse the styles into the table *****/
-
-                ParseStyles ( AsDocument ( poKmlContainer ), &poStyleTable );
+                ParseStyles( AsDocument( poKmlContainer ), &poStyleTable );
 
                 /***** look for the style we need to map to in the table *****/
-
                 const char *pszTest = NULL;
                 pszTest = poStyleTable->Find(pszRemoteStyleName);
 
                 /***** if found copy it to the table as a new style *****/
-                if ( pszTest )
+                if( pszTest )
                     poStyleTable->AddStyle(pszStyleMapId, pszTest);
 
             }
@@ -943,40 +944,38 @@ static StyleSelectorPtr StyleFromStyleURL(
     }
 
     /***** FIXME Add support here for relative links inside KML. *****/
-
-    CPLFree ( pszUrl );
-    CPLFree ( pszStyleMapId );
+    CPLFree( pszUrl );
+    CPLFree( pszStyleMapId );
 
     return NULL;
 }
 
 StyleSelectorPtr StyleFromStyleMap(
     const StyleMapPtr& poKmlStyleMap,
-    OGRStyleTable * poStyleTable)
+    OGRStyleTable * poStyleTable )
 {
-
     /***** check the config option to see if the    *****/
     /***** user wants normal or highlighted mapping *****/
-
-    const char *pszStyleMapKey = CPLGetConfigOption ( "LIBKML_STYLEMAP_KEY", "normal" );
-    int nStyleMapKey = STYLESTATE_NORMAL;
-    if ( EQUAL (pszStyleMapKey, "highlight"))
-         nStyleMapKey = STYLESTATE_HIGHLIGHT;
+    const char *pszStyleMapKey =
+        CPLGetConfigOption( "LIBKML_STYLEMAP_KEY", "normal" );
+    const int nStyleMapKey =
+        EQUAL(pszStyleMapKey, "highlight") ?
+            STYLESTATE_HIGHLIGHT: STYLESTATE_NORMAL;
 
     /*****  Loop through the stylemap pairs and look for the "normal" one *****/
-
-    for (size_t i = 0; i < poKmlStyleMap->get_pair_array_size(); ++i) {
+    for( size_t i = 0; i < poKmlStyleMap->get_pair_array_size(); ++i )
+    {
         PairPtr myPair = poKmlStyleMap->get_pair_array_at(i);
 
         /***** is it the right one of the pair? *****/
-
-        if ( myPair->get_key() == nStyleMapKey ) {
-
-            if (myPair->has_styleselector())
-                return StyleFromStyleSelector(myPair->get_styleselector(), poStyleTable);
-
-            else if (myPair->has_styleurl())
-                return StyleFromStyleURL(poKmlStyleMap, myPair->get_styleurl(), poStyleTable);
+        if( myPair->get_key() == nStyleMapKey )
+        {
+            if( myPair->has_styleselector() )
+                return StyleFromStyleSelector(myPair->get_styleselector(),
+                                              poStyleTable);
+            else if(myPair->has_styleurl() )
+                return StyleFromStyleURL(poKmlStyleMap, myPair->get_styleurl(),
+                                         poStyleTable);
         }
     }
 
@@ -987,44 +986,38 @@ StyleSelectorPtr StyleFromStyleMap(
  function to parse a style table out of a document
 ******************************************************************************/
 
-void ParseStyles (
+void ParseStyles(
     DocumentPtr poKmlDocument,
     OGRStyleTable ** poStyleTable )
 {
-
     /***** if document is null just bail now *****/
-
-    if ( !poKmlDocument )
+    if( !poKmlDocument )
         return;
 
     /***** loop over the Styles *****/
-
-    size_t nKmlStyles = poKmlDocument->get_styleselector_array_size (  );
-    size_t iKmlStyle;
+    const size_t nKmlStyles = poKmlDocument->get_styleselector_array_size();
 
     /***** Lets first build the style table.    *****/
     /***** to begin this is just proper styles. *****/
-
-    for( iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ ) {
+    for( size_t iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ )
+    {
         StyleSelectorPtr poKmlStyle =
-            poKmlDocument->get_styleselector_array_at ( iKmlStyle );
+            poKmlDocument->get_styleselector_array_at( iKmlStyle );
 
         /***** Everything that is not a style you skip *****/
-
-        if ( !poKmlStyle->IsA ( kmldom::Type_Style ) )
+        if( !poKmlStyle->IsA( kmldom::Type_Style ) )
             continue;
 
         /***** We need to check to see if this is the first style. if it *****/
         /***** is we will not have a style table and need to create one  *****/
 
-        if ( !*poStyleTable )
-            *poStyleTable = new OGRStyleTable (  );
+        if( !*poStyleTable )
+            *poStyleTable = new OGRStyleTable();
 
         /***** TODO:: Not sure we need to do this as we seem *****/
         /***** to cast to element and then back to style.    *****/
-
-        ElementPtr poKmlElement = AsElement ( poKmlStyle );
-        kml2styletable ( *poStyleTable, AsStyle ( poKmlElement ) );
+        ElementPtr poKmlElement = AsElement( poKmlStyle );
+        kml2styletable( *poStyleTable, AsStyle( poKmlElement ) );
     }
 
     /***** Now we have to loop back around and get the style maps. We    *****/
@@ -1032,48 +1025,49 @@ void ParseStyles (
     /***** and we are just looping reference styles that are farther     *****/
     /***** down in the file. Order through the XML as it is parsed.      *****/
 
-    for( iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ ) {
+    for( size_t iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ )
+    {
         StyleSelectorPtr poKmlStyle =
-            poKmlDocument->get_styleselector_array_at ( iKmlStyle );
+            poKmlDocument->get_styleselector_array_at( iKmlStyle );
 
         /***** Everything that is not a stylemap you skip *****/
-
-        if ( !poKmlStyle->IsA ( kmldom::Type_StyleMap ) )
+        if( !poKmlStyle->IsA( kmldom::Type_StyleMap ) )
             continue;
 
         /***** We need to check to see if this is the first style. if it *****/
         /***** is we will not have a style table and need to create one  *****/
-
-        if ( !*poStyleTable )
-            *poStyleTable = new OGRStyleTable (  );
+        if( !*poStyleTable )
+            *poStyleTable = new OGRStyleTable();
 
         /***** copy the style the style map points to since *****/
 
-        char *pszStyleMapId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
-        poKmlStyle = StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
-        if (poKmlStyle == NULL) {
+        char *pszStyleMapId = CPLStrdup( poKmlStyle->get_id().c_str() );
+        poKmlStyle =
+            StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
+        if( poKmlStyle == NULL )
+        {
             CPLFree(pszStyleMapId);
             continue;
         }
-        char *pszStyleId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
+        char *pszStyleId = CPLStrdup( poKmlStyle->get_id().c_str() );
 
         /***** TODO:: Not sure we need to do this as we seem *****/
         /***** to cast to element and then back to style.    *****/
-
-        ElementPtr poKmlElement = AsElement ( poKmlStyle );
-        kml2styletable ( *poStyleTable, AsStyle ( poKmlElement ) );
+        ElementPtr poKmlElement = AsElement( poKmlStyle );
+        kml2styletable( *poStyleTable, AsStyle( poKmlElement ) );
 
         // Change the name of the new style in the style table
 
         const char *pszTest = NULL;
         pszTest = (*poStyleTable)->Find(pszStyleId);
         // If we found the style we want in the style table we...
-        if ( pszTest ) {
+        if( pszTest )
+        {
             (*poStyleTable)->AddStyle(pszStyleMapId, pszTest);
-            (*poStyleTable)->RemoveStyle ( pszStyleId );
+            (*poStyleTable)->RemoveStyle( pszStyleId );
         }
-        CPLFree ( pszStyleId );
-        CPLFree ( pszStyleMapId );
+        CPLFree( pszStyleId );
+        CPLFree( pszStyleMapId );
     }
 
     return;
@@ -1083,7 +1077,7 @@ void ParseStyles (
  function to add a style table to a kml container
 ******************************************************************************/
 
-void styletable2kml (
+void styletable2kml(
     OGRStyleTable * poOgrStyleTable,
     KmlFactory * poKmlFactory,
     ContainerPtr poKmlContainer,
@@ -1098,7 +1092,8 @@ void styletable2kml (
     poOgrStyleTable->ResetStyleStringReading();
 
     // Collect styles that end with _normal or _highlight.
-    while( poOgrStyleTable->GetNextStyle() != NULL ) {
+    while( poOgrStyleTable->GetNextStyle() != NULL )
+    {
         const char *pszStyleName = poOgrStyleTable->GetLastStyleName();
 
         if( strlen(pszStyleName) > strlen("_normal") &&
@@ -1123,7 +1118,8 @@ void styletable2kml (
     poOgrStyleTable->ResetStyleStringReading();
 
     const char *pszStyleString = NULL;
-    while( ( pszStyleString = poOgrStyleTable->GetNextStyle() ) != NULL ) {
+    while( ( pszStyleString = poOgrStyleTable->GetNextStyle() ) != NULL )
+    {
         const char *pszStyleName = poOgrStyleTable->GetLastStyleName();
 
         if( aoSetNormalStyles.find(pszStyleName) != aoSetNormalStyles.end() &&
@@ -1136,7 +1132,7 @@ void styletable2kml (
         /***** add the style header to the kml *****/
         StylePtr poKmlStyle = poKmlFactory->CreateStyle();
 
-        poKmlStyle->set_id ( pszStyleName );
+        poKmlStyle->set_id( pszStyleName );
 
         /***** parse the style string *****/
         addstylestring2kml( pszStyleString, poKmlStyle, poKmlFactory, NULL );
@@ -1155,8 +1151,8 @@ void styletable2kml (
         int nA = 0;
         OGRStylePen oStyleTool;
         if( (pszBalloonStyleBgColor != NULL &&
-             oStyleTool.GetRGBFromString ( pszBalloonStyleBgColor,
-                                           nR, nG, nB, nA ) ) ||
+             oStyleTool.GetRGBFromString( pszBalloonStyleBgColor,
+                                          nR, nG, nB, nA ) ) ||
             pszBalloonStyleText != NULL )
         {
             const BalloonStylePtr poKmlBalloonStyle =
@@ -1171,12 +1167,12 @@ void styletable2kml (
                              static_cast<GByte>(nR) ) );
             if( pszBalloonStyleText != NULL )
                 poKmlBalloonStyle->set_text(pszBalloonStyleText);
-            poKmlStyle->set_balloonstyle ( poKmlBalloonStyle );
+            poKmlStyle->set_balloonstyle( poKmlBalloonStyle );
         }
 
         /***** add the style to the container *****/
-        const DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );
-        poKmlDocument->add_styleselector ( poKmlStyle );
+        const DocumentPtr poKmlDocument = AsDocument( poKmlContainer );
+        poKmlDocument->add_styleselector( poKmlStyle );
     }
 
     // Find style name that end with _normal and _highlight to create
@@ -1200,19 +1196,17 @@ void styletable2kml (
                 CPLSPrintf("#%s_normal", osStyleName.c_str()));
             poKmlStyleMap->add_pair(poKmlPairNormal);
 
-            PairPtr poKmlPairHighlight = poKmlFactory->CreatePair (  );
+            PairPtr poKmlPairHighlight = poKmlFactory->CreatePair();
             poKmlPairHighlight->set_key(STYLESTATE_HIGHLIGHT);
             poKmlPairHighlight->set_styleurl(
                 CPLSPrintf("#%s_highlight", osStyleName.c_str()));
             poKmlStyleMap->add_pair(poKmlPairHighlight);
 
             /***** add the style to the container *****/
-            DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );
-            poKmlDocument->add_styleselector ( poKmlStyleMap );
+            DocumentPtr poKmlDocument = AsDocument( poKmlContainer );
+            poKmlDocument->add_styleselector( poKmlStyleMap );
         }
     }
-
-    return;
 }
 
 
@@ -1220,7 +1214,7 @@ void styletable2kml (
  function to add a ListStyle and select it to a container
 ******************************************************************************/
 
-void createkmlliststyle (
+void createkmlliststyle(
     KmlFactory * poKmlFactory,
     const char* pszBaseName,
     ContainerPtr poKmlLayerContainer,
@@ -1235,7 +1229,7 @@ void createkmlliststyle (
         const char* pszStyleName =
             CPLSPrintf("%s_liststyle",
                        OGRLIBKMLGetSanitizedNCName(pszBaseName).c_str());
-        poKmlStyle->set_id ( pszStyleName );
+        poKmlStyle->set_id( pszStyleName );
 
         ListStylePtr poKmlListStyle = poKmlFactory->CreateListStyle();
         poKmlStyle->set_liststyle( poKmlListStyle );
@@ -1256,7 +1250,8 @@ void createkmlliststyle (
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
-                    "Invalid value for list style type: %s. Defaulting to Check",
+                    "Invalid value for list style type: %s. "
+                    "Defaulting to Check",
                     osListStyleType.c_str());
                 poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
             }
