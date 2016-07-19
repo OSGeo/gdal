@@ -46,11 +46,11 @@
 
 /* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
 /* VSICalloc(), VSIFree(), VSIStrdup() */
-//#define DEBUG_VSIMALLOC
+#define DEBUG_VSIMALLOC
 
 /* Uncomment to compute memory usage statistics. */
 /* DEBUG_VSIMALLOC must also be defined */
-//#define DEBUG_VSIMALLOC_STATS
+#define DEBUG_VSIMALLOC_STATS
 
 /* Highly experimental, and likely buggy. Do not use, except for fixing it! */
 /* DEBUG_VSIMALLOC must also be defined */
@@ -1291,8 +1291,11 @@ char *VSIStrerror( int nErrno )
  */
 GIntBig CPLGetPhysicalRAM(void)
 {
-    return static_cast<GIntBig>(sysconf(_SC_PHYS_PAGES))
-        * sysconf(_SC_PAGESIZE);
+    long nPhysPages = sysconf(_SC_PHYS_PAGES);
+    long nPageSize =  sysconf(_SC_PAGESIZE);
+    if( nPhysPages < 0 || nPageSize < 0 )
+        return 0;
+    return static_cast<GIntBig>(nPhysPages) * nPageSize;
 }
 
 #elif defined(__MACH__) && defined(__APPLE__)
