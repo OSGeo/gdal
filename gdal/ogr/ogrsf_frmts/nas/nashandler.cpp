@@ -269,11 +269,10 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
             return;
         }
 
-        if( EQUAL( pszLast, "Update" )  &&
-            ( m_osLastEnded == "" || m_LastOccasions.empty() ) )
+        if( EQUAL( pszLast, "Update" ) && m_osLastEnded == "" )
         {
             CPLError( CE_Failure, CPLE_AssertionFailed,
-                      "m_osLastEnded == \"\" || m_LastOccasions.empty()" );
+                      "m_osLastEnded == \"\"" );
 
             m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
@@ -303,8 +302,6 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
         }
         else if( EQUAL( pszLast, "Update" ) )
         {
-            //CPLAssert( m_osLastEnded != "" );
-            //CPLAssert( m_LastOccasions.empty() );
             m_poReader->SetFeaturePropertyDirectly(
                 "endet", CPLStrdup(m_osLastEnded) );
 
@@ -315,6 +312,7 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
               m_poReader->SetFeaturePropertyDirectly(
                   "anlass", CPLStrdup(*it) );
             }
+
             m_osLastEnded = "";
             m_LastOccasions.clear();
         }
