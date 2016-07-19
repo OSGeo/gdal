@@ -439,7 +439,8 @@ def stats_flt_min():
         print("%.18g" % nodata)
         return 'fail'
 
-    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168]:
+    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'
@@ -480,7 +481,8 @@ def stats_dbl_min():
         print("%.18g" % nodata)
         return 'fail'
 
-    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168]:
+    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'
@@ -520,8 +522,9 @@ def stats_byte_partial_tiles():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
 
-    expected_stats = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
-    if stats != expected_stats:
+    expected_stats       = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
+    expected_stats_32bit = [1.0, 255.0, 50.311081057390084, 67.145413894880946]
+    if stats != expected_stats and stats != expected_stats_32bit:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         print(expected_stats)

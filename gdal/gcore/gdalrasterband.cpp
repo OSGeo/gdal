@@ -3791,6 +3791,160 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
     }
 }
 
+// Specialization for Byte that is mostly 32 bit friendly as it avoids
+// using 64bit accumulators in internal loops. This also slightly helps in
+// 64bit mode.
+template<>
+void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
+                                       int nBlockXSize,
+                                       int nYCheck,
+                                       const GByte* pData,
+                                       bool bHasNoData,
+                                       GUInt32 nNoDataValue,
+                                       GUInt32& nMin,
+                                       GUInt32& nMax,
+                                       GUIntBig& nSum,
+                                       GUIntBig& nSumSquare,
+                                       GUIntBig& nSampleCount )
+{
+    int nOuterLoops = nXCheck / 65536;
+    if( nXCheck % 65536 )
+        nOuterLoops ++;
+
+    if( bHasNoData )
+    {
+        // General case
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            int iX = 0;
+            for( int k=0; k< nOuterLoops; k++ )
+            {
+                int iMax = iX + 65536;
+                if (iMax > nXCheck )
+                    iMax = nXCheck;
+                GUInt32 nSum32bit = 0;
+                GUInt32 nSumSquare32bit = 0;
+                GUInt32 nSampleCount32bit = 0;
+                for( ; iX < iMax; iX++)
+                {
+                    const int iOffset = iX + iY * nBlockXSize;
+                    const GUInt32 nValue = pData[iOffset];
+                    if( nValue == nNoDataValue )
+                        continue;
+                    nSampleCount32bit ++;
+                    if( nValue < nMin )
+                        nMin = nValue;
+                    if( nValue > nMax )
+                        nMax = nValue;
+                    nSum32bit += nValue;
+                    nSumSquare32bit += nValue * nValue;
+                }
+                nSampleCount += nSampleCount32bit;
+                nSum += nSum32bit;
+                nSumSquare += nSumSquare32bit;
+            }
+        }
+    }
+    else if( nMin == 0 &&
+             nMax == 255 )
+    {
+        // Optimization when there is no nodata and we know we have already
+        // reached the min and max
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            int iX = 0;
+            for( int k=0; k< nOuterLoops; k++ )
+            {
+                int iMax = iX + 65536;
+                if (iMax > nXCheck )
+                    iMax = nXCheck;
+                GUInt32 nSum32bit = 0;
+                GUInt32 nSumSquare32bit = 0;
+                for( ; iX + 3 < iMax; iX+=4 )
+                {
+                    const int iOffset = iX + iY * nBlockXSize;
+                    const GUInt32 nValue = pData[iOffset];
+                    const GUInt32 nValue2 = pData[iOffset+1];
+                    const GUInt32 nValue3 = pData[iOffset+2];
+                    const GUInt32 nValue4 = pData[iOffset+3];
+                    nSum32bit += nValue;
+                    nSumSquare32bit += nValue * nValue;
+                    nSum32bit += nValue2;
+                    nSumSquare32bit += nValue2 * nValue2;
+                    nSum32bit += nValue3;
+                    nSumSquare32bit += nValue3 * nValue3;
+                    nSum32bit += nValue4;
+                    nSumSquare32bit += nValue4 * nValue4;
+                }
+                nSum += nSum32bit;
+                nSumSquare += nSumSquare32bit;
+            }
+            for( ; iX < nXCheck; ++iX )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+            }
+        }
+        nSampleCount += nXCheck * nYCheck;
+    }
+    else
+    {
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            int iX = 0;
+            for( int k=0; k< nOuterLoops; k++ )
+            {
+                int iMax = iX + 65536;
+                if (iMax > nXCheck )
+                    iMax = nXCheck;
+                GUInt32 nSum32bit = 0;
+                GUInt32 nSumSquare32bit = 0;
+                for( ; iX + 1 < iMax; iX+=2 )
+                {
+                    const int iOffset = iX + iY * nBlockXSize;
+                    const GUInt32 nValue = pData[iOffset];
+                    const GUInt32 nValue2 = pData[iOffset+1];
+                    if( nValue < nValue2 )
+                    {
+                        if( nValue < nMin )
+                            nMin = nValue;
+                        if( nValue2 > nMax )
+                            nMax = nValue2;
+                    }
+                    else
+                    {
+                        if( nValue2 < nMin )
+                            nMin = nValue2;
+                        if( nValue > nMax )
+                            nMax = nValue;
+                    }
+                    nSum32bit += nValue;
+                    nSumSquare32bit += nValue * nValue;
+                    nSum32bit += nValue2;
+                    nSumSquare32bit += nValue2 * nValue2;
+                }
+                nSum += nSum32bit;
+                nSumSquare += nSumSquare32bit;
+            }
+            if( iX < nXCheck )
+            {
+                const int iOffset = iX + iY * nBlockXSize;
+                const GUInt32 nValue = pData[iOffset];
+                if( nValue < nMin )
+                    nMin = nValue;
+                if( nValue > nMax )
+                    nMax = nValue;
+                nSum += nValue;
+                nSumSquare += nValue * nValue;
+            }
+        }
+        nSampleCount += nXCheck * nYCheck;
+    }
+}
+
+
 template<class T>
 static void ComputeStatisticsInternal( int nXCheck,
                                        int nBlockXSize,
