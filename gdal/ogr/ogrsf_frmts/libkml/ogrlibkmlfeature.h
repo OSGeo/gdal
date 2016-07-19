@@ -35,7 +35,7 @@
  function to output a ogr feature to a kml placemark
 ******************************************************************************/
 
-kmldom::FeaturePtr feat2kml (
+kmldom::FeaturePtr feat2kml(
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
@@ -46,18 +46,18 @@ kmldom::FeaturePtr feat2kml (
  function to read a kml placemark into a ogr feature
 ******************************************************************************/
 
-OGRFeature *kml2feat (
+OGRFeature *kml2feat(
     kmldom::PlacemarkPtr poKmlPlacemark,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
-OGRFeature *kmlgroundoverlay2feat (
+OGRFeature *kmlgroundoverlay2feat(
     kmldom::GroundOverlayPtr poKmlOverlay,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
 #endif /*  OGR_LIBKML_FEATURE_H */

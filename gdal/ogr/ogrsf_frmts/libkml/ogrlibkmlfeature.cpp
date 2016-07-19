@@ -44,7 +44,6 @@ using kmldom::AliasPtr;
 using kmldom::CameraPtr;
 using kmldom::ElementPtr;
 using kmldom::FeaturePtr;
-using kmldom::Geometry;
 using kmldom::GeometryPtr;
 using kmldom::GroundOverlayPtr;
 using kmldom::IconPtr;
@@ -73,9 +72,9 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
         poOgrFeat->GetFieldIndex(oFC.camera_longitude_field);
     const int iCameraLatitudeField =
         poOgrFeat->GetFieldIndex(oFC.camera_latitude_field);
-    int iCameraAltitudeField =
+    const int iCameraAltitudeField =
         poOgrFeat->GetFieldIndex(oFC.camera_altitude_field);
-    int iCameraAltitudeModeField =
+    const int iCameraAltitudeModeField =
         poOgrFeat->GetFieldIndex(oFC.camera_altitudemode_field);
 
     const bool bNeedCamera =
@@ -90,7 +89,7 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
     if( !bNeedCamera )
         return NULL;
 
-    CameraPtr camera = poKmlFactory->CreateCamera();
+    CameraPtr const camera = poKmlFactory->CreateCamera();
     camera->set_latitude(poOgrFeat->GetFieldAsDouble(iCameraLatitudeField));
     camera->set_longitude(poOgrFeat->GetFieldAsDouble(iCameraLongitudeField));
     int isGX = FALSE;
@@ -659,7 +658,7 @@ FeaturePtr feat2kml(
             (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
             (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)) )
         {
-            OrientationPtr orientation = poKmlFactory->CreateOrientation();
+            OrientationPtr const orientation = poKmlFactory->CreateOrientation();
             model->set_orientation(orientation);
             if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
                 orientation->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
@@ -872,7 +871,7 @@ OGRFeature *kml2feat(
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS)
+    OGRSpatialReference *poOgrSRS )
 {
     OGRFeature *poOgrFeat = new OGRFeature( poOgrFeatDefn );
 
@@ -882,7 +881,7 @@ OGRFeature *kml2feat(
     /***** geometry *****/
     if( poKmlPlacemark->has_geometry() )
     {
-        OGRGeometry *poOgrGeom =
+        OGRGeometry * const poOgrGeom =
             kml2geom( poKmlPlacemark->get_geometry(), poOgrSRS );
         poOgrFeat->SetGeometryDirectly( poOgrGeom );
     }
@@ -923,14 +922,14 @@ OGRFeature *kmlgroundoverlay2feat(
     /***** geometry *****/
     if( poKmlOverlay->has_latlonbox() )
     {
-        OGRGeometry *poOgrGeom =
+        OGRGeometry * const poOgrGeom =
             kml2geom_latlonbox( poKmlOverlay->get_latlonbox(), poOgrSRS );
         poOgrFeat->SetGeometryDirectly( poOgrGeom );
 
     }
     else if( poKmlOverlay->has_gx_latlonquad() )
     {
-        OGRGeometry *poOgrGeom =
+        OGRGeometry * const poOgrGeom =
             kml2geom_latlonquad( poKmlOverlay->get_gx_latlonquad(), poOgrSRS );
         poOgrFeat->SetGeometryDirectly( poOgrGeom );
     }
