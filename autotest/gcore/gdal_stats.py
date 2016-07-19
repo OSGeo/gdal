@@ -546,6 +546,48 @@ def stats_byte_partial_tiles():
         print(expected_stats)
         return 'fail'
 
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_byte_tiled.tif', 1000, 512,
+                                              options = ['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
+    ds.GetRasterBand(1).Fill(255)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+    gdal.Unlink('/vsimem/stats_byte_tiled.tif')
+
+    expected_stats = [255.0, 255.0, 255.0, 0.0]
+    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    # Non optimized code path
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    import struct
+    ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('B' * 1, 1))
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    expected_stats = [1.0, 1.0, 1.0, 0.0]
+    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 5)
+    import struct
+    ds.GetRasterBand(1).WriteRaster(0,0,3,1,struct.pack('B' * 3, 20, 30, 50))
+    ds.GetRasterBand(1).WriteRaster(0,1,3,1,struct.pack('B' * 3, 60, 10, 5))
+    ds.GetRasterBand(1).WriteRaster(0,2,3,1,struct.pack('B' * 3, 10, 20, 0))
+    ds.GetRasterBand(1).WriteRaster(0,3,3,1,struct.pack('B' * 3, 10, 20, 255))
+    ds.GetRasterBand(1).WriteRaster(0,4,3,1,struct.pack('B' * 3, 10, 20, 10))
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    expected_stats = [0.0, 255.0, 35.333333333333336, 60.785597709398971]
+    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -597,6 +639,52 @@ def stats_uint16():
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         print(expected_stats)
+        return 'fail'
+
+    for fill_val in [ 0, 1, 32767, 32768, 65535 ]:
+        ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_uint16_tiled.tif', 1000, 512, 1, gdal.GDT_UInt16,
+                                                options = ['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
+        ds.GetRasterBand(1).Fill(fill_val)
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        ds = None
+        gdal.Unlink('/vsimem/stats_uint16_tiled.tif')
+
+        expected_stats = [fill_val, fill_val, fill_val, 0.0]
+        if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+            gdaltest.post_reason('did not get expected stats')
+            print(stats)
+            print(fill_val)
+            return 'fail'
+
+    # Non optimized code path
+    for fill_val in [ 0, 1, 32767, 32768, 65535 ]:
+        ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_UInt16)
+        import struct
+        ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('H' * 1, fill_val))
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        ds = None
+
+        expected_stats = [fill_val, fill_val, fill_val, 0.0]
+        if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+            gdaltest.post_reason('did not get expected stats')
+            print(stats)
+            print(fill_val)
+            return 'fail'
+
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 5, 1, gdal.GDT_UInt16)
+    import struct
+    ds.GetRasterBand(1).WriteRaster(0,0,3,1,struct.pack('H' * 3, 20, 30, 50))
+    ds.GetRasterBand(1).WriteRaster(0,1,3,1,struct.pack('H' * 3, 60, 10, 5))
+    ds.GetRasterBand(1).WriteRaster(0,2,3,1,struct.pack('H' * 3, 10, 20, 0))
+    ds.GetRasterBand(1).WriteRaster(0,3,3,1,struct.pack('H' * 3, 10, 20, 255))
+    ds.GetRasterBand(1).WriteRaster(0,4,3,1,struct.pack('H' * 3, 10, 20, 10))
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    ds = None
+
+    expected_stats = [0.0, 255.0, 35.333333333333336, 60.785597709398971]
+    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
         return 'fail'
 
     return 'success'
