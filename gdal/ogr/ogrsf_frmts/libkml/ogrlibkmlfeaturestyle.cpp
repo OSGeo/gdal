@@ -41,7 +41,6 @@ using kmldom::KmlFactory;;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;
 using kmldom::PolyStylePtr;
-using kmldom::Style;
 using kmldom::StyleMapPtr;
 using kmldom::StylePtr;
 using kmldom::StyleSelectorPtr;
@@ -92,7 +91,6 @@ void featurestyle2kml(
             }
             /***** assume its a dataset style,
                    maybe the user will add it later *****/
-
             else
             {
                 string oTmp;
@@ -105,7 +103,6 @@ void featurestyle2kml(
                 poKmlFeature->set_styleurl( oTmp );
             }
         }
-
         /***** no style table ref *****/
         else
         {
@@ -119,7 +116,6 @@ void featurestyle2kml(
                 poKmlFeature->set_styleselector( poKmlStyle );
         }
     }
-
     /***** get the style table *****/
     else if( ( poOgrSTBL = poOgrFeat->GetStyleTable() ) != NULL )
     {
@@ -199,9 +195,7 @@ void kml2featurestyle(
 
         if( pszTest )
         {
-
             /***** should we resolve the style *****/
-
             const char *pszResolve =
                 CPLGetConfigOption( "LIBKML_RESOLVE_STYLE", "no" );
 
@@ -215,11 +209,11 @@ void kml2featurestyle(
                 poOgrFeat->SetStyleString( pszUrl );
             }
         }
-
         /***** is it a dataset style? *****/
         else
         {
-            int nPathLen = static_cast<int>(strlen( poOgrDS->GetStylePath() ));
+            const int nPathLen =
+                static_cast<int>(strlen( poOgrDS->GetStylePath() ));
 
             if( nPathLen == 0 ||
                 EQUALN( pszUrl, poOgrDS->GetStylePath(), nPathLen ) )
@@ -242,7 +236,6 @@ void kml2featurestyle(
                     poOgrFeat->SetStyleString( pszUrl + nPathLen );
                 }
             }
-
             /**** its someplace else *****/
             else
             {
@@ -347,7 +340,6 @@ void kml2featurestyle(
 
             delete poOgrSM;
         }
-
         /***** is the style a stylemap? *****/
         else if( poKmlStyleSelector->IsA( kmldom::Type_StyleMap ) )
         {

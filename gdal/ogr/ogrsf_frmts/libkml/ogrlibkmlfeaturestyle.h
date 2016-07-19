@@ -43,4 +43,4 @@ void kml2featurestyle (
     kmldom::FeaturePtr poKmlFeature,
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poOgrLayer,
-    OGRFeature *poOgrFeat);
+    OGRFeature *poOgrFeat );
