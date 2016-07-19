@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Specialization of the kml class, only for vectors in kml files.
@@ -32,6 +31,8 @@
 #include "cpl_conv.h"
 
 #include <string>
+
+CPL_CVSID("$Id$");
 
 KMLVector::~KMLVector() {}
 
@@ -141,4 +142,3 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
             print();
     }
 }
-
