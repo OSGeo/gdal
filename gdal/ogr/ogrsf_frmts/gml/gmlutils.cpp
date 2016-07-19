@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Utils
  * Purpose:  GML reader
@@ -34,6 +33,8 @@
 #include "ogr_p.h"
 #include <string>
 #include <map>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                GML_ExtractSrsNameFromGeometry()                      */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReader::ResolveXlinks() method.
@@ -30,15 +29,14 @@
 
 #include "gmlreader.h"
 #include "cpl_error.h"
-
-CPL_CVSID("$Id$");
-
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
 
 #include <stack>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              GetID()                                 */

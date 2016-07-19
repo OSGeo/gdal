@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLHandler class.
@@ -33,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef HAVE_XERCES
 
