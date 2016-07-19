@@ -3675,6 +3675,8 @@ class GDALUInt128
 /*                    ComputeStatisticsInternal()                       */
 /************************************************************************/
 
+// The rationale for below optimizations is detailed in statistics.txt
+
 // Use with T = GDT_Byte or GDT_UInt16 only !
 template<class T>
 static void ComputeStatisticsInternalGeneric( int nXCheck,
