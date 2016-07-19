@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLDriver class.
@@ -32,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "ogr_kml.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRKMLDriverIdentify()                       */

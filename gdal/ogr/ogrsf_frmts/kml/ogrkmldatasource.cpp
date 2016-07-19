@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLDataSource class.
@@ -34,6 +33,8 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRKMLDataSource()                           */
