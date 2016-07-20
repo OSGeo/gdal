@@ -35,6 +35,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <typeinfo>
 
 CPL_CVSID("$Id$");
 
@@ -1256,6 +1257,10 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
         VRTSourcedRasterBand* poBand
             = reinterpret_cast<VRTSourcedRasterBand*>( papoBands[iBand] );
+
+        // Do not allow VRTDerivedRasterBand for example
+        if( typeid(*poBand) != typeid(VRTSourcedRasterBand) )
+            return FALSE;
 
         if (iBand == 0)
         {
