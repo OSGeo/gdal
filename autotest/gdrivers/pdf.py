@@ -601,6 +601,11 @@ def pdf_xmp():
     src_ds = gdal.Open( 'data/adobe_style_geospatial_with_xmp.pdf')
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
     out_ds = gdal.Open('tmp/pdf_xmp.pdf')
+    if out_ds is None:
+        # Some Poppler versions cannot re-open the file
+        gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
+        return 'skip'
+
     ref_md = src_ds.GetMetadata('xml:XMP')
     got_md = out_ds.GetMetadata('xml:XMP')
     base_md = out_ds.GetMetadata()
