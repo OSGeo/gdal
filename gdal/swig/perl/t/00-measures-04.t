@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use bytes;
 use v5.10;
-use Test::More qw(no_plan);
+use Test::More;
 BEGIN { use_ok('Geo::GDAL') };
 
 # test measured geometries in pg driver
@@ -41,6 +41,12 @@ my @data = (
 );
 
 my $driver = 'PostgreSQL';
+
+eval {
+    Geo::OGR::Open('PG:dbname=autotest', 1);
+};
+SKIP: {
+    skip "PG connect to autotest failed. Probably it is not available.", 1 if $@;
 
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
@@ -81,3 +87,5 @@ for (my $i = 0; $i < @data; $i+=2) {
 
     Geo::OGR::Open('PG:dbname=autotest', 1)->DeleteLayer(lc($type));
 }
+}
+done_testing();
