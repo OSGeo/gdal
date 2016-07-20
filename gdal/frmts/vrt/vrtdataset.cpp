@@ -33,6 +33,8 @@
 #include "cpl_minixml.h"
 #include "ogr_spatialref.h"
 
+#include <typeinfo>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1206,6 +1208,10 @@ int VRTDataset::CheckCompatibleForDatasetIO()
         /* If there are overviews, let's VRTSourcedRasterBand::IRasterIO() */
         /* do the job */
         if (poBand->GetOverviewCount() != 0)
+            return FALSE;
+
+        // Do not allow VRTDerivedRasterBand for example
+        if( typeid(*poBand) != typeid(VRTSourcedRasterBand) )
             return FALSE;
 
         if (iBand == 0)
