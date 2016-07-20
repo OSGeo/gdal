@@ -49,6 +49,8 @@
 
 ******************************************************************************/
 
+#include "ogr_libkml.h"
+
 void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
