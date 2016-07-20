@@ -4720,7 +4720,15 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     else
     {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        return GDALPDFOpen(pszFilename, GA_ReadOnly);
+        GDALDataset* poDS = GDALPDFOpen(pszFilename, GA_ReadOnly);
+        char** papszMD = CSLDuplicate( poSrcDS->GetMetadata() );
+        papszMD = CSLMerge( papszMD, poDS->GetMetadata() );
+        const char* pszAOP = CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
+        if( pszAOP != NULL && EQUAL(pszAOP, GDALMD_AOP_AREA) )
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        poDS->SetMetadata( papszMD );
+        CSLDestroy(papszMD);
+        return poDS;
 #else
         return new GDALFakePDFDataset();
 #endif

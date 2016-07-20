@@ -6511,9 +6511,33 @@ char      **PDFDataset::GetMetadata( const char * pszDomain )
         apszMetadata[0] = poStream->GetBytes();
         oMDMD.SetMetadata(apszMetadata, pszDomain);
         VSIFree(apszMetadata[0]);
+        return oMDMD.GetMetadata(pszDomain);
     }
-
-    return oMDMD.GetMetadata(pszDomain);
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        char** papszPAMMD = GDALPamDataset::GetMetadata(pszDomain);
+        for(char** papszIter = papszPAMMD;
+            papszIter && *papszIter;
+            ++papszIter )
+        {
+            char* pszKey = NULL;
+            const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+            if( pszKey && pszValue )
+            {
+                if( oMDMD.GetMetadataItem( pszKey, pszDomain ) == NULL )
+                    oMDMD.SetMetadataItem( pszKey, pszValue, pszDomain );
+            }
+            CPLFree(pszKey);
+        }
+        return oMDMD.GetMetadata(pszDomain);
+    }
+    if( EQUAL(pszDomain, "LAYERS") ||
+        EQUAL(pszDomain, "xml:XMP") ||
+        EQUAL(pszDomain, "SUBDATASETS") )
+    {
+        return oMDMD.GetMetadata(pszDomain);
+    }
+    return GDALPamDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -6525,16 +6549,37 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
 {
     if (pszDomain == NULL || EQUAL(pszDomain, ""))
     {
-        if (CSLFindString(papszMetadata, "NEATLINE") != -1)
+        char** papszMetadataDup = CSLDuplicate(papszMetadata);
+        oMDMD.SetMetadata(NULL, pszDomain);
+
+        for(char** papszIter = papszMetadataDup;
+            papszIter && *papszIter;
+            ++papszIter )
         {
-            bProjDirty = TRUE;
-            bNeatLineDirty = TRUE;
+            char* pszKey = NULL;
+            const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+            if( pszKey && pszValue )
+            {
+                SetMetadataItem( pszKey, pszValue, pszDomain );
+            }
+            CPLFree(pszKey);
         }
-        bInfoDirty = TRUE;
+        CSLDestroy(papszMetadataDup);
+        return CE_None;
     }
     else if (EQUAL(pszDomain, "xml:XMP"))
+    {
         bXMPDirty = TRUE;
-    return oMDMD.SetMetadata(papszMetadata, pszDomain);
+        return oMDMD.SetMetadata(papszMetadata, pszDomain);
+    }
+    else if (EQUAL(pszDomain, "SUBDATASETS") )
+    {
+        return oMDMD.SetMetadata(papszMetadata, pszDomain);
+    }
+    else
+    {
+        return GDALPamDataset::SetMetadata(papszMetadata, pszDomain);
+    }
 }
 
 /************************************************************************/
@@ -6554,7 +6599,7 @@ const char *PDFDataset::GetMetadataItem( const char * pszName,
         if(bUseLib.test(PDFLIB_PDFIUM))
             return "PDFIUM";
     }
-    return oMDMD.GetMetadataItem(pszName, pszDomain);
+    return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
 }
 
 /************************************************************************/
@@ -6569,19 +6614,63 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
     {
         if (EQUAL(pszName, "NEATLINE"))
         {
-            bProjDirty = TRUE;
-            bNeatLineDirty = TRUE;
+            const char* pszOldValue = oMDMD.GetMetadataItem(pszName, pszDomain);
+            if( (pszValue == NULL && pszOldValue != NULL) ||
+                (pszValue != NULL && pszOldValue == NULL) ||
+                (pszValue != NULL && pszOldValue != NULL &&
+                 strcmp(pszValue, pszOldValue) != 0) )
+            {
+                bProjDirty = TRUE;
+                bNeatLineDirty = TRUE;
+            }
+            return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
         }
         else
         {
             if (pszValue == NULL)
                 pszValue = "";
-            bInfoDirty = TRUE;
+            if( EQUAL(pszName, "AUTHOR") ||
+                EQUAL(pszName, "PRODUCER") ||
+                EQUAL(pszName, "CREATOR") ||
+                EQUAL(pszName, "CREATION_DATE") ||
+                EQUAL(pszName, "SUBJECT") ||
+                EQUAL(pszName, "TITLE") ||
+                EQUAL(pszName, "KEYWORDS") )
+            {
+                const char* pszOldValue = oMDMD.GetMetadataItem(pszName, pszDomain);
+                if( (pszValue == NULL && pszOldValue != NULL) ||
+                    (pszValue != NULL && pszOldValue == NULL) ||
+                    (pszValue != NULL && pszOldValue != NULL &&
+                    strcmp(pszValue, pszOldValue) != 0) )
+                {
+                    bInfoDirty = TRUE;
+                }
+                return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+            }
+            else if( EQUAL(pszName, "DPI") )
+            {
+                return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+            }
+            else
+            {
+                oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+                return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+            }
         }
     }
     else if (EQUAL(pszDomain, "xml:XMP"))
+    {
         bXMPDirty = TRUE;
-    return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+        return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+    }
+    else if (EQUAL(pszDomain, "SUBDATASETS"))
+    {
+        return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+    }
+    else
+    {
+        return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+    }
 }
 
 /************************************************************************/
