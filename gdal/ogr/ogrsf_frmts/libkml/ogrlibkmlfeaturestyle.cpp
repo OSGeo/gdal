@@ -107,7 +107,7 @@ void featurestyle2kml(
         else
         {
             /***** parse the style string *****/
-            StylePtr poKmlStyle =
+            const StylePtr poKmlStyle =
                 addstylestring2kml( pszStyleString, NULL, poKmlFactory,
                                     poKmlFeature );
 
@@ -152,7 +152,7 @@ void featurestyle2kml(
             {
                 /***** parse the style string *****/
                 const StylePtr poKmlStyle =
-                    addstylestring2kml( pszStyleString, poKmlStyle,
+                    addstylestring2kml( pszStyleString, NULL,
                                      poKmlFactory, poKmlFeature );
                 if( poKmlStyle != NULL )
                 {
