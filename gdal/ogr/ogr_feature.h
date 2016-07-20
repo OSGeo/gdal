@@ -84,22 +84,22 @@ class CPL_DLL OGRFieldDefn
     void                SetName( const char * );
     const char         *GetNameRef() { return pszName; }
 
-    OGRFieldType        GetType() { return eType; }
+    OGRFieldType        GetType() const { return eType; }
     void                SetType( OGRFieldType eTypeIn );
     static const char  *GetFieldTypeName( OGRFieldType );
 
-    OGRFieldSubType     GetSubType() { return eSubType; }
+    OGRFieldSubType     GetSubType() const { return eSubType; }
     void                SetSubType( OGRFieldSubType eSubTypeIn );
     static const char  *GetFieldSubTypeName( OGRFieldSubType );
 
-    OGRJustification    GetJustify() { return eJustify; }
+    OGRJustification    GetJustify() const { return eJustify; }
     void                SetJustify( OGRJustification eJustifyIn )
                                                 { eJustify = eJustifyIn; }
 
-    int                 GetWidth() { return nWidth; }
+    int                 GetWidth() const { return nWidth; }
     void                SetWidth( int nWidthIn ) { nWidth = MAX(0,nWidthIn); }
 
-    int                 GetPrecision() { return nPrecision; }
+    int                 GetPrecision() const { return nPrecision; }
     void                SetPrecision( int nPrecisionIn )
                                                 { nPrecision = nPrecisionIn; }
 
@@ -110,7 +110,7 @@ class CPL_DLL OGRFieldDefn
     const char         *GetDefault() const;
     int                 IsDefaultDriverSpecific() const;
 
-    int                 IsIgnored() { return bIgnore; }
+    int                 IsIgnored() const { return bIgnore; }
     void                SetIgnored( int bIgnoreIn ) { bIgnore = bIgnoreIn; }
 
     int                 IsNullable() const { return bNullable; }
@@ -153,21 +153,21 @@ protected:
         void                Initialize( const char *, OGRwkbGeometryType );
 
 public:
-                            OGRGeomFieldDefn(const char *pszNameIn,
-                                             OGRwkbGeometryType eGeomTypeIn);
+                            OGRGeomFieldDefn( const char *pszNameIn,
+                                              OGRwkbGeometryType eGeomTypeIn );
                             OGRGeomFieldDefn( OGRGeomFieldDefn * );
         virtual            ~OGRGeomFieldDefn();
 
         void                SetName( const char * );
         const char         *GetNameRef() { return pszName; }
 
-        OGRwkbGeometryType  GetType() { return eGeomType; }
+        OGRwkbGeometryType  GetType() const { return eGeomType; }
         void                SetType( OGRwkbGeometryType eTypeIn );
 
         virtual OGRSpatialReference* GetSpatialRef();
         void                 SetSpatialRef(OGRSpatialReference* poSRSIn);
 
-        int                 IsIgnored() { return bIgnore; }
+        int                 IsIgnored() const { return bIgnore; }
         void                SetIgnored( int bIgnoreIn ) { bIgnore = bIgnoreIn; }
 
         int                 IsNullable() const { return bNullable; }
@@ -251,7 +251,7 @@ class CPL_DLL OGRFeatureDefn
 
     virtual int         IsGeometryIgnored();
     virtual void        SetGeometryIgnored( int bIgnore );
-    virtual int        IsStyleIgnored() { return bIgnoreStyle; }
+    virtual int         IsStyleIgnored() const { return bIgnoreStyle; }
     virtual void        SetStyleIgnored( int bIgnore ) { bIgnoreStyle = bIgnore; }
 
     virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
