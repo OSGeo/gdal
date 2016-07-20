@@ -378,13 +378,13 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  * implemented).
  */
 
-OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
+OGRErr OGRFeature::SetGeometry( const OGRGeometry * poGeomIn )
 
 {
-    if( GetGeomFieldCount() > 0 )
-        return SetGeomField(0, poGeomIn);
-    else
+    if( GetGeomFieldCount() < 1 )
         return OGRERR_FAILURE;
+
+    return SetGeomField(0, poGeomIn);
 }
 
 /************************************************************************/
@@ -768,7 +768,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
  * @since GDAL 1.11
  */
 
-OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
+OGRErr OGRFeature::SetGeomField( int iField, const OGRGeometry * poGeomIn )
 
 {
     if( iField < 0 || iField >= GetGeomFieldCount() )

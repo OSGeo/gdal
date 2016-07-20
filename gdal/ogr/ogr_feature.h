@@ -296,7 +296,7 @@ class CPL_DLL OGRFeature
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
 
     OGRErr              SetGeometryDirectly( OGRGeometry * );
-    OGRErr              SetGeometry( OGRGeometry * );
+    OGRErr              SetGeometry( const OGRGeometry * );
     OGRGeometry        *GetGeometryRef();
     OGRGeometry        *StealGeometry() CPL_WARN_UNUSED_RESULT;
 
@@ -311,7 +311,7 @@ class CPL_DLL OGRFeature
     OGRGeometry*        StealGeometry(int iField);
     OGRGeometry*        GetGeomFieldRef(const char* pszFName);
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
-    OGRErr              SetGeomField( int iField, OGRGeometry * );
+    OGRErr              SetGeomField( int iField, const OGRGeometry * );
 
     OGRFeature         *Clone() CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean  Equal( OGRFeature * poFeature );
