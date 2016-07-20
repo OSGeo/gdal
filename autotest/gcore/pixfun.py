@@ -121,6 +121,16 @@ def pixfun_imag_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     if not numpy.alltrue(data == refdata.imag):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test bugfix of #6599
+    copied_ds = gdal.Translate('', filename, format = 'MEM')
+    data_ds = copied_ds.GetRasterBand(1).ReadAsArray()
+    copied_ds = None
+
+    if not numpy.alltrue(data == data_ds):
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
