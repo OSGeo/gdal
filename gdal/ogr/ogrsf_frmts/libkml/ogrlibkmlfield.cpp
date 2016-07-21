@@ -244,8 +244,9 @@ static char* OGRLIBKMLSanitizeUTF8String( const char* pszString )
         }
         else
         {
-            CPLDebug("OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
-                    pszString);
+            CPLDebug(
+                "OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
+                pszString);
         }
         return CPLForceToASCII(pszString, -1, '?');
     }
@@ -481,7 +482,9 @@ void field2kml(
         // supported in OGR data model to have 2 fields with same name.
         case OFTDate:          //   Date
             {
-                memcpy(&sFieldDT, poOgrFeat->GetRawFieldRef(i), sizeof(OGRField));
+                memcpy(&sFieldDT,
+                       poOgrFeat->GetRawFieldRef(i),
+                       sizeof(OGRField));
 
                 for( int iTimeField = i + 1;
                      iTimeField < nFields;
@@ -500,7 +503,8 @@ void field2kml(
                           EQUAL( name, oFC.beginfield ) ||
                           EQUAL( name, oFC.endfield ) ) )
                     {
-                        const OGRField* psField2 = poOgrFeat->GetRawFieldRef(iTimeField);
+                        const OGRField* const psField2 =
+                            poOgrFeat->GetRawFieldRef(iTimeField);
                         sFieldDT.Date.Hour = psField2->Date.Hour;
                         sFieldDT.Date.Minute = psField2->Date.Minute;
                         sFieldDT.Date.Second = psField2->Date.Second;
@@ -844,10 +848,10 @@ void field2kml(
 }
 
 /******************************************************************************
- recursive function to read altitude mode from the geometry
+ Recursive function to read altitude mode from the geometry.
 ******************************************************************************/
 
-static int kml2altitudemode_rec(
+static bool kml2altitudemode_rec(
     GeometryPtr poKmlGeometry,
     int *pnAltitudeMode,
     int *pbIsGX )
@@ -861,13 +865,13 @@ static int kml2altitudemode_rec(
         if( poKmlPoint->has_altitudemode() )
         {
             *pnAltitudeMode = poKmlPoint->get_altitudemode();
-            return TRUE;
+            return true;
         }
         else if( poKmlPoint->has_gx_altitudemode() )
         {
             *pnAltitudeMode = poKmlPoint->get_gx_altitudemode();
             *pbIsGX = true;
-            return TRUE;
+            return true;
         }
 
         break;
@@ -879,13 +883,13 @@ static int kml2altitudemode_rec(
         if( poKmlLineString->has_altitudemode() )
         {
             *pnAltitudeMode = poKmlLineString->get_altitudemode();
-            return TRUE;
+            return true;
         }
         else if( poKmlLineString->has_gx_altitudemode() )
         {
             *pnAltitudeMode = poKmlLineString->get_gx_altitudemode();
             *pbIsGX = true;
-            return TRUE;
+            return true;
         }
         break;
     }
@@ -900,13 +904,13 @@ static int kml2altitudemode_rec(
         if( poKmlPolygon->has_altitudemode() )
         {
             *pnAltitudeMode = poKmlPolygon->get_altitudemode();
-            return TRUE;
+            return true;
         }
         else if( poKmlPolygon->has_gx_altitudemode() )
         {
             *pnAltitudeMode = poKmlPolygon->get_gx_altitudemode();
             *pbIsGX = true;
-            return TRUE;
+            return true;
         }
 
         break;
@@ -921,7 +925,7 @@ static int kml2altitudemode_rec(
             if( kml2altitudemode_rec( poKmlMultiGeometry->
                                       get_geometry_array_at( i ),
                                       pnAltitudeMode, pbIsGX ) )
-                return TRUE;
+                return true;
         }
 
         break;
@@ -933,14 +937,14 @@ static int kml2altitudemode_rec(
 
     }
 
-    return FALSE;
+    return false;
 }
 
 /******************************************************************************
- recursive function to read extrude from the geometry
+ Recursive function to read extrude from the geometry.
 ******************************************************************************/
 
-static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
+static bool kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
 {
     switch( poKmlGeometry->Type() )
     {
@@ -951,7 +955,7 @@ static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
         if( poKmlPoint->has_extrude() )
         {
             *pbExtrude = poKmlPoint->get_extrude();
-            return TRUE;
+            return true;
         }
 
         break;
@@ -963,7 +967,7 @@ static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
         if( poKmlLineString->has_extrude() )
         {
             *pbExtrude = poKmlLineString->get_extrude();
-            return TRUE;
+            return true;
         }
 
         break;
@@ -979,7 +983,7 @@ static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
         if( poKmlPolygon->has_extrude() )
         {
             *pbExtrude = poKmlPolygon->get_extrude();
-            return TRUE;
+            return true;
         }
 
         break;
@@ -993,7 +997,7 @@ static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
         {
             if( kml2extrude_rec( poKmlMultiGeometry->
                                  get_geometry_array_at( i ), pbExtrude ) )
-                return TRUE;
+                return true;
         }
 
         break;
@@ -1004,14 +1008,14 @@ static int kml2extrude_rec( GeometryPtr poKmlGeometry, bool *pbExtrude )
     }
     }
 
-    return FALSE;
+    return false;
 }
 
 /******************************************************************************
- recursive function to read tessellate from the geometry
+ Recursive function to read tessellate from the geometry.
 ******************************************************************************/
 
-static int kml2tessellate_rec(
+static bool kml2tessellate_rec(
     GeometryPtr poKmlGeometry,
     int *pnTessellate )
 {
@@ -1028,7 +1032,7 @@ static int kml2tessellate_rec(
         if( poKmlLineString->has_tessellate() )
         {
             *pnTessellate = poKmlLineString->get_tessellate();
-            return TRUE;
+            return true;
         }
 
         break;
@@ -1044,7 +1048,7 @@ static int kml2tessellate_rec(
         if( poKmlPolygon->has_tessellate() )
         {
             *pnTessellate = poKmlPolygon->get_tessellate();
-            return TRUE;
+            return true;
         }
 
         break;
@@ -1059,7 +1063,7 @@ static int kml2tessellate_rec(
             if( kml2tessellate_rec( poKmlMultiGeometry->
                                     get_geometry_array_at( i ),
                                     pnTessellate ) )
-                return TRUE;
+                return true;
         }
 
         break;
@@ -1069,7 +1073,7 @@ static int kml2tessellate_rec(
 
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1117,15 +1121,15 @@ static void ogrkmlSetAltitudeMode( OGRFeature* poOgrFeat, int iField,
 
 static const char* TrimSpaces( string& oText )
 {
-    /* SerializePretty() adds a new line before the data */
-    /* ands trailing spaces. I believe this is wrong */
-    /* as it breaks round-tripping */
+    // SerializePretty() adds a new line before the data
+    // ands trailing spaces. I believe this is wrong
+    // as it breaks round-tripping.
 
-    /* Trim trailing spaces */
+    // Trim trailing spaces.
     while( oText.size() != 0 && oText[oText.size()-1] == ' ' )
         oText.resize(oText.size()-1);
 
-    /* Skip leading newline and spaces */
+    // Skip leading newline and spaces.
     const char* pszText = oText.c_str();
     if( pszText[0] == '\n' )
         pszText ++;
@@ -1196,7 +1200,8 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
         if( poKmlTimePrimitive->IsA( kmldom::Type_TimeStamp ) )
         {
-            // probably a libkml bug: AsTimeStamp should really return not NULL on a gx:TimeStamp
+            // Probably a libkml bug: AsTimeStamp should really return not NULL
+            // on a gx:TimeStamp.
             TimeStampPtr poKmlTimeStamp = AsTimeStamp( poKmlTimePrimitive );
             if( poKmlTimeStamp == NULL )
                 poKmlTimeStamp = AsGxTimeStamp( poKmlTimePrimitive );
@@ -1212,7 +1217,8 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
         if( poKmlTimePrimitive->IsA( kmldom::Type_TimeSpan ) )
         {
-            // probably a libkml bug: AsTimeSpan should really return not NULL on a gx:TimeSpan
+            // Probably a libkml bug: AsTimeSpan should really return not NULL
+            // on a gx:TimeSpan.
             TimeSpanPtr poKmlTimeSpan = AsTimeSpan( poKmlTimePrimitive );
             if( poKmlTimeSpan == NULL )
                 poKmlTimeSpan = AsGxTimeSpan( poKmlTimePrimitive );
@@ -1236,7 +1242,6 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
     }
 
     /***** placemark *****/
-
     PlacemarkPtr poKmlPlacemark = AsPlacemark( poKmlFeature );
     GroundOverlayPtr poKmlGroundOverlay = AsGroundOverlay( poKmlFeature );
     if( poKmlPlacemark && poKmlPlacemark->has_geometry() )
@@ -1392,7 +1397,8 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
         {
             if( poKmlGroundOverlay->has_draworder() )
             {
-                poOgrFeat->SetField( iField, poKmlGroundOverlay->get_draworder() );
+                poOgrFeat->SetField( iField,
+                                     poKmlGroundOverlay->get_draworder() );
             }
         }
 
@@ -1436,10 +1442,8 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
     }
 
     /***** visibility *****/
-    int nVisibility = -1;
-
-    if( poKmlFeature->has_visibility() )
-        nVisibility = poKmlFeature->get_visibility();
+    const int nVisibility = poKmlFeature->has_visibility() ?
+        poKmlFeature->get_visibility() : -1;
 
     int iField = poOgrFeat->GetFieldIndex( oFC.visibilityfield );
 
@@ -1467,23 +1471,22 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
         /***** loop over the schemadata_arrays *****/
 
-        size_t nSchemaData = poKmlExtendedData->get_schemadata_array_size();
+        const size_t nSchemaData =
+            poKmlExtendedData->get_schemadata_array_size();
 
-        size_t iSchemaData;
-
-        for( iSchemaData = 0; iSchemaData < nSchemaData; iSchemaData++ )
+        for( size_t iSchemaData = 0; iSchemaData < nSchemaData; iSchemaData++ )
         {
             SchemaDataPtr poKmlSchemaData =
                 poKmlExtendedData->get_schemadata_array_at( iSchemaData );
 
             /***** loop over the simpledata array *****/
 
-            size_t nSimpleData =
+            const size_t nSimpleData =
                 poKmlSchemaData->get_simpledata_array_size();
 
-            size_t iSimpleData;
-
-            for( iSimpleData = 0; iSimpleData < nSimpleData; iSimpleData++ )
+            for( size_t iSimpleData = 0;
+                 iSimpleData < nSimpleData;
+                 iSimpleData++ )
             {
                 SimpleDataPtr poKmlSimpleData =
                     poKmlSchemaData->get_simpledata_array_at( iSimpleData );
@@ -1511,23 +1514,26 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
             }
         }
 
-        if(nSchemaData == 0 &&  poKmlExtendedData->get_data_array_size() > 0 )
+        if( nSchemaData == 0 &&  poKmlExtendedData->get_data_array_size() > 0 )
         {
-            int bLaunderFieldNames =
-                CPLTestBool(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
-            size_t nDataArraySize = poKmlExtendedData->get_data_array_size();
-            for(size_t i=0; i < nDataArraySize; i++)
+            const bool bLaunderFieldNames =
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
+            const size_t nDataArraySize =
+                poKmlExtendedData->get_data_array_size();
+            for( size_t i = 0; i < nDataArraySize; i++ )
             {
                 const DataPtr& data = poKmlExtendedData->get_data_array_at(i);
-                if(data->has_name() && data->has_value())
+                if( data->has_name() && data->has_value() )
                 {
                     CPLString osName = std::string(data->get_name());
-                    if(bLaunderFieldNames)
+                    if( bLaunderFieldNames )
                         osName = OGRLIBKMLLayer::LaunderFieldNames(osName);
                     iField = poOgrFeat->GetFieldIndex( osName );
-                    if(iField >= 0)
+                    if( iField >= 0 )
                     {
-                        poOgrFeat->SetField( iField, data->get_value().c_str() );
+                        poOgrFeat->SetField( iField,
+                                             data->get_value().c_str() );
                     }
                 }
             }
@@ -1600,8 +1606,6 @@ SimpleFieldPtr FieldDef2kml(
     SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField();
     poKmlSimpleField->set_name( pszFieldName );
 
-    SimpleDataPtr poKmlSimpleData = NULL;
-
     switch( poOgrFieldDef->GetType() )
     {
     case OFTInteger:
@@ -1661,18 +1665,19 @@ void kml2FeatureDef(
             pszType = osType.c_str();
         }
 
-        /* FIXME? We cannot set displayname as the field name because in kml2field() we make the */
-        /* lookup on fields based on their name. We would need some map if we really */
-        /* want to use displayname, but that might not be a good idea because displayname */
-        /* may have HTML formatting, which makes it impractical when converting to other */
-        /* drivers or to make requests */
-        /* Example: http://www.jasonbirch.com/files/newt_combined.kml */
-        /* if( poKmlSimpleField->has_displayname() )
-           {
-               osName = poKmlSimpleField->get_displayname();
-           }
-           else
-        */
+        // TODO: We cannot set displayname as the field name because in
+        // kml2field() we make the lookup on fields based on their name. We
+        // would need some map if we really want to use displayname, but that
+        // might not be a good idea because displayname may have HTML
+        // formatting, which makes it impractical when converting to other
+        // drivers or to make requests.
+        // Example: http://www.jasonbirch.com/files/newt_combined.kml
+
+        // if( poKmlSimpleField->has_displayname() )
+        //   {
+        //       osName = poKmlSimpleField->get_displayname();
+        //   }
+        //   else
         if( poKmlSimpleField->has_name() )
         {
             osName = poKmlSimpleField->get_name();
@@ -1698,14 +1703,12 @@ void kml2FeatureDef(
             OGRFieldDefn oOgrFieldName( osName.c_str(), OFTReal );
             poOgrFeatureDefn->AddFieldDefn( &oOgrFieldName );
         }
-        else /* string, or any other unrecognized type */
+        else  // string, or any other unrecognized type.
         {
             OGRFieldDefn oOgrFieldName( osName.c_str(), OFTString );
             poOgrFeatureDefn->AddFieldDefn( &oOgrFieldName );
         }
     }
-
-    return;
 }
 
 /*******************************************************************************
@@ -1745,31 +1748,73 @@ void get_fieldconfig( struct fieldconfig *oFC )
     oFC->scalexfield = CPLGetConfigOption( "LIBKML_SCALE_X_FIELD", "scale_x");
     oFC->scaleyfield = CPLGetConfigOption( "LIBKML_SCALE_Y_FIELD", "scale_y");
     oFC->scalezfield = CPLGetConfigOption( "LIBKML_SCALE_Z_FIELD", "scale_z");
-    oFC->networklinkfield = CPLGetConfigOption( "LIBKML_NETWORKLINK_FIELD", "networklink");
-    oFC->networklink_refreshvisibility_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD", "networklink_refreshvisibility");
-    oFC->networklink_flytoview_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_FLYTOVIEW_FIELD", "networklink_flytoview");
-    oFC->networklink_refreshMode_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHMODE_FIELD", "networklink_refreshmode");
-    oFC->networklink_refreshInterval_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD", "networklink_refreshinterval");
-    oFC->networklink_viewRefreshMode_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD", "networklink_viewrefreshmode");
-    oFC->networklink_viewRefreshTime_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD", "networklink_viewrefreshtime");
-    oFC->networklink_viewBoundScale_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD", "networklink_viewboundscale");
-    oFC->networklink_viewFormat_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWFORMAT_FIELD", "networklink_viewformat");
-    oFC->networklink_httpQuery_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_HTTPQUERY_FIELD", "networklink_httpquery");
-    oFC->camera_longitude_field = CPLGetConfigOption( "LIBKML_CAMERA_LONGITUDE_FIELD", "camera_longitude");
-    oFC->camera_latitude_field = CPLGetConfigOption( "LIBKML_CAMERA_LATITUDE_FIELD", "camera_latitude");
-    oFC->camera_altitude_field = CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDE_FIELD", "camera_altitude");
-    oFC->camera_altitudemode_field = CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDEMODE_FIELD", "camera_altitudemode");
-    oFC->photooverlayfield = CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_FIELD", "photooverlay");
-    oFC->leftfovfield = CPLGetConfigOption( "LIBKML_LEFTFOV_FIELD", "leftfov");
-    oFC->rightfovfield = CPLGetConfigOption( "LIBKML_RIGHTFOV_FIELD", "rightfov");
-    oFC->bottomfovfield = CPLGetConfigOption( "LIBKML_BOTTOMFOV_FIELD", "bottomfov");
-    oFC->topfovfield = CPLGetConfigOption( "LIBKML_TOPFOV_FIELD", "topfov");
-    oFC->nearfield = CPLGetConfigOption( "LIBKML_NEARFOV_FIELD", "near");
-    oFC->photooverlay_shape_field = CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_SHAPE_FIELD", "photooverlay_shape");
-    oFC->imagepyramid_tilesize_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_TILESIZE", "imagepyramid_tilesize");
-    oFC->imagepyramid_maxwidth_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXWIDTH", "imagepyramid_maxwidth");
-    oFC->imagepyramid_maxheight_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXHEIGHT", "imagepyramid_maxheight");
-    oFC->imagepyramid_gridorigin_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_GRIDORIGIN", "imagepyramid_gridorigin");
+    oFC->networklinkfield =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_FIELD", "networklink");
+    oFC->networklink_refreshvisibility_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD",
+                            "networklink_refreshvisibility");
+    oFC->networklink_flytoview_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_FLYTOVIEW_FIELD",
+                            "networklink_flytoview" );
+    oFC->networklink_refreshMode_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHMODE_FIELD",
+                            "networklink_refreshmode" );
+    oFC->networklink_refreshInterval_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD",
+                            "networklink_refreshinterval" );
+    oFC->networklink_viewRefreshMode_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD",
+                            "networklink_viewrefreshmode" );
+    oFC->networklink_viewRefreshTime_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD",
+                            "networklink_viewrefreshtime" );
+    oFC->networklink_viewBoundScale_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD",
+                            "networklink_viewboundscale" );
+    oFC->networklink_viewFormat_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWFORMAT_FIELD",
+                            "networklink_viewformat" );
+    oFC->networklink_httpQuery_field =
+        CPLGetConfigOption( "LIBKML_NETWORKLINK_HTTPQUERY_FIELD",
+                            "networklink_httpquery" );
+    oFC->camera_longitude_field =
+        CPLGetConfigOption( "LIBKML_CAMERA_LONGITUDE_FIELD",
+                            "camera_longitude" );
+    oFC->camera_latitude_field =
+        CPLGetConfigOption( "LIBKML_CAMERA_LATITUDE_FIELD",
+                            "camera_latitude" );
+    oFC->camera_altitude_field =
+        CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDE_FIELD", "camera_altitude");
+    oFC->camera_altitudemode_field =
+        CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDEMODE_FIELD",
+                            "camera_altitudemode");
+    oFC->photooverlayfield =
+        CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_FIELD", "photooverlay");
+    oFC->leftfovfield =
+        CPLGetConfigOption( "LIBKML_LEFTFOV_FIELD", "leftfov");
+    oFC->rightfovfield =
+        CPLGetConfigOption( "LIBKML_RIGHTFOV_FIELD", "rightfov");
+    oFC->bottomfovfield =
+        CPLGetConfigOption( "LIBKML_BOTTOMFOV_FIELD", "bottomfov");
+    oFC->topfovfield =
+        CPLGetConfigOption( "LIBKML_TOPFOV_FIELD", "topfov");
+    oFC->nearfield =
+        CPLGetConfigOption( "LIBKML_NEARFOV_FIELD", "near");
+    oFC->photooverlay_shape_field =
+        CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_SHAPE_FIELD",
+                            "photooverlay_shape");
+    oFC->imagepyramid_tilesize_field =
+        CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_TILESIZE",
+                            "imagepyramid_tilesize");
+    oFC->imagepyramid_maxwidth_field =
+        CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXWIDTH",
+                            "imagepyramid_maxwidth");
+    oFC->imagepyramid_maxheight_field =
+        CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXHEIGHT",
+                            "imagepyramid_maxheight");
+    oFC->imagepyramid_gridorigin_field =
+        CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_GRIDORIGIN",
+                            "imagepyramid_gridorigin" );
 }
 
 /************************************************************************/
