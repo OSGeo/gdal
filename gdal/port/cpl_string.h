@@ -103,10 +103,22 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(
     char **papszStrList, int nFirstLineToDelete,
     int nNumToRemove, char ***ppapszRetStrings) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CSLFindString( const char * const *, const char * );
-int CPL_DLL CSLFindStringCaseSensitive( const char * const *, const char * );
+#ifdef __cplusplus
+int CPL_DLL CSLFindString( const char * const *papszList,
+                           const char *pszTarget );
+int CPL_DLL CSLFindStringCaseSensitive( const char * const *papszList,
+                                        const char *pszTarget );
 int CPL_DLL CSLPartialFindString( const char * const *papszHaystack,
-                                  const char * pszNeedle );
+                                  const char *pszNeedle );
+#else
+// Present non-const to C code that does not like passing non-const to const.
+// Should be ABI compatible with the const versions.
+int CPL_DLL CSLFindString( char **papszList, const char *pszTarget );
+int CPL_DLL CSLFindStringCaseSensitive( char * const *papszList,
+                                        const char *pszTarget );
+int CPL_DLL CSLPartialFindString( char * const *papszHaystack,
+                                  const char *pszNeedle );
+#endif
 int CPL_DLL CSLFindName(char **papszStrList, const char *pszName);
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
                              int bDefault );
