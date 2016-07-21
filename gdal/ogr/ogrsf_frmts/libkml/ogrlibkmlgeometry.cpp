@@ -29,7 +29,7 @@
 
 #include "libkml_headers.h"
 
-#include <ogr_geometry.h>
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogrlibkmlgeometry.h"
 
@@ -51,7 +51,7 @@ using kmldom::PointPtr;
 using kmldom::PolygonPtr;
 
 /******************************************************************************
- function to write out a ogr geometry to kml
+ Function to write out a ogr geometry to kml.
 
 args:
           poOgrGeom     the ogr geometry
@@ -68,8 +68,6 @@ ElementPtr geom2kml(
     int extra,
     KmlFactory * poKmlFactory )
 {
-    int i;
-
     if( !poOgrGeom )
     {
         return NULL;
@@ -78,32 +76,32 @@ ElementPtr geom2kml(
     /***** ogr geom vars *****/
 
     OGRPoint *poOgrPoint = NULL;
-    OGRLineString *poOgrLineString;
-    OGRPolygon *poOgrPolygon;
-    OGRGeometryCollection *poOgrMultiGeom;
+    OGRLineString *poOgrLineString = NULL;
+    OGRPolygon *poOgrPolygon = NULL;
+    OGRGeometryCollection *poOgrMultiGeom = NULL;
 
     /***** libkml geom vars *****/
 
-    CoordinatesPtr coordinates;
-    PointPtr poKmlPoint;
-    LineStringPtr poKmlLineString;
-    LinearRingPtr poKmlLinearRing;
-    OuterBoundaryIsPtr poKmlOuterRing;
-    InnerBoundaryIsPtr poKmlInnerRing;
-    PolygonPtr poKmlPolygon;
-    MultiGeometryPtr poKmlMultiGeometry;
+    CoordinatesPtr coordinates = NULL;
+    PointPtr poKmlPoint = NULL;
+    LineStringPtr poKmlLineString = NULL;
+    LinearRingPtr poKmlLinearRing = NULL;
+    OuterBoundaryIsPtr poKmlOuterRing = NULL;
+    InnerBoundaryIsPtr poKmlInnerRing = NULL;
+    PolygonPtr poKmlPolygon = NULL;
+    MultiGeometryPtr poKmlMultiGeometry = NULL;
 
-    ElementPtr poKmlGeometry;
-    ElementPtr poKmlTmpGeometry;
+    ElementPtr poKmlGeometry = NULL;
+    ElementPtr poKmlTmpGeometry = NULL;
 
     /***** other vars *****/
 
-    double x,
-        y,
-        z;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
 
     int numpoints = 0;
-    int nGeom;
+    int nGeom = 0;
     OGRwkbGeometryType type = poOgrGeom->getGeometryType();
 
     switch( type )
@@ -111,7 +109,7 @@ ElementPtr geom2kml(
     case wkbPoint:
 
         poOgrPoint = ( OGRPoint * ) poOgrGeom;
-        if(poOgrPoint->getCoordinateDimension() == 0)
+        if( poOgrPoint->getCoordinateDimension() == 0 )
         {
             poKmlGeometry = poKmlPoint = poKmlFactory->CreatePoint();
         }
@@ -160,18 +158,22 @@ ElementPtr geom2kml(
         if( extra >= 0 )
         {
             if( numpoints < 4 &&
-                CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "A linearring should have at least 4 points");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "A linearring should have at least 4 points");
                 return NULL;
             }
         }
         else
         {
             if( numpoints < 2 &&
-                CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "A linestring should have at least 2 points");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "A linestring should have at least 2 points");
                 return NULL;
             }
         }
@@ -180,7 +182,7 @@ ElementPtr geom2kml(
 
         poOgrPoint = new OGRPoint();
 
-        for( i = 0; i < numpoints; i++ )
+        for( int i = 0; i < numpoints; i++ )
         {
             poOgrLineString->getPoint( i, poOgrPoint );
 
@@ -207,7 +209,7 @@ ElementPtr geom2kml(
 
       /***** fallthrough *****/
 
-    case wkbLinearRing:        //this case is for readability only
+    case wkbLinearRing:  // This case is for readability only.
 
         poKmlLinearRing = poKmlFactory->CreateLinearRing();
         poKmlLinearRing->set_coordinates( coordinates );
@@ -240,18 +242,22 @@ ElementPtr geom2kml(
         if( extra >= 0 )
         {
             if( numpoints < 4 &&
-                CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "A linearring should have at least 4 points");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "A linearring should have at least 4 points");
                 return NULL;
             }
         }
         else
         {
             if( numpoints < 2 &&
-                CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "A linestring should have at least 2 points");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "A linestring should have at least 2 points");
                 return NULL;
             }
         }
@@ -259,7 +265,7 @@ ElementPtr geom2kml(
         coordinates = poKmlFactory->CreateCoordinates();
         poOgrPoint = new OGRPoint();
 
-        for( i = 0; i < numpoints; i++ )
+        for( int i = 0; i < numpoints; i++ )
         {
             poOgrLineString->getPoint( i, poOgrPoint );
 
@@ -309,7 +315,8 @@ ElementPtr geom2kml(
     case wkbPolygon:
 
         CPLErrorReset();
-        if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
+        if( CPLTestBool(
+               CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
             OGRGeometryFactory::haveGEOS() && (!poOgrGeom->IsValid() ||
              CPLGetLastErrorType() != CE_None) )
         {
@@ -326,7 +333,7 @@ ElementPtr geom2kml(
             set_outerboundaryis( AsOuterBoundaryIs( poKmlTmpGeometry ) );
 
         nGeom = poOgrPolygon->getNumInteriorRings();
-        for( i = 0; i < nGeom; i++ )
+        for( int i = 0; i < nGeom; i++ )
         {
             poKmlTmpGeometry = geom2kml( poOgrPolygon->getInteriorRing ( i ),
                                          i + 1, poKmlFactory );
@@ -339,7 +346,8 @@ ElementPtr geom2kml(
     case wkbPolygon25D:
 
         CPLErrorReset();
-        if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
+        if( CPLTestBool(
+               CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
             OGRGeometryFactory::haveGEOS() && (!poOgrGeom->IsValid() ||
              CPLGetLastErrorType() != CE_None) )
         {
@@ -356,7 +364,7 @@ ElementPtr geom2kml(
             set_outerboundaryis( AsOuterBoundaryIs( poKmlTmpGeometry ) );
 
         nGeom = poOgrPolygon->getNumInteriorRings();
-        for( i = 0; i < nGeom; i++ )
+        for( int i = 0; i < nGeom; i++ )
         {
             poKmlTmpGeometry = geom2kml( poOgrPolygon->getInteriorRing( i ),
                                          i + 1, poKmlFactory );
@@ -380,7 +388,8 @@ ElementPtr geom2kml(
         nGeom = poOgrMultiGeom->getNumGeometries();
 
         if( nGeom == 1 &&
-            CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+            CPLTestBool(
+                CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLDebug("LIBKML", "Turning multiple geometry into single geometry");
             poKmlGeometry = geom2kml( poOgrMultiGeom->getGeometryRef( 0 ),
@@ -389,15 +398,17 @@ ElementPtr geom2kml(
         else
         {
             if( nGeom == 0 &&
-                CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                CPLTestBool(
+                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
-                CPLError(CE_Warning, CPLE_AppDefined, "Empty multi geometry are not recommended");
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Empty multi geometry are not recommended");
             }
             poKmlGeometry = poKmlMultiGeometry =
                 poKmlFactory->CreateMultiGeometry();
-            for( i = 0; i < nGeom; i++ )
+            for( int i = 0; i < nGeom; i++ )
             {
-                poKmlTmpGeometry = geom2kml( poOgrMultiGeom->getGeometryRef( i ),
+                poKmlTmpGeometry = geom2kml( poOgrMultiGeom->getGeometryRef(i),
                                             -1, poKmlFactory );
                 poKmlMultiGeometry->
                     add_geometry( AsGeometry( poKmlTmpGeometry ) );
@@ -417,7 +428,7 @@ ElementPtr geom2kml(
 }
 
 /******************************************************************************
- recursive function to read a kml geometry and translate to ogr
+ Recursive function to read a kml geometry and translate to ogr.
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
@@ -434,34 +445,33 @@ static OGRGeometry *kml2geom_rec(
 {
     /***** ogr geom vars *****/
 
-    OGRPoint *poOgrPoint;
-    OGRLineString *poOgrLineString;
-    OGRLinearRing *poOgrLinearRing;
-    OGRPolygon *poOgrPolygon;
-    OGRGeometryCollection *poOgrMultiGeometry;
+    OGRPoint *poOgrPoint = NULL;
+    OGRLineString *poOgrLineString = NULL;
+    OGRLinearRing *poOgrLinearRing = NULL;
+    OGRPolygon *poOgrPolygon = NULL;
+    OGRGeometryCollection *poOgrMultiGeometry = NULL;
     OGRGeometry *poOgrGeometry = NULL;
     OGRGeometry *poOgrTmpGeometry = NULL;
 
     /***** libkml geom vars *****/
 
-    CoordinatesPtr poKmlCoordinates;
-    PointPtr poKmlPoint;
-    LineStringPtr poKmlLineString;
-    LinearRingPtr poKmlLinearRing;
-    OuterBoundaryIsPtr poKmlOuterRing;
-    InnerBoundaryIsPtr poKmlInnerRing;
-    PolygonPtr poKmlPolygon;
-    MultiGeometryPtr poKmlMultiGeometry;
-    GxTrackPtr poKmlGxTrack;
-    GxMultiTrackPtr poKmlGxMultiTrack;
-    GeometryPtr poKmlTmpGeometry;
+    CoordinatesPtr poKmlCoordinates = NULL;
+    PointPtr poKmlPoint = NULL;
+    LineStringPtr poKmlLineString = NULL;
+    LinearRingPtr poKmlLinearRing = NULL;
+    OuterBoundaryIsPtr poKmlOuterRing = NULL;
+    InnerBoundaryIsPtr poKmlInnerRing = NULL;
+    PolygonPtr poKmlPolygon = NULL;
+    MultiGeometryPtr poKmlMultiGeometry = NULL;
+    GxTrackPtr poKmlGxTrack = NULL;
+    GxMultiTrackPtr poKmlGxMultiTrack = NULL;
+    GeometryPtr poKmlTmpGeometry = NULL;
 
     Vec3 oKmlVec;
 
-    size_t nRings,
-        nCoords,
-        nGeom,
-        i;
+    size_t nRings = 0;
+    size_t nCoords = 0;
+    size_t nGeom = 0;
 
     switch( poKmlGeometry->Type() )
     {
@@ -505,7 +515,7 @@ static OGRGeometry *kml2geom_rec(
             poKmlCoordinates = poKmlLineString->get_coordinates();
 
             nCoords = poKmlCoordinates->get_coordinates_array_size();
-            for( i = 0; i < nCoords; i++ )
+            for( size_t i = 0; i < nCoords; i++ )
             {
                 oKmlVec = poKmlCoordinates->get_coordinates_array_at( i );
                 if( oKmlVec.has_altitude() )
@@ -530,7 +540,7 @@ static OGRGeometry *kml2geom_rec(
             poKmlCoordinates = poKmlLinearRing->get_coordinates();
 
             nCoords = poKmlCoordinates->get_coordinates_array_size();
-            for( i = 0; i < nCoords; i++ )
+            for( size_t i = 0; i < nCoords; i++ )
             {
                 oKmlVec = poKmlCoordinates->get_coordinates_array_at( i );
                 if( oKmlVec.has_altitude() )
@@ -565,7 +575,7 @@ static OGRGeometry *kml2geom_rec(
 
         }
         nRings = poKmlPolygon->get_innerboundaryis_array_size();
-        for( i = 0; i < nRings; i++ )
+        for( size_t i = 0; i < nRings; i++ )
         {
             poKmlInnerRing = poKmlPolygon->get_innerboundaryis_array_at( i );
             poKmlLinearRing = poKmlInnerRing->get_linearring();
@@ -588,7 +598,7 @@ static OGRGeometry *kml2geom_rec(
         // Detect subgeometry type to instantiate appropriate
         // multi geometry type.
         kmldom::KmlDomType type = kmldom::Type_Unknown;
-        for( i = 0; i < nGeom; i++ )
+        for( size_t i = 0; i < nGeom; i++ )
         {
             poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at( i );
             if( type == kmldom::Type_Unknown )
@@ -611,7 +621,7 @@ static OGRGeometry *kml2geom_rec(
         else
             poOgrMultiGeometry = new OGRGeometryCollection();
 
-        for( i = 0; i < nGeom; i++ )
+        for( size_t i = 0; i < nGeom; i++ )
         {
             poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at( i );
             poOgrTmpGeometry = kml2geom_rec( poKmlTmpGeometry, poOgrSRS );
@@ -626,7 +636,7 @@ static OGRGeometry *kml2geom_rec(
         poKmlGxTrack = AsGxTrack( poKmlGeometry );
         nCoords = poKmlGxTrack->get_gx_coord_array_size();
         poOgrLineString = new OGRLineString();
-        for( i = 0; i < nCoords; i++ )
+        for( size_t i = 0; i < nCoords; i++ )
         {
             oKmlVec = poKmlGxTrack->get_gx_coord_array_at( i );
             if( oKmlVec.has_altitude() )
@@ -652,7 +662,7 @@ static OGRGeometry *kml2geom_rec(
             poKmlGxTrack = poKmlGxMultiTrack->get_gx_track_array_at( j );
             nCoords = poKmlGxTrack->get_gx_coord_array_size();
             poOgrLineString = new OGRLineString();
-            for( i = 0; i < nCoords; i++ )
+            for( size_t i = 0; i < nCoords; i++ )
             {
                 oKmlVec = poKmlGxTrack->get_gx_coord_array_at( i );
                 if( oKmlVec.has_altitude() )
@@ -686,8 +696,6 @@ OGRGeometry *kml2geom_latlonbox_int(
     LatLonBoxPtr poKmlLatLonBox,
     OGRSpatialReference *poOgrSRS )
 {
-    OGRPolygon *poOgrPolygon;
-    double north, south, east, west;
     if( !poKmlLatLonBox->has_north() ||
         !poKmlLatLonBox->has_south() ||
         !poKmlLatLonBox->has_east() ||
@@ -695,17 +703,19 @@ OGRGeometry *kml2geom_latlonbox_int(
     {
         return NULL;
     }
-    poOgrPolygon = new OGRPolygon();
-    north = poKmlLatLonBox->get_north();
-    south = poKmlLatLonBox->get_south();
-    east = poKmlLatLonBox->get_east();
-    west = poKmlLatLonBox->get_west();
+    const double north = poKmlLatLonBox->get_north();
+    const double south = poKmlLatLonBox->get_south();
+    const double east = poKmlLatLonBox->get_east();
+    const double west = poKmlLatLonBox->get_west();
+
     OGRLinearRing* poOgrRing = new OGRLinearRing();
     poOgrRing->addPoint( east, north, 0.0 );
     poOgrRing->addPoint( east, south, 0.0 );
     poOgrRing->addPoint( west, south, 0.0 );
     poOgrRing->addPoint( west, north, 0.0 );
     poOgrRing->addPoint( east, north, 0.0 );
+
+    OGRPolygon *poOgrPolygon = new OGRPolygon();
     poOgrPolygon->
         addRingDirectly( poOgrRing );
     poOgrPolygon->assignSpatialReference(poOgrSRS);
@@ -751,7 +761,7 @@ OGRGeometry *kml2geom_latlonquad_int(
 }
 
 /******************************************************************************
- main function to read a kml geometry and translate to ogr
+ Main function to read a kml geometry and translate to ogr.
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
