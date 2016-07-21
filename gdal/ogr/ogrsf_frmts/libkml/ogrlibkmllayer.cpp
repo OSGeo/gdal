@@ -795,7 +795,7 @@ OGRStyleTable *OGRLIBKMLLayer::GetStyleTable()
 
  Returns:       nothing
 
- note: this method assumes ownership of the style table
+ Note: This method assumes ownership of the style table.
 ******************************************************************************/
 
 void OGRLIBKMLLayer::SetStyleTableDirectly( OGRStyleTable * poStyleTable )
@@ -839,8 +839,8 @@ void OGRLIBKMLLayer::SetStyleTableDirectly( OGRStyleTable * poStyleTable )
 
  Returns:       nothing
 
- note:  This method copies the style table, and the user will still be
-        responsible for its destruction
+ Note:  This method copies the style table, and the user will still be
+        responsible for its destruction.
 ******************************************************************************/
 
 void OGRLIBKMLLayer::SetStyleTable( OGRStyleTable * poStyleTable )
@@ -1017,10 +1017,10 @@ void OGRLIBKMLLayer::SetCamera( const char* pszCameraLongitude,
 /*                         SetWriteRegion()                             */
 /************************************************************************/
 
-void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels,
-                                    double dfMaxLodPixels,
-                                    double dfMinFadeExtent,
-                                    double dfMaxFadeExtent)
+void OGRLIBKMLLayer::SetWriteRegion( double dfMinLodPixels,
+                                     double dfMaxLodPixels,
+                                     double dfMinFadeExtent,
+                                     double dfMaxFadeExtent )
 {
     m_bWriteRegion = true;
     m_bRegionBoundsAuto = true;
