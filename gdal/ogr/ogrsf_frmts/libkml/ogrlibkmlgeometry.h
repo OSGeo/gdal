@@ -32,7 +32,7 @@
 #include "libkml_headers.h"
 
 /*******************************************************************************
- function to write out a ogr geometry to km
+ Function to write out a ogr geometry to km.
 
 args:
             poOgrGeom     the ogr geometry
@@ -51,7 +51,7 @@ kmldom::ElementPtr geom2kml (
 
 
 /******************************************************************************
- function to read a kml geometry and translate to ogr
+ Function to read a kml geometry and translate to ogr.
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
@@ -64,14 +64,14 @@ Returns:
 
 OGRGeometry *kml2geom (
     kmldom::GeometryPtr poKmlGeometry,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
 OGRGeometry *kml2geom_latlonbox (
     kmldom::LatLonBoxPtr poKmlLatLonBox,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
 OGRGeometry *kml2geom_latlonquad (
     kmldom::GxLatLonQuadPtr poKmlLatLonQuad,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
-#endif /* OGR_LIBKML_GEOMETRY_H */
+#endif  // OGR_LIBKML_GEOMETRY_H
