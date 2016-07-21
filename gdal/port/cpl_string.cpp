@@ -645,7 +645,7 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLFindString( char ** papszList, const char * pszTarget )
+int CSLFindString( const char * const * papszList, const char * pszTarget )
 
 {
     if( papszList == NULL )
@@ -653,7 +653,7 @@ int CSLFindString( char ** papszList, const char * pszTarget )
 
     for( int i = 0; papszList[i] != NULL; ++i )
     {
-        if( EQUAL(papszList[i],pszTarget) )
+        if( EQUAL(papszList[i], pszTarget) )
             return i;
     }
 
@@ -679,7 +679,7 @@ int CSLFindString( char ** papszList, const char * pszTarget )
  * @since GDAL 2.0
  */
 
-int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
+int CSLFindStringCaseSensitive( const char * const * papszList, const char * pszTarget )
 
 {
     if( papszList == NULL )
@@ -711,7 +711,7 @@ int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLPartialFindString( char **papszHaystack, const char * pszNeedle )
+int CSLPartialFindString( const char * const *papszHaystack, const char * pszNeedle )
 {
     if (papszHaystack == NULL || pszNeedle == NULL)
         return -1;
