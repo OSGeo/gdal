@@ -61,7 +61,7 @@ using kmldom::STYLESTATE_HIGHLIGHT;
 using kmldom::STYLESTATE_NORMAL;
 
 /******************************************************************************
- generic function to parse a stylestring and add to a kml style
+ Generic function to parse a stylestring and add to a kml style.
 
 args:
             pszStyleString  the stylestring to parse
@@ -571,7 +571,7 @@ OGRStyleLabel *kml2label(
 }
 
 /******************************************************************************
- function to add a kml style to a style table
+ Function to add a kml style to a style table.
 ******************************************************************************/
 
 static void kml2styletable(
@@ -579,35 +579,32 @@ static void kml2styletable(
     StylePtr poKmlStyle )
 {
     /***** No reason to add it if it don't have an id. *****/
-    if( poKmlStyle->has_id() )
-    {
-        OGRStyleMgr *poOgrSM = new OGRStyleMgr( poOgrStyleTable );
-
-        poOgrSM->InitStyleString( NULL );
-
-        /***** read the style *****/
-        kml2stylestring( poKmlStyle, poOgrSM );
-
-        /***** add the style to the style table *****/
-        const std::string oName = poKmlStyle->get_id();
-
-        poOgrSM->AddStyle(
-            CPLString().Printf( "%s", oName.c_str() ), NULL );
-
-        /***** Cleanup the style manager. *****/
-        delete poOgrSM;
-    }
-    else
+    if( !poKmlStyle->has_id() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ERROR parsing kml Style: No id" );
+        return;
     }
 
-    return;
+    OGRStyleMgr *poOgrSM = new OGRStyleMgr( poOgrStyleTable );
+
+    poOgrSM->InitStyleString( NULL );
+
+    /***** read the style *****/
+    kml2stylestring( poKmlStyle, poOgrSM );
+
+    /***** add the style to the style table *****/
+    const std::string oName = poKmlStyle->get_id();
+
+    poOgrSM->AddStyle(
+        CPLString().Printf( "%s", oName.c_str() ), NULL );
+
+    /***** Cleanup the style manager. *****/
+    delete poOgrSM;
 }
 
 /******************************************************************************
- function to follow the kml stylemap if one exists
+ Function to follow the kml stylemap if one exists.
 ******************************************************************************/
 
 StyleSelectorPtr StyleFromStyleSelector(
@@ -785,7 +782,7 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
 }
 
 /******************************************************************************
- function to get the container from the kmlroot
+ Function to get the container from the kmlroot.
 
  Args:          poKmlRoot   the root element
 
@@ -983,7 +980,7 @@ StyleSelectorPtr StyleFromStyleMap(
 }
 
 /******************************************************************************
- function to parse a style table out of a document
+ Function to parse a style table out of a document.
 ******************************************************************************/
 
 void ParseStyles(
@@ -1069,12 +1066,10 @@ void ParseStyles(
         CPLFree( pszStyleId );
         CPLFree( pszStyleMapId );
     }
-
-    return;
 }
 
 /******************************************************************************
- function to add a style table to a kml container
+ Function to add a style table to a kml container.
 ******************************************************************************/
 
 void styletable2kml(
@@ -1211,7 +1206,7 @@ void styletable2kml(
 
 
 /******************************************************************************
- function to add a ListStyle and select it to a container
+ Function to add a ListStyle and select it to a container.
 ******************************************************************************/
 
 void createkmlliststyle(
