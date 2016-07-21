@@ -29,7 +29,7 @@
 
 #include <cmath>
 #include "gdal.h"
-#include "gdal_vrt.h"
+#include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -928,9 +928,9 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
  *
  * @see GDALAddDerivedBandPixelFunc
  *
- * @return CE_None, invalid (NULL) parameters are currently ignored.
+ * @return CE_None
  */
-CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc( void )
+CPLErr GDALRegisterDefaultPixelFunc()
 {
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
