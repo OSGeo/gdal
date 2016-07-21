@@ -28,7 +28,7 @@
  *****************************************************************************/
 
 /******************************************************************************
- function to output ogr fields in kml
+ Function to output ogr fields in kml.
 
  args:
         poOgrFeat       pointer to the feature the field is in
@@ -46,7 +46,6 @@
   LIBKML_DESCRIPTION_FIELD       default: none
   LIBKML_NAME_FIELD              default: OFTString field named name
 
-
 ******************************************************************************/
 
 #include "ogr_libkml.h"
@@ -59,7 +58,7 @@ void field2kml (
     int bUseSimpleField );
 
 /******************************************************************************
- function to read kml into ogr fields
+ Function to read kml into ogr fields.
 ******************************************************************************/
 
 void kml2field (
@@ -67,7 +66,7 @@ void kml2field (
     kmldom::FeaturePtr poKmlFeature );
 
 /******************************************************************************
- function create a simplefield from a FieldDefn
+ Function create a simplefield from a FieldDefn.
 ******************************************************************************/
 
 kmldom::SimpleFieldPtr FieldDef2kml (
@@ -75,16 +74,15 @@ kmldom::SimpleFieldPtr FieldDef2kml (
     kmldom::KmlFactory * poKmlFactory );
 
 /******************************************************************************
- function to add the simpleFields in a schema to a featuredefn
+ Function to add the simpleFields in a schema to a featuredefn.
 ******************************************************************************/
 
 void kml2FeatureDef (
     kmldom::SchemaPtr poKmlSchema,
-    OGRFeatureDefn *poOgrFeatureDefn);
+    OGRFeatureDefn *poOgrFeatureDefn );
 
 /*******************************************************************************
- * function to fetch the field config options
- *
+ Function to fetch the field config options.
 *******************************************************************************/
 
 struct fieldconfig {
@@ -136,5 +134,5 @@ struct fieldconfig {
 
 void get_fieldconfig( struct fieldconfig *oFC );
 
-int kmlAltitudeModeFromString(const char* pszAltitudeMode,
-                              int& isGX);
+int kmlAltitudeModeFromString( const char* pszAltitudeMode,
+                               int& isGX );
