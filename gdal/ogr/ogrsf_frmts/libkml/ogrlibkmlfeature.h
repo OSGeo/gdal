@@ -32,7 +32,7 @@
 #include "ogr_libkml.h"
 
 /******************************************************************************
- function to output a ogr feature to a kml placemark
+ Function to output a ogr feature to a kml placemark.
 ******************************************************************************/
 
 kmldom::FeaturePtr feat2kml(
@@ -43,7 +43,7 @@ kmldom::FeaturePtr feat2kml(
     int bUseSimpleField );
 
 /******************************************************************************
- function to read a kml placemark into a ogr feature
+ Function to read a kml placemark into a ogr feature.
 ******************************************************************************/
 
 OGRFeature *kml2feat(
