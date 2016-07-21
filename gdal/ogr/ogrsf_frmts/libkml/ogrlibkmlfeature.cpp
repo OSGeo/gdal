@@ -28,17 +28,15 @@
  *****************************************************************************/
 
 #include "libkml_headers.h"
+#include "ogrlibkmlfeature.h"
 
-#include <ogrsf_frmts.h>
-#include <ogr_geometry.h>
 #include "gdal.h"
-
+#include "ogr_geometry.h"
 #include "ogr_libkml.h"
-
-#include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
-#include "ogrlibkmlfeature.h"
+#include "ogrlibkmlgeometry.h"
+#include "ogrsf_frmts.h"
 
 using kmldom::AliasPtr;
 using kmldom::CameraPtr;
@@ -164,7 +162,7 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL( const char* pszURL,
 /*                        IsPowerOf2                                    */
 /************************************************************************/
 
-static int IsPowerOf2( int nVal )
+static bool IsPowerOf2( int nVal )
 {
     const unsigned int nTmp = static_cast<unsigned int>(nVal);
 
@@ -658,7 +656,8 @@ FeaturePtr feat2kml(
             (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
             (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)) )
         {
-            OrientationPtr const orientation = poKmlFactory->CreateOrientation();
+            OrientationPtr const orientation =
+                poKmlFactory->CreateOrientation();
             model->set_orientation(orientation);
             if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
                 orientation->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
