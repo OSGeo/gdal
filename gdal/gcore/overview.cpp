@@ -205,7 +205,7 @@ static int GDALFindBestEntry( int nEntryCount, const GDALColorEntry* aEntries,
 }
 
 /************************************************************************/
-/*                      ReadColorTableAsArray()                        */
+/*                      ReadColorTableAsArray()                         */
 /************************************************************************/
 
 static bool ReadColorTableAsArray( const GDALColorTable* poColorTable,
@@ -219,7 +219,7 @@ static bool ReadColorTableAsArray( const GDALColorTable* poColorTable,
     nTransparentIdx = -1;
     if( aEntries == NULL )
         return false;
-    for(int i = 0; i < nEntryCount; ++i )
+    for( int i = 0; i < nEntryCount; ++i )
     {
         poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
         if( nTransparentIdx < 0 && aEntries[i].c4 == 0 )
@@ -288,6 +288,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
     int nTransparentIdx = -1;
+
     if( poColorTable &&
         !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
                                nTransparentIdx) )
@@ -297,18 +298,17 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         return CE_Failure;
     }
 
-    if( aEntries == NULL )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Unable to allocate aEntries");
-        VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
-        return CE_Failure;
-    }
-
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
     // it as nodata value
     if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < nEntryCount )
     {
+        if( aEntries == NULL )
+        {
+            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries.");
+            VSIFree(pDstScanline);
+            VSIFree(panSrcXOffShifted);
+            return CE_Failure;
+        }
         aEntries[static_cast<int>(tNoDataValue)].c4 = 0;
     }
     // Or if we have no explicit nodata, but a color table entry that is
@@ -462,7 +462,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     {
                         const T val = pChunk[iX + iY *nChunkXSize];
                         int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount && aEntries[nVal].c4 )
+                        if( nVal >= 0 && nVal < nEntryCount &&
+                            aEntries[nVal].c4 )
                         {
                             nTotalR += aEntries[nVal].c1;
                             nTotalG += aEntries[nVal].c2;
@@ -654,17 +655,16 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return CE_Failure;
     }
 
-    if( aEntries == NULL )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Unable to allocate aEntries");
-        VSIFree(pafDstScanline);
-        return CE_Failure;
-    }
-
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
     // it as nodata value.
     if( bHasNoData && fNoDataValue >= 0.0f && fNoDataValue < nEntryCount )
     {
+        if( aEntries == NULL )
+        {
+            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries");
+            VSIFree(pafDstScanline);
+            return CE_Failure;
+        }
         aEntries[static_cast<int>(fNoDataValue)].c4 = 0;
     }
     // Or if we have no explicit nodata, but a color table entry that is
@@ -796,7 +796,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             pafSrcScanline[iX - nChunkXOff +
                                            (iY-nSrcYOff) * nChunkXSize];
                         int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount && aEntries[nVal].c4 )
+                        if( nVal >= 0 && nVal < nEntryCount &&
+                            aEntries[nVal].c4 )
                         {
                             const int nWeight = panLineWeight[i];
                             nTotalR += aEntries[nVal].c1 * nWeight;
@@ -882,7 +883,8 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     GDALColorEntry* aEntries = NULL;
     int nTransparentIdx = -1;
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries, nTransparentIdx) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount,
+                               aEntries, nTransparentIdx) )
     {
         VSIFree(pafDstScanline);
         return CE_Failure;
@@ -3072,7 +3074,9 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
     CPLErr eErr = CE_None;
-    for( int iOverview = 0; iOverview < nOverviews && eErr == CE_None; ++iOverview )
+    for( int iOverview = 0;
+         iOverview < nOverviews && eErr == CE_None;
+         ++iOverview )
     {
         int iSrcOverview = -1;  // -1 means the source bands.
 
