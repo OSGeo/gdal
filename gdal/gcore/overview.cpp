@@ -647,22 +647,30 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     GDALColorEntry* aEntries = NULL;
     int nTransparentIdx = -1;
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries, nTransparentIdx) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
+                               nTransparentIdx) )
     {
         VSIFree(pafDstScanline);
         return CE_Failure;
     }
+
+    if( aEntries == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Unable to allocate aEntries");
+        VSIFree(pafDstScanline);
+        return CE_Failure;
+    }
+
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
-    // it as nodata value
+    // it as nodata value.
     if( bHasNoData && fNoDataValue >= 0.0f && fNoDataValue < nEntryCount )
     {
         aEntries[static_cast<int>(fNoDataValue)].c4 = 0;
     }
     // Or if we have no explicit nodata, but a color table entry that is
-    // transparent, consider it as the nodata value
+    // transparent, consider it as the nodata value.
     else if( !bHasNoData && nTransparentIdx >= 0 )
     {
-        /*bHasNoData = TRUE; */ /* never read */
         fNoDataValue = static_cast<float>(nTransparentIdx);
     }
 
