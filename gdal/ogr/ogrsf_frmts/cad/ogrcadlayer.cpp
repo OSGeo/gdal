@@ -318,10 +318,17 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             OGRPoint * poPoint = new OGRPoint( poCADText->getPosition().getX(),
                                                poCADText->getPosition().getY(),
                                                poCADText->getPosition().getZ() );
-            poFeature->SetField( "text", poCADText->getTextValue().c_str() );
+            CPLString sTextValue = CADRecode( poCADText->getTextValue(), 29 );
+            poFeature->SetField( "text", sTextValue );
 
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADText" );
+            
+            oStringStream.str(std::string());
+            oStringStream << "LABEL(f:\"Arial\",t:\"" << sTextValue << "\",";
+            oStringStream << "c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+            oStringStream << ")" << std::dec;
+            poFeature->SetStyleString( oStringStream.str().c_str() );
             break;
         }
 
@@ -331,10 +338,17 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             OGRPoint * poPoint = new OGRPoint( poCADMText->getPosition().getX(),
                                                poCADMText->getPosition().getY(),
                                                poCADMText->getPosition().getZ() );
-            poFeature->SetField( "text", poCADMText->getTextValue().c_str() );
-
+            CPLString sTextValue = CADRecode( poCADMText->getTextValue(), 29 );
+            
+            poFeature->SetField( "text", sTextValue );
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADMText" );
+            
+            oStringStream.str(std::string());
+            oStringStream << "LABEL(f:\"Arial\",t:\"" << sTextValue << "\",";
+            oStringStream << "c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+            oStringStream << ")" << std::dec;
+            poFeature->SetStyleString( oStringStream.str().c_str() );
             break;
         }
 
@@ -396,15 +410,20 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         case CADGeometry::ATTDEF:
         {
             CADAttdef * const poCADAttdef = ( CADAttdef* ) poCADGeometry;
-
             OGRPoint * poPoint = new OGRPoint( poCADAttdef->getPosition().getX(),
                                                poCADAttdef->getPosition().getY(),
                                                poCADAttdef->getPosition().getZ() );
+            CPLString sTextValue = CADRecode( poCADAttdef->getTag(), 29 );
 
-            poFeature->SetField( "text", poCADAttdef->getTag().c_str() );
-
+            poFeature->SetField( "text", sTextValue );
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( "cadgeom_type", "CADAttdef" );
+            
+            oStringStream.str(std::string());
+            oStringStream << "LABEL(f:\"Arial\",t:\"" << sTextValue << "\",";
+            oStringStream << "c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+            oStringStream << ")" << std::dec;
+            poFeature->SetStyleString( oStringStream.str().c_str() );
             break;
         }
             

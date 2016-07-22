@@ -1,3 +1,34 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+###############################################################################
+# $Id$
+#
+# Project:  GDAL/OGR Test Suite
+# Purpose:  Test OGR DXF driver functionality.
+# Author:   Frank Warmerdam <warmerdam@pobox.com>
+#
+###############################################################################
+# Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+###############################################################################
 import os
 import sys
 from sys import version_info
@@ -234,7 +265,105 @@ def ogr_cad_3():
         return 'fail'
 
     return 'success'
+   
+# read a point 
+def ogr_cad_4():
+    gdaltest.cad_ds = ogr.Open( 'data/cad/point2d_r2000.dwg' )
+    
+    if gdaltest.cad_ds.GetLayerCount() != 1:
+        gdaltest.post_reason( 'expected exactly one layer.' )
+        return 'fail'
+        
+    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    
+    if gdaltest.cad_layer.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'expected exactly one feature.' )
+        return 'fail'
+        
+    feat = gdaltest.cad_layer.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT (50 50 0)' ):
+        gdaltest.post_reason( 'got feature which doesnot fit expectations.' )
+        return 'fail'
+    
+    return 'success'
 
+# read a line
+def ogr_cad_5():
+    gdaltest.cad_ds = ogr.Open( 'data/cad/line_r2000.dwg' )
+    
+    if gdaltest.cad_ds.GetLayerCount() != 1:
+        gdaltest.post_reason( 'expected exactly one layer.' )
+        return 'fail'
+        
+    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    
+    if gdaltest.cad_layer.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'expected exactly one feature.' )
+        return 'fail'
+        
+    feat = gdaltest.cad_layer.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (50 50 0,100 100 0)' ):
+        gdaltest.post_reason( 'got feature which doesnot fit expectations.' )
+        return 'fail'
+
+    return 'success'
+    
+# text reading
+def ogr_cad_6():
+    gdaltest.cad_ds = ogr.Open( 'data/cad/text_mtext_attdef_r2000.dwg' )
+    
+    if gdaltest.cad_ds.GetLayerCount() != 1:
+        gdaltest.post_reason( 'expected exactly one layer.' )
+        return 'fail'
+    
+    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    
+    if gdaltest.cad_layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'expected 3 features, got: %d' %gdaltest.cad_layer.GetFeatureCount() )
+        return 'fail'
+        
+    feat = gdaltest.cad_layer.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT(0.7413 1.7794 0)' ):
+        return 'fail'
+    
+    expected_style = 'LABEL(f:"Arial",t:"Русские буквы",c:#ffffff)'
+    if feat.GetStyleString() != expected_style:
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % ( feat.GetStyleString(), expected_style ) )
+        return 'fail'
+      
+    return 'success'
+    
+# mtext reading
+def ogr_cad_7():
+    feat = gdaltest.cad_layer.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT(2.8139 5.7963 0)' ):
+        return 'fail'
+    
+    expected_style = 'LABEL(f:"Arial",t:"English letters",c:#ffffff)'
+    if feat.GetStyleString() != expected_style:
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % ( feat.GetStyleString(), expected_style ) )
+        return 'fail'
+        
+    return 'success'
+    
+# attdef reading
+def ogr_cad_8():
+    feat = gdaltest.cad_layer.GetNextFeature()
+    
+    if ogrtest.check_feature_geometry( feat, 'POINT(4.98953601938918 2.62670161690571 0)' ):
+        return 'fail'
+    
+    expected_style = 'LABEL(f:"Arial",t:"TESTTAG",c:#ffffff)'
+    if feat.GetStyleString() != expected_style:
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % ( feat.GetStyleString(), expected_style ) )
+        return 'fail'
+        
+    return 'success'
+    
 # cleanup
 def ogr_cad_cleanup():
     gdaltest.cad_layer = None
@@ -246,6 +375,11 @@ gdaltest_list = [
     ogr_cad_1,
     ogr_cad_2,
     ogr_cad_3,
+    ogr_cad_4,
+    ogr_cad_5,
+    ogr_cad_6,
+    ogr_cad_7,
+    ogr_cad_8,
     ogr_cad_cleanup ]
 
 if __name__ == '__main__':

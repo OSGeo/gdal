@@ -46,10 +46,10 @@ class Matrix
 {
 public:
     Matrix();
-    void translate(const CADVector &vector);
-    void rotate(double rotation);
-    void scale(const CADVector &vector);
-    CADVector multiply(const CADVector &vector) const;
+    void        translate(const CADVector &vector);
+    void        rotate(double rotation);
+    void        scale(const CADVector &vector);
+    CADVector   multiply(const CADVector &vector) const;
 protected:
     array<double, 9> matrix;
 };
@@ -306,10 +306,10 @@ public:
     long                getScenario() const;
     void                setScenario(long value);
 
-    bool                getRational() const;
+    bool                isRational() const;
     void                setRational(bool value);
 
-    bool                getClosed() const;
+    bool                isClosed() const;
     void                setClosed(bool value);
 
     vector<CADVector>&  getControlPoints();
@@ -319,6 +319,7 @@ public:
     void                addControlPointsWeight(double weight);
     void                addControlPoint(const CADVector& point);
     void                addFitPoint(const CADVector& point);
+    
     bool                getWeight() const;
     void                setWeight(bool value);
 
@@ -537,7 +538,7 @@ public:
     double              getScale() const;
     void                setScale(double value);
 
-    bool                getOpened() const;
+    bool                isOpened() const;
     void                setOpened(bool value);
 
     void                addVertex(const CADVector& vertex);

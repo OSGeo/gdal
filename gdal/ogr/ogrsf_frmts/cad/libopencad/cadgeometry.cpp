@@ -669,7 +669,7 @@ void CADSpline::setScenario(long value)
     scenario = value;
 }
 
-bool CADSpline::getRational() const
+bool CADSpline::isRational() const
 {
     return rational;
 }
@@ -679,7 +679,7 @@ void CADSpline::setRational(bool value)
     rational = value;
 }
 
-bool CADSpline::getClosed() const
+bool CADSpline::isClosed() const
 {
     return closed;
 }
@@ -1117,7 +1117,7 @@ void CADMLine::setScale(double value)
     scale = value;
 }
 
-bool CADMLine::getOpened() const
+bool CADMLine::isOpened() const
 {
     return opened;
 }

@@ -429,7 +429,7 @@ const vector<char> CADCommonEntityObjectTypes
       CADObject::POLYLINE2D, CADObject::HATCH, CADObject::INSERT,
       CADObject::VERTEX3D, CADObject::VERTEX2D, CADObject::VERTEX_MESH,
       CADObject::VERTEX_PFACE, CADObject::VERTEX_PFACE_FACE, CADObject::TOLERANCE,
-      CADObject::SOLID3D
+      CADObject::SOLID3D, CADObject::WIPEOUT
 };
 
 bool isCommonEntityType(short nType)

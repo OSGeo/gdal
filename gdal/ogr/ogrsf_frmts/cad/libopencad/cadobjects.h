@@ -198,7 +198,8 @@ public:
         VBA_PROJECT_UNFIXED = 0x6E,     // 110
         VISUALSTYLE = 0x6F,             // 111
         WIPEOUTVARIABLE = 0x70,         // 112
-        XRECORD_UNFIXED = 0x71          // 113
+        XRECORD_UNFIXED = 0x71,         // 113
+        WIPEOUT = 0x72                  // 114
     };
 
 
