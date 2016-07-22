@@ -4670,11 +4670,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         // can fit on a uint64. Should be 99.99999% of cases.
         // For GUInt16, this limits to raster of 4 giga pixels
         if( (eDataType == GDT_Byte && !bSignedByte &&
-             static_cast<GUInt32>(nBlocksPerRow*nBlocksPerColumn/nSampleRate) <
+             static_cast<GUIntBig>(nBlocksPerRow)*nBlocksPerColumn/nSampleRate <
                 GUINTBIG_MAX / (255U * 255U) /
                         static_cast<GUInt32>(nBlockXSize * nBlockYSize)) ||
             (eDataType == GDT_UInt16 &&
-             static_cast<GUInt32>(nBlocksPerRow*nBlocksPerColumn/nSampleRate) <
+             static_cast<GUIntBig>(nBlocksPerRow)*nBlocksPerColumn/nSampleRate <
                 GUINTBIG_MAX / (65535U * 65535U) /
                         static_cast<GUInt32>(nBlockXSize * nBlockYSize)) )
         {
