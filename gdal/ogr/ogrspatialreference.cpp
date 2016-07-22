@@ -2280,13 +2280,12 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH_CI(pszCode, "AUTO") )
     {
-      char szWMSAuto[100] = { '\0' };
+        char szWMSAuto[100] = { '\0' };
 
         if( strlen(pszCode) > sizeof(szWMSAuto)-2 )
             return OGRERR_FAILURE;
 
-        strcpy( szWMSAuto, "AUTO:" );
-        strcpy( szWMSAuto + 5, pszCode + 4 );
+        snprintf( szWMSAuto, sizeof(szWMSAuto), "AUTO:%s", pszCode + 4 );
         for( int i = 5; szWMSAuto[i] != '\0'; i++ )
         {
             if( szWMSAuto[i] == ':' )
