@@ -1749,7 +1749,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.papanBandSrcValid == NULL );
 
-        bool bAllBandsAllValid = false;
+        bool bAllBandsAllValid = true;
         for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
         {
             eErr = CreateKernelMask( &oWK, i, "BandSrcValid" );
