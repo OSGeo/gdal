@@ -234,7 +234,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     int nColorsMod8 = nColors % 8;
     if( nColorsMod8 )
     {
-        for( iColor = 0; iColor < 8 - nColorsMod8; iColor ++)
+        // Make it obvious to Coverity that we won't overflow the array
+        // with the nColors + iColor < 256 condition.
+        for( iColor = 0; iColor < 8 - nColorsMod8 &&
+                         nColors + iColor < 256; iColor ++)
         {
             anPCT[nColors+iColor] = anPCT[nColors-1];
         }
