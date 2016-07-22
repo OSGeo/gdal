@@ -4727,6 +4727,19 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
         if( pszAOP != NULL && EQUAL(pszAOP, GDALMD_AOP_AREA) )
             papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
         poDS->SetMetadata( papszMD );
+        if( EQUAL(pszGEO_ENCODING, "NONE") )
+        {
+            double adfGeoTransform[6];
+            if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
+            {
+                poDS->SetGeoTransform( adfGeoTransform );
+            }
+            const char* pszProjectionRef = poSrcDS->GetProjectionRef();
+            if( pszProjectionRef != NULL && pszProjectionRef[0] != '\0' )
+            {
+                poDS->SetProjection( pszProjectionRef );
+            }
+        }
         CSLDestroy(papszMD);
         return poDS;
 #else

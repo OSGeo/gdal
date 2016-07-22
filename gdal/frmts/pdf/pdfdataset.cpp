@@ -6424,6 +6424,10 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
 
 const char* PDFDataset::GetProjectionRef()
 {
+    const char* pszPAMProjection = GDALPamDataset::GetProjectionRef();
+    if( pszPAMProjection != NULL && pszPAMProjection[0] != '\0' )
+        return pszPAMProjection;
+
     if (pszWKT && bGeoTransformValid)
         return pszWKT;
     return "";
@@ -6436,6 +6440,11 @@ const char* PDFDataset::GetProjectionRef()
 CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 
 {
+    if( GDALPamDataset::GetGeoTransform( padfTransform ) == CE_None )
+    {
+        return CE_None;
+    }
+
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
     return( (bGeoTransformValid) ? CE_None : CE_Failure );
@@ -6447,6 +6456,9 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr PDFDataset::SetProjection(const char* pszWKTIn)
 {
+    if( eAccess == GA_ReadOnly )
+        GDALPamDataset::SetProjection(pszWKTIn);
+
     CPLFree(pszWKT);
     pszWKT = pszWKTIn ? CPLStrdup(pszWKTIn) : CPLStrdup("");
     bProjDirty = TRUE;
@@ -6459,6 +6471,9 @@ CPLErr PDFDataset::SetProjection(const char* pszWKTIn)
 
 CPLErr PDFDataset::SetGeoTransform(double* padfGeoTransform)
 {
+    if( eAccess == GA_ReadOnly )
+        GDALPamDataset::SetGeoTransform(padfGeoTransform);
+
     memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
     bGeoTransformValid = TRUE;
     bProjDirty = TRUE;
