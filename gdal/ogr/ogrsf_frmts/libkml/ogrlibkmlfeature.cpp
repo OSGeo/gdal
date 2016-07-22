@@ -164,11 +164,11 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL( const char* pszURL,
 
 static bool IsPowerOf2( int nVal )
 {
+    if( nVal < 1 ) return false;
+
     const unsigned int nTmp = static_cast<unsigned int>(nVal);
 
-    return
-        nTmp != 0 &&
-        (nTmp & (nTmp - 1)) == 0;
+    return (nTmp & (nTmp - 1)) == 0;
 }
 
 /************************************************************************/
