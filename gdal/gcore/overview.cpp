@@ -255,7 +255,6 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     if( bBit2Grayscale )
         poColorTable = NULL;
 
-
     T tNoDataValue;
     if( !bHasNoData )
         tNoDataValue = 0;
@@ -290,12 +289,22 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     GDALColorEntry* aEntries = NULL;
     int nTransparentIdx = -1;
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries, nTransparentIdx) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
+                               nTransparentIdx) )
     {
         VSIFree(pDstScanline);
         VSIFree(panSrcXOffShifted);
         return CE_Failure;
     }
+
+    if( aEntries == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Unable to allocate aEntries");
+        VSIFree(pDstScanline);
+        VSIFree(panSrcXOffShifted);
+        return CE_Failure;
+    }
+
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
     // it as nodata value
     if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < nEntryCount )
@@ -2557,7 +2566,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                   "will probably lead to unexpected results.", pszResampling );
     }
 
-
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
 
@@ -2867,7 +2875,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     return eErr;
 }
-
 
 
 /************************************************************************/
