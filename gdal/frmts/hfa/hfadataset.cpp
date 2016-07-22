@@ -4101,16 +4101,16 @@ int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA)
 
   const char *pszGEOGCS = poSRS->GetAttrValue( "GEOGCS" );
   const char *pszDatum = poSRS->GetAttrValue( "DATUM" );
-  int gcsNameOffset = 0;
-  int datumNameOffset = 0;
+  size_t gcsNameOffset = 0;
+  size_t datumNameOffset = 0;
   if( pszGEOGCS == NULL )
       pszGEOGCS = "";
   if( pszDatum == NULL )
       pszDatum = "";
-  if(strstr(pszGEOGCS, "GCS_"))
-    gcsNameOffset = static_cast<int>(strlen("GCS_"));
-  if(strstr(pszDatum, "D_"))
-    datumNameOffset = static_cast<int>(strlen("D_"));
+  if(STARTS_WITH(pszGEOGCS, "GCS_"))
+    gcsNameOffset = strlen("GCS_");
+  if(STARTS_WITH(pszDatum, "D_"))
+    datumNameOffset = strlen("D_");
 
   if(!EQUAL(pszGEOGCS+gcsNameOffset, pszDatum+datumNameOffset))
     ret = TRUE;
