@@ -2249,9 +2249,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
         }
 
         /* Microsoft IIS */
-        szMonth[0] = ' ';
-        strcpy(szMonth + 1, apszMonths[iMonth]);
-        strcat(szMonth, " ");
+        snprintf( szMonth, sizeof(szMonth), " %s ", apszMonths[iMonth] );
         pszMonthFound = strstr(pszStr, szMonth);
         if (pszMonthFound)
         {
