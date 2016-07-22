@@ -694,6 +694,10 @@ def pdf_update_gt():
     ds.SetGeoTransform([2,1,0,49,0,-1])
     ds = None
 
+    if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Check geotransform
     ds = gdal.Open('tmp/pdf_update_gt.pdf')
     gt = ds.GetGeoTransform()
@@ -2020,6 +2024,40 @@ def pdf_metadata():
 
     return 'success'
 
+###############################################################################
+# Test PAM georef support
+
+def pdf_pam_georef():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    # Default behaviour should result in no PAM file
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds )
+    if os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Now disable internal georeferencing, so georef should go to PAM 
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'] )
+    if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('tmp/pdf_pam_georef.pdf')
+    if ds.GetGeoTransform() != src_ds.GetGeoTransform():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetProjectionRef() != src_ds.GetProjectionRef():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_pam_georef.pdf')
+
+    return 'success'
 
 gdaltest_list_for_full_backend = [
     pdf_online_1,
@@ -2072,7 +2110,8 @@ gdaltest_list_for_full_backend = [
     pdf_overviews,
     pdf_password,
     pdf_multipage,
-    pdf_metadata ]
+    pdf_metadata,
+    pdf_pam_georef ]
 
 gdaltest_list_for_short_backend = [
     pdf_iso32000,
