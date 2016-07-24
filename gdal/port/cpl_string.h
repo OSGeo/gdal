@@ -156,9 +156,9 @@ const char CPL_DLL *
                             const char *pszDefault );
 #else
 const char CPL_DLL *
-      CSLFetchNameValue( const char **papszStrList, const char *pszName);
+      CSLFetchNameValue( char **papszStrList, const char *pszName);
 const char CPL_DLL *
-      CSLFetchNameValueDef( const char **papszStrList,
+      CSLFetchNameValueDef( char **papszStrList,
                             const char *pszName,
                             const char *pszDefault );
 #endif
