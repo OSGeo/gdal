@@ -61,7 +61,7 @@ GDALCADDataset::GDALCADDataset() : poCADFile(NULL), papoLayers(NULL), nLayers(0)
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    }
+}
 
 GDALCADDataset::~GDALCADDataset()
     {
@@ -76,7 +76,7 @@ GDALCADDataset::~GDALCADDataset()
     CPLFree( papoLayers );
     if(poCADFile)
         delete( poCADFile );
-    }
+}
     
 void GDALCADDataset::FillTransform(CADImage* pImage, double dfUnits)
 {
