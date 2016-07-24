@@ -38,14 +38,14 @@
 
 static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
 {
-    if (poOpenInfo->nHeaderBytes < 6)
+    if ( poOpenInfo->nHeaderBytes < 6 )
         return FALSE;
 
-    if (poOpenInfo->pabyHeader[0] != 'A' ||
-        poOpenInfo->pabyHeader[1] != 'C')
+    if ( poOpenInfo->pabyHeader[0] != 'A' ||
+        poOpenInfo->pabyHeader[1] != 'C' )
         return TRUE;
         
-    return IdentifyCADFile( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 
+    return IdentifyCADFile ( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 
         FALSE : TRUE;
 }
 

@@ -153,7 +153,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     if( poCADGeometry->getEED().size() != 0 )
     {
         std::string sEEDAsOneString = "";
-        for ( auto iter = poCADGeometry->getEED().cbegin(); // TODO: replace auto with explicit type name.
+        for ( std::vector<std::string>::const_iterator
+              iter = poCADGeometry->getEED().cbegin();
               iter != poCADGeometry->getEED().cend(); ++iter )
         {
             sEEDAsOneString += *iter;
@@ -181,7 +182,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             CADVector stPositionVector = poCADPoint->getPosition();
             
             poFeature->SetGeometryDirectly( new OGRPoint( stPositionVector.getX(),
-                                                         stPositionVector.getY(), stPositionVector.getZ() ) );
+                                                          stPositionVector.getY(),
+                                                          stPositionVector.getZ() ) );
             poFeature->SetField( "cadgeom_type", "CADPoint" );
             break;
         }
@@ -206,7 +208,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         {
             CADCircle * const poCADCircle = ( CADCircle* ) poCADGeometry;
             OGRGeometry *poCircle = OGRGeometryFactory::approximateArcAngles(
-                    poCADCircle->getPosition().getX(), poCADCircle->getPosition().getY(),
+                    poCADCircle->getPosition().getX(), 
+                    poCADCircle->getPosition().getY(),
                     poCADCircle->getPosition().getZ(),
                     poCADCircle->getRadius(), poCADCircle->getRadius(), 0.0,
                     0.0, 360.0,
@@ -221,7 +224,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         {
             CADArc * const poCADArc = ( CADArc* ) poCADGeometry;
             OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                poCADArc->getPosition().getX(), poCADArc->getPosition().getY(),
+                poCADArc->getPosition().getX(),
+                poCADArc->getPosition().getY(),
                 poCADArc->getPosition().getZ(),
                 poCADArc->getRadius(), poCADArc->getRadius(), 0.0,
                 poCADArc->getStartingAngle(), 
@@ -230,7 +234,6 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                 0.0 );
 
             poFeature->SetGeometryDirectly( poArc );
-
             poFeature->SetField( "cadgeom_type", "CADArc" );
             break;
         }
@@ -240,7 +243,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             CADFace3D * const poCADFace = ( CADFace3D* ) poCADGeometry;
             OGRPolygon * poPoly = new OGRPolygon();
             OGRLinearRing * poLR = new OGRLinearRing();
-
+            
             for ( size_t i = 0; i < 3; ++i )
             {
                 poLR->addPoint(
@@ -265,26 +268,190 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             break;
         }
 
-        // TODO: unsupported smooth lines
         case CADGeometry::LWPOLYLINE:
         {
             CADLWPolyline * const poCADLWPolyline = ( CADLWPolyline* ) poCADGeometry;
-            OGRLineString * poLS = new OGRLineString();
-
-            for( size_t i = 0; i < poCADLWPolyline->getVertexCount(); ++i )
+            
+            poFeature->SetField( "cadgeom_type", "CADLWPolyline" );
+            
+            /*
+             * Excessive check, like in DXF driver.
+             * I tried to make a single-point polyline, but couldnt make it.
+             * Probably this check should be removed.
+             */
+            if( poCADLWPolyline->getVertexCount() == 1 )
             {
-                CADVector stVertex = poCADLWPolyline->getVertex( i );
+                poFeature->SetGeometryDirectly( 
+                                                new OGRPoint( poCADLWPolyline->getVertex(0).getX(),
+                                                              poCADLWPolyline->getVertex(0).getY(),
+                                                              poCADLWPolyline->getVertex(0).getZ() )
+                );
+                
+                break;
+            }
+            
+            /*
+             * If polyline has no arcs, handle it in easy way.
+             */
+            OGRLineString * poLS = new OGRLineString();
+            
+            if( poCADLWPolyline->getBulges().size() == 0 )
+            {
+                for( size_t i = 0; i < poCADLWPolyline->getVertexCount(); ++i )
+                {
+                    CADVector stVertex = poCADLWPolyline->getVertex( i );
+                    poLS->addPoint( stVertex.getX(),
+                                    stVertex.getY(),
+                                    stVertex.getZ()
+                    );
+                }
+                
+                poFeature->SetGeometryDirectly( poLS );
+                break;
+            }
+            
+            /*
+             * Last case - if polyline has mixed arcs and lines.
+             */
+            bool   bLineStringStarted = false;
+            size_t iCurrentVertex = 0, 
+                   iLastVertex = poCADLWPolyline->getVertexCount() - 1;
+            std::vector< double > adfBulges = poCADLWPolyline->getBulges();
+            
+            while( iCurrentVertex != iLastVertex )
+            {
+                CADVector stCurrentVertex = poCADLWPolyline->getVertex( iCurrentVertex );
+                CADVector stNextVertex = poCADLWPolyline->getVertex( iCurrentVertex + 1 );
+                
+                double dfLength = sqrt( pow( stNextVertex.getX() - stCurrentVertex.getX(), 2 )
+                                      + pow( stNextVertex.getY() - stCurrentVertex.getY(), 2 ) );
+                
+                /*
+                 * Handling straigth polyline segment.
+                 */
+                if( ( dfLength == 0 ) || ( adfBulges[iCurrentVertex] == 0 ) )
+                {
+                    if( !bLineStringStarted )
+                    {
+                        poLS->addPoint( stCurrentVertex.getX(),
+                                        stCurrentVertex.getY(),
+                                        stCurrentVertex.getZ()
+                        );
+                        bLineStringStarted = true;
+                    }
+                    
+                    poLS->addPoint( stNextVertex.getX(),
+                                    stNextVertex.getY(),
+                                    stNextVertex.getZ()
+                    );
+                }
+                else
+                {
+                    double dfSegmentBulge = adfBulges[iCurrentVertex];
+                    double dfH = ( dfSegmentBulge * dfLength ) / 2;
+                    double dfRadius = ( dfH / 2 ) + ( dfLength * dfLength / ( 8 * dfH ) );
+                    double dfOgrArcRotation = 0, dfOgrArcRadius = fabs( dfRadius );
+                    
+                    /*
+                     * Set arc's direction and keep bulge positive.
+                     */
+                    bool   bClockwise = ( dfSegmentBulge < 0 );
+                    if( bClockwise )
+                        dfSegmentBulge *= -1;
+                    
+                    /*
+                     * Get arc's center point.
+                     */
+                    double dfSaggita = fabs( dfSegmentBulge * ( dfLength / 2.0 ) );
+                    double dfApo = bClockwise ? -( dfOgrArcRadius - dfSaggita ) :
+                                                -( dfSaggita - dfOgrArcRadius );
+                                                
+                    CADVector stVertex;
+                    stVertex.setX( stCurrentVertex.getX() - stNextVertex.getX() );
+                    stVertex.setY( stCurrentVertex.getY() - stNextVertex.getY() );
+                    stVertex.setZ( stCurrentVertex.getZ() );
+                    
+                    CADVector stMidPoint;
+                    stMidPoint.setX( stNextVertex.getX() + 0.5 * stVertex.getX() );
+                    stMidPoint.setY( stNextVertex.getY() + 0.5 * stVertex.getY() );
+                    stMidPoint.setZ( stVertex.getZ() );
+                    
+                    CADVector stPperp;
+                    stPperp.setX( stVertex.getY() );
+                    stPperp.setY( -stVertex.getX() );
+                    double dfStPperpLength = sqrt( stPperp.getX() * stPperp.getX() +
+                                                   stPperp.getY() * stPperp.getY() );
+                    // TODO: check that length isnot 0
+                    stPperp.setX( stPperp.getX() / dfStPperpLength );
+                    stPperp.setY( stPperp.getY() / dfStPperpLength );
+                    
+                    CADVector stOgrArcCenter;
+                    stOgrArcCenter.setX( stMidPoint.getX() + ( stPperp.getX() * dfApo ) );
+                    stOgrArcCenter.setY( stMidPoint.getY() + ( stPperp.getY() * dfApo ) );
+                    
+                    /*
+                     * Get the line's general vertical direction ( -1 = down, +1 = up ).
+                     */
+                    double dfLineDir = stNextVertex.getY() > stCurrentVertex.getY() ? 1.0f : -1.0f;
+                    
+                    /*
+                     * Get arc's starting angle.
+                     */
+                    double dfA = atan2( ( stOgrArcCenter.getY() - stCurrentVertex.getY() ),
+                                        ( stOgrArcCenter.getX() - stCurrentVertex.getX() ) ) * 180.0 / M_PI;
+                    if( bClockwise && ( dfLineDir == 1.0 ) )
+                        dfA += ( dfLineDir * 180.0 );
+                    
+                    double dfOgrArcStartAngle = dfA > 0.0 ? -( dfA - 180.0 ) :
+                                                            -( dfA + 180.0 );
+                    
+                    /*
+                     * Get arc's ending angle.
+                     */
+                    dfA = atan2( ( stOgrArcCenter.getY() - stNextVertex.getY() ),
+                                 ( stOgrArcCenter.getX() - stNextVertex.getX() ) ) * 180.0 / M_PI;
+                    if( bClockwise && ( dfLineDir == 1.0 ) )
+                        dfA += ( dfLineDir * 180.0 );
 
-                poLS->addPoint( stVertex.getX(),
-                                stVertex.getY(),
-                                stVertex.getZ() );
+                    double dfOgrArcEndAngle = dfA > 0.0 ? -( dfA - 180.0 ) :
+                                                          -( dfA + 180.0 );
+                    
+                    if( !bClockwise && ( dfOgrArcStartAngle < dfOgrArcEndAngle) )
+                        dfOgrArcEndAngle = -180.0 + ( dfLineDir * dfA );
+                    
+                    if( bClockwise && ( dfOgrArcStartAngle > dfOgrArcEndAngle ) )
+                        dfOgrArcEndAngle += 360.0;
+                    
+                    /*
+                     * Flip arc's rotation if necessary.
+                     */
+                    if( bClockwise && ( dfLineDir == 1.0 ) )
+                        dfOgrArcRotation = dfLineDir * 180.0;
+                    
+                    /*
+                     * Tesselate the arc segment and append to the linestring.
+                     */
+                    OGRLineString * poArcpoLS = 
+                        ( OGRLineString * ) OGRGeometryFactory::approximateArcAngles(
+                            stOgrArcCenter.getX(), stOgrArcCenter.getY(), stOgrArcCenter.getZ(),
+                            dfOgrArcRadius, dfOgrArcRadius, dfOgrArcRotation,
+                            dfOgrArcStartAngle,dfOgrArcEndAngle,
+                            0.0 );
+                    
+                    poLS->addSubLineString( poArcpoLS );
+                    
+                    delete( poArcpoLS );
+                }
+                
+                ++iCurrentVertex;
             }
             
             if( poCADLWPolyline->isClosed() )
             {
                 poLS->addPoint( poCADLWPolyline->getVertex(0).getX(),
                                 poCADLWPolyline->getVertex(0).getY(),
-                                poCADLWPolyline->getVertex(0).getZ() );
+                                poCADLWPolyline->getVertex(0).getZ()
+                );
             }
 
             poFeature->SetGeometryDirectly( poLS );
