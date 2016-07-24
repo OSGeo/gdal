@@ -945,6 +945,48 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     }
 
 /* -------------------------------------------------------------------- */
+/*     Triangle                                                         */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbTriangle )
+    {
+        OGRTriangle      *poTri = (OGRTriangle *) poGeometry;
+
+        // Buffer for triangle tag name + srsName attribute if set
+        const size_t nTriTagLength = 14;
+        char* pszTriTagName = NULL;
+        const size_t nTriTagNameBufLen = nTriTagLength + nAttrsLength + 1;
+        pszTriTagName = (char *) CPLMalloc( nTriTagNameBufLen );
+
+        // Compose Polygon tag with or without srsName attribute
+        snprintf( pszTriTagName, nTriTagNameBufLen, "<gml:Triangle%s>", szAttributes );
+
+        AppendString( ppszText, pnLength, pnMaxLength, pszTriTagName );
+
+        // FREE TAG BUFFER
+        CPLFree( pszTriTagName );
+
+        if( poTri->getExteriorRingCurve() != NULL )
+        {
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "<gml:exterior>" );
+
+            if( !OGR2GML3GeometryAppend( poTri->getExteriorRingCurve(), poSRS,
+                                         ppszText, pnLength, pnMaxLength,
+                                         true, bLongSRS, bLineStringAsCurve,
+                                         NULL, nSRSDimensionLocFlags, true, NULL) )
+            {
+                return false;
+            }
+
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "</gml:exterior>" );
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "</gml:Triangle>" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      MultiSurface, MultiCurve, MultiPoint, MultiGeometry             */
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbMultiPolygon
@@ -1034,6 +1076,134 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         // FREE TAG BUFFER
         CPLFree( pszElemOpen );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Polyhedral Surface                                              */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbPolyhedralSurface)
+    {
+        // The patches enclosed in a single <gml:polygonPatches> tag need to be co-planar.
+        // TODO - enforce the condition within this implementation
+
+        OGRPolyhedralSurface *poPS = (OGRPolyhedralSurface *) poGeometry;
+        int             iMember;
+        const char *pszElemClose = NULL;
+        const char *pszMemberElem = NULL;
+
+        // Buffer for opening tag + srsName attribute
+        char* pszElemOpen = NULL;
+
+        const size_t nBufLen = 18 + nAttrsLength + 1;
+        pszElemOpen = (char *) CPLMalloc( nBufLen );
+        snprintf( pszElemOpen, nBufLen, "PolyhedralSurface%s>", szAttributes );
+
+        pszElemClose = "PolyhedralSurface>";
+        pszMemberElem = "PolygonPatch>";
+
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:polygonPatches>" );
+
+        for( iMember = 0; iMember < poPS->getNumGeometries(); iMember++)
+        {
+            OGRGeometry *poMember = poPS->getGeometry( iMember );
+
+            AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
+            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
+
+            char* pszGMLIdSub = NULL;
+            if (pszGMLId != NULL)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
+            if( !OGR2GML3GeometryAppend( poMember, poSRS,
+                                         ppszText, pnLength, pnMaxLength,
+                                         true, bLongSRS, bLineStringAsCurve,
+                                         pszGMLIdSub, nSRSDimensionLocFlags, false, NULL ) )
+            {
+                CPLFree(pszGMLIdSub);
+                return false;
+            }
+
+            CPLFree(pszGMLIdSub);
+
+            AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:polygonPatches>" );
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
+
+        // FREE TAG BUFFER
+        CPLFree( pszElemOpen );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      TIN                                                             */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbTIN)
+    {
+        // OGR uses the following hierarchy for TriangulatedSurface -
+
+        // <gml:TriangulatedSurface>
+        //     <gml:patches>
+        //         <gml:Triangle>
+        //             <gml:exterior>
+        //                 <gml:LinearRing>
+        //                     <gml:posList srsDimension=...>...</gml:posList>
+        //                 </gml:LinearRing>
+        //             </gml:exterior>
+        //         </gml:Triangle>
+        //     </gml:patches>
+        // </gml:TriangulatedSurface>
+
+        // <gml:trianglePatches> is deprecated, so write feature is not enabled for <gml:trianglePatches>
+
+        OGRTriangulatedSurface *poTIN = (OGRTriangulatedSurface *) poGeometry;
+        int             iMember;
+        const char *pszElemClose = NULL;
+
+        // Buffer for opening tag + srsName attribute
+        char* pszElemOpen = NULL;
+
+        const size_t nBufLen = 20 + nAttrsLength + 1;
+        pszElemOpen = (char *) CPLMalloc( nBufLen );
+        snprintf( pszElemOpen, nBufLen, "TriangulatedSurface%s>", szAttributes );
+
+        pszElemClose = "TriangulatedSurface>";
+
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:patches>" );
+
+        for( iMember = 0; iMember < poTIN->getNumGeometries(); iMember++)
+        {
+            OGRGeometry *poMember = poTIN->getGeometry( iMember );
+
+            char* pszGMLIdSub = NULL;
+            if (pszGMLId != NULL)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
+            if( !OGR2GML3GeometryAppend( poMember, poSRS,
+                                         ppszText, pnLength, pnMaxLength,
+                                         true, bLongSRS, bLineStringAsCurve,
+                                         pszGMLIdSub, nSRSDimensionLocFlags, false, NULL ) )
+            {
+                CPLFree(pszGMLIdSub);
+                return false;
+            }
+
+            CPLFree(pszGMLIdSub);
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:patches>" );
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
+
+        // FREE TAG BUFFER
+        CPLFree( pszElemOpen );
+    }
+
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported geometry type %s",
