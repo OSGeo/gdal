@@ -150,10 +150,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
+OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
+                                          int /* bApproxOK */  )
 {
-    UNREFERENCED_PARAM(bApproxOK);
-
     for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
     {
         OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
