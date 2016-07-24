@@ -1557,15 +1557,15 @@ int CPLTestBoolean( const char *pszValue )
  * @return true or false
  **********************************************************************/
 
-bool CPLFetchBool( const char **papszStrList, const char *pszKey,
+bool CPLFetchBool( const char * const *papszStrList, const char *pszKey,
                    bool bDefault )
 
 {
-    if( CSLFindString( const_cast<char **>(papszStrList), pszKey ) != -1 )
+    if( CSLFindString( papszStrList, pszKey ) != -1 )
         return true;
 
     const char * const pszValue =
-        CSLFetchNameValue( const_cast<char **>(papszStrList), pszKey );
+        CSLFetchNameValue( papszStrList, pszKey );
     if( pszValue == NULL )
         return bDefault;
 
@@ -1594,15 +1594,14 @@ bool CPLFetchBool( const char **papszStrList, const char *pszKey,
 int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
 
 {
-    return CPLFetchBool( const_cast<const char **>(papszStrList),
-                         pszKey, CPL_TO_BOOL(bDefault) );
+    return CPLFetchBool( papszStrList, pszKey, CPL_TO_BOOL(bDefault) );
 }
 
 /************************************************************************/
 /*                     CSLFetchNameValueDefaulted()                     */
 /************************************************************************/
 
-const char *CSLFetchNameValueDef( char **papszStrList,
+const char *CSLFetchNameValueDef( const char * const *papszStrList,
                                   const char *pszName,
                                   const char *pszDefault )
 
@@ -1628,7 +1627,8 @@ const char *CSLFetchNameValueDef( char **papszStrList,
  *
  * Returns NULL if the name is not found.
  **********************************************************************/
-const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
+const char *CSLFetchNameValue( const char * const *papszStrList,
+                               const char *pszName )
 {
     if (papszStrList == NULL || pszName == NULL)
         return NULL;

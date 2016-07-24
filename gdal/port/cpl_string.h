@@ -140,17 +140,29 @@ bool CPL_DLL CPLTestBool( const char *pszValue );
 }
 #endif
 #endif
-bool CPL_DLL CPLFetchBool( const char **papszStrList, const char *pszKey,
+bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
                            bool bDefault );
 #endif  /* __cplusplus */
 
 const char CPL_DLL *
-      CPLParseNameValue(const char *pszNameValue, char **ppszKey );
+      CPLParseNameValue( const char *pszNameValue, char **ppszKey );
+
+#ifdef __cplusplus
 const char CPL_DLL *
-      CSLFetchNameValue(char **papszStrList, const char *pszName);
+      CSLFetchNameValue( const char * const *papszStrList, const char *pszName);
 const char CPL_DLL *
-      CSLFetchNameValueDef(char **papszStrList, const char *pszName,
-                           const char *pszDefault );
+      CSLFetchNameValueDef( const char * const *papszStrList,
+                            const char *pszName,
+                            const char *pszDefault );
+#else
+const char CPL_DLL *
+      CSLFetchNameValue( const char **papszStrList, const char *pszName);
+const char CPL_DLL *
+      CSLFetchNameValueDef( const char **papszStrList,
+                            const char *pszName,
+                            const char *pszDefault );
+#endif
+
 char CPL_DLL **
       CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
 char CPL_DLL **
