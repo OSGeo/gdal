@@ -1365,6 +1365,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     OGRMultiPolygon* CastToMultiPolygon();
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRErr addGeometry( const OGRGeometry * );
+    virtual OGRErr addGeometryDirectly(OGRGeometry *poNewGeom);
     virtual int getNumGeometries();
     virtual OGRGeometry* getGeometry(int i);
 

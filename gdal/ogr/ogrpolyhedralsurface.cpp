@@ -722,6 +722,41 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
 }
 
 /************************************************************************/
+/*                        addGeometryDirectly()                         */
+/************************************************************************/
+
+OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
+{
+    if (!EQUAL(poNewGeom->getGeometryName(), "POLYGON"))
+    {
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+    if( poNewGeom->Is3D() && !Is3D() )
+        set3D(TRUE);
+
+    if( poNewGeom->IsMeasured() && !IsMeasured() )
+        setMeasured(TRUE);
+
+    if( !poNewGeom->Is3D() && Is3D() )
+        poNewGeom->set3D(TRUE);
+
+    if( !poNewGeom->IsMeasured() && IsMeasured() )
+        poNewGeom->setMeasured(TRUE);
+
+    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( oMP.papoGeoms,
+                                             sizeof(void*) * (oMP.nGeomCount+1) );
+    if( papoNewGeoms == NULL )
+        return OGRERR_FAILURE;
+
+    oMP.papoGeoms = papoNewGeoms;
+    oMP.papoGeoms[oMP.nGeomCount] = poNewGeom;
+    oMP.nGeomCount++;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                          getNumGeometries()                          */
 /************************************************************************/
 
