@@ -359,7 +359,13 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", NULL) == NULL )
     {
+#if defined(__MACH__) && defined(__APPLE__)
+        // On Mach, the default limit is 256 files per process
+        // We should eventually dynamically query the limit
+        CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100");
+#else
         CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "450");
+#endif
     }
 
 /* -------------------------------------------------------------------- */
