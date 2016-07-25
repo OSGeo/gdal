@@ -697,7 +697,7 @@ static int OGRESRIJSONReaderParseXYZMArray (json_object* poObjCoords,
 /*                        OGRESRIJSONReadLineString()                   */
 /************************************************************************/
 
-OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
+OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj)
 {
     CPLAssert( NULL != poObj );
 
@@ -727,8 +727,8 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
         return NULL;
     }
 
-    OGRLineString* poLine
-        = new OGRLineString();
+    OGRMultiLineString* poMLS = NULL;
+    OGRGeometry* poRet = NULL;
     const int nPaths = json_object_array_length( poObjPaths );
     for(int iPath = 0; iPath < nPaths; iPath ++)
     {
@@ -736,12 +736,24 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
         if ( poObjPath == NULL ||
                 json_type_array != json_object_get_type( poObjPath ) )
         {
-            delete poLine;
+            delete poRet;
             CPLDebug( "ESRIJSON",
                     "LineString: got non-array object." );
             return NULL;
         }
 
+        OGRLineString* poLine = new OGRLineString();
+        if( nPaths > 1 )
+        {
+            if( iPath == 0 )
+            {
+                poMLS = new OGRMultiLineString();
+                poRet = poMLS;
+            }
+            poMLS->addGeometryDirectly(poLine);
+        }
+        else
+            poRet = poLine;
         const int nPoints = json_object_array_length( poObjPath );
         for(int i = 0; i < nPoints; i++)
         {
@@ -753,6 +765,7 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
                 delete poLine;
+                delete poRet;
                 return NULL;
             }
 
@@ -766,8 +779,10 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
             }
         }
     }
+    if( poRet == NULL )
+        poRet = new OGRLineString();
 
-    return poLine;
+    return poRet;
 }
 
 /************************************************************************/
