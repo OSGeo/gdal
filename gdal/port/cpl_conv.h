@@ -77,7 +77,13 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( VSILFILE * );
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols, char** papszOptions);
+#ifdef __cplusplus
+const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
+                                   const char * const * papszOptions );
+#else
+const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
+                                   char** papszOptions );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Convert ASCII string to floating point number                  */
