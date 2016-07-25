@@ -152,7 +152,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
     char* pszPath = CPLStrdup(pszPathIn);
     char* pszDisplayedPath = NULL;
 
-    while(true)
+    while( true )
     {
         if( nCount < 0 )
         {
@@ -237,7 +237,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
         {
             CSLDestroy( papszFiles );
 
-            if( aoStack.size() )
+            if( !aoStack.empty() )
             {
                 int iLast = static_cast<int>(aoStack.size()) - 1;
                 CPLFree(pszPath);
@@ -251,7 +251,9 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 aoStack.resize(iLast);
             }
             else
+            {
                 break;
+            }
         }
     }
 
