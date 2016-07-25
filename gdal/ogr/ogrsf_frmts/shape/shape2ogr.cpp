@@ -62,33 +62,34 @@ static void RingStartEnd( SHPObject *psShape, int ring, int *start, int *end )
 /*                                                                      */
 /************************************************************************/
 static OGRLinearRing * CreateLinearRing(
-    SHPObject *psShape, int ring, int bHasZ, int bHasM )
+    SHPObject *psShape, int ring, bool bHasZ, bool bHasM )
 {
-    int nRingStart, nRingEnd;
+    int nRingStart = 0;
+    int nRingEnd = 0;
+    RingStartEnd( psShape, ring, &nRingStart, &nRingEnd );
 
-    OGRLinearRing *poRing = new OGRLinearRing();
+    if( !(nRingEnd >= nRingStart) )
+        return NULL;
 
-    RingStartEnd ( psShape, ring, &nRingStart, &nRingEnd );
-    if( nRingEnd >= nRingStart )
-    {
-        const int nRingPoints = nRingEnd - nRingStart + 1;
+    OGRLinearRing * const poRing = new OGRLinearRing();
 
-        if( bHasZ && bHasM )
-            poRing->setPoints(
-                nRingPoints, psShape->padfX + nRingStart,
-                psShape->padfY + nRingStart,
-                psShape->padfZ + nRingStart,
-                psShape->padfM ? psShape->padfM + nRingStart : NULL );
-        else if( bHasM )
-            poRing->setPointsM(
-                nRingPoints, psShape->padfX + nRingStart,
-                psShape->padfY + nRingStart,
-                psShape->padfM ? psShape->padfM + nRingStart :NULL );
-        else
-            poRing->setPoints(
-                nRingPoints, psShape->padfX + nRingStart,
-                psShape->padfY + nRingStart );
-    }
+    const int nRingPoints = nRingEnd - nRingStart + 1;
+
+    if( bHasZ && bHasM )
+        poRing->setPoints(
+            nRingPoints, psShape->padfX + nRingStart,
+            psShape->padfY + nRingStart,
+            psShape->padfZ + nRingStart,
+            psShape->padfM ? psShape->padfM + nRingStart : NULL );
+    else if( bHasM )
+        poRing->setPointsM(
+            nRingPoints, psShape->padfX + nRingStart,
+            psShape->padfY + nRingStart,
+            psShape->padfM ? psShape->padfM + nRingStart :NULL );
+    else
+        poRing->setPoints(
+            nRingPoints, psShape->padfX + nRingStart,
+            psShape->padfY + nRingStart );
 
     return poRing;
 }
@@ -309,7 +310,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
             poOGR = poOGRPoly;
             OGRLinearRing *poRing =
-                CreateLinearRing ( psShape, 0, bHasZ, bHasM );
+                CreateLinearRing( psShape, 0, bHasZ, bHasM );
             poOGRPoly->addRingDirectly( poRing );
         }
         else
@@ -319,7 +320,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             {
                 tabPolygons[iRing] = new OGRPolygon();
                 tabPolygons[iRing]->addRingDirectly(
-                    CreateLinearRing ( psShape, iRing, bHasZ, bHasM ));
+                    CreateLinearRing( psShape, iRing, bHasZ, bHasM ));
             }
 
             int isValidGeometry = FALSE;
@@ -462,7 +463,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     poLastPoly = new OGRPolygon();
 
                 poLastPoly->addRingDirectly(
-                    CreateLinearRing( psShape, iPart, TRUE, TRUE ) );
+                    CreateLinearRing( psShape, iPart, true, true ) );
             }
             else
             {
@@ -506,7 +507,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /************************************************************************/
 static
 OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
-                          int bRewind, OGRwkbGeometryType eLayerGeomType )
+                          bool bRewind, OGRwkbGeometryType eLayerGeomType )
 
 {
 /* ==================================================================== */
@@ -1451,7 +1452,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     {
         const OGRErr eErr =
             SHPWriteOGRObject( hSHP, static_cast<int>(poFeature->GetFID()),
-                               poFeature->GetGeometryRef(), bRewind,
+                               poFeature->GetGeometryRef(),
+                               CPL_TO_BOOL(bRewind),
                                poDefn->GetGeomType() );
         if( eErr != OGRERR_NONE )
             return eErr;
@@ -1592,7 +1594,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               int nFieldWidth = poFieldDefn->GetWidth();
               snprintf(szFormat, sizeof(szFormat),
                        "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d",
-                       MIN(nFieldWidth, (int)sizeof(szValue)-1));
+                       MIN(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1));
               snprintf(szValue, sizeof(szValue), szFormat,
                        poFeature->GetFieldAsInteger64(iField));
 
