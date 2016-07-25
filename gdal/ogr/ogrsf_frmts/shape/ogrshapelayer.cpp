@@ -1127,8 +1127,11 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
-    else
+    else if( hDBF != NULL )
         nTotalShapeCount = hDBF->nRecords;
+    else
+        CPLError(CE_Fatal, CPLE_AssertionFailed,
+                 "Should not happen: Both hSHP and hDBF are nullptrs");
 
     return eErr;
 }
