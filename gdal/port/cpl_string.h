@@ -92,8 +92,15 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
-                        char** papszOptions) CPL_WARN_UNUSED_RESULT;
+#ifdef __cplusplus
+char CPL_DLL **CSLLoad2(
+    const char *pszFname, int nMaxLines, int nMaxCols,
+    const char * const * papszOptions) CPL_WARN_UNUSED_RESULT;
+#else
+char CPL_DLL **CSLLoad2(
+    const char *pszFname, int nMaxLines, int nMaxCols,
+    char **papszOptions) CPL_WARN_UNUSED_RESULT;
+#endif
 int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
 
 char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
