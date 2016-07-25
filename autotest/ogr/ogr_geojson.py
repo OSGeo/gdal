@@ -763,6 +763,28 @@ def ogr_geojson_17():
     lyr = None
     ds = None
 
+    # MultiLineString
+    ds = ogr.Open("""{
+  "geometryType": "esriGeometryPolyline",
+  "fields": [],
+  "features": [
+  {
+   "geometry": {
+      "paths" : [ 
+       [ [2,49],[2.1,49.1] ], 
+       [ [3,50],[3.1,50.1] ]
+      ]
+   }
+  }
+ ]
+}""")
+    lyr = ds.GetLayer(0)
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTILINESTRING ((2 49,2.1 49.1),(3 50,3.1 50.1))')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
