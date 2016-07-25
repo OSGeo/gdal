@@ -295,14 +295,14 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  */
 
 char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
-                 char** papszOptions )
+                 const char * const * papszOptions )
 {
     VSILFILE *fp = VSIFOpenL(pszFname, "rb");
 
     if (!fp)
     {
-        if( CSLFetchBoolean( papszOptions, "EMIT_ERROR_IF_CANNOT_OPEN_FILE",
-                             TRUE ) )
+        if( CPLFetchBool( papszOptions, "EMIT_ERROR_IF_CANNOT_OPEN_FILE",
+                          true ) )
         {
             /* Unable to open file */
             CPLError( CE_Failure, CPLE_OpenFailed,
