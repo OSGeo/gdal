@@ -166,8 +166,9 @@ if ($different_versions && !$gdal_config && !$versions_may_differ && $downloads_
 
 # still in the game?
 
+# TODO(schwehr): Simplify now that have_ogr will always be 1.
 my $have_gnm = `grep "CONFIG_GNM_ENABLED" $config`;
-my $have_ogr = `grep "CONFIG_OGR_ENABLED" $config`;
+my $have_ogr = 'yes';
 for ($have_gnm, $have_ogr) {
     chomp;
     $_ = /yes/ ? 1 : 0;
