@@ -468,14 +468,13 @@ const char *NWT_GRDDataset::GetProjectionRef() {
     // First try getting it from the PAM dataset
     pszProjection = GDALPamDataset::GetProjectionRef();
 
-    // If that isn't possible, read it from the GRD file. This may be a less complete
-    // projection string
-    if (strlen(pszProjection) == 0) {
-#ifdef OGR_ENABLED
-
-        OGRSpatialReference *poSpatialRef;
-        poSpatialRef = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
-        if (poSpatialRef)
+    // If that isn't possible, read it from the GRD file. This may be a less
+    //  complete projection string.
+    if( strlen(pszProjection) == 0 )
+    {
+        OGRSpatialReference *poSpatialRef =
+            MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
+        if( poSpatialRef )
         {
             char* pszProjectionTmp = NULL;
             poSpatialRef->exportToWkt( &pszProjectionTmp );
@@ -485,7 +484,6 @@ const char *NWT_GRDDataset::GetProjectionRef() {
             CPLFree(pszProjectionTmp);
             return m_osProjection;
         }
-#endif
     }
     return pszProjection;
 }
@@ -494,9 +492,7 @@ const char *NWT_GRDDataset::GetProjectionRef() {
 /*                          SetProjectionRef()                          */
 /************************************************************************/
 
-CPLErr NWT_GRDDataset::SetProjection(const char *pszProjection) {
-    CPLErr result = CE_None;
-#ifdef OGR_ENABLED
+CPLErr NWT_GRDDataset::SetProjection( const char *pszProjection ) {
     OGRSpatialReference oSpatialRef;
     char *pszTmp = const_cast<char*>(pszProjection);
     oSpatialRef.importFromWkt( &pszTmp );
@@ -504,19 +500,14 @@ CPLErr NWT_GRDDataset::SetProjection(const char *pszProjection) {
     strncpy( pGrd->cMICoordSys, psTABProj, sizeof(pGrd->cMICoordSys) -1 );
     pGrd->cMICoordSys[255] = '\0';
 
-    // Free temp projection
+    // Free temp projection.
     CPLFree(psTABProj);
     // Set projection in PAM dataset, so that
     // GDAL can always retrieve the complete projection.
     GDALPamDataset::SetProjection( pszProjection );
     bUpdateHeader = true;
 
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-            "OGR must be enabled to set the projection");
-    result = CE_Failure;
-#endif
-    return result;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -725,88 +716,95 @@ int NWT_GRDDataset::UpdateHeader() {
 }
 
 int NWT_GRDDataset::WriteTab() {
-#ifdef OGR_ENABLED
-    // Create the filename for the .tab file
-    std::string sTabFile(CPLResetExtension(pGrd->szFileName, "tab"));
+    // Create the filename for the .tab file.
+    const std::string sTabFile(CPLResetExtension(pGrd->szFileName, "tab"));
 
-    VSILFILE *tabfp;
-    if ( ( tabfp = VSIFOpenL(sTabFile.c_str(), "wt")) != NULL)
-    {
-        VSIFPrintfL(tabfp, "!table\n");
-        VSIFPrintfL(tabfp, "!version 500\n");
-        VSIFPrintfL(tabfp, "!charset %s\n", "Neutral");
-        VSIFPrintfL(tabfp, "\n");
-
-        VSIFPrintfL(tabfp, "Definition Table\n");
-        std::string path(pGrd->szFileName);
-        std::string basename = path.substr(path.find_last_of("/\\") + 1);
-        VSIFPrintfL(tabfp, "  File \"%s\"\n", basename.c_str());
-        VSIFPrintfL(tabfp, "  Type \"RASTER\"\n");
-
-        double dMapUnitsPerPixel = (pGrd->dfMaxX - pGrd->dfMinX)/((double)pGrd->nXSide-1);
-        double dShift = dMapUnitsPerPixel/2;
-
-        VSIFPrintfL( tabfp, "  (%f,%f) (%d,%d) Label \"Pt 1\",\n",pGrd->dfMinX - dShift,pGrd->dfMaxY + dShift,0,0 );
-        VSIFPrintfL( tabfp, "  (%f,%f) (%d,%d) Label \"Pt 2\",\n",pGrd->dfMaxX - dShift,pGrd->dfMinY + dShift,pGrd->nXSide -1, pGrd->nYSide-1);
-        VSIFPrintfL( tabfp, "  (%f,%f) (%d,%d) Label \"Pt 3\"\n",pGrd->dfMinX - dShift,pGrd->dfMinY + dShift,0, pGrd->nYSide-1 );
-
-        VSIFPrintfL( tabfp, "  CoordSys %s\n",pGrd->cMICoordSys );
-        VSIFPrintfL(tabfp, "  Units \"m\"\n");
-
-        //Raster Styles
-
-        // Raster is a grid, which is style 6.
-        VSIFPrintfL(tabfp, "  RasterStyle 6 1\n");
-
-        // Brightness - style 1
-        if (pGrd->style.iBrightness > 0) {
-            VSIFPrintfL(tabfp, "  RasterStyle 1 %d\n",pGrd->style.iBrightness);
-        }
-
-        // Contrast - style 2
-        if (pGrd->style.iContrast > 0) {
-            VSIFPrintfL(tabfp, "  RasterStyle 2 %d\n",pGrd->style.iContrast);
-        }
-
-        // Greyscale - style 3; only need to write if TRUE
-        if (pGrd->style.bGreyscale == TRUE) {
-            VSIFPrintfL(tabfp, "  RasterStyle 3 1\n");
-        }
-
-        // Flag to render one colour transparent - style 4
-        if (pGrd->style.bTransparent == TRUE) {
-            VSIFPrintfL(tabfp, "  RasterStyle 4 1\n");
-            if (pGrd->style.iTransColour > 0) {
-                VSIFPrintfL(tabfp, "  RasterStyle 7 %d\n",pGrd->style.iTransColour);
-            }
-        }
-
-        // Transparency of immage
-        if (pGrd->style.iTranslucency > 0) {
-            VSIFPrintfL(tabfp, "  RasterStyle 8 %d\n",pGrd->style.iTranslucency);
-        }
-
-        VSIFPrintfL(tabfp, "begin_metadata\n");
-        VSIFPrintfL(tabfp, "\"\\MapInfo\" = \"\"\n");
-        VSIFPrintfL(tabfp, "\"\\Vm\" = \"\"\n");
-        VSIFPrintfL(tabfp, "\"\\Vm\\Grid\" = \"Numeric\"\n");
-        VSIFPrintfL(tabfp, "\"\\Vm\\GridName\" = \"%s\"\n", basename.c_str());
-        VSIFPrintfL(tabfp, "\"\\IsReadOnly\" = \"FALSE\"\n");
-        VSIFPrintfL(tabfp, "end_metadata\n");
-
-        VSIFCloseL(tabfp);
-    }
-    else
+    VSILFILE *tabfp = VSIFOpenL(sTabFile.c_str(), "wt");
+    if( tabfp == NULL)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                "Failed to create file `%s'", sTabFile.c_str());
+                 "Failed to create file `%s'", sTabFile.c_str());
         return -1;
     }
 
+    VSIFPrintfL(tabfp, "!table\n");
+    VSIFPrintfL(tabfp, "!version 500\n");
+    VSIFPrintfL(tabfp, "!charset %s\n", "Neutral");
+    VSIFPrintfL(tabfp, "\n");
+
+    VSIFPrintfL(tabfp, "Definition Table\n");
+    const std::string path(pGrd->szFileName);
+    const std::string basename = path.substr(path.find_last_of("/\\") + 1);
+    VSIFPrintfL(tabfp, "  File \"%s\"\n", basename.c_str());
+    VSIFPrintfL(tabfp, "  Type \"RASTER\"\n");
+
+    double dMapUnitsPerPixel =
+        (pGrd->dfMaxX - pGrd->dfMinX) /
+        (static_cast<double>(pGrd->nXSide) - 1);
+    double dShift = dMapUnitsPerPixel / 2.0;
+
+    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 1\",\n",
+                pGrd->dfMinX - dShift, pGrd->dfMaxY + dShift, 0, 0);
+    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 2\",\n",
+                pGrd->dfMaxX - dShift, pGrd->dfMinY + dShift, pGrd->nXSide - 1,
+                pGrd->nYSide - 1);
+    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 3\"\n",
+                pGrd->dfMinX - dShift, pGrd->dfMinY + dShift, 0,
+                pGrd->nYSide - 1);
+
+    VSIFPrintfL(tabfp, "  CoordSys %s\n",pGrd->cMICoordSys);
+    VSIFPrintfL(tabfp, "  Units \"m\"\n");
+
+    // Raster Styles.
+
+    // Raster is a grid, which is style 6.
+    VSIFPrintfL(tabfp, "  RasterStyle 6 1\n");
+
+    // Brightness - style 1
+    if( pGrd->style.iBrightness > 0 )
+    {
+        VSIFPrintfL(tabfp, "  RasterStyle 1 %d\n",pGrd->style.iBrightness);
+    }
+
+    // Contrast - style 2
+    if( pGrd->style.iContrast > 0 )
+    {
+        VSIFPrintfL(tabfp, "  RasterStyle 2 %d\n",pGrd->style.iContrast);
+    }
+
+    // Greyscale - style 3; only need to write if TRUE
+    if( pGrd->style.bGreyscale == TRUE )
+    {
+        VSIFPrintfL(tabfp, "  RasterStyle 3 1\n");
+    }
+
+    // Flag to render one colour transparent - style 4
+    if( pGrd->style.bTransparent == TRUE )
+    {
+        VSIFPrintfL(tabfp, "  RasterStyle 4 1\n");
+        if( pGrd->style.iTransColour > 0 )
+        {
+            VSIFPrintfL(tabfp, "  RasterStyle 7 %d\n",pGrd->style.iTransColour);
+        }
+    }
+
+    // Transparency of immage
+    if( pGrd->style.iTranslucency > 0 )
+    {
+        VSIFPrintfL(tabfp, "  RasterStyle 8 %d\n",pGrd->style.iTranslucency);
+    }
+
+    VSIFPrintfL(tabfp, "begin_metadata\n");
+    VSIFPrintfL(tabfp, "\"\\MapInfo\" = \"\"\n");
+    VSIFPrintfL(tabfp, "\"\\Vm\" = \"\"\n");
+    VSIFPrintfL(tabfp, "\"\\Vm\\Grid\" = \"Numeric\"\n");
+    VSIFPrintfL(tabfp, "\"\\Vm\\GridName\" = \"%s\"\n", basename.c_str());
+    VSIFPrintfL(tabfp, "\"\\IsReadOnly\" = \"FALSE\"\n");
+    VSIFPrintfL(tabfp, "end_metadata\n");
+
+    VSIFCloseL(tabfp);
+
     return 0;
-#else
-    return -1;
-#endif
 }
 
 /************************************************************************/
