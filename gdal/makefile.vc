@@ -24,7 +24,6 @@ OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
 		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
 
 
-CPPFLAGS = $(CPPFLAGS) -DOGR_ENABLED
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
@@ -55,7 +54,7 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(VB6_OBJ) \
 	 apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
 	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
-	
+
 DISTDIR	=	gdal_$(VERSION)
 
 default:	port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target $(VB6_TARGET)$(GDAL_DLL) \
@@ -68,7 +67,7 @@ staticlib:
 appslib-target:
 	cd apps
 	$(MAKE) /f makefile.vc appslib
-	cd ..	
+	cd ..
 
 target-lib: port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target dll 
 
@@ -148,7 +147,7 @@ vb6_dir:
 	cd vb6
 	$(MAKE) /f makefile.vc
 	cd ..
-	
+
 ogr_dir:      port_dir
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
