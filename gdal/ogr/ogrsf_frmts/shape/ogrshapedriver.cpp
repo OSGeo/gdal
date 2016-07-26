@@ -27,8 +27,10 @@
  ****************************************************************************/
 
 #include "ogrshape.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -38,11 +40,11 @@ CPL_CVSID("$Id$");
 
 static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    /* Files not ending with .shp, .shx or .dbf are not handled by this driver */
+    // Files not ending with .shp, .shx or .dbf are not handled by this driver.
     if( !poOpenInfo->bStatOK )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
-        return -1; /* unsure */
+        return -1;  // Unsure.
     if( poOpenInfo->fpL == NULL )
     {
         return FALSE;
@@ -58,23 +60,23 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         if( poOpenInfo->nHeaderBytes < 32 )
             return FALSE;
         const GByte* pabyBuf = poOpenInfo->pabyHeader;
-        unsigned int nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
-        unsigned int nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
+        const unsigned int nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
+        const unsigned int nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
         if( nHeadLen < 32 )
             return FALSE;
         // The header length of some .dbf files can be a non-multiple of 32
         // See https://trac.osgeo.org/gdal/ticket/6035
         // Hopefully there are not so many .dbf files around that are not real
         // DBFs
-        //if( (nHeadLen % 32) != 0 && (nHeadLen % 32) != 1 )
-        //    return FALSE;
-        unsigned int nFields = (nHeadLen - 32) / 32;
+        // if( (nHeadLen % 32) != 0 && (nHeadLen % 32) != 1 )
+        //     return FALSE;
+        const unsigned int nFields = (nHeadLen - 32) / 32;
         if( nRecordLength < nFields )
             return FALSE;
         return TRUE;
     }
 #ifdef DEBUG
-    /* For AFL, so that .cur_input is detected as the archive filename */
+    // For AFL, so that .cur_input is detected as the archive filename.
     if( !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
@@ -91,33 +93,32 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRShapeDataSource  *poDS;
-
     if( OGRShapeDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
 #ifdef DEBUG
-    /* For AFL, so that .cur_input is detected as the archive filename */
+    // For AFL, so that .cur_input is detected as the archive filename.
     if( poOpenInfo->fpL != NULL &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
-        GDALOpenInfo oOpenInfo( (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
-                                poOpenInfo->nOpenFlags );
+        GDALOpenInfo oOpenInfo(
+            (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
+            poOpenInfo->nOpenFlags );
         oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
         return OGRShapeDriverOpen(&oOpenInfo);
     }
 #endif
 
-    poDS = new OGRShapeDataSource();
+    OGRShapeDataSource *poDS = new OGRShapeDataSource();
 
     if( !poDS->Open( poOpenInfo, TRUE ) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -125,24 +126,24 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRShapeDriverCreate( const char * pszName,
-                                          CPL_UNUSED int nBands,
-                                          CPL_UNUSED int nXSize,
-                                          CPL_UNUSED int nYSize,
-                                          CPL_UNUSED GDALDataType eDT,
-                                          CPL_UNUSED char **papszOptions )
+                                           int /* nBands */,
+                                           int /* nXSize */,
+                                           int /* nYSize */,
+                                           GDALDataType /* eDT */,
+                                           char ** /* papszOptions */ )
 {
-    VSIStatBuf  stat;
-    int         bSingleNewFile = FALSE;
+    bool bSingleNewFile = false;
 
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
+    VSIStatBuf stat;
     if( CPLStat( pszName, &stat ) == 0 )
     {
         if( !VSI_ISDIR(stat.st_mode) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s is not a directory.\n",
+                      "%s is not a directory.",
                       pszName );
 
             return NULL;
@@ -153,10 +154,10 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /*      Does it end in the extension .shp indicating the user likely    */
 /*      wants to create a single file set?                              */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(CPLGetExtension(pszName),"shp")
-             || EQUAL(CPLGetExtension(pszName),"dbf") )
+    else if( EQUAL(CPLGetExtension(pszName), "shp")
+             || EQUAL(CPLGetExtension(pszName), "dbf") )
     {
-        bSingleNewFile = TRUE;
+        bSingleNewFile = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -167,8 +168,8 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
         if( VSIMkdir( pszName, 0755 ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to create directory %s\n"
-                      "for shapefile datastore.\n",
+                      "Failed to create directory %s "
+                      "for shapefile datastore.",
                       pszName );
 
             return NULL;
@@ -178,9 +179,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRShapeDataSource  *poDS = NULL;
-
-    poDS = new OGRShapeDataSource();
+    OGRShapeDataSource  *poDS = new OGRShapeDataSource();
 
     GDALOpenInfo oOpenInfo( pszName, GA_Update );
     if( !poDS->Open( &oOpenInfo, FALSE, bSingleNewFile ) )
@@ -188,8 +187,8 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -199,11 +198,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 
 {
-    int iExt;
     VSIStatBufL sStatBuf;
-    static const char * const apszExtensions[] =
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
-          "qix", "cpg", NULL };
 
     if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
@@ -214,15 +209,19 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         return CE_Failure;
     }
 
+    static const char * const apszExtensions[] =
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
+          "qix", "cpg", NULL };
+
     if( VSI_ISREG(sStatBuf.st_mode)
-        && (EQUAL(CPLGetExtension(pszDataSource),"shp")
-            || EQUAL(CPLGetExtension(pszDataSource),"shx")
-            || EQUAL(CPLGetExtension(pszDataSource),"dbf")) )
+        && (EQUAL(CPLGetExtension(pszDataSource), "shp")
+            || EQUAL(CPLGetExtension(pszDataSource), "shx")
+            || EQUAL(CPLGetExtension(pszDataSource), "dbf")) )
     {
-        for( iExt=0; apszExtensions[iExt] != NULL; iExt++ )
+        for( int iExt = 0; apszExtensions[iExt] != NULL; iExt++ )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
-                                                    apszExtensions[iExt] );
+                                                    apszExtensions[iExt]);
             if( VSIStatL( pszFile, &sStatBuf ) == 0 )
                 VSIUnlink( pszFile );
         }
@@ -230,13 +229,12 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
     else if( VSI_ISDIR(sStatBuf.st_mode) )
     {
         char **papszDirEntries = VSIReadDir( pszDataSource );
-        int  iFile;
 
-        for( iFile = 0;
+        for( int iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {
-            if( CSLFindString( (char **) apszExtensions,
+            if( CSLFindString( apszExtensions,
                                CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
                 VSIUnlink( CPLFormFilename( pszDataSource,
