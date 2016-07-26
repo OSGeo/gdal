@@ -736,8 +736,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
         if ( poObjPath == NULL ||
                 json_type_array != json_object_get_type( poObjPath ) )
         {
-            if( poRet != NULL )
-                delete poRet;
+            delete poRet;
             CPLDebug( "ESRIJSON", "LineString: got non-array object." );
             return NULL;
         }
@@ -769,7 +768,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
                 delete poLine;
-                if( poRet != NULL )
+                if( poRet != poLine )
                     delete poRet;
                 return NULL;
             }
