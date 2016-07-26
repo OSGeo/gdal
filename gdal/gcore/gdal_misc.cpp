@@ -1898,7 +1898,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 #ifdef PAM_ENABLED
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
-        osBuildInfo += "OGR_ENABLED=YES\n";
+        osBuildInfo += "OGR_ENABLED=YES\n";  // Deprecated.  Always yes.
 
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );
