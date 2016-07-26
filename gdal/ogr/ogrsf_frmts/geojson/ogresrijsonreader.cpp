@@ -697,7 +697,7 @@ static int OGRESRIJSONReaderParseXYZMArray (json_object* poObjCoords,
 /*                        OGRESRIJSONReadLineString()                   */
 /************************************************************************/
 
-OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj)
+OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
 {
     CPLAssert( NULL != poObj );
 
@@ -730,15 +730,15 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj)
     OGRMultiLineString* poMLS = NULL;
     OGRGeometry* poRet = NULL;
     const int nPaths = json_object_array_length( poObjPaths );
-    for(int iPath = 0; iPath < nPaths; iPath ++)
+    for( int iPath = 0; iPath < nPaths; iPath++ )
     {
         json_object* poObjPath = json_object_array_get_idx( poObjPaths, iPath );
         if ( poObjPath == NULL ||
                 json_type_array != json_object_get_type( poObjPath ) )
         {
-            delete poRet;
-            CPLDebug( "ESRIJSON",
-                    "LineString: got non-array object." );
+            if( poRet != NULL )
+                delete poRet;
+            CPLDebug( "ESRIJSON", "LineString: got non-array object." );
             return NULL;
         }
 
@@ -753,23 +753,28 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj)
             poMLS->addGeometryDirectly(poLine);
         }
         else
+        {
             poRet = poLine;
+        }
         const int nPoints = json_object_array_length( poObjPath );
-        for(int i = 0; i < nPoints; i++)
+        for( int i = 0; i < nPoints; i++ )
         {
             int nNumCoords = 2;
-            json_object* poObjCoords
-                = json_object_array_get_idx( poObjPath, i );
-            double dfX, dfY, dfZ;
+            json_object* poObjCoords =
+                json_object_array_get_idx( poObjPath, i );
+            double dfX = 0.0;
+            double dfY = 0.0;
+            double dfZ = 0.0;
             if( !OGRESRIJSONReaderParseXYZMArray (
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
                 delete poLine;
-                delete poRet;
+                if( poRet != NULL )
+                    delete poRet;
                 return NULL;
             }
 
-            if(nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM))
+            if( nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM) )
             {
                 poLine->addPoint( dfX, dfY, dfZ);
             }
@@ -779,6 +784,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj)
             }
         }
     }
+
     if( poRet == NULL )
         poRet = new OGRLineString();
 
