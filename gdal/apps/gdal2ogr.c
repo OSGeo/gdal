@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: gdal2ogr.c $
  *
  * Project:  GDAL Utilities
  * Purpose:  Create an OGR datasource from the values of a GDAL dataset
@@ -32,6 +31,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */

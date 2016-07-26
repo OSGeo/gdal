@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: gdalflattenmask.c $
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL mask flattening utility
@@ -30,6 +29,8 @@
 #include "gdal.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */
