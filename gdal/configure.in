@@ -2861,11 +2861,6 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-dnl Always build with OGR support.
-OGR_ENABLED=yes
-
-dnl ---------------------------------------------------------------------------
-
 GNM_ENABLED=no
 
 AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
