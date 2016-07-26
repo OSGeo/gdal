@@ -72,7 +72,9 @@ The creation options available vary by format driver, and some simple
 formats have no creation options at all.  A list of options supported
 for a format can be listed with the "--format <format>" command line
 option but the web page for the format is the definitive source of 
-information on driver creation options.<p>
+information on driver creation options. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a><p>
 </dd>
 
 <dt> <b>-a_srs</b> <i>SRS</i></dt><dd> 
@@ -421,8 +423,9 @@ value to be changed to the value specified with this option.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format.</dd>
+output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>.</dd>
 <dt> <b>-gcp</b> <i>pixel line easting northing elevation</i>:</dt><dd>
 Add the indicated ground control point to the output dataset.  This option 
 may be provided multiple times to provide a set of GCPs. 
@@ -1059,8 +1062,9 @@ EPSG:n or a file containing the WKT. </dd>
 
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL >= 1.8.0)
 Passes a creation option to the output format driver.  Multiple <b>-co</b>
-options may be listed.  See format specific documentation for legal creation
-options for each format.</dd>
+options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>.</dd>
 
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em> :</dt><dd> (GDAL >= 1.8.0) 
 Set georeferenced extents. The values must be expressed in georeferenced units.
@@ -1352,8 +1356,9 @@ created.  Newly created files are created with the HFA driver by default
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
 Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format. Only valid when creating a new file</dd>
+output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>. Only valid when creating a new file</dd>
 <dt> <b>-white</b>:</dt><dd> 
 Search for nearly white (255) pixels instead of nearly black pixels.
 </dd>
@@ -1438,6 +1443,9 @@ Output format, defaults to GeoTIFF (GTiff).
 </dd>
 <dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd> 
 Creation option for output file.  Multiple options can be specified.
+See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>
 </dd>
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
 Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
@@ -1684,6 +1692,9 @@ Output format, defaults to GeoTIFF (GTiff).
 </dd>
 <dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd>
 Creation option for output file.  Multiple options can be specified.
+See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>
 </dd>
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd>
 Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
@@ -1857,8 +1868,9 @@ An SQL statement to be evaluated against the datasource to produce a
 virtual layer of features to be processed.</dd>
 
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format.</dd>
+output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>.</dd>
 
 <dt> <b>-q</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
@@ -2205,8 +2217,9 @@ is GeoTIFF (GTiff).  Use the short format name.</dd>
 <dt> <b>-alg</b> <i>ZevenbergenThorne</i>:</dt><dd> (GDAL >= 1.8.0) Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format.</dd>
+output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a></dd>
 <dt> <b>-q</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
 </dl>
@@ -2663,8 +2676,9 @@ setting.</dd>
 Select behaviour when bands have not the same extent. See <i>SpatialExtentAdjustment</i>
 documentation in  <a href="gdal_vrttut.html#gdal_vrttut_pansharpen">VRT tutorial</a></dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format.</dd>
+output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>.</dd>
 <dt> <b>-q</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
 <dt> <i>pan_dataset</i></dt><dd> Dataset with panchromatic band (first band will be used).</dd>
