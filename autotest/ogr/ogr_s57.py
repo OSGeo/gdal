@@ -285,6 +285,16 @@ def ogr_s57_9():
 
     gdaltest.s57_ds = None
 
+    ds = gdal.OpenEx( 'tmp/ogr_s57_9.000', open_options = ['RETURN_PRIMITIVES=ON'] )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetLayerByName('IsolatedNode') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
     try:
         os.unlink('tmp/ogr_s57_9.000')
     except:
