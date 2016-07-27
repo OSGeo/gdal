@@ -61,7 +61,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     pszFullName(CPLStrdup(pszFullNameIn)),
     hSHP(hSHPIn),
     hDBF(hDBFIn),
-    bUpdateAccess(bUpdate),
+    bUpdateAccess(CPL_TO_BOOL(bUpdate)),
     eRequestedGeomType(eReqType),
     panMatchingFIDs(NULL),
     iMatchingFID(0),
@@ -80,7 +80,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bHDBFWasNonNULL(hDBFIn != NULL),
     eFileDescriptorsState(FD_OPENED),
     bResizeAtClose(false),
-    bCreateSpatialIndexAtClose(false)
+    bCreateSpatialIndexAtClose(false),
+    bRewindOnWrite(FALSE)
 {
     if( hSHP != NULL )
     {
