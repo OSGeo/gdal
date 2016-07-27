@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        RingStartEnd                                  */
-/*        set first and last vertex for given ring                      */
+/*        Set first and last vertex for given ring.                     */
 /************************************************************************/
 static void RingStartEnd( SHPObject *psShape, int ring, int *start, int *end )
 {
@@ -59,7 +59,6 @@ static void RingStartEnd( SHPObject *psShape, int ring, int *start, int *end )
 
 /************************************************************************/
 /*                        CreateLinearRing                              */
-/*                                                                      */
 /************************************************************************/
 static OGRLinearRing * CreateLinearRing(
     SHPObject *psShape, int ring, bool bHasZ, bool bHasM )
@@ -68,10 +67,9 @@ static OGRLinearRing * CreateLinearRing(
     int nRingEnd = 0;
     RingStartEnd( psShape, ring, &nRingStart, &nRingEnd );
 
-    if( !(nRingEnd >= nRingStart) )
-        return NULL;
-
     OGRLinearRing * const poRing = new OGRLinearRing();
+    if( !(nRingEnd >= nRingStart) )
+        return poRing;
 
     const int nRingPoints = nRingEnd - nRingStart + 1;
 
@@ -116,10 +114,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
         return NULL;
     }
 
+    OGRGeometry *poOGR = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Point.                                                          */
 /* -------------------------------------------------------------------- */
-    OGRGeometry *poOGR = NULL;
     if( psShape->nSHPType == SHPT_POINT )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0] );
@@ -160,7 +159,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
             for( int i = 0; i < psShape->nVertices; i++ )
             {
-                OGRPoint    *poPoint;
+                OGRPoint *poPoint = NULL;
 
                 if( psShape->nSHPType == SHPT_MULTIPOINTZ )
                 {
@@ -214,6 +213,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
         else if( psShape->nParts == 1 )
         {
             OGRLineString *poOGRLine = new OGRLineString();
+            poOGR = poOGRLine;
 
             if( psShape->nSHPType == SHPT_ARCZ )
                 poOGRLine->setPoints( psShape->nVertices,
@@ -226,13 +226,10 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             else
                 poOGRLine->setPoints( psShape->nVertices,
                                       psShape->padfX, psShape->padfY );
-
-            poOGR = poOGRLine;
         }
         else
         {
             OGRMultiLineString *poOGRMulti = new OGRMultiLineString();
-
             poOGR = poOGRMulti;
 
             for( int iRing = 0; iRing < psShape->nParts; iRing++ )
@@ -249,7 +246,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                 }
                 else
                 {
-
                     if( iRing == psShape->nParts - 1 )
                         nRingPoints =
                             psShape->nVertices - psShape->panPartStart[iRing];
@@ -307,8 +303,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
         {
             // Surely outer ring.
             OGRPolygon *poOGRPoly = new OGRPolygon();
-
             poOGR = poOGRPoly;
+
             OGRLinearRing *poRing =
                 CreateLinearRing( psShape, 0, bHasZ, bHasM );
             poOGRPoly->addRingDirectly( poRing );
@@ -547,7 +543,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         OGRPoint *poPoint = dynamic_cast<OGRPoint *>( poGeom );
         if( poPoint == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "dynamic_cast failed" );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected a point." );
             return OGRERR_FAILURE;
         }
 
@@ -594,17 +591,18 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
         OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
         double *padfX = static_cast<double *>(
-            CPLMalloc(sizeof(double)*poMP->getNumGeometries()));
+            CPLMalloc(sizeof(double) * poMP->getNumGeometries()));
         double *padfY = static_cast<double *>(
-            CPLMalloc(sizeof(double)*poMP->getNumGeometries()));
+            CPLMalloc(sizeof(double) * poMP->getNumGeometries()));
+        // TODO(schwehr): Why a calloc for padfZ?
         double *padfZ = static_cast<double *>(
-            CPLCalloc(sizeof(double),poMP->getNumGeometries()));
+            CPLCalloc(sizeof(double), poMP->getNumGeometries()));
         double *padfM = NULL;
         if( wkbHasM(eLayerGeomType) &&
             (hSHP->nShapeType == SHPT_MULTIPOINTM ||
              hSHP->nShapeType == SHPT_MULTIPOINTZ) )
             padfM = static_cast<double *>(
-                CPLCalloc(sizeof(double),poMP->getNumGeometries()));
+                CPLCalloc(sizeof(double), poMP->getNumGeometries()));
 
         int iDstPoints = 0;
         for( int iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
@@ -613,7 +611,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 dynamic_cast<OGRPoint *>(poMP->getGeometryRef(iPoint));
             if( poPoint == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "dynamic_cast failed" );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "dynamic_cast failed.  "
+                          "Expected point within multi-point." );
                 CPLFree( padfX );
                 CPLFree( padfY );
                 CPLFree( padfZ );
@@ -634,13 +634,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                     else
                         padfM[iDstPoints] = -std::numeric_limits<double>::max();
                 }
-                iDstPoints ++;
+                iDstPoints++;
             }
             else
             {
                 CPLDebug(
                     "OGR",
-                    "Ignore POINT EMPTY inside MULTIPOINT in shapefile "
+                    "Ignored POINT EMPTY inside MULTIPOINT in shapefile "
                     "writer." );
             }
         }
@@ -668,7 +668,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
               || hSHP->nShapeType == SHPT_ARCZ)
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        OGRLineString   *poArc = (OGRLineString *) poGeom;
+        OGRLineString *poArc = dynamic_cast<OGRLineString *>(poGeom);
+        if( poArc == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "dynamic_cast failed.  Expected line string for arc." );
+            return OGRERR_FAILURE;
+        }
 
         double *padfX = static_cast<double *>(
             CPLMalloc(sizeof(double) * poArc->getNumPoints()));
@@ -736,7 +742,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         if( poML == NULL )
         {
             delete poForcedGeom;
-            CPLError( CE_Failure, CPLE_AppDefined, "dynamic_cast failed" );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "dynamic_cast failed.  Expected multi-line string." );
             return OGRERR_FAILURE;
         }
 
@@ -759,7 +766,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 poML->getGeometryRef(iGeom));
             if( poArc == NULL )
             {
-                CPLDebug("OGR", "dynamic_cast failed");
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "dynamic_cast failed. Expected line string for arc.");
                 continue;
             }
             const int nNewPoints = poArc->getNumPoints();
@@ -961,18 +969,18 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         int *panRingStart =
             static_cast<int *>( CPLMalloc(sizeof(int) * nRings) );
         double *padfX =
-            static_cast<double *>( CPLMalloc(sizeof(double)*nVertex) );
+            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
         double *padfY =
-            static_cast<double *>( CPLMalloc(sizeof(double)*nVertex) );
+            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
         double *padfZ =
-            static_cast<double *>( CPLMalloc(sizeof(double)*nVertex) );
+            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
 
         double *padfM = NULL;
         if( wkbHasM(eLayerGeomType) &&
             (hSHP->nShapeType == SHPT_POLYGONM ||
              hSHP->nShapeType == SHPT_POLYGONZ) )
             padfM = static_cast<double *>(
-                CPLMalloc(sizeof(double)*nVertex));
+                CPLMalloc(sizeof(double) * nVertex));
 
         // Collect vertices.
         nVertex = 0;
@@ -1095,10 +1103,10 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
     }
 
     // Do an optional past if requested and needed to demote Integer64->Integer
-    // or Real->Integer64/Integer */
+    // or Real->Integer64/Integer.
     if( nAdjustableFields && bAdjustType )
     {
-        int* panAdjustableField = static_cast<int *>(
+        int *panAdjustableField = static_cast<int *>(
             CPLCalloc(sizeof(int), nFieldCount));
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
@@ -1108,7 +1116,6 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
             {
                 panAdjustableField[iField] = TRUE;
                 poDefn->GetFieldDefn(iField)->SetType(OFTInteger);
-                //poDefn->GetFieldDefn(iField)->SetWidth(0);
             }
         }
 
@@ -1438,8 +1445,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( poFeature->GetGeometryRef() == NULL && hSHP != NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to write feature without geometry not supported"
-                  " for shapefile driver." );
+                  "Attempt to write feature without geometry not supported "
+                  "for shapefile driver." );
 
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
