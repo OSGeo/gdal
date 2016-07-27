@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
-#include "gdal.h"
 #include "cpl_port.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal.h"
+#include "ogr_api.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -77,8 +77,8 @@ static void Usage(const char* pszErrorMsg)
 /************************************************************************/
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (i_arg + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i_arg], nExtraArg)); } while(0)
+    do { if (iArg + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[iArg], nExtraArg)); } while(0)
 
 typedef enum
 {
@@ -88,39 +88,16 @@ typedef enum
     FORMAT_PROJ
 } SrcSRSFormat;
 
-int main(int argc, char *argv[])
+int main( int argc, char *argv[] )
 {
-    const char* pszIndexLayerName = NULL;
-    const char *index_filename = NULL;
-    const char *tile_index = "location";
-    const char* pszDriverName = "ESRI Shapefile";
-    size_t nMaxFieldSize = 254;
-    int		i_arg, ti_field;
-    OGRDataSourceH hTileIndexDS;
-    OGRLayerH hLayer = NULL;
-    OGRFeatureDefnH hFDefn;
-    int write_absolute_path = FALSE;
-    char* current_path = NULL;
-    int i;
-    int nExistingFiles;
-    int skip_different_projection = FALSE;
-    char** existingFilesTab = NULL;
-    int alreadyExistingProjectionRefValid = FALSE;
-    char* alreadyExistingProjectionRef = NULL;
-    const char *pszTargetSRS = "";
-    int bSetTargetSRS = FALSE;
-    OGRSpatialReferenceH hTargetSRS = NULL;
-    const char* pszSrcSRSName = NULL;
-    int i_SrcSRSName = -1;
-    int bSrcSRSFormatSpecified = FALSE;
-    SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
-
-    /* Check that we are running against at least GDAL 1.4 */
-    /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
+    // Check that we are running against at least GDAL 1.4.
+    // Note to developers: if we use newer API, please change the requirement.
+    if( atoi(GDALVersionInfo("VERSION_NUM")) < 1400 )
     {
-        fprintf(stderr, "At least, GDAL >= 1.4.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        fprintf(stderr,
+                "At least, GDAL >= 1.4.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n",
+                argv[0], GDAL_RELEASE_NAME);
         exit(1);
     }
 
@@ -134,59 +111,76 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
 /*      Get commandline arguments other than the GDAL raster filenames. */
 /* -------------------------------------------------------------------- */
-    for( i_arg = 1; i_arg < argc; i_arg++ )
+    const char* pszIndexLayerName = NULL;
+    const char *index_filename = NULL;
+    const char *tile_index = "location";
+    const char* pszDriverName = "ESRI Shapefile";
+    size_t nMaxFieldSize = 254;
+    bool write_absolute_path = false;
+    char* current_path = NULL;
+    bool skip_different_projection = false;
+    const char *pszTargetSRS = "";
+    bool bSetTargetSRS = false;
+    const char* pszSrcSRSName = NULL;
+    int i_SrcSRSName = -1;
+    bool bSrcSRSFormatSpecified = false;
+    SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
+
+    int iArg = 1;  // Used after for.
+    for( ; iArg < argc; iArg++ )
     {
-        if( EQUAL(argv[i_arg], "--utility_version") )
+        if( EQUAL(argv[iArg], "--utility_version") )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             CSLDestroy( argv );
             return 0;
         }
-        else if( EQUAL(argv[i_arg],"--help") )
+        else if( EQUAL(argv[iArg],"--help") )
             Usage(NULL);
-        else if( strcmp(argv[i_arg],"-f") == 0 )
+        else if( strcmp(argv[iArg],"-f") == 0 )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszDriverName = argv[++i_arg];
+            pszDriverName = argv[++iArg];
             if( !EQUAL(pszDriverName, "ESRI Shapefile") )
                 nMaxFieldSize = 0;
         }
-        else if( strcmp(argv[i_arg],"-lyr_name") == 0 )
+        else if( strcmp(argv[iArg],"-lyr_name") == 0 )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszIndexLayerName = argv[++i_arg];
+            pszIndexLayerName = argv[++iArg];
         }
-        else if( strcmp(argv[i_arg],"-tileindex") == 0 )
+        else if( strcmp(argv[iArg],"-tileindex") == 0 )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            tile_index = argv[++i_arg];
+            tile_index = argv[++iArg];
         }
-        else if( strcmp(argv[i_arg],"-t_srs") == 0 )
+        else if( strcmp(argv[iArg],"-t_srs") == 0 )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszTargetSRS = argv[++i_arg];
-            bSetTargetSRS = TRUE;
+            pszTargetSRS = argv[++iArg];
+            bSetTargetSRS = true;
         }
-        else if ( strcmp(argv[i_arg],"-write_absolute_path") == 0 )
+        else if ( strcmp(argv[iArg],"-write_absolute_path") == 0 )
         {
-            write_absolute_path = TRUE;
+            write_absolute_path = true;
         }
-        else if ( strcmp(argv[i_arg],"-skip_different_projection") == 0 )
+        else if ( strcmp(argv[iArg],"-skip_different_projection") == 0 )
         {
-            skip_different_projection = TRUE;
+            skip_different_projection = true;
         }
-        else if( strcmp(argv[i_arg], "-src_srs_name") == 0 )
+        else if( strcmp(argv[iArg], "-src_srs_name") == 0 )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszSrcSRSName = argv[++i_arg];
+            pszSrcSRSName = argv[++iArg];
         }
-        else if( strcmp(argv[i_arg], "-src_srs_format") == 0 )
+        else if( strcmp(argv[iArg], "-src_srs_format") == 0 )
         {
             const char* pszFormat;
-            bSrcSRSFormatSpecified = TRUE;
+            bSrcSRSFormatSpecified = true;
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszFormat = argv[++i_arg];
+            pszFormat = argv[++iArg];
             if( EQUAL(pszFormat, "AUTO") )
                 eSrcSRSFormat = FORMAT_AUTO;
             else if( EQUAL(pszFormat, "WKT") )
@@ -196,53 +190,58 @@ int main(int argc, char *argv[])
             else if( EQUAL(pszFormat, "PROJ") )
                 eSrcSRSFormat = FORMAT_PROJ;
         }
-        else if( argv[i_arg][0] == '-' )
-            Usage(CPLSPrintf("Unknown option name '%s'", argv[i_arg]));
+        else if( argv[iArg][0] == '-' )
+            Usage(CPLSPrintf("Unknown option name '%s'", argv[iArg]));
         else if( index_filename == NULL )
         {
-            index_filename = argv[i_arg];
-            i_arg++;
+            index_filename = argv[iArg];
+            iArg++;
             break;
         }
     }
 
     if( index_filename == NULL )
         Usage("No index filename specified.");
-    if( i_arg == argc )
+    if( iArg == argc )
         Usage("No file to index specified.");
     if( bSrcSRSFormatSpecified && pszSrcSRSName == NULL )
-        Usage("-src_srs_name must be specified when -src_srs_format is specified.");
+        Usage("-src_srs_name must be specified when -src_srs_format is "
+              "specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Create and validate target SRS if given.                        */
 /* -------------------------------------------------------------------- */
-   if( bSetTargetSRS )
-   {
-       if ( skip_different_projection )
-       {
-           fprintf( stderr,
-                    "Warning : -skip_different_projection does not apply "
-                    "when -t_srs is requested.\n" );
-       }
-       hTargetSRS = OSRNewSpatialReference("");
-       /* coverity[tainted_data] */
-       if( OSRSetFromUserInput( hTargetSRS, pszTargetSRS ) != CE_None )
-       {
-           OSRDestroySpatialReference( hTargetSRS );
-           fprintf( stderr, "Invalid target SRS `%s'.\n",
-                    pszTargetSRS );
-           exit(1);
-       }
-   }
+    OGRSpatialReferenceH hTargetSRS = NULL;
+    if( bSetTargetSRS )
+    {
+        if( skip_different_projection )
+        {
+            fprintf( stderr,
+                     "Warning : -skip_different_projection does not apply "
+                     "when -t_srs is requested.\n" );
+        }
+        hTargetSRS = OSRNewSpatialReference("");
+        // coverity[tainted_data]
+        if( OSRSetFromUserInput( hTargetSRS, pszTargetSRS ) != CE_None )
+        {
+            OSRDestroySpatialReference( hTargetSRS );
+            fprintf( stderr, "Invalid target SRS `%s'.\n",
+                     pszTargetSRS );
+            exit(1);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open or create the target datasource                            */
 /* -------------------------------------------------------------------- */
-    hTileIndexDS = OGROpen( index_filename, TRUE, NULL );
-    if (hTileIndexDS != NULL)
+    OGRDataSourceH hTileIndexDS = OGROpen( index_filename, TRUE, NULL );
+    OGRLayerH hLayer = NULL;
+    if( hTileIndexDS != NULL )
     {
         if( OGR_DS_GetLayerCount(hTileIndexDS) == 1 )
+        {
             hLayer = OGR_DS_GetLayer(hTileIndexDS, 0);
+        }
         else
         {
             if( pszIndexLayerName == NULL )
@@ -257,10 +256,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        OGRSFDriverH hDriver;
-
         printf( "Creating new index file...\n" );
-        hDriver = OGRGetDriverByName( pszDriverName );
+        OGRSFDriverH hDriver = OGRGetDriverByName( pszDriverName );
         if( hDriver == NULL )
         {
             printf( "%s driver not available.\n", pszDriverName );
@@ -273,13 +270,15 @@ int main(int argc, char *argv[])
     if( hTileIndexDS != NULL && hLayer == NULL )
     {
         OGRSpatialReferenceH hSpatialRef = NULL;
-        char* pszLayerName;
+        char* pszLayerName = NULL;
         if( pszIndexLayerName == NULL )
         {
             VSIStatBuf sStat;
             if( EQUAL(pszDriverName, "ESRI Shapefile") ||
                 VSIStat(index_filename, &sStat) == 0 )
+            {
                 pszLayerName = CPLStrdup(CPLGetBasename(index_filename));
+            }
             else
             {
                 printf( "-lyr_name must be specified.\n" );
@@ -287,7 +286,9 @@ int main(int argc, char *argv[])
             }
         }
         else
+        {
             pszLayerName = CPLStrdup(pszIndexLayerName);
+        }
 
         /* get spatial reference for output file from target SRS (if set) */
         /* or from first input file */
@@ -297,8 +298,8 @@ int main(int argc, char *argv[])
         }
         else
         {
-            GDALDatasetH hDS = GDALOpen( argv[i_arg], GA_ReadOnly );
-            if (hDS)
+            GDALDatasetH hDS = GDALOpen( argv[iArg], GA_ReadOnly );
+            if( hDS )
             {
                 const char* pszWKT = GDALGetProjectionRef(hDS);
                 if (pszWKT != NULL && pszWKT[0] != '\0')
@@ -309,16 +310,18 @@ int main(int argc, char *argv[])
             }
         }
 
-        hLayer = OGR_DS_CreateLayer( hTileIndexDS, pszLayerName, hSpatialRef, wkbPolygon, NULL );
+        hLayer =
+            OGR_DS_CreateLayer( hTileIndexDS, pszLayerName, hSpatialRef,
+                                wkbPolygon, NULL );
         CPLFree(pszLayerName);
-        if (hSpatialRef)
+        if( hSpatialRef )
             OSRRelease(hSpatialRef);
 
-        if (hLayer)
+        if( hLayer )
         {
             OGRFieldDefnH hFieldDefn = OGR_Fld_Create( tile_index, OFTString );
             if( nMaxFieldSize )
-                OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
+                OGR_Fld_SetWidth( hFieldDefn, static_cast<int>(nMaxFieldSize));
             OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
             OGR_Fld_Destroy(hFieldDefn);
             if( pszSrcSRSName != NULL )
@@ -339,9 +342,9 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-    hFDefn = OGR_L_GetLayerDefn(hLayer);
+    OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hLayer);
 
-    ti_field = OGR_FD_GetFieldIndex( hFDefn, tile_index );
+    const int ti_field = OGR_FD_GetFieldIndex( hFDefn, tile_index );
     if( ti_field < 0 )
     {
         fprintf( stderr, "Unable to find field `%s' in file `%s'.\n",
@@ -352,25 +355,32 @@ int main(int argc, char *argv[])
     if( pszSrcSRSName != NULL )
         i_SrcSRSName = OGR_FD_GetFieldIndex( hFDefn, pszSrcSRSName );
 
-    /* Load in memory existing file names in SHP */
-    nExistingFiles = (int)OGR_L_GetFeatureCount(hLayer, FALSE);
+    // Load in memory existing file names in SHP.
+    int nExistingFiles = static_cast<int>(OGR_L_GetFeatureCount(hLayer, FALSE));
     if( nExistingFiles < 0)
         nExistingFiles = 0;
-    if (nExistingFiles > 0)
+
+    char** existingFilesTab = NULL;
+    bool alreadyExistingProjectionRefValid = false;
+    char* alreadyExistingProjectionRef = NULL;
+    if( nExistingFiles > 0 )
     {
-        OGRFeatureH hFeature;
-        existingFilesTab = (char**)CPLMalloc(nExistingFiles * sizeof(char*));
-        for(i=0;i<nExistingFiles;i++)
+        OGRFeatureH hFeature = NULL;
+        existingFilesTab = static_cast<char **>(
+            CPLMalloc(nExistingFiles * sizeof(char*)));
+        for( int i = 0; i < nExistingFiles; i++ )
         {
             hFeature = OGR_L_GetNextFeature(hLayer);
-            existingFilesTab[i] = CPLStrdup(OGR_F_GetFieldAsString( hFeature, ti_field ));
-            if (i == 0)
+            existingFilesTab[i] =
+                CPLStrdup(OGR_F_GetFieldAsString( hFeature, ti_field ));
+            if( i == 0 )
             {
                 GDALDatasetH hDS = GDALOpen(existingFilesTab[i], GA_ReadOnly );
-                if (hDS)
+                if( hDS )
                 {
-                    alreadyExistingProjectionRefValid = TRUE;
-                    alreadyExistingProjectionRef = CPLStrdup(GDALGetProjectionRef(hDS));
+                    alreadyExistingProjectionRefValid = true;
+                    alreadyExistingProjectionRef =
+                        CPLStrdup(GDALGetProjectionRef(hDS));
                     GDALClose(hDS);
                 }
             }
@@ -378,13 +388,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (write_absolute_path)
+    if( write_absolute_path )
     {
         current_path = CPLGetCurrentDir();
         if (current_path == NULL)
         {
-            fprintf( stderr, "This system does not support the CPLGetCurrentDir call. "
-                             "The option -write_absolute_path will have no effect\n");
+            fprintf( stderr,
+                     "This system does not support the CPLGetCurrentDir call. "
+                     "The option -write_absolute_path will have no effect\n" );
             write_absolute_path = FALSE;
         }
     }
@@ -392,56 +403,53 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
 /*      loop over GDAL files, processing.                               */
 /* -------------------------------------------------------------------- */
-    for( ; i_arg < argc; i_arg++ )
+    for( ; iArg < argc; iArg++ )
     {
-        GDALDatasetH	hDS;
-        double	        adfGeoTransform[6];
-        double		adfX[5], adfY[5];
-        int		nXSize, nYSize;
-        char* fileNameToWrite;
-        const char* projectionRef;
+        char *fileNameToWrite = NULL;
         VSIStatBuf sStatBuf;
-        int k;
-        OGRFeatureH hFeature;
-        OGRGeometryH hPoly, hRing;
-        OGRSpatialReferenceH hSourceSRS = NULL;
 
-        /* Make sure it is a file before building absolute path name */
-        if (write_absolute_path && CPLIsFilenameRelative( argv[i_arg] ) &&
-            VSIStat( argv[i_arg], &sStatBuf ) == 0)
+        // Make sure it is a file before building absolute path name.
+        if( write_absolute_path && CPLIsFilenameRelative( argv[iArg] ) &&
+            VSIStat( argv[iArg], &sStatBuf ) == 0 )
         {
-            fileNameToWrite = CPLStrdup(CPLProjectRelativeFilename(current_path, argv[i_arg]));
+            fileNameToWrite =
+                CPLStrdup(CPLProjectRelativeFilename(current_path, argv[iArg]));
         }
         else
         {
-            fileNameToWrite = CPLStrdup(argv[i_arg]);
+            fileNameToWrite = CPLStrdup(argv[iArg]);
         }
 
-        /* Checks that file is not already in tileindex */
-        for(i=0;i<nExistingFiles;i++)
+        // Checks that file is not already in tileindex.
         {
-            if (EQUAL(fileNameToWrite, existingFilesTab[i]))
+            int i = 0;  // Used after for.
+            for( ; i < nExistingFiles; i++ )
             {
-                fprintf(stderr, "File %s is already in tileindex. Skipping it.\n",
-                        fileNameToWrite);
-                break;
+                if (EQUAL(fileNameToWrite, existingFilesTab[i]))
+                {
+                    fprintf(stderr,
+                            "File %s is already in tileindex. Skipping it.\n",
+                            fileNameToWrite);
+                    break;
+                }
+            }
+            if (i != nExistingFiles)
+            {
+                CPLFree(fileNameToWrite);
+                continue;
             }
         }
-        if (i != nExistingFiles)
-        {
-            CPLFree(fileNameToWrite);
-            continue;
-        }
 
-        hDS = GDALOpen( argv[i_arg], GA_ReadOnly );
+        GDALDatasetH hDS = GDALOpen( argv[iArg], GA_ReadOnly );
         if( hDS == NULL )
         {
             fprintf( stderr, "Unable to open %s, skipping.\n",
-                     argv[i_arg] );
+                     argv[iArg] );
             CPLFree(fileNameToWrite);
             continue;
         }
 
+        double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         GDALGetGeoTransform( hDS, adfGeoTransform );
         if( adfGeoTransform[0] == 0.0
             && adfGeoTransform[1] == 1.0
@@ -451,34 +459,41 @@ int main(int argc, char *argv[])
             fprintf( stderr,
                      "It appears no georeferencing is available for\n"
                      "`%s', skipping.\n",
-                     argv[i_arg] );
+                     argv[iArg] );
             GDALClose( hDS );
             CPLFree(fileNameToWrite);
             continue;
         }
 
-        projectionRef = GDALGetProjectionRef(hDS);
+        const char *projectionRef = GDALGetProjectionRef(hDS);
 
-        /* if not set target srs, test that the current file uses same projection as others */
+        // If not set target srs, test that the current file uses same
+        // projection as others.
         if( !bSetTargetSRS )
         {
-            if (alreadyExistingProjectionRefValid)
+            if( alreadyExistingProjectionRefValid )
             {
                 int projectionRefNotNull, alreadyExistingProjectionRefNotNull;
                 projectionRefNotNull = projectionRef && projectionRef[0];
-                alreadyExistingProjectionRefNotNull = alreadyExistingProjectionRef && alreadyExistingProjectionRef[0];
+                alreadyExistingProjectionRefNotNull =
+                    alreadyExistingProjectionRef &&
+                    alreadyExistingProjectionRef[0];
                 if ((projectionRefNotNull &&
                      alreadyExistingProjectionRefNotNull &&
                      EQUAL(projectionRef, alreadyExistingProjectionRef) == 0) ||
                     (projectionRefNotNull != alreadyExistingProjectionRefNotNull))
                 {
-                    fprintf(stderr, "Warning : %s is not using the same projection system as "
-                            "other files in the tileindex.\n"
-			    "This may cause problems when using it in MapServer for example.\n"
-                            "Use -t_srs option to set target projection system (not supported by MapServer).\n"
-                            "%s\n", argv[i_arg],
-                            (skip_different_projection) ? "Skipping this file." : "");
-                    if (skip_different_projection)
+                    fprintf(
+                        stderr,
+                        "Warning : %s is not using the same projection system "
+                        "as other files in the tileindex.\n"
+                        "This may cause problems when using it in MapServer "
+                        "for example.\n"
+                        "Use -t_srs option to set target projection system "
+                        "(not supported by MapServer).\n"
+                        "%s\n", argv[iArg],
+                        skip_different_projection ? "Skipping this file." : "");
+                    if( skip_different_projection )
                     {
                         CPLFree(fileNameToWrite);
                         GDALClose( hDS );
@@ -488,14 +503,16 @@ int main(int argc, char *argv[])
             }
             else
             {
-                alreadyExistingProjectionRefValid = TRUE;
+                alreadyExistingProjectionRefValid = true;
                 alreadyExistingProjectionRef = CPLStrdup(projectionRef);
             }
         }
 
-        nXSize = GDALGetRasterXSize( hDS );
-        nYSize = GDALGetRasterYSize( hDS );
+        const int nXSize = GDALGetRasterXSize( hDS );
+        const int nYSize = GDALGetRasterYSize( hDS );
 
+        double adfX[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double adfY[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
         adfX[0] = adfGeoTransform[0]
             + 0 * adfGeoTransform[1]
             + 0 * adfGeoTransform[2];
@@ -531,10 +548,15 @@ int main(int argc, char *argv[])
             + 0 * adfGeoTransform[4]
             + 0 * adfGeoTransform[5];
 
-        if( (bSetTargetSRS || i_SrcSRSName >= 0) && projectionRef != NULL && projectionRef[0] != '\0' )
+        OGRSpatialReferenceH hSourceSRS = NULL;
+        if( (bSetTargetSRS || i_SrcSRSName >= 0) &&
+            projectionRef != NULL &&
+            projectionRef[0] != '\0' )
+        {
             hSourceSRS = OSRNewSpatialReference( projectionRef );
+        }
 
-        /* if set target srs, do the forward transformation of all points */
+        // If set target srs, do the forward transformation of all points.
         if( bSetTargetSRS && projectionRef != NULL && projectionRef[0] != '\0' )
         {
             OGRCoordinateTransformationH hCT = NULL;
@@ -543,51 +565,68 @@ int main(int argc, char *argv[])
                 hCT = OCTNewCoordinateTransformation( hSourceSRS, hTargetSRS );
                 if( hCT == NULL || !OCTTransform( hCT, 5, adfX, adfY, NULL ) )
                 {
-                    fprintf( stderr,
-                             "Warning : unable to transform points from source SRS `%s' to target SRS `%s'\n"
-                             "for file `%s' - file skipped\n",
-                             projectionRef, pszTargetSRS, fileNameToWrite );
-                    if ( hCT )
+                    fprintf(
+                        stderr,
+                        "Warning : unable to transform points from source "
+                        "SRS `%s' to target SRS `%s'\n"
+                        "for file `%s' - file skipped\n",
+                        projectionRef, pszTargetSRS, fileNameToWrite );
+                    if( hCT )
                         OCTDestroyCoordinateTransformation( hCT );
-                    if ( hSourceSRS )
+                    if( hSourceSRS )
                         OSRDestroySpatialReference( hSourceSRS );
                     continue;
                 }
-                if ( hCT )
+                if( hCT )
                     OCTDestroyCoordinateTransformation( hCT );
             }
         }
 
-        hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+        OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
         OGR_F_SetFieldString( hFeature, ti_field, fileNameToWrite );
 
         if( i_SrcSRSName >= 0 && hSourceSRS != NULL )
         {
-            const char* pszAuthorityCode = OSRGetAuthorityCode(hSourceSRS, NULL);
-            const char* pszAuthorityName = OSRGetAuthorityName(hSourceSRS, NULL);
+            const char* pszAuthorityCode =
+                OSRGetAuthorityCode(hSourceSRS, NULL);
+            const char* pszAuthorityName =
+                OSRGetAuthorityName(hSourceSRS, NULL);
             if( eSrcSRSFormat == FORMAT_AUTO )
             {
                 if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
-                                        CPLSPrintf("%s:%s", pszAuthorityName, pszAuthorityCode) );
-                else if( nMaxFieldSize == 0 || strlen(projectionRef) <= nMaxFieldSize )
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName, projectionRef );
+                {
+                    OGR_F_SetFieldString(
+                        hFeature, i_SrcSRSName,
+                        CPLSPrintf("%s:%s",
+                                   pszAuthorityName, pszAuthorityCode) );
+                }
+                else if( nMaxFieldSize == 0 ||
+                         strlen(projectionRef) <= nMaxFieldSize )
+                {
+                    OGR_F_SetFieldString(hFeature, i_SrcSRSName, projectionRef);
+                }
                 else
                 {
                     char* pszProj4 = NULL;
                     if( OSRExportToProj4(hSourceSRS, &pszProj4) == OGRERR_NONE )
                     {
-                        OGR_F_SetFieldString( hFeature, i_SrcSRSName, pszProj4 );
+                        OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                              pszProj4 );
                         CPLFree(pszProj4);
                     }
                     else
-                        OGR_F_SetFieldString( hFeature, i_SrcSRSName, projectionRef );
+                    {
+                        OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                              projectionRef );
+                    }
                 }
             }
             else if( eSrcSRSFormat == FORMAT_WKT )
             {
-                if( nMaxFieldSize == 0 || strlen(projectionRef) <= nMaxFieldSize )
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName, projectionRef );
+                if( nMaxFieldSize == 0 ||
+                    strlen(projectionRef) <= nMaxFieldSize )
+                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                          projectionRef );
             }
             else if( eSrcSRSFormat == FORMAT_PROJ )
             {
@@ -601,16 +640,18 @@ int main(int argc, char *argv[])
             else if( eSrcSRSFormat == FORMAT_EPSG )
             {
                 if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
-                                        CPLSPrintf("%s:%s", pszAuthorityName, pszAuthorityCode) );
+                    OGR_F_SetFieldString(
+                        hFeature, i_SrcSRSName,
+                        CPLSPrintf("%s:%s",
+                                   pszAuthorityName, pszAuthorityCode) );
             }
         }
         if( hSourceSRS )
             OSRDestroySpatialReference( hSourceSRS );
 
-        hPoly = OGR_G_CreateGeometry(wkbPolygon);
-        hRing = OGR_G_CreateGeometry(wkbLinearRing);
-        for(k=0;k<5;k++)
+        OGRGeometryH hPoly = OGR_G_CreateGeometry(wkbPolygon);
+        OGRGeometryH hRing = OGR_G_CreateGeometry(wkbLinearRing);
+        for( int k = 0; k < 5; k++ )
             OGR_G_SetPoint_2D(hRing, k, adfX[k], adfY[k]);
         OGR_G_AddGeometryDirectly( hPoly, hRing );
         OGR_F_SetGeometryDirectly( hFeature, hPoly );
@@ -632,7 +673,7 @@ int main(int argc, char *argv[])
 
     if (nExistingFiles)
     {
-        for(i=0;i<nExistingFiles;i++)
+        for( int i = 0; i < nExistingFiles; i++ )
         {
             CPLFree(existingFilesTab[i]);
         }
