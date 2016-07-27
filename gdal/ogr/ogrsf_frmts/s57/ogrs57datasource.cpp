@@ -57,18 +57,18 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
 /* -------------------------------------------------------------------- */
     const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
 
-    if ( pszOptString == NULL )
-        return;
-
-    papszOptions =
-        CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
-
-    if ( papszOptions && *papszOptions )
+    if ( pszOptString != NULL )
     {
-        CPLDebug( "S57", "The following S57 options are being set:" );
-        char **papszCurOption = papszOptions;
-        while( *papszCurOption )
-            CPLDebug( "S57", "    %s", *papszCurOption++ );
+        papszOptions =
+            CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
+
+        if ( papszOptions && *papszOptions )
+        {
+            CPLDebug( "S57", "The following S57 options are being set:" );
+            char **papszCurOption = papszOptions;
+            while( *papszCurOption )
+                CPLDebug( "S57", "    %s", *papszCurOption++ );
+        }
     }
 
 /* -------------------------------------------------------------------- */
