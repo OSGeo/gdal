@@ -65,7 +65,7 @@ class CPL_DLL OGRFieldDefn
     char                *pszName;
     OGRFieldType        eType;
     OGRJustification    eJustify;
-    int                 nWidth;                 /* zero is variable */
+    int                 nWidth;  // Zero is variable.
     int                 nPrecision;
     char                *pszDefault;
 
@@ -165,13 +165,14 @@ public:
         void                SetType( OGRwkbGeometryType eTypeIn );
 
         virtual OGRSpatialReference* GetSpatialRef();
-        void                 SetSpatialRef(OGRSpatialReference* poSRSIn);
+        void                 SetSpatialRef( OGRSpatialReference* poSRSIn );
 
         int                 IsIgnored() const { return bIgnore; }
         void                SetIgnored( int bIgnoreIn ) { bIgnore = bIgnoreIn; }
 
         int                 IsNullable() const { return bNullable; }
-        void                SetNullable( int bNullableIn ) { bNullable = bNullableIn; }
+        void                SetNullable( int bNullableIn )
+            { bNullable = bNullableIn; }
 
         int                 IsSame( OGRGeomFieldDefn * );
 
@@ -236,7 +237,8 @@ class CPL_DLL OGRFeatureDefn
     virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i );
     virtual int         GetGeomFieldIndex( const char * );
 
-    virtual void        AddGeomFieldDefn( OGRGeomFieldDefn *, int bCopy = TRUE );
+    virtual void        AddGeomFieldDefn( OGRGeomFieldDefn *,
+                                          int bCopy = TRUE );
     virtual OGRErr      DeleteGeomFieldDefn( int iGeomField );
 
     virtual OGRwkbGeometryType GetGeomType();
@@ -252,7 +254,8 @@ class CPL_DLL OGRFeatureDefn
     virtual int         IsGeometryIgnored();
     virtual void        SetGeometryIgnored( int bIgnore );
     virtual int         IsStyleIgnored() const { return bIgnoreStyle; }
-    virtual void        SetStyleIgnored( int bIgnore ) { bIgnoreStyle = bIgnore; }
+    virtual void        SetStyleIgnored( int bIgnore )
+        { bIgnoreStyle = bIgnore; }
 
     virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
 
@@ -300,27 +303,28 @@ class CPL_DLL OGRFeature
     OGRGeometry        *GetGeometryRef();
     OGRGeometry        *StealGeometry() CPL_WARN_UNUSED_RESULT;
 
-    int                 GetGeomFieldCount()
+    int                 GetGeomFieldCount() const
                                 { return poDefn->GetGeomFieldCount(); }
     OGRGeomFieldDefn   *GetGeomFieldDefnRef( int iField )
                                 { return poDefn->GetGeomFieldDefn(iField); }
-    int                 GetGeomFieldIndex( const char * pszName)
+    int                 GetGeomFieldIndex( const char * pszName )
                                 { return poDefn->GetGeomFieldIndex(pszName); }
 
-    OGRGeometry*        GetGeomFieldRef(int iField);
-    OGRGeometry*        StealGeometry(int iField);
-    OGRGeometry*        GetGeomFieldRef(const char* pszFName);
+    OGRGeometry*        GetGeomFieldRef( int iField );
+    OGRGeometry*        StealGeometry( int iField );
+    OGRGeometry*        GetGeomFieldRef( const char* pszFName );
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
     OGRErr              SetGeomField( int iField, const OGRGeometry * );
 
     OGRFeature         *Clone() CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean  Equal( OGRFeature * poFeature );
 
-    int                 GetFieldCount() { return poDefn->GetFieldCount(); }
-    OGRFieldDefn       *GetFieldDefnRef( int iField )
+    int                 GetFieldCount() const
+        { return poDefn->GetFieldCount(); }
+    OGRFieldDefn       *GetFieldDefnRef( int iField ) const
                                       { return poDefn->GetFieldDefn(iField); }
-    int                 GetFieldIndex( const char * pszName)
-                                      { return poDefn->GetFieldIndex(pszName);}
+    int                 GetFieldIndex( const char * pszName )
+                                      { return poDefn->GetFieldIndex(pszName); }
 
     int                 IsFieldSet( int iField );
 
@@ -338,13 +342,17 @@ class CPL_DLL OGRFeature
     char              **GetFieldAsStringList( int i );
     GByte              *GetFieldAsBinary( int i, int *pnCount );
     int                 GetFieldAsDateTime( int i,
-                                     int *pnYear, int *pnMonth, int *pnDay,
-                                     int *pnHour, int *pnMinute, int *pnSecond,
-                                     int *pnTZFlag );
+                                            int *pnYear, int *pnMonth,
+                                            int *pnDay,
+                                            int *pnHour, int *pnMinute,
+                                            int *pnSecond,
+                                            int *pnTZFlag );
     int                 GetFieldAsDateTime( int i,
-                                     int *pnYear, int *pnMonth, int *pnDay,
-                                     int *pnHour, int *pnMinute, float *pfSecond,
-                                     int *pnTZFlag );
+                                            int *pnYear, int *pnMonth,
+                                            int *pnDay,
+                                            int *pnHour, int *pnMinute,
+                                            float *pfSecond,
+                                            int *pnTZFlag );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
@@ -374,7 +382,8 @@ class CPL_DLL OGRFeature
     void                SetField( int i, double dfValue );
     void                SetField( int i, const char * pszValue );
     void                SetField( int i, int nCount, int * panValues );
-    void                SetField( int i, int nCount, const GIntBig * panValues );
+    void                SetField( int i, int nCount,
+                                  const GIntBig * panValues );
     void                SetField( int i, int nCount, double * padfValues );
     void                SetField( int i, char ** papszValues );
     void                SetField( int i, OGRField * puValue );
@@ -389,17 +398,17 @@ class CPL_DLL OGRFeature
                            { SetField( GetFieldIndex(pszFName), nValue ); }
     void                SetField( const char *pszFName, double dfValue )
                            { SetField( GetFieldIndex(pszFName), dfValue ); }
-    void                SetField( const char *pszFName, const char * pszValue)
+    void                SetField( const char *pszFName, const char * pszValue )
                            { SetField( GetFieldIndex(pszFName), pszValue ); }
     void                SetField( const char *pszFName, int nCount,
                                   int * panValues )
-                         { SetField(GetFieldIndex(pszFName),nCount,panValues);}
+                         { SetField(GetFieldIndex(pszFName),nCount,panValues); }
     void                SetField( const char *pszFName, int nCount,
                                   const GIntBig * panValues )
-                         { SetField(GetFieldIndex(pszFName),nCount,panValues);}
+                         { SetField(GetFieldIndex(pszFName),nCount,panValues); }
     void                SetField( const char *pszFName, int nCount,
                                   double * padfValues )
-                         {SetField(GetFieldIndex(pszFName),nCount,padfValues);}
+                         {SetField(GetFieldIndex(pszFName),nCount,padfValues); }
     void                SetField( const char *pszFName, char ** papszValues )
                            { SetField( GetFieldIndex(pszFName), papszValues); }
     void                SetField( const char *pszFName, OGRField * puValue )
@@ -412,12 +421,12 @@ class CPL_DLL OGRFeature
                                        nYear, nMonth, nDay,
                                        nHour, nMinute, fSecond, nTZFlag ); }
 
-    GIntBig             GetFID() { return nFID; }
+    GIntBig             GetFID() const { return nFID; }
     virtual OGRErr      SetFID( GIntBig nFIDIn );
 
     void                DumpReadable( FILE *, char** papszOptions = NULL );
 
-    OGRErr              SetFrom( OGRFeature *, int = TRUE);
+    OGRErr              SetFrom( OGRFeature *, int = TRUE );
     OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
     OGRErr              SetFieldsFrom( OGRFeature *, int *, int = TRUE );
 
@@ -428,18 +437,19 @@ class CPL_DLL OGRFeature
 
     int                 Validate( int nValidateFlags,
                                   int bEmitError );
-    void                FillUnsetWithDefault(int bNotNullableOnly,
-                                             char** papszOptions );
+    void                FillUnsetWithDefault( int bNotNullableOnly,
+                                              char** papszOptions );
 
     virtual const char *GetStyleString();
     virtual void        SetStyleString( const char * );
     virtual void        SetStyleStringDirectly( char * );
     virtual OGRStyleTable *GetStyleTable() { return m_poStyleTable; }
-    virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
-    virtual void        SetStyleTableDirectly(OGRStyleTable *poStyleTable);
+    virtual void        SetStyleTable( OGRStyleTable *poStyleTable );
+    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
 
     const char         *GetNativeData() const { return m_pszNativeData; }
-    const char         *GetNativeMediaType() const { return m_pszNativeMediaType; }
+    const char         *GetNativeMediaType() const
+        { return m_pszNativeMediaType; }
     void                SetNativeData( const char* pszNativeData );
     void                SetNativeMediaType( const char* pszNativeMediaType );
 
@@ -466,7 +476,8 @@ class CPL_DLL OGRFeatureQuery
 
     char          **FieldCollector( void *, char ** );
 
-    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, GIntBig& nFIDCount);
+    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
+                                           GIntBig& nFIDCount );
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
@@ -475,7 +486,9 @@ class CPL_DLL OGRFeatureQuery
                 ~OGRFeatureQuery();
 
     OGRErr      Compile( OGRFeatureDefn *, const char *,
-                         int bCheck = TRUE, swq_custom_func_registrar* poCustomFuncRegistrar = NULL );
+                         int bCheck = TRUE,
+                         swq_custom_func_registrar*
+                             poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
     GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
