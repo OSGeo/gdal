@@ -263,7 +263,7 @@ CPL_C_END
 /*                                                                      */
 /*      This class represents the lowest level of abstraction.  It      */
 /*      is holds the imagery for one "chunk" of a warp, and the         */
-/*      pre-prepared masks.  All IO is done before and after it's       */
+/*      pre-prepared masks.  All IO is done before and after its        */
 /*      operation.  This class is not normally used by the              */
 /*      application.                                                    */
 /************************************************************************/

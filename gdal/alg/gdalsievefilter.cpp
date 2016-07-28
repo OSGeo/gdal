@@ -90,11 +90,11 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXS
 /*                          CompareNeighbour()                          */
 /*                                                                      */
 /*      Compare two neighbouring polygons, and update eaches            */
-/*      "biggest neighbour" if the other is larger than it's current    */
+/*      "biggest neighbour" if the other is larger than its current     */
 /*      largest neighbour.                                              */
 /*                                                                      */
 /*      Note that this should end up with each polygon knowing the      */
-/*      id of it's largest neighbour.  No attempt is made to            */
+/*      id of its largest neighbour.  No attempt is made to             */
 /*      restrict things to small polygons that we will be merging,      */
 /*      nor to exclude assigning "biggest neighbours" that are still    */
 /*      smaller than our sieve threshold.                               */

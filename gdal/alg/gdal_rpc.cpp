@@ -50,7 +50,7 @@ static const int MAX_ABS_VALUE_WARNINGS = 20;
 /************************************************************************/
 /*                            RPCInfoToMD()                             */
 /*                                                                      */
-/*      Turn an RPCInfo structure back into it's metadata format.       */
+/*      Turn an RPCInfo structure back into its metadata format.        */
 /************************************************************************/
 
 char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
