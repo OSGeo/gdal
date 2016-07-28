@@ -2877,7 +2877,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
  * This function works the same as GDALOpen(), but allows the sharing of
  * GDALDataset handles for a dataset with other callers to GDALOpenShared().
  *
- * In particular, GDALOpenShared() will first consult it's list of currently
+ * In particular, GDALOpenShared() will first consult its list of currently
  * open and shared GDALDataset's, and if the GetDescription() name for one
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.

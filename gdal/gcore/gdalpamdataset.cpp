@@ -655,8 +655,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
         CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
 
 /* -------------------------------------------------------------------- */
-/*      If we are looking for a subdataset, search for it's subtree     */
-/*      now.                                                            */
+/*      If we are looking for a subdataset, search for its subtree not. */
 /* -------------------------------------------------------------------- */
     if( psTree && psPam->osSubdatasetName.size() )
     {
