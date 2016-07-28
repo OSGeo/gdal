@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OPeNDAP Raster Driver
  * Purpose:  Implements DODSDataset and DODSRasterBand classes.

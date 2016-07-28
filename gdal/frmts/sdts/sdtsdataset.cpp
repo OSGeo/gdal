@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  GDALDataset driver for SDTS Raster translator.

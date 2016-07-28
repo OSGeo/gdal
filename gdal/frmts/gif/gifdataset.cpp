@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GIF Driver
  * Purpose:  Implement GDAL GIF Support using libungif code.

@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Example program dumping data in 8211 data to stdout.
@@ -29,6 +28,8 @@
 
 #include <stdio.h>
 #include "iso8211.h"
+
+CPL_CVSID("$Id$");
 
 static void ViewRecordField( DDFField * poField );
 static int ViewSubfield( DDFSubfieldDefn *poSFDefn,

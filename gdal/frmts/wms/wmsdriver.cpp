@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -43,6 +42,8 @@
 #include "minidriver_iip.h"
 
 #include <limits>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */

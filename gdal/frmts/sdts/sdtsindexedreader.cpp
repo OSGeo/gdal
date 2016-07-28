@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implmementation of SDTSIndexedReader class.  This base class for

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -30,6 +29,8 @@
 
 #include "wmsdriver.h"
 #include "minidriver_worldwind.h"
+
+CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(WorldWind)
 

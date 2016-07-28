@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -44,6 +43,8 @@
 #include "minidriver_tms.h"
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALWMSDataset()                           */

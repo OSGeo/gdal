@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Various utility functions.

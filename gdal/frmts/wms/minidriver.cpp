@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  GDALWMSMiniDriver base class implementation.
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
+
+CPL_CVSID("$Id$");
 
 static volatile GDALWMSMiniDriverManager *g_mini_driver_manager = NULL;
 static CPLMutex *g_mini_driver_manager_mutex = NULL;

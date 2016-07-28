@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  ISO8211 Library
  * Purpose:  Test ISO8211 writing capability.

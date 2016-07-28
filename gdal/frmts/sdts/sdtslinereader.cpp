@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSLineReader and SDTSRawLine classes.

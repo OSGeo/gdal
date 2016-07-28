@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL BPG Driver
  * Purpose:  Implement GDAL BPG Support based on libbpg

@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Mainline for converting to ArcView Shapefiles.
