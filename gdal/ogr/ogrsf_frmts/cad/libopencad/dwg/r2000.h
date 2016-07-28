@@ -84,11 +84,11 @@ public:
 protected:
     virtual int         readSectionLocator() override;
     virtual int         readHeader(enum OpenOptions eOptions) override;
-    virtual int 	    readClasses(enum OpenOptions eOptions) override;
+    virtual int         readClasses(enum OpenOptions eOptions) override;
     virtual int         createFileMap() override;
 
     CADObject *         getObject(long index, bool bHandlesOnly = false) override;
-    CADGeometry *       getGeometry(long index) override;
+    CADGeometry *       getGeometry(long index, long blockrefhandle = 0) override;
 
     CADDictionary       getNOD() override;
 protected:

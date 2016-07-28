@@ -134,8 +134,6 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
 
         if ( dCurrentEntHandle == dLastEntHandle )
         {
-            ent.reset (static_cast<CADEntityObject *>(
-                               file->getObject (dCurrentEntHandle, true) ) );
             if(nullptr != ent)
                 fillLayer(ent.get ());
             else

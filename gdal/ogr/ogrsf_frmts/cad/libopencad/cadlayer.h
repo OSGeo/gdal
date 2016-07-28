@@ -34,6 +34,7 @@
 #include "cadgeometry.h"
 
 #include <memory>
+#include <unordered_set>
 
 class CADFile;
 
@@ -73,7 +74,10 @@ public:
     long getHandle() const;
     void setHandle(long value);
 
-    void addHandle(long handle, enum CADObject::ObjectType type);
+    unordered_set< string > getAttributesTags();
+
+    // cadinserthandle is 0 by default because if entity isnt a part of custom block - its a part of ModelSpace block.
+    void addHandle(long handle, enum CADObject::ObjectType type, long cadinserthandle = 0);
 
     size_t getGeometryCount () const;
     CADGeometry* getGeometry(size_t index);
@@ -101,7 +105,8 @@ protected:
     long handle;
     short geometryType; // if all geometry is same type set this type or -1
 
-    vector<long> geometryHandles;
+    unordered_set<string> attributesNames;
+    vector< pair< long,long > > geometryHandles; // second param is CADInsert handle, 0 if its not a geometry in block ref.
     vector<long> imageHandles;
     vector< pair< long, map< string, long > > > geometryAttributes;
     map<long, Matrix> transformations;

@@ -145,7 +145,7 @@ void CADGeometry::setColor(int ACIColorIndex)
     geometry_color = CADACIColors[ACIColorIndex];
 }
 
-vector< string > CADGeometry::getEED()
+vector< string > CADGeometry::getEED() const
 {
     return asEED;
 }
@@ -153,6 +153,16 @@ vector< string > CADGeometry::getEED()
 void CADGeometry::setEED( vector< string > eed )
 {
     asEED = eed;
+}
+
+vector<CADAttrib> CADGeometry::getBlockAttributes() const
+{
+    return blockAttributes;
+}
+
+void CADGeometry::setBlockAttributes( const vector< CADAttrib >& data )
+{
+    blockAttributes = data;
 }
 
 //------------------------------------------------------------------------------

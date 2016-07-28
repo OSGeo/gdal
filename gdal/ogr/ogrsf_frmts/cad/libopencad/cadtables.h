@@ -70,18 +70,19 @@ public:
     };
 public:
     CADTables();
-    void addTable(enum TableType eType, CADHandle hHandle);
-    CADHandle getTableHandle(enum TableType);
-    int readTable(CADFile * const file, enum TableType eType);
-    size_t getLayerCount() const;
-    CADLayer& getLayer(size_t index);
+    
+    void                addTable(enum TableType eType, CADHandle hHandle);
+    CADHandle           getTableHandle(enum TableType);
+    int                 readTable(CADFile * const file, enum TableType eType);
+    size_t              getLayerCount() const;
+    CADLayer&           getLayer(size_t index);
 
 protected:
-    int readLayersTable(CADFile * const file, long index);
-    void fillLayer(const CADEntityObject* ent);
+    int                 readLayersTable(CADFile * const file, long index);
+    void                fillLayer(const CADEntityObject* ent);
 protected:
-    map<enum TableType, CADHandle> tableMap;
-    vector<CADLayer> layers;
+    map<enum TableType, CADHandle>  tableMap;
+    vector<CADLayer>                layers;
 };
 
 #endif // CADTABLES_H

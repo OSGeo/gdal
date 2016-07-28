@@ -557,10 +557,12 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
         header.addValue(CADHeader::TSTACKSIZE, ReadBITSHORT (pabyBuf,
                                                         nBitOffsetFromStart));
     }
-    else{
+    else
+    {
        skipBITSHORT (pabyBuf, nBitOffsetFromStart);
        skipBITSHORT (pabyBuf, nBitOffsetFromStart);
     }
+    
     header.addValue(CADHeader::HYPERLINKBASE, ReadTV (pabyBuf,
                                                          nBitOffsetFromStart));
     header.addValue(CADHeader::STYLESHEET, ReadTV (pabyBuf,
@@ -657,7 +659,8 @@ int DWGFileR2000::readHeader (OpenOptions eOptions)
 
 int DWGFileR2000::readClasses (enum OpenOptions eOptions)
 {
-    if(eOptions == OpenOptions::READ_ALL || eOptions == OpenOptions::READ_FAST ){
+    if(eOptions == OpenOptions::READ_ALL || eOptions == OpenOptions::READ_FAST )
+    {
         char    *pabySectionContent;
         char    buffer[255];
         size_t dSectionSize = 0;
@@ -680,7 +683,7 @@ int DWGFileR2000::readClasses (enum OpenOptions eOptions)
         pabySectionContent = new char[dSectionSize + 4];
         fileIO->Read (pabySectionContent, dSectionSize);
 
-        while ( ( nBitOffsetFromStart / 8 ) + 1 < dSectionSize )
+        while ( ( nBitOffsetFromStart / 8 + 1 ) < dSectionSize )
         {
             CADClass stClass;
             stClass.dClassNum = ReadBITSHORT (pabySectionContent,
@@ -810,7 +813,7 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     dObjectSize = ReadMSHORT (pabySectionContent, nBitOffsetFromStart);
     short dObjectType = ReadBITSHORT (pabySectionContent, nBitOffsetFromStart);
 
-    if(dObjectType >= 500)
+    if( dObjectType >= 500 )
     {
         CADClass cadClass = classes.getClassByNum (dObjectType);
         // FIXME: replace strcmp() with C++ analog
@@ -1065,13 +1068,460 @@ CADObject * DWGFileR2000::getObject (long index, bool bHandlesOnly)
     return readed_object;
 }
 
-CADGeometry *DWGFileR2000::getGeometry(long index)
+CADGeometry *DWGFileR2000::getGeometry(long geomhandle, long blockrefhandle)
 {
-    unique_ptr<CADEntityObject> readedObject( ( CADEntityObject* ) getObject(index) );
+    CADGeometry * poGeometry = nullptr;
+    unique_ptr<CADEntityObject> readedObject( static_cast<CADEntityObject*>(getObject(geomhandle)) );
 
     if(nullptr == readedObject)
         return nullptr;
 
+    switch ( readedObject->getType() )
+    {
+    case CADObject::ARC:
+    {
+        CADArc * arc = new CADArc();
+        CADArcObject * cadArc = static_cast<CADArcObject*>(
+                    readedObject.get());
+
+        arc->setColor (cadArc->stCed.nCMColor);
+        arc->setPosition (cadArc->vertPosition);
+        arc->setExtrusion (cadArc->vectExtrusion);
+        arc->setRadius (cadArc->dfRadius);
+        arc->setThickness(cadArc->dfThickness);
+        arc->setStartingAngle (cadArc->dfStartAngle);
+        arc->setEndingAngle (cadArc->dfEndAngle);
+
+        poGeometry = arc;
+        break;
+    }
+
+    case CADObject::POINT:
+    {
+        CADPoint3D * point = new CADPoint3D();
+        CADPointObject * cadPoint = static_cast<CADPointObject*>(
+                    readedObject.get());
+
+        point->setColor (cadPoint->stCed.nCMColor);
+        point->setPosition (cadPoint->vertPosition);
+        point->setExtrusion (cadPoint->vectExtrusion);
+        point->setXAxisAng (cadPoint->dfXAxisAng);
+        point->setThickness(cadPoint->dfThickness);
+
+        poGeometry = point;
+        break;
+    }
+
+    case CADObject::POLYLINE3D:
+    {
+        CADPolyline3D * polyline = new CADPolyline3D();
+        CADPolyline3DObject * cadPolyline3D = static_cast<CADPolyline3DObject*>(
+                    readedObject.get ());
+
+        polyline->setColor (cadPolyline3D->stCed.nCMColor);
+        // TODO: code can be much simplified if CADHandle will be used.
+        // to do so, == and ++ operators should be implemented.
+        unique_ptr<CADVertex3DObject> vertex;
+        long currentVertexH = cadPolyline3D->hVertexes[0].getAsLong ();
+        while ( currentVertexH != 0 )
+        {
+            vertex.reset (static_cast<CADVertex3DObject*>(
+                              getObject (currentVertexH)));
+
+            if ( vertex == nullptr )
+                break;
+
+            currentVertexH = vertex->stCed.hObjectHandle.getAsLong ();
+            polyline->addVertex ( vertex->vertPosition );
+            if ( vertex->stCed.bNoLinks == true )
+            {
+                ++currentVertexH;
+            }
+            else
+            {
+                currentVertexH = vertex->stChed.hNextEntity.getAsLong (
+                            vertex->stCed.hObjectHandle );
+            }
+
+            // Last vertex is reached. read it and break reading.
+            if ( currentVertexH == cadPolyline3D->hVertexes[1].getAsLong () )
+            {
+                vertex.reset (static_cast<CADVertex3DObject*>(
+                                  getObject (currentVertexH)));
+                polyline->addVertex ( vertex->vertPosition );
+                break;
+            }
+        }
+
+        poGeometry = polyline;
+        break;
+    }
+
+    case CADObject::LWPOLYLINE:
+    {
+        CADLWPolyline * lwPolyline = new CADLWPolyline();
+        CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject*>(
+                    readedObject.get ());
+
+        lwPolyline->setBulges(cadlwPolyline->adfBulges);
+        lwPolyline->setClosed(cadlwPolyline->bClosed);
+        lwPolyline->setColor (cadlwPolyline->stCed.nCMColor);
+        lwPolyline->setConstWidth (cadlwPolyline->dfConstWidth);
+        lwPolyline->setElevation (cadlwPolyline->dfElevation);
+        for(const CADVector& vertex : cadlwPolyline->avertVertexes)
+            lwPolyline->addVertex (vertex);
+        lwPolyline->setVectExtrusion (cadlwPolyline->vectExtrusion);
+        lwPolyline->setWidths (cadlwPolyline->astWidths);
+
+        poGeometry = lwPolyline;
+        break;
+    }
+
+    case CADObject::CIRCLE:
+    {
+        CADCircle * circle = new CADCircle();
+        CADCircleObject * cadCircle = static_cast<CADCircleObject*>(
+                    readedObject.get());
+
+        circle->setColor (cadCircle->stCed.nCMColor);
+        circle->setPosition (cadCircle->vertPosition);
+        circle->setExtrusion (cadCircle->vectExtrusion);
+        circle->setRadius (cadCircle->dfRadius);
+        circle->setThickness(cadCircle->dfThickness);
+
+        poGeometry = circle;
+        break;
+    }
+
+    case CADObject::ATTRIB:
+    {
+        CADAttrib * attrib = new CADAttrib();
+        CADAttribObject * cadAttrib = static_cast<CADAttribObject*>(
+                readedObject.get() );
+
+        attrib->setPosition (cadAttrib->vertInsetionPoint);
+        attrib->setColor (cadAttrib->stCed.nCMColor);
+        attrib->setExtrusion (cadAttrib->vectExtrusion);
+        attrib->setRotationAngle (cadAttrib->dfRotationAng);
+        attrib->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
+        attrib->setElevation (cadAttrib->dfElevation);
+        attrib->setHeight (cadAttrib->dfHeight);
+        attrib->setObliqueAngle (cadAttrib->dfObliqueAng);
+        attrib->setPositionLocked (cadAttrib->bLockPosition);
+        attrib->setTag (cadAttrib->sTag);
+        attrib->setTextValue (cadAttrib->sTextValue);
+        attrib->setThickness (cadAttrib->dfThickness);
+
+        poGeometry = attrib;
+        break;
+    }
+
+    case CADObject::ATTDEF:
+    {
+        CADAttdef * attdef = new CADAttdef();
+        CADAttdefObject * cadAttrib = static_cast<CADAttdefObject*>(
+                readedObject.get() );
+
+        attdef->setPosition (cadAttrib->vertInsetionPoint);
+        attdef->setColor (cadAttrib->stCed.nCMColor);
+        attdef->setExtrusion (cadAttrib->vectExtrusion);
+        attdef->setRotationAngle (cadAttrib->dfRotationAng);
+        attdef->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
+        attdef->setElevation (cadAttrib->dfElevation);
+        attdef->setHeight (cadAttrib->dfHeight);
+        attdef->setObliqueAngle (cadAttrib->dfObliqueAng);
+        attdef->setPositionLocked (cadAttrib->bLockPosition);
+        attdef->setTag (cadAttrib->sTag);
+        attdef->setTextValue (cadAttrib->sTextValue);
+        attdef->setThickness (cadAttrib->dfThickness);
+        attdef->setPrompt (cadAttrib->sPrompt);
+
+        poGeometry = attdef;
+        break;
+    }
+
+    case CADObject::ELLIPSE:
+    {
+        CADEllipse * ellipse = new CADEllipse();
+        CADEllipseObject * cadEllipse = static_cast<CADEllipseObject*>(
+                    readedObject.get());
+
+        ellipse->setColor (cadEllipse->stCed.nCMColor);
+        ellipse->setPosition (cadEllipse->vertPosition);
+        ellipse->setSMAxis (cadEllipse->vectSMAxis);
+        ellipse->setAxisRatio (cadEllipse->dfAxisRatio);
+        ellipse->setEndingAngle (cadEllipse->dfEndAngle);
+        ellipse->setStartingAngle (cadEllipse->dfBegAngle);
+
+        poGeometry = ellipse;
+        break;
+    }
+
+    case CADObject::LINE:
+    {
+        CADLineObject * cadLine = static_cast<CADLineObject *>(
+                    readedObject.get());
+
+        CADPoint3D ptBeg(cadLine->vertStart, cadLine->dfThickness);
+        CADPoint3D ptEnd(cadLine->vertEnd, cadLine->dfThickness);
+
+        CADLine * line = new CADLine(ptBeg, ptEnd);
+        line->setColor (cadLine->stCed.nCMColor);
+
+        poGeometry = line;
+        break;
+    }
+
+    case CADObject::RAY:
+    {
+        CADRay * ray = new CADRay();
+        CADRayObject * cadRay = static_cast<CADRayObject *>(
+                    readedObject.get());
+
+        ray->setColor (cadRay->stCed.nCMColor);
+        ray->setVectVector (cadRay->vectVector);
+        ray->setPosition (cadRay->vertPosition);
+
+        poGeometry = ray;
+        break;
+    }
+
+    case CADObject::SPLINE:
+    {
+        CADSpline * spline = new CADSpline();
+        CADSplineObject * cadSpline = static_cast<CADSplineObject *>(
+                    readedObject.get());
+
+
+        spline->setColor (cadSpline->stCed.nCMColor);
+        spline->setScenario (cadSpline->dScenario);
+        spline->setDegree( cadSpline->dDegree );
+        if ( spline->getScenario() == 2 )
+        {
+            spline->setFitTollerance (cadSpline->dfFitTol);
+        }
+        else if ( spline->getScenario() == 1 )
+        {
+            spline->setRational (cadSpline->bRational);
+            spline->setClosed (cadSpline->bClosed);
+            spline->setWeight (cadSpline->bWeight);
+        }
+        for(double weight : cadSpline->adfCtrlPointsWeight)
+            spline->addControlPointsWeight (weight);
+
+        for(const CADVector &pt : cadSpline->averFitPoints)
+            spline->addFitPoint(pt);
+
+        for(const CADVector &pt : cadSpline->avertCtrlPoints)
+            spline->addControlPoint(pt);
+
+        poGeometry = spline;
+        break;
+    }
+
+    case CADObject::TEXT:
+    {
+        CADText * text = new CADText();
+        CADTextObject * cadText = static_cast<CADTextObject *>(
+                    readedObject.get());
+
+        text->setColor (cadText->stCed.nCMColor);
+        text->setPosition (cadText->vertInsetionPoint);
+        text->setTextValue (cadText->sTextValue);
+        text->setRotationAngle (cadText->dfRotationAng);
+        text->setObliqueAngle (cadText->dfObliqueAng);
+        text->setThickness(cadText->dfThickness);
+        text->setHeight (cadText->dfElevation);
+
+        poGeometry = text;
+        break;
+    }
+
+    case CADObject::SOLID:
+    {
+        CADSolid * solid = new CADSolid();
+        CADSolidObject * cadSolid = static_cast<CADSolidObject *>(
+                    readedObject.get());
+
+        solid->setColor (cadSolid->stCed.nCMColor);
+        solid->setElevation (cadSolid->dfElevation);
+        solid->setThickness(cadSolid->dfThickness);
+        for(const CADVector& corner : cadSolid->avertCorners)
+            solid->addAverCorner (corner) ;
+        solid->setExtrusion (cadSolid->vectExtrusion);
+
+        poGeometry = solid;
+        break;
+    }
+
+    case CADObject::IMAGE:
+    {
+        CADImage * image = new CADImage();
+        CADImageObject * cadImage = static_cast<CADImageObject *>(
+                    readedObject.get());
+
+        unique_ptr<CADImageDefObject> cadImageDef (
+                    static_cast<CADImageDefObject *>(
+                        getObject ( cadImage->hImageDef.getAsLong () ) ) );
+
+
+        image->setColor (cadImage->stCed.nCMColor);
+        image->setClippingBoundaryType (cadImage->dClipBoundaryType);
+        image->setFilePath (cadImageDef->sFilePath);
+        image->setVertInsertionPoint(cadImage->vertInsertion);
+        CADVector imageSize(cadImage->dfSizeX,
+                            cadImage->dfSizeY);
+        image->setImageSize(imageSize);
+        CADVector imageSizeInPx(cadImageDef->dfXImageSizeInPx,
+                                cadImageDef->dfYImageSizeInPx);
+        image->setImageSizeInPx(imageSizeInPx);
+        CADVector pixelSizeInACADUnits (cadImageDef->dfXPixelSize,
+                                        cadImageDef->dfYPixelSize);
+        image->setPixelSizeInACADUnits(pixelSizeInACADUnits);
+        image->setResolutionUnits(cadImageDef->dResUnits);
+        image->setOptions(cadImage->dDisplayProps & 0x08,
+                          cadImage->bClipping,
+                          cadImage->dBrightness,
+                          cadImage->dContrast);
+        for(const CADVector &clipPt :  cadImage->avertClippingPolygonVertexes)
+        {
+            image->addClippingPoint(clipPt);
+        }
+
+        poGeometry = image;
+        break;
+    }
+
+    case CADObject::MLINE:
+    {
+        CADMLine * mline = new CADMLine();
+        CADMLineObject * cadmLine = static_cast<CADMLineObject *>(
+                    readedObject.get());
+
+        mline->setColor (cadmLine->stCed.nCMColor);
+        mline->setScale (cadmLine->dfScale);
+        mline->setOpened (cadmLine->dOpenClosed == 1 ? true : false);
+        for (  const CADMLineVertex &vertex : cadmLine->avertVertexes )
+            mline->addVertex (vertex.vertPosition);
+
+        poGeometry = mline;
+        break;
+    }
+    
+    case CADObject::MTEXT:
+    {
+        CADMText * mtext = new CADMText();
+        CADMTextObject * cadmText = static_cast<CADMTextObject *>(
+                    readedObject.get());
+
+        mtext->setColor (cadmText->stCed.nCMColor);
+
+        mtext->setTextValue (cadmText->sTextValue);
+        mtext->setXAxisAng (cadmText->vectXAxisDir.getX ()); //TODO: is this needed?
+
+        mtext->setPosition (cadmText->vertInsertionPoint);
+        mtext->setExtrusion (cadmText->vectExtrusion);
+
+        mtext->setHeight (cadmText->dfTextHeight);
+        mtext->setRectWidth(cadmText->dfRectWidth);
+        mtext->setExtents(cadmText->dfExtents);
+        mtext->setExtentsWidth(cadmText->dfExtentsWidth);
+
+        poGeometry = mtext;
+        break;
+    }
+    
+    case CADObject::POLYLINE_PFACE:
+    {
+        CADPolylinePFace * polyline = new CADPolylinePFace();
+        CADPolylinePFaceObject * cadpolyPface = static_cast<CADPolylinePFaceObject *>(
+                    readedObject.get());
+
+        // TODO: code can be much simplified if CADHandle will be used.
+        // to do so, == and ++ operators should be implemented.
+        polyline->setColor (cadpolyPface->stCed.nCMColor);
+        unique_ptr<CADVertexPFaceObject> vertex;
+        auto dCurrentEntHandle = cadpolyPface->hVertexes[0].getAsLong ();
+        auto dLastEntHandle    = cadpolyPface->hVertexes[1].getAsLong ();
+        while ( true )
+        {
+            vertex.reset (static_cast<CADVertexPFaceObject*>(
+                              getObject (dCurrentEntHandle)));
+            /* TODO: this check is excessive, but if something goes wrong way -
+             * some part of geometries will be parsed. */
+            if ( vertex == nullptr )
+                    continue;
+
+            polyline->addVertex (vertex->vertPosition);
+
+            /* FIXME: somehow one more vertex which isnot presented is read.
+             * so, checking the number of added vertexes */
+            /*TODO: is this needed - check on real data
+            if ( polyline->hVertexes.size() == cadpolyPface->nNumVertexes )
+            {
+                delete( vertex );
+                break;
+            }*/
+
+            if ( vertex->stCed.bNoLinks )
+                ++dCurrentEntHandle;
+            else
+                dCurrentEntHandle = vertex->stChed.hNextEntity.getAsLong (
+                            vertex->stCed.hObjectHandle);
+
+            if ( dCurrentEntHandle == dLastEntHandle )
+            {
+                vertex.reset (static_cast<CADVertexPFaceObject*>(
+                                  getObject (dCurrentEntHandle)));
+                polyline->addVertex (vertex->vertPosition);
+                break;
+            }
+        }
+
+        poGeometry = polyline;
+        break;
+    }
+    
+    case CADObject::XLINE:
+    {
+        CADXLine * xline = new CADXLine();
+        CADXLineObject * cadxLine = static_cast<CADXLineObject *>(
+                    readedObject.get());
+
+        xline->setColor (cadxLine->stCed.nCMColor);
+        xline->setVectVector (cadxLine->vectVector);
+        xline->setPosition (cadxLine->vertPosition);
+
+        poGeometry = xline;
+        break;
+    }
+    
+    case CADObject::FACE3D:
+    {
+        CADFace3D * face = new CADFace3D();
+        CAD3DFaceObject * cad3DFace = static_cast<CAD3DFaceObject *>(
+                    readedObject.get());
+
+        face->setColor (cad3DFace->stCed.nCMColor);
+        for(const CADVector& corner : cad3DFace->avertCorners)
+            face->addCorner (corner);
+        face->setInvisFlags (cad3DFace->dInvisFlags);
+
+        poGeometry = face;
+        break;
+    }
+    
+    case CADObject::POLYLINE_MESH:
+    case CADObject::VERTEX_MESH:
+    case CADObject::VERTEX_PFACE_FACE:
+    default:
+        cerr << "Asked geometry has unsupported type." << endl;
+    }
+
+    if( poGeometry == nullptr )
+        return nullptr;
+
+    // Applying EED
     // Casting object's EED to a vector of strings
     vector< string > asEED;
     for( auto citer = readedObject->stCed.aEED.cbegin();
@@ -1184,443 +1634,68 @@ CADGeometry *DWGFileR2000::getGeometry(long index)
         asEED.emplace_back( sEED );
     }
 
-    switch ( readedObject->getType() )
+    // Getting block reference attributes.
+    if( blockrefhandle != 0 )
     {
-    case CADObject::ARC:
-    {
-        CADArc * arc = new CADArc();
-        CADArcObject * cadArc = static_cast<CADArcObject*>(
-                    readedObject.get());
+        vector< CADAttrib > blockRefAttributes;
+        unique_ptr< CADInsertObject > spoBlockRef(
+                    static_cast<CADInsertObject*>( getObject (blockrefhandle) ) );
 
-        arc->setColor (cadArc->stCed.nCMColor);
-        arc->setPosition (cadArc->vertPosition);
-        arc->setExtrusion (cadArc->vectExtrusion);
-        arc->setRadius (cadArc->dfRadius);
-        arc->setThickness(cadArc->dfThickness);
-        arc->setStartingAngle (cadArc->dfStartAngle);
-        arc->setEndingAngle (cadArc->dfEndAngle);
-        arc->setEED( asEED );
-
-        return arc;
-    }
-
-    case CADObject::POINT:
-    {
-        CADPoint3D * point = new CADPoint3D();
-        CADPointObject * cadPoint = static_cast<CADPointObject*>(
-                    readedObject.get());
-
-        point->setColor (cadPoint->stCed.nCMColor);
-        point->setPosition (cadPoint->vertPosition);
-        point->setExtrusion (cadPoint->vectExtrusion);
-        point->setXAxisAng (cadPoint->dfXAxisAng);
-        point->setThickness(cadPoint->dfThickness);
-        point->setEED( asEED );
-
-        return point;
-    }
-
-    case CADObject::POLYLINE3D:
-    {
-        CADPolyline3D * polyline = new CADPolyline3D();
-        CADPolyline3DObject * cadPolyline3D = static_cast<CADPolyline3DObject*>(
-                    readedObject.get ());
-
-        polyline->setColor (cadPolyline3D->stCed.nCMColor);
-        polyline->setEED( asEED );
-        // TODO: code can be much simplified if CADHandle will be used.
-        // to do so, == and ++ operators should be implemented.
-        unique_ptr<CADVertex3DObject> vertex;
-        long currentVertexH = cadPolyline3D->hVertexes[0].getAsLong ();
-        while ( currentVertexH != 0 )
+        long dCurrentEntHandle, dLastEntHandle;
+        while ( spoBlockRef->bHasAttribs )
         {
-            vertex.reset (static_cast<CADVertex3DObject*>(
-                              getObject (currentVertexH)));
+            dCurrentEntHandle = spoBlockRef->hAtrribs[0].getAsLong ();
+            dLastEntHandle    = spoBlockRef->hAtrribs[1].getAsLong ();
 
-            if ( vertex == nullptr )
-                break;
-
-            currentVertexH = vertex->stCed.hObjectHandle.getAsLong ();
-            polyline->addVertex ( vertex->vertPosition );
-            if ( vertex->stCed.bNoLinks == true )
-            {
-                ++currentVertexH;
-            }
-            else
-            {
-                currentVertexH = vertex->stChed.hNextEntity.getAsLong (
-                            vertex->stCed.hObjectHandle );
-            }
-
-            // Last vertex is reached. read it and break reading.
-            if ( currentVertexH == cadPolyline3D->hVertexes[1].getAsLong () )
-            {
-                vertex.reset (static_cast<CADVertex3DObject*>(
-                                  getObject (currentVertexH)));
-                polyline->addVertex ( vertex->vertPosition );
-                break;
-            }
-        }
-        return polyline;
-    }
-
-    case CADObject::LWPOLYLINE:
-    {
-        CADLWPolyline * lwPolyline = new CADLWPolyline();
-        CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject*>(
-                    readedObject.get ());
-		
-		lwPolyline->setBulges(cadlwPolyline->adfBulges);
-		lwPolyline->setClosed(cadlwPolyline->bClosed);
-        lwPolyline->setColor (cadlwPolyline->stCed.nCMColor);
-        lwPolyline->setConstWidth (cadlwPolyline->dfConstWidth);
-        lwPolyline->setElevation (cadlwPolyline->dfElevation);
-        for(const CADVector& vertex : cadlwPolyline->avertVertexes)
-            lwPolyline->addVertex (vertex);
-        lwPolyline->setVectExtrusion (cadlwPolyline->vectExtrusion);
-        lwPolyline->setWidths (cadlwPolyline->astWidths);
-        lwPolyline->setEED( asEED );
-
-        return lwPolyline;
-    }
-
-    case CADObject::CIRCLE:
-    {
-        CADCircle * circle = new CADCircle();
-        CADCircleObject * cadCircle = static_cast<CADCircleObject*>(
-                    readedObject.get());
-
-        circle->setColor (cadCircle->stCed.nCMColor);
-        circle->setPosition (cadCircle->vertPosition);
-        circle->setExtrusion (cadCircle->vectExtrusion);
-        circle->setRadius (cadCircle->dfRadius);
-        circle->setThickness(cadCircle->dfThickness);
-        circle->setEED( asEED );
-
-        return circle;
-    }
-
-    case CADObject::ATTRIB:
-    {
-        CADAttrib * attrib = new CADAttrib();
-        CADAttribObject * cadAttrib = static_cast<CADAttribObject*>(
-                readedObject.get() );
-
-        attrib->setPosition (cadAttrib->vertInsetionPoint);
-        attrib->setColor (cadAttrib->stCed.nCMColor);
-        attrib->setExtrusion (cadAttrib->vectExtrusion);
-        attrib->setRotationAngle (cadAttrib->dfRotationAng);
-        attrib->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
-        attrib->setElevation (cadAttrib->dfElevation);
-        attrib->setHeight (cadAttrib->dfHeight);
-        attrib->setObliqueAngle (cadAttrib->dfObliqueAng);
-        attrib->setPositionLocked (cadAttrib->bLockPosition);
-        attrib->setTag (cadAttrib->sTag);
-        attrib->setTextValue (cadAttrib->sTextValue);
-        attrib->setThickness (cadAttrib->dfThickness);
-        attrib->setEED( asEED );
-
-        return attrib;
-    }
-
-    case CADObject::ATTDEF:
-    {
-        CADAttdef * attdef = new CADAttdef();
-        CADAttdefObject * cadAttrib = static_cast<CADAttdefObject*>(
-                readedObject.get() );
-
-        attdef->setPosition (cadAttrib->vertInsetionPoint);
-        attdef->setColor (cadAttrib->stCed.nCMColor);
-        attdef->setExtrusion (cadAttrib->vectExtrusion);
-        attdef->setRotationAngle (cadAttrib->dfRotationAng);
-        attdef->setAlignmentPoint (cadAttrib->vertAlignmentPoint);
-        attdef->setElevation (cadAttrib->dfElevation);
-        attdef->setHeight (cadAttrib->dfHeight);
-        attdef->setObliqueAngle (cadAttrib->dfObliqueAng);
-        attdef->setPositionLocked (cadAttrib->bLockPosition);
-        attdef->setTag (cadAttrib->sTag);
-        attdef->setTextValue (cadAttrib->sTextValue);
-        attdef->setThickness (cadAttrib->dfThickness);
-        attdef->setEED( asEED );
-
-        return attdef;
-    }
-
-    case CADObject::ELLIPSE:
-    {
-        CADEllipse * ellipse = new CADEllipse();
-        CADEllipseObject * cadEllipse = static_cast<CADEllipseObject*>(
-                    readedObject.get());
-
-        ellipse->setColor (cadEllipse->stCed.nCMColor);
-        ellipse->setPosition (cadEllipse->vertPosition);
-        ellipse->setSMAxis (cadEllipse->vectSMAxis);
-        ellipse->setAxisRatio (cadEllipse->dfAxisRatio);
-        ellipse->setEndingAngle (cadEllipse->dfEndAngle);
-        ellipse->setStartingAngle (cadEllipse->dfBegAngle);
-        ellipse->setEED( asEED );
-
-        return ellipse;
-    }
-
-    case CADObject::LINE:
-    {
-        CADLineObject * cadLine = static_cast<CADLineObject *>(
-                    readedObject.get());
-
-        CADPoint3D ptBeg(cadLine->vertStart, cadLine->dfThickness);
-        CADPoint3D ptEnd(cadLine->vertEnd, cadLine->dfThickness);
-
-        CADLine * line = new CADLine(ptBeg, ptEnd);
-        line->setColor (cadLine->stCed.nCMColor);
-        line->setEED( asEED );
-
-        return line;
-    }
-
-    case CADObject::RAY:
-    {
-        CADRay * ray = new CADRay();
-        CADRayObject * cadRay = static_cast<CADRayObject *>(
-                    readedObject.get());
-
-        ray->setColor (cadRay->stCed.nCMColor);
-        ray->setVectVector (cadRay->vectVector);
-        ray->setPosition (cadRay->vertPosition);
-        ray->setEED( asEED );
-
-        return ray;
-    }
-
-    case CADObject::SPLINE:
-    {
-        CADSpline * spline = new CADSpline();
-        CADSplineObject * cadSpline = static_cast<CADSplineObject *>(
-                    readedObject.get());
-
-
-        spline->setColor (cadSpline->stCed.nCMColor);
-        spline->setScenario (cadSpline->dScenario);
-        spline->setDegree( cadSpline->dDegree );
-        spline->setEED( asEED );
-        if ( spline->getScenario() == 2 )
-        {
-            spline->setFitTollerance (cadSpline->dfFitTol);
-        }
-        else if ( spline->getScenario() == 1 )
-        {
-            spline->setRational (cadSpline->bRational);
-            spline->setClosed (cadSpline->bClosed);
-            spline->setWeight (cadSpline->bWeight);
-        }
-        for(double weight : cadSpline->adfCtrlPointsWeight)
-            spline->addControlPointsWeight (weight);
-
-        for(const CADVector &pt : cadSpline->averFitPoints)
-            spline->addFitPoint(pt);
-
-        for(const CADVector &pt : cadSpline->avertCtrlPoints)
-            spline->addControlPoint(pt);
-
-        return spline;
-    }
-
-    case CADObject::TEXT:
-    {
-        CADText * text = new CADText();
-        CADTextObject * cadText = static_cast<CADTextObject *>(
-                    readedObject.get());
-
-        text->setColor (cadText->stCed.nCMColor);
-        text->setPosition (cadText->vertInsetionPoint);
-        text->setTextValue (cadText->sTextValue);
-        text->setRotationAngle (cadText->dfRotationAng);
-        text->setObliqueAngle (cadText->dfObliqueAng);
-        text->setThickness(cadText->dfThickness);
-        text->setHeight (cadText->dfElevation);
-        text->setEED( asEED );
-
-        return text;
-    }
-
-    case CADObject::SOLID:
-    {
-        CADSolid * solid = new CADSolid();
-        CADSolidObject * cadSolid = static_cast<CADSolidObject *>(
-                    readedObject.get());
-
-        solid->setColor (cadSolid->stCed.nCMColor);
-        solid->setElevation (cadSolid->dfElevation);
-        solid->setThickness(cadSolid->dfThickness);
-        for(const CADVector& corner : cadSolid->avertCorners)
-            solid->addAverCorner (corner) ;
-        solid->setExtrusion (cadSolid->vectExtrusion);
-        solid->setEED( asEED );
-
-        return solid;
-    }
-
-    case CADObject::IMAGE:
-    {
-        CADImage * image = new CADImage();
-        CADImageObject * cadImage = static_cast<CADImageObject *>(
-                    readedObject.get());
-
-        unique_ptr<CADImageDefObject> cadImageDef (
-                    static_cast<CADImageDefObject *>(
-                        getObject ( cadImage->hImageDef.getAsLong () ) ) );
-
-
-        image->setColor (cadImage->stCed.nCMColor);
-        image->setClippingBoundaryType (cadImage->dClipBoundaryType);
-        image->setFilePath (cadImageDef->sFilePath);
-        image->setVertInsertionPoint(cadImage->vertInsertion);
-        CADVector imageSize(cadImage->dfSizeX,
-                            cadImage->dfSizeY);
-        image->setImageSize(imageSize);
-        CADVector imageSizeInPx(cadImageDef->dfXImageSizeInPx,
-                                cadImageDef->dfYImageSizeInPx);
-        image->setImageSizeInPx(imageSizeInPx);
-        CADVector pixelSizeInACADUnits (cadImageDef->dfXPixelSize,
-                                        cadImageDef->dfYPixelSize);
-        image->setPixelSizeInACADUnits(pixelSizeInACADUnits);
-        image->setResolutionUnits(cadImageDef->dResUnits);
-        image->setOptions(cadImage->dDisplayProps & 0x08,
-                          cadImage->bClipping,
-                          cadImage->dBrightness,
-                          cadImage->dContrast);
-        for(const CADVector &clipPt :  cadImage->avertClippingPolygonVertexes)
-        {
-            image->addClippingPoint(clipPt);
-        }
-        image->setEED( asEED );
-
-        return image;
-    }
-
-    case CADObject::MLINE:
-    {
-        CADMLine * mline = new CADMLine();
-        CADMLineObject * cadmLine = static_cast<CADMLineObject *>(
-                    readedObject.get());
-
-        mline->setColor (cadmLine->stCed.nCMColor);
-        mline->setScale (cadmLine->dfScale);
-        mline->setOpened (cadmLine->dOpenClosed == 1 ? true : false);
-        for (  const CADMLineVertex &vertex : cadmLine->avertVertexes )
-            mline->addVertex (vertex.vertPosition);
-        mline->setEED( asEED );
-
-        return mline;
-    }
-
-    case CADObject::MTEXT:
-    {
-        CADMText * mtext = new CADMText();
-        CADMTextObject * cadmText = static_cast<CADMTextObject *>(
-                    readedObject.get());
-
-        mtext->setColor (cadmText->stCed.nCMColor);
-
-        mtext->setTextValue (cadmText->sTextValue);
-        mtext->setXAxisAng (cadmText->vectXAxisDir.getX ()); //TODO: is this needed?
-
-        mtext->setPosition (cadmText->vertInsertionPoint);
-        mtext->setExtrusion (cadmText->vectExtrusion);
-
-        mtext->setHeight (cadmText->dfTextHeight);
-        mtext->setRectWidth(cadmText->dfRectWidth);
-        mtext->setExtents(cadmText->dfExtents);
-        mtext->setExtentsWidth(cadmText->dfExtentsWidth);
-        mtext->setEED( asEED );
-
-        return mtext;
-    }
-    case CADObject::POLYLINE_PFACE:
-    {
-        CADPolylinePFace * polyline = new CADPolylinePFace();
-        CADPolylinePFaceObject * cadpolyPface = static_cast<CADPolylinePFaceObject *>(
-                    readedObject.get());
-
-        // TODO: code can be much simplified if CADHandle will be used.
-        // to do so, == and ++ operators should be implemented.
-        polyline->setColor (cadpolyPface->stCed.nCMColor);
-        polyline->setEED( asEED );
-        unique_ptr<CADVertexPFaceObject> vertex;
-        auto dCurrentEntHandle = cadpolyPface->hVertexes[0].getAsLong ();
-        auto dLastEntHandle    = cadpolyPface->hVertexes[1].getAsLong ();
-        while ( true )
-        {
-            vertex.reset (static_cast<CADVertexPFaceObject*>(
-                              getObject (dCurrentEntHandle)));
-            /* TODO: this check is excessive, but if something goes wrong way -
-             * some part of geometries will be parsed. */
-            if ( vertex == nullptr )
-                    continue;
-
-            polyline->addVertex (vertex->vertPosition);
-
-            /* FIXME: somehow one more vertex which isnot presented is read.
-             * so, checking the number of added vertexes */
-            /*TODO: is this needed - check on real data
-            if ( polyline->hVertexes.size() == cadpolyPface->nNumVertexes )
-            {
-                delete( vertex );
-                break;
-            }*/
-
-            if ( vertex->stCed.bNoLinks )
-                ++dCurrentEntHandle;
-            else
-                dCurrentEntHandle = vertex->stChed.hNextEntity.getAsLong (
-                            vertex->stCed.hObjectHandle);
+            // FIXME: memory leak, somewhere in CAD* destructor is a bug
+            CADEntityObject * attDefObj = static_cast<CADEntityObject*>(
+                        getObject (dCurrentEntHandle, true) );
 
             if ( dCurrentEntHandle == dLastEntHandle )
             {
-                vertex.reset (static_cast<CADVertexPFaceObject*>(
-                                  getObject (dCurrentEntHandle)));
-                polyline->addVertex (vertex->vertPosition);
+                if ( attDefObj == nullptr )
+                    break;
+
+                CADAttrib *attrib = static_cast<CADAttrib*>(
+                            getGeometry (dCurrentEntHandle) );
+
+                if(attrib)
+                {
+                    blockRefAttributes.push_back (CADAttrib(*attrib));
+                    delete attrib;
+                }
+                delete attDefObj;
                 break;
             }
+
+            if ( attDefObj != nullptr )
+            {
+                if ( attDefObj->stCed.bNoLinks )
+                    ++dCurrentEntHandle;
+                else
+                    dCurrentEntHandle = attDefObj->stChed.hNextEntity.getAsLong (
+                            attDefObj->stCed.hObjectHandle);
+
+                CADAttrib *attrib = static_cast<CADAttrib*>(
+                            getGeometry (dCurrentEntHandle) );
+
+                if(attrib)
+                {
+                    blockRefAttributes.push_back (CADAttrib(*attrib));
+                    delete attrib;
+                }
+                delete attDefObj;
+            }
+            else
+            {
+                assert (0);
+            }
         }
-
-        return polyline;
-    }
-    case CADObject::XLINE:
-    {
-        CADXLine * xline = new CADXLine();
-        CADXLineObject * cadxLine = static_cast<CADXLineObject *>(
-                    readedObject.get());
-
-        xline->setColor (cadxLine->stCed.nCMColor);
-        xline->setVectVector (cadxLine->vectVector);
-        xline->setPosition (cadxLine->vertPosition);
-        xline->setEED( asEED );
-
-        return xline;
-    }
-    case CADObject::FACE3D:
-    {
-        CADFace3D * face = new CADFace3D();
-        CAD3DFaceObject * cad3DFace = static_cast<CAD3DFaceObject *>(
-                    readedObject.get());
-
-        face->setColor (cad3DFace->stCed.nCMColor);
-        for(const CADVector& corner : cad3DFace->avertCorners)
-            face->addCorner (corner);
-        face->setInvisFlags (cad3DFace->dInvisFlags);
-        face->setEED( asEED );
-
-        return face;
-    }
-    case CADObject::POLYLINE_MESH:
-    case CADObject::VERTEX_MESH:
-    case CADObject::VERTEX_PFACE_FACE:
-    default:
-        cerr << "Asked geometry has unsupported type." << endl;
+        poGeometry->setBlockAttributes ( blockRefAttributes );
     }
 
-    return nullptr;
+    poGeometry->setEED( asEED );
+    return poGeometry;
 }
 
 CADBlockObject *DWGFileR2000::getBlock(long dObjectSize,
@@ -1742,7 +1817,6 @@ CADPointObject *DWGFileR2000::getPoint(long dObjectSize,
                                        const char *pabyInput,
                                        size_t &nBitOffsetFromStart)
 {
-
     CADPointObject * point = new CADPointObject();
 
     point->setSize( dObjectSize );
@@ -2296,7 +2370,7 @@ CADAttdefObject *DWGFileR2000::getAttributesDefn(long dObjectSize,
                   __LINE__, __FILE__, (nBitOffsetFromStart/8 - dObjectSize - 4));
 #endif //_DEBUG
     return  attdef;
-            }
+}
 
 CADLWPolylineObject *DWGFileR2000::getLWPolyLine(long dObjectSize,
                                                  CADCommonED stCommonEntityData,
@@ -2546,17 +2620,20 @@ CADInsertObject *DWGFileR2000::getInsert(int dObjectType, long dObjectSize,
     double val41 = 1.0;
     double val42 = 1.0;
     double val43 = 1.0;
-    if(dataFlags == 0){
+    if(dataFlags == 0)
+    {
         val41 = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
         val42 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
         val43 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
     }
-    else if(dataFlags == 1){
+    else if(dataFlags == 1)
+    {
         val41 = 1.0;
         val42 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
         val43 = ReadBITDOUBLEWD (pabyInput, nBitOffsetFromStart, val41);
     }
-    else if(dataFlags == 2){
+    else if(dataFlags == 2)
+    {
         val41 = ReadRAWDOUBLE (pabyInput, nBitOffsetFromStart);
         val42 = val41;
         val43 = val41;
@@ -2569,7 +2646,8 @@ CADInsertObject *DWGFileR2000::getInsert(int dObjectType, long dObjectSize,
     fillCommonEntityHandleData(insert, pabyInput, nBitOffsetFromStart);
 
     insert->hBlockHeader = ReadHANDLE (pabyInput, nBitOffsetFromStart);
-    if(insert->bHasAttribs){
+    if(insert->bHasAttribs)
+    {
         insert->hAtrribs.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
         insert->hAtrribs.push_back (ReadHANDLE (pabyInput, nBitOffsetFromStart));
         insert->hSeqend = ReadHANDLE (pabyInput, nBitOffsetFromStart);
