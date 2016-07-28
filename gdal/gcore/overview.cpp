@@ -2486,7 +2486,7 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
  * \brief Generate downsampled overviews.
  *
  * This function will generate one or more overview images from a base image
- * using the requested downsampling algorithm.  It's primary use is for
+ * using the requested downsampling algorithm.  Its primary use is for
  * generating overviews via GDALDataset::BuildOverviews(), but it can also be
  * used to generate downsampled images in one file from another outside the
  * overview architecture.
@@ -2896,7 +2896,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * compressed pixel-interleaved overviews (JPEG-IN-TIFF for example)
  *
  * This function will generate one or more overview images from a base
- * image using the requested downsampling algorithm.  It's primary use
+ * image using the requested downsampling algorithm.  Its primary use
  * is for generating overviews via GDALDataset::BuildOverviews(), but it
  * can also be used to generate downsampled images in one file from another
  * outside the overview architecture.

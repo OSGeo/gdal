@@ -797,8 +797,7 @@ GDALDefaultOverviews::BuildOverviews(
     CPLFree( pahBands );
 
 /* -------------------------------------------------------------------- */
-/*      If we have a mask file, we need to build it's overviews         */
-/*      too.                                                            */
+/*      If we have a mask file, we need to build its overviews too.     */
 /* -------------------------------------------------------------------- */
     if( HaveMaskFile() && poMaskDS )
     {

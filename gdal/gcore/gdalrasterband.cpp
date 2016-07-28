@@ -2570,7 +2570,7 @@ int CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH hBand )
  * \brief Fetch the band number.
  *
  * This method returns the band that this GDALRasterBand objects represents
- * within it's dataset.  This method may return a value of 0 to indicate
+ * within its dataset.  This method may return a value of 0 to indicate
  * GDALRasterBand objects without an apparently relationship to a dataset,
  * such as GDALRasterBands serving as overviews.
  *

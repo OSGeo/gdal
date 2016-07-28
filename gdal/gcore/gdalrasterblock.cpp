@@ -741,7 +741,7 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
 /**
  * Force writing of the current block, if dirty.
  *
- * The block is written using GDALRasterBand::IWriteBlock() on it's
+ * The block is written using GDALRasterBand::IWriteBlock() on its
  * corresponding band object.  Even if the write fails the block will
  * be marked clean.
  *
