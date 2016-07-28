@@ -96,7 +96,6 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     }
     else if( hDBF != NULL )
     {
-        // TODO(schwehr): Make sure there is no nullptr dereference in DEBUG.
         nTotalShapeCount = hDBF->nRecords;
     }
 #ifdef DEBUG
