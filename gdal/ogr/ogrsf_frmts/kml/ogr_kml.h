@@ -81,7 +81,7 @@ private:
 
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
-	OGRCoordinateTransformation *poCT_;
+    OGRCoordinateTransformation *poCT_;
 
     OGRFeatureDefn* poFeatureDefn_;
 
@@ -134,8 +134,8 @@ public:
     KML* GetKMLFile() { return poKMLFile_; };
 #endif
 
-	bool IsFirstCTError() const { return !bIssuedCTError_; }
-	void IssuedFirstCTError() { bIssuedCTError_ = true; }
+    bool IsFirstCTError() const { return !bIssuedCTError_; }
+    void IssuedFirstCTError() { bIssuedCTError_ = true; }
 
 private:
 
@@ -153,7 +153,7 @@ private:
     char* pszDescriptionField_;
 
     //The KML altitude mode to use
- 	char* pszAltitudeMode_;
+    char* pszAltitudeMode_;
 
     char** papszCreateOptions_;
 
@@ -162,8 +162,8 @@ private:
 
     OGREnvelope oEnvelope_;
 
-	//Have we issued a coordinate transformation already for this datasource
-	bool bIssuedCTError_;
+    // Have we issued a coordinate transformation already for this datasource
+    bool bIssuedCTError_;
 };
 
 #endif /* OGR_KML_H_INCLUDED */
