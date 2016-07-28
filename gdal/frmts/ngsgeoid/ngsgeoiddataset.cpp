@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NGSGEOID driver
  * Purpose:  GDALDataset driver for NGSGEOID dataset.

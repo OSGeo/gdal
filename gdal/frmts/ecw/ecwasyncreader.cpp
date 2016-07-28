@@ -1,7 +1,6 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  ECWAsyncReader implementation
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -38,8 +37,8 @@ CPL_CVSID("$Id$");
 /*                          BeginAsyncReader()                          */
 /************************************************************************/
 
-GDALAsyncReader* 
-ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize, 
+GDALAsyncReader*
+ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pBuf, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               int nBandCount, int* panBandMap,

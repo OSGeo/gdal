@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Supporting utility functions for GDAL WMS driver.
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
+
+CPL_CVSID("$Id$");
 
 CPLString MD5String(const char *s) {
     unsigned char hash[16];

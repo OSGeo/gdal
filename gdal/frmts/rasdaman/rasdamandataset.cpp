@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  * Project:  rasdaman Driver
  * Purpose:  Implement Rasdaman GDAL driver
  * Author:   Constantin Jucovschi, jucovschi@yahoo.com

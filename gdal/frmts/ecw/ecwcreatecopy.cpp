@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL ECW Driver
  * Purpose:  ECW CreateCopy method implementation.

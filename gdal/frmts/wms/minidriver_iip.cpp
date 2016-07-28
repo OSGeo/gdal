@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Mini driver for Internet Imaging Protocol (IIP)
@@ -30,6 +29,7 @@
 #include "wmsdriver.h"
 #include "minidriver_iip.h"
 
+CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(IIP)
 
