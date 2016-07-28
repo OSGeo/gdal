@@ -44,7 +44,7 @@ static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
     if( pszDriverExtensions )
     {
         char** papszTokens = CSLTokenizeString( pszDriverExtensions );
-        for(int j=0; papszTokens[j]; j++)
+        for( int j = 0; papszTokens[j]; j++ )
         {
             if( EQUAL(pszExt, papszTokens[j]) )
             {
@@ -71,18 +71,19 @@ void CheckExtensionConsistency(const char* pszDestFilename,
 {
 
     CPLString osExt = CPLGetExtension(pszDestFilename);
-    if (osExt.size())
+    if( !osExt.empty() )
     {
         GDALDriverH hThisDrv = GDALGetDriverByName(pszDriverName);
         if( hThisDrv != NULL && DoesDriverHandleExtension(hThisDrv, osExt) )
             return;
 
-        int nDriverCount = GDALGetDriverCount();
+        const int nDriverCount = GDALGetDriverCount();
         CPLString osConflictingDriverList;
-        for(int i=0;i<nDriverCount;i++)
+        for( int i = 0; i < nDriverCount; i++ )
         {
             GDALDriverH hDriver = GDALGetDriver(i);
-            if( hDriver != hThisDrv && DoesDriverHandleExtension(hDriver, osExt) )
+            if( hDriver != hThisDrv &&
+                DoesDriverHandleExtension(hDriver, osExt) )
             {
                 if (osConflictingDriverList.size())
                     osConflictingDriverList += ", ";
@@ -91,13 +92,16 @@ void CheckExtensionConsistency(const char* pszDestFilename,
         }
         if (osConflictingDriverList.size())
         {
-            fprintf(stderr,
-                    "Warning: The target file has a '%s' extension, which is normally used by the %s driver%s,\n"
-                    "but the requested output driver is %s. Is it really what you want ?\n",
-                    osExt.c_str(),
-                    osConflictingDriverList.c_str(),
-                    strchr(osConflictingDriverList.c_str(), ',') ? "s" : "",
-                    pszDriverName);
+            fprintf(
+                stderr,
+                "Warning: The target file has a '%s' extension, "
+                "which is normally used by the %s driver%s, "
+                "but the requested output driver is %s. "
+                "Is it really what you want?\n",
+                osExt.c_str(),
+                osConflictingDriverList.c_str(),
+                strchr(osConflictingDriverList.c_str(), ',') ? "s" : "",
+                pszDriverName);
         }
     }
 }
@@ -108,9 +112,10 @@ void CheckExtensionConsistency(const char* pszDestFilename,
 
 void EarlySetConfigOptions( int argc, char ** argv )
 {
-    /* Must process some config options before GDALAllRegister() or OGRRegisterAll(), */
-    /* but we can't call GDALGeneralCmdLineProcessor() or OGRGeneralCmdLineProcessor(), */
-    /* because it needs the drivers to be registered for the --format or --formats options */
+    // Must process some config options before GDALAllRegister() or
+    // OGRRegisterAll(), but we can't call GDALGeneralCmdLineProcessor() or
+    // OGRGeneralCmdLineProcessor(), because it needs the drivers to be
+    // registered for the --format or --formats options.
     for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i],"--config") && i + 2 < argc &&
