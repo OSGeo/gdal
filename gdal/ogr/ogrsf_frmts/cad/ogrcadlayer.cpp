@@ -62,8 +62,9 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
         case CADObject::FACE3D:
             eGeomType = wkbPolygon;
             break;
-        case -2: // FIXME: -2 should be a signal that error occured?
-        case -1: 
+        case -1:
+            eGeomType = wkbGeometryCollection;
+            break;
         default:
             eGeomType = wkbUnknown;
             break;

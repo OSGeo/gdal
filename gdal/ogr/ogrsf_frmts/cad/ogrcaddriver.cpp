@@ -138,7 +138,7 @@ void RegisterOGRCAD()
     }
 }
 
-CPLString CADRecode( std::string sString, int CADEncoding )
+CPLString CADRecode( const std::string& sString, int CADEncoding )
 {
     switch( CADEncoding )
     {
