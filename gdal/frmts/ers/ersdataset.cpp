@@ -613,7 +613,7 @@ char **ERSDataset::GetFileList()
     if( strlen(osRawFilename) > 0 )
         papszFileList = CSLAddString( papszFileList, osRawFilename );
 
-    // If we have a dependent file, merge it's list of files in.
+    // If we have a dependent file, merge its list of files in.
     if( poDepFile )
     {
         char **papszDepFiles = poDepFile->GetFileList();

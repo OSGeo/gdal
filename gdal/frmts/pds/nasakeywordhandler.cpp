@@ -88,7 +88,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, nOffset, SEEK_SET ) != 0 )
         return FALSE;

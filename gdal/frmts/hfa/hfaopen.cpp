@@ -3618,7 +3618,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Get the camera model node, and confirm it's type.               */
+/*      Get the camera model node, and confirm its type.                */
 /* -------------------------------------------------------------------- */
     HFAEntry *poXForm;
 

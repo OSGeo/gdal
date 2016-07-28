@@ -13233,7 +13233,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         }
 
 /* -------------------------------------------------------------------- */
-/*      Did we find a tab file?  If so we will use it's coordinate      */
+/*      Did we find a tab file?  If so we will use its coordinate       */
 /*      system and give it precedence.                                  */
 /* -------------------------------------------------------------------- */
         if( pszTabWKT != NULL
