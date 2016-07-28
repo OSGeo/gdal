@@ -63,12 +63,12 @@ using kmldom::STYLESTATE_NORMAL;
 /******************************************************************************
  Generic function to parse a stylestring and add to a kml style.
 
-args:
+Args:
             pszStyleString  the stylestring to parse
             poKmlStyle      the kml style to add to (or NULL)
             poKmlFactory    the kml dom factory
 
-returns:
+Returns:
             the kml style
 
 ******************************************************************************/

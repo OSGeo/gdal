@@ -257,13 +257,13 @@ static char* OGRLIBKMLSanitizeUTF8String( const char* pszString )
 /******************************************************************************
  Function to output ogr fields in kml.
 
- args:
+ Args:
         poOgrFeat       pointer to the feature the field is in
         poOgrLayer      pointer to the layer the feature is in
         poKmlFactory    pointer to the libkml dom factory
         poKmlPlacemark  pointer to the placemark to add to
 
- returns:
+ Returns:
         nothing
 
  env vars:

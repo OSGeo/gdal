@@ -48,13 +48,13 @@ using kmldom::StyleSelectorPtr;
 /******************************************************************************
  function to write out a features style to kml
 
-args:
+Args:
             poOgrLayer      the layer the feature is in
             poOgrFeat       the feature
             poKmlFactory    the kml dom factory
             poKmlFeature    the placemark to add it to
 
-returns:
+Returns:
             nothing
 ******************************************************************************/
 
