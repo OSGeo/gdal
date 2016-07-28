@@ -57,7 +57,7 @@ Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
 
 <p>
 The gdallocationinfo utility provide a mechanism to query information about
-a pixel given it's location in one of a variety of coordinate systems.  Several
+a pixel given its location in one of a variety of coordinate systems.  Several
 reporting options are provided.
 
 <p>
