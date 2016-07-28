@@ -1340,7 +1340,7 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
  * passed in for the named element or attribute.  To search following
  * siblings as well as children, prefix the pszElement name with an equal
  * sign.  This function does an in-order traversal of the document tree.
- * So it will first match against the current node, then it's first child,
+ * So it will first match against the current node, then its first child,
  * that child's first child, and so on.
  *
  * Use CPLGetXMLNode() to find a specific child, or along a specific
@@ -1431,7 +1431,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
  * level in the subdocument.
  *
  * If the pszPath is prefixed by "=" then the search will begin with the
- * root node, and it's siblings, instead of the root nodes children.  This
+ * root node, and its siblings, instead of the root nodes children.  This
  * is particularly useful when searching within a whole document which is
  * often prefixed by one or more "junk" nodes like the <?xml> declaration.
  *
@@ -1588,7 +1588,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
  * list, but attributes (CXT_Attribute) will be inserted after any other
  * attributes but before any other element type.  Ownership of the child
  * node is effectively assumed by the parent node.   If the child has
- * siblings (it's psNext is not NULL) they will be trimmed, but if the child
+ * siblings (its psNext is not NULL) they will be trimmed, but if the child
  * has children they are carried with it.
  *
  * @param psParent the node to attach the child to.  May not be NULL.
@@ -1643,7 +1643,7 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
  * \brief Remove child node from parent.
  *
  * The passed child is removed from the child list of the passed parent,
- * but the child is not destroyed.  The child retains ownership of it's
+ * but the child is not destroyed.  The child retains ownership of its
  * own children, but is cleanly removed from the child list of the parent.
  *
  * @param psParent the node to the child is attached to.

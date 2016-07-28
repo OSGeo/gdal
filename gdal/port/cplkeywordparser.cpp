@@ -68,7 +68,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     for( ; true; )
     {

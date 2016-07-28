@@ -1939,7 +1939,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * This function will "escape" a variety of special characters
  * to make the string suitable to embed within a string constant
  * or to write within a text stream but in a form that can be
- * reconstituted to it's original form.  The escaping will even preserve
+ * reconstituted to its original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  *
  * CPLES_BackslashQuotable(0): This scheme turns a binary string into
@@ -2181,7 +2181,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  *
  * This function does the opposite of CPLEscapeString().  Given a string
  * with special values escaped according to some scheme, it will return a
- * new copy of the string returned to it's original form.
+ * new copy of the string returned to its original form.
  *
  * @param pszInput the input string.  This is a zero terminated string.
  * @param pnLength location to return the length of the unescaped string,
