@@ -36,7 +36,6 @@
 
 
 /*
- * $Id$
  * JPEG band
  * JPEG page compression and decompression functions, gets compiled twice
  * once directly and once through inclusion from JPEG12_band.cpp
@@ -50,6 +49,8 @@
 CPL_C_START
 #include <jpeglib.h>
 CPL_C_END
+
+CPL_CVSID("$Id$");
 
 NAMESPACE_MRF_START
 

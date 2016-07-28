@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Memory Array Translator
  * Purpose:  Complete implementation.

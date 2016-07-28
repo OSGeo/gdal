@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of ReflectanceCalculator class. Calculate
  *           reflectance values from radiance, for visual bands.
@@ -30,6 +29,9 @@
 #include "reflectancecalculator.h"
 #include <cmath>
 #include <cstdlib>
+
+CPL_CVSID("$Id$");
+
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////

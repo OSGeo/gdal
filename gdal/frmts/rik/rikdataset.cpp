@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  RIK Reader
  * Purpose:  All code for RIK Reader

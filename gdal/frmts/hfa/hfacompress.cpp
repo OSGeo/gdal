@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     hfadataset.cpp
  * Project:  Erdas Imagine Driver

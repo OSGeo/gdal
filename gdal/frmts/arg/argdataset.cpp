@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Azavea Raster Grid format driver.
  * Purpose:  Implements support for reading and writing Azavea Raster Grid

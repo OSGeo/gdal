@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "ilwisdataset.h"
 #include <cfloat>
 #include <climits>
@@ -35,6 +34,8 @@
 #include <string>
 
 #include "gdal_frmts.h"
+
+CPL_CVSID("$Id$");
 
 using std::string;
 

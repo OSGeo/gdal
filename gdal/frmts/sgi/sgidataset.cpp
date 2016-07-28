@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SGI Image Driver
  * Purpose:  Implement SGI Image Support based on Paul Bourke's SGI Image code.

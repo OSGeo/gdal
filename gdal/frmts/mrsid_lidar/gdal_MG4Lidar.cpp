@@ -48,6 +48,8 @@ LT_USE_LIDAR_NAMESPACE
 #include "gdal_pam.h"
 // #include "gdal_alg.h" // 1.6 and later have gridding algorithms
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /* ==================================================================== */
 /*				MG4LidarDataset				*/

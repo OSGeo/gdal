@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCIDSK Database File
  * Purpose:  PCIDSK SDK compatible IO interface built on VSI.

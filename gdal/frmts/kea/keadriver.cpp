@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keadriver.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -30,6 +29,8 @@
 
 #include "gdal_frmts.h"
 #include "keadataset.h"
+
+CPL_CVSID("$Id$");
 
 // method to register this driver
 void GDALRegister_KEA()

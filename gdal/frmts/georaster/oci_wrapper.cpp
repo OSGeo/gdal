@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "oci_wrapper.h"
+
+CPL_CVSID("$Id$");
 
 static const OW_CellDepth ahOW_CellDepth[] = {
     {"8BIT_U",          GDT_Byte},

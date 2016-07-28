@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  netCDF read/write Driver
  * Purpose:  GDAL bindings over netCDF library for GMT Grids.

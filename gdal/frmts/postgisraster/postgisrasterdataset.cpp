@@ -38,6 +38,8 @@
 #include "postgisraster.h"
 #include <math.h>
 
+CPL_CVSID("$Id$");
+
 #ifdef _WIN32
 #define rint(x) floor((x) + 0.5)
 #endif

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTA read/write Driver
  * Purpose:  GDAL bindings over GTA library.

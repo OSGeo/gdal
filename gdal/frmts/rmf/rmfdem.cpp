@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Implementation of the ad-hoc compression algorithm used in
@@ -31,6 +30,8 @@
 #include "cpl_conv.h"
 
 #include "rmfdataset.h"
+
+CPL_CVSID("$Id$");
 
 /*
  * The encoded data stream is a series of records.
@@ -293,4 +294,3 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
 
   return static_cast<int>((GByte*)paiOut - pabyOut);
 }
-

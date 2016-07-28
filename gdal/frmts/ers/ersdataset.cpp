@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ERMapper .ers Driver
  * Purpose:  Implementation of .ers driver.

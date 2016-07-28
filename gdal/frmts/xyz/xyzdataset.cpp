@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XYZ driver
  * Purpose:  GDALDataset driver for XYZ dataset.

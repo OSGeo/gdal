@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     georaster_dataset.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -37,6 +36,8 @@
 #include "ogr_spatialref.h"
 
 #include "georaster_priv.h"
+
+CPL_CVSID("$Id$");
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterDataset()

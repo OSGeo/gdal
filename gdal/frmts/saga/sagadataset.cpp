@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  * Project:  SAGA GIS Binary Driver
  * Purpose:  Implements the SAGA GIS Binary Grid Format.
  * Author:   Volker Wichmann, wichmann@laserdata.at

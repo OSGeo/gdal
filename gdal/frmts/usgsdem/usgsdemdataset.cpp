@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  USGS DEM Driver
  * Purpose:  All reader for USGS DEM Reader

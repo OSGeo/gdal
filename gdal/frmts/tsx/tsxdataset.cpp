@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:     TerraSAR-X XML Product Support
  * Purpose:     Support for TerraSAR-X XML Metadata files

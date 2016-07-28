@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of NASAKeywordHandler - a class to read
@@ -52,6 +51,8 @@
 
 #include "cpl_string.h"
 #include "nasakeywordhandler.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

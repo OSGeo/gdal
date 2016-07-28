@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CEOS Translator
  * Purpose:  GDALDataset driver for CEOS translator.

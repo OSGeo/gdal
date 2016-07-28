@@ -30,6 +30,8 @@
 #include "gdal_proxy.h"
 #include "derivedlist.h"
 
+CPL_CVSID("$Id$");
+
 class DerivedDataset : public VRTDataset
 {
     public:

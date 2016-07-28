@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     georaster_rasterband.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -35,6 +34,8 @@
 #include "georaster_priv.h"
 #include "cpl_vsi.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 //  ---------------------------------------------------------------------------
 //                                                        GeoRasterRasterBand()

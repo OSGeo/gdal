@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keacopy.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -33,6 +32,8 @@
 #include "gdal_rat.h"
 
 #include "keacopy.h"
+
+CPL_CVSID("$Id$");
 
 // Support functions for CreateCopy()
 

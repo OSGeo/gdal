@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ESRI ArcSDE Raster reader
  * Purpose:  Rasterband implementation for ESRI ArcSDE Rasters
@@ -32,6 +31,7 @@
 
 #include "sderasterband.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*  SDERasterBand implements a GDAL RasterBand for ArcSDE.  This class  */

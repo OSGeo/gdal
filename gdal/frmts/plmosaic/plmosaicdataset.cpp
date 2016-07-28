@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PLMosaic driver
  * Purpose:  PLMosaic driver

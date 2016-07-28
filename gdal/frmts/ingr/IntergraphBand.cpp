@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Read/Write Intergraph Raster Format, band support
@@ -42,6 +41,8 @@
 #include "IngrTypes.h"
 
 #include <algorithm>
+
+CPL_CVSID("$Id$");
 
 using std::fill;
 

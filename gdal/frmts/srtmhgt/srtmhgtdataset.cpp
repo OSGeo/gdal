@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SRTM HGT Driver
  * Purpose:  SRTM HGT File Read Support.

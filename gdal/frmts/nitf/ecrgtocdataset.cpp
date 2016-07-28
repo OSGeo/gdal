@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ECRG TOC read Translator
  * Purpose:  Implementation of ECRGTOCDataset and ECRGTOCSubDataset.

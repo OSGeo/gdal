@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     georaster_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -34,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+
+CPL_CVSID("$Id$");
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterWrapper()
