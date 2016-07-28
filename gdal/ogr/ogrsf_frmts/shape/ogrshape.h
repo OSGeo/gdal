@@ -142,7 +142,7 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     int                 bTruncationWarningEmitted;
 
     bool                bHSHPWasNonNULL; // Must try to reopen a .shp?
-    int                 bHDBFWasNonNULL; // Must try to reopen a .dbf
+    bool                bHDBFWasNonNULL; // Must try to reopen a .dbf
     // Current state of opening of file descriptor to .shp and .dbf.
     int                 eFileDescriptorsState;
 

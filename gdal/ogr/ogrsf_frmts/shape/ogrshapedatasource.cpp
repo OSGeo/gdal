@@ -754,7 +754,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         CPLString osPrjFile =
             CPLFormFilename( NULL, pszFilenameWithoutExt, "prj");
 
-        // The shape layer needs it's own copy.
+        // The shape layer needs its own copy.
         poSRS = poSRS->Clone();
         poSRS->morphToESRI();
 
@@ -835,7 +835,7 @@ int OGRShapeDataSource::GetLayerCount()
             const char* pszFilename = oVectorLayerName[i].c_str();
             const char* pszLayerName = CPLGetBasename(pszFilename);
 
-            int j = 0; // Used after for.
+            int j = 0;  // Used after for.
             for( ; j < nLayers; j++ )
             {
                 if( strcmp(papoLayers[j]->GetName(), pszLayerName) == 0 )
@@ -1087,7 +1087,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /*      Get depth if provided.                                          */
 /* -------------------------------------------------------------------- */
     const int nDepth =
-        ( CSLCount(papszTokens) == 7 ) ? atoi(papszTokens[6]) : 0;
+        CSLCount(papszTokens) == 7 ? atoi(papszTokens[6]) : 0;
 
 /* -------------------------------------------------------------------- */
 /*      What layer are we operating on.                                 */
@@ -1139,13 +1139,7 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
     }
 
-    OGRShapeLayer* poLayerToDelete = dynamic_cast<OGRShapeLayer*>(
-        papoLayers[iLayer]);
-    if( poLayerToDelete == NULL )
-    {
-      CPLError( CE_Failure, CPLE_AppDefined, "dynamic_cast failed" );
-        return OGRERR_FAILURE;
-    }
+    OGRShapeLayer* poLayerToDelete = papoLayers[iLayer];
 
     char * const pszFilename = CPLStrdup(poLayerToDelete->GetFullName());
 
