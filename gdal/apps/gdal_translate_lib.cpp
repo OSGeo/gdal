@@ -727,6 +727,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         psOptions->adfSrcWin[2] = (psOptions->dfLRX - psOptions->dfULX) / adfGeoTransform[1];
         psOptions->adfSrcWin[3] = (psOptions->dfLRY - psOptions->dfULY) / adfGeoTransform[5];
+        
+        // In case of nearest resampling, round to integer pixels (#6610)
+        if( psOptions->pszResampling == NULL ||
+            EQUALN(psOptions->pszResampling, "NEAR", 4) )
+        {
+            psOptions->adfSrcWin[0] = floor(psOptions->adfSrcWin[0] + 0.001); 
+            psOptions->adfSrcWin[1] = floor(psOptions->adfSrcWin[1] + 0.001);
+            psOptions->adfSrcWin[2] = floor(psOptions->adfSrcWin[2] + 0.5);
+            psOptions->adfSrcWin[3] = floor(psOptions->adfSrcWin[3] + 0.5);
+        }
 
         /*if( !bQuiet )
             fprintf( stdout,
