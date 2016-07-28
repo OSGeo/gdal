@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DDS Driver
  * Purpose:  Implement GDAL DDS Support

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement GDAL JPEG Support based on IJG libjpeg.
@@ -41,6 +40,8 @@
 
 #include <setjmp.h>
 
+CPL_CVSID("$Id$");
+
 static const int TIFF_VERSION = 42;
 
 static const int TIFF_BIGENDIAN = 0x4d4d;
@@ -59,8 +60,6 @@ typedef struct {
         GUInt16  tiff_version;   /* TIFF version number */
         GUInt32  tiff_diroff;    /* byte offset to first directory */
 } TIFFHeader;
-
-CPL_CVSID("$Id$");
 
 CPL_C_START
 #ifdef LIBJPEG_12_PATH

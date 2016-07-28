@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Types support function
@@ -34,6 +33,8 @@
 #ifdef DEBUG
 #include "stdio.h"
 #endif
+
+CPL_CVSID("$Id$");
 
 static const INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  CreateCopy() implementation for R stats package object format.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of MSGCommand class. Parse the src_dataset
  *           string that is meant for the MSG driver.
@@ -30,6 +29,9 @@
 #include "msgcommand.h"
 #include <cstdlib>
 #include <cstdio>
+
+CPL_CVSID("$Id$");
+
 using namespace std;
 
 #ifdef _WIN32

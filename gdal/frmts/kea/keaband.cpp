@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keaband.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -39,6 +38,8 @@
 #include <vector>
 
 #include <limits.h>
+
+CPL_CVSID("$Id$");
 
 // constructor
 KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount )

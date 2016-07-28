@@ -36,7 +36,6 @@
 
 
 /*
- * $Id$
  * PNG band
  * PNG page compression and decompression functions
  * These functions are not methods, they reside in the global space
@@ -53,6 +52,8 @@ CPL_C_START
 #include <png.h>
 #endif
 CPL_C_END
+
+CPL_CVSID("$Id$");
 
 NAMESPACE_MRF_START
 

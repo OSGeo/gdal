@@ -32,6 +32,8 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
+CPL_CVSID("$Id$");
+
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
 static const char SIG[]="GDAL_WMS TiledWMS: ";

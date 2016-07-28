@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Sentinel SAFE products
  * Purpose:  Sentinel Products (manifest.safe) driver

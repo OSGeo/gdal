@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Read/write raster files used in GIS "Integratsia"

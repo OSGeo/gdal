@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CTG driver
  * Purpose:  GDALDataset driver for CTG dataset.

@@ -55,6 +55,8 @@
 
 #include <vector>
 
+CPL_CVSID("$Id$");
+
 using std::vector;
 using std::string;
 

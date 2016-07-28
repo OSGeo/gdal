@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Implement system hook functions for libtiff on top of CPL/VSI,
@@ -45,6 +44,8 @@
 #ifdef RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 #include "gdal_libgeotiff_symbol_rename.h"
 #endif
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 extern TIFF CPL_DLL * XTIFFClientOpen( const char* name, const char* mode,

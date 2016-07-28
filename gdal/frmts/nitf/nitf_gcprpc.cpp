@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  GCP / RPC Georeferencing Model (custom by/for ESRI)

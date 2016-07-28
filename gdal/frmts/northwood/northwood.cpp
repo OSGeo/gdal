@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GRC/GRD Reader
  * Purpose:  Northwood Format basic implementation
@@ -34,6 +33,8 @@
 
 #include <algorithm>
 #include <string>
+
+CPL_CVSID("$Id$");
 
 int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {

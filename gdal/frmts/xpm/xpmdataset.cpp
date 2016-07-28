@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XPM Driver
  * Purpose:  Implement GDAL XPM Support

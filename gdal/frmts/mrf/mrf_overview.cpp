@@ -14,7 +14,6 @@
 */
 
 /******************************************************************************
-* $Id$
 *
 * Project:  Meta Raster File Format Driver Implementation, overlay support
 * Purpose:  Implementation overlay support for MRF
@@ -28,6 +27,8 @@
 
 #include "marfa.h"
 #include <vector>
+
+CPL_CVSID("$Id$");
 
 using std::vector;
 

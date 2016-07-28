@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EarthWatch .TIL Driver
  * Purpose:  Implementation of the TILDataset class.

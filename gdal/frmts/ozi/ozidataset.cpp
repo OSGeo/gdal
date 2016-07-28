@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:   OZF2 and OZFx3 binary files driver
  * Purpose:  GDALDataset driver for OZF2 and OZFx3 binary files.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Implementation of the LZW compression algorithm as used in
@@ -49,6 +48,8 @@
 #include "cpl_conv.h"
 
 #include "rmfdataset.h"
+
+CPL_CVSID("$Id$");
 
 // Code marks that there is no predecessor in the string
 #define NO_PRED     0xFFFF
@@ -238,4 +239,3 @@ bad:
     CPLFree( poCodeTab );
     return 0;
 }
-

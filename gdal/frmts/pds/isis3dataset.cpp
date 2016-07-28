@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISIS Version 3 Driver
  * Purpose:  Implementation of ISIS3Dataset

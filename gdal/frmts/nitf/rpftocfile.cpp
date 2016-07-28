@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  RPF A.TOC read Library
  * Purpose:  Module responsible for opening a RPF TOC file, populating RPFToc

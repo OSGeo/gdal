@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keadataset.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -31,6 +30,8 @@
 #include "keadataset.h"
 #include "keaband.h"
 #include "keacopy.h"
+
+CPL_CVSID("$Id$");
 
 // Function for converting a libkea type into a GDAL type
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEGLS driver based on CharLS library
  * Purpose:  JPEGLS driver based on CharLS library
@@ -686,4 +685,3 @@ void GDALRegister_JPEGLS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

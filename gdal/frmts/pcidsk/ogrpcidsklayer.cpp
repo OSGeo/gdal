@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCIDSK Translator
  * Purpose:  Implements OGRPCIDSKLayer class.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  APP ENVISAT Support
  * Purpose:  Detect range of ADS records matching the MDS records.
@@ -38,6 +37,8 @@ CPL_C_START
 CPL_C_END
 
 #include <cmath>
+
+CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
 /*

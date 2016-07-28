@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  APP ENVISAT Support
  * Purpose:  GCPs Unwrapping for products crossing the WGS84 date-line
@@ -30,6 +29,8 @@
 #include "gdal.h"
 #include <cmath>
 #include <cstdio>
+
+CPL_CVSID("$Id$");
 
 // number of histogram bins (36 a 10dg)
 static const int NBIN = 36;

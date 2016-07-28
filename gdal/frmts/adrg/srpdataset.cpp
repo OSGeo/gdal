@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  * Purpose:  ASRP/USRP Reader
  * Author:   Frank Warmerdam (warmerdam@pobox.com)
  *

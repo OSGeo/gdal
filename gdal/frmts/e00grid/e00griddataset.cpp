@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  E00 grid driver
  * Purpose:  GDALDataset driver for E00 grid dataset.

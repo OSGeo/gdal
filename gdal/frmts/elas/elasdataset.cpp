@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ELAS Translator
  * Purpose:  Complete implementation of ELAS translator module for GDAL.

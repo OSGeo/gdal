@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Polarimetric Workstation
  * Purpose:  Radarsat 2 - XML Products (product.xml) driver

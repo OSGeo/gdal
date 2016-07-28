@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of XRITHeaderParser class. Parse the header
  *           of the combined XRIT header/data files.
@@ -30,6 +29,8 @@
 #include "xritheaderparser.h"
 #include <cstdlib> // malloc, free
 #include <cstring> // memcpy
+
+CPL_CVSID("$Id$");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

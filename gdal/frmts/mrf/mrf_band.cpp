@@ -35,7 +35,6 @@
 
 
 /******************************************************************************
-* $Id$
 *
 * Project:  Meta Raster File Format Driver Implementation, RasterBand
 * Purpose:  Implementation of Pile of Tile Format
@@ -52,6 +51,8 @@
 #include <vector>
 #include <assert.h>
 #include "../zlib/zlib.h"
+
+CPL_CVSID("$Id$");
 
 using std::vector;
 using std::string;

@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  Creates a jpeg header
  * Purpose:  Abbreviated JPEG support
@@ -29,6 +28,8 @@
  *****************************************************************************/
 
 #include "JpegHelper.h"
+
+CPL_CVSID("$Id$");
 
 static const GByte JPGHLP_1DC_Codes[] = {
     0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  IRIS Reader
  * Purpose:  All code for IRIS format Reader

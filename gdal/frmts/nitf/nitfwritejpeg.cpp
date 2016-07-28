@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  GDALDataset/GDALRasterBand implementation on top of "nitflib".
@@ -35,6 +34,8 @@
 
 #include "cpl_port.h"
 #include "gdal_pam.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #ifdef LIBJPEG_12_PATH

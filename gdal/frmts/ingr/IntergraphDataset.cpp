@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Read/Write Intergraph Raster Format, dataset support
@@ -40,6 +39,8 @@
 #include "IntergraphDataset.h"
 #include "IntergraphBand.h"
 #include "IngrTypes.h"
+
+CPL_CVSID("$Id$");
 
 //  ----------------------------------------------------------------------------
 //                                        IntergraphDataset::IntergraphDataset()

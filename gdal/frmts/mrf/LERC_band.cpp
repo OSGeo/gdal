@@ -24,6 +24,8 @@ Contributors:  Lucian Plesea
 #include <CntZImage.h>
 #include <Lerc2.h>
 
+CPL_CVSID("$Id$");
+
 USING_NAMESPACE_LERC
 
 NAMESPACE_MRF_START
