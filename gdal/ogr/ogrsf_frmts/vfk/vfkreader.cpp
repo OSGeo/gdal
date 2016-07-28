@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader
  * Purpose:  Implements VFKReader class.
@@ -44,6 +43,8 @@
 #ifdef SUPPORT_GEOMETRY
 #  include "ogr_geometry.h"
 #endif
+
+CPL_CVSID("$Id$");
 
 static char *GetDataBlockName(const char *);
 

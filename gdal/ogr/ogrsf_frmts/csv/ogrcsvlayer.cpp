@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSV Translator
  * Purpose:  Implements OGRCSVLayer class.

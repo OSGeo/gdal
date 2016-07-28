@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalktool.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Walk Binary Data to Walk Geometry and OGC WKB
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogrwalk.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                   OGRWalkArcCenterFromEdgePoints()                   */

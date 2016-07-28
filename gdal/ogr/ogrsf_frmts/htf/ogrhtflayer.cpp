@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HTF Translator
  * Purpose:  Implements OGRHTFLayer class.

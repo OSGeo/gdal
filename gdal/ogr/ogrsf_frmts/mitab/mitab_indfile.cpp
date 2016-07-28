@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -82,6 +81,8 @@
 #include "mitab_utils.h"
 
 #include <ctype.h>      /* toupper() */
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABINDFile

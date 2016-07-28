@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRESRIJSONReader class (OGR ESRIJSON Driver)
@@ -35,6 +34,8 @@
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
 #include <ogr_api.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRESRIJSONReader()                         */

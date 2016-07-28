@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_awy_reader.cpp$
  *
  * Project:  X-Plane awy.dat file reader
  * Purpose:  Implements OGRXPlaneAwyReader class

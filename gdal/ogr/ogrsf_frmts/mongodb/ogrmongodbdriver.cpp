@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MongoDB Translator
  * Purpose:  Implements OGRMongoDBDriver.

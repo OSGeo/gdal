@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEOLayer class.

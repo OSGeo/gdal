@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Idrisi Translator
  * Purpose:  Implements OGRIdrisiLayer class.

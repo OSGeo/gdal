@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Definition of classes for OGR SXF driver.
@@ -142,6 +141,3 @@ void RegisterOGRSXF()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-
-
-

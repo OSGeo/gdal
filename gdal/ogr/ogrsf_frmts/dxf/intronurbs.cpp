@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Low level spline interpolation.
@@ -45,6 +44,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <vector>
 #include "cpl_port.h" // in case of -DDEBUG_BOOL
+
+CPL_CVSID("$Id$");
 
 /* used by ogrdxflayer.cpp */
 void rbspline2(int npts,int k,int p1,double b[],double h[],

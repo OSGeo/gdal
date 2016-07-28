@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Test mainline for fast loading.
@@ -29,6 +28,8 @@
 
 #include <stdio.h>
 #include "ogr_oci.h"
+
+CPL_CVSID("$Id$");
 
 int main()
 

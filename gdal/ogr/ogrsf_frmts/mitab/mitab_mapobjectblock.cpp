@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -113,6 +112,8 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABMAPObjectBlock

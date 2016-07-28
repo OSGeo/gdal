@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  UK NTF Reader
  * Purpose:  Implements OGRNTFFeatureClassLayer class.

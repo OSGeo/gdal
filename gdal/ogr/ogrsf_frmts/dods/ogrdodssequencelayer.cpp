@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSSequenceLayer class, which implements the

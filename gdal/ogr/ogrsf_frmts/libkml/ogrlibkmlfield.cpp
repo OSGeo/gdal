@@ -36,6 +36,8 @@
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
 
+CPL_CVSID("$Id$");
+
 using kmldom::CameraPtr;
 using kmldom::DataPtr;
 using kmldom::ExtendedDataPtr;

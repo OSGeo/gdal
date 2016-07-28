@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGRASSDriver class.
@@ -120,4 +119,3 @@ void RegisterOGRGRASS()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

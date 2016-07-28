@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SOSI Translator
  * Purpose:  Implements OGRSOSILayer.
@@ -30,6 +29,8 @@
 
 #include "ogr_sosi.h"
 #include <map>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRSOSILayer()                             */

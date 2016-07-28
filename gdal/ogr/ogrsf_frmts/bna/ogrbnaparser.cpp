@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BNA Parser
  * Purpose:  Parse a BNA record
@@ -31,6 +30,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 void BNA_FreeRecord(BNARecord* record)
 {

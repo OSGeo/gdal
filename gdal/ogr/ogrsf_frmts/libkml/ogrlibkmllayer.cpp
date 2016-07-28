@@ -37,6 +37,8 @@
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlstyle.h"
 
+CPL_CVSID("$Id$");
+
 using kmldom::CameraPtr;
 using kmldom::ChangePtr;
 using kmldom::CreatePtr;

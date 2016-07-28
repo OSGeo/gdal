@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSDriver class.
@@ -96,4 +95,3 @@ void RegisterOGRDODS()
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRDODSDriver );
 }
-

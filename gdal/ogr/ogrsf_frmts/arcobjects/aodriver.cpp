@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            AODriver()                            */
@@ -223,4 +224,3 @@ void RegisterOGRao()
     return;
   OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new AODriver );
 }
-

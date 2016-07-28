@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of GeoJSON writer utilities (OGR GeoJSON Driver).
@@ -37,6 +36,7 @@
 #include <ogr_api.h>
 #include <ogr_p.h>
 
+CPL_CVSID("$Id$");
 
 static json_object* json_object_new_coord(double dfVal, int nCoordPrecision, int nSignificantFigures)
 {

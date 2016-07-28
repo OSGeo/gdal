@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EPIInfo .REC Reader
  * Purpose:  Implements low level REC reading API.

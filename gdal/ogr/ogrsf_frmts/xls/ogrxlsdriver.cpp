@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSDriver.
@@ -104,4 +103,3 @@ void RegisterOGRXLS()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

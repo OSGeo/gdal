@@ -34,6 +34,8 @@
 #include "ogrlibkmlstyle.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
+
 using kmlbase::Attributes;
 using kmldom::ContainerPtr;
 using kmldom::DocumentPtr;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGDI Bridge
  * Purpose:  Implements OGROGDIDataSource class.

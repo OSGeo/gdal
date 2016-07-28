@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CartoDB Translator
  * Purpose:  Implements OGRCARTODBResultLayer class.

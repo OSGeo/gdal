@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrgeoconceptdriver.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptDriver class.

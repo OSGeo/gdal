@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SVG Translator
  * Purpose:  Implements OGRSVGDataSource class

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageTableLayer class
@@ -32,6 +31,8 @@
 #include "ogrgeopackageutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 //----------------------------------------------------------------------
 // SaveExtent()

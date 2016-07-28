@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_nav_reader.cpp$
  *
  * Project:  X-Plane nav.dat file reader
  * Purpose:  Implements OGRXPlaneNavReader class

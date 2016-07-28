@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AmigoCloud Translator
  * Purpose:  Implements OGRAmigoCloudResultLayer class.

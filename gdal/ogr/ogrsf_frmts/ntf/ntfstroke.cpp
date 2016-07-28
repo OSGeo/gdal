@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NTF Translator
  * Purpose:  NTF Arc to polyline stroking code.  This code is really generic,

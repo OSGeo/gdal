@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AeronavFAA Translator
  * Purpose:  Implements OGRAeronavFAADriver.
@@ -84,4 +83,3 @@ void RegisterOGRAeronavFAA()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

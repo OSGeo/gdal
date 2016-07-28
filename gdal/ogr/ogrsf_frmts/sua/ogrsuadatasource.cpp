@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SUA Translator
  * Purpose:  Implements OGRSUADataSource class

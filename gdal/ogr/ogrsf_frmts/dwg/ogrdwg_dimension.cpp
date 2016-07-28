@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for DIMENSION elements as a part

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRNASLayer class.

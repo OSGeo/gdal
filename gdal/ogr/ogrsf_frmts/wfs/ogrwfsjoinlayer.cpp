@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WFS Translator
  * Purpose:  Implements OGRWFSJoinLayer class.

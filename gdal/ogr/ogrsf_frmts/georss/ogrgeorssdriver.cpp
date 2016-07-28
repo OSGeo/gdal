@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoRSS Translator
  * Purpose:  Implements OGRGeoRSSDriver.

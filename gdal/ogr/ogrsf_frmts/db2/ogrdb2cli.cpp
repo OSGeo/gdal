@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 #ifndef SQLColumns_TABLE_CAT
 #define SQLColumns_TABLE_CAT 1
 #define SQLColumns_TABLE_SCHEM 2
@@ -1845,5 +1847,3 @@ SQLSMALLINT OGRDB2Statement::GetTypeMapping( SQLSMALLINT nTypeCode )
             return SQL_C_CHAR;
     }
 }
-
-

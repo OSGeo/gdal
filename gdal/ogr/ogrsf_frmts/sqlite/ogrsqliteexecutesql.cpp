@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Run SQL requests with SQLite SQL engine
@@ -34,6 +33,8 @@
 #include "cpl_multiproc.h"
 
 #ifdef HAVE_SQLITE_VFS
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                       OGRSQLiteExecuteSQLLayer                       */

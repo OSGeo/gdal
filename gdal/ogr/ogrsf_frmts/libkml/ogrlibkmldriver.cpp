@@ -33,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
+CPL_CVSID("$Id$");
+
 using kmldom::KmlFactory;
 
 static CPLMutex *hMutex = NULL;

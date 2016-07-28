@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NTF Translator
  * Purpose:  Handle UK Ordnance Survey Raster DTM products.  Includes some

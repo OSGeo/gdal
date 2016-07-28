@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Feature definition
  * Purpose:  Implements IVFKFeature/VFKFeature class.
@@ -35,6 +34,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 /*!
   \brief IVFKFeature constructor

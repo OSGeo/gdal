@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRGeoJSONLayer class (OGR GeoJSON Driver).
@@ -30,6 +29,8 @@
 #include <algorithm> // for_each, find_if
 #include <json.h> // JSON-C
 #include "ogr_geojson.h"
+
+CPL_CVSID("$Id$");
 
 /* Remove annoying warnings Microsoft Visual C++ */
 #if defined(_MSC_VER)

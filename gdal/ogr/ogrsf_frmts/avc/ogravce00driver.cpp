@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  OGRAVCE00Driver implementation (Arc/Info E00ary Coverages)

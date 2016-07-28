@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalkdriver.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkDriver class.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "ogrwalk.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRWalkDriver()                            */

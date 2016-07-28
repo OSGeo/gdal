@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRGeoJSONWriteLayer class (OGR GeoJSON Driver).
@@ -29,6 +28,8 @@
  ****************************************************************************/
 #include "ogr_geojson.h"
 #include "ogrgeojsonwriter.h"
+
+CPL_CVSID("$Id$");
 
 /* Remove annoying warnings Microsoft Visual C++ */
 #if defined(_MSC_VER)

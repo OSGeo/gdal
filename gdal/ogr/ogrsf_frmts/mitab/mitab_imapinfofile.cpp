@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -140,6 +139,8 @@
 #else
 #  include <wctype.h>      /* iswspace() */
 #endif
+
+CPL_CVSID("$Id$");
 
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()

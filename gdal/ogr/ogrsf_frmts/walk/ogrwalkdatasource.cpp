@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalkdatasource.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkDatasource class.
@@ -29,6 +28,8 @@
 
 #include "ogrwalk.h"
 #include <vector>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRWalkDataSource()                          */

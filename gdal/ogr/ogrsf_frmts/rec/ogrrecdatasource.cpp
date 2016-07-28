@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Epiinfo .REC Translator
  * Purpose:  Implements OGRRECDataSource class

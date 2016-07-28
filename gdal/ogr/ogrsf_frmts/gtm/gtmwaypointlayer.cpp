@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of gtmwaypoint class.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 #include "ogr_gtm.h"
 #include "cpl_time.h"
+
+CPL_CVSID("$Id$");
 
 GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                                     OGRSpatialReference* poSRSIn,
