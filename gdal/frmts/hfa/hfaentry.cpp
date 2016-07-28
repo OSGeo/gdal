@@ -347,7 +347,7 @@ HFAEntry::~HFAEntry()
 /************************************************************************/
 /*                          RemoveAndDestroy()                          */
 /*                                                                      */
-/*      Removes this entry, and it's children from the current          */
+/*      Removes this entry, and its children from the current           */
 /*      tree.  The parent and/or siblings are appropriately updated     */
 /*      so that they will be flushed back to disk without the           */
 /*      reference to this node.                                         */
@@ -961,7 +961,7 @@ void HFAEntry::SetPosition()
 
 {
 /* -------------------------------------------------------------------- */
-/*      Establish the location of this entry, and it's data.            */
+/*      Establish the location of this entry, and its data.             */
 /* -------------------------------------------------------------------- */
     if( nFilePos == 0 )
     {
@@ -987,7 +987,7 @@ void HFAEntry::SetPosition()
 /************************************************************************/
 /*                            FlushToDisk()                             */
 /*                                                                      */
-/*      Write this entry, and it's data to disk if the entries          */
+/*      Write this entry, and its data to disk if the entries           */
 /*      information is dirty.  Also force children to do the same.      */
 /************************************************************************/
 

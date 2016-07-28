@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
- *           code.  This include files, and it's implementing code depends
+ *           code.  This include files, and its implementing code depends
  *           on CPL, but not GDAL.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

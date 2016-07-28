@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
 /*                                                                      */
-/*      Read one entry from the file header, and return it and it's     */
+/*      Read one entry from the file header, and return it and its      */
 /*      value in clean form.                                            */
 /************************************************************************/
 

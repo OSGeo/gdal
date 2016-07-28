@@ -81,7 +81,7 @@ DDFRecord::~DDFRecord()
 /**
  * Write out record contents to debugging file.
  *
- * A variety of information about this record, and all it's fields and
+ * A variety of information about this record, and all its fields and
  * subfields is written to the given debugging file handle.  Note that
  * field definition information (ala DDFFieldDefn) isn't written.
  *
@@ -911,7 +911,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
  *
  * This method is used to make a copy of a record that will become (mostly)
  * the properly of application.  However, it is automatically destroyed if
- * the DDFModule it was created relative to is destroyed, as it's field
+ * the DDFModule it was created relative to is destroyed, as its field
  * and subfield definitions relate to that DDFModule.  However, it does
  * persist even when the record returned by DDFModule::ReadRecord() is
  * invalidated, such as when reading a new record.  This allows an application

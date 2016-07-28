@@ -453,7 +453,7 @@ class SDTSPointReader : public SDTSIndexedReader
   Class for holding information about a polygon feature.
 
   When directly read from a polygon module, the polygon has no concept
-  of it's geometry.  Just it's ID, and references to attribute records.
+  of its geometry.  Just it's ID, and references to attribute records.
   However, if the SDTSLineReader::AttachToPolygons() method is called on
   the module containing the lines forming the polygon boundaries, then the
   nEdges/papoEdges information on the SDTSRawPolygon will be filled in.

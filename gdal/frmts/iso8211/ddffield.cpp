@@ -56,7 +56,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 /**
  * Write out field contents to debugging file.
  *
- * A variety of information about this field, and all it's
+ * A variety of information about this field, and all its
  * subfields is written to the given debugging file handle.  Note that
  * field definition information (ala DDFFieldDefn) isn't written.
  *
