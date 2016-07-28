@@ -435,6 +435,26 @@ def test_gdal_translate_lib_102():
     return 'success'
 
 ###############################################################################
+# Test that -projwin with nearest neighbor resampling uses integer source
+# pixel boundaries (#6610)
+
+def test_gdal_translate_lib_103():
+
+    ds = gdal.Translate('', '../gcore/data/byte.tif', format = 'MEM', projWin = [440730, 3751310, 441910, 3750140])
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -468,6 +488,7 @@ gdaltest_list = [
     test_gdal_translate_lib_100,
     test_gdal_translate_lib_101,
     test_gdal_translate_lib_102,
+    test_gdal_translate_lib_103,
     test_gdal_translate_lib_cleanup
     ]
 
