@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -58,6 +57,8 @@
  **********************************************************************/
 
 #include "mitab.h"
+
+CPL_CVSID("$Id$");
 
 typedef struct
 {

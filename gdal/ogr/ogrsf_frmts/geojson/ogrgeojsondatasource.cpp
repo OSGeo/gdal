@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRGeoJSONDataSource class (OGR GeoJSON Driver).
@@ -36,6 +35,9 @@
 #include "ogrgeojsonwriter.h"
 #include <cstddef>
 #include <cstdlib>
+
+CPL_CVSID("$Id$");
+
 using namespace std;
 
 /************************************************************************/

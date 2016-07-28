@@ -33,6 +33,8 @@
 #include "ogr_p.h"
 #include "ogrlibkmlgeometry.h"
 
+CPL_CVSID("$Id$");
+
 using kmlbase::Vec3;
 using kmldom::CoordinatesPtr;
 using kmldom::ElementPtr;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CouchDB Translator
  * Purpose:  Implements OGRCouchDBLayer class.

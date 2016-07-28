@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSLayer class.
@@ -373,4 +372,3 @@ int OGRXLSLayer::TestCapability( const char * pszCap )
 
     return FALSE;
 }
-

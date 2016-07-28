@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  UK NTF Reader
  * Purpose:  Implements OGRNTFDriver
@@ -105,4 +104,3 @@ void RegisterOGRNTF()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

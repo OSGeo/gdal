@@ -28,6 +28,9 @@
  ****************************************************************************/
 
 #include "ogr_db2.h"
+
+CPL_CVSID("$Id$");
+
 static GPKGTileFormat GetTileFormat(const char* pszTF );
 
 /* layer status */
@@ -3617,6 +3620,3 @@ OGRErr OGRDB2DataSource::CreateGDALAspatialExtension()
 #endif
     return OGRERR_NONE;
 }
-
-
-

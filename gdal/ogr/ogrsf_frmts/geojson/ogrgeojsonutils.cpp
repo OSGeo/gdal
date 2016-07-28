@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of private utilities used within OGR GeoJSON Driver.
@@ -32,6 +31,8 @@
 #include <cpl_conv.h>
 #include <ogr_geometry.h>
 #include <json.h> // JSON-C
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GeoJSONIsObject()                          */

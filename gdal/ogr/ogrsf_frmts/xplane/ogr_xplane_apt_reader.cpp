@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_apt_reader.cpp$
  *
  * Project:  X-Plane apt.dat file reader
  * Purpose:  Implements OGRXPlaneAptReader class

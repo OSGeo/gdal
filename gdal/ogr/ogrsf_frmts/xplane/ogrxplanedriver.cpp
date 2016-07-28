@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrxplanedriver.cpp$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Implements OGRXPlaneDriver.
@@ -29,6 +28,8 @@
 
 #include "ogr_xplane.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              GetName()                               */

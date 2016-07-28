@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          AODataSource()                           */
@@ -48,7 +49,7 @@ m_pszName(0)
 /************************************************************************/
 
 AODataSource::~AODataSource()
-{   
+{
     CPLFree( m_pszName );
 
     size_t count = m_layers.size();
@@ -71,7 +72,7 @@ int AODataSource::Open(IWorkspace* pWorkspace, const char * pszNewName, int bUpd
     }
 
     m_pszName = CPLStrdup( pszNewName );
-    
+
     m_ipWorkspace = pWorkspace;
 
     HRESULT hr;

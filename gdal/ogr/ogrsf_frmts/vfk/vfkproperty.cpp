@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Property definition
  * Purpose:  Implements VFKProperty class.
@@ -34,6 +33,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 /*!
   \brief Set VFK property (null)

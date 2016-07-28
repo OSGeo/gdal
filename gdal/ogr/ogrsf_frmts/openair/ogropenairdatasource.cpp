@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenAir Translator
  * Purpose:  Implements OGROpenAirDataSource class

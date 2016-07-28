@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalkselectlayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkSelectLayer class, layer access to the results
@@ -30,6 +29,8 @@
 
 #include "cpl_conv.h"
 #include "ogrwalk.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRWalkSelectLayer()                        */

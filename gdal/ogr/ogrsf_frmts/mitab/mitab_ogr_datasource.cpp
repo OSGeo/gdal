@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -73,6 +72,7 @@
 
 #include "mitab_ogr_driver.h"
 
+CPL_CVSID("$Id$");
 
 /*=======================================================================
  *                 OGRTABDataSource

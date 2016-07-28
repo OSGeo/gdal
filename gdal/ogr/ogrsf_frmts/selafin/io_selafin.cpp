@@ -32,6 +32,8 @@
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
 
+CPL_CVSID("$Id$");
+
 namespace Selafin {
 
     const char SELAFIN_ERROR_MESSAGE[]="Error when reading Selafin file\n";

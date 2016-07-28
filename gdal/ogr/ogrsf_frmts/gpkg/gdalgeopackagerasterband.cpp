@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements GDALGeoPackageRasterBand class
@@ -30,6 +29,8 @@
 #include "ogr_geopackage.h"
 #include "memdataset.h"
 #include "gdal_alg_priv.h"
+
+CPL_CVSID("$Id$");
 
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
 #define DEBUG_VERBOSE

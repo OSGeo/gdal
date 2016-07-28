@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGROSMDriver class.
@@ -123,4 +122,3 @@ void RegisterOGROSM()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

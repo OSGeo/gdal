@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGDriver.

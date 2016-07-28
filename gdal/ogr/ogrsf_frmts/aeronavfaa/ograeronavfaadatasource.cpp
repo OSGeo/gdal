@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AeronavFAA Translator
  * Purpose:  Implements OGRAeronavFAADataSource class

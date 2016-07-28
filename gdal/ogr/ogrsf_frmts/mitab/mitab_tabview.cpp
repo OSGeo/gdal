@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -110,6 +109,8 @@
 #include "mitab_utils.h"
 
 #include <ctype.h>      /* isspace() */
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABView

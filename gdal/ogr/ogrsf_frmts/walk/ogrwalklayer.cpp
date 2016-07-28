@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalklayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkLayer class.
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogrwalk.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRWalkLayer()                            */

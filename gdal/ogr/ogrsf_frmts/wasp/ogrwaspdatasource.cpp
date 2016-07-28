@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WAsP Translator
  * Purpose:  Implements OGRWAsPDataSource class
@@ -33,6 +32,8 @@
 
 #include <cassert>
 #include <sstream>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRWAsPDataSource()                          */

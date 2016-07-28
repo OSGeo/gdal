@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements GDALGeoPackageDataset class
@@ -32,6 +31,8 @@
 #include "ogr_p.h"
 #include "swq.h"
 #include "gdalwarper.h"
+
+CPL_CVSID("$Id$");
 
 /* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
 /* http://opengis.github.io/geopackage/#_file_format */

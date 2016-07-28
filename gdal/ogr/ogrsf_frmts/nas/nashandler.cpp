@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  NAS Reader
  * Purpose:  Implementation of NASHandler class.
@@ -32,6 +31,8 @@
 #include "nasreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static const int MAX_TOKEN_SIZE = 1000;
 

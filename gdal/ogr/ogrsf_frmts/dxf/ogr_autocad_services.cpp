@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF and DWG Translators
  * Purpose:  Implements various generic services shared between autocad related

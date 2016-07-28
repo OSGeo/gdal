@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Personal Geodatabase driver.
@@ -121,4 +120,3 @@ void RegisterOGRMDB()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mdb.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

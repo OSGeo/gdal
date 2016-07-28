@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PlanetLabs scene driver
  * Purpose:  Implements OGRPLScenesDataset

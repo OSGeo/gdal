@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -138,6 +137,8 @@
  **********************************************************************/
 
 #include "mitab.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef WIN32
 inline double round(double r) {

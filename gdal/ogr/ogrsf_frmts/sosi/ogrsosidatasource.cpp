@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SOSI Data Source
  * Purpose:  Provide SOSI Data to OGR.
@@ -31,6 +30,8 @@
 #include "ogr_sosi.h"
 #include <map>
 #include <math.h>
+
+CPL_CVSID("$Id$");
 
 /* This is the most common encoding for SOSI files. Let's at least try if
  * it is supported, or generate a meaningful error message.               */

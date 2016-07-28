@@ -28,6 +28,7 @@
 
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 bool AOErr(HRESULT hr, std::string desc)
 {
@@ -60,7 +61,7 @@ bool AOToOGRGeometry(IGeometryDef* pGeoDef, OGRwkbGeometryType* pOut)
 
   pGeoDef->get_GeometryType(&geo);
   pGeoDef->get_HasZ(&hasZ);
-  
+
   switch (geo)
   {
     case esriGeometry::esriGeometryPoint:      *pOut = hasZ == VARIANT_TRUE? wkbPoint25D      : wkbPoint;                break;

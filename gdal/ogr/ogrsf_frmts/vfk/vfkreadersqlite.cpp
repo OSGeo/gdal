@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader (SQLite)
  * Purpose:  Implements VFKReaderSQLite class.
@@ -45,6 +44,8 @@
 #ifdef SUPPORT_GEOMETRY
 #  include "ogr_geometry.h"
 #endif
+
+CPL_CVSID("$Id$");
 
 /*!
   \brief VFKReaderSQLite constructor

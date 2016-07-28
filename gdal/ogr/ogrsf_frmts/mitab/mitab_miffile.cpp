@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -197,6 +196,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 #include <ctype.h>
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class MIFFile

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTTableLayer class.

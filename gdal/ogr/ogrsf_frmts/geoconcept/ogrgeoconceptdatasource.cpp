@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrgeoconceptdatasource.cpp$
  *
  * Name:     ogrgeoconceptdatasource.h
  * Project:  OpenGIS Simple Features Reference Implementation

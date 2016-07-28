@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGDI Bridge
  * Purpose:  Implements OGROGDIDriver class.
@@ -131,4 +130,3 @@ void RegisterOGROGDI()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

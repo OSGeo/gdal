@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTSReader
  * Purpose:  Implements OGRSDTSLayer class.

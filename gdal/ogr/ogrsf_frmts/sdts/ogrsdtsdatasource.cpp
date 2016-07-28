@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implements OGRSDTSDataSource class
@@ -204,4 +203,3 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 
     return TRUE;
 }
-

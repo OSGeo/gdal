@@ -1,5 +1,4 @@
 /******************************************************************************
-* $Id$
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Different utility functions used in FileGDB OGR driver.

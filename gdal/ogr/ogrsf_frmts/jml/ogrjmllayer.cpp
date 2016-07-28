@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JML Translator
  * Purpose:  Implements OGRJMLLayer class.

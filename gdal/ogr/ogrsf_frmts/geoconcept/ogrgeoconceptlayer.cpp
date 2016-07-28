@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrgeoconceptlayer.cpp$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptLayer class.

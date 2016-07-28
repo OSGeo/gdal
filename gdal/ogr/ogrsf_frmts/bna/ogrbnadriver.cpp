@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNADriver.
@@ -29,6 +28,8 @@
 
 #include "ogr_bna.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                                Open()                                */
