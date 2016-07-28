@@ -85,6 +85,14 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
     OGRFieldDefn  oTextField( "text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
+    auto oAttrTags = poCADLayer.getAttributesTags();
+    for( auto citer = oAttrTags.cbegin(); citer != oAttrTags.cend(); ++citer )
+    {
+        OGRFieldDefn oAttrField( (*citer).c_str(), OFTString );
+        poFeatureDefn->AddFieldDefn( &oAttrField );
+        asFeaturesAttributes.push_back( *citer );
+    }
+
     // Applying spatial ref info
     poSpatialRef = poSR;
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSR );
@@ -170,8 +178,21 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     std::stringstream oStringStream;
     oStringStream << "PEN(c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
     oStringStream << ",w:5px)" << std::dec;
-
     poFeature->SetStyleString( oStringStream.str().c_str() );
+
+    auto oBlockAttrs = poCADGeometry->getBlockAttributes();
+    for( auto citer = oBlockAttrs.cbegin(); citer != oBlockAttrs.cend(); ++citer )
+    {
+        for( auto citer_fattr = asFeaturesAttributes.cbegin(); 
+            citer_fattr != asFeaturesAttributes.cend(); 
+            ++citer_fattr)
+        {
+            if( citer->getTag() == *citer_fattr )
+            {
+                poFeature->SetField( (*citer_fattr).c_str(), citer->getTextValue().c_str() );
+            }
+        }
+    }
 
     switch( poCADGeometry->getType() )
     {

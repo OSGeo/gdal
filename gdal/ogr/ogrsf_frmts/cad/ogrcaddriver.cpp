@@ -140,9 +140,9 @@ void RegisterOGRCAD()
 
 CPLString CADRecode( std::string sString, int CADEncoding )
 {
-	switch( CADEncoding )
-	{
-		case 29:
-			return CPLString( CPLRecode( sString.c_str(), "CP1251", CPL_ENC_UTF8 ) );
-	}
+    switch( CADEncoding )
+    {
+        case 29:
+            return CPLString( CPLRecode( sString.c_str(), "CP1251", CPL_ENC_UTF8 ) );
+    }
 }
