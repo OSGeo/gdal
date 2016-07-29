@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogrogdi.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -37,17 +38,22 @@ CPL_CVSID("$Id$");
 /*                         OGROGDIDataSource()                          */
 /************************************************************************/
 
-OGROGDIDataSource::OGROGDIDataSource()
-
+OGROGDIDataSource::OGROGDIDataSource() :
+    m_papoLayers(NULL),
+    m_nLayers(0),
+    m_nClientID(-1),
+    m_poSpatialRef(NULL),
+    m_poCurrentLayer(NULL),
+    m_pszFullName(NULL),
+    m_bLaunderLayerNames(
+        CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO")))
 {
-    m_pszFullName = NULL;
-    m_papoLayers = NULL;
-    m_nLayers = 0;
-    m_nClientID = -1;
-    m_poSpatialRef = NULL;
-    m_poCurrentLayer = NULL;
-    m_bLaunderLayerNames =
-            CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO"));
+    m_sGlobalBounds.north = 0.0;
+    m_sGlobalBounds.south = 0.0;
+    m_sGlobalBounds.east = 0.0;
+    m_sGlobalBounds.west = 0.0;
+    m_sGlobalBounds.ns_res = 0.0;
+    m_sGlobalBounds.ew_res = 0.0;
 }
 
 /************************************************************************/
