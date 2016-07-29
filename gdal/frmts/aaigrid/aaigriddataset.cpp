@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements Arc/Info ASCII Grid Format.
@@ -35,6 +34,7 @@
 
 #include <ctype.h>
 #include <climits>
+#include <limits>
 
 #include "cpl_string.h"
 #include "gdal_pam.h"
@@ -596,6 +596,12 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
              INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
         {
             eDataType = GDT_Float32;
+            if( !CPLIsInf(dfNoDataValue) &&
+                (fabs(dfNoDataValue) < std::numeric_limits<float>::min() ||
+                 fabs(dfNoDataValue) > std::numeric_limits<float>::max()) )
+            {
+                eDataType = GDT_Float64;
+            }
         }
         if( eDataType == GDT_Float32 )
         {
@@ -821,7 +827,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
-    if( pszDataType == NULL && poDS->eDataType != GDT_Float32)
+    if( pszDataType == NULL && poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;

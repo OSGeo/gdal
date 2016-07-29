@@ -2,7 +2,7 @@
 OBJ	=	vrtdataset.obj vrtrasterband.obj vrtdriver.obj \
 		vrtsources.obj vrtfilters.obj vrtsourcedrasterband.obj \
 		vrtrawrasterband.obj vrtderivedrasterband.obj vrtwarped.obj \
-		vrtpansharpened.obj
+		vrtpansharpened.obj pixelfunctions.obj
 
 GDAL_ROOT	=	..\..
 

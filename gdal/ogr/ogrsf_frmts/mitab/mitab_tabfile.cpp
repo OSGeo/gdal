@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.78 2010-10-08 18:40:12 aboudreault Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -108,6 +107,8 @@
 #include "ogr_p.h"
 
 #include <ctype.h>      /* isspace() */
+
+CPL_CVSID("$Id$");
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLGeometryWriter class to write native SqlGeometries.
@@ -236,7 +235,7 @@ void OGRMSSQLGeometryWriter::WriteLineString(OGRLineString* poGeom)
     else
     {
         for (i = 0; i < poGeom->getNumPoints(); i++)
-            WritePoint(poGeom->getX(i), poGeom->getY(i));          
+            WritePoint(poGeom->getX(i), poGeom->getY(i));
     }
     ++iFigure;
 }
@@ -288,7 +287,7 @@ void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon* poGeom)
                 WritePoint(poRing->getX(i), poRing->getY(i));
             ++iFigure;
         }
-    }  
+    }
 }
 
 /************************************************************************/
@@ -313,7 +312,7 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
     WriteInt32(FigureOffset(iShape), iFigure);
 
     iParent = iShape;
-    
+
     switch (poGeom->getGeometryType())
     {
     case wkbPoint:
@@ -324,7 +323,7 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
         WritePoint((OGRPoint*)poGeom);
         ++iFigure;
         break;
-        
+
     case wkbLineString:
     case wkbLineString25D:
         WriteByte(ShapeType(iShape++), ST_LINESTRING);
@@ -380,7 +379,7 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
         ++nNumFigures;
         ++nNumPoints;
         break;
-        
+
     case wkbLineString:
     case wkbLineString25D:
         ++nNumFigures;
@@ -430,7 +429,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
 
     if (nBufLen < nLen)
         return OGRERR_FAILURE;
-    
+
     OGRwkbGeometryType geomType = poGeom2->getGeometryType();
 
     if (nNumPoints == 1 && (geomType == wkbPoint || geomType == wkbPoint25D))
@@ -504,4 +503,3 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     }
     return OGRERR_NONE;
 }
-

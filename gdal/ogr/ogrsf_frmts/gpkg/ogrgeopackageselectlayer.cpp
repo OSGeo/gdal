@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageSelectLayer class
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        OGRGeoPackageSelectLayer()                    */

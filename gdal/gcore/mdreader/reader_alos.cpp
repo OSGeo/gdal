@@ -30,6 +30,8 @@
 
 #include "reader_alos.h"
 
+CPL_CVSID("$Id:");
+
 /**
  * GDALMDReaderALOS()
  */

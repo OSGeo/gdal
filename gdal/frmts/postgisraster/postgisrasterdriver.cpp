@@ -4,7 +4,7 @@
  * Purpose:  Implements PostGIS Raster driver class methods
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ******************************************************************************
  * Copyright (c) 2010, Jorge Arevalo, jorge.arevalo@deimos-space.com
@@ -30,6 +30,8 @@
  ******************************************************************************/
 #include "postgisraster.h"
 #include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 /************************
  * \brief Constructor

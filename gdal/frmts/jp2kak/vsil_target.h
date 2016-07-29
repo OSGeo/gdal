@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: subfile_source.h 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  JPEG-2000
  * Purpose:  Implements VSI*L based writer.

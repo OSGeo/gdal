@@ -30,6 +30,8 @@
 
 #include "reader_kompsat.h"
 
+CPL_CVSID("$Id:");
+
 /**
  * GDALMDReaderKompsat()
  */

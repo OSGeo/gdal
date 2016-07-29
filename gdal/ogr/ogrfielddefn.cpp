@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFieldDefn class implementation.
@@ -280,7 +279,7 @@ void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eTypeIn, eSubType) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     eType = eTypeIn;
@@ -366,7 +365,7 @@ void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eType, eSubTypeIn) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     else

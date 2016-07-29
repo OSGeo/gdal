@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Contour Generator
  * Purpose:  Contour Generator mainline.

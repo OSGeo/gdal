@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  HDF4 Datasets. Open HDF4 file, fetch metadata and list of
@@ -40,6 +39,7 @@
 
 #include "HdfEosDef.h"
 
+#include "hdf4compat.h"
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");

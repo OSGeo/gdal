@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdwg_blockmap.cpp 22011 2011-03-22 20:13:38Z warmerdam $
  *
  * Project:  DWG Translator
  * Purpose:  Implements BlockMap reading and management portion of
@@ -33,7 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-CPL_CVSID("$Id: ogrdwg_blockmap.cpp 22011 2011-03-22 20:13:38Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ReadBlockSection()                          */

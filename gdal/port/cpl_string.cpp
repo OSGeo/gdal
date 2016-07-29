@@ -1,6 +1,4 @@
-
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_string.cpp
  * Project:  CPL - Common Portability Library
@@ -297,14 +295,14 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  */
 
 char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
-                 char** papszOptions )
+                 const char * const * papszOptions )
 {
     VSILFILE *fp = VSIFOpenL(pszFname, "rb");
 
     if (!fp)
     {
-        if( CSLFetchBoolean( papszOptions, "EMIT_ERROR_IF_CANNOT_OPEN_FILE",
-                             TRUE ) )
+        if( CPLFetchBool( papszOptions, "EMIT_ERROR_IF_CANNOT_OPEN_FILE",
+                          true ) )
         {
             /* Unable to open file */
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -647,7 +645,7 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLFindString( char ** papszList, const char * pszTarget )
+int CSLFindString( const char * const * papszList, const char * pszTarget )
 
 {
     if( papszList == NULL )
@@ -655,7 +653,7 @@ int CSLFindString( char ** papszList, const char * pszTarget )
 
     for( int i = 0; papszList[i] != NULL; ++i )
     {
-        if( EQUAL(papszList[i],pszTarget) )
+        if( EQUAL(papszList[i], pszTarget) )
             return i;
     }
 
@@ -681,7 +679,7 @@ int CSLFindString( char ** papszList, const char * pszTarget )
  * @since GDAL 2.0
  */
 
-int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
+int CSLFindStringCaseSensitive( const char * const * papszList, const char * pszTarget )
 
 {
     if( papszList == NULL )
@@ -713,7 +711,7 @@ int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLPartialFindString( char **papszHaystack, const char * pszNeedle )
+int CSLPartialFindString( const char * const *papszHaystack, const char * pszNeedle )
 {
     if (papszHaystack == NULL || pszNeedle == NULL)
         return -1;
@@ -1559,15 +1557,15 @@ int CPLTestBoolean( const char *pszValue )
  * @return true or false
  **********************************************************************/
 
-bool CPLFetchBool( const char **papszStrList, const char *pszKey,
+bool CPLFetchBool( const char * const *papszStrList, const char *pszKey,
                    bool bDefault )
 
 {
-    if( CSLFindString( const_cast<char **>(papszStrList), pszKey ) != -1 )
+    if( CSLFindString( papszStrList, pszKey ) != -1 )
         return true;
 
     const char * const pszValue =
-        CSLFetchNameValue( const_cast<char **>(papszStrList), pszKey );
+        CSLFetchNameValue( papszStrList, pszKey );
     if( pszValue == NULL )
         return bDefault;
 
@@ -1596,15 +1594,14 @@ bool CPLFetchBool( const char **papszStrList, const char *pszKey,
 int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
 
 {
-    return CPLFetchBool( const_cast<const char **>(papszStrList),
-                         pszKey, CPL_TO_BOOL(bDefault) );
+    return CPLFetchBool( papszStrList, pszKey, CPL_TO_BOOL(bDefault) );
 }
 
 /************************************************************************/
 /*                     CSLFetchNameValueDefaulted()                     */
 /************************************************************************/
 
-const char *CSLFetchNameValueDef( char **papszStrList,
+const char *CSLFetchNameValueDef( const char * const *papszStrList,
                                   const char *pszName,
                                   const char *pszDefault )
 
@@ -1630,7 +1627,8 @@ const char *CSLFetchNameValueDef( char **papszStrList,
  *
  * Returns NULL if the name is not found.
  **********************************************************************/
-const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
+const char *CSLFetchNameValue( const char * const *papszStrList,
+                               const char *pszName )
 {
     if (papszStrList == NULL || pszName == NULL)
         return NULL;
@@ -1941,7 +1939,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * This function will "escape" a variety of special characters
  * to make the string suitable to embed within a string constant
  * or to write within a text stream but in a form that can be
- * reconstituted to it's original form.  The escaping will even preserve
+ * reconstituted to its original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  *
  * CPLES_BackslashQuotable(0): This scheme turns a binary string into
@@ -2183,7 +2181,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  *
  * This function does the opposite of CPLEscapeString().  Given a string
  * with special values escaped according to some scheme, it will return a
- * new copy of the string returned to it's original form.
+ * new copy of the string returned to its original form.
  *
  * @param pszInput the input string.  This is a zero terminated string.
  * @param pnLength location to return the length of the unescaped string,

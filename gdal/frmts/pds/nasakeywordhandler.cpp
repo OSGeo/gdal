@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: pdsdataset.cpp 12658 2007-11-07 23:14:33Z warmerdam $
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of NASAKeywordHandler - a class to read
@@ -53,6 +52,8 @@
 #include "cpl_string.h"
 #include "nasakeywordhandler.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          NASAKeywordHandler                          */
@@ -88,7 +89,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, nOffset, SEEK_SET ) != 0 )
         return FALSE;

@@ -119,6 +119,22 @@ def test_ogrlineref_4():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/subline.shp')
 
     return 'success'
+    
+###############################################################################
+# test kml
+def test_ogrlineref_5():
+    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
+        return 'skip'
+
+    if os.path.exists('tmp/parts.kml'):
+        ogr.GetDriverByName('KML').DeleteDataSource('tmp/parts.kml')
+
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222')
+    if os.path.exists('tmp/parts.kml'):
+        return 'success'
+
+    return 'fail'    
+
 
 def test_ogrlineref_cleanup():
     if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
@@ -126,6 +142,8 @@ def test_ogrlineref_cleanup():
 
     if os.path.exists('tmp/parts.shp'):
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/parts.shp')
+    if os.path.exists('tmp/parts.kml'):
+        ogr.GetDriverByName('KML').DeleteDataSource('tmp/parts.kml')
 
     return 'success'
 
@@ -134,6 +152,7 @@ gdaltest_list = [
     test_ogrlineref_2,
     test_ogrlineref_3,
     test_ogrlineref_4,
+    test_ogrlineref_5,
     test_ogrlineref_cleanup
     ]
 

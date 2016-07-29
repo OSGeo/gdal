@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Ground-based SAR Applitcations Testbed File Format driver
  * Purpose:  Support in GDAL for Sandia National Laboratory's GFF format

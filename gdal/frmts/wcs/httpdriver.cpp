@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of an HTTP fetching driver.

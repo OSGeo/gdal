@@ -28,7 +28,8 @@ PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_SDE_DIR) \
 			$(PLUGIN_INGRESDIR) \
 			$(PLUGIN_LIBKMLDIR) \
-            $(PLUGIN_MONGODBDIR)
+			$(PLUGIN_MONGODBDIR) \
+			$(PLUGIN_MSSPATIALDIR)
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -40,9 +41,13 @@ ODBCDIR	=	odbc pgeo mssqlspatial geomedia db2 walk
 ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj db2\*.obj walk\*.obj
 !ENDIF
 
+!IFDEF SQLNCLI_LIB
+PLUGIN_MSSPATIALDIR = mssqlspatial
+!ENDIF
+
 !IFDEF SQLITE_LIB
-SQLITE_DIR	=	sqlite gpkg
-SQLITE_OBJ =	sqlite\*.obj gpkg\*.obj
+SQLITE_DIR	= sqlite gpkg
+SQLITE_OBJ	= sqlite\*.obj gpkg\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
@@ -57,7 +62,7 @@ PLUGIN_OCIDIR = oci
 !IFDEF INGRES_HOME
 !IF "$(INGRES_PLUGIN)" != "YES"
 INGRESDIR	=	ingres
-INGRESOBJ =	ingres\*.obj
+INGRESOBJ	=	ingres\*.obj
 !ELSE
 PLUGIN_INGRESDIR =	ingres
 !ENDIF
@@ -289,7 +294,7 @@ plugindirs:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) ) do \
+	for %d in ( $(DIRLIST) $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd .. \

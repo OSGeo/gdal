@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL MBTiles driver
  * Purpose:  Implement GDAL MBTiles support using OGR SQLite driver
@@ -2235,7 +2234,7 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
     GDALDestroyGenImgProjTransformer( hTransformArg );
     hTransformArg = NULL;
 
-    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when 
+    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when
     // reprojection latitude = +/- 90 to EPSG:3857
     double adfSrcGeoTransform[6];
     if( poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )

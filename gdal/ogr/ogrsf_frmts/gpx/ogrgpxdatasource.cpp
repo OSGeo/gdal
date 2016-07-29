@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXDataSource class

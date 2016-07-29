@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Base class for raster file formats.
@@ -40,6 +39,7 @@
 #include "ograpispy.h"
 #include "ogrunionlayer.h"
 #include "swq.h"
+#include "../frmts/derived/derivedlist.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
@@ -581,6 +581,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
                      "Cannot allocate band array");
             return;
         }
+
         papoBands = papoNewBands;
 
         for( int i = nBands; i < nNewBand; ++i )
@@ -2331,7 +2332,7 @@ char **GDALDataset::GetFileList()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we have a known overview file?                               */
+/*      Do we have a known mask file?                                   */
 /* -------------------------------------------------------------------- */
     if( oOvManager.HaveMaskFile() )
     {
@@ -2344,40 +2345,6 @@ char **GDALDataset::GetFileList()
             ++papszIter;
         }
         CSLDestroy( papszMskList );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a world file?                                        */
-/* -------------------------------------------------------------------- */
-    if( bMainFileReal &&
-        !GDALCanFileAcceptSidecarFile(osMainFilename) )
-    {
-        const char* pszExtension = CPLGetExtension( osMainFilename );
-        if( strlen(pszExtension) > 2 )
-        {
-            // first + last + 'w'
-            char szDerivedExtension[4];
-            szDerivedExtension[0] = pszExtension[0];
-            szDerivedExtension[1] = pszExtension[strlen(pszExtension)-1];
-            szDerivedExtension[2] = 'w';
-            szDerivedExtension[3] = '\0';
-            CPLString osWorldFilename = CPLResetExtension( osMainFilename, szDerivedExtension );
-
-            if (oOvManager.papszInitSiblingFiles)
-            {
-                int iSibling = CSLFindString(oOvManager.papszInitSiblingFiles,
-                                             CPLGetFilename(osWorldFilename));
-                if (iSibling >= 0)
-                {
-                    osWorldFilename.resize(strlen(osWorldFilename) -
-                                           strlen(oOvManager.papszInitSiblingFiles[iSibling]));
-                    osWorldFilename += oOvManager.papszInitSiblingFiles[iSibling];
-                    papszList = CSLAddString( papszList, osWorldFilename );
-                }
-            }
-            else if( VSIStatExL( osWorldFilename, &sStat, VSI_STAT_EXISTS_FLAG ) == 0 )
-                papszList = CSLAddString( papszList, osWorldFilename );
-        }
     }
 
     return papszList;
@@ -2910,7 +2877,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
  * This function works the same as GDALOpen(), but allows the sharing of
  * GDALDataset handles for a dataset with other callers to GDALOpenShared().
  *
- * In particular, GDALOpenShared() will first consult it's list of currently
+ * In particular, GDALOpenShared() will first consult its list of currently
  * open and shared GDALDataset's, and if the GetDescription() name for one
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.
@@ -3323,6 +3290,77 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
         CPLErrorV( eErrClass, err_no, fmt, args );
     }
     va_end(args);
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+char ** GDALDataset::GetMetadata(const char * pszDomain)
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
+    {
+        oDerivedMetadataList.Clear();
+
+        // First condition: at least one raster band
+        if(GetRasterCount()>0)
+        {
+            // Check if there is at least one complex band
+            bool hasAComplexBand = false;
+
+            for(int rasterId = 1; rasterId <= GetRasterCount();++rasterId)
+            {
+                if(GDALDataTypeIsComplex(GetRasterBand(rasterId)->GetRasterDataType()))
+                {
+                    hasAComplexBand = true;
+                    break;
+                }
+            }
+
+            unsigned int nbSupportedDerivedDS;
+            const DerivedDatasetDescription * poDDSDesc =
+                GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
+
+            int nNumDataset = 1;
+            for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
+            {
+                if(hasAComplexBand ||
+                    CPLString(poDDSDesc[derivedId].pszInputPixelType) != "complex")
+                {
+                    oDerivedMetadataList.SetNameValue(
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_NAME",nNumDataset),
+                        CPLSPrintf("DERIVED_SUBDATASET:%s:%s",
+                                poDDSDesc[derivedId].pszDatasetName,GetDescription()));
+
+                    CPLString osDesc(CPLSPrintf("%s from %s",
+                                    poDDSDesc[derivedId].pszDatasetDescritpion,
+                                    GetDescription()));
+                    oDerivedMetadataList.SetNameValue(
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_DESC",nNumDataset),
+                        osDesc.c_str());
+
+                    nNumDataset ++;
+                }
+            }
+        }
+        return oDerivedMetadataList.List();
+    }
+    else
+        return GDALMajorObject::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                            GetMetadataDomainList()                   */
+/************************************************************************/
+char ** GDALDataset::GetMetadataDomainList()
+{
+    char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
+
+    // Ensure that we do not duplicate DERIVED domain
+    if(GetRasterCount()>0 && CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
+    {
+        currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+    }
+    return currentDomainList;
 }
 
 /************************************************************************/

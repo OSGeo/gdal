@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Utility functions for OGR GeoPackage driver.
@@ -29,6 +28,8 @@
 
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /* Runs a SQL command and ignores the result (good for INSERT/UPDATE/CREATE) */
 OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)

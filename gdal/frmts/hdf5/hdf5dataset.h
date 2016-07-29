@@ -87,7 +87,7 @@ protected:
 
   /**
    * Reads an array of double attributes from the HDF5 metadata.
-   * It reads the attributes directly on it's binary form directly,
+   * It reads the attributes directly on its binary form directly,
    * thus avoiding string conversions.
    *
    * Important: It allocates the memory for the attributes internally,

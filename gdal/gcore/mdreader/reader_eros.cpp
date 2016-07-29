@@ -30,6 +30,8 @@
 
 #include "reader_eros.h"
 
+CPL_CVSID("$Id:");
+
 /**
  * GDALMDReaderEROS()
  */

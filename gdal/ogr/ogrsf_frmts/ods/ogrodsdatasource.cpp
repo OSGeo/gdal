@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ODS Translator
  * Purpose:  Implements OGRODSDataSource class

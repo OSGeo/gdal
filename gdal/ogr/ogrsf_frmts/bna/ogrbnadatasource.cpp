@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNADataSource class
@@ -32,6 +31,8 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "ogrbnaparser.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRBNADataSource()                          */

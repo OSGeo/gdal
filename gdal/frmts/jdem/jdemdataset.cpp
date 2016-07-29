@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JDEM Reader
  * Purpose:  All code for Japanese DEM Reader

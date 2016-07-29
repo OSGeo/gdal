@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALRasterBlock class and related global
@@ -35,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 static bool bCacheMaxInitialized = false;
-// Will later be overriden by the default 5% if GDAL_CACHEMAX not defined.
+// Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
 static GIntBig nCacheMax = 40 * 1024 * 1024;
 static volatile GIntBig nCacheUsed = 0;
 
@@ -236,20 +235,29 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         GIntBig nNewCacheMax;
         if( strchr(pszCacheMax, '%') != NULL )
         {
-            GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-            // For some reason, coverity pretends that this will overflow.
-            // "Multiply operation overflows on operands static_cast<double>(
-            // nUsagePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
-            // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
-            // static_cast<double>(nUsagePhysicalRAM) = -9223372036854775808."
-            // coverity[overflow]
-            double dfCacheMax =
-                static_cast<double>(nUsagePhysicalRAM) *
-                CPLAtof(pszCacheMax) / 100.0;
-            if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
-                nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+            GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+            if( nUsablePhysicalRAM > 0 )
+            {
+                // For some reason, coverity pretends that this will overflow.
+                // "Multiply operation overflows on operands static_cast<double>(
+                // nUsablePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
+                // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
+                // static_cast<double>(nUsablePhysicalRAM) = -9223372036854775808."
+                // coverity[overflow]
+                double dfCacheMax =
+                    static_cast<double>(nUsablePhysicalRAM) *
+                    CPLAtof(pszCacheMax) / 100.0;
+                if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
+                    nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                else
+                    nNewCacheMax = nCacheMax;
+            }
             else
+            {
+                CPLDebug("GDAL",
+                         "Cannot determine usable physical RAM.");
                 nNewCacheMax = nCacheMax;
+            }
         }
         else
         {
@@ -262,11 +270,15 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                         CE_Failure, CPLE_NotSupported,
                         "Invalid value for GDAL_CACHEMAX. "
                         "Using default value.");
-                    GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-                    if( nUsagePhysicalRAM )
-                        nNewCacheMax = nUsagePhysicalRAM / 20;
+                    GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                    if( nUsablePhysicalRAM )
+                        nNewCacheMax = nUsablePhysicalRAM / 20;
                     else
+                    {
+                        CPLDebug("GDAL",
+                                 "Cannot determine usable physical RAM.");
                         nNewCacheMax = nCacheMax;
+                    }
                 }
                 else
                 {
@@ -380,7 +392,7 @@ int CPL_STDCALL GDALFlushCacheBlock()
 /************************************************************************/
 /*                          FlushCacheBlock()                           */
 /*                                                                      */
-/*      Note, if we have alot of blocks locked for a long time, this    */
+/*      Note, if we have a lot of blocks locked for a long time, this    */
 /*      method is going to get slow because it will have to traverse    */
 /*      the linked list a long ways looking for a flushing              */
 /*      candidate.   It might help to re-touch locked blocks to push    */
@@ -445,7 +457,7 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
         }
     }
 
-    VSIFree(poTarget->pData);
+    VSIFreeAligned(poTarget->pData);
     poTarget->pData = NULL;
     poTarget->GetBand()->AddBlockToFreeList(poTarget);
 
@@ -463,7 +475,7 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
  * useful when doing multi-threaded code that can trigger the block cache.
  *
  * Due to the current design of the block cache, dirty blocks belonging to a
- * same dataset could be pushed simultanously to the IWriteBlock() method of
+ * same dataset could be pushed simultaneously to the IWriteBlock() method of
  * that dataset from different threads, causing races.
  *
  * Calling this method before that code can help workarounding that issue,
@@ -593,7 +605,7 @@ GDALRasterBlock::~GDALRasterBlock()
 
     if( pData != NULL )
     {
-        VSIFree( pData );
+        VSIFreeAligned( pData );
     }
 
     CPLAssert( nLockCount <= 0 );
@@ -729,7 +741,7 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
 /**
  * Force writing of the current block, if dirty.
  *
- * The block is written using GDALRasterBand::IWriteBlock() on it's
+ * The block is written using GDALRasterBand::IWriteBlock() on its
  * corresponding band object.  Even if the write fails the block will
  * be marked clean.
  *
@@ -946,7 +958,7 @@ CPLErr GDALRasterBlock::Internalize()
             }
             else
             {
-                VSIFree(poBlock->pData);
+                VSIFreeAligned(poBlock->pData);
             }
             poBlock->pData = NULL;
 
@@ -957,7 +969,7 @@ CPLErr GDALRasterBlock::Internalize()
 
     if( pNewData == NULL )
     {
-        pNewData = VSI_MALLOC_VERBOSE( nSizeInBytes );
+        pNewData = VSI_MALLOC_ALIGNED_AUTO_VERBOSE( nSizeInBytes );
         if( pNewData == NULL )
         {
             return( CE_Failure );

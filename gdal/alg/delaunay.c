@@ -63,8 +63,16 @@ CPL_CVSID("$Id$");
 
 #else /* INTERNAL_QHULL */
 
+#if !defined(QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
 #include "libqhull.h"
 #include "qset.h"
+#elif QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
+#include "libqhull/libqhull.h"
+#include "libqhull/qset.h"
+#else
+#include "qhull/libqhull.h"
+#include "qhull/qset.h"
+#endif
 
 #endif /* INTERNAL_QHULL */
 

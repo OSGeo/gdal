@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for translating between formats.
@@ -32,6 +31,8 @@
 #include "ogr_p.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include <vector>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -151,6 +152,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            nRetCode = 0;
             goto exit;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
@@ -190,7 +192,8 @@ int main( int nArgc, char ** papszArgv )
     if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
         psOptionsForBinary->bQuiet = TRUE;
 
-    if (!psOptionsForBinary->bQuiet && psOptionsForBinary->bFormatExplicitlySet)
+    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet &&
+        psOptionsForBinary->eAccessMode == ACCESS_CREATION)
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
                                            psOptionsForBinary->pszFormat);
@@ -289,6 +292,11 @@ static void Usage(int bShort)
     Usage(NULL, bShort);
 }
 
+static bool StringCISortFunction(const CPLString& a, const CPLString& b)
+{
+    return STRCASECMP(a.c_str(), b.c_str()) < 0;
+}
+
 static void Usage(const char* pszAdditionalMsg, int bShort)
 
 {
@@ -304,7 +312,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] \n"
-            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]\n"
+            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
             "               [-dim 2|3|layer_dim] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
@@ -338,12 +346,18 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
     printf("\n -f format_name: output file format name, possible values are:\n");
 
+    std::vector<CPLString> aoSetDrivers;
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
 
         if( CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
-            printf( "     -f \"%s\"\n", poDriver->GetDescription() );
+            aoSetDrivers.push_back( poDriver->GetDescription() );
+    }
+    std::sort (aoSetDrivers.begin(), aoSetDrivers.end(), StringCISortFunction);
+    for( size_t i = 0; i < aoSetDrivers.size(); i++ )
+    {
+        printf( "     -f \"%s\"\n", aoSetDrivers[i].c_str() );
     }
 
     printf( " -append: Append to existing layer instead of creating new if it exists\n"

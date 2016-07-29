@@ -488,6 +488,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
+    virtual char ** GetMetadata(const char * pszDomain = "");
+
+    virtual char ** GetMetadataDomainList();
+    
 private:
     void           *m_hPrivateData;
 
@@ -495,7 +499,7 @@ private:
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
-
+    CPLStringList oDerivedMetadataList;
   public:
 
     virtual int         GetLayerCount();
@@ -1345,7 +1349,12 @@ int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 // Test if 2 floating point values match. Useful when comparing values
 // stored as a string at some point. See #3573, #4183, #4506
 #define ARE_REAL_EQUAL(dfVal1, dfVal2) \
- (dfVal1 == dfVal2 || fabs(dfVal1 - dfVal2) < 1e-10 || (dfVal2 != 0 && fabs(1 - dfVal1 / dfVal2) < 1e-10 ))
+ /* Is it FLT_MIN ? Cf #6578 */ \
+ (((float)dfVal2 == (float)1.17549435e-38) ? ((float)dfVal1 == (float)dfVal2) : \
+ /* Or DBL_MIN ? */ \
+  (dfVal2 == 2.2250738585072014e-308) ? (dfVal1 == dfVal2) : \
+ /* General case */ \
+  (dfVal1 == dfVal2 || fabs(dfVal1 - dfVal2) < 1e-10 || (dfVal2 != 0 && fabs(1 - dfVal1 / dfVal2) < 1e-10 )))
 
 /* Internal use only */
 

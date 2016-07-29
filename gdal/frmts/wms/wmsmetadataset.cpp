@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Definition of GDALWMSMetaDataset class
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "wmsmetadataset.h"
+
+CPL_CVSID("$Id$");
 
 int VersionStringToInt(const char *version);
 

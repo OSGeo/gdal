@@ -282,4 +282,43 @@ namespace tut
         GetGDALDriverManager()->DeregisterDriver( poDriver );
         delete poDriver;
     }
+
+    // Test that GDALSwapWords() with unaligned buffers
+    template<> template<> void object::test<10>()
+    {
+        GByte abyBuffer[ 8 * 2 + 1 ] = { 0, 1, 2, 3, 4, 5, 6, 7, 255, 7, 6, 5, 4, 3, 2, 1, 0 };
+        GDALSwapWords(abyBuffer, 4, 2, 9 );
+        ensure( abyBuffer[0] == 3 );
+        ensure( abyBuffer[1] == 2 );
+        ensure( abyBuffer[2] == 1 );
+        ensure( abyBuffer[3] == 0 );
+
+        ensure( abyBuffer[9] == 4 );
+        ensure( abyBuffer[10] == 5 );
+        ensure( abyBuffer[11] == 6 );
+        ensure( abyBuffer[12] == 7 );
+        GDALSwapWords(abyBuffer, 4, 2, 9 );
+
+        GDALSwapWords(abyBuffer, 8, 2, 9 );
+        ensure( abyBuffer[0] == 7 );
+        ensure( abyBuffer[1] == 6 );
+        ensure( abyBuffer[2] == 5 );
+        ensure( abyBuffer[3] == 4 );
+        ensure( abyBuffer[4] == 3 );
+        ensure( abyBuffer[5] == 2 );
+        ensure( abyBuffer[6] == 1 );
+        ensure( abyBuffer[7] == 0 );
+
+        ensure( abyBuffer[9] == 0 );
+        ensure( abyBuffer[10] == 1 );
+        ensure( abyBuffer[11] == 2 );
+        ensure( abyBuffer[12] == 3 );
+        ensure( abyBuffer[13] == 4 );
+        ensure( abyBuffer[14] == 5 );
+        ensure( abyBuffer[15] == 6 );
+        ensure( abyBuffer[16] == 7 );
+        GDALSwapWords(abyBuffer, 4, 2, 9 );
+
+    }
+
 } // namespace tut

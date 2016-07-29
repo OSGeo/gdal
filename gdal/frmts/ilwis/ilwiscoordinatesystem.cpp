@@ -30,6 +30,8 @@
 
 #include <string>
 
+CPL_CVSID("$Id$");
+
 using std::string;
 
 typedef struct

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Generic data file location finder, with application hooking.
@@ -109,14 +108,15 @@ static FindFileTLS* CPLFinderInit()
         }
         else
         {
+#ifdef INST_DATA
+            CPLPushFinderLocation( INST_DATA );
+#endif
 #ifdef GDAL_PREFIX
   #ifdef MACOSX_FRAMEWORK
             CPLPushFinderLocation( GDAL_PREFIX "/Resources/gdal" );
   #else
             CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
   #endif
-#else
-            CPLPushFinderLocation( "/usr/local/share/gdal" );
 #endif
         }
     }
@@ -242,9 +242,13 @@ void CPLPushFinderLocation( const char *pszLocation )
     FindFileTLS* pTLSData = CPLFinderInit();
     if( pTLSData == NULL )
         return;
+    // Check if location already is in list.
+    if( CSLFindStringCaseSensitive(pTLSData->papszFinderLocations,
+                                   pszLocation) > -1 )
+        return;
     pTLSData->papszFinderLocations
         = CSLAddStringMayFail( pTLSData->papszFinderLocations,
-                                   pszLocation );
+                               pszLocation );
 }
 
 

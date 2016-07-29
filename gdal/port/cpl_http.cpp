@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  libcurl based HTTP client
  * Purpose:  libcurl based HTTP client

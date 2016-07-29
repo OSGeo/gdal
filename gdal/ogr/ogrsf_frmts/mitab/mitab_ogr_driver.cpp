@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.11 2005-05-21 03:15:18 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -74,6 +73,8 @@
 
 #include "mitab_ogr_driver.h"
 
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                  OGRTABDriverIdentify()                              */

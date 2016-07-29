@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapindexblock.cpp,v 1.14 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapindexblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -84,6 +83,8 @@
  **********************************************************************/
 
 #include "mitab.h"
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABMAPIndexBlock

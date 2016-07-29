@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_sxfdriver.cpp  $
  *
  * Project:  SXF Translator
  * Purpose:  Definition of classes for OGR SXF driver.
@@ -33,7 +32,7 @@
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-CPL_CVSID("$Id: ogrsxfdriver.cpp  $");
+CPL_CVSID("$Id$");
 
 
 extern "C" void RegisterOGRSXF();
@@ -142,6 +141,3 @@ void RegisterOGRSXF()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-
-
-

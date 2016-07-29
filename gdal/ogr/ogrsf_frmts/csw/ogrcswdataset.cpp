@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSW Translator
  * Purpose:  Implements OGRCSWDriver.
@@ -1078,4 +1077,3 @@ void RegisterOGRCSW()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

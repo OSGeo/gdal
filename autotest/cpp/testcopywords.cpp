@@ -471,8 +471,8 @@ void check_GDT_CFloat32and64()
 
 int main(int /* argc */, char* /* argv */ [])
 {
-    pIn = (char*)malloc(128);
-    pOut = (char*)malloc(128);
+    pIn = (char*)malloc(256);
+    pOut = (char*)malloc(256);
 
     check_GDT_Byte();
     check_GDT_Int16();
@@ -483,6 +483,45 @@ int main(int /* argc */, char* /* argv */ [])
     check_GDT_CInt16();
     check_GDT_CInt32();
     check_GDT_CFloat32and64();
+
+    memset(pIn, 0xff, 256);
+    GInt16* pInShort = (GInt16*)pIn;
+    GInt16* pOutShort = (GInt16*)pOut;
+    for(int i=0;i<9;i++)
+    {
+        pInShort[2*i+0] = 0x1234;
+        pInShort[2*i+1] = 0x5678;
+    }
+    for(int iSpacing=0;iSpacing<4;iSpacing++)
+    {
+        memset(pOut, 0xff, 256);
+        GDALCopyWords(pInShort, GDT_Int16, sizeof(short),
+                      pOutShort, GDT_Int16, (iSpacing + 1) * sizeof(short),
+                      18);
+        for(int i=0;i<9;i++)
+        {
+            AssertRes(GDT_Int16, pInShort[2*i+0], GDT_Int16, pInShort[2*i+0], pOutShort[(iSpacing+1)*(2*i+0)], __LINE__);
+            AssertRes(GDT_Int16, pInShort[2*i+1], GDT_Int16, pInShort[2*i+1], pOutShort[(iSpacing+1)*(2*i+1)], __LINE__);
+        }
+    }
+    for(int iSpacing=0;iSpacing<4;iSpacing++)
+    {
+        memset(pIn, 0xff, 256);
+        memset(pOut, 0xff, 256);
+        for(int i=0;i<9;i++)
+        {
+            pInShort[(iSpacing+1)*(2*i+0)] = 0x1234;
+            pInShort[(iSpacing+1)*(2*i+1)] = 0x5678;
+        }
+        GDALCopyWords(pInShort, GDT_Int16, (iSpacing + 1) * sizeof(short),
+                      pOutShort, GDT_Int16, sizeof(short),
+                      18);
+        for(int i=0;i<9;i++)
+        {
+            AssertRes(GDT_Int16, pInShort[(iSpacing+1)*(2*i+0)], GDT_Int16, pInShort[(iSpacing+1)*(2*i+0)], pOutShort[2*i+0], __LINE__);
+            AssertRes(GDT_Int16, pInShort[(iSpacing+1)*(2*i+1)], GDT_Int16, pInShort[(iSpacing+1)*(2*i+1)], pOutShort[2*i+1], __LINE__);
+        }
+    }
 
     free(pIn);
     free(pOut);

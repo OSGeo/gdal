@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BIGGIF Driver
  * Purpose:  Implement GDAL support for reading large GIF files in a

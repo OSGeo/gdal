@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL WMTS driver
  * Purpose:  Implement GDAL WMTS support

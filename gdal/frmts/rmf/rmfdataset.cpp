@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Read/write raster files used in GIS "Integratsia"
@@ -179,9 +178,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nCurBlockYSize = nLastTileHeight;
     else
         nCurBlockYSize = nBlockYSize;
-        
+
     vsi_l_offset nTileOffset = poGDS->GetFileOffset( poGDS->paiTiles[2 * nTile] );
-    
+
     if ( VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
@@ -527,7 +526,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         vsi_l_offset    nNewTileOffset;
         nTileOffset = VSIFTellL( poGDS->fp );
         poGDS->paiTiles[2 * nTile] = poGDS->GetRMFOffset( nTileOffset, &nNewTileOffset );
-        
+
         if( nTileOffset != nNewTileOffset )
         {   //May be it is better to write some zeros here?
             if ( VSIFSeekL( poGDS->fp, nNewTileOffset, SEEK_SET ) < 0 )
@@ -1339,8 +1338,8 @@ do {                                                                    \
         /* coverity[tainted_data] */
         for ( GUInt32 i = 0; i < poDS->sHeader.nROISize; i += sizeof(nValue) )
         {
-            if( VSIFSeekL( poDS->fp, 
-                           poDS->GetFileOffset( poDS->sHeader.nROIOffset + i ), 
+            if( VSIFSeekL( poDS->fp,
+                           poDS->GetFileOffset( poDS->sHeader.nROIOffset + i ),
                            SEEK_SET ) != 0 ||
                 VSIFReadL( &nValue, 1, sizeof(nValue), poDS->fp ) != sizeof(nValue) )
             {
@@ -1356,8 +1355,8 @@ do {                                                                    \
 /* -------------------------------------------------------------------- */
 /*  Read array of blocks offsets/sizes.                                 */
 /* -------------------------------------------------------------------- */
-    if ( VSIFSeekL( poDS->fp, 
-                    poDS->GetFileOffset( poDS->sHeader.nTileTblOffset ), 
+    if ( VSIFSeekL( poDS->fp,
+                    poDS->GetFileOffset( poDS->sHeader.nTileTblOffset ),
                     SEEK_SET ) < 0)
     {
         delete poDS;
@@ -1452,7 +1451,7 @@ do {                                                                    \
                         delete poDS;
                         return NULL;
                     }
-                    if ( VSIFSeekL( poDS->fp, 
+                    if ( VSIFSeekL( poDS->fp,
                                     poDS->GetFileOffset( poDS->sHeader.nClrTblOffset ),
                                     SEEK_SET ) < 0 )
                     {
@@ -1743,10 +1742,10 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         memcpy( poDS->sHeader.bySignature, RMF_SigMTW, RMF_SIGNATURE_SIZE );
     else
         memcpy( poDS->sHeader.bySignature, RMF_SigRSW, RMF_SIGNATURE_SIZE );
-        
+
     const char *pszRMFHUGE = CSLFetchNameValue(papszParmList, "RMFHUGE");
     GUInt32     iVersion = RMF_VERSION;
-    
+
     if( pszRMFHUGE == NULL )
         pszRMFHUGE = "NO";// Keep old behavior by default
 
@@ -1773,7 +1772,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
             iVersion = RMF_VERSION;
         }
     }
-    
+
     CPLDebug( "RMF", "Version %d", iVersion );
 
     poDS->sHeader.iVersion = iVersion;
@@ -1952,7 +1951,7 @@ GUInt32 RMFDataset::GetRMFOffset( vsi_l_offset nFileOffset, vsi_l_offset* pnNewF
         }
         return (GUInt32)nFileOffset;
     }
-} 
+}
 
 /************************************************************************/
 /*                        GDALRegister_RMF()                            */

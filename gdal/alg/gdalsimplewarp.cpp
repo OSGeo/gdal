@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Simple (source in memory) warp algorithm.
@@ -157,7 +156,8 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             break;
         }
     }
-    if( !ok ) {
+    if( !ok )
+    {
         for( int i=0; i <= nBandCount; i++ )
         {
             VSIFree(papabySrcData[i]);

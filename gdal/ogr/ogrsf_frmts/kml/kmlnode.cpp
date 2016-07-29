@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Class for building up the node structure of the kml file.
@@ -29,9 +28,11 @@
  ****************************************************************************/
 #include "kmlnode.h"
 #include "cpl_conv.h"
-// std
+
 #include <string>
 #include <vector>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           Help functions                             */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLLayer class.
@@ -34,6 +33,8 @@
 #include "ogr_api.h"
 #include "ogr_kml.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /* Function utility to dump OGRGeometry to KML text. */
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char* pszAltitudeMode );

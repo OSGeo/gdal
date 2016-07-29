@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of Prologue class. Parse the prologue of one
  *           repeat cycle and keep the interesting info.
@@ -28,6 +27,8 @@
  ******************************************************************************/
 
 #include "prologue.h"
+
+CPL_CVSID("$Id$");
 
 int size_SatelliteStatus()
 {

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode.cpp
  * Project:  CPL - Common Portability Library

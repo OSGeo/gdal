@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AmigoCloud Translator
  * Purpose:  Implements OGRAMIGOCLOUDDriver.
@@ -135,4 +134,3 @@ void RegisterOGRAmigoCloud()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

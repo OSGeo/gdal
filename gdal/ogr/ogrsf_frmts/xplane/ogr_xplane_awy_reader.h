@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_awy_reader.cpp
+ * $Id: ogr_xplane_awy_reader.cpp$
  *
  * Project:  X-Plane awy.dat file reader header
  * Purpose:  Definition of classes for X-Plane awy.dat file reader

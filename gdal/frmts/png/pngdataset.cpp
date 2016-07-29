@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PNG Driver
  * Purpose:  Implement GDAL PNG Support

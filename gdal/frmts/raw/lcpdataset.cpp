@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  LCP Driver
  * Purpose:  FARSITE v.4 Landscape file (.lcp) reader for GDAL

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements GDALGeoPackageRasterBand class
@@ -31,6 +30,8 @@
 #include "memdataset.h"
 #include "gdal_alg_priv.h"
 
+CPL_CVSID("$Id$");
+
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
 #define DEBUG_VERBOSE
 #endif
@@ -41,6 +42,7 @@
 
 GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
     m_bNew(false),
+    m_bHasModifiedTiles(false),
     m_nZoomLevel(-1),
     m_pabyCachedTiles(NULL),
     m_nShiftXTiles(0),
@@ -1865,7 +1867,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary
     time_t nCurTimeStamp = time(NULL);
     if( m_nLastSpaceCheckTimestamp == 0 )
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
-    if( m_nLastSpaceCheckTimestamp > 0 && 
+    if( m_nLastSpaceCheckTimestamp > 0 &&
         (m_bForceTempDBCompaction || nCurTimeStamp - m_nLastSpaceCheckTimestamp > 10) )
     {
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
@@ -2252,6 +2254,10 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
     {
         return CE_Failure;
     }
+    if( m_poTPD->m_poParentDS )
+        m_poTPD->m_poParentDS->m_bHasModifiedTiles = true;
+    else
+        m_poTPD->m_bHasModifiedTiles = true;
 
     int nRow = nBlockYOff + m_poTPD->m_nShiftYTiles;
     int nCol = nBlockXOff + m_poTPD->m_nShiftXTiles;

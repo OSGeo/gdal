@@ -27,12 +27,12 @@ reading as well. </p>
 such as YCbCr color model files, are automatically translated into RGBA
 (red, green, blue, alpha) form, and treated as four eight bit bands. </p>
 
-<h2>Georeferencing</h2>
+<h2><a name="georeferencing">Georeferencing</a></h2>
 
 <p>Most GeoTIFF projections should be supported, with the caveat that in order
 to translate uncommon Projected, and Geographic coordinate systems into
 OGC WKT it is necessary to have the EPSG .csv files available.  They must
-be found at the location pointed to by the GEOTIFF_CSV environment variable.
+be found at the location pointed to by the GDAL_DATA or GEOTIFF_CSV environment variable.
 </p>
 
 <p>Georeferencing from GeoTIFF is supported in the form of one tiepoint and
@@ -42,6 +42,23 @@ pixel size, a transformation matrix, or a list of GCPs.</p>
 information is available in the TIFF file itself, GDAL will also check for,
 and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extension .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file.</p>
+
+<p>
+By default, information is fetched in following order (first listed is the most
+prioritary): PAM (Persitant Auxiliary metadata) .aux.xml sidecar file,
+INTERNAL (GeoTIFF keys and tags), TABFILE (.tab), WORLDFILE (.tfw, .tifw/.tiffw or .wld).
+</p>
+<p>Starting with GDAL 2.2, the allowed sources
+and their priority order can be changed with the GDAL_GEOREF_SOURCES
+configuration option (or GEOREF_SOURCES open option) whose value is a
+comma-separated list of the following keywords : PAM, INTERNAL, TABFILE, WORLDFILE, NONE.
+First mentioned sources are the most prioritary over the next ones. A non mentioned
+source will be ignored.
+</p>
+<p>
+For example setting it to "WORLDFILE,PAM,INTERNAL" will make a geotransformation
+matrix from a potential worldfile prioritary over PAM or GeoTIFF.
+</p>
 
 <p>GDAL can read and write the <i>RPCCoefficientTag</i> as described in the <a href="http://geotiff.maptools.org/rpc_prop.html">
 RPCs in GeoTIFF</a> proposed extension. The tag is written only for
@@ -157,6 +174,45 @@ stored the EXIF metadata domain.</p>
 files created with the default profile GDALGeoTIFF. Note that all bands must use the same nodata value.
 When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM .aux.xml file.</p>
 
+<h2>Sparse files</h2>
+
+<p>GDAL makes a special interpretation of a TIFF tile or strip whose offset
+and byte count are set to 0, that is to say a tile or strip that has no corresponding
+allocated physical storage. On reading, such tiles or strips are considered to
+be implictly set to 0 or to the nodata value when it is defined. On writing, it
+is possible to enable generating such files through the Create() interface by setting
+the SPARSE_OK creation option to YES. Then, blocks that are never written
+through the IWriteBlock()/IRasterIO() interfaces will have their offset and
+byte count set to 0. This is particularly useful to save disk space and time when
+the file must be initialized empty before being passed to a further processing
+stage that will fill it.
+To avoid ambiguities with anoter sparse mechanism discussed in the next paragraphs,
+we will call such files with implicit tiles/strips "TIFF sparse files". They will
+be likely <b>not</b> interoperable with TIFF readers that are not GDAL based and
+would consider such files with implicit tiles/strips as defective.
+</p>
+
+<p>Starting with GDAL 2.2, this mechanism is extended to the CreateCopy() and
+Open() interfaces (for update mode) as well. If the SPARSE_OK creation option
+(or the SPARSE_OK open option for Open()) is set to YES, even an attempt to
+write a all 0/nodata block will be detected so that the tile/strip is not
+allocated (if it was already allocated, then its content will be replaced by
+the 0/nodata content).</p>
+
+<p>Starting with GDAL 2.2, in the case where SPARSE_OK is <b>not</b> defined (or set
+to its default value FALSE), for uncompressed files whose nodata value is not
+set, or set to 0, in Create() and CreateCopy() mode, the driver will delay the
+allocation of 0-blocks until file closing, so as to be able to write them at
+the very end of the file, and in a way compatible of the filesystem sparse file
+mechanisms (to be distinguished from the TIFF sparse file extension discussed
+earlier). That is that all the empty blocks will be seen as properly allocated
+from the TIFF point of view (corresponding strips/tiles will have valid offsets
+and byte counts), but will have no corresponding physical storage. Provided that
+the filesystem supports such sparse files, which is the case for most Linux
+popular filesystems (ext2/3/4, xfs, btfs, ...) or NTFS on Windows. If the file
+system does not support sparse files, physical storage will be
+allocated and filled with zeros.</p>
+
 <h2>Open options</h2>
 
 <ul>
@@ -165,6 +221,17 @@ When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM
 Enable multi-threaded compression by specifying the number of worker threads.
 Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
 ignored for JPEG.  Default is compression in the main thread.</p></li>
+
+<li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
+allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
+
+<li><p><b>SPARSE_OK=TRUE/FALSE</b> ((GDAL &gt; 2.2): Should empty blocks be omitted on disk?
+When this option is set, any attempt of writing a block whose all pixels are 0
+or the nodata value will cause it not to be written at all (unless there is a
+corresponding block already allocated in the file).
+Sparse files have 0 tile/strip offsets for blocks never written and save space;
+however, most non-GDAL packages cannot read such files.
+The default is FALSE.</p></li>
 
 </ul>
 
@@ -234,7 +301,15 @@ Default is compression in the main thread.</p></li>
 Set the number of least-significant bits to clear, possibly different per band.
 Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compression.</p></li>
 
-<li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.</p></li>
+<li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files (through Create() interface) be allowed to be sparse?
+Sparse files have 0 tile/strip offsets for blocks never written and save space;
+however, most non-GDAL packages cannot read such files.
+Starting with GDAL 2.2, SPARSE_OK=TRUE is also supported through the CreateCopy()
+interface.
+Starting with GDAL 2.2, even an attempt to write a block whose
+all pixels are 0 or the nodata value will cause it not to be written at all
+(unless there is a corresponding block already allocated in the file).
+The default is FALSE.</p></li>
 
 <li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
 
@@ -397,8 +472,8 @@ This paragraph lists the configuration options that can be set to alter the defa
 Can help reading partially corrupted TIFF files</li>
 <li>ESRI_XML_PAM: Can be set to TRUE to force metadata in the xml:ESRI domain to be written to PAM.</li>
 <li>JPEG_QUALITY_OVERVIEW: Integer between 0 and 100. Default value : 75. Quality of JPEG compressed overviews, either internal or external.</li>
-<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : FALSE.</li>
-<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i> section</a>. Default value : TRUE</li>
+<li>GDAL_TIFF_INTERNAL_MASK: See <a href="#internal_mask"><i>Internal nodata masks</i></a>  section. Default value : FALSE.</li>
+<li>GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See <a href="#internal_mask"><i>Internal nodata masks</i></a>  section. Default value : TRUE</li>
 <li>USE_RRD: Can be set to TRUE to force external overviews in the RRD format. Default value : FALSE</li>
 <li>TIFF_USE_OVR: Can be set to TRUE to force external overviews in the GeoTIFF (.ovr) format. Default value : FALSE</li>
 <li>GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the behaviour of GDAL &lt; 1.8.0
@@ -409,7 +484,7 @@ RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default
 <!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
 <!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
-<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
+<li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i></a> section.
 <li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that
 have false easting/northing improperly set in meters when it ought to be in
 coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>).
@@ -431,6 +506,9 @@ might occur if the whole file is read. Setting it to IF_ENOUGH_RAM will first
 check if the uncompressed file size is no bigger than the physical memory. Default value:NO.
 If both GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is used
 in priority, and if not possible, the later is tried.
+<li>GDAL_GEOREF_SOURCES=comma-separated list with one or several of
+PAM, INTERNAL, TABFILE or WORLDFILE. (GDAL &gt;= 2.2).
+See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
 </ul>
 </p>
 

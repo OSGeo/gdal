@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Supporting functions for HFA (.img) ... main (C callable) API
@@ -62,6 +61,7 @@ static const char * const apszAuxMetadataItems[] = {
  "StatisticsParameters", "lSkipFactorY",          "STATISTICS_SKIPFACTORY", "",
  "StatisticsParameters", "dExcludedValues",       "STATISTICS_EXCLUDEDVALUES","",
  "",                     "elayerType",            "LAYER_TYPE",             "",
+ "RRDInfoList",          "salgorithm.string",     "OVERVIEWS_ALGORITHM",    "Emif_String",
  NULL
 };
 
@@ -3231,14 +3231,13 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     *pnDataOffset = VSIFTellL( fpVSIL );
 
     if( !bRet ||
-        VSIFSeekL( fpVSIL, nTileDataSize - 1 + *pnDataOffset, SEEK_SET ) != 0
-        || VSIFWriteL( (void *) "", 1, 1, fpVSIL ) != 1 )
+        VSIFTruncateL( fpVSIL, nTileDataSize  + *pnDataOffset ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to extend %s to full size (%g bytes),\n"
+                  "Failed to extend %s to full size (" CPL_FRMT_GIB " bytes),\n"
                   "likely out of disk space.\n%s",
                   psInfo->pszIGEFilename,
-                  (double) nTileDataSize - 1 + *pnDataOffset,
+                  nTileDataSize + *pnDataOffset,
                   VSIStrerror( errno ) );
 
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
@@ -3618,7 +3617,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Get the camera model node, and confirm it's type.               */
+/*      Get the camera model node, and confirm its type.                */
 /* -------------------------------------------------------------------- */
     HFAEntry *poXForm;
 

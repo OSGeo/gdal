@@ -745,7 +745,7 @@ def jpeg_18():
 
 def jpeg_19():
 
-    for (width, height, iX) in [ (32, 32, 12), (25, 25, 8), (24, 25, 8) ]:
+    for width, height, iX in [ (32, 32, 12), (25, 25, 8), (24, 25, 8) ]:
         src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif',
                                                       width, height, 1)
         src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -852,7 +852,7 @@ def jpeg_21():
         return 'fail'
     expected_dim_cs = [ [512,512,0], [256,256,0], [196,196,12681] ]
     i = 0
-    for (expected_w, expected_h, expected_cs) in expected_dim_cs:
+    for expected_w, expected_h, expected_cs in expected_dim_cs:
         ovr = ds.GetRasterBand(1).GetOverview(i)
         cs = ovr.Checksum()
         if (ovr.XSize != expected_w or

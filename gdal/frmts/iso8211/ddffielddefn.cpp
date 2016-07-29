@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFFieldDefn class.
@@ -390,7 +389,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 /**
  * Write out field definition info to debugging file.
  *
- * A variety of information about this field definition, and all it's
+ * A variety of information about this field definition, and all its
  * subfields is written to the give debugging file handle.
  *
  * @param fp The standard IO file handle to write to.  i.e. stderr
@@ -789,7 +788,7 @@ int DDFFieldDefn::ApplyFormats()
 /************************************************************************/
 
 /**
- * Find a subfield definition by it's mnemonic tag.
+ * Find a subfield definition by its mnemonic tag.
  *
  * @param pszMnemonic The name of the field.
  *
@@ -812,7 +811,7 @@ DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 /************************************************************************/
 /*                            GetSubfield()                             */
 /*                                                                      */
-/*      Fetch a subfield by it's index.                                 */
+/*      Fetch a subfield by its index.                                 */
 /************************************************************************/
 
 /**

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogis_geometry_wkb_struct.h
+ * $Id: ogis_geometry_wkb_struct.h$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definition of GeometryWkb Structs

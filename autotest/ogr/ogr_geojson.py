@@ -763,6 +763,28 @@ def ogr_geojson_17():
     lyr = None
     ds = None
 
+    # MultiLineString
+    ds = ogr.Open("""{
+  "geometryType": "esriGeometryPolyline",
+  "fields": [],
+  "features": [
+  {
+   "geometry": {
+      "paths" : [ 
+       [ [2,49],[2.1,49.1] ], 
+       [ [3,50],[3.1,50.1] ]
+      ]
+   }
+  }
+ ]
+}""")
+    lyr = ds.GetLayer(0)
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTILINESTRING ((2 49,2.1 49.1),(3 50,3.1 50.1))')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1872,6 +1894,131 @@ def ogr_geojson_39():
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
+
+    # id and properties.ID (#6538)
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : 1, "properties": { "ID": 2 }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'ID' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1 or feat.GetField('ID') != 2:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # Test handling of duplicated id
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : 1, "properties": { "foo": "bar" }, "geometry": null },
+{ "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
+{ "type": "Feature", "id" : 2, "properties": { "foo": "baw" }, "geometry": null }
+] }""")
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected warning')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1 or feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2 or feat.GetField('foo') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 3 or feat.GetField('foo') != 'baw':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # negative id
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : -1, "properties": { "foo": "bar" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # negative id 64bit
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : -1234567890123, "properties": { "foo": "bar" }, "geometry": null },
+{ "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != -1234567890123:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # negative id
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
+{ "type": "Feature", "id" : -1234567890123, "properties": { "foo": "bar" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != -2:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # positive and then negative id
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
+{ "type": "Feature", "id" : -1, "properties": { "foo": "bar" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(1).GetName() != 'id' or feat_defn.GetFieldDefn(1).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # mix of int and string id
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
+{ "type": "Feature", "id" : "str", "properties": { "foo": "bar" }, "geometry": null },
+{ "type": "Feature", "id" : -3, "properties": { "foo": "baz" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != '-2':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

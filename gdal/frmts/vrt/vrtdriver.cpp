@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTDriver
@@ -36,6 +35,7 @@
 #include "gdal_frmts.h"
 
 CPL_CVSID("$Id$");
+
 
 /************************************************************************/
 /*                             VRTDriver()                              */
@@ -356,6 +356,9 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
+    // First register the pixel functions
+    GDALRegisterDefaultPixelFunc();
+  
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
 

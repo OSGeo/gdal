@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageTableLayer class
@@ -33,6 +32,8 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
+
 //----------------------------------------------------------------------
 // SaveExtent()
 //
@@ -61,6 +62,50 @@ OGRErr OGRGeoPackageTableLayer::SaveExtent()
     OGRErr err = SQLCommand(poDb, pszSQL);
     sqlite3_free(pszSQL);
     m_bExtentChanged = false;
+
+    return err;
+}
+
+//----------------------------------------------------------------------
+// SaveTimestamp()
+//
+// Update the last_change column of the gpkg_contents metadata table.
+//
+OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
+{
+    if ( !m_poDS->GetUpdate() || !m_bContentChanged )
+        return OGRERR_NONE;
+
+    m_bContentChanged = false;
+
+    sqlite3* poDb = m_poDS->GetDB();
+
+    if ( ! poDb ) return OGRERR_FAILURE;
+
+    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+    char *pszSQL;
+
+    if( pszCurrentDate )
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = '%q'"
+                    "WHERE table_name = '%q' AND "
+                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    m_pszTableName, pszCurrentDate);
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP)"
+                    "WHERE table_name = '%q' AND "
+                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    m_pszTableName);
+    }
+
+    OGRErr err = SQLCommand(poDb, pszSQL);
+    sqlite3_free(pszSQL);
 
     return err;
 }
@@ -511,7 +556,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 // populate OGRSpatialReference information and OGRFeatureDefn objects,
 // among others.
 //
-OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
+OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable)
 {
     OGRErr err;
     SQLResult oResultTable;
@@ -524,103 +569,106 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     bool bHasZ = false;
     bool bHasM = false;
 
-    /* Check that the table name is registered in gpkg_contents */
-    pszSQL = sqlite3_mprintf(
-                "SELECT table_name, data_type, identifier, "
-                "description, min_x, min_y, max_x, max_y, srs_id "
-                "FROM gpkg_contents "
-                "WHERE table_name = '%q'"
-#ifdef WORKAROUND_SQLITE3_BUGS
-                " OR 0"
-#endif
-                ,m_pszTableName);
-
-    SQLResult oResultContents;
-    err = SQLQuery(poDb, pszSQL, &oResultContents);
-    sqlite3_free(pszSQL);
-
-    /* gpkg_contents query has to work */
-    /* gpkg_contents.table_name is supposed to be unique */
-    if ( err != OGRERR_NONE || oResultContents.nRowCount != 1 )
+    if( bIsGpkgTable )
     {
-        if ( err != OGRERR_NONE )
-            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg ? oResultContents.pszErrMsg : "" );
-        else /* if ( oResultContents.nRowCount != 1 ) */
-            CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
-
-        SQLResultFree(&oResultContents);
-        return OGRERR_FAILURE;
-    }
-
-    const char* pszIdentifier = SQLResultGetValue(&oResultContents, 2, 0);
-    if( pszIdentifier && strcmp(pszIdentifier, m_pszTableName) != 0 )
-        OGRLayer::SetMetadataItem("IDENTIFIER", pszIdentifier);
-    const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
-    if( pszDescription && pszDescription[0] )
-        OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
-
-    if( bIsSpatial )
-    {
-        const char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
-        const char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
-        const char *pszMaxX = SQLResultGetValue(&oResultContents, 6, 0);
-        const char *pszMaxY = SQLResultGetValue(&oResultContents, 7, 0);
-
-        /* All the extrema have to be non-NULL for this to make sense */
-        if ( pszMinX && pszMinY && pszMaxX && pszMaxY )
-        {
-            oExtent.MinX = CPLAtof(pszMinX);
-            oExtent.MinY = CPLAtof(pszMinY);
-            oExtent.MaxX = CPLAtof(pszMaxX);
-            oExtent.MaxY = CPLAtof(pszMaxY);
-            bReadExtent = true;
-        }
-
-        /* Done with info from gpkg_contents now */
-        SQLResultFree(&oResultContents);
-
-        /* Check that the table name is registered in gpkg_geometry_columns */
+        /* Check that the table name is registered in gpkg_contents */
         pszSQL = sqlite3_mprintf(
-                    "SELECT table_name, column_name, "
-                    "geometry_type_name, srs_id, z, m "
-                    "FROM gpkg_geometry_columns "
+                    "SELECT table_name, data_type, identifier, "
+                    "description, min_x, min_y, max_x, max_y, srs_id "
+                    "FROM gpkg_contents "
                     "WHERE table_name = '%q'"
 #ifdef WORKAROUND_SQLITE3_BUGS
                     " OR 0"
 #endif
                     ,m_pszTableName);
 
-        SQLResult oResultGeomCols;
-        err = SQLQuery(poDb, pszSQL, &oResultGeomCols);
+        SQLResult oResultContents;
+        err = SQLQuery(poDb, pszSQL, &oResultContents);
         sqlite3_free(pszSQL);
 
-        /* gpkg_geometry_columns query has to work */
-        /* gpkg_geometry_columns.table_name is supposed to be unique */
-        if ( err != OGRERR_NONE || oResultGeomCols.nRowCount != 1 )
+        /* gpkg_contents query has to work */
+        /* gpkg_contents.table_name is supposed to be unique */
+        if ( err != OGRERR_NONE || oResultContents.nRowCount != 1 )
         {
             if ( err != OGRERR_NONE )
-                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultGeomCols.pszErrMsg ? oResultGeomCols.pszErrMsg : "" );
+                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg ? oResultContents.pszErrMsg : "" );
             else /* if ( oResultContents.nRowCount != 1 ) */
-                CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_geometry_columns", m_pszTableName );
+                CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
 
-            SQLResultFree(&oResultGeomCols);
+            SQLResultFree(&oResultContents);
             return OGRERR_FAILURE;
         }
 
-        const char* pszGeomColName = SQLResultGetValue(&oResultGeomCols, 1, 0);
-        if( pszGeomColName != NULL )
-            osGeomColumnName = pszGeomColName;
-        const char* pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
-        if( pszGeomColsType != NULL )
-            osGeomColsType = pszGeomColsType;
-        m_iSrs = SQLResultGetValueAsInteger(&oResultGeomCols, 3, 0);
-        bHasZ = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0));
-        bHasM = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 5, 0));
+        const char* pszIdentifier = SQLResultGetValue(&oResultContents, 2, 0);
+        if( pszIdentifier && strcmp(pszIdentifier, m_pszTableName) != 0 )
+            OGRLayer::SetMetadataItem("IDENTIFIER", pszIdentifier);
+        const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
+        if( pszDescription && pszDescription[0] )
+            OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
 
-        SQLResultFree(&oResultGeomCols);
+        if( bIsSpatial )
+        {
+            const char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
+            const char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
+            const char *pszMaxX = SQLResultGetValue(&oResultContents, 6, 0);
+            const char *pszMaxY = SQLResultGetValue(&oResultContents, 7, 0);
+
+            /* All the extrema have to be non-NULL for this to make sense */
+            if ( pszMinX && pszMinY && pszMaxX && pszMaxY )
+            {
+                oExtent.MinX = CPLAtof(pszMinX);
+                oExtent.MinY = CPLAtof(pszMinY);
+                oExtent.MaxX = CPLAtof(pszMaxX);
+                oExtent.MaxY = CPLAtof(pszMaxY);
+                bReadExtent = true;
+            }
+
+            /* Done with info from gpkg_contents now */
+            SQLResultFree(&oResultContents);
+
+            /* Check that the table name is registered in gpkg_geometry_columns */
+            pszSQL = sqlite3_mprintf(
+                        "SELECT table_name, column_name, "
+                        "geometry_type_name, srs_id, z, m "
+                        "FROM gpkg_geometry_columns "
+                        "WHERE table_name = '%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                        " OR 0"
+#endif
+                        ,m_pszTableName);
+
+            SQLResult oResultGeomCols;
+            err = SQLQuery(poDb, pszSQL, &oResultGeomCols);
+            sqlite3_free(pszSQL);
+
+            /* gpkg_geometry_columns query has to work */
+            /* gpkg_geometry_columns.table_name is supposed to be unique */
+            if ( err != OGRERR_NONE || oResultGeomCols.nRowCount != 1 )
+            {
+                if ( err != OGRERR_NONE )
+                    CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultGeomCols.pszErrMsg ? oResultGeomCols.pszErrMsg : "" );
+                else /* if ( oResultContents.nRowCount != 1 ) */
+                    CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_geometry_columns", m_pszTableName );
+
+                SQLResultFree(&oResultGeomCols);
+                return OGRERR_FAILURE;
+            }
+
+            const char* pszGeomColName = SQLResultGetValue(&oResultGeomCols, 1, 0);
+            if( pszGeomColName != NULL )
+                osGeomColumnName = pszGeomColName;
+            const char* pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
+            if( pszGeomColsType != NULL )
+                osGeomColsType = pszGeomColsType;
+            m_iSrs = SQLResultGetValueAsInteger(&oResultGeomCols, 3, 0);
+            bHasZ = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0));
+            bHasM = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 5, 0));
+
+            SQLResultFree(&oResultGeomCols);
+        }
+        else
+            SQLResultFree(&oResultContents);
     }
-    else
-        SQLResultFree(&oResultContents);
 
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
@@ -852,6 +900,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_iSrs = 0;
     m_poExtent = NULL;
     m_bExtentChanged = false;
+    m_bContentChanged = false;
     m_poQueryStatement = NULL;
     m_poUpdateStatement = NULL;
     m_bInsertStatementWithFID = false;
@@ -867,6 +916,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bDeferredCreation = false;
     m_iFIDAsRegularColumnIndex = -1;
     m_bHasReadMetadataFromStorage = false;
+    m_bRegisterAsAspatial = false;
 }
 
 
@@ -895,6 +945,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
     /* Save metadata back to the database */
     SaveExtent();
+    SaveTimestamp();
 
     /* Clean up resources in memory */
     if ( m_pszTableName )
@@ -1232,6 +1283,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         poFeature->SetFID(OGRNullFID);
     }
 
+    m_bContentChanged = true;
+
     /* All done! */
     return OGRERR_NONE;
 }
@@ -1363,6 +1416,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetGeomFieldRef(0)->getEnvelope(&oEnv);
             UpdateExtent(&oEnv);
         }
+
+        m_bContentChanged = true;
     }
 
     /* All done! */
@@ -1555,7 +1610,12 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
     OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
     if( eErr == OGRERR_NONE )
+    {
         eErr = (sqlite3_changes(m_poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+
+        if( eErr == OGRERR_NONE )
+            m_bContentChanged = true;
+    }
     return eErr;
 }
 
@@ -1569,6 +1629,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
         return OGRERR_FAILURE;
 
     SaveExtent();
+    SaveTimestamp();
     return OGRERR_NONE;
 }
 
@@ -2514,29 +2575,39 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     /* Update gpkg_contents with the table info */
     if ( bIsSpatial )
         err = RegisterGeometryColumn();
-    else
+    else if( m_bRegisterAsAspatial )
         err = m_poDS->CreateGDALAspatialExtension();
 
     if ( err != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
-    if( pszIdentifier == NULL )
-        pszIdentifier = pszLayerName;
-    const char* pszDescription = GetMetadataItem("DESCRIPTION");
-    if( pszDescription == NULL )
-        pszDescription = "";
-    pszSQL = sqlite3_mprintf(
-        "INSERT INTO gpkg_contents "
-        "(table_name,data_type,identifier,description,last_change,srs_id)"
-        " VALUES "
-        "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
-        pszLayerName, (bIsSpatial ? "features": "aspatial"), pszIdentifier, pszDescription, m_iSrs);
+    if( bIsSpatial || m_bRegisterAsAspatial )
+    {
+        const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
+        if( pszIdentifier == NULL )
+            pszIdentifier = pszLayerName;
+        const char* pszDescription = GetMetadataItem("DESCRIPTION");
+        if( pszDescription == NULL )
+            pszDescription = "";
+        const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+        CPLString osInsertGpkgContentsFormatting("INSERT INTO gpkg_contents "
+                 "(table_name,data_type,identifier,description,last_change,srs_id) VALUES "
+                "('%q','%q','%q','%q',");
+        osInsertGpkgContentsFormatting += ( pszCurrentDate ) ? "'%q'" : "%s";
+        osInsertGpkgContentsFormatting += ",%d)";
 
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
-    if ( err != OGRERR_NONE )
-        return OGRERR_FAILURE;
+        pszSQL = sqlite3_mprintf(
+            osInsertGpkgContentsFormatting.c_str(),
+            pszLayerName, (bIsSpatial ? "features": "aspatial"),
+            pszIdentifier, pszDescription,
+            pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)",
+            m_iSrs);
+
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if ( err != OGRERR_NONE )
+            return OGRERR_FAILURE;
+    }
 
     ResetReading();
 

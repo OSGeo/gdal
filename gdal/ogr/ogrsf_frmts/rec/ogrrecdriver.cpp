@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  REC Translator
  * Purpose:  Implements EpiInfo .REC driver.
@@ -84,4 +83,3 @@ void RegisterOGRREC()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

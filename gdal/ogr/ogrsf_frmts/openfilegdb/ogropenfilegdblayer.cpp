@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Open FileGDB OGR driver.
@@ -31,7 +30,7 @@
 #include "cpl_minixml.h"
 #include <algorithm>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                      OGROpenFileGDBGeomFieldDefn                     */
@@ -413,7 +412,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
         // Check that the first feature has actually a M value before advertizing
         // it.
-        if( poGDBGeomField->HasM() && m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
+        if( poGDBGeomField->HasM() &&
+            m_poLyrTable->GetValidRecordCount() > 0 &&
+            m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
         {
             const OGRField* psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
             if( psField != NULL )
@@ -1356,8 +1357,21 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                     OGRwkbGeometryType eFlattenType = wkbFlatten(poGeom->getGeometryType());
                     if( eFlattenType == wkbPolygon )
                         poGeom = OGRGeometryFactory::forceToMultiPolygon(poGeom);
+                    else if( eFlattenType == wkbCurvePolygon)
+                    {
+                        OGRMultiSurface* poMS = new OGRMultiSurface();
+                        poMS->addGeometryDirectly( poGeom );
+                        poGeom = poMS;
+                    }
                     else if( eFlattenType == wkbLineString )
                         poGeom = OGRGeometryFactory::forceToMultiLineString(poGeom);
+                    else if (eFlattenType == wkbCompoundCurve)
+                    {
+                        OGRMultiCurve* poMC = new OGRMultiCurve();
+                        poMC->addGeometryDirectly( poGeom );
+                        poGeom = poMC;
+                    }
+
                     poGeom->assignSpatialReference(
                         m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() );
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
  * Purpose:  HDF5 Datasets. Open HDF5 file, fetch metadata and list of
@@ -1131,7 +1130,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
 
 /**
  * Reads an array of double attributes from the HDF5 metadata.
- * It reads the attributes directly on it's binary form directly,
+ * It reads the attributes directly on its binary form directly,
  * thus avoiding string conversions.
  *
  * Important: It allocates the memory for the attributes internally,

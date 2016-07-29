@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of OGRGTMDriver class.
@@ -29,6 +28,8 @@
 #include "ogr_gtm.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                                Open()                                */

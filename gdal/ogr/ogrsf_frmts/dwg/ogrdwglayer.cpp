@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGLayer class.
@@ -49,7 +48,7 @@
 #include "DbFiler.h"
 #include "Ge/GeScale3d.h"
 
-CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDWGLayer()                             */

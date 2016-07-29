@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ZMap driver
  * Purpose:  GDALDataset driver for ZMap dataset.

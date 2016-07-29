@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Helper code to implement overview support in different drivers.
@@ -180,14 +179,18 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
 /*                          GDALFindBestEntry()                         */
 /************************************************************************/
 
+// Find in the color table the entry whose (c1,c2,c3) value is the closest
+// (using quadratic distance) to the passed (nR,nG,nB) triplet, ignoring
+// transparent entries.
 static int GDALFindBestEntry( int nEntryCount, const GDALColorEntry* aEntries,
-                              int nR, int nG, int nB, int nNoDataIndex )
+                              int nR, int nG, int nB )
 {
     int nMinDist = std::numeric_limits<int>::max();
-    int iBestEntry = (nNoDataIndex != 0 || nEntryCount == 1) ? 0 : 1;
+    int iBestEntry = 0;
     for( int i = 0; i < nEntryCount; ++i )
     {
-        if( i == nNoDataIndex || aEntries[i].c4 == 0 )
+        // Ignore transparent entries
+        if( aEntries[i].c4 == 0 )
             continue;
         int nDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
             (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
@@ -202,21 +205,25 @@ static int GDALFindBestEntry( int nEntryCount, const GDALColorEntry* aEntries,
 }
 
 /************************************************************************/
-/*                      ReadColorTableAsArray()                        */
+/*                      ReadColorTableAsArray()                         */
 /************************************************************************/
 
 static bool ReadColorTableAsArray( const GDALColorTable* poColorTable,
                                    int& nEntryCount,
-                                   GDALColorEntry*& aEntries )
+                                   GDALColorEntry*& aEntries,
+                                   int& nTransparentIdx )
 {
     nEntryCount = poColorTable->GetColorEntryCount();
     aEntries = static_cast<GDALColorEntry *>(
         VSI_MALLOC2_VERBOSE(sizeof(GDALColorEntry), nEntryCount) );
+    nTransparentIdx = -1;
     if( aEntries == NULL )
         return false;
-    for(int i = 0; i < nEntryCount; ++i )
+    for( int i = 0; i < nEntryCount; ++i )
     {
         poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
+        if( nTransparentIdx < 0 && aEntries[i].c4 == 0 )
+            nTransparentIdx = i;
     }
     return true;
 }
@@ -247,7 +254,6 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
     if( bBit2Grayscale )
         poColorTable = NULL;
-
 
     T tNoDataValue;
     if( !bHasNoData )
@@ -281,12 +287,36 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
+    int nTransparentIdx = -1;
+
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
+                               nTransparentIdx) )
     {
         VSIFree(pDstScanline);
         VSIFree(panSrcXOffShifted);
         return CE_Failure;
+    }
+
+    // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
+    // it as nodata value
+    if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < nEntryCount )
+    {
+        if( aEntries == NULL )
+        {
+            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries.");
+            VSIFree(pDstScanline);
+            VSIFree(panSrcXOffShifted);
+            return CE_Failure;
+        }
+        aEntries[static_cast<int>(tNoDataValue)].c4 = 0;
+    }
+    // Or if we have no explicit nodata, but a color table entry that is
+    // transparent, consider it as the nodata value
+    else if( !bHasNoData && nTransparentIdx >= 0 )
+    {
+        bHasNoData = TRUE;
+        tNoDataValue = static_cast<T>(nTransparentIdx);
     }
 
 /* ==================================================================== */
@@ -431,16 +461,14 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const T val = pChunk[iX + iY *nChunkXSize];
-                        if( bHasNoData == FALSE || val != tNoDataValue )
+                        int nVal = static_cast<int>(val);
+                        if( nVal >= 0 && nVal < nEntryCount &&
+                            aEntries[nVal].c4 )
                         {
-                            int nVal = static_cast<int>(val);
-                            if( nVal >= 0 && nVal < nEntryCount )
-                            {
-                                nTotalR += aEntries[nVal].c1;
-                                nTotalG += aEntries[nVal].c2;
-                                nTotalB += aEntries[nVal].c3;
-                                ++nCount;
-                            }
+                            nTotalR += aEntries[nVal].c1;
+                            nTotalG += aEntries[nVal].c2;
+                            nTotalB += aEntries[nVal].c3;
+                            ++nCount;
                         }
                     }
                 }
@@ -453,8 +481,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         nG = (nTotalG + nCount / 2) / nCount,
                         nB = (nTotalB + nCount / 2) / nCount;
                     pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB,
-                        bHasNoData ? static_cast<int>(tNoDataValue) : -1);
+                        nEntryCount, aEntries, nR, nG, nB);
                 }
             }
         }
@@ -614,13 +641,37 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return CE_Failure;
     }
 
+    if( !bHasNoData )
+        fNoDataValue = 0.0f;
+
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
+    int nTransparentIdx = -1;
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
+                               nTransparentIdx) )
     {
         VSIFree(pafDstScanline);
         return CE_Failure;
+    }
+
+    // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
+    // it as nodata value.
+    if( bHasNoData && fNoDataValue >= 0.0f && fNoDataValue < nEntryCount )
+    {
+        if( aEntries == NULL )
+        {
+            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries");
+            VSIFree(pafDstScanline);
+            return CE_Failure;
+        }
+        aEntries[static_cast<int>(fNoDataValue)].c4 = 0;
+    }
+    // Or if we have no explicit nodata, but a color table entry that is
+    // transparent, consider it as the nodata value.
+    else if( !bHasNoData && nTransparentIdx >= 0 )
+    {
+        fNoDataValue = static_cast<float>(nTransparentIdx);
     }
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
@@ -716,17 +767,14 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     }
                 }
 
-                if( bHasNoData && nCount == 0 )
+                if( nCount == 0 )
                 {
                     pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
                 }
                 else
                 {
-                    if( nCount == 0 )
-                        pafDstScanline[iDstPixel - nDstXOff] = 0.0;
-                    else
-                        pafDstScanline[iDstPixel - nDstXOff] =
-                            static_cast<float>(dfTotal / nCount);
+                    pafDstScanline[iDstPixel - nDstXOff] =
+                        static_cast<float>(dfTotal / nCount);
                 }
             }
             else
@@ -747,45 +795,34 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         const double val =
                             pafSrcScanline[iX - nChunkXOff +
                                            (iY-nSrcYOff) * nChunkXSize];
-                        if( bHasNoData == FALSE || val != fNoDataValue )
+                        int nVal = static_cast<int>(val);
+                        if( nVal >= 0 && nVal < nEntryCount &&
+                            aEntries[nVal].c4 )
                         {
-                            int nVal = static_cast<int>(val);
-                            if( nVal >= 0 && nVal < nEntryCount )
-                            {
-                                const int nWeight = panLineWeight[i];
-                                nTotalR += aEntries[nVal].c1 * nWeight;
-                                nTotalG += aEntries[nVal].c2 * nWeight;
-                                nTotalB += aEntries[nVal].c3 * nWeight;
-                                nTotalWeight += nWeight;
-                            }
+                            const int nWeight = panLineWeight[i];
+                            nTotalR += aEntries[nVal].c1 * nWeight;
+                            nTotalG += aEntries[nVal].c2 * nWeight;
+                            nTotalB += aEntries[nVal].c3 * nWeight;
+                            nTotalWeight += nWeight;
                         }
                     }
                 }
 
-                if( bHasNoData && nTotalWeight == 0 )
+                if( nTotalWeight == 0 )
                 {
                     pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
                 }
                 else
                 {
-                    if( nTotalWeight == 0 )
-                    {
-                        pafDstScanline[iDstPixel - nDstXOff] = 0.0;
-                    }
-                    else
-                    {
-                        const int nR =
-                            (nTotalR + nTotalWeight / 2) / nTotalWeight;
-                        const int nG =
-                            (nTotalG + nTotalWeight / 2) / nTotalWeight;
-                        const int nB =
-                            (nTotalB + nTotalWeight / 2) / nTotalWeight;
-                        pafDstScanline[iDstPixel - nDstXOff] =
-                            static_cast<float>( GDALFindBestEntry(
-                                nEntryCount, aEntries, nR, nG, nB,
-                                bHasNoData ?
-                                static_cast<int>(fNoDataValue) : -1) );
-                    }
+                    const int nR =
+                        (nTotalR + nTotalWeight / 2) / nTotalWeight;
+                    const int nG =
+                        (nTotalG + nTotalWeight / 2) / nTotalWeight;
+                    const int nB =
+                        (nTotalB + nTotalWeight / 2) / nTotalWeight;
+                    pafDstScanline[iDstPixel - nDstXOff] =
+                        static_cast<float>( GDALFindBestEntry(
+                            nEntryCount, aEntries, nR, nG, nB ) );
                 }
             }
 
@@ -840,10 +877,14 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return CE_Failure;
     }
 
+    if( !bHasNoData )
+        fNoDataValue = 0.0f;
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
+    int nTransparentIdx = -1;
     if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries) )
+        !ReadColorTableAsArray(poColorTable, nEntryCount,
+                               aEntries, nTransparentIdx) )
     {
         VSIFree(pafDstScanline);
         return CE_Failure;
@@ -2445,7 +2486,7 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
  * \brief Generate downsampled overviews.
  *
  * This function will generate one or more overview images from a base image
- * using the requested downsampling algorithm.  It's primary use is for
+ * using the requested downsampling algorithm.  Its primary use is for
  * generating overviews via GDALDataset::BuildOverviews(), but it can also be
  * used to generate downsampled images in one file from another outside the
  * overview architecture.
@@ -2534,7 +2575,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                   "Computing %s overviews on palette index raster bands "
                   "will probably lead to unexpected results.", pszResampling );
     }
-
 
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
@@ -2847,7 +2887,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 }
 
 
-
 /************************************************************************/
 /*            GDALRegenerateOverviewsMultiBand()                        */
 /************************************************************************/
@@ -2857,7 +2896,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * compressed pixel-interleaved overviews (JPEG-IN-TIFF for example)
  *
  * This function will generate one or more overview images from a base
- * image using the requested downsampling algorithm.  It's primary use
+ * image using the requested downsampling algorithm.  Its primary use
  * is for generating overviews via GDALDataset::BuildOverviews(), but it
  * can also be used to generate downsampled images in one file from another
  * outside the overview architecture.
@@ -3035,7 +3074,9 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
     CPLErr eErr = CE_None;
-    for( int iOverview = 0; iOverview < nOverviews && eErr == CE_None; ++iOverview )
+    for( int iOverview = 0;
+         iOverview < nOverviews && eErr == CE_None;
+         ++iOverview )
     {
         int iSrcOverview = -1;  // -1 means the source bands.
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Component: ODS formula Engine
  * Purpose: Implementation of the ods_formula_node class used to represent a
@@ -31,6 +30,8 @@
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ods_formula_node()                          */

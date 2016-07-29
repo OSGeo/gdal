@@ -1,6 +1,5 @@
 
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALJP2Metadata - Read GeoTIFF and/or GML georef info.
@@ -40,6 +39,7 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include <set>
 
 CPL_CVSID("$Id$");
 
@@ -133,7 +133,9 @@ GDALJP2Metadata::~GDALJP2Metadata()
 /*      if anything useful is found.                                    */
 /************************************************************************/
 
-int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
+int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
+                                   int nGMLJP2Index, int nMSIGIndex,
+                                   int nWorldFileIndex, int *pnIndexUsed  )
 
 {
     VSILFILE *fpLL = VSIFOpenL( pszFilename, "rb" );
@@ -145,14 +147,16 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
         return FALSE;
     }
 
-    bool bRet = CPL_TO_BOOL(ReadAndParse( fpLL ));
+    int nIndexUsed = -1;
+    bool bRet = CPL_TO_BOOL(ReadAndParse( fpLL, nGEOJP2Index, nGMLJP2Index, nMSIGIndex, &nIndexUsed ));
     CPL_IGNORE_RET_VAL(VSIFCloseL( fpLL ));
 
 /* -------------------------------------------------------------------- */
 /*      If we still don't have a geotransform, look for a world         */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
-    if( !bHaveGeoTransform )
+    if( nWorldFileIndex >= 0 &&
+        ((bHaveGeoTransform && nWorldFileIndex < nIndexUsed) || !bHaveGeoTransform) )
     {
         bHaveGeoTransform = CPL_TO_BOOL(
             GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
@@ -160,19 +164,38 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
         bRet |= bHaveGeoTransform;
     }
 
+    if( pnIndexUsed )
+        *pnIndexUsed = nIndexUsed;
+
     return bRet;
 }
 
-int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL )
+int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL, int nGEOJP2Index,
+                                   int nGMLJP2Index, int nMSIGIndex, int *pnIndexUsed )
 
 {
     ReadBoxes( fpLL );
 
 /* -------------------------------------------------------------------- */
-/*      Try JP2GeoTIFF, GML and finally MSIG to get something.          */
+/*      Try JP2GeoTIFF, GML and finally MSIG in specified order.        */
 /* -------------------------------------------------------------------- */
-    if( !ParseJP2GeoTIFF() && !ParseGMLCoverageDesc() )
-        ParseMSIG();
+    std::set<int> aoSetPriorities;
+    if( nGEOJP2Index >= 0 ) aoSetPriorities.insert(nGEOJP2Index);
+    if( nGMLJP2Index >= 0 ) aoSetPriorities.insert(nGMLJP2Index);
+    if( nMSIGIndex >= 0 ) aoSetPriorities.insert(nMSIGIndex);
+    std::set<int>::iterator oIter = aoSetPriorities.begin();
+    for( ; oIter != aoSetPriorities.end(); ++oIter )
+    {
+        int nIndex = *oIter;
+        if( (nIndex == nGEOJP2Index && ParseJP2GeoTIFF()) ||
+            (nIndex == nGMLJP2Index && ParseGMLCoverageDesc()) ||
+            (nIndex == nMSIGIndex && ParseMSIG() ) )
+        {
+            if( pnIndexUsed )
+                *pnIndexUsed = nIndex;
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Return success either either of projection or geotransform      */
@@ -3017,6 +3040,7 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
         {
             if( !EQUAL(*papszMDListIter, "") &&
                 !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszMDListIter, "DERIVED_SUBDATASETS") &&
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
                 !STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") &&
                 !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&

@@ -27,6 +27,8 @@
 #include "swq_parser.hpp"
 #include "cpl_time.h"
 
+CPL_CVSID("$Id$");
+
 #define YYSTYPE  swq_expr_node*
 
 /************************************************************************/

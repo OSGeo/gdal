@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  ECW (ERDAS Wavelet Compression Format) Driver Definitions

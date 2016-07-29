@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* CPL_SHA256* functions derived from http://code.google.com/p/ulib/source/browse/trunk/src/base/sha256sum.c?r=39 */
 
 /* The MIT License

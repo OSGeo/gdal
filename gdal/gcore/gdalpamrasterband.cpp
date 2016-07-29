@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALPamRasterBand, a raster band base class
@@ -418,6 +417,12 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
              psEntry != NULL;
              psEntry = psEntry->psNext )
         {
+            if( !(psEntry->eType == CXT_Element &&
+                  EQUAL(psEntry->pszValue, "Entry")) )
+            {
+                continue;
+            }
+
             GDALColorEntry sCEntry = {
                 static_cast<short>(atoi(CPLGetXMLValue( psEntry, "c1", "0" ))),
                 static_cast<short>(atoi(CPLGetXMLValue( psEntry, "c2", "0" ))),

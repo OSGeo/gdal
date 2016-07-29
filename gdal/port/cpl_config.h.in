@@ -1,4 +1,5 @@
 /* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
+/* $Id$ */
 
 /* Define if you want to use pthreads based multiprocessing support */
 #undef CPL_MULTIPROC_PTHREAD
@@ -70,6 +71,9 @@
 
 /* Define to 1 if the system has the type `int8'. */
 #undef HAVE_INT8
+
+/* Define to 1 if the system has the type `__uint128_t'. */
+#undef HAVE_UINT128_T
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -146,6 +150,9 @@
 /* Define to 1 if you have the `posix_spawnp' function. */
 #undef HAVE_POSIX_SPAWNP
 
+/* Define to 1 if you have the `posix_memalign' function. */
+#undef HAVE_POSIX_MEMALIGN
+
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
@@ -197,6 +204,9 @@
 
 /* Define to 1 if GCC atomic builtins are available */
 #undef HAVE_GCC_ATOMIC_BUILTINS
+
+/* Define to 1 if GCC bswap builtins are available */
+#undef HAVE_GCC_BSWAP
 
 /* Define to name of 64bit fopen function */
 #undef VSI_FOPEN64

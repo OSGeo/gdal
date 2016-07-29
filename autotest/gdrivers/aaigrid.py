@@ -382,6 +382,30 @@ def aaigrid_14():
     return 'success'
 
 ###############################################################################
+# Test Float64 detection when nodata = DBL_MIN
+
+def aaigrid_15():
+
+    gdal.FileFromMemBuffer('/vsimem/aaigrid_15.asc', """ncols        4
+nrows        1
+xllcorner    0
+yllcorner    -1
+cellsize     1
+NODATA_value  2.2250738585072014e-308
+ 2.2250738585072014e-308 0 1 2.3e-308
+""")
+
+    ds = gdal.Open('/vsimem/aaigrid_15.asc')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/aaigrid_15.asc')
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
@@ -399,7 +423,8 @@ gdaltest_list = [
     aaigrid_11,
     aaigrid_12,
     aaigrid_13,
-    aaigrid_14 ]
+    aaigrid_14,
+    aaigrid_15 ]
 
 if __name__ == '__main__':
 

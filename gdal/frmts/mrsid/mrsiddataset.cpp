@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
  * Purpose:  Read/write LizardTech's MrSID file format - Version 4+ SDK.

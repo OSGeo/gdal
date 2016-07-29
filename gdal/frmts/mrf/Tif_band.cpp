@@ -45,6 +45,8 @@
 
 #include "marfa.h"
 
+CPL_CVSID("$Id$");
+
 NAMESPACE_MRF_START
 
 // Returns a string in /vsimem/ + prefix + count that doesn't exist when this function gets called

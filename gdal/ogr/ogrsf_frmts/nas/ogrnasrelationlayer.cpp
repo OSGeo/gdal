@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRNASRelationLayer class, a special layer holding all
@@ -198,4 +197,3 @@ void OGRNASRelationLayer::AddRelation( const char *pszFromID,
 
     aoRelationCollection.push_back( osRelation );
 }
-

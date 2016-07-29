@@ -675,6 +675,7 @@ FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 QHULL_SETTING
 GEOS_CONFIG
 GEOS_VERSION
@@ -823,6 +824,7 @@ HAVE_AVX_AT_COMPILE_TIME
 AVXFLAGS
 HAVE_SSE_AT_COMPILE_TIME
 SSEFLAGS
+HAVE_GCC_BSWAP
 HAVE_GCC_ATOMIC_BUILTINS
 CXXFLAGS_NOFTRAPV
 CFLAGS_NOFTRAPV
@@ -18131,6 +18133,17 @@ _ACEOF
 fi
 done
 
+for ac_func in posix_memalign
+do :
+  ac_fn_c_check_func "$LINENO" "posix_memalign" "ac_cv_func_posix_memalign"
+if test "x$ac_cv_func_posix_memalign" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_POSIX_MEMALIGN 1
+_ACEOF
+
+fi
+done
+
 for ac_func in vfork
 do :
   ac_fn_c_check_func "$LINENO" "vfork" "ac_cv_func_vfork"
@@ -18382,6 +18395,70 @@ rm -f atomicbuiltins.* atomicbuiltins
 
 HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GCC bswap builtins are available" >&5
+$as_echo_n "checking whether GCC bswap builtins are available... " >&6; }
+
+rm -f bswapbuiltins.c
+echo '#include <x86intrin.h>' > bswapbuiltins.c
+echo 'int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
+if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
+    HAVE_GCC_BSWAP=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GCC_BSWAP 1
+_ACEOF
+
+else
+    HAVE_GCC_BSWAP=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f bswapbuiltins.* bswapbuiltins
+
+HAVE_GCC_BSWAP=$HAVE_GCC_BSWAP
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __uint128_t" >&5
+$as_echo_n "checking for __uint128_t... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+
+      unsigned long long v1 = 1024ULL;
+      unsigned long long v2 = 0x8000000000000000ULL;
+      __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
+      return u == 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UINT128_T 1
+_ACEOF
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
@@ -29212,11 +29289,7 @@ fi
 
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/qhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -29277,11 +29350,7 @@ fi
 
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/libqhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/libqhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -29291,13 +29360,17 @@ fi
         as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
     else
         QHULL_SETTING=internal
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
     fi
   fi
 else
   QHULL_SETTING=internal
+  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 QHULL_SETTING=$QHULL_SETTING
+
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 
 
 

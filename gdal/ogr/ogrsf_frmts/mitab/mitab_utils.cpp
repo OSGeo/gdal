@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.26 2011-06-16 15:53:12 fwarmerdam Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -119,6 +118,7 @@
 #  include <mbctype.h>  /* Multibyte chars stuff */
 #endif
 
+CPL_CVSID("$Id$");
 
 /**********************************************************************
  *                       TABGenerateArc()

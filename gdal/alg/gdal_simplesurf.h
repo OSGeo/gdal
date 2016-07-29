@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  * Project:  GDAL
  * Purpose:  Correlator
  * Author:   Andrew Migal, migal.drew@gmail.com

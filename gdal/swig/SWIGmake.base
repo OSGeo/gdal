@@ -18,5 +18,5 @@ ogr_wrap.cpp:  ../include/ogr.i ../include/$(BINDING)/ogr_$(BINDING).i ../includ
 osr_wrap.cpp:  ../include/osr.i ../include/$(BINDING)/osr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/osr.i
 
-gnm_wrap.cpp:  ../include/gnm.i ../include/MajorObject.i ../include/Dataset.i ../include/$(BINDING)/typemaps_$(BINDING).i
+gnm_wrap.cpp:  ../include/gnm.i ../include/$(BINDING)/gnm_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gnm.i

@@ -41,6 +41,7 @@
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
+CPLErr GDALRegisterDefaultPixelFunc();
 
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
@@ -463,11 +464,12 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     char         **m_papszSourceList;
 
     bool           CanUseSourcesMinMaxImplementations();
+    void           CheckSource( VRTSimpleSource *poSS );
 
   public:
     int            nSources;
     VRTSource    **papoSources;
-    int            bEqualAreas;
+    int            bSkipBufferInitialization;
 
                    VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
                    VRTSourcedRasterBand( GDALDataType eType,
@@ -716,6 +718,8 @@ class VRTDriver : public GDALDriver
 class CPL_DLL VRTSimpleSource : public VRTSource
 {
 protected:
+    friend class VRTSourcedRasterBand;
+
     GDALRasterBand      *m_poRasterBand;
 
     // When poRasterBand is a mask band, poMaskBandMainBand is the band

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ESRI ArcSDE Raster reader
  * Purpose:  Dataset implementation for ESRI ArcSDE Rasters
@@ -32,6 +31,8 @@
 
 #include "gdal_frmts.h"
 #include "sdedataset.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          GetRastercount()                            */

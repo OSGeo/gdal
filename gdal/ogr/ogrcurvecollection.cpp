@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCurveCollection class.
@@ -31,7 +30,7 @@
 #include "ogr_p.h"
 #include <assert.h>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRCurveCollection()                         */

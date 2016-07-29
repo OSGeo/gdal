@@ -33,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
+CPL_CVSID("$Id$");
+
 using kmldom::KmlFactory;
 
 static CPLMutex *hMutex = NULL;
@@ -42,7 +44,7 @@ static KmlFactory* m_poKmlFactory = NULL;
  OGRLIBKMLDriverUnload()
 ******************************************************************************/
 
-static void OGRLIBKMLDriverUnload ( CPL_UNUSED GDALDriver* poDriver )
+static void OGRLIBKMLDriverUnload( GDALDriver * /* poDriver */ )
 {
     if( hMutex != NULL )
         CPLDestroyMutex(hMutex);
@@ -62,15 +64,16 @@ static int OGRLIBKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->bIsDirectory )
         return -1;
 
-    return( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kml") ||
-            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kmz") );
+    return
+        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kml") ||
+        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kmz");
 }
 
 /******************************************************************************
  Open()
 ******************************************************************************/
 
-static GDALDataset *OGRLIBKMLDriverOpen ( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRLIBKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( OGRLIBKMLDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
@@ -78,12 +81,14 @@ static GDALDataset *OGRLIBKMLDriverOpen ( GDALOpenInfo* poOpenInfo )
     {
         CPLMutexHolderD(&hMutex);
         if( m_poKmlFactory == NULL )
-            m_poKmlFactory = KmlFactory::GetFactory (  );
+            m_poKmlFactory = KmlFactory::GetFactory();
     }
 
-    OGRLIBKMLDataSource *poDS = new OGRLIBKMLDataSource ( m_poKmlFactory );
+    OGRLIBKMLDataSource *poDS = new OGRLIBKMLDataSource( m_poKmlFactory );
 
-    if ( !poDS->Open ( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) ) {
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update ) )
+    {
         delete poDS;
 
         poDS = NULL;
@@ -98,24 +103,24 @@ static GDALDataset *OGRLIBKMLDriverOpen ( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
-                                           CPL_UNUSED int nBands,
-                                           CPL_UNUSED int nXSize,
-                                           CPL_UNUSED int nYSize,
-                                           CPL_UNUSED GDALDataType eDT,
+                                           int /* nBands */,
+                                           int /* nXSize */,
+                                           int /* nYSize */,
+                                           GDALDataType /* eDT */,
                                            char **papszOptions )
 {
-    CPLAssert ( NULL != pszName );
-    CPLDebug ( "LIBKML", "Attempt to create: %s", pszName );
+    CPLAssert( NULL != pszName );
+    CPLDebug( "LIBKML", "Attempt to create: %s", pszName );
 
     {
         CPLMutexHolderD(&hMutex);
         if( m_poKmlFactory == NULL )
-            m_poKmlFactory = KmlFactory::GetFactory (  );
+            m_poKmlFactory = KmlFactory::GetFactory();
     }
 
-    OGRLIBKMLDataSource *poDS = new OGRLIBKMLDataSource ( m_poKmlFactory );
+    OGRLIBKMLDataSource *poDS = new OGRLIBKMLDataSource( m_poKmlFactory );
 
-    if ( !poDS->Create ( pszName, papszOptions ) ) {
+    if( !poDS->Create( pszName, papszOptions ) ) {
         delete poDS;
 
         poDS = NULL;
@@ -127,54 +132,57 @@ static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
 /******************************************************************************
  DeleteDataSource()
 
- Note: this method recursively deletes an entire dir if the datasource is a dir
+ Note: This method recursively deletes an entire dir if the datasource is a dir
        and all the files are kml or kmz.
 
 ******************************************************************************/
 
 static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
 {
-
     /***** dir *****/
-
     VSIStatBufL sStatBuf;
-    if ( !VSIStatL ( pszName, &sStatBuf ) && VSI_ISDIR ( sStatBuf.st_mode ) ) {
-
-        char **papszDirList = VSIReadDir ( pszName );
-        for ( int iFile = 0; papszDirList != NULL &&
-                             papszDirList[iFile] != NULL; iFile++ ) {
-            if ( CE_Failure ==
-                 OGRLIBKMLDriverDelete ( papszDirList[iFile] ) ) {
-                CSLDestroy ( papszDirList );
+    if( !VSIStatL( pszName, &sStatBuf ) && VSI_ISDIR( sStatBuf.st_mode ) )
+    {
+        char **papszDirList = VSIReadDir( pszName );
+        for( int iFile = 0;
+             papszDirList != NULL && papszDirList[iFile] != NULL;
+             iFile++ )
+        {
+            if( CE_Failure == OGRLIBKMLDriverDelete( papszDirList[iFile] ) )
+            {
+                CSLDestroy( papszDirList );
                 return CE_Failure;
             }
         }
-        CSLDestroy ( papszDirList );
+        CSLDestroy( papszDirList );
 
-        if ( VSIRmdir ( pszName ) < 0 ) {
+        if( VSIRmdir( pszName ) < 0 )
+        {
             return CE_Failure;
         }
     }
 
-   /***** kml *****/
-
-    else if ( EQUAL ( CPLGetExtension ( pszName ), "kml" ) ) {
-        if ( VSIUnlink ( pszName ) < 0 )
+    /***** kml *****/
+    else if( EQUAL( CPLGetExtension( pszName ), "kml" ) )
+    {
+        if( VSIUnlink( pszName ) < 0 )
             return CE_Failure;
     }
 
     /***** kmz *****/
-
-    else if ( EQUAL ( CPLGetExtension ( pszName ), "kmz" ) ) {
-        if ( VSIUnlink ( pszName ) < 0 )
+    else if( EQUAL( CPLGetExtension( pszName ), "kmz" ) )
+    {
+        if( VSIUnlink( pszName ) < 0 )
             return CE_Failure;
     }
 
     /***** do not delete other types of files *****/
-
     else
+    {
         return CE_Failure;
+    }
 
+    // TODO(schwehr): Isn't this redundant to the else case?
     return CE_None;
 }
 
@@ -182,7 +190,7 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
  RegisterOGRLIBKML()
 ******************************************************************************/
 
-void RegisterOGRLIBKML ()
+void RegisterOGRLIBKML()
 {
     if( GDALGetDriverByName( "LIBKML" ) != NULL )
         return;

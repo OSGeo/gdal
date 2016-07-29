@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  kearat.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -29,6 +28,8 @@
  */
 
 #include "kearat.h"
+
+CPL_CVSID("$Id$");
 
 KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable)
 {

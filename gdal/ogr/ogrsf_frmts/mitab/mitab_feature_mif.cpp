@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.39 2010-09-07 16:07:53 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -169,6 +168,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 #include <ctype.h>
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABFeature

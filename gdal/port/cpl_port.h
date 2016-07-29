@@ -112,12 +112,12 @@
 /*      MinGW stuff                                                     */
 /* ==================================================================== */
 
-/* We need __MSVCRT_VERSION__ >= 0x0601 to have "struct __stat64" */
+/* We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc" */
 /* Latest versions of mingw32 define it, but with older ones, */
 /* we need to define it manually */
 #if defined(__MINGW32__)
 #ifndef __MSVCRT_VERSION__
-#define __MSVCRT_VERSION__ 0x0601
+#define __MSVCRT_VERSION__ 0x0700
 #endif
 #endif
 
@@ -362,12 +362,12 @@ extern "C++" {
 
 
 #ifndef MAX
-#  define MIN(a,b)      ((a<b) ? a : b)
-#  define MAX(a,b)      ((a>b) ? a : b)
+#  define MIN(a,b)      (((a)<(b)) ? (a) : (b))
+#  define MAX(a,b)      (((a)>(b)) ? (a) : (b))
 #endif
 
 #ifndef ABS
-#  define ABS(x)        ((x<0) ? (-1*(x)) : x)
+#  define ABS(x)        (((x)<0) ? (-1*(x)) : (x))
 #endif
 
 #ifndef M_PI
@@ -614,10 +614,28 @@ template<> struct CPLStaticAssert<true>
  *        Little endian <==> big endian byte swap macros.
  *--------------------------------------------------------------------*/
 
-#define CPL_SWAP16(x) \
-        ((GUInt16)( \
-            (((GUInt16)(x) & 0x00ffU) << 8) | \
-            (((GUInt16)(x) & 0xff00U) >> 8) ))
+#define CPL_SWAP16(x) ((GUInt16)( ((GUInt16)(x) << 8) | ((GUInt16)(x) >> 8) ))
+
+#if defined(HAVE_GCC_BSWAP) && (defined(__i386__) || defined(__x86_64__))
+/* Could potentially be extended to other architectures but must be checked */
+/* that the intrinsic is indeed efficient */
+/* GCC (at least 4.6  or above) need that include */
+#include <x86intrin.h>
+#define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
+/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
+#define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
+#elif defined(_MSC_VER)
+#define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
+/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
+#define CPL_SWAP64(x) ((GUIntBig)(_byteswap_uint64((GUIntBig)(x))))
+#else
+#define CPL_SWAP32(x) \
+        ((GUInt32)( \
+            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
+            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
+            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
+            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+#endif
 
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
@@ -628,13 +646,6 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
 }
-
-#define CPL_SWAP32(x) \
-        ((GUInt32)( \
-            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
-            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
-            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
-            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
 #define CPL_SWAP32PTR(x) \
 {                                                                 \

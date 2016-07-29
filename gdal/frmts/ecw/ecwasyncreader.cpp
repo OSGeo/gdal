@@ -1,7 +1,6 @@
 /******************************************************************************
- * $Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  ECWAsyncReader implementation
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -30,7 +29,7 @@
 
 #include "gdal_ecw.h"
 
-CPL_CVSID("$Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $");
+CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && (ECWSDK_VERSION >= 40)
 
@@ -38,8 +37,8 @@ CPL_CVSID("$Id: ecwdataset.cpp 21486 2011-01-13 17:38:17Z warmerdam $");
 /*                          BeginAsyncReader()                          */
 /************************************************************************/
 
-GDALAsyncReader* 
-ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize, 
+GDALAsyncReader*
+ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pBuf, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               int nBandCount, int* panBandMap,

@@ -637,7 +637,6 @@ def ogr_basic_12():
 # Test OGRParseDate (#6452)
 
 def ogr_basic_13():
-  
     feat_defn = ogr.FeatureDefn('test')
     field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
     feat_defn.AddFieldDefn(field_defn)

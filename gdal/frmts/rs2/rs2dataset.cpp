@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Polarimetric Workstation
  * Purpose:  Radarsat 2 - XML Products (product.xml) driver
@@ -1339,7 +1338,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                        "geographicInformation.rationalFunctions" );
     if( psRationalFunctions != NULL ) {
         char** papszRPC = NULL;
-        static const char* const apszXMLToGDALMapping[] = 
+        static const char* const apszXMLToGDALMapping[] =
         {
             "biasError", "ERR_BIAS",
             "randomError", "ERR_RAND",

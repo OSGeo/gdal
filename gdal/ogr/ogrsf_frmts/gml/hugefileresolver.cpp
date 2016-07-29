@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReader::HugeFileResolver() method.
@@ -159,11 +158,11 @@ static bool gmlHugeFileSQLiteInit( struct huge_helper *helper )
                 "     gml_id VARCHAR PRIMARY KEY, "
                 "     gml_string BLOB, "
                 "     gml_resolved BLOB, "
-				"     node_from_id TEXT, "
+                "     node_from_id TEXT, "
                 "     node_from_x DOUBLE, "
                 "     node_from_y DOUBLE, "
                 "     node_from_z DOUBLE, "
-				"     node_to_id TEXT, "
+                "     node_to_id TEXT, "
                 "     node_to_x DOUBLE, "
                 "     node_to_y DOUBLE, "
                 "     node_to_z DOUBLE)";
@@ -909,22 +908,21 @@ static void gmlHugeFileHrefReset( struct huge_helper *helper )
 static int gmlHugeFileHrefCheck( struct huge_helper *helper )
 {
 /* testing for unresolved items */
-    int bError = false;
-	struct huge_href *p = helper->pFirstHref;
-	while( p != NULL )
+    bool bError = false;
+    struct huge_href *p = helper->pFirstHref;
+    while( p != NULL )
     {
-		if( p->gmlText == NULL)
-		{
-			bError = true;
-			CPLError( CE_Failure, CPLE_AppDefined,
+        if( p->gmlText == NULL)
+        {
+            bError = true;
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Edge xlink:href\"%s\": unresolved match",
                       p->gmlId->c_str() );
-		}
+        }
         p = p->pNext;
     }
-	if( bError )
-		return false;
-	return true;
+
+    return !bError;
 }
 
 static void gmlHugeFileRewiterReset( struct huge_helper *helper )

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SEG-P1 / UKOOA P1-90 Translator
  * Purpose:  Implements OGRSEGUKOOADataSource class

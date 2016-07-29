@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDS Translator
  * Purpose:  Implements OGRPDSDriver.
@@ -85,4 +84,3 @@ void RegisterOGRPDS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DRDC Configurable Airborne SAR Processor (COASP) data reader
  * Purpose:  Support in GDAL for the DRDC COASP format data, both Metadata

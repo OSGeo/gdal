@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  IRIS Reader
  * Purpose:  All code for IRIS format Reader
@@ -193,7 +192,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     IRISDataset *poGDS = (IRISDataset *) poDS;
 
-    //Every product type has it's own size. TODO: Move it like dataType
+    //Every product type has its own size. TODO: Move it like dataType
     int nDataLength = 1;
     if(poGDS->nDataTypeCode == 2){nDataLength=1;}
     else if(poGDS->nDataTypeCode == 37){nDataLength=2;}

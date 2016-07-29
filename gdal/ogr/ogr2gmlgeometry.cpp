@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Translator
  * Purpose:  Code to translate OGRGeometry to GML string representation.
@@ -46,6 +45,8 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 #define SRSDIM_LOC_GEOMETRY (1 << 0)
 #define SRSDIM_LOC_POSLIST  (1 << 1)

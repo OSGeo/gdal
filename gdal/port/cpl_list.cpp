@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_list.cpp
  * Project:  CPL - Common Portability Library

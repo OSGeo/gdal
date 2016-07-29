@@ -264,7 +264,7 @@ def algebra_intersection():
 def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
         return 'skip'
-    
+
     driver = ogr.GetDriverByName('MEMORY')
     ds = driver.CreateDataSource('ds')
     layer1 = ds.CreateLayer('layer1')
@@ -332,7 +332,7 @@ def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
         return 'fail'
 
     return 'success'
-    
+
 
 def algebra_union():
     if not ogrtest.have_geos():

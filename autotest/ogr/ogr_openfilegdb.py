@@ -1442,6 +1442,48 @@ def ogr_openfilegdb_17():
     return 'success'
 
 ###############################################################################
+# Read curves
+
+def ogr_openfilegdb_18():
+
+    ds = ogr.Open('data/curves.gdb')
+    lyr = ds.GetLayerByName('line')
+    ds_ref = ogr.Open('data/curves_line.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToWkt())
+            print(f_ref.GetGeometryRef().ExportToWkt())
+            return 'fail'
+
+    lyr = ds.GetLayerByName('polygon')
+    ds_ref = ogr.Open('data/curves_polygon.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToWkt())
+            print(f_ref.GetGeometryRef().ExportToWkt())
+            return 'fail'
+
+    ds = ogr.Open('data/curve_circle_by_center.gdb')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/curve_circle_by_center.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToWkt())
+            print(f_ref.GetGeometryRef().ExportToWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1489,6 +1531,7 @@ gdaltest_list = [
     ogr_openfilegdb_15,
     ogr_openfilegdb_16,
     ogr_openfilegdb_17,
+    ogr_openfilegdb_18,
     ogr_openfilegdb_cleanup,
     ]
 

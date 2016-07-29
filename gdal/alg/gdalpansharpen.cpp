@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Pansharpening module
  * Purpose:  Implementation of pansharpening.

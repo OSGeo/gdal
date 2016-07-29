@@ -150,6 +150,15 @@ int CPL_DLL     VSIFFlushL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL     VSIFPutcL( int, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
+typedef enum 
+{
+    VSI_RANGE_STATUS_UNKNOWN,
+    VSI_RANGE_STATUS_DATA,
+    VSI_RANGE_STATUS_HOLE
+} VSIRangeStatus;
+
+VSIRangeStatus CPL_DLL VSIFGetRangeStatusL( VSILFILE * fp, vsi_l_offset nStart, vsi_l_offset nLength );
+
 int CPL_DLL     VSIIngestFile( VSILFILE* fp,
                                const char* pszFilename,
                                GByte** ppabyRet,
@@ -173,6 +182,8 @@ int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, i
 
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
+int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */
@@ -184,6 +195,13 @@ void CPL_DLL   *VSIMalloc( size_t ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL    VSIFree( void * );
 void CPL_DLL   *VSIRealloc( void *, size_t ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL   *VSIStrdup( const char * ) CPL_WARN_UNUSED_RESULT;
+
+void CPL_DLL   *VSIMallocAligned( size_t nAlignment, size_t nSize ) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL   *VSIMallocAlignedAuto( size_t nSize ) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL    VSIFreeAligned( void* ptr );
+
+void CPL_DLL   *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_MALLOC_ALIGNED_AUTO_VERBOSE( size ) VSIMallocAlignedAutoVerbose(size,__FILE__,__LINE__)
 
 /**
  VSIMalloc2 allocates (nSize1 * nSize2) bytes.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id $
  *
  * Project:  WFS Translator
  * Purpose:  Implements OGRWFSDriver.
@@ -121,4 +120,3 @@ void RegisterOGRWFS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -145,6 +145,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /* -------------------------------------------------------------------- */
 typedef int *SAFile;
 
+/* SAOffset was set to vsi_l_offset in r13274.  Why is the ifndef still here? */
 #ifndef SAOffset
 typedef unsigned long SAOffset;
 #endif

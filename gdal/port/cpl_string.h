@@ -92,8 +92,15 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
-                        char** papszOptions) CPL_WARN_UNUSED_RESULT;
+#ifdef __cplusplus
+char CPL_DLL **CSLLoad2(
+    const char *pszFname, int nMaxLines, int nMaxCols,
+    const char * const * papszOptions) CPL_WARN_UNUSED_RESULT;
+#else
+char CPL_DLL **CSLLoad2(
+    const char *pszFname, int nMaxLines, int nMaxCols,
+    char **papszOptions) CPL_WARN_UNUSED_RESULT;
+#endif
 int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
 
 char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
@@ -103,10 +110,22 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(
     char **papszStrList, int nFirstLineToDelete,
     int nNumToRemove, char ***ppapszRetStrings) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CSLFindString( char **, const char * );
-int CPL_DLL CSLFindStringCaseSensitive( char **, const char * );
-int CPL_DLL CSLPartialFindString( char **papszHaystack,
-                                  const char * pszNeedle );
+#ifdef __cplusplus
+int CPL_DLL CSLFindString( const char * const *papszList,
+                           const char *pszTarget );
+int CPL_DLL CSLFindStringCaseSensitive( const char * const *papszList,
+                                        const char *pszTarget );
+int CPL_DLL CSLPartialFindString( const char * const *papszHaystack,
+                                  const char *pszNeedle );
+#else
+// Present non-const to C code that does not like passing non-const to const.
+// Should be ABI compatible with the const versions.
+int CPL_DLL CSLFindString( char **papszList, const char *pszTarget );
+int CPL_DLL CSLFindStringCaseSensitive( char * const *papszList,
+                                        const char *pszTarget );
+int CPL_DLL CSLPartialFindString( char * const *papszHaystack,
+                                  const char *pszNeedle );
+#endif
 int CPL_DLL CSLFindName(char **papszStrList, const char *pszName);
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
                              int bDefault );
@@ -128,17 +147,29 @@ bool CPL_DLL CPLTestBool( const char *pszValue );
 }
 #endif
 #endif
-bool CPL_DLL CPLFetchBool( const char **papszStrList, const char *pszKey,
+bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
                            bool bDefault );
 #endif  /* __cplusplus */
 
 const char CPL_DLL *
-      CPLParseNameValue(const char *pszNameValue, char **ppszKey );
+      CPLParseNameValue( const char *pszNameValue, char **ppszKey );
+
+#ifdef __cplusplus
 const char CPL_DLL *
-      CSLFetchNameValue(char **papszStrList, const char *pszName);
+      CSLFetchNameValue( const char * const *papszStrList, const char *pszName);
 const char CPL_DLL *
-      CSLFetchNameValueDef(char **papszStrList, const char *pszName,
-                           const char *pszDefault );
+      CSLFetchNameValueDef( const char * const *papszStrList,
+                            const char *pszName,
+                            const char *pszDefault );
+#else
+const char CPL_DLL *
+      CSLFetchNameValue( char **papszStrList, const char *pszName);
+const char CPL_DLL *
+      CSLFetchNameValueDef( char **papszStrList,
+                            const char *pszName,
+                            const char *pszDefault );
+#endif
+
 char CPL_DLL **
       CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
 char CPL_DLL **
@@ -335,6 +366,11 @@ public:
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
+    CPLString &replaceAll(
+        const std::string &osBefore, const std::string& osAfter );
+    CPLString &replaceAll( const std::string &osBefore, char chAfter );
+    CPLString &replaceAll( char chBefore, const std::string &osAfter );
+    CPLString &replaceAll( char chBefore, char chAfter );
 
     /* case insensitive find alternates */
     size_t    ifind( const std::string & str, size_t pos = 0 ) const;

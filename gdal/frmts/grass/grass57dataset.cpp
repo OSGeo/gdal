@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GRASS Driver
  * Purpose:  Implement GRASS raster read/write support

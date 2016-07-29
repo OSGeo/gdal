@@ -20,6 +20,7 @@ It can also read directly zipped .gdb directories (.gdb.zip)
 A specific .gdbtable file (including "system" tables) can also be opened
 directly.
 </p>
+<p>Curve in geometries are supported with GDAL &gt;= 2.2.</p>
 
 <h2>Spatial filtering</h2>
 
@@ -74,12 +75,6 @@ Drawbacks of the OpenFileGDB driver:
 <li>Read-only.</li>
 <li>Cannot use spatial indexes.</li>
 <li>Cannot read data from compressed data in CDF format (Compressed Data Format).</li>
-</ul>
-
-<h2>Known Issues</h2>
-
-<ul>
-        <li>Curve in geometries are not currently supported.</li>
 </ul>
 
 <h2>Examples</h2>

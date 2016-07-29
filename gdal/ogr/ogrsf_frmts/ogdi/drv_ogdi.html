@@ -55,6 +55,18 @@ There is no update or creation support in the OGDI driver.<p>
 Raster layers cannot be accessed with this driver but can be accessed
 using the GDAL OGDI Raster driver.<p>
 
+<H3>Error handling</H3>
+
+<p>
+Starting with GDAL 2.2 and OGDI > 3.2.0beta2, if the OGDI_STOP_ON_ERROR environment
+variable is set to NO, some errors can be gracefully recovered by OGDI (in VPF driver).
+They will still be caught by GDAL and emitted as regular GDAL errors.
+</p>
+<p>
+Note: be aware that this is a work in progress. Not all recoverable errors can be recovered, and
+some errors might be recovered silently.
+</p>
+
 <H3>Examples</H3>
 
 Usage example 'ogrinfo':<BR>

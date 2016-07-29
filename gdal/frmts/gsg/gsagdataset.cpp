@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software ASCII Grid Format.
@@ -39,6 +38,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+CPL_CVSID("$Id$");
+
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
 #  define DBL_MAX __DBL_MAX__
@@ -50,8 +51,6 @@
 #ifndef INT_MAX
 # define INT_MAX 2147483647
 #endif /* INT_MAX */
-
-CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

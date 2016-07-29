@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRESRIJSONReader class (OGR ESRIJSON Driver)
@@ -35,6 +34,8 @@
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
 #include <ogr_api.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRESRIJSONReader()                         */
@@ -215,36 +216,42 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
     if( NULL != poObjName && NULL != poObjType )
     {
         OGRFieldType eFieldType = OFTString;
-        if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeOID"))
+        if( EQUAL(json_object_get_string(poObjType), "esriFieldTypeOID") )
         {
             eFieldType = OFTInteger;
             poLayer_->SetFIDColumn(json_object_get_string(poObjName));
         }
-        else if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeDouble"))
+        else if( EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeDouble") )
         {
             eFieldType = OFTReal;
         }
-        else if (EQUAL(json_object_get_string(poObjType), "esriFieldTypeSmallInteger") ||
-                 EQUAL(json_object_get_string(poObjType), "esriFieldTypeInteger") )
+        else if( EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeSmallInteger") ||
+                 EQUAL(json_object_get_string(poObjType),
+                       "esriFieldTypeInteger") )
         {
             eFieldType = OFTInteger;
         }
         OGRFieldDefn fldDefn( json_object_get_string(poObjName),
-                              eFieldType);
+                              eFieldType );
 
-        json_object* poObjLength = OGRGeoJSONFindMemberByName( poObj, "length" );
-        if (poObjLength != NULL && json_object_get_type(poObjLength) == json_type_int )
+        json_object * const poObjLength =
+            OGRGeoJSONFindMemberByName( poObj, "length" );
+        if( poObjLength != NULL &&
+            json_object_get_type(poObjLength) == json_type_int )
         {
-            int nWidth = json_object_get_int(poObjLength);
-            // A dummy with of 2147483647 seems to indicate no known field with
-            // which in the OGR world is better modelled as 0 field width. (#6529)
+            const int nWidth = json_object_get_int(poObjLength);
+            // A dummy width of 2147483647 seems to indicate no known field with
+            // which in the OGR world is better modelled as 0 field width.
+            // (#6529)
             if( nWidth != INT_MAX )
                 fldDefn.SetWidth(nWidth);
         }
 
         poDefn->AddFieldDefn( &fldDefn );
 
-        bSuccess = true; // SUCCESS
+        bSuccess = true;
     }
     return bSuccess;
 }
@@ -691,7 +698,7 @@ static int OGRESRIJSONReaderParseXYZMArray (json_object* poObjCoords,
 /*                        OGRESRIJSONReadLineString()                   */
 /************************************************************************/
 
-OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
+OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
 {
     CPLAssert( NULL != poObj );
 
@@ -721,36 +728,53 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
         return NULL;
     }
 
-    OGRLineString* poLine
-        = new OGRLineString();
+    OGRMultiLineString* poMLS = NULL;
+    OGRGeometry* poRet = NULL;
     const int nPaths = json_object_array_length( poObjPaths );
-    for(int iPath = 0; iPath < nPaths; iPath ++)
+    for( int iPath = 0; iPath < nPaths; iPath++ )
     {
         json_object* poObjPath = json_object_array_get_idx( poObjPaths, iPath );
         if ( poObjPath == NULL ||
                 json_type_array != json_object_get_type( poObjPath ) )
         {
-            delete poLine;
-            CPLDebug( "ESRIJSON",
-                    "LineString: got non-array object." );
+            delete poRet;
+            CPLDebug( "ESRIJSON", "LineString: got non-array object." );
             return NULL;
         }
 
+        OGRLineString* poLine = new OGRLineString();
+        if( nPaths > 1 )
+        {
+            if( iPath == 0 )
+            {
+                poMLS = new OGRMultiLineString();
+                poRet = poMLS;
+            }
+            poMLS->addGeometryDirectly(poLine);
+        }
+        else
+        {
+            poRet = poLine;
+        }
         const int nPoints = json_object_array_length( poObjPath );
-        for(int i = 0; i < nPoints; i++)
+        for( int i = 0; i < nPoints; i++ )
         {
             int nNumCoords = 2;
-            json_object* poObjCoords
-                = json_object_array_get_idx( poObjPath, i );
-            double dfX, dfY, dfZ;
+            json_object* poObjCoords =
+                json_object_array_get_idx( poObjPath, i );
+            double dfX = 0.0;
+            double dfY = 0.0;
+            double dfZ = 0.0;
             if( !OGRESRIJSONReaderParseXYZMArray (
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
                 delete poLine;
+                if( poRet != poLine )
+                    delete poRet;
                 return NULL;
             }
 
-            if(nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM))
+            if( nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM) )
             {
                 poLine->addPoint( dfX, dfY, dfZ);
             }
@@ -761,7 +785,10 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
         }
     }
 
-    return poLine;
+    if( poRet == NULL )
+        poRet = new OGRLineString();
+
+    return poRet;
 }
 
 /************************************************************************/

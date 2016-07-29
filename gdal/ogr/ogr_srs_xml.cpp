@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference interface to OGC XML (014r4).
@@ -32,6 +31,8 @@
 #include "ogr_p.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              parseURN()                              */

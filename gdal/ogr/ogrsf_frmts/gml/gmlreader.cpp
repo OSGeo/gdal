@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReader class.
@@ -36,6 +35,8 @@
 #include "cpl_conv.h"
 #include <map>
 #include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 #define SUPPORT_GEOMETRY
 

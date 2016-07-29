@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HF2 driver
  * Purpose:  GDALDataset driver for HF2/HFZ dataset.

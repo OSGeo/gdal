@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGR -> KML geometries writer.
@@ -35,6 +34,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
 
 static const double EPSILON = 1e-8;
 

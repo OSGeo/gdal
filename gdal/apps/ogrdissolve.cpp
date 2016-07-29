@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdissolve.cpp 11636 2007-06-10 06:02:56Z mloskot $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Allow a user to dissolve geometries based on an attribute.
@@ -34,7 +33,7 @@
 #include "ogr_api.h"
 #include <map>
 #include <list>
-CPL_CVSID("$Id: ogr2ogr.cpp 11636 2007-06-10 06:02:56Z mloskot $");
+CPL_CVSID("$Id$");
 
 static void Usage();
 

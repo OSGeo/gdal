@@ -206,6 +206,7 @@ AC_CHECK_DECLS(strtof)
 AC_CHECK_FUNCS(readlink)
 AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
+AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
 AC_CHECK_FUNCS(statvfs)
@@ -320,6 +321,48 @@ fi
 rm -f atomicbuiltins.* atomicbuiltins
 
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if GCC bswap builtins are available
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether GCC bswap builtins are available])
+
+rm -f bswapbuiltins.c
+echo '#include <x86intrin.h>' > bswapbuiltins.c
+echo 'int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
+if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
+    HAVE_GCC_BSWAP=yes
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_GCC_BSWAP,1, [Define to 1 if GCC bswap builtins are available])
+else
+    HAVE_GCC_BSWAP=no
+    AC_MSG_RESULT([no])
+fi
+rm -f bswapbuiltins.* bswapbuiltins
+
+AC_SUBST(HAVE_GCC_BSWAP,$HAVE_GCC_BSWAP)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if __uint128_t is available and usable
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for __uint128_t])
+AC_TRY_COMPILE(
+  [
+  ], [
+      unsigned long long v1 = 1024ULL;
+      unsigned long long v2 = 0x8000000000000000ULL;
+      __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
+      return u == 0;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_UINT128_T, 1,
+          [Define to 1 if the system has the type __uint128_t])
+  ], [
+    AC_MSG_RESULT([no])
+])
 
 dnl ---------------------------------------------------------------------------
 dnl Check SSE availability
@@ -2818,11 +2861,6 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-dnl Always build with OGR support.
-OGR_ENABLED=yes
-
-dnl ---------------------------------------------------------------------------
-
 GNM_ENABLED=no
 
 AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
@@ -3649,11 +3687,7 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
     AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/qhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -3662,11 +3696,7 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
     AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/libqhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/libqhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -3676,13 +3706,16 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
         AC_MSG_ERROR([--with-qhull requested, but library not found!])
     else
         QHULL_SETTING=internal
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
     fi
   fi
 else
   QHULL_SETTING=internal
+  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 AC_SUBST([QHULL_SETTING],$QHULL_SETTING)
+AC_SUBST([QHULL_INCLUDE_SUBDIR_IS_LIBQHULL],$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if opencl library is available.

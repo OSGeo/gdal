@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster raster band implementation.
@@ -32,6 +31,8 @@
 #include "pcrasterdataset.h"
 #include "pcrasterrasterband.h"
 #include "pcrasterutil.h"
+
+CPL_CVSID("$Id$");
 
 /*!
   \file

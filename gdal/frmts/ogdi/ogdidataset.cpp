@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     ogdidataset.cpp
  * Project:  OGDI Bridge
@@ -220,6 +219,7 @@ OGDIRasterBand::~OGDIRasterBand()
 {
     FlushCache();
     CPLFree( pszLayerName );
+    delete poCT;
 }
 
 /************************************************************************/

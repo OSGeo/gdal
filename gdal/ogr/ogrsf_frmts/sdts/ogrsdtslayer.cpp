@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTSReader
  * Purpose:  Implements OGRSDTSLayer class.
@@ -239,7 +238,7 @@ AssignAttrRecordToFeature( OGRFeature * poFeature,
         const char *    pachData = poSR->GetSubfieldData(poSFDefn,
                                                          &nMaxBytes);
 /* -------------------------------------------------------------------- */
-/*      Indentify this field on the feature.                            */
+/*      Identify this field on the feature.                            */
 /* -------------------------------------------------------------------- */
         iField = poFeature->GetFieldIndex( poSFDefn->GetName() );
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Class for reading, parsing and handling a kmlfile.
@@ -31,11 +30,13 @@
 #include "kml.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
-// std
+
 #include <cerrno>
 #include <cstdio>
 #include <iostream>
 #include <string>
+
+CPL_CVSID("$Id$");
 
 KML::KML() :
     poTrunk_(NULL),

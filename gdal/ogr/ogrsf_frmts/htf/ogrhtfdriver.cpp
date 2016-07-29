@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HTF Translator
  * Purpose:  Implements OGRHTFDriver.
@@ -82,4 +81,3 @@ void RegisterOGRHTF()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

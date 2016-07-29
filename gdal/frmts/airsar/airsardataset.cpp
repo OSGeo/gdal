@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AirSAR Reader
  * Purpose:  Implements read support for AirSAR Polarimetric data.

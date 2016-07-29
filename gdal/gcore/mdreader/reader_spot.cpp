@@ -30,6 +30,8 @@
 
 #include "reader_spot.h"
 
+CPL_CVSID("$Id:");
+
 /**
  * GDALMDReaderSpot()
  */

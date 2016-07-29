@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF driver
  * Purpose:  GDALDataset driver for PDF dataset.
@@ -4720,7 +4719,28 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     else
     {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        return GDALPDFOpen(pszFilename, GA_ReadOnly);
+        GDALDataset* poDS = GDALPDFOpen(pszFilename, GA_ReadOnly);
+        char** papszMD = CSLDuplicate( poSrcDS->GetMetadata() );
+        papszMD = CSLMerge( papszMD, poDS->GetMetadata() );
+        const char* pszAOP = CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
+        if( pszAOP != NULL && EQUAL(pszAOP, GDALMD_AOP_AREA) )
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        poDS->SetMetadata( papszMD );
+        if( EQUAL(pszGEO_ENCODING, "NONE") )
+        {
+            double adfGeoTransform[6];
+            if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
+            {
+                poDS->SetGeoTransform( adfGeoTransform );
+            }
+            const char* pszProjectionRef = poSrcDS->GetProjectionRef();
+            if( pszProjectionRef != NULL && pszProjectionRef[0] != '\0' )
+            {
+                poDS->SetProjection( pszProjectionRef );
+            }
+        }
+        CSLDestroy(papszMD);
+        return poDS;
 #else
         return new GDALFakePDFDataset();
 #endif

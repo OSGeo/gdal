@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SNODAS driver
  * Purpose:  Implementation of SNODASDataset

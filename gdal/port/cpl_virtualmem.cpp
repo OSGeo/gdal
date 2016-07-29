@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_virtualmem.cpp
  * Project:  CPL - Common Portability Library
@@ -44,6 +43,8 @@
 #include "cpl_conv.h"
 
 #include <cassert>
+
+CPL_CVSID("$Id:");
 
 #ifdef NDEBUG
 /* Non NDEBUG: we ignore the result */

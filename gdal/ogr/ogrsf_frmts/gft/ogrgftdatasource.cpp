@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Google Fusion Table Translator
  * Purpose:  Implements OGRGFTDataSource class

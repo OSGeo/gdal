@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Project:  DDS Driver
  * Purpose:  Implement GDAL DDS Support
@@ -39,7 +38,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id: $");
+CPL_CVSID("$Id$");
 
 using namespace crnlib;
 

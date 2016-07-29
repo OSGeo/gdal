@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalk.h
+ * $Id: ogrwalk.h$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definition of classes for OGR Walk driver.

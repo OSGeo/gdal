@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software Binary Grid Format.
@@ -38,6 +37,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+CPL_CVSID("$Id$");
+
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
 #  define DBL_MAX __DBL_MAX__
@@ -61,8 +62,6 @@
 #ifndef SHRT_MAX
 # define SHRT_MAX 32767
 #endif /* SHRT_MAX */
-
-CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

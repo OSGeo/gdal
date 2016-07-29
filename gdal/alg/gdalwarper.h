@@ -130,7 +130,7 @@ typedef struct {
     GDALDataType        eWorkingDataType;
 
     /*! Source image dataset. */
-    GDALDatasetH	hSrcDS;
+    GDALDatasetH        hSrcDS;
 
     /*! Destination image dataset - may be NULL if only using GDALWarpOperation::WarpRegionToBuffer(). */
     GDALDatasetH        hDstDS;
@@ -263,7 +263,7 @@ CPL_C_END
 /*                                                                      */
 /*      This class represents the lowest level of abstraction.  It      */
 /*      is holds the imagery for one "chunk" of a warp, and the         */
-/*      pre-prepared masks.  All IO is done before and after it's       */
+/*      pre-prepared masks.  All IO is done before and after its        */
 /*      operation.  This class is not normally used by the              */
 /*      application.                                                    */
 /************************************************************************/
@@ -280,7 +280,7 @@ class CPL_DLL GDALWarpKernel
 public:
     char              **papszWarpOptions;
 
-    GDALResampleAlg	eResample;
+    GDALResampleAlg     eResample;
     GDALDataType        eWorkingDataType;
     int                 nBands;
 

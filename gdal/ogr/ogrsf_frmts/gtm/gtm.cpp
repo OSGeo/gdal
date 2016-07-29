@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Class for reading, parsing and handling a gtmfile.
@@ -30,6 +29,7 @@
 
 #include "gtm.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*        Methods for dealing with write on files and buffers           */
@@ -827,6 +827,3 @@ bool GTM::readFile(void* pBuffer, size_t nSize, size_t nCount)
     }
     return true;
 }
-
-
-

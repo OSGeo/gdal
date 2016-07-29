@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSRasterReader class.
@@ -340,7 +339,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Currently we will always use sequential access.  In the         */
 /*      future we should modify the iso8211 library to support          */
 /*      seeking, and modify this to seek directly to the right          */
-/*      record once it's location is known.                             */
+/*      record once its location is known.                              */
 /************************************************************************/
 
 /**

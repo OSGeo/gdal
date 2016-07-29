@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Cloudant Translator
  * Purpose:  Definition of classes for OGR Cloudant driver.

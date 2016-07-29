@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Free standing functions for GDAL.
@@ -497,6 +496,38 @@ double GDALAdjustValueToDataType(
     if( pbRounded )
         *pbRounded = bRounded;
     return dfValue;
+}
+
+/************************************************************************/
+/*                        GDALGetNonComplexDataType()                */
+/************************************************************************/
+/**
+ * \brief Return the base data type for the specified input.
+ *
+ * If the input data type is complex this function returns the base type
+ * i.e. the data type of the real and imaginary parts (non-complex).
+ * If the input data type is already non-complex, then it is returned
+ * unchanged.
+ *
+ * @param eDataType type, such as GDT_CFloat32.
+ *
+ * @return GDAL data type.
+ */
+GDALDataType CPL_STDCALL GDALGetNonComplexDataType( GDALDataType eDataType )
+{
+    switch( eDataType )
+    {
+      case GDT_CInt16:
+        return GDT_Int16;
+      case GDT_CInt32:
+        return GDT_Int32;
+      case GDT_CFloat32:
+        return GDT_Float32;
+      case GDT_CFloat64:  
+        return GDT_Float64;
+      default:
+        return eDataType;
+    }
 }
 
 /************************************************************************/
@@ -1867,7 +1898,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 #ifdef PAM_ENABLED
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
-        osBuildInfo += "OGR_ENABLED=YES\n";
+        osBuildInfo += "OGR_ENABLED=YES\n";  // Deprecated.  Always yes.
 
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );

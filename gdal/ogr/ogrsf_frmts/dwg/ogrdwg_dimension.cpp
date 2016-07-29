@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for DIMENSION elements as a part
@@ -35,7 +34,7 @@
 #include "DbRotatedDimension.h"
 #include "DbAlignedDimension.h"
 
-CPL_CVSID("$Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         TranslateDIMENSION()                         */

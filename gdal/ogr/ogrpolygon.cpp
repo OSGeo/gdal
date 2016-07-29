@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRPolygon geometry class.
@@ -193,7 +192,7 @@ OGRLinearRing *OGRPolygon::stealExteriorRing()
  *
  * Relates to the SFCOM IPolygon::get_InternalRing() method.
  *
- * @param iRing internal ring index from 0 to getNumInternalRings() - 1.
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
  *
  * @return pointer to interior ring.  May be NULL.
  */
@@ -226,7 +225,7 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
  * After the call to that function, only call to stealInteriorRing() or
  * destruction of the OGRPolygon is valid. Other operations may crash.
  *
- * @param iRing internal ring index from 0 to getNumInternalRings() - 1.
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
  * @return pointer to interior ring.  May be NULL.
  */
 

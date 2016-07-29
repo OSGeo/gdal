@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
  *
  * Project:  jpip read driver
  * Purpose:  GDAL bindings for JPIP.
@@ -35,6 +34,8 @@
 
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
+
+CPL_CVSID("$Id$");
 
 /*
 ** The following are for testing premature stream termination support.

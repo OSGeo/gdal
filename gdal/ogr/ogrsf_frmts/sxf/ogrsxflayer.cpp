@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_sxflayer.cpp  $
  *
  * Project:  SXF Translator
  * Purpose:  Definition of classes for OGR SXF Layers.
@@ -38,7 +37,7 @@
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id: ogrsxflayer.cpp $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        OGRSXFLayer()                                 */
@@ -1447,23 +1446,23 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
     OGRMultiLineString *poMLS = new  OGRMultiLineString ();
 
 /*---------------------- Reading Primary Line --------------------------------*/
-    
+
     OGRLineString* poLS = new OGRLineString();
-    
+
     for(GUInt32 count=0 ; count <  certifInfo.nPointCount ; count++)
     {
         const char * psCoords = psRecordBuf + nOffset ;
 
         if (certifInfo.bDim == 1)
         {
-            nDelta = TranslateXYH( certifInfo, psCoords, nBufLen - nOffset, 
-                                    &dfX, &dfY, &dfZ );
+            nDelta = TranslateXYH( certifInfo, psCoords, nBufLen - nOffset,
+                                   &dfX, &dfY, &dfZ );
         }
         else
         {
             dfZ = 0.0;
-            nDelta = TranslateXYH( certifInfo, psCoords, nBufLen - nOffset, 
-                                    &dfX, &dfY );
+            nDelta = TranslateXYH( certifInfo, psCoords, nBufLen - nOffset,
+                                   &dfX, &dfY );
         }
 
         if( nDelta == 0 )
@@ -1498,7 +1497,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
         CPLFree(pszRecoded);
 
         CPLFree( pszTextBuf );
-        
+
         nOffset += nTextL+2;
     }
 
@@ -1542,7 +1541,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
         }
 
         poMLS->addGeometry( poLS );
-        
+
         if ( certifInfo.bHasTextSign )
         {
             if( nOffset + 1 > nBufLen )
@@ -1563,7 +1562,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
             CPLFree(pszRecoded);
 
             CPLFree( pszTextBuf );
-            
+
             nOffset += nTextL+2;
         }
 

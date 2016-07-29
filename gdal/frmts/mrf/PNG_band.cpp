@@ -36,7 +36,6 @@
 
 
 /*
- * $Id$
  * PNG band
  * PNG page compression and decompression functions
  * These functions are not methods, they reside in the global space
@@ -53,6 +52,8 @@ CPL_C_START
 #include <png.h>
 #endif
 CPL_C_END
+
+CPL_CVSID("$Id$");
 
 NAMESPACE_MRF_START
 
@@ -327,7 +328,7 @@ CPLErr PNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 }
 
 CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
-{   
+{
     if (!codec.PNGColors && img.comp == IL_PPNG) { // Late set PNG palette to conserve memory
         GDALColorTable *poCT = GetColorTable();
         if (!poCT) {

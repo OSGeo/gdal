@@ -35,15 +35,14 @@
 
 typedef enum
 {
-	VIZ_GEOREF_SPLINE_ZERO_POINTS,
-	VIZ_GEOREF_SPLINE_ONE_POINT,
-	VIZ_GEOREF_SPLINE_TWO_POINTS,
-	VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL,
-	VIZ_GEOREF_SPLINE_FULL,
+    VIZ_GEOREF_SPLINE_ZERO_POINTS,
+    VIZ_GEOREF_SPLINE_ONE_POINT,
+    VIZ_GEOREF_SPLINE_TWO_POINTS,
+    VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL,
+    VIZ_GEOREF_SPLINE_FULL,
 
-	VIZ_GEOREF_SPLINE_POINT_WAS_ADDED,
-	VIZ_GEOREF_SPLINE_POINT_WAS_DELETED
-
+    VIZ_GEOREF_SPLINE_POINT_WAS_ADDED,
+    VIZ_GEOREF_SPLINE_POINT_WAS_DELETED
 } vizGeorefInterType;
 
 //#define VIZ_GEOREF_SPLINE_MAX_POINTS 40
@@ -116,32 +115,32 @@ class VizGeorefSpline2D
     }
 
     void dump_data_points()
-	{
-            for ( int i = 0; i < _nof_points; i++ )
-            {
-                fprintf(stderr, "X = %f Y = %f Vars = ", x[i], y[i]);
-                for ( int v = 0; v < _nof_vars; v++ )
-                    fprintf(stderr, "%f ", rhs[v][i+3]);
-                fprintf(stderr, "\n");
-            }
-	}
+    {
+        for ( int i = 0; i < _nof_points; i++ )
+        {
+            fprintf(stderr, "X = %f Y = %f Vars = ", x[i], y[i]);
+            for ( int v = 0; v < _nof_vars; v++ )
+                fprintf(stderr, "%f ", rhs[v][i+3]);
+            fprintf(stderr, "\n");
+        }
+    }
 
     int delete_list()
-	{
-            _nof_points = 0;
-            type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
-            if ( _AA )
-            {
-                CPLFree(_AA);
-                _AA = NULL;
-            }
-            if ( _Ainv )
-            {
-                CPLFree(_Ainv);
-                _Ainv = NULL;
-            }
-            return _nof_points;
-	}
+    {
+        _nof_points = 0;
+        type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
+        if ( _AA )
+        {
+            CPLFree(_AA);
+            _AA = NULL;
+        }
+        if ( _Ainv )
+        {
+            CPLFree(_Ainv);
+            _Ainv = NULL;
+        }
+        return _nof_points;
+    }
 #endif
 
     bool add_point( const double Px, const double Py, const double *Pvars );

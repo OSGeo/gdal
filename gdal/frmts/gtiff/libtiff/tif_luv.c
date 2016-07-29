@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.41 2015-12-27 16:25:11 erouault Exp $ */
+/* $Id: tif_luv.c,v 1.42 2016-07-01 11:06:04 erouault Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -1275,6 +1275,14 @@ LogL16InitState(TIFF* tif)
 
 	assert(sp != NULL);
 	assert(td->td_photometric == PHOTOMETRIC_LOGL);
+
+	if( td->td_samplesperpixel != 1 )
+	{
+		TIFFErrorExt(tif->tif_clientdata, module,
+		             "Sorry, can not handle LogL image with %s=%d",
+			     "Samples/pixel", td->td_samplesperpixel);
+		return 0;
+	}
 
 	/* for some reason, we can't do this in TIFFInitLogL16 */
 	if (sp->user_datafmt == SGILOGDATAFMT_UNKNOWN)

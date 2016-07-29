@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_aws.cpp
  * Project:  CPL - Common Portability Library

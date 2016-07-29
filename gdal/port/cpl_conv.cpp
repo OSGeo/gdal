@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Convenience functions.
@@ -520,7 +519,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
  * Read a line of text from the given file handle, taking care
  * to capture CR and/or LF and strip off ... equivalent of
  * DKReadLine().  Pointer to an internal buffer is returned.
- * The application shouldn't free it, or depend on it's value
+ * The application shouldn't free it, or depend on its value
  * past the next call to CPLReadLine().
  *
  * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
@@ -627,7 +626,7 @@ const char *CPLReadLineL( VSILFILE * fp )
  */
 
 const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
-                           char** /*papszOptions */ )
+                           const char * const * /* papszOptions */ )
 
 {
 /* -------------------------------------------------------------------- */

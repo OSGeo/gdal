@@ -53,6 +53,14 @@ def vsifile_generic(filename):
         gdaltest.post_reason('failure')
         return 'fail'
 
+    if gdal.VSIFTruncateL(fp, 20) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if gdal.VSIFTellL(fp) != 10:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     if gdal.VSIFTruncateL(fp, 5) != 0:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -531,6 +539,78 @@ abc***NEWFILE***:""")
 
     return 'success'
 
+###############################################################################
+# Test generic Truncate implementation for file extension
+
+def vsifile_11():
+  
+    f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'wb')
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL('/vsisubfile/0_,/vsimem/vsifile_11', 'wb')
+    gdal.VSIFWriteL('0123456789', 1, 10, f)
+    if gdal.VSIFTruncateL(f, 10+4096+2) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTellL(f) != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTruncateL(f, 0) != -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'rb')
+    data = gdal.VSIFReadL(1, 10+4096+2, f)
+    gdal.VSIFCloseL(f)
+    import struct
+    data = struct.unpack('B' * len(data), data)
+    if data[0] != 48 or data[9] != 57 or data[10] != 0 or data[10+4096+2-1] != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/vsifile_11')
+
+    return 'success'
+
+###############################################################################
+# Test regular file system sparse file support
+
+def vsifile_12():
+
+    target_dir = 'tmp'
+
+    if gdal.VSISupportsSparseFiles(target_dir) == 0:
+        return 'skip'
+
+    # Minimum value to make it work on NTFS
+    block_size = 65536
+    f = gdal.VSIFOpenL(target_dir+'/vsifile_12', 'wb')
+    gdal.VSIFWriteL('a', 1, 1, f)
+    if gdal.VSIFTruncateL(f, block_size*2) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = gdal.VSIFGetRangeStatusL(f, 0, 1)
+    # We could get unknown on nfs
+    if ret == gdal.VSI_RANGE_STATUS_UNKNOWN:
+        print('Range status unknown')
+    else:
+        if ret != gdal.VSI_RANGE_STATUS_DATA:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+        ret = gdal.VSIFGetRangeStatusL(f, block_size*2-1,1)
+        if ret != gdal.VSI_RANGE_STATUS_HOLE:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink(target_dir+'/vsifile_12')
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -540,7 +620,9 @@ gdaltest_list = [ vsifile_1,
                   vsifile_7,
                   vsifile_8,
                   vsifile_9,
-                  vsifile_10 ]
+                  vsifile_10,
+                  vsifile_11,
+                  vsifile_12 ]
 
 if __name__ == '__main__':
 

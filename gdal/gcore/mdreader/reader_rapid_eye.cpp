@@ -30,6 +30,8 @@
 
 #include "reader_rapid_eye.h"
 
+CPL_CVSID("$Id:");
+
 /**
  * GDALMDReaderRapidEye()
  */

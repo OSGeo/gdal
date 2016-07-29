@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_mem.h 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions within the OGR GMT driver.

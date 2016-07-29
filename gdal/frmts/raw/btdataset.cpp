@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VTP .bt Driver
  * Purpose:  Implementation of VTP .bt elevation format read/write support.

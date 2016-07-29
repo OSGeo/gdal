@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRPGDumpLayer class
@@ -1061,7 +1060,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     // Binary formatting
     else if( nOGRFieldType == OFTBinary )
     {
-        osCommand += "'";
+        osCommand += "E'";
 
         int nLen = 0;
         GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );

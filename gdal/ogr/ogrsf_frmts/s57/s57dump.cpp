@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for viewing S57 driver data.
@@ -204,4 +203,3 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
-

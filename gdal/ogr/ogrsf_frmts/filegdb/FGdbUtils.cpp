@@ -1,5 +1,4 @@
 /******************************************************************************
-* $Id$
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Different utility functions used in FileGDB OGR driver.
@@ -442,17 +441,30 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
         // force geometries to multi if requested
 
         // If it is a polygon, force to MultiPolygon since we always produce multipolygons
-        if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPolygon)
+        OGRwkbGeometryType eFlattenType = wkbFlatten(pOGRGeometry->getGeometryType());
+        if (eFlattenType == wkbPolygon)
         {
             pOGRGeometry = OGRGeometryFactory::forceToMultiPolygon(pOGRGeometry);
         }
+        else if (eFlattenType == wkbCurvePolygon)
+        {
+            OGRMultiSurface* poMS = new OGRMultiSurface();
+            poMS->addGeometryDirectly( pOGRGeometry );
+            pOGRGeometry = poMS;
+        }
         else if (forceMulti)
         {
-            if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbLineString)
+            if (eFlattenType == wkbLineString)
             {
                 pOGRGeometry = OGRGeometryFactory::forceToMultiLineString(pOGRGeometry);
             }
-            else if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPoint)
+            else if (eFlattenType == wkbCompoundCurve)
+            {
+                OGRMultiCurve* poMC = new OGRMultiCurve();
+                poMC->addGeometryDirectly( pOGRGeometry );
+                pOGRGeometry = poMC;
+            }
+            else if (eFlattenType == wkbPoint)
             {
                 pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
             }

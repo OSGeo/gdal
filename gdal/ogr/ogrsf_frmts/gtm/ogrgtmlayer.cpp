@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of OGRGTMLayer class.
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogr_gtm.h"
+
+CPL_CVSID("$Id$");
 
 OGRGTMLayer::OGRGTMLayer() :
     poDS(NULL),

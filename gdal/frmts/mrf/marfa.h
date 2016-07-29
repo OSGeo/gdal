@@ -91,10 +91,10 @@ NAMESPACE_MRF_START
 // Force LERC to be included, normally off, detected in the makefile
 // #define LERC
 
-// These are a pain to maintain in sync.  They should be replaced with 
+// These are a pain to maintain in sync.  They should be replaced with
 // C++11 uniform initializers.  The externs reside in util.cpp
 enum ILCompression {
-    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF, 
+    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF,
 #if defined(LERC)
     IL_LERC,
 #endif
@@ -591,7 +591,7 @@ protected:
 
 class PNG_Codec {
 public:
-    PNG_Codec(const ILImage &image) : img(image), 
+    PNG_Codec(const ILImage &image) : img(image),
         PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {};
 
     virtual ~PNG_Codec() {
@@ -625,7 +625,7 @@ protected:
     PNG_Codec codec;
 };
 
-/* 
+/*
  * The JPEG Codec can be used outside of the JPEG_Band
 */
 
@@ -766,4 +766,3 @@ protected:
 NAMESPACE_MRF_END
 
 #endif // GDAL_FRMTS_MRF_MARFA_H_INCLUDED
-

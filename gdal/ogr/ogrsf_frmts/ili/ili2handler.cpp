@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Implementation of ILI2Handler class.

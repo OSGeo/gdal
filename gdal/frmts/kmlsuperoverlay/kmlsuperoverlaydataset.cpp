@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KmlSuperOverlay
  * Purpose:  Implements write support for KML superoverlay - KMZ.
@@ -46,6 +45,8 @@
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
+
+CPL_CVSID("$Id$");
 
 using namespace std;
 

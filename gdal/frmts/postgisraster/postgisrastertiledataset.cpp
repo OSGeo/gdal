@@ -5,7 +5,7 @@
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2013, Jorge Arevalo
@@ -32,6 +32,8 @@
  * SOFTWARE.
  ************************************************************************/
 #include "postgisraster.h"
+
+CPL_CVSID("$Id$");
 
 /************************
  * \brief Constructor

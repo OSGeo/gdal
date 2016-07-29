@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FYBA Callbacks
  * Purpose:  Needed by FYBA - however we do not want to display most messages

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Test program for high performance warper API.
@@ -178,8 +177,9 @@ input/output operation simultaneously.</dd>
 <dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
 <dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
 <dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation option to
-the output format driver. Multiple <b>-co</b> options may be listed. See
-format specific documentation for legal creation options for each format.
+the output format driver. Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>
 </dd>
 
 <dt> <b>-cutline</b> <em>datasource</em>:</dt><dd>Enable use of a blend cutline from the name OGR support datasource.</dd>
@@ -381,7 +381,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", NULL) == NULL )
     {
+#if defined(__MACH__) && defined(__APPLE__)
+        // On Mach, the default limit is 256 files per process
+        // TODO We should eventually dynamically query the limit for all OS
+        CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100");
+#else
         CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "450");
+#endif
     }
 
     GDALWarpAppOptionsForBinary* psOptionsForBinary = GDALWarpAppOptionsForBinaryNew();

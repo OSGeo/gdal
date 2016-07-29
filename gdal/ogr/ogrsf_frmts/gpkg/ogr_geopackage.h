@@ -299,6 +299,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_soFilter;
     CPLString                   osQuery;
     bool                        m_bExtentChanged;
+    bool                        m_bContentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
@@ -315,6 +316,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
     bool                        m_bHasReadMetadataFromStorage;
+    bool                        m_bRegisterAsAspatial;
 
     virtual OGRErr      ResetStatement();
 
@@ -353,7 +355,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    OGRErr              ReadTableDefinition(int bIsSpatial);
+    OGRErr              ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable);
     void                SetCreationParameters( OGRwkbGeometryType eGType,
                                                const char* pszGeomColumnName,
                                                int bGeomNullable,
@@ -363,6 +365,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                                const char* pszDescription );
     void                SetDeferredSpatialIndexCreation( bool bFlag )
                                 { m_bDeferredSpatialIndexCreation = bFlag; }
+    void                SetRegisterAsAspatial( bool bFlag )
+                                { m_bRegisterAsAspatial = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex();
@@ -398,6 +402,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
   private:
     OGRErr              UpdateExtent( const OGREnvelope *poExtent );
     OGRErr              SaveExtent();
+    OGRErr              SaveTimestamp();
     OGRErr              BuildColumns();
     OGRBoolean          IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );

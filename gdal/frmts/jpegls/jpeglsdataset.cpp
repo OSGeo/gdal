@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEGLS driver based on CharLS library
  * Purpose:  JPEGLS driver based on CharLS library
@@ -675,7 +674,7 @@ void GDALRegister_JPEGLS()
 "       <Value>LINE</Value>"
 "       <Value>BAND</Value>"
 "   </Option>"
-"   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, > 1 lossless'/>"
+"   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, >1 = lossy'/>"
 "</CreationOptionList>\n" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
@@ -686,4 +685,3 @@ void GDALRegister_JPEGLS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

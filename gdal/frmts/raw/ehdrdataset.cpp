@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ESRI .hdr Driver
  * Purpose:  Implementation of EHdrDataset

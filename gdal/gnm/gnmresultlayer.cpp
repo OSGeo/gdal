@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM result layer class.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 #include "gnm.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDSIn,
                                                    OGRLayer* poLayerIn)
@@ -210,4 +211,3 @@ OGRErr OGRGNMWrappedResultLayer::ICreateFeature(OGRFeature *poFeature)
 {
     return poLayer->CreateFeature(poFeature);
 }
-

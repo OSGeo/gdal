@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  eCognition
  * Purpose:  Implementation of Erdas .LAN / .GIS format.

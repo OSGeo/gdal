@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Generate Translator
  * Purpose:  Implements OGRARCGENDriver.
@@ -126,4 +125,3 @@ void RegisterOGRARCGEN()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

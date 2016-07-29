@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PALSAR JAXA imagery reader
  * Purpose:  Support for PALSAR L1.1/1.5 imagery and appropriate metadata from

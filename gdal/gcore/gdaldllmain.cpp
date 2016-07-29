@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  The library set-up/clean-up routines.
@@ -134,11 +133,10 @@ static void GDALDestructor(void)
 
 #include <windows.h>
 
-extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
+                               DWORD dwReason,
+                               LPVOID /* lpReserved */ )
 {
-    UNREFERENCED_PARAMETER(hInstance);
-    UNREFERENCED_PARAMETER(lpReserved);
-
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         // nothing to do

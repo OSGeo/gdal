@@ -59,6 +59,7 @@ class GDALGPKGMBTilesLikePseudoDataset
 
   protected:
     bool                m_bNew;
+    bool                m_bHasModifiedTiles;
 
     CPLString           m_osRasterTable;
     int                 m_nZoomLevel;

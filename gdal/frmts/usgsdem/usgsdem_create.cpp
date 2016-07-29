@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  USGS DEM Driver
  * Purpose:  CreateCopy() implementation.
@@ -40,7 +39,6 @@
 #include <cmath>
 
 #include <algorithm>
-
 
 CPL_CVSID("$Id$");
 
