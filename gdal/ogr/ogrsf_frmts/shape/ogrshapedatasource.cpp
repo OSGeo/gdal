@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include <set>
 
-//#define IMMEDIATE_OPENING 1
+// #define IMMEDIATE_OPENING 1
 
 CPL_CVSID("$Id$");
 
@@ -178,15 +178,15 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
     else
     {
-        char      **papszCandidates = VSIReadDir( pszNewName );
+        char **papszCandidates = VSIReadDir( pszNewName );
         const int nCandidateCount = CSLCount( papszCandidates );
         bool bMightBeOldCoverage = false;
         std::set<CPLString> osLayerNameSet;
 
         for( int iCan = 0; iCan < nCandidateCount; iCan++ )
         {
-            const char  *pszCandidate = papszCandidates[iCan];
-            const char  *pszLayerName = CPLGetBasename(pszCandidate);
+            const char *pszCandidate = papszCandidates[iCan];
+            const char *pszLayerName = CPLGetBasename(pszCandidate);
             CPLString osLayerName(pszLayerName);
 #ifdef WIN32
             // On Windows, as filenames are case insensitive, a shapefile layer
@@ -449,8 +449,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
                                   char ** papszOptions )
 
 {
-    int         nShapeType;
-
     // To ensure that existing layers are created.
     GetLayerCount();
 
@@ -480,6 +478,8 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Figure out what type of layer we need.                          */
 /* -------------------------------------------------------------------- */
+    int nShapeType = -1;
+
     if( wkbFlatten(eType) == wkbUnknown || eType == wkbLineString )
         nShapeType = SHPT_ARC;
     else if( eType == wkbPoint )
@@ -530,8 +530,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         nShapeType = SHPT_MULTIPOINTZ;
     else if( eType == wkbNone )
         nShapeType = SHPT_NULL;
-    else
-        nShapeType = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Has the application overridden this with a special creation     */
@@ -540,7 +538,9 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     const char *pszOverride = CSLFetchNameValue( papszOptions, "SHPT" );
 
     if( pszOverride == NULL )
+    {
         /* ignore */;
+    }
     else if( EQUAL(pszOverride,"POINT") )
     {
         nShapeType = SHPT_POINT;
@@ -712,10 +712,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         SHPSetFastModeReadObject( hSHP, TRUE );
 
         CPLFree( pszFilename );
-    }
-    else
-    {
-        hSHP = NULL;
     }
 
 /* -------------------------------------------------------------------- */
