@@ -514,13 +514,26 @@ CPLErr OGDIRasterBand::AdviseRead( int nXOff, int nYOff,
 /*                            OGDIDataset()                            */
 /************************************************************************/
 
-OGDIDataset::OGDIDataset()
-
+OGDIDataset::OGDIDataset() :
+    nClientID(-1),
+    nCurrentBand(-1),
+    nCurrentIndex(-1),
+    pszProjection(NULL),
+    papszSubDatasets(NULL)
 {
-    nClientID = -1;
-    nCurrentBand = -1;
-    nCurrentIndex = -1;
-    papszSubDatasets = NULL;
+    sGlobalBounds.north = 0.0;
+    sGlobalBounds.south = 0.0;
+    sGlobalBounds.east = 0.0;
+    sGlobalBounds.west = 0.0;
+    sGlobalBounds.ns_res = 0.0;
+    sGlobalBounds.ew_res = 0.0;
+
+    sCurrentBounds.north = 0.0;
+    sCurrentBounds.south = 0.0;
+    sCurrentBounds.east = 0.0;
+    sCurrentBounds.west = 0.0;
+    sCurrentBounds.ns_res = 0.0;
+    sCurrentBounds.ew_res = 0.0;
 }
 
 /************************************************************************/
