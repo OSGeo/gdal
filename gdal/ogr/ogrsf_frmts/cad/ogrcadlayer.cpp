@@ -181,16 +181,17 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     oStringStream << ",w:5px)" << std::dec;
     poFeature->SetStyleString( oStringStream.str().c_str() );
 
-    auto oBlockAttrs = poCADGeometry->getBlockAttributes();
-    for( auto citer = oBlockAttrs.cbegin(); citer != oBlockAttrs.cend(); ++citer )
+    std::vector< CADAttrib > oBlockAttrs = poCADGeometry->getBlockAttributes();
+    for( std::vector< CADAttrib >::const_iterator citerBlockAttrs = oBlockAttrs.cbegin(); 
+         citerBlockAttrs != oBlockAttrs.cend(); ++citerBlockAttrs )
     {
-        for( auto citer_fattr = asFeaturesAttributes.cbegin(); 
-            citer_fattr != asFeaturesAttributes.cend(); 
-            ++citer_fattr)
+        for( std::vector< std::string >::const_iterator citerFeatAttrs = asFeaturesAttributes.cbegin(); 
+            citerFeatAttrs != asFeaturesAttributes.cend(); 
+            ++citerFeatAttrs)
         {
-            if( citer->getTag() == *citer_fattr )
+            if( citerBlockAttrs->getTag() == *citerFeatAttrs )
             {
-                poFeature->SetField( (*citer_fattr).c_str(), citer->getTextValue().c_str() );
+                poFeature->SetField( (*citerFeatAttrs).c_str(), citerBlockAttrs->getTextValue().c_str() );
             }
         }
     }

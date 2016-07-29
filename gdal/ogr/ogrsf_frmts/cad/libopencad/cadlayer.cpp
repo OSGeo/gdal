@@ -280,7 +280,7 @@ bool CADLayer::addAttribute(const CADObject *pObject)
     {
         if ( i->first == attrib->stChed.hOwner.getAsLong () )
         {
-            i->second.insert ( make_pair( attrib->sTag, handle ) );
+            i->second.insert ( make_pair( attrib->sTag, layer_handle ) );
             return true;
         }
     }
