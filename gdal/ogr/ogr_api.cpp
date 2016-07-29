@@ -1249,7 +1249,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
         return (OGRGeometryH) ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
     else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
-        return (OGRGeometryH) ((OGRPolyhedralSurface *)hGeom)->getGeometry( iSubGeom );
+        return (OGRGeometryH) ((OGRPolyhedralSurface *)hGeom)->getGeometry(iSubGeom );
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
