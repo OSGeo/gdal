@@ -768,9 +768,9 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
             if( !OGRESRIJSONReaderParseXYZMArray (
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
-                delete poLine;
                 if( poRet != poLine )
                     delete poRet;
+                delete poLine;
                 return NULL;
             }
 
