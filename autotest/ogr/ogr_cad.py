@@ -30,15 +30,12 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE. 
 ################################################################################
-import os
 import sys
-from sys import version_info
 
 sys.path.append( '../pymod' )
 
 import ogrtest
 import gdaltest
-from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
