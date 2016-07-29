@@ -47,8 +47,7 @@ class OGRKMLDataSource;
 
 class OGRKMLLayer : public OGRLayer
 {
-public:
-
+  public:
     OGRKMLLayer( const char* pszName_,
                  OGRSpatialReference* poSRS,
                  bool bWriter,
@@ -76,7 +75,7 @@ public:
 
     CPLString WriteSchema();
 
-private:
+  private:
     friend class OGRKMLDataSource;
 
     OGRKMLDataSource* poDS_;
@@ -104,7 +103,7 @@ private:
 
 class OGRKMLDataSource : public OGRDataSource
 {
-public:
+  public:
     OGRKMLDataSource();
     ~OGRKMLDataSource();
 
@@ -137,8 +136,7 @@ public:
     bool IsFirstCTError() const { return !bIssuedCTError_; }
     void IssuedFirstCTError() { bIssuedCTError_ = true; }
 
-private:
-
+  private:
 #ifdef HAVE_EXPAT
     KML* poKMLFile_;
 #endif
@@ -148,21 +146,21 @@ private:
     OGRKMLLayer** papoLayers_;
     int nLayers_;
 
-    //The name of the field to use for the KML name element
+    // The name of the field to use for the KML name element.
     char* pszNameField_;
     char* pszDescriptionField_;
 
-    //The KML altitude mode to use
+    // The KML altitude mode to use.
     char* pszAltitudeMode_;
 
     char** papszCreateOptions_;
 
-    // output related parameters
+    // Output related parameters.
     VSILFILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
 
-    // Have we issued a coordinate transformation already for this datasource
+    // Have we issued a coordinate transformation already for this datasource.
     bool bIssuedCTError_;
 };
 

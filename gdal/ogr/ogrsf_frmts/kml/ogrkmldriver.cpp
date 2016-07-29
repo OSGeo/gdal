@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogr_kml.h"
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
-#include "ogr_kml.h"
 
 CPL_CVSID("$Id$");
 
@@ -44,7 +45,9 @@ static int OGRKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->fpL == NULL )
         return FALSE;
 
-    return( strstr((const char*)poOpenInfo->pabyHeader, "<kml") != NULL );
+    return
+        strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+               "<kml") != NULL;
 }
 
 /************************************************************************/
@@ -65,14 +68,16 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
-        /*if( poDS->GetLayerCount() == 0 )
+#ifdef DEBUG_VERBOSE
+        if( poDS->GetLayerCount() == 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                 "No layers in KML file: %s.", pszName );
 
             delete poDS;
             poDS = NULL;
-        }*/
+        }
+#endif
     }
     else
     {
