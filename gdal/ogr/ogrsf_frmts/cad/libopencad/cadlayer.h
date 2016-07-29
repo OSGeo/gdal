@@ -77,7 +77,7 @@ public:
     unordered_set< string > getAttributesTags();
 
     // cadinserthandle is 0 by default because if entity isnt a part of custom block - its a part of ModelSpace block.
-    void addHandle(long /*handle*/, enum CADObject::ObjectType type, long cadinserthandle = 0);
+    void addHandle(long handle, enum CADObject::ObjectType type, long cadinserthandle = 0);
 
     size_t getGeometryCount () const;
     CADGeometry* getGeometry(size_t index);
@@ -102,7 +102,7 @@ protected:
     short lineWeight;
     short color;
     size_t layerId;
-    long handle;
+    long layer_handle;
     short geometryType; // if all geometry is same type set this type or -1
 
     unordered_set<string> attributesNames;
