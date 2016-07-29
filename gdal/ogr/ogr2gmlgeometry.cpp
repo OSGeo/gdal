@@ -1366,5 +1366,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         return NULL;
     }
     else
+    {
         return pszText;
+    }
 }
