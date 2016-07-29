@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Implementation of the OGROCIDataSource class.
@@ -240,7 +241,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
     for( i = 0; papszTableList != NULL && papszTableList[i] != NULL; i++ )
     {
-        OpenTable( papszTableList[i], -1, bUpdate, FALSE );
+        OpenTable( papszTableList[i], -1, bUpdate, FALSE, papszOpenOptionsIn );
     }
 
     CSLDestroy( papszTableList );
@@ -253,7 +254,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName,
-                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
+                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen,
+                                 char** papszOpenOptionsIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -276,6 +278,8 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
     papoLayers = (OGROCILayer **)
         CPLRealloc( papoLayers,  sizeof(OGROCILayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
+
+    poLayer->SetOptions( papszOpenOptionsIn );
 
     return TRUE;
 }
@@ -482,6 +486,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     poSession->CleanName( pszSafeLayerName );
     CPLDebug( "OCI", "In Create Layer ..." );
 
+    bNoLogging = CSLFetchBoolean( papszOptions, "NO_LOGGING", false );
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
@@ -572,6 +578,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                      pszSafeLayerName, pszExpectedFIDName,
                      pszGeometryName, SDO_GEOMETRY,
                      (!bGeomNullable) ? " NOT NULL":"");
+        }
+
+        if (bNoLogging)
+        {
+            char     szCommand2[1024];
+            
+            strncpy( szCommand2, szCommand, sizeof(szCommand) );
+            
+            snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
+              "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
+              "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
+              szCommand2, pszGeometryName, pszGeometryName);
         }
 
         if( oStatement.Execute( szCommand ) != CE_None )
