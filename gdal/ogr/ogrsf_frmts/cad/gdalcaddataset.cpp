@@ -153,6 +153,8 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
 
     if( nSubRasterLayer != -1 && nSubRasterFID != -1 )
     {
+        // indicate that subdataset from CAD layer number nSubRasterLayer and 
+        // FID nSubRasterFID is request
         nRasters = 2;
     }
     else
@@ -196,9 +198,11 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 nRasters++;
             }
         }
+        // if nRasters == 2 we have the only one raster in CAD file
     }   
     }
     
+    // the only one raster layer in dataset is present or subdataset is request
     if( nRasters == 2 )
     {
         CADLayer &oLayer = poCADFile->getLayer( nSubRasterLayer );
