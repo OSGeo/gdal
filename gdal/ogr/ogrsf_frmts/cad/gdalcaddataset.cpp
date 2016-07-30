@@ -253,7 +253,18 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 SetBand( iBand,
                     new CADWrapperRasterBand( poRasterDS->GetRasterBand( 
                         iBand )) );
-
+            
+            char** papszDomainList = poRasterDS->GetDomainList();
+            while( papszDomainList )
+            {
+                char** papszMetadata = GetMetadata(*papszDomainList);
+                char** papszRasterMetadata = poRasterDS->GetMetadata(*papszDomainList);
+                if(NULL == papszMetadata)
+                    SetMetadata(papszRasterMetadata, *papszDomainList);
+                else
+                    CSLMerge(papszMetadata, papszRasterMetadata);    
+                papszDomainList++;
+            }    
         }
     }
     
@@ -425,30 +436,7 @@ const GDAL_GCP *GDALCADDataset::GetGCPs()
     return poRasterDS->GetGCPs();    
 } 
 
-char **GDALCADDataset::GetMetadataDomainList()
-{
-    if(NULL == poRasterDS)
-        return GDALDataset::GetMetadataDomainList();
-    return CSLMerge(GDALDataset::GetMetadataDomainList(), 
-                                    poRasterDS->GetMetadataDomainList());    
-}
-    
-char **GDALCADDataset::GetMetadata( const char * pszDomain  )
-{
-    if(NULL == poRasterDS)
-        return GDALDataset::GetMetadata(pszDomain);
-    return CSLMerge(GDALDataset::GetMetadata(pszDomain), 
-                                    poRasterDS->GetMetadata(pszDomain));    
-}
-
-const char *GDALCADDataset::GetMetadataItem( const char * pszName, const char * pszDomain )
-{
-    const char* pszRet = GDALDataset::GetMetadataItem(pszName, pszDomain);
-    if(NULL == pszRet && NULL != poRasterDS)
-        pszRet = poRasterDS->GetMetadataItem(pszName, pszDomain);
-    return pszRet;
-}
-    
+   
 int GDALCADDataset::CloseDependentDatasets()
 {
     int bRet = GDALDataset::CloseDependentDatasets();
