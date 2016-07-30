@@ -129,6 +129,9 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
+    {
+        INITIALIZE_LOCK;
+    }
     bCacheMaxInitialized = TRUE;
     nCacheMax = nNewSizeInBytes;
 
