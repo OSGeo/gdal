@@ -560,7 +560,7 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
     nRasterYSize = nRasterYSizeIn;
     eAccess = eAccessIn;
 
-    bShared = static_cast<GByte>(bSharedIn);
+    bShared = CPL_TO_BOOL(bSharedIn);
 
     responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
@@ -613,7 +613,7 @@ GDALProxyPoolDataset::~GDALProxyPoolDataset()
     /* want ~GDALDataset() to try to release it from its */
     /* shared dataset hashset. This will save a */
     /* "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet" debug message */
-    bShared = FALSE;
+    bShared = false;
 
     CPLFree(pszProjectionRef);
     CPLFree(pszGCPProjection);
