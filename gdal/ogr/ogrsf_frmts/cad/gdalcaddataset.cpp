@@ -152,6 +152,8 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
 
     if( nSubRasterLayer != -1 && nSubRasterFID != -1 )
     {
+        // indicate that subdataset from CAD layer number nSubRasterLayer and 
+        // FID nSubRasterFID is request
         nRasters = 2;
     }
     else
@@ -195,8 +197,10 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 }
             }
         }
+        // if nRasters == 2 we have the only one raster in CAD file
     }
 
+    // the only one raster layer in dataset is present or subdataset is request
     if( nRasters == 2 )
     {
         CADLayer &oLayer = poCADFile->getLayer( nSubRasterLayer );
@@ -228,7 +232,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 GDALClose( poRasterDS );
                 return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
             }
-            
+
             if(poRasterDS->GetGeoTransform(adfGeoTransform) != CE_None)
             {
                 // external world file have priority
@@ -238,7 +242,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 FillTransform(pImage, dfUnits);
             }
             delete pImage;
-            
+
             nRasterXSize = poRasterDS->GetRasterXSize();
             nRasterYSize = poRasterDS->GetRasterYSize();
             if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
@@ -252,9 +256,20 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                     new CADWrapperRasterBand( poRasterDS->GetRasterBand( 
                         iBand )) );
 
+            char** papszDomainList = poRasterDS->GetMetadataDomainList();
+            while( papszDomainList )
+            {
+                char** papszMetadata = GetMetadata(*papszDomainList);
+                char** papszRasterMetadata = poRasterDS->GetMetadata(*papszDomainList);
+                if(NULL == papszMetadata)
+                    SetMetadata(papszRasterMetadata, *papszDomainList);
+                else
+                    CSLMerge(papszMetadata, papszRasterMetadata);    
+                papszDomainList++;
+            }
         }
     }
-    
+
     return TRUE;
 }
 
@@ -401,7 +416,7 @@ CPLErr GDALCADDataset::GetGeoTransform( double* padfGeoTransform )
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
     return CE_None;
 }
-                       
+
 int GDALCADDataset::GetGCPCount()
 {
     if(NULL == poRasterDS)
@@ -421,30 +436,6 @@ const GDAL_GCP *GDALCADDataset::GetGCPs()
     if(NULL == poRasterDS)
         return NULL;
     return poRasterDS->GetGCPs();
-} 
-
-char **GDALCADDataset::GetMetadataDomainList()
-{
-    if(NULL == poRasterDS)
-        return GDALDataset::GetMetadataDomainList();
-    return CSLMerge(GDALDataset::GetMetadataDomainList(), 
-                                    poRasterDS->GetMetadataDomainList());    
-}
-
-char **GDALCADDataset::GetMetadata( const char * pszDomain  )
-{
-    if(NULL == poRasterDS)
-        return GDALDataset::GetMetadata(pszDomain);
-    return CSLMerge(GDALDataset::GetMetadata(pszDomain), 
-                                    poRasterDS->GetMetadata(pszDomain));    
-}
-
-const char *GDALCADDataset::GetMetadataItem( const char * pszName, const char * pszDomain )
-{
-    const char* pszRet = GDALDataset::GetMetadataItem(pszName, pszDomain);
-    if(NULL == pszRet && NULL != poRasterDS)
-        pszRet = poRasterDS->GetMetadataItem(pszName, pszDomain);
-    return pszRet;
 }
 
 int GDALCADDataset::CloseDependentDatasets()
