@@ -1032,7 +1032,7 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
     {
         GDALRasterBand * const poBaseBand = poBaseDS->GetRasterBand(1);
         GDALRasterBand * poBaseMask = poBaseBand != NULL ?
-          poBaseMask = poBaseBand->GetMaskBand() : NULL;
+            poBaseBand->GetMaskBand() : NULL;
 
         const int nOverviewCount = poBaseMask != NULL ?
             poBaseMask->GetOverviewCount() : 0;
