@@ -111,7 +111,7 @@ static const GTIFFTags asTIFFTags[] =
 /*                            IsPowerOfTwo()                            */
 /************************************************************************/
 
-static bool IsPowerOfTwo(unsigned int i)
+static bool IsPowerOfTwo( unsigned int i )
 {
     int nBitSet = 0;
     while(i != 0)
@@ -138,12 +138,12 @@ void GTIFFSetInExternalOvr( bool b )
 
 void GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize )
 {
-    static bool bHasWarned = false;
     const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
     int nOvrBlockSize = atoi(pszVal);
     if( nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
         !IsPowerOfTwo(nOvrBlockSize) )
     {
+        static bool bHasWarned = false;
         if( !bHasWarned )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
@@ -1266,8 +1266,9 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
 GTiffRasterBand::~GTiffRasterBand()
 {
     // So that any future DropReferenceVirtualMem() will not try to access the
-    // raster band object, but this would not conform the advertised contract.
-    if( aSetPSelf.size() != 0 )
+    // raster band object, but this would not conform to the advertised
+    // contract.
+    if( !aSetPSelf.empty() )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Virtual memory objects still exist at GTiffRasterBand "
@@ -5812,8 +5813,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
-        int iBit, iPixel, iBitOffset = 0;
-        int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
 
         if( iBand+1 == nBand )
         {
@@ -5838,22 +5837,22 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             pabyThisImage = static_cast<GByte *>(poBlock->GetDataRef());
         }
 
-        iPixelBitSkip = poGDS->nBitsPerSample * poGDS->nBands;
-        iBandBitOffset = iBand * poGDS->nBitsPerSample;
+        const int iPixelBitSkip = poGDS->nBitsPerSample * poGDS->nBands;
+        const int iBandBitOffset = iBand * poGDS->nBitsPerSample;
 
         // bits per line rounds up to next byte boundary.
-        nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        int nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        iPixel = 0;
-        for( iY = 0; iY < nBlockYSize; ++iY )
+        int iPixel = 0;
+        for( int iY = 0; iY < nBlockYSize; ++iY )
         {
-            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            int iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
             if( poGDS->nBitsPerSample == 12 )
             {
-                for( iX = 0; iX < nBlockXSize; ++iX )
+                for( int iX = 0; iX < nBlockXSize; ++iX )
                 {
                     GUInt32 nInWord =
                         reinterpret_cast<const GUInt16 *>(
@@ -5897,20 +5896,23 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 continue;
             }
 
-            for( iX = 0; iX < nBlockXSize; ++iX )
+            for( int iX = 0; iX < nBlockXSize; ++iX )
             {
                 GUInt32 nInWord = 0;
                 if( eDataType == GDT_Byte )
                 {
-                    nInWord = static_cast<const GByte *>(pabyThisImage)[iPixel++];
+                    nInWord =
+                        static_cast<const GByte *>(pabyThisImage)[iPixel++];
                 }
                 else if( eDataType == GDT_UInt16 )
                 {
-                    nInWord = reinterpret_cast<const GUInt16 *>(pabyThisImage)[iPixel++];
+                    nInWord = reinterpret_cast<const GUInt16 *>(
+                        pabyThisImage)[iPixel++];
                 }
                 else if( eDataType == GDT_UInt32 )
                 {
-                    nInWord = reinterpret_cast<const GUInt32 *>(pabyThisImage)[iPixel++];
+                    nInWord = reinterpret_cast<const GUInt32 *>(
+                        pabyThisImage)[iPixel++];
                 }
                 else
                 {
@@ -5938,24 +5940,24 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] =
-                        (GByte) nInWord;
+                        static_cast<GByte>(nInWord);
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] =
-                        (GByte) (nInWord >> 8);
+                        static_cast<GByte>(nInWord >> 8);
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] =
-                        (GByte) (nInWord >> 16);
+                        static_cast<GByte>(nInWord >> 16);
 #else
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] =
-                        (GByte) (nInWord >> 16);
+                        static_cast<GByte>(nInWord >> 16);
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] =
-                        (GByte) (nInWord >> 8);
+                        static_cast<GByte>(nInWord >> 8);
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] =
-                        (GByte) nInWord;
+                        static_cast<GByte>(nInWord);
 #endif
                     iBitOffset += 24;
                 }
                 else
                 {
-                    for( iBit = 0; iBit < poGDS->nBitsPerSample; ++iBit )
+                    for( int iBit = 0; iBit < poGDS->nBitsPerSample; ++iBit )
                     {
                         // TODO(schwehr): Revisit this block.
                         if( nInWord &
@@ -5976,7 +5978,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     }
                 }
 
-                iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
+                iBitOffset = iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
             }
         }
 
@@ -6155,8 +6157,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else if( poGDS->nBitsPerSample == 12 )
     {
-        int iPixel, iBitOffset = 0;
-        int iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
+        int iPixelBitSkip = 0;
+        int iBandBitOffset = 0;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -6166,22 +6168,21 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             iPixelBitSkip = poGDS->nBitsPerSample;
-            iBandBitOffset = 0;
         }
 
         // bits per line rounds up to next byte boundary.
-        nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        int nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        iPixel = 0;
-        for( iY = 0; iY < nBlockYSize; ++iY )
+        int iPixel = 0;
+        for( int iY = 0; iY < nBlockYSize; ++iY )
         {
-            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            int iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-            for( iX = 0; iX < nBlockXSize; ++iX )
+            for( int iX = 0; iX < nBlockXSize; ++iX )
             {
-                int iByte = iBitOffset>>3;
+                const int iByte = iBitOffset >> 3;
 
                 if( (iBitOffset & 0x7) == 0 )
                 {
@@ -6210,7 +6211,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else if( poGDS->nBitsPerSample == 24 )
     {
-        int     iPixelByteSkip, iBandByteOffset, iX, iY, nBytesPerLine;
+        int iPixelByteSkip = 0;
+        int iBandByteOffset = 0;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -6220,18 +6222,17 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             iPixelByteSkip = poGDS->nBitsPerSample / 8;
-            iBandByteOffset = 0;
         }
 
-        nBytesPerLine = nBlockXSize * iPixelByteSkip;
+        const int nBytesPerLine = nBlockXSize * iPixelByteSkip;
 
         int iPixel = 0;
-        for( iY = 0; iY < nBlockYSize; ++iY )
+        for( int iY = 0; iY < nBlockYSize; ++iY )
         {
             GByte *pabyImage =
                 poGDS->pabyBlockBuf + iBandByteOffset + iY * nBytesPerLine;
 
-            for( iX = 0; iX < nBlockXSize; ++iX )
+            for( int iX = 0; iX < nBlockXSize; ++iX )
             {
 #ifdef CPL_MSB
                 static_cast<GUInt32 *>(pImage)[iPixel++] =
@@ -6254,8 +6255,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else
     {
-        int iBit, iPixel, iBitOffset = 0;
-        int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
+        int iPixelBitSkip = 0;
+        int iBandBitOffset = 0;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -6265,27 +6266,26 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             iPixelBitSkip = poGDS->nBitsPerSample;
-            iBandBitOffset = 0;
         }
 
-        // bits per line rounds up to next byte boundary.
-        nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        // Bits per line rounds up to next byte boundary.
+        int nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
         const GByte * const pabyBlockBuf = poGDS->pabyBlockBuf;
         const int nBitsPerSample = poGDS->nBitsPerSample;
-        iPixel = 0;
+        int iPixel = 0;
 
-        for( iY = 0; iY < nBlockYSize; ++iY )
+        for( int iY = 0; iY < nBlockYSize; ++iY )
         {
-            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            int iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-            for( iX = 0; iX < nBlockXSize; ++iX )
+            for( int iX = 0; iX < nBlockXSize; ++iX )
             {
                 int  nOutWord = 0;
 
-                for( iBit = 0; iBit < nBitsPerSample; ++iBit )
+                for( int iBit = 0; iBit < nBitsPerSample; ++iBit )
                 {
                     if( pabyBlockBuf[iBitOffset>>3]
                         & (0x80 >>(iBitOffset & 7)) )
@@ -6293,7 +6293,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     ++iBitOffset;
                 }
 
-                iBitOffset= iBitOffset + iPixelBitSkip - nBitsPerSample;
+                iBitOffset = iBitOffset + iPixelBitSkip - nBitsPerSample;
 
                 if( eDataType == GDT_Byte )
                 {
@@ -6513,9 +6513,10 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Translate 1bit data to eight bit.                               */
 /* -------------------------------------------------------------------- */
-    int iPixel, iSrcOffset=0, iDstOffset=0;
+    int iSrcOffset = 0;
+    int iDstOffset = 0;
 
-    for( iPixel = 0; iPixel < nBlockXSize; ++iPixel, ++iSrcOffset )
+    for( int iPixel = 0; iPixel < nBlockXSize; ++iPixel, ++iSrcOffset )
     {
         if( poGDS->pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
             static_cast<GByte *>(pImage)[iDstOffset++] = 1;
@@ -7186,7 +7187,7 @@ void GTiffDataset::FillEmptyTiles()
 /*                         HasOnlyNoData()                              */
 /************************************************************************/
 
-template<class T> 
+template<class T>
 static inline bool IsEqualToNoData( T value, T noDataValue )
 {
     return value == noDataValue;
@@ -8656,7 +8657,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
     toff_t *panOffsets = NULL;
 
     if( ( TIFFIsTiled( hTIFF )
-          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) 
+          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts )
           && (pnOffset == NULL || TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets )) )
         || ( !TIFFIsTiled( hTIFF )
           && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
@@ -9781,11 +9782,12 @@ void GTiffDataset::WriteGeoTIFFInfo()
         if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
                 && adfGeoTransform[5] < 0.0 )
         {
-            double adfPixelScale[3] = {
-                adfGeoTransform[1], fabs(adfGeoTransform[5]), 0.0 };
-
             if( !EQUAL(osProfile,"BASELINE") )
+            {
+                const double adfPixelScale[3] = {
+                    adfGeoTransform[1], fabs(adfGeoTransform[5]), 0.0 };
                 TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+            }
 
             double adfTiePoints[6] = {
                 0.0, 0.0, 0.0, adfGeoTransform[0], adfGeoTransform[3], 0.0 };
@@ -9908,18 +9910,16 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
                                 const char *pszDomain )
 
 {
-    char szBandId[32];
-    CPLXMLNode *psItem;
-
 /* -------------------------------------------------------------------- */
 /*      Create the Item element, and subcomponents.                     */
 /* -------------------------------------------------------------------- */
-    psItem = CPLCreateXMLNode( NULL, CXT_Element, "Item" );
+    CPLXMLNode *psItem = CPLCreateXMLNode( NULL, CXT_Element, "Item" );
     CPLCreateXMLNode( CPLCreateXMLNode( psItem, CXT_Attribute, "name"),
                       CXT_Text, pszKey );
 
     if( nBand > 0 )
     {
+        char szBandId[32] = {};
         snprintf( szBandId, sizeof(szBandId), "%d", nBand - 1 );
         CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"sample"),
                           CXT_Text, szBandId );
@@ -11979,9 +11979,8 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
         // Output colorimetric data.
         const int TIFFTAG_TRANSFERRANGE = 0x0156;
 
-        float pCHR[6]; // Primaries
-        float pWP[2];  // Whitepoint
-        uint16 pTXR[6]; // Transfer range
+        float pCHR[6] = {};  // Primaries.
+        uint16 pTXR[6] = {};  // Transfer range.
         const char* pszCHRNames[] = {
             "SOURCE_PRIMARIES_RED",
             "SOURCE_PRIMARIES_GREEN",
@@ -12048,7 +12047,6 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
         }
 
         // Output whitepoint.
-        bool bOutputWhitepoint = true;
         if( pDS != NULL )
             pszValue =
                 pDS->GetMetadataItem("SOURCE_WHITEPOINT", "COLOR_PROFILE");
@@ -12062,6 +12060,8 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
                     CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
                     CSLT_STRIPENDSPACES );
 
+            bool bOutputWhitepoint = true;
+            float pWP[2] = { 0.0f, 0.0f };  // Whitepoint
             if( CSLCount( papszTokens ) != 3 )
             {
                 bOutputWhitepoint = false;
@@ -12543,12 +12543,14 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             poColorTable = new GDALColorTable();
             const int nColorCount = 1 << nBitsPerSample;
 
-            for ( int iColor = 0; iColor < nColorCount; ++iColor )
+            for( int iColor = 0; iColor < nColorCount; ++iColor )
             {
-            oEntry.c1 = oEntry.c2 = oEntry.c3 = (short)
-                        ((255 * (nColorCount - 1 - iColor)) / (nColorCount-1));
-            oEntry.c4 = 255;
-            poColorTable->SetColorEntry( iColor, &oEntry );
+                oEntry.c1 = static_cast<short>(
+                    ((255 * (nColorCount - 1 - iColor)) / (nColorCount-1)));
+                oEntry.c2 = oEntry.c1;
+                oEntry.c3 = oEntry.c1;
+                oEntry.c4 = 255;
+                poColorTable->SetColorEntry( iColor, &oEntry );
             }
 
             nPhotometric = PHOTOMETRIC_PALETTE;
@@ -14854,7 +14856,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     // TODO(schwehr): nBands is a member and this nBands shadows the member.
     const int nBands = poSrcDS->GetRasterCount();
-    for ( int iBand = 2; iBand <= nBands; ++iBand )
+    for( int iBand = 2; iBand <= nBands; ++iBand )
     {
         if( eType != poSrcDS->GetRasterBand(iBand)->GetRasterDataType() )
         {
@@ -15344,13 +15346,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
                 && adfGeoTransform[5] < 0.0 )
             {
-                double adfPixelScale[3] = {
-                    adfGeoTransform[1],
-                    fabs(adfGeoTransform[5]),
-                    0.0
-                };
+                {
+                    const double adfPixelScale[3] = {
+                        adfGeoTransform[1], fabs(adfGeoTransform[5]), 0.0 };
 
-                TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+                    TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3,
+                                  adfPixelScale );
+                }
 
                 double adfTiePoints[6] = {
                     0.0,
