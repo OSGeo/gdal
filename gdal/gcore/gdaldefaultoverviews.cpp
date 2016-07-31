@@ -187,8 +187,6 @@ void GDALDefaultOverviews::OverviewScan()
 /* -------------------------------------------------------------------- */
 /*      Open overview dataset if it exists.                             */
 /* -------------------------------------------------------------------- */
-    bool bExists = false;
-
     if( pszInitName == NULL )
         pszInitName = CPLStrdup(poDS->GetDescription());
 
@@ -205,7 +203,7 @@ void GDALDefaultOverviews::OverviewScan()
         memcpy(&(achOvrFilename[0]),
                osOvrFilename.c_str(),
                osOvrFilename.size() + 1);
-        bExists = CPL_TO_BOOL(
+        bool bExists = CPL_TO_BOOL(
             CPLCheckForFile( &achOvrFilename[0], papszInitSiblingFiles ) );
         osOvrFilename = &achOvrFilename[0];
 
