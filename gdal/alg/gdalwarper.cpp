@@ -613,7 +613,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 
 
     // rescale.
-    const float inverse_255_single = 0.00392157f; // 1. / 255
+    const float inv_alpha_max = static_cast<float>(1.0 / CPLAtof(
+      CSLFetchNameValueDef( psWO->papszWarpOptions, "SRC_ALPHA_MAX", "255" )));
     bool bOutAllOpaque = true;
 #if (defined(__x86_64) || defined(_M_X64))
     GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
@@ -631,7 +632,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
         if( ((size_t)pafMask & 0xf) != 0 )
         {
-            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) * inverse_255_single;
+            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                    inv_alpha_max;
             if( pafMask[iPixel] >= 1.0F )
                 pafMask[iPixel] = 1.0F;
             else
@@ -639,7 +641,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
             iPixel ++;
         }
         CPLAssert( ((size_t)(pafMask + iPixel) & 0xf) == 0 );
-        const __m128 xmm_inverse_255 = _mm_load1_ps(&inverse_255_single);
+        const __m128 xmm_inverse_alpha_max = _mm_load1_ps(&inv_alpha_max);
         const float one_single = 1.0f;
         const __m128 xmm_one = _mm_load1_ps(&one_single);
         const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
@@ -660,12 +662,12 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
                     _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 4) )) );
             __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
                     _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 5) )) );
-            xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_255);
-            xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_255);
-            xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_255);
-            xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_255);
-            xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_255);
-            xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_255);
+            xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
+            xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
+            xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
+            xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_alpha_max);
+            xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_alpha_max);
+            xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_alpha_max);
             xmmMaskNonOpaque0 = _mm_or_ps(xmmMaskNonOpaque0, _mm_cmplt_ps(xmm_mask0, xmm_one));
             xmmMaskNonOpaque1 = _mm_or_ps(xmmMaskNonOpaque1, _mm_cmplt_ps(xmm_mask1, xmm_one));
             xmmMaskNonOpaque2 = _mm_or_ps(xmmMaskNonOpaque2, _mm_cmplt_ps(xmm_mask2, xmm_one));
@@ -692,7 +694,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         }
         for(; iPixel < nXSize * nYSize; iPixel++ )
         {
-            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) * inverse_255_single;
+            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                      inv_alpha_max;
             if( pafMask[iPixel] >= 1.0F )
                 pafMask[iPixel] = 1.0F;
             else
@@ -711,22 +714,22 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 
         for( ; iPixel < nXSize * nYSize-3; iPixel+=4 )
         {
-            pafMask[iPixel] = pafMask[iPixel] * inverse_255_single;
+            pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
             if( pafMask[iPixel] >= 1.0F )
                 pafMask[iPixel] = 1.0F;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+1] = pafMask[iPixel+1] * inverse_255_single;
+            pafMask[iPixel+1] = pafMask[iPixel+1] * inv_alpha_max;
             if( pafMask[iPixel+1] >= 1.0F )
                 pafMask[iPixel+1] = 1.0F;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+2] = pafMask[iPixel+2] * inverse_255_single;
+            pafMask[iPixel+2] = pafMask[iPixel+2] * inv_alpha_max;
             if( pafMask[iPixel+2] >= 1.0F )
                 pafMask[iPixel+2] = 1.0F;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+3] = pafMask[iPixel+3] * inverse_255_single;
+            pafMask[iPixel+3] = pafMask[iPixel+3] * inv_alpha_max;
             if( pafMask[iPixel+3] >= 1.0F )
                 pafMask[iPixel+3] = 1.0F;
             else
@@ -734,7 +737,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         }
         for( ; iPixel < nXSize * nYSize; iPixel++ )
         {
-            pafMask[iPixel] = pafMask[iPixel] * inverse_255_single;
+            pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
             if( pafMask[iPixel] >= 1.0F )
                 pafMask[iPixel] = 1.0F;
             else
@@ -892,7 +895,9 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         }
 
         // rescale.
-        const float inverse_255_single = 0.00392157f;
+        const float inv_alpha_max =  static_cast<float>(CPLAtof(
+            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
+                                  "255" ) ));
 #if (defined(__x86_64) || defined(_M_X64))
         GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
         if( eDT == GDT_Byte || eDT == GDT_UInt16 )
@@ -909,12 +914,14 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
             if( ((size_t)pafMask & 0xf) != 0 )
             {
-                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) * inverse_255_single;
+                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                          inv_alpha_max;
                 pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
                 iPixel ++;
             }
             CPLAssert( ((size_t)(pafMask + iPixel) & 0xf) == 0 );
-            const __m128 xmm_inverse_255 = _mm_load1_ps(&inverse_255_single);
+            const __m128 xmm_inverse_alpha_max =
+                                        _mm_load1_ps(&inv_alpha_max);
             const float one_single = 1.0f;
             const __m128 xmm_one = _mm_load1_ps(&one_single);
             const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
@@ -936,14 +943,14 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                     _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 6) )) );
                 __m128 xmm_mask7 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
                     _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 7) )) );
-                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_255);
-                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_255);
-                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_255);
-                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_255);
-                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_255);
-                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_255);
-                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_inverse_255);
-                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_inverse_255);
+                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
+                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
+                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
+                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_alpha_max);
+                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_alpha_max);
+                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_alpha_max);
+                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_inverse_alpha_max);
+                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_inverse_alpha_max);
                 xmm_mask0 = _mm_min_ps(xmm_mask0, xmm_one);
                 xmm_mask1 = _mm_min_ps(xmm_mask1, xmm_one);
                 xmm_mask2 = _mm_min_ps(xmm_mask2, xmm_one);
@@ -963,7 +970,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             }
             for(; iPixel < nXSize * nYSize; iPixel++ )
             {
-                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) * inverse_255_single;
+                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                        inv_alpha_max;
                 pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
             }
         }
@@ -979,7 +987,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
 
             for(; iPixel < nXSize * nYSize; iPixel++ )
             {
-                pafMask[iPixel] = pafMask[iPixel] * inverse_255_single;
+                pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
                 pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
             }
         }
@@ -1002,19 +1010,25 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         if (nYOff + nYSize > GDALGetRasterBandYSize(hAlphaBand))
             nDstYSize = GDALGetRasterBandYSize(hAlphaBand) - nYOff;
 
-        const float cst_255dot1_single = 255.1f;
-#if (defined(__x86_64) || defined(_M_X64))
         GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
+        const float cst_alpha_max = static_cast<float>(CPLAtof(
+            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
+                                  "255" ) )) +
+            (( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
+               eDT == GDT_Int32 || eDT == GDT_UInt32 ) ?
+                0.1f : 0.0f);
+        
+#if (defined(__x86_64) || defined(_M_X64))
         if( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 )
         {
             // Make sure we have the correct alignment before doing SSE
             if( ((size_t)pafMask & 0xf) != 0 )
             {
-                ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_255dot1_single );
+                ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_alpha_max );
                 iPixel ++;
             }
             CPLAssert( ((size_t)(pafMask + iPixel) & 0xf) == 0 ); 
-            const __m128 xmm_255dot1_single = _mm_load1_ps(&cst_255dot1_single);
+            const __m128 xmm_alpha_max = _mm_load1_ps(&cst_alpha_max);
             for( ; iPixel < nXSize * nYSize-31; iPixel+=32 )
             {
                 __m128 xmm_mask0 = _mm_load_ps(pafMask + iPixel + 4 * 0);
@@ -1025,14 +1039,14 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 __m128 xmm_mask5 = _mm_load_ps(pafMask + iPixel + 4 * 5);
                 __m128 xmm_mask6 = _mm_load_ps(pafMask + iPixel + 4 * 6);
                 __m128 xmm_mask7 = _mm_load_ps(pafMask + iPixel + 4 * 7);
-                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_255dot1_single);
-                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_255dot1_single);
-                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_255dot1_single);
-                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_255dot1_single);
-                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_255dot1_single);
-                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_255dot1_single);
-                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_255dot1_single);
-                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_255dot1_single);
+                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_alpha_max);
+                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_alpha_max);
+                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_alpha_max);
+                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_alpha_max);
+                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_alpha_max);
+                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_alpha_max);
+                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_alpha_max);
+                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_alpha_max);
                  // truncate to int
                 _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 0),
                                 _mm_cvttps_epi32(xmm_mask0));
@@ -1052,7 +1066,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                                 _mm_cvttps_epi32(xmm_mask7));
             }
             for( ; iPixel < nXSize * nYSize; iPixel++ )
-                ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_255dot1_single );
+                ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_alpha_max );
 
             // Write data.
             // Assumes little endianness here
@@ -1066,13 +1080,13 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         {
             for( ; iPixel < nXSize * nYSize-3; iPixel+=4 )
             {
-                pafMask[iPixel+0] = (float)(int) ( pafMask[iPixel+0] * cst_255dot1_single );
-                pafMask[iPixel+1] = (float)(int) ( pafMask[iPixel+1] * cst_255dot1_single );
-                pafMask[iPixel+2] = (float)(int) ( pafMask[iPixel+2] * cst_255dot1_single );
-                pafMask[iPixel+3] = (float)(int) ( pafMask[iPixel+3] * cst_255dot1_single );
+                pafMask[iPixel+0] = (float)(int) ( pafMask[iPixel+0] * cst_alpha_max );
+                pafMask[iPixel+1] = (float)(int) ( pafMask[iPixel+1] * cst_alpha_max );
+                pafMask[iPixel+2] = (float)(int) ( pafMask[iPixel+2] * cst_alpha_max );
+                pafMask[iPixel+3] = (float)(int) ( pafMask[iPixel+3] * cst_alpha_max );
             }
             for( ; iPixel < nXSize * nYSize; iPixel++ )
-                pafMask[iPixel] = (float)(int) ( pafMask[iPixel] * cst_255dot1_single );
+                pafMask[iPixel] = (float)(int) ( pafMask[iPixel] * cst_alpha_max );
 
             // Write data.
 
@@ -1199,6 +1213,18 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * ratio, the higher the performance will be, since exact
  * reprojections must statistically be done with a frequency of
  * 4*error_threshold/SRC_COORD_PRECISION.
+ * 
+ * - SRC_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * source dataset. If the value is not set and the alpha band has a NBITS
+ * metadata item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
+ * value is not set and the alpha band is of type UInt16 (resp Int16), 65535
+ * (resp 32767) is used. Otherwise, 255 is used.
+ *
+ * - DST_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * destination dataset. If the value is not set and the alpha band has a NBITS
+ * metadata item, it is used to set DST_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
+ * value is not set and the alpha band is of type UInt16 (resp Int16), 65535
+ * (resp 32767) is used. Otherwise, 255 is used.
  */
 
 /************************************************************************/
