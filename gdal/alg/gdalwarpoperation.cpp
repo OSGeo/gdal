@@ -392,6 +392,36 @@ int GDALWarpOperation::ValidateOptions()
 }
 
 /************************************************************************/
+/*                            SetAlphaMax()                             */
+/************************************************************************/
+
+static void SetAlphaMax( GDALWarpOptions* psOptions,
+                         GDALRasterBandH hBand,
+                         const char* pszKey )
+{
+    const char* pszNBits = GDALGetMetadataItem(
+                            hBand, "NBITS", "IMAGE_STRUCTURE" );
+    if( pszNBits )
+    {
+        psOptions->papszWarpOptions = CSLSetNameValue(
+            psOptions->papszWarpOptions, pszKey,
+            CPLSPrintf("%u", (1U << atoi(pszNBits)) - 1U) );
+    }
+    else if( GDALGetRasterDataType( hBand ) == GDT_Int16 )
+    {
+        
+        psOptions->papszWarpOptions = CSLSetNameValue(
+            psOptions->papszWarpOptions, pszKey, "32767" );
+    }
+    else if( GDALGetRasterDataType( hBand ) == GDT_UInt16 )
+    {
+        
+        psOptions->papszWarpOptions = CSLSetNameValue(
+            psOptions->papszWarpOptions,pszKey, "65535" );
+    }
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
@@ -567,6 +597,32 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
             if( pszBD )
                 psOptions->dfCutlineBlendDist = CPLAtof(pszBD);
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set SRC_ALPHA_MAX if not provided.                              */
+/* -------------------------------------------------------------------- */
+    if( psOptions->hSrcDS != NULL &&
+        psOptions->nSrcAlphaBand > 0 &&
+        psOptions->nSrcAlphaBand <= GDALGetRasterCount(psOptions->hSrcDS) &&
+        CSLFetchNameValue( psOptions->papszWarpOptions, "SRC_ALPHA_MAX" ) == NULL )
+    {
+        GDALRasterBandH hSrcAlphaBand =  GDALGetRasterBand(
+                          psOptions->hSrcDS, psOptions->nSrcAlphaBand);
+        SetAlphaMax( psOptions, hSrcAlphaBand, "SRC_ALPHA_MAX" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set DST_ALPHA_MAX if not provided.                              */
+/* -------------------------------------------------------------------- */
+    if( psOptions->hDstDS != NULL &&
+        psOptions->nDstAlphaBand > 0 &&
+        psOptions->nDstAlphaBand <= GDALGetRasterCount(psOptions->hDstDS) &&
+        CSLFetchNameValue( psOptions->papszWarpOptions, "DST_ALPHA_MAX" ) == NULL )
+    {
+        GDALRasterBandH hDstAlphaBand =  GDALGetRasterBand(
+                          psOptions->hDstDS, psOptions->nDstAlphaBand);
+        SetAlphaMax( psOptions, hDstAlphaBand, "DST_ALPHA_MAX" );
     }
 
 /* -------------------------------------------------------------------- */
