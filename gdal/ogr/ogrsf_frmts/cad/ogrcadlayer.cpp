@@ -173,7 +173,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     }
 
     RGBColor stRGB = poCADGeometry->getColor();
-    GIntBig adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
+    int adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
     poFeature->SetField( "color", 3, adRGB);
 
     std::stringstream oStringStream;

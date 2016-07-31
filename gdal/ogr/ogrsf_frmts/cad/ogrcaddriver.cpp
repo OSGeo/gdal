@@ -44,7 +44,7 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
     if ( poOpenInfo->pabyHeader[0] != 'A' ||
         poOpenInfo->pabyHeader[1] != 'C' )
         return TRUE;
-        
+
     return IdentifyCADFile ( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ? 
         FALSE : TRUE;
 }
@@ -70,21 +70,21 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         pFileIO = new VSILFileIO( papszTokens[1] ); 
         nSubRasterLayer = atol(papszTokens[2]);
         nSubRasterFID = atol(papszTokens[3]);
-        
+
         CSLDestroy(papszTokens);
     }
     else
     {
         pFileIO = new VSILFileIO( poOpenInfo->pszFilename );    
     }
-    
+
     if ( IdentifyCADFile( pFileIO, false ) == FALSE)
     {
         delete pFileIO;
         return NULL;
     }
-        
-        
+
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -96,7 +96,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         delete pFileIO;
         return NULL;
     }
-         
+
     GDALCADDataset *poDS = new GDALCADDataset();    
     if( !poDS->Open( poOpenInfo, pFileIO, nSubRasterLayer, nSubRasterFID ) )
     {
@@ -114,7 +114,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRCAD()
 {
     GDALDriver  *poDriver;
-    
+
     if ( GDALGetDriverByName( "CAD" ) == NULL )
     {
         poDriver = new GDALDriver();
@@ -124,13 +124,13 @@ void RegisterOGRCAD()
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD Driver" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );        
-        
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='MODE' type='int' min='1' max='3' description='Open mode. 1 - read all data (slow), 2 - read main data (fast), 3 - read less data' default='2'/>"
 "</OpenOptionList>"); 
 
-        
+
         poDriver->pfnOpen = OGRCADDriverOpen;
         poDriver->pfnIdentify = OGRCADDriverIdentify;
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
@@ -144,5 +144,9 @@ CPLString CADRecode( const std::string& sString, int CADEncoding )
     {
         case 29:
             return CPLString( CPLRecode( sString.c_str(), "CP1251", CPL_ENC_UTF8 ) );
+        default:
+            CPLError( CE_Failure, CPLE_NotSupported,
+                  "CADRecode() function does not support provided CADEncoding." );
+            return CPLString("");
     }
 }
