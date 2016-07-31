@@ -163,21 +163,21 @@ class CPL_DLL GDALDefaultOverviews
 
     CPLString   osOvrFilename;
 
-    int         bOvrIsAux;
+    bool        bOvrIsAux;
 
-    int         bCheckedForMask;
-    int         bOwnMaskDS;
+    bool        bCheckedForMask;
+    bool        bOwnMaskDS;
     GDALDataset *poMaskDS;
 
-    // for "overview datasets" we record base level info so we can
+    // For "overview datasets" we record base level info so we can
     // find our way back to get overview masks.
     GDALDataset *poBaseDS;
 
-    // Stuff for deferred initialize/overviewscans...
+    // Stuff for deferred initialize/overviewscans.
     bool        bCheckedForOverviews;
     void        OverviewScan();
     char       *pszInitName;
-    int         bInitNameIsOVR;
+    bool        bInitNameIsOVR;
     char      **papszInitSiblingFiles;
 
   public:
@@ -188,7 +188,7 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
-    void       TransferSiblingFiles(char** papszSiblingFiles);
+    void       TransferSiblingFiles( char** papszSiblingFiles );
 
     int        IsInitialized();
 
@@ -196,8 +196,8 @@ class CPL_DLL GDALDefaultOverviews
 
     // Overview Related
 
-    int        GetOverviewCount(int);
-    GDALRasterBand *GetOverview(int,int);
+    int        GetOverviewCount( int nBand );
+    GDALRasterBand *GetOverview( int nBand, int iOverview );
 
     CPLErr     BuildOverviews( const char * pszBasename,
                                const char * pszResampling,
