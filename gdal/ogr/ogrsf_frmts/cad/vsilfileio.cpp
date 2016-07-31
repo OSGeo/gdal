@@ -60,10 +60,7 @@ bool VSILFileIO::Open(int mode)
         sOpenMode = "r+b";
 
     if(mode & OpenMode::write)
-    {
-        sOpenMode = "w+b";
         return false;
-    }
 
     m_oFileStream = VSIFOpenL( m_soFilePath.c_str(), sOpenMode.c_str() );
 

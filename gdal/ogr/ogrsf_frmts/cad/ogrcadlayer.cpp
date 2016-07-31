@@ -77,7 +77,7 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
     OGRFieldDefn  oLinetypeField( "thickness", OFTReal );
     poFeatureDefn->AddFieldDefn( &oLinetypeField );
 
-    OGRFieldDefn  oColorField( "color", OFTIntegerList );
+    OGRFieldDefn  oColorField( "color", OFTString );
     poFeatureDefn->AddFieldDefn( &oColorField );
 
     OGRFieldDefn  oExtendedField( "extentity_data", OFTString );
@@ -173,10 +173,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     }
 
     RGBColor stRGB = poCADGeometry->getColor();
-    int adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
-    poFeature->SetField( "color", 3, adRGB);
-
+    short adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
     std::stringstream oStringStream;
+    oStringStream << "#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+    oStringStream << "ff ";
+    poFeature->SetField( "color", oStringStream.str().c_str() );
+
+    oStringStream.str(std::string());
     oStringStream << "PEN(c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
     oStringStream << ",w:5px)" << std::dec;
     poFeature->SetStyleString( oStringStream.str().c_str() );
