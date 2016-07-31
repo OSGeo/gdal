@@ -191,10 +191,10 @@ GDALDataset::GDALDataset()
 GDALDataset::GDALDataset(int bForceCachedIOIn)
 
 {
-    Init(bForceCachedIOIn);
+    Init(CPL_TO_BOOL(bForceCachedIOIn));
 }
 
-void GDALDataset::Init(int bForceCachedIOIn)
+void GDALDataset::Init(bool bForceCachedIOIn)
 {
     poDriver = NULL;
     eAccess = GA_ReadOnly;
@@ -204,15 +204,15 @@ void GDALDataset::Init(int bForceCachedIOIn)
     papoBands = NULL;
     nRefCount = 1;
     nOpenFlags = 0;
-    bShared = FALSE;
-    bIsInternal = TRUE;
-    bSuppressOnClose = FALSE;
+    bShared = false;
+    bIsInternal = true;
+    bSuppressOnClose = false;
     papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
-    bForceCachedIO = (GByte)bForceCachedIOIn;
+    bForceCachedIO = bForceCachedIOIn;
 
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
@@ -339,7 +339,7 @@ void GDALDataset::AddToDatasetOpenList()
 /* -------------------------------------------------------------------- */
 /*      Add this dataset to the open dataset list.                      */
 /* -------------------------------------------------------------------- */
-    bIsInternal = FALSE;
+    bIsInternal = false;
 
     CPLMutexHolderD( &hDLMutex );
 
@@ -1147,11 +1147,7 @@ int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
  * @return TRUE if the GDALDataset is available for sharing, or FALSE if not.
  */
 
-int GDALDataset::GetShared()
-
-{
-    return bShared;
-}
+int GDALDataset::GetShared() const { return bShared; }
 
 /************************************************************************/
 /*                            MarkAsShared()                            */
@@ -1166,7 +1162,7 @@ void GDALDataset::MarkAsShared()
 {
     CPLAssert( !bShared );
 
-    bShared = TRUE;
+    bShared = true;
     if( bIsInternal )
         return;
 

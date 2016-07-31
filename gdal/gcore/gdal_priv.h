@@ -310,7 +310,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void AddToDatasetOpenList();
 
-    void           Init(int bForceCachedIO);
+    void           Init( bool bForceCachedIO );
 
   protected:
     GDALDriver  *poDriver;
@@ -325,10 +325,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         nOpenFlags;
 
     int         nRefCount;
-    GByte       bForceCachedIO;
-    GByte       bShared;
-    GByte       bIsInternal;
-    GByte       bSuppressOnClose;
+    bool        bForceCachedIO;
+    bool        bShared;
+    bool        bIsInternal;
+    bool        bSuppressOnClose;
 
                 GDALDataset(void);
                 GDALDataset(int bForceCachedIO);
@@ -475,10 +475,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int           Dereference();
     GDALAccess    GetAccess() const { return eAccess; }
 
-    int           GetShared();
+    int           GetShared() const;
     void          MarkAsShared();
 
-    void          MarkSuppressOnClose() { bSuppressOnClose = TRUE; }
+    void          MarkSuppressOnClose() { bSuppressOnClose = true; }
 
     char        **GetOpenOptions() { return papszOpenOptions; }
 
