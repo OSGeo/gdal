@@ -5993,14 +5993,15 @@ static void ExpandPacked8ToByte255( const GByte * const CPL_RESTRICT pabySrc,
     for( int i = 0, j = 0; i < nBytes; i++, j += 8 )
     {
         const GByte byVal = pabySrc[i];
-        pabyDest[j+0] = static_cast<char>(byVal << 0) >> 7;
-        pabyDest[j+1] = static_cast<char>(byVal << 1) >> 7;
-        pabyDest[j+2] = static_cast<char>(byVal << 2) >> 7;
-        pabyDest[j+3] = static_cast<char>(byVal << 3) >> 7;
-        pabyDest[j+4] = static_cast<char>(byVal << 4) >> 7;
-        pabyDest[j+5] = static_cast<char>(byVal << 5) >> 7;
-        pabyDest[j+6] = static_cast<char>(byVal << 6) >> 7;
-        pabyDest[j+7] = static_cast<char>(byVal << 7) >> 7;
+        // Signedness of char implementation dependent, so be explicit.
+        pabyDest[j+0] = static_cast<signed char>(byVal << 0) >> 7;
+        pabyDest[j+1] = static_cast<signed char>(byVal << 1) >> 7;
+        pabyDest[j+2] = static_cast<signed char>(byVal << 2) >> 7;
+        pabyDest[j+3] = static_cast<signed char>(byVal << 3) >> 7;
+        pabyDest[j+4] = static_cast<signed char>(byVal << 4) >> 7;
+        pabyDest[j+5] = static_cast<signed char>(byVal << 5) >> 7;
+        pabyDest[j+6] = static_cast<signed char>(byVal << 6) >> 7;
+        pabyDest[j+7] = static_cast<signed char>(byVal << 7) >> 7;
     }
 }
 
