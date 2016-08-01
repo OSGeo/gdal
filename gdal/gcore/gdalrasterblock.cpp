@@ -799,9 +799,14 @@ void GDALRasterBlock::Touch()
 void GDALRasterBlock::Touch_unlocked()
 
 {
-    // poNewest==this should not happen as tested in Touch(), and cannot
-    // happen from Internalize()
-    CPLAssert( poNewest != this );
+    // Could happen even if tested in Touch() before taking the lock
+    // Scenario would be :
+    // 0. this is the second block (the one pointed by poNewest->poNext)
+    // 1. Thread 1 calls Touch() and poNewest != this at that point
+    // 2. Thread 2 detaches poNewest
+    // 3. Thread 1 arrives here
+    if( poNewest == this )
+        return;
 
     // In theory, we should not try to touch a block that has been detached.
     CPLAssert(bMustDetach);
