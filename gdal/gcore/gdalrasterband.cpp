@@ -811,28 +811,6 @@ int GDALRasterBand::InitBlockInfo()
 }
 
 /************************************************************************/
-/*                             AdoptBlock()                             */
-/*                                                                      */
-/*      Add a block to the raster band's block matrix.  If this         */
-/*      exceeds our maximum blocks for this layer, flush the oldest     */
-/*      block out.                                                      */
-/*                                                                      */
-/*      This method is protected.                                       */
-/************************************************************************/
-
-CPLErr GDALRasterBand::AdoptBlock( GDALRasterBlock * poBlock )
-
-{
-    if( !InitBlockInfo() )
-        return CE_Failure;
-
-    CPLErr eErr = poBandBlockCache->AdoptBlock(poBlock);
-    if( eErr == CE_None )
-        poBlock->Touch();
-    return eErr;
-}
-
-/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -1134,7 +1112,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return NULL;
         }
 
-        if ( AdoptBlock( poBlock ) != CE_None )
+        if ( poBandBlockCache->AdoptBlock(poBlock) != CE_None )
         {
             poBlock->DropLock();
             delete poBlock;
