@@ -815,7 +815,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     int            InitBlockInfo();
 
-    CPLErr         AdoptBlock( GDALRasterBlock * );
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
     void           AddBlockToFreeList( GDALRasterBlock * );
 
