@@ -787,6 +787,10 @@ CPLErr GDALRasterBlock::Write()
 void GDALRasterBlock::Touch()
 
 {
+    // Can be safely tested outside the lock
+    if( poNewest == this )
+        return;
+
     TAKE_LOCK;
     Touch_unlocked();
 }
@@ -795,8 +799,9 @@ void GDALRasterBlock::Touch()
 void GDALRasterBlock::Touch_unlocked()
 
 {
-    if( poNewest == this )
-        return;
+    // poNewest==this should not happen as tested in Touch(), and cannot
+    // happen from Internalize()
+    CPLAssert( poNewest != this );
 
     // In theory, we should not try to touch a block that has been detached.
     CPLAssert(bMustDetach);
