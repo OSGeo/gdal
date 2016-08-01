@@ -6067,7 +6067,9 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             int iSrcOffsetBit = (iSrcOffsetByte + nBlockXSize / 8) * 8;
             iDstOffset += nBlockXSize & ~0x7;
             const GByte bSetVal = poGDS->bPromoteTo8Bits ? 255 : 1;
-            for( int iPixel = nBlockXSize & ~0x7 ; iPixel < nBlockXSize; ++iPixel, ++iSrcOffsetBit )
+            for( int iPixel = nBlockXSize & ~0x7 ;
+                 iPixel < nBlockXSize;
+                 ++iPixel, ++iSrcOffsetBit )
             {
                 if( pabyBlockBuf[iSrcOffsetBit >>3] &
                     (0x80 >> (iSrcOffsetBit & 0x7)) )
@@ -6085,10 +6087,11 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         const int nWordBytes = poGDS->nBitsPerSample / 8;
         GByte *pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
-        const int iSkipBytes = ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ?
+        const int iSkipBytes =
+            ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ?
             nWordBytes : poGDS->nBands * nWordBytes;
 
-        int nBlockPixels = nBlockXSize * nBlockYSize;
+        const int nBlockPixels = nBlockXSize * nBlockYSize;
         if( poGDS->nBitsPerSample == 16 )
         {
             for( int i = 0; i < nBlockPixels; ++i )
@@ -6620,7 +6623,6 @@ GTiffDataset::GTiffDataset() :
     m_nTABFILEGeorefSrcIndex(-1),
     m_nWORLDFILEGeorefSrcIndex(-1),
     m_nGeoTransformGeorefSrcIndex(-1)
-//    m_nProjectionGeorefSrcIndex(-1)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -6710,7 +6712,7 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
     FlushCacheInternal( true );
 
-    // Destroy compression pool
+    // Destroy compression pool.
     if( poCompressThreadPool )
     {
         delete poCompressThreadPool;
@@ -6907,7 +6909,7 @@ int GTiffDataset::GetJPEGOverviewCount()
         {
             return 0;
         }
-        nJPEGTableSize --;  // Remove final 0xD9.
+        nJPEGTableSize--;  // Remove final 0xD9.
     }
     else
     {
@@ -7067,8 +7069,8 @@ void GTiffDataset::FillEmptyTiles()
 /* -------------------------------------------------------------------- */
     else if( nCompression == COMPRESSION_NONE && (nBitsPerSample % 8) == 0  )
     {
-        // Only use libtiff to write the first sparse block to ensure that it will
-        // serialize offset and count arrays back to disk.
+        // Only use libtiff to write the first sparse block to ensure that it
+        // will serialize offset and count arrays back to disk.
         int nCountBlocksToZero = 0;
         for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
         {
@@ -7078,7 +7080,9 @@ void GTiffDataset::FillEmptyTiles()
                 {
                     const bool bWriteEmptyTilesBak = bWriteEmptyTiles;
                     bWriteEmptyTiles = true;
-                    const bool bOK = ( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) == CE_None );
+                    const bool bOK =
+                        WriteEncodedTileOrStrip( iBlock, pabyData,
+                                                 FALSE ) == CE_None;
                     bWriteEmptyTiles = bWriteEmptyTilesBak;
                     if( !bOK )
                         break;
@@ -7123,9 +7127,10 @@ void GTiffDataset::FillEmptyTiles()
                 }
             }
             CPLAssert( iBlockToZero ==
-                              static_cast<vsi_l_offset>(nCountBlocksToZero) );
+                       static_cast<vsi_l_offset>(nCountBlocksToZero) );
 
-            if( VSIFTruncateL( fpTIF, nOffset + iBlockToZero * nBlockBytes ) != 0 )
+            if( VSIFTruncateL( fpTIF,
+                               nOffset + iBlockToZero * nBlockBytes ) != 0 )
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Cannot initialize empty blocks");
@@ -7163,21 +7168,25 @@ static inline bool IsEqualToNoData( T value, T noDataValue )
 
 template<> bool IsEqualToNoData<float>( float value, float noDataValue )
 {
-    return CPLIsNan(noDataValue) ? CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
+    return
+        CPLIsNan(noDataValue) ?
+        CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
 }
 
 template<> bool IsEqualToNoData<double>( double value, double noDataValue )
 {
-    return CPLIsNan(noDataValue) ? CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
+    return
+        CPLIsNan(noDataValue) ?
+        CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
 }
 
 
 template<class T>
 bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
-                                  int nLineStride, int nComponents )
+                                   int nLineStride, int nComponents )
 {
     const T noDataValue = static_cast<T>((bNoDataSet) ? dfNoDataValue : 0.0);
-    // Fast test: check the 4 corners and the middle pixel
+    // Fast test: check the 4 corners and the middle pixel.
     for( int iBand = 0; iBand < nComponents; iBand++ )
     {
         if( !(IsEqualToNoData(pBuffer[iBand], noDataValue) &&
@@ -7190,7 +7199,7 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
         }
     }
 
-    // Test all pixels now
+    // Test all pixels.
     for( int iY = 0; iY < nHeight; iY++ )
     {
         for( int iX = 0; iX < nWidth * nComponents; iX++ )
@@ -7292,7 +7301,8 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
     if( nBitsPerSample == 32 && eDT == GDT_Float32 )
     {
         if( CPLIsNan(dfNoDataValue) )
-            return CPL_TO_BOOL(CPLIsNan(*(reinterpret_cast<const float*>(pBuffer))));
+            return CPL_TO_BOOL(
+                CPLIsNan(*(reinterpret_cast<const float*>(pBuffer))));
         return *(reinterpret_cast<const float*>(pBuffer)) ==
                         static_cast<float>(dfEffectiveNoData);
     }
@@ -7324,7 +7334,6 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
 /* -------------------------------------------------------------------- */
     if( !bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData) )
     {
-        // WaitCompletionForBlock(tile); // not needed since threaded I/O is for compressed only
         if( !IsBlockAvailable(tile) )
         {
             const int nComponents =
@@ -7335,13 +7344,16 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
             iColumn = (tile % nBlocksPerBand) % nBlocksPerRow;
             iRow = (tile % nBlocksPerBand) / nBlocksPerRow;
 
-            int nActualBlockWidth = ( iColumn == nBlocksPerRow - 1 ) ?
-                                nRasterXSize - iColumn * nBlockXSize : nBlockXSize;
-            int nActualBlockHeight = ( iRow ==  nBlocksPerColumn - 1 ) ?
-                                nRasterYSize - iRow * nBlockYSize : nBlockYSize;
+            const int nActualBlockWidth =
+                ( iColumn == nBlocksPerRow - 1 ) ?
+                nRasterXSize - iColumn * nBlockXSize : nBlockXSize;
+            const int nActualBlockHeight =
+                ( iRow ==  nBlocksPerColumn - 1 ) ?
+                nRasterYSize - iRow * nBlockYSize : nBlockYSize;
 
             if( HasOnlyNoData(pabyData,
-                  nActualBlockWidth, nActualBlockHeight, nBlockXSize, nComponents ) )
+                              nActualBlockWidth, nActualBlockHeight,
+                              nBlockXSize, nComponents ) )
             {
                 return true;
             }
@@ -7438,7 +7450,7 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
 
     if( bStreamingOut )
     {
-        if( tile != (uint32)(nLastWrittenBlockId + 1) )
+        if( tile != static_cast<uint32>(nLastWrittenBlockId + 1) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Attempt to write block %d whereas %d was expected",
@@ -7461,11 +7473,11 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
     if( SubmitCompressionJob(tile, pabyData, cc, nBlockYSize) )
         return true;
 
-    // libtiff 4.0.6 or older do not always properly report write errors
+    // libtiff 4.0.6 or older do not always properly report write errors.
 #if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
-    CPLErr eBefore = CPLGetLastErrorType();
+    const CPLErr eBefore = CPLGetLastErrorType();
 #endif
-    bool bRet =
+    const bool bRet =
         static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc)) == cc;
 #if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
     if( eBefore == CE_None && CPLGetLastErrorType() == CE_Failure )
@@ -7488,7 +7500,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
 /*      we need to trim the number of scanlines written to the          */
 /*      amount of valid data we have. (#2748)                           */
 /* -------------------------------------------------------------------- */
-    int nStripWithinBand = strip % nBlocksPerBand;
+    const int nStripWithinBand = strip % nBlocksPerBand;
     int nStripHeight = nRowsPerStrip;
 
     if( static_cast<int>((nStripWithinBand+1) * nRowsPerStrip) >
@@ -7505,14 +7517,14 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
 /* -------------------------------------------------------------------- */
     if( !bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData) )
     {
-        // WaitCompletionForBlock(strip); // not needed since threaded I/O is for compressed only
         if( !IsBlockAvailable(strip) )
         {
             const int nComponents =
                 nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
 
             if( HasOnlyNoData(pabyData,
-                  nBlockXSize, nStripHeight, nBlockXSize, nComponents ) )
+                              nBlockXSize, nStripHeight,
+                              nBlockXSize, nComponents ) )
             {
                 return true;
             }
@@ -7568,7 +7580,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
     if( SubmitCompressionJob(strip, pabyData, cc, nStripHeight) )
         return true;
 
-    // libtiff 4.0.6 or older do not always properly report write errors
+    // libtiff 4.0.6 or older do not always properly report write errors.
 #if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
     CPLErr eBefore = CPLGetLastErrorType();
 #endif
@@ -7586,7 +7598,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
 /*                        InitCompressionThreads()                      */
 /************************************************************************/
 
-void GTiffDataset::InitCompressionThreads(char** papszOptions)
+void GTiffDataset::InitCompressionThreads( char** papszOptions )
 {
     const char* pszValue = CSLFetchNameValue( papszOptions, "NUM_THREADS" );
     if( pszValue == NULL )
@@ -7619,7 +7631,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
                 {
                     // Add a margin of an extra job w.r.t thread number
                     // so as to optimize compression time (enables the main
-                    // thread to do boring I/O while all CPUs are working)
+                    // thread to do boring I/O while all CPUs are working).
                     asCompressionJobs.resize(nThreads + 1);
                     memset(&asCompressionJobs[0], 0,
                            asCompressionJobs.size() *
@@ -7662,7 +7674,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
 /*                       GetGTIFFKeysFlavor()                           */
 /************************************************************************/
 
-static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor(char** papszOptions)
+static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor( char** papszOptions )
 {
     const char* pszGeoTIFFKeysFlavor =
         CSLFetchNameValueDef( papszOptions, "GEOTIFF_KEYS_FLAVOR", "STANDARD" );
@@ -7675,7 +7687,7 @@ static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor(char** papszOptions)
 /*                      InitCreationOrOpenOptions()                     */
 /************************************************************************/
 
-void GTiffDataset::InitCreationOrOpenOptions(char** papszOptions)
+void GTiffDataset::InitCreationOrOpenOptions( char** papszOptions )
 {
     InitCompressionThreads(papszOptions);
 
@@ -7686,7 +7698,7 @@ void GTiffDataset::InitCreationOrOpenOptions(char** papszOptions)
 /*                      ThreadCompressionFunc()                         */
 /************************************************************************/
 
-void GTiffDataset::ThreadCompressionFunc(void* pData)
+void GTiffDataset::ThreadCompressionFunc( void* pData )
 {
     GTiffCompressionJob* psJob = static_cast<GTiffCompressionJob *>(pData);
     GTiffDataset* poDS = psJob->poDS;
@@ -7714,8 +7726,8 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
     TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->nPlanarConfig);
 
     bool bOK
-        = (TIFFWriteEncodedStrip(hTIFFTmp, 0, psJob->pabyBuffer,
-                                 psJob->nBufferSize) == psJob->nBufferSize);
+        = TIFFWriteEncodedStrip(hTIFFTmp, 0, psJob->pabyBuffer,
+                                psJob->nBufferSize) == psJob->nBufferSize;
 
     int nOffset = 0;
     if( bOK )
@@ -7751,8 +7763,8 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
     {
         vsi_l_offset nFileSize = 0;
         GByte* pabyCompressedBuffer = VSIGetMemFileBuffer(psJob->pszTmpFilename,
-                                                                &nFileSize,
-                                                                FALSE);
+                                                          &nFileSize,
+                                                          FALSE);
         CPLAssert( nOffset + psJob->nCompressedBufferSize <=
                    static_cast<int>(nFileSize) );
         psJob->pabyCompressedBuffer = pabyCompressedBuffer + nOffset;
@@ -7772,12 +7784,14 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
 /*                        WriteRawStripOrTile()                         */
 /************************************************************************/
 
-void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
-                                       GByte* pabyCompressedBuffer,
-                                       int nCompressedBufferSize)
+void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
+                                        GByte* pabyCompressedBuffer,
+                                        int nCompressedBufferSize )
 {
-    //CPLDebug("GTIFF", "Writing raw strip/tile %d, size %d",
-    //         nStripOrTile, nCompressedBufferSize);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GTIFF", "Writing raw strip/tile %d, size %d",
+             nStripOrTile, nCompressedBufferSize);
+#endif
     toff_t *panOffsets = NULL;
     if( TIFFGetField(
             hTIFF,
@@ -7814,7 +7828,7 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
                          nBlockId);
 
                 CPLAcquireMutex(hCompressThreadPoolMutex, 1000.0);
-                bool bReady = asCompressionJobs[i].bReady;
+                const bool bReady = asCompressionJobs[i].bReady;
                 CPLReleaseMutex(hCompressThreadPoolMutex);
                 if( !bReady )
                 {
@@ -7842,8 +7856,8 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
 /*                      SubmitCompressionJob()                          */
 /************************************************************************/
 
-bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte* pabyData,
-                                       int cc, int nHeight)
+bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
+                                         int cc, int nHeight )
 {
 /* -------------------------------------------------------------------- */
 /*      Should we do compression in a worker thread ?                   */
@@ -7856,13 +7870,13 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte* pabyData,
         return false;
 
     int nNextCompressionJobAvail = -1;
-    // Wait that at least one job is finished
+    // Wait that at least one job is finished.
     poCompressThreadPool->WaitCompletion(
         static_cast<int>(asCompressionJobs.size() - 1) );
     for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
     {
         CPLAcquireMutex(hCompressThreadPoolMutex, 1000.0);
-        bool bReady = asCompressionJobs[i].bReady;
+        const bool bReady = asCompressionJobs[i].bReady;
         CPLReleaseMutex(hCompressThreadPoolMutex);
         if( bReady )
         {
@@ -7909,7 +7923,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte* pabyData,
 /*                          DiscardLsb()                                */
 /************************************************************************/
 
-void GTiffDataset::DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand)
+void GTiffDataset::DiscardLsb( GByte* pabyBuffer, int nBytes, int iBand )
 {
     if( nBitsPerSample == 8 )
     {
@@ -8046,7 +8060,8 @@ CPLErr GTiffDataset::FlushBlockBuf()
     if( !SetDirectory() )
         return CE_Failure;
 
-    CPLErr eErr = WriteEncodedTileOrStrip(nLoadedBlock, pabyBlockBuf, true);
+    const CPLErr eErr =
+        WriteEncodedTileOrStrip(nLoadedBlock, pabyBlockBuf, true);
     if( eErr != CE_None )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -8072,10 +8087,9 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /* -------------------------------------------------------------------- */
 /*      If we have a dirty loaded block, flush it out first.            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
     if( nLoadedBlock != -1 && bLoadedBlockDirty )
     {
-        eErr = FlushBlockBuf();
+        const CPLErr eErr = FlushBlockBuf();
         if( eErr != CE_None )
             return eErr;
     }
@@ -8137,8 +8151,8 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /*      an error won't be reported in this case. (#1179)                */
 /* -------------------------------------------------------------------- */
     int nBlockReqSize = nBlockBufSize;
-    int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
+    const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    const int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
 
     if( static_cast<int>((nBlockYOff+1) * nBlockYSize) > nRasterYSize )
     {
@@ -8164,6 +8178,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /* -------------------------------------------------------------------- */
 /*      Load the block, if it isn't our current block.                  */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
     if( TIFFIsTiled( hTIFF ) )
     {
         if( TIFFReadEncodedTile(hTIFF, nBlockId, pabyBlockBuf,
@@ -8212,7 +8227,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /*                   GTiffFillStreamableOffsetAndCount()                */
 /************************************************************************/
 
-static void GTiffFillStreamableOffsetAndCount(TIFF* hTIFF, int nSize)
+static void GTiffFillStreamableOffsetAndCount( TIFF* hTIFF, int nSize )
 {
     uint32  nXSize, nYSize;
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
@@ -8234,7 +8249,7 @@ static void GTiffFillStreamableOffsetAndCount(TIFF* hTIFF, int nSize)
     if( !bIsTiled  )
     {
         TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &nRowsPerStrip);
-        if( nRowsPerStrip > (uint32)nYSize )
+        if( nRowsPerStrip > static_cast<uint32>(nYSize) )
             nRowsPerStrip = nYSize;
         nBlocksPerBand = DIV_ROUND_UP(nYSize, nRowsPerStrip);
     }
@@ -8242,7 +8257,7 @@ static void GTiffFillStreamableOffsetAndCount(TIFF* hTIFF, int nSize)
     {
         int cc = bIsTiled ? static_cast<int>(TIFFTileSize(hTIFF)) :
                             static_cast<int>(TIFFStripSize(hTIFF));
-        if( !bIsTiled  )
+        if( !bIsTiled )
         {
 /* -------------------------------------------------------------------- */
 /*      If this is the last strip in the image, and is partial, then    */
@@ -8541,7 +8556,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             vsi_l_offset nCurOffset = VSIFTellL(fp);
             if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 )
             {
-                vsi_l_offset l_nDirOffset;
+                vsi_l_offset l_nDirOffset = 0;
                 if( hTIFF->tif_flags&TIFF_BIGTIFF )
                     l_nDirOffset =
                         hTIFF->
@@ -8573,7 +8588,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 
             if( ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
             {
-                vsi_l_offset l_nDirOffset;
+                vsi_l_offset l_nDirOffset = 0;
                 if( hTIFF->tif_flags&TIFF_BIGTIFF )
                     l_nDirOffset =
                         hTIFF->
@@ -8753,7 +8768,7 @@ void GTiffDataset::FlushDirectory()
             if( !SetDirectory() )
                 return;
 
-            TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
+            const TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
             nDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
             if( (nDirOffset % 2) == 1 )
@@ -8779,7 +8794,7 @@ void GTiffDataset::FlushDirectory()
     if( GetAccess() == GA_Update && TIFFCurrentDirOffset(hTIFF) == nDirOffset )
     {
 #if defined(BIGTIFF_SUPPORT)
-        TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
+        const TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
         if( (nNewDirOffset % 2) == 1 )
@@ -8819,7 +8834,7 @@ CPLErr GTiffDataset::CleanOverviews()
 /*      Cleanup overviews objects, and get offsets to all overview      */
 /*      directories.                                                    */
 /* -------------------------------------------------------------------- */
-    std::vector<toff_t>  anOvDirOffsets;
+    std::vector<toff_t> anOvDirOffsets;
 
     for( int i = 0; i < nOverviewCount; ++i )
     {
@@ -8844,7 +8859,7 @@ CPLErr GTiffDataset::CleanOverviews()
             {
                 CPLDebug( "GTiff", "%d -> %d",
                           static_cast<int>(anOvDirOffsets[i]), iThisOffset );
-                anOvDirIndexes.push_back( (uint16) iThisOffset );
+                anOvDirIndexes.push_back( static_cast<uint16>(iThisOffset) );
             }
         }
 
