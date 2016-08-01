@@ -7481,7 +7481,7 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
         static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc)) == cc;
 #if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
     if( eBefore == CE_None && CPLGetLastErrorType() == CE_Failure )
-        bRet = FALSE;
+        return false;
 #endif
     return bRet;
 }
