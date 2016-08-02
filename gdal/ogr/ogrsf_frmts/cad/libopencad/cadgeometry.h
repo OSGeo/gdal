@@ -324,7 +324,7 @@ public:
     vector<CADVector>&  getFitPoints();
     vector<double>&     getControlPointsWeights();
 
-    void                addControlPointsWeight(double weight);
+    void                addControlPointsWeight(double p_weight);
     void                addControlPoint(const CADVector& point);
     void                addFitPoint(const CADVector& point);
     

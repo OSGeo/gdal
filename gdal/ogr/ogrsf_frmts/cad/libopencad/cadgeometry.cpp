@@ -699,9 +699,9 @@ void CADSpline::setClosed(bool value)
     closed = value;
 }
 
-void CADSpline::addControlPointsWeight(double weight)
+void CADSpline::addControlPointsWeight(double p_weight)
 {
-    ctrlPointsWeight.push_back (weight);
+    ctrlPointsWeight.push_back (p_weight);
 }
 
 void CADSpline::addControlPoint(const CADVector &point)
