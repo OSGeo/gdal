@@ -955,8 +955,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         }
 
         const bool bRelativeToVRT =
-            CPL_TO_BOOL(
-                CSLFetchBoolean( papszOptions, "relativeToVRT", FALSE ));
+            CPLFetchBool( papszOptions, "relativeToVRT", false );
 
 /* -------------------------------------------------------------------- */
 /*      Create and initialize the band.                                 */

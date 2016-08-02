@@ -5407,7 +5407,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
         nRestartInterval = atoi(CSLFetchNameValue(papszOptions,"RESTART_INTERVAL"));
     }
 
-    int bProgressive = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
+    const bool bProgressive = CPLFetchBool( papszOptions, "PROGRESSIVE", false );
 
 /* -------------------------------------------------------------------- */
 /*      Compute blocking factors                                        */
