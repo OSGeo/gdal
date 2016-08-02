@@ -737,7 +737,8 @@ typedef struct
 } GDALRasterIOTransformerStruct;
 
 static int GDALRasterIOTransformer( void *pTransformerArg,
-                                    CPL_UNUSED int bDstToSrc, int nPointCount,
+                                    CPL_UNUSED int bDstToSrc,
+                                    int nPointCount,
                                     double *x, double *y, double * /* z */,
                                     int *panSuccess )
 {
@@ -757,12 +758,13 @@ static int GDALRasterIOTransformer( void *pTransformerArg,
 /*                          RasterIOResampled()                         */
 /************************************************************************/
 
-CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
-                                  int nXOff, int nYOff, int nXSize, int nYSize,
-                                  void * pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType,
-                                  GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg )
+CPLErr GDALRasterBand::RasterIOResampled(
+    GDALRWFlag /* eRWFlag */,
+    int nXOff, int nYOff, int nXSize, int nYSize,
+    void * pData, int nBufXSize, int nBufYSize,
+    GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALRasterIOExtraArg* psExtraArg )
 {
     // Determine if we use warping resampling or overview resampling
     bool bUseWarp = false;
@@ -1188,14 +1190,15 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 /*                          RasterIOResampled()                         */
 /************************************************************************/
 
-CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void *pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg )
+CPLErr GDALDataset::RasterIOResampled(
+    GDALRWFlag /* eRWFlag */,
+    int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize,
+    GDALDataType eBufType,
+    int nBandCount, int *panBandMap,
+    GSpacing nPixelSpace, GSpacing nLineSpace,
+    GSpacing nBandSpace,
+    GDALRasterIOExtraArg* psExtraArg )
 
 {
 #if 0

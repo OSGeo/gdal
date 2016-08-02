@@ -841,7 +841,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( CPL_UNUSED const char * pszProjection )
+CPLErr GDALDataset::SetProjection( const char * /* pszProjection */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -951,7 +951,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double * padfTransform )
+CPLErr GDALDataset::SetGeoTransform( double * /* padfTransform */ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -995,7 +995,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognized/supported.
  */
 
-void *GDALDataset::GetInternalHandle( CPL_UNUSED const char * pszHandleName )
+void *GDALDataset::GetInternalHandle( const char * /* pszHandleName */ )
 
 {
     return( NULL );
@@ -5828,7 +5828,7 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 */
 
-OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
+OGRLayer* GDALDataset::GetLayer( int /* iLayer */ )
 {
     return NULL;
 }
@@ -5867,7 +5867,7 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
+int GDALDataset::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -5918,7 +5918,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
  @return OGRERR_NONE on success.
  @since GDAL 2.0
 */
-OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
+OGRErr GDALDataset::StartTransaction( int /* bForce */ )
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
