@@ -486,7 +486,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     poSession->CleanName( pszSafeLayerName );
     CPLDebug( "OCI", "In Create Layer ..." );
 
-    bNoLogging = CSLFetchBoolean( papszOptions, "NO_LOGGING", false );
+    bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -494,7 +494,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     int iLayer;
 
-    if( CSLFetchBoolean( papszOptions, "TRUNCATE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "TRUNCATE", false ) )
     {
         CPLDebug( "OCI", "Calling TruncateLayer for %s", pszLayerName );
         TruncateLayer( pszSafeLayerName );
@@ -545,7 +545,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -583,9 +584,9 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         if (bNoLogging)
         {
             char     szCommand2[1024];
-            
+
             strncpy( szCommand2, szCommand, sizeof(szCommand) );
-            
+
             snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
               "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
               "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
@@ -619,8 +620,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Set various options on the layer.                               */
 /* -------------------------------------------------------------------- */
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
     if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
         poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );

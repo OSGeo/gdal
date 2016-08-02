@@ -70,13 +70,13 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
             m_eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
     }
     m_nBulkUpload = m_poDS->m_nBulkUpload;
-    if( CSLFetchBoolean(papszOptions, "BULK_INSERT", TRUE) )
+    if( CPLFetchBool(papszOptions, "BULK_INSERT", true) )
     {
         m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
     }
 
     m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
-    m_bStoreFields = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "STORE_FIELDS", false));
+    m_bStoreFields = CPLFetchBool(papszOptions, "STORE_FIELDS", false);
 
     const char* pszStoredFields = CSLFetchNameValue(papszOptions, "STORED_FIELDS");
     if( pszStoredFields )

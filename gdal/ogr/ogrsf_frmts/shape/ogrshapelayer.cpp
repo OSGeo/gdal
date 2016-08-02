@@ -162,7 +162,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     poFeatureDefn = SHPReadOGRFeatureDefn(
         CPLGetBasename(pszFullName),
         hSHP, hDBF, osEncoding,
-        CSLFetchBoolean(poDS->GetOpenOptions(), "ADJUST_TYPE", FALSE) );
+        CPLFetchBool(poDS->GetOpenOptions(), "ADJUST_TYPE", false) );
 
     // To make sure that
     //  GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef() == GetSpatialRef()
