@@ -1416,6 +1416,7 @@ def pdf_extra_rasters():
 
     options = [ 'MARGIN=1',
                 'DPI=300',
+                'WRITE_USERUNIT=YES',
                 'CLIPPING_EXTENT=440780,3750180,441860,3751260',
                 'LAYER_NAME=byte_tif',
                 'EXTRA_RASTERS=tmp/subbyte.vrt',
