@@ -467,8 +467,8 @@ static const char* const apszGMLGeometryElements[] =
     "Surface",
     "Tin",
     "TopoCurve",
-    "TopoSurface"
-    "TriangulatedSurface",
+    "TopoSurface",
+    "TriangulatedSurface"
 };
 
 #define GML_GEOMETRY_TYPE_COUNT  \
