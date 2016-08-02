@@ -1358,7 +1358,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( CPL_UNUSED char ** papszNames )
+CPLErr GDALRasterBand::SetCategoryNames( char ** /* papszNames */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -1462,7 +1462,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
+CPLErr GDALRasterBand::SetNoDataValue( double /* dfNoData */ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -5539,7 +5539,8 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  * failing.
  */
 
-CPLErr GDALRasterBand::SetDefaultRAT( CPL_UNUSED const GDALRasterAttributeTable *poRAT )
+CPLErr GDALRasterBand::SetDefaultRAT(
+    const GDALRasterAttributeTable * /* poRAT */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,

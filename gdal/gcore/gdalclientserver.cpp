@@ -6328,7 +6328,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 static GDALDriver* poAPIPROXYDriver = NULL;
 
-static void GDALUnloadAPIPROXYDriver(CPL_UNUSED GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 {
     if( bRecycleChild )
     {

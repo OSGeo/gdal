@@ -317,8 +317,8 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 /*                      GDALGMLJP2XPathErrorHandler()                   */
 /************************************************************************/
 
-static void GDALGMLJP2XPathErrorHandler(CPL_UNUSED void * userData,
-                                        xmlErrorPtr error)
+static void GDALGMLJP2XPathErrorHandler( void * /* userData */,
+                                         xmlErrorPtr error)
 {
     if( error->domain == XML_FROM_XPATH &&
         error->str1 != NULL &&

@@ -153,7 +153,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double timeout,
  * @return TRUE if successful, or FALSE on an error.
  */
 
-int GDALAsyncReader::LockBuffer( CPL_UNUSED double dfTimeout )
+int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
 {
     return TRUE;
 }
@@ -305,11 +305,11 @@ GDALDefaultAsyncReader::~GDALDefaultAsyncReader()
 /************************************************************************/
 
 GDALAsyncStatusType
-GDALDefaultAsyncReader::GetNextUpdatedRegion(CPL_UNUSED double dfTimeout,
-                                             int* pnBufXOff,
-                                             int* pnBufYOff,
-                                             int* pnBufXSize,
-                                             int* pnBufYSize )
+GDALDefaultAsyncReader::GetNextUpdatedRegion( double /*dfTimeout*/,
+                                              int* pnBufXOff,
+                                              int* pnBufYOff,
+                                              int* pnBufXSize,
+                                              int* pnBufYSize )
 {
     CPLErr eErr;
 
