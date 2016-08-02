@@ -1267,6 +1267,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         bOverwrite = true;
         bUpdate = true;
     }
+    else if( hDstDS != NULL )
+    {
+        bUpdate = true;
+    }
 
     osDateLineOffset = CPLOPrintf("%g", psOptions->dfDateLineOffset);
 
