@@ -689,19 +689,19 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
-    poGRD->poGeoRaster->bCreateObjectTable = CPL_TO_BOOL(
-        CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE ));
+    poGRD->poGeoRaster->bCreateObjectTable =
+        CPLFetchBool( papszOptions, "OBJECTTABLE", false );
 
     //  -------------------------------------------------------------------
     //  Create a SDO_GEORASTER object on the server
     //  -------------------------------------------------------------------
 
-    bool bSucced = poGRW->Create( pszDescription, pszInsert, poGRW->bUniqueFound );
+    const bool bSuccess = poGRW->Create( pszDescription, pszInsert, poGRW->bUniqueFound );
 
     CPLFree( pszInsert );
     CPLFree( pszDescription );
 
-    if( ! bSucced )
+    if( ! bSuccess )
     {
         delete poGRD;
         return NULL;
@@ -748,8 +748,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    poGRD->poGeoRaster->bGenSpatialIndex = CPL_TO_BOOL(
-        CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE ));
+    poGRD->poGeoRaster->bGenSpatialIndex =
+        CPLFetchBool( papszOptions, "SPATIALEXTENT", TRUE );
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
 
