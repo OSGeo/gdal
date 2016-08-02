@@ -172,7 +172,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     double dfSrcNoDataValue = 0.0;
     double *pdfSrcNoData = NULL;
-    if( CSLFetchBoolean( papszOptions, "USE_INPUT_NODATA", FALSE ) )
+    if( CPLFetchBool( papszOptions, "USE_INPUT_NODATA", false ) )
     {
         int bSrcHasNoData = 0;
         dfSrcNoDataValue = GDALGetRasterNoDataValue( hSrcBand, &bSrcHasNoData );

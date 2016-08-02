@@ -571,8 +571,8 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 /* -------------------------------------------------------------------- */
 /*      Are we doing timings?                                           */
 /* -------------------------------------------------------------------- */
-    bReportTimings = CSLFetchBoolean( psOptions->papszWarpOptions,
-                                      "REPORT_TIMINGS", FALSE );
+    bReportTimings = CPLFetchBool( psOptions->papszWarpOptions,
+                                   "REPORT_TIMINGS", false );
 
 /* -------------------------------------------------------------------- */
 /*      Support creating cutline from text warpoption.                  */
@@ -1085,7 +1085,7 @@ CPLErr GDALWarpOperation::CollectChunkList(
 /*      appropriate.                                                    */
 /* -------------------------------------------------------------------- */
     if( (nSrcXSize == 0 || nSrcYSize == 0)
-        && CSLFetchBoolean( psOptions->papszWarpOptions, "SKIP_NOSOURCE",0 ))
+        && CPLFetchBool( psOptions->papszWarpOptions, "SKIP_NOSOURCE", false ))
         return CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -1166,14 +1166,16 @@ CPLErr GDALWarpOperation::CollectChunkList(
              nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcFillRatio);*/
     if( (dfTotalMemoryUse > psOptions->dfWarpMemoryLimit && (nDstXSize > 2 || nDstYSize > 2)) ||
         (dfSrcFillRatio > 0 && dfSrcFillRatio < 0.5 && (nDstXSize > 100 || nDstYSize > 100) &&
-         CSLFetchBoolean( psOptions->papszWarpOptions, "SRC_FILL_RATIO_HEURISTICS", TRUE )) )
+         CPLFetchBool( psOptions->papszWarpOptions, "SRC_FILL_RATIO_HEURISTICS",
+                       true )) )
     {
         CPLErr eErr2 = CE_None;
 
         int bStreamableOutput =
-                CSLFetchBoolean( psOptions->papszWarpOptions, "STREAMABLE_OUTPUT", FALSE );
+            CPLFetchBool( psOptions->papszWarpOptions, "STREAMABLE_OUTPUT",
+                          false );
         int bOptimizeSize = !bStreamableOutput &&
-                CSLFetchBoolean( psOptions->papszWarpOptions, "OPTIMIZE_SIZE", FALSE );
+            CPLFetchBool( psOptions->papszWarpOptions, "OPTIMIZE_SIZE", false );
 
         /* If the region width is greater than the region height, */
         /* cut in half in the width. When we want to optimize the size */
@@ -1482,8 +1484,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         }
 
         if( eErr == CE_None &&
-            CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH",
-                             FALSE ) )
+            CPLFetchBool( psOptions->papszWarpOptions, "WRITE_FLUSH", false ) )
         {
             CPLErr eOldErr = CPLGetLastErrorType();
             CPLString osLastErrMsg = CPLGetLastErrorMsg();
@@ -1848,8 +1849,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /*      respective nodata values.                                       */
 /* -------------------------------------------------------------------- */
         if( oWK.papanBandSrcValid != NULL &&
-            CSLFetchBoolean( psOptions->papszWarpOptions, "UNIFIED_SRC_NODATA",
-                             FALSE )
+            CPLFetchBool( psOptions->papszWarpOptions, "UNIFIED_SRC_NODATA",
+                          false )
             && eErr == CE_None )
         {
             int nBytesInMask = (oWK.nSrcXSize * oWK.nSrcYSize + 31) / 8;
@@ -2233,8 +2234,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 
     dfStepSize = 1.0 / (nStepCount-1);
 
-    bUseGrid = CSLFetchBoolean( psOptions->papszWarpOptions,
-                                "SAMPLE_GRID", FALSE );
+    bUseGrid = CPLFetchBool( psOptions->papszWarpOptions,
+                             "SAMPLE_GRID", false );
 
   TryAgainWithGrid:
     nSamplePoints = 0;
