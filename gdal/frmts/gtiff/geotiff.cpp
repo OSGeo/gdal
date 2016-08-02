@@ -8289,138 +8289,140 @@ static void GTiffFillStreamableOffsetAndCount( TIFF* hTIFF, int nSize )
 void GTiffDataset::Crystalize()
 
 {
-    if( !bCrystalized )
+    if( bCrystalized )
+        return;
+
+    if( bCheckIfColorInterpMustGoToPamAtCrystalization )
     {
-        if( bCheckIfColorInterpMustGoToPamAtCrystalization )
+        bool bColorInterpToPam = false;
+        if( nPhotometric == PHOTOMETRIC_MINISBLACK )
         {
-            bool bColorInterpToPam = false;
-            if( nPhotometric == PHOTOMETRIC_MINISBLACK )
+            for( int i = 0; i < nBands; ++i )
             {
-                for( int i = 0; i < nBands; ++i )
+                GDALColorInterp eInterp =
+                    GetRasterBand(i+1)->GetColorInterpretation();
+                if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
+                      (i > 0 && eInterp == GCI_AlphaBand)) )
                 {
-                    GDALColorInterp eInterp =
-                        GetRasterBand(i+1)->GetColorInterpretation();
-                    if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
-                          (i > 0 && eInterp == GCI_AlphaBand)) )
-                    {
-                        bColorInterpToPam = true;
-                        break;
-                    }
+                    bColorInterpToPam = true;
+                    break;
                 }
             }
-            else if( nPhotometric == PHOTOMETRIC_RGB )
-            {
-                for( int i = 0; i < nBands; ++i )
-                {
-                    GDALColorInterp eInterp =
-                        GetRasterBand(i+1)->GetColorInterpretation();
-                    if( !((i == 0 && eInterp == GCI_RedBand) ||
-                          (i == 1 && eInterp == GCI_GreenBand) ||
-                          (i == 2 && eInterp == GCI_BlueBand) ||
-                          (i >= 3 && (eInterp == GCI_Undefined ||
-                                      eInterp == GCI_AlphaBand))) )
-                    {
-                        bColorInterpToPam = true;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                bColorInterpToPam = true;
-            }
-            if( bColorInterpToPam )
-            {
-                CPLDebug("GTiff", "Color interpretations have to go to PAM");
-                for( int i = 0; i < nBands; ++i )
-                {
-                    static_cast<GDALPamRasterBand*>(GetRasterBand(i+1))->
-                        GDALPamRasterBand::SetColorInterpretation(
-                            GetRasterBand(i+1)->GetColorInterpretation() );
-                }
-            }
-            bCheckIfColorInterpMustGoToPamAtCrystalization = false;
         }
-
-        // FIXME? libtiff writes extended tags in the order they are specified
-        // and not in increasing order
-        WriteMetadata( this, hTIFF, true, osProfile, osFilename,
-                       papszCreationOptions );
-        WriteGeoTIFFInfo();
-        if( bNoDataSet )
-            WriteNoDataValue( hTIFF, dfNoDataValue );
-
-        bMetadataChanged = false;
-        bGeoTIFFInfoChanged = false;
-        bNoDataChanged = false;
-        bNeedsRewrite = false;
-
-        bCrystalized = true;
-
-        TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
-
-        // Keep zip and tiff quality, and jpegcolormode which get reset when
-        // we call TIFFWriteDirectory.
-        int jquality = -1, zquality = -1, nColorMode = -1, nJpegTablesModeIn = -1;
-        TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality);
-        TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality);
-        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
-        TIFFGetField( hTIFF, TIFFTAG_JPEGTABLESMODE, &nJpegTablesModeIn );
-
-        TIFFWriteDirectory( hTIFF );
-        if( bStreamingOut )
+        else if( nPhotometric == PHOTOMETRIC_RGB )
         {
-            // We need to write twice the directory to be sure that custom
-            // TIFF tags are correctly sorted and that padding bytes have been
-            // added.
-            TIFFSetDirectory( hTIFF, 0 );
-            TIFFWriteDirectory( hTIFF );
-
-            if( VSIFSeekL( fpL, 0, SEEK_END ) != 0 )
+            for( int i = 0; i < nBands; ++i )
             {
-                CPLError(CE_Failure, CPLE_FileIO, "Could not seek");
+                GDALColorInterp eInterp =
+                    GetRasterBand(i+1)->GetColorInterpretation();
+                if( !((i == 0 && eInterp == GCI_RedBand) ||
+                      (i == 1 && eInterp == GCI_GreenBand) ||
+                      (i == 2 && eInterp == GCI_BlueBand) ||
+                      (i >= 3 && (eInterp == GCI_Undefined ||
+                                  eInterp == GCI_AlphaBand))) )
+                {
+                    bColorInterpToPam = true;
+                    break;
+                }
             }
-            const int nSize = static_cast<int>( VSIFTellL(fpL) );
-
-            TIFFSetDirectory( hTIFF, 0 );
-            GTiffFillStreamableOffsetAndCount( hTIFF, nSize );
-            TIFFWriteDirectory( hTIFF );
-
-            vsi_l_offset nDataLength;
-            void* pabyBuffer =
-                VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE);
-            if( static_cast<int>(
-                    VSIFWriteL( pabyBuffer, 1,
-                                static_cast<int>(nDataLength), fpToWrite ) ) !=
-                static_cast<int>(nDataLength) )
-            {
-                CPLError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
-                          static_cast<int>(nDataLength) );
-            }
-            // In case of single strip file, there's a libtiff check that would
-            // issue a warning since the file hasn't the required size.
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            TIFFSetDirectory( hTIFF, 0 );
-            CPLPopErrorHandler();
         }
         else
         {
-            TIFFSetDirectory( hTIFF, 0 );
+            bColorInterpToPam = true;
         }
-
-
-        // Now, reset zip and tiff quality and jpegcolormode.
-        if( jquality > 0 )
-            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality);
-        if( zquality > 0 )
-            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
-        if( nColorMode >= 0 )
-            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, nColorMode);
-        if( nJpegTablesModeIn >= 0 )
-            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesModeIn);
-
-        nDirOffset = TIFFCurrentDirOffset( hTIFF );
+        if( bColorInterpToPam )
+        {
+            CPLDebug("GTiff", "Color interpretations have to go to PAM");
+            for( int i = 0; i < nBands; ++i )
+            {
+                static_cast<GDALPamRasterBand*>(GetRasterBand(i+1))->
+                    GDALPamRasterBand::SetColorInterpretation(
+                        GetRasterBand(i+1)->GetColorInterpretation() );
+            }
+        }
+        bCheckIfColorInterpMustGoToPamAtCrystalization = false;
     }
+
+    // TODO: libtiff writes extended tags in the order they are specified
+    // and not in increasing order.
+    WriteMetadata( this, hTIFF, true, osProfile, osFilename,
+                   papszCreationOptions );
+    WriteGeoTIFFInfo();
+    if( bNoDataSet )
+        WriteNoDataValue( hTIFF, dfNoDataValue );
+
+    bMetadataChanged = false;
+    bGeoTIFFInfoChanged = false;
+    bNoDataChanged = false;
+    bNeedsRewrite = false;
+
+    bCrystalized = true;
+
+    TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
+
+    // Keep zip and tiff quality, and jpegcolormode which get reset when
+    // we call TIFFWriteDirectory.
+    int jquality = -1;
+    TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality);
+    int zquality = -1;
+    TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality);
+    int nColorMode = -1;
+    TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+    int nJpegTablesModeIn = -1;
+    TIFFGetField( hTIFF, TIFFTAG_JPEGTABLESMODE, &nJpegTablesModeIn );
+
+    TIFFWriteDirectory( hTIFF );
+    if( bStreamingOut )
+    {
+        // We need to write twice the directory to be sure that custom
+        // TIFF tags are correctly sorted and that padding bytes have been
+        // added.
+        TIFFSetDirectory( hTIFF, 0 );
+        TIFFWriteDirectory( hTIFF );
+
+        if( VSIFSeekL( fpL, 0, SEEK_END ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Could not seek");
+        }
+        const int nSize = static_cast<int>( VSIFTellL(fpL) );
+
+        TIFFSetDirectory( hTIFF, 0 );
+        GTiffFillStreamableOffsetAndCount( hTIFF, nSize );
+        TIFFWriteDirectory( hTIFF );
+
+        vsi_l_offset nDataLength = 0;
+        void* pabyBuffer =
+            VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE);
+        if( static_cast<int>(
+                VSIFWriteL( pabyBuffer, 1,
+                            static_cast<int>(nDataLength), fpToWrite ) ) !=
+            static_cast<int>(nDataLength) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
+                      static_cast<int>(nDataLength) );
+        }
+        // In case of single strip file, there's a libtiff check that would
+        // issue a warning since the file hasn't the required size.
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        TIFFSetDirectory( hTIFF, 0 );
+        CPLPopErrorHandler();
+    }
+    else
+    {
+        TIFFSetDirectory( hTIFF, 0 );
+    }
+
+    // Now, reset zip and tiff quality and jpegcolormode.
+    if( jquality > 0 )
+        TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality);
+    if( zquality > 0 )
+        TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
+    if( nColorMode >= 0 )
+        TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, nColorMode);
+    if( nJpegTablesModeIn >= 0 )
+        TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesModeIn);
+
+    nDirOffset = TIFFCurrentDirOffset( hTIFF );
 }
 
 #ifdef INTERNAL_LIBTIFF
