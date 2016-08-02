@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM file based generic driver.
@@ -31,6 +30,8 @@
 
 #include "gnmfile.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 GNMFileNetwork::GNMFileNetwork() : GNMGenericNetwork()
 {
@@ -134,7 +135,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
     // if path exist check if network already present and OVERWRITE option
     // else create the path
 
-    bool bOverwrite = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE));
+    const bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
 
     if(m_soName.empty())
     {
@@ -170,7 +171,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
                 EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_FEATURES) ||
                 EQUAL(papszFiles[i], GNM_SRSFILENAME) )
             {
-                if(bOverwrite)
+                if( bOverwrite )
                 {
                     const char* pszDeleteFile = CPLFormFilename(
                                 m_soNetworkFullName, papszFiles[i], NULL);
