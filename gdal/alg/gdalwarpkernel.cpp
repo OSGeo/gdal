@@ -1072,7 +1072,7 @@ CPLErr GDALWarpKernel::PerformWarp()
 /* -------------------------------------------------------------------- */
 /*      Set up resampling functions.                                    */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszWarpOptions, "USE_GENERAL_CASE", FALSE ) )
+    if( CPLFetchBool( papszWarpOptions, "USE_GENERAL_CASE", false ) )
         return GWKGeneralCase( this );
 
 #if defined(HAVE_OPENCL)
@@ -1086,7 +1086,7 @@ CPLErr GDALWarpKernel::PerformWarp()
         || eResample == GRA_Cubic
         || eResample == GRA_CubicSpline
         || eResample == GRA_Lanczos) &&
-        CSLFetchBoolean( papszWarpOptions, "USE_OPENCL", TRUE ))
+        CPLFetchBool( papszWarpOptions, "USE_OPENCL", true ))
     {
         CPLErr eResult = GWKOpenCLCase( this );
 

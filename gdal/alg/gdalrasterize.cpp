@@ -461,7 +461,7 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
                                    GDALBurnValueSrc *peBurnValueSource,
                                    GDALRasterMergeAlg *peMergeAlg)
 {
-    *pbAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
+    *pbAllTouched = CPLFetchBool( papszOptions, "ALL_TOUCHED", false );
 
     const char *pszOpt = CSLFetchNameValue( papszOptions, "BURN_VALUE_FROM" );
     *peBurnValueSource = GBV_UserBurnValue;

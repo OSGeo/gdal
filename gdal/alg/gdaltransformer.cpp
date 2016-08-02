@@ -1463,7 +1463,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         CPLString osSrcWKT = pszSrcWKT;
         if (hSrcDS
-            && CSLFetchBoolean( papszOptions, "INSERT_CENTER_LONG", TRUE ) )
+            && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ) )
             osSrcWKT = InsertCenterLong( hSrcDS, osSrcWKT );
 
         psInfo->pReprojectArg =

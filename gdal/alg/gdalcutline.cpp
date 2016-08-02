@@ -366,7 +366,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     int    anXYOff[2];
     char   **papszRasterizeOptions = NULL;
 
-    if( CSLFetchBoolean( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", FALSE ))
+    if( CPLFetchBool( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false ))
         papszRasterizeOptions =
             CSLSetNameValue( papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
 
