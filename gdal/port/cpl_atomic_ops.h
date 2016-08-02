@@ -51,7 +51,7 @@ CPL_C_START
   * supported by GCC 4.1 or higher. For other platforms supporting
   * the pthread library, and when GDAL is configured with thread-support,
   * the atomicity will be done with a mutex, but with
-  * reduced efficiently. For the remaining platforms, a simple addition
+  * reduced efficiency. For the remaining platforms, a simple addition
   * with no locking will be done...
   *
   * @param ptr a pointer to an integer to increment
@@ -91,8 +91,8 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   * supported by GCC 4.1 or higher. For other platforms supporting
   * the pthread library, and when GDAL is configured with thread-support,
   * the atomicity will be done with a mutex, but with
-  * reduced efficiently. For the remaining platforms, a simple addition
-  * with no locking will be done...
+  * reduced efficiency. For the remaining platforms, a simple compare and
+  * exchange with no locking will be done...
   *
   * @param ptr a pointer to an integer (aligned on 32bit boundary).
   * @param oldval old value
