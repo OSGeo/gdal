@@ -1254,8 +1254,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     VSIFree(pszBinaryContent);
                 }
 
-                if( (CSLFetchBoolean(papszOptions, "BINARY_CONTENT", FALSE) ||
-                     CSLFetchBoolean(papszOptions, "ALL", FALSE) ) &&
+                if( (CPLFetchBool(papszOptions, "BINARY_CONTENT", false) ||
+                     CPLFetchBool(papszOptions, "ALL", false) ) &&
                     strcmp(pszBoxType, "jp2c") != 0 &&
                     nBoxDataLength < 100 * 1024 )
                 {
@@ -1277,8 +1277,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     VSIFree(pszBinaryContent);
                 }
 
-                if( (CSLFetchBoolean(papszOptions, "TEXT_CONTENT", FALSE) ||
-                     CSLFetchBoolean(papszOptions, "ALL", FALSE) ) &&
+                if( (CPLFetchBool(papszOptions, "TEXT_CONTENT", false) ||
+                     CPLFetchBool(papszOptions, "ALL", false) ) &&
                     strcmp(pszBoxType, "jp2c") != 0 &&
                     nBoxDataLength < 100 * 1024 )
                 {
@@ -1314,8 +1314,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
 
                 if( strcmp(pszBoxType, "jp2c") == 0 )
                 {
-                    if( CSLFetchBoolean(papszOptions, "CODESTREAM", FALSE) ||
-                        CSLFetchBoolean(papszOptions, "ALL", FALSE) )
+                    if( CPLFetchBool(papszOptions, "CODESTREAM", false) ||
+                        CPLFetchBool(papszOptions, "ALL", false) )
                     {
                         DumpJPK2CodeStream(psBox, fp,
                                            oBox.GetDataOffset(), nBoxDataLength);
@@ -1411,8 +1411,8 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     CPLXMLNode* psParent = NULL;
     if( memcmp(abyHeader, jpc_header, sizeof(jpc_header)) == 0 )
     {
-        if( CSLFetchBoolean(papszOptions, "CODESTREAM", FALSE) ||
-            CSLFetchBoolean(papszOptions, "ALL", FALSE) )
+        if( CPLFetchBool(papszOptions, "CODESTREAM", false) ||
+            CPLFetchBool(papszOptions, "ALL", false) )
         {
             if( VSIFSeekL(fp, 0, SEEK_END) == 0 )
             {
