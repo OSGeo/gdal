@@ -952,16 +952,19 @@ CPLErr GDALECWCompressor::Initialize(
         oJP2MD.SetRPCMD( papszRPCMD );
 
         if (bIsJPEG2000) {
-            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            if( CPLFetchBool(papszOptions, "WRITE_METADATA", false) )
             {
-                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                if( !CPLFetchBool(papszOptions, "MAIN_MD_DOMAIN_ONLY", false) )
                 {
                     WriteXMLBoxes();
                 }
-                WriteJP2Box(GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
-                        m_poSrcDS, CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE)));
+                WriteJP2Box(
+                    GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+                        m_poSrcDS,
+                        CPLFetchBool(papszOptions, "MAIN_MD_DOMAIN_ONLY",
+                                     false)));
             }
-            if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+            if( CPLFetchBool( papszOptions, "GMLJP2", true ) )
             {
                 const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
                 if( pszGMLJP2V2Def != NULL )
@@ -969,10 +972,10 @@ CPLErr GDALECWCompressor::Initialize(
                 else
                     WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
             }
-            if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+            if( CPLFetchBool( papszOptions, "GeoJP2", true ) )
                 WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
-            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
-                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            if( CPLFetchBool(papszOptions, "WRITE_METADATA", false) &&
+                !CPLFetchBool(papszOptions, "MAIN_MD_DOMAIN_ONLY", false) )
             {
                 WriteJP2Box(GDALJP2Metadata::CreateXMPBox(m_poSrcDS));
             }
@@ -1344,7 +1347,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(TRUE);
         int nFlags = GCIF_PAM_DEFAULT;
         if( bIsJPEG2000 &&
-            !CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            !CPLFetchBool(papszOptions, "WRITE_METADATA", false) )
             nFlags &= ~GCIF_METADATA;
         poDS->CloneInfo( poSrcDS, nFlags );
         ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(FALSE);
