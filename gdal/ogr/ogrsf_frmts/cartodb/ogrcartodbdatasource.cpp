@@ -426,7 +426,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
     }
 
     CPLString osName(pszNameIn);
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", true) )
     {
         char* pszTmp = OGRPGCommonLaunderName(pszNameIn);
         osName = pszTmp;
@@ -435,11 +435,11 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
 
 
     OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, osName);
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable = CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
     int nSRID = (poSpatialRef && eGType != wkbNone) ? FetchSRSId( poSpatialRef ) : 0;
-    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBFY",
-                                      CSLFetchBoolean(papszOptions, "CARTODBIFY",
-                                      TRUE));
+    bool bCartoDBify = CPLFetchBool(papszOptions, "CARTODBFY",
+                                    CPLFetchBool(papszOptions, "CARTODBIFY",
+                                                 true));
     if( bCartoDBify )
     {
         if( nSRID != 4326 )
@@ -450,11 +450,11 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
                         "Cannot register table in dashboard with "
                         "cdb_cartodbfytable() since its SRS is not EPSG:4326");
             }
-            bCartoDBify = FALSE;
+            bCartoDBify = false;
         }
     }
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
     poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));

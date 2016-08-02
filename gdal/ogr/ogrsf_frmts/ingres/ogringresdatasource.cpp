@@ -866,7 +866,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     int                 nDimension = 3; // Ingres only supports 2d currently
 
 
-    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
@@ -1056,8 +1056,8 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

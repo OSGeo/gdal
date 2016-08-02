@@ -853,7 +853,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     InterruptLongResult();
 
 
-    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
@@ -902,9 +902,8 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     if (!pszExpectedFIDName)
         pszExpectedFIDName="OGR_FID";
 
-    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", false);
     const char* pszFIDType = bFID64 ? "BIGINT": "INT";
-
 
     CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
@@ -1082,8 +1081,8 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     if( eType != wkbNone )
         poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

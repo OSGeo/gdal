@@ -2066,7 +2066,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
     if( m_poKmlDSContainer != NULL )
     {
-        if( CSLFetchBoolean( papszOptions, "FOLDER", FALSE ) )
+        if( CPLFetchBool( papszOptions, "FOLDER", false ) )
             poKmlLayerContainer = m_poKmlFactory->CreateFolder();
         else
             poKmlLayerContainer = m_poKmlFactory->CreateDocument();
@@ -2083,7 +2083,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
     /***** add the layer name as a <Name> *****/
     if( poKmlLayerContainer != NULL )
         poKmlLayerContainer->set_name( pszLayerName );
-    else if(  CSLFetchBoolean( papszOptions, "FOLDER", FALSE ) )
+    else if(  CPLFetchBool( papszOptions, "FOLDER", false ) )
     {
         poOgrLayer->SetUpdateIsFolder(TRUE);
     }

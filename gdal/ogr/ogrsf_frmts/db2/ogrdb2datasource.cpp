@@ -577,13 +577,11 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRDB2TableLayer   *poLayer;
+    OGRDB2TableLayer *poLayer = new OGRDB2TableLayer( this );
 
-    poLayer = new OGRDB2TableLayer( this );
-
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",
-                               TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag(
+        CPLFetchBool(papszOptions, "PRECISION", true));
 
     char *pszWKT = NULL;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )

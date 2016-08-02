@@ -1397,7 +1397,7 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
 {
     bool bRet = true;
     const bool bStandardHeader =
-            CSLFetchBoolean(papszOptions, "STANDARD_HEADER", TRUE) != FALSE;
+            CPLFetchBool(papszOptions, "STANDARD_HEADER", true);
 
     struct tm tm;
     CPLUnixTimeToYMDHMS(time(NULL), &tm);
@@ -1532,9 +1532,9 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
         OGRVDVLoadVDV452Tables(m_oVDV452Tables);
     }
     const bool bProfileStrict =
-        CSLFetchBoolean(papszOptions, "PROFILE_STRICT", FALSE) != FALSE;
+        CPLFetchBool(papszOptions, "PROFILE_STRICT", false);
     const bool bCreateAllFields =
-        CSLFetchBoolean(papszOptions, "CREATE_ALL_FIELDS", TRUE) != FALSE;
+        CPLFetchBool(papszOptions, "CREATE_ALL_FIELDS", true);
 
     CPLString osUpperLayerName(pszLayerName);
     osUpperLayerName.toupper();
@@ -1775,7 +1775,7 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
         return NULL;
     }
 
-    bool bSingleFile = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "SINGLE_FILE", TRUE));
+    const bool bSingleFile = CPLFetchBool(papszOptions, "SINGLE_FILE", true);
     if( !bSingleFile )
     {
         if( VSIMkdir( pszName, 0755 ) != 0 )

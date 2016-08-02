@@ -600,11 +600,12 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
     poReader->SetSourceFile( pszFilename );
     ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
-    bEmptyAsNull = CPL_TO_BOOL(CSLFetchBoolean(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", TRUE));
+    bEmptyAsNull =
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", true);
     ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
     ((GMLReader*)poReader)->SetReportAllAttributes(
-        CPL_TO_BOOL(CSLFetchBoolean(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
-            CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO")))));
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
+            CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
@@ -935,7 +936,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             papszTypeNames = CSLTokenizeString2( osTypeName, ",", 0);
 
                             if (!bHasFoundXSD && CPLHTTPEnabled() &&
-                                CSLFetchBoolean(poOpenInfo->papszOpenOptions,
+                                CPLFetchBool(
+                                    poOpenInfo->papszOpenOptions,
                                     "DOWNLOAD_SCHEMA",
                                     CPLTestBool(CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA", "YES"))) )
                             {
@@ -1101,7 +1103,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema ||
-        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION", FALSE) )
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION",
+                     false) )
     {
         bool bOnlyDetectSRS = bHaveSchema;
         if( !poReader->PrescanForSchema( true, bAnalyzeSRSPerFeature,
@@ -1715,7 +1718,7 @@ void OGRGMLDataSource::WriteTopElements()
 /*      We will need to seek back to fill it in.                        */
 /* -------------------------------------------------------------------- */
     nBoundedByLocation = -1;
-    if( CSLFetchBoolean( papszCreateOptions , "BOUNDEDBY", TRUE ))
+    if( CPLFetchBool( papszCreateOptions , "BOUNDEDBY", true ))
     {
         if (!bFpOutputIsNonSeekable )
         {

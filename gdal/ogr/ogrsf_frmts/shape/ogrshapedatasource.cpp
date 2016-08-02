@@ -787,7 +787,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetResizeAtClose(
         CPLFetchBool( papszOptions, "RESIZE", false ) );
     poLayer->CreateSpatialIndexAtClose(
-        CSLFetchBoolean( papszOptions, "SPATIAL_INDEX", FALSE ) );
+        CPLFetchBool( papszOptions, "SPATIAL_INDEX", false ) );
     poLayer->SetModificationDate(
         CSLFetchNameValue( papszOptions, "DBF_DATE_LAST_UPDATE" ) );
 

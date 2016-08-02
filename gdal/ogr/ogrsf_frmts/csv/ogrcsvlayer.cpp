@@ -318,11 +318,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                                     const char* pszGeonamesGeomFieldPrefix,
                                     char** papszOpenOptions )
 {
-
-    bMergeDelimiter
-        = CSLFetchBoolean(papszOpenOptions, "MERGE_SEPARATOR", FALSE);
-    bEmptyStringNull
-        = CSLFetchBoolean(papszOpenOptions, "EMPTY_STRING_AS_NULL", FALSE);
+    bMergeDelimiter = CPLFetchBool(papszOpenOptions, "MERGE_SEPARATOR", false);
+    bEmptyStringNull =
+        CPLFetchBool(papszOpenOptions, "EMPTY_STRING_AS_NULL", false);
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
