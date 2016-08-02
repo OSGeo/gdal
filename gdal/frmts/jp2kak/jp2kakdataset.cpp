@@ -1369,13 +1369,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Should we promote alpha channel to 8 bits ?                     */
 /* -------------------------------------------------------------------- */
-        poDS->bPromoteTo8Bit = (poDS->nBands == 4 &&
-                                poDS->oCodeStream.get_bit_depth(0) == 8 &&
-                                poDS->oCodeStream.get_bit_depth(1) == 8 &&
-                                poDS->oCodeStream.get_bit_depth(2) == 8 &&
-                                poDS->oCodeStream.get_bit_depth(3) == 1 &&
-                                CSLFetchBoolean(poOpenInfo->papszOpenOptions,
-                                                "1BIT_ALPHA_PROMOTION", TRUE));
+        poDS->bPromoteTo8Bit =
+            poDS->nBands == 4 &&
+            poDS->oCodeStream.get_bit_depth(0) == 8 &&
+            poDS->oCodeStream.get_bit_depth(1) == 8 &&
+            poDS->oCodeStream.get_bit_depth(2) == 8 &&
+            poDS->oCodeStream.get_bit_depth(3) == 1 &&
+            CPLFetchBool(poOpenInfo->papszOpenOptions,
+                         "1BIT_ALPHA_PROMOTION", true);
         if( poDS->bPromoteTo8Bit )
             CPLDebug( "JP2KAK",
                       "Fourth (alpha) band is promoted from 1 bit to 8 bit");
@@ -1448,8 +1449,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
         {
             poDS->LoadVectorLayers(
-                CSLFetchBoolean( poOpenInfo->papszOpenOptions,
-                                 "OPEN_REMOTE_GML", FALSE ) );
+                CPLFetchBool( poOpenInfo->papszOpenOptions,
+                              "OPEN_REMOTE_GML", false ) );
 
             // If file opened in vector-only mode and there's no vector,
             // return
@@ -2416,19 +2417,14 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we want a comment segment emitted?                           */
 /* -------------------------------------------------------------------- */
-    bool bComseg = false;
-
-    if( CSLFetchBoolean( papszOptions, "COMSEG", TRUE ) )
-        bComseg = true;
-    else
-        bComseg = false;
+    const bool bComseg = CPLFetchBool( papszOptions, "COMSEG", true );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the precision.                                         */
 /* -------------------------------------------------------------------- */
     int nBits = 0;
 
-  if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
+    if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
         nBits = atoi(CSLFetchNameValue(papszOptions,"NBITS"));
     else if( poPrototypeBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )
              != NULL )
@@ -2772,7 +2768,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oJP2MD.bPixelIsPoint =
             pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+        if( CPLFetchBool( papszOptions, "GMLJP2", true ) )
         {
             const char* pszGMLJP2V2Def =
                 CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
@@ -2784,7 +2780,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             else
                 JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
         }
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+        if( CPLFetchBool( papszOptions, "GeoJP2", true ) )
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
     }
 
@@ -2821,7 +2817,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     double dfPixelsDone = 0.0;
     const double dfPixelsTotal = nXSize * static_cast<double>( nYSize );
-    const int bFlushEnabled = CSLFetchBoolean( papszOptions, "FLUSH", TRUE );
+    const bool bFlushEnabled = CPLFetchBool( papszOptions, "FLUSH", true );
 
     for( int iTileYOff = 0; iTileYOff < nYSize; iTileYOff += nTileYSize )
     {
