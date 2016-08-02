@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Alos imagery.
@@ -30,7 +29,7 @@
 
 #include "reader_alos.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderALOS()
