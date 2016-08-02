@@ -5704,8 +5704,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     if( poDS != NULL )
     {
-        poDS->bIgnoreUTM = CSLFetchBoolean( papszParmList, "IGNOREUTM",
-                                            FALSE );
+        poDS->bIgnoreUTM = CPLFetchBool( papszParmList, "IGNOREUTM", false );
     }
 
 /* -------------------------------------------------------------------- */
@@ -5716,7 +5715,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     if( poDS != NULL )
     {
         poDS->bForceToPEString =
-            CSLFetchBoolean( papszParmList, "FORCETOPESTRING", FALSE );
+            CPLFetchBool( papszParmList, "FORCETOPESTRING", false );
     }
 
     return poDS;
@@ -5833,7 +5832,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we really just want to create an .aux file?                  */
 /* -------------------------------------------------------------------- */
-    bool bCreateAux = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "AUX", FALSE ));
+    bool bCreateAux = CPLFetchBool( papszOptions, "AUX", false );
 
 /* -------------------------------------------------------------------- */
 /*      Establish a representative data type to use.                    */
@@ -5958,7 +5957,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we want to generate statistics and a histogram?              */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "STATISTICS", FALSE ) )
+    if( CPLFetchBool( papszOptions, "STATISTICS", false ) )
     {
         for( int iBand = 0; iBand < nBandCount; iBand++ )
         {

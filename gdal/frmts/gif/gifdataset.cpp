@@ -351,7 +351,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Check for interlaced option.                                    */
 /* -------------------------------------------------------------------- */
-    int bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
+    const bool bInterlace = CPLFetchBool(papszOptions, "INTERLACING", false);
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -606,7 +606,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
         double      adfGeoTransform[6];
 

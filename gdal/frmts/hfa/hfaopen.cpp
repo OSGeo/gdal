@@ -2362,12 +2362,12 @@ HFAHandle HFACreate( const char * pszFilename,
             nBlockSize = 64;
         }
     }
-    int bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
-                                             FALSE);
-    int bCreateCompressed =
-        CSLFetchBoolean(papszOptions,"COMPRESS", FALSE)
-        || CSLFetchBoolean(papszOptions,"COMPRESSED", FALSE);
-    int bCreateAux = CSLFetchBoolean(papszOptions,"AUX", FALSE);
+    bool bCreateLargeRaster =
+        CPLFetchBool(papszOptions, "USE_SPILL", false);
+    bool bCreateCompressed =
+        CPLFetchBool(papszOptions, "COMPRESS", false)
+        || CPLFetchBool(papszOptions, "COMPRESSED", false);
+    const bool bCreateAux = CPLFetchBool(papszOptions, "AUX", false);
 
     char *pszFullFilename = NULL, *pszRawFilename = NULL;
 
@@ -2424,7 +2424,7 @@ HFAHandle HFACreate( const char * pszFilename,
         (double)nBands + 10000000.0;
 
     if( dfApproxSize > 2147483648.0 && !bCreateAux )
-        bCreateLargeRaster = TRUE;
+        bCreateLargeRaster = true;
 
     // erdas imagine creates this entry even if an external spill file is used
     if( !bCreateAux )
@@ -2436,7 +2436,8 @@ HFAHandle HFACreate( const char * pszFilename,
         if ( bCreateLargeRaster )
         {
             poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
-            bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile
+            // Can't be compressed if we are creating a spillfile.
+            bCreateCompressed = false;
         }
         else
         {

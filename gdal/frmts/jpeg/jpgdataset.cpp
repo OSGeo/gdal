@@ -2201,8 +2201,8 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
     sArgs.nScaleFactor = 1;
     sArgs.bDoPAMInitialize = TRUE;
     sArgs.bUseInternalOverviews =
-        CSLFetchBoolean( poOpenInfo->papszOpenOptions, "USE_INTERNAL_OVERVIEWS",
-                         TRUE);
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "USE_INTERNAL_OVERVIEWS", true);
 
     return JPGDataset::Open(&sArgs);
 }
@@ -3531,7 +3531,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     const bool bProgressive
-        = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE ));
+        = CPLFetchBool( papszOptions, "PROGRESSIVE", false );
     if( bProgressive )
         jpeg_simple_progression( &sCInfo );
 
@@ -3571,10 +3571,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      jpeg file after the imagery.                                    */
 /* -------------------------------------------------------------------- */
     const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
-    const bool bAppendMask = !(nMaskFlags & GMF_ALL_VALID)
-        && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET))
-        && CPL_TO_BOOL(
-            CSLFetchBoolean( papszOptions, "INTERNAL_MASK", TRUE ) );
+    const bool bAppendMask =
+        !(nMaskFlags & GMF_ALL_VALID) &&
+        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
+        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -3675,7 +3675,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
         double adfGeoTransform[6] = { 0.0 };
 

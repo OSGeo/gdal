@@ -683,7 +683,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     FETCH_AND_SET_OPTION_INT("PARTITION_LIMIT", partition_limit, 0, 100);
 #endif
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
-    sConfig.lossless = CSLFetchBoolean(papszOptions, "LOSSLESS", FALSE);
+    sConfig.lossless = CPLFetchBool(papszOptions, "LOSSLESS", false);
     if (sConfig.lossless)
         sPicture.use_argb = 1;
 #endif
