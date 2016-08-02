@@ -1501,6 +1501,7 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
 
 int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
                              double dfDPI,
+                             bool bWriteUserUnit,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
                              PDFMargins* psMargins,
@@ -1541,9 +1542,10 @@ int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
     oDictPage.Add("Type", GDALPDFObjectRW::CreateName("Page"))
              .Add("Parent", nPageResourceId, 0)
              .Add("MediaBox", &((new GDALPDFArrayRW())
-                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)))
-             .Add("UserUnit", dfUserUnit)
-             .Add("Contents", nContentId, 0)
+                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)));
+    if( bWriteUserUnit )
+      oDictPage.Add("UserUnit", dfUserUnit);
+    oDictPage.Add("Contents", nContentId, 0)
              .Add("Resources", nResourcesId, 0)
              .Add("Annots", nAnnotsId, 0);
 
@@ -4409,6 +4411,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( pszDPI != NULL )
         dfDPI = CPLAtof(pszDPI);
 
+    const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
+    bool bWriteUserUnit;
+    if( pszWriteUserUnit != NULL )
+        bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
+    else
+        bWriteUserUnit = ( pszDPI == NULL );
+
     double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
     double dfWidthInUserUnit = nWidth / dfUserUnit + sMargins.nLeft + sMargins.nRight;
     double dfHeightInUserUnit = nHeight / dfUserUnit + sMargins.nBottom + sMargins.nTop;
@@ -4519,7 +4528,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
     const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
-
+    
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -4545,6 +4554,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     oWriter.StartPage(poClippingDS,
                       dfDPI,
+                      bWriteUserUnit,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,

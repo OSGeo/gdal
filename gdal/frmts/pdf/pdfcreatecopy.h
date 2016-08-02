@@ -208,6 +208,7 @@ class GDALPDFWriter
 
        int  StartPage(GDALDataset* poSrcDS,
                       double dfDPI,
+                      bool bWriteUserUnit,
                       const char* pszGEO_ENCODING,
                       const char* pszNEATLINE,
                       PDFMargins* psMargins,

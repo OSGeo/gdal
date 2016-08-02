@@ -185,6 +185,17 @@ Set the DPI to use. Default to 72. May be automatically adjusted to higher value
 so that page dimension does not exceed the 14400 maximum value (in user units)
 allowed by Acrobat.</p></li>
 
+<li><p><b>WRITE_USERUNIT=YES/NO</b>: (GDAL &gt;= 2.2)
+Whether the UserUnit setting computed from the DPI (UserUnit = DPI / 72.0)
+should be recorded in the file. When UserUnit is recorded, the raster size in
+pixels recognized by GDAL on reading remains identical to the source raster.
+When UserUnit is not recorded, the printed size will depends on the DPI value.
+If this parameter is not set, but DPI is specified, then it will default to NO
+(so that the printed size depends on the DPI value). If this parameter is not
+set and DPI is not specified, then UserUnit will be recorded (so that the
+raster size in pixels recognized by GDAL on reading remain identical to the
+source raster).</p></li>
+
 <li><p><b>PREDICTOR=[1/2]</b>:
 Only for DEFLATE compression. Might be set to 2 to use horizontal predictor that can make files smaller (but not always!).
 1 is the default.</p></li>

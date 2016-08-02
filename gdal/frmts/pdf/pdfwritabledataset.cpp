@@ -190,10 +190,26 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     const char* pszGEO_ENCODING =
         CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
 
-    double dfDPI = CPLAtof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
-    if (dfDPI < 72.0)
-        dfDPI = 72.0;
+    const char* pszDPI = CSLFetchNameValue(papszOptions, "DPI");
+    double dfDPI = DEFAULT_DPI;
+    if( pszDPI != NULL )
+    {
+        dfDPI = CPLAtof(pszDPI);
+        if (dfDPI < DEFAULT_DPI)
+            dfDPI = DEFAULT_DPI;
+    }
+    else
+    {
+        dfDPI = DEFAULT_DPI;
+    }
 
+    const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
+    bool bWriteUserUnit;
+    if( pszWriteUserUnit != NULL )
+        bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
+    else
+        bWriteUserUnit = ( pszDPI == NULL );
+    
     const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
 
     int nMargin = atoi(CSLFetchNameValueDef(papszOptions, "MARGIN", "0"));
@@ -285,6 +301,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     oWriter.StartPage(poSrcDS,
                       dfDPI,
+                      bWriteUserUnit,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,
