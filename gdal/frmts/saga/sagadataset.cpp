@@ -928,7 +928,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    if (CSLFetchBoolean( papszParmList , "FILL_NODATA", TRUE ))
+    if( CPLFetchBool( papszParmList , "FILL_NODATA", true ) )
     {
         const int nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
         GByte* pabyNoDataBuf = reinterpret_cast<GByte *>(
