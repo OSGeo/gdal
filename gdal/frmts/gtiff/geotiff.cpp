@@ -9811,9 +9811,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
         }
 
         // Do we need a world file?
-        if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) )
+        if( CPLFetchBool( papszCreationOptions, "TFW", false ) )
             GDALWriteWorldFile( osFilename, "tfw", adfGeoTransform );
-        else if( CSLFetchBoolean( papszCreationOptions, "WORLDFILE", FALSE ) )
+        else if( CPLFetchBool( papszCreationOptions, "WORLDFILE", false ) )
             GDALWriteWorldFile( osFilename, "wld", adfGeoTransform );
     }
     else if( GetGCPCount() > 0 )
@@ -9944,17 +9944,14 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 
 static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                              CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
-                             int nBand, const char *pszProfile )
+                             int nBand, const char * /* pszProfile */ )
 
 {
-    char **papszDomainList;
-
-    (void) pszProfile;
 
 /* ==================================================================== */
 /*      Process each domain.                                            */
 /* ==================================================================== */
-    papszDomainList = poMDMD->GetDomainList();
+    char **papszDomainList = poMDMD->GetDomainList();
     for( int iDomain = 0;
          papszDomainList && papszDomainList[iDomain];
          ++iDomain )
@@ -9980,7 +9977,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /* -------------------------------------------------------------------- */
         for( int iItem = 0; papszMD && papszMD[iItem]; ++iItem )
         {
-            const char *pszItemValue;
+            const char *pszItemValue = NULL;
             char *pszItemName = NULL;
 
             if( bIsXML )
@@ -9994,7 +9991,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                 if( pszItemName == NULL )
                 {
                     CPLDebug( "GTiff",
-                             "Invalid metadata item : %s", papszMD[iItem] );
+                              "Invalid metadata item : %s", papszMD[iItem] );
                     continue;
                 }
             }
@@ -10005,7 +10002,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             if( strlen(papszDomainList[iDomain]) == 0
                 && nBand == 0 && STARTS_WITH_CI(pszItemName, "TIFFTAG_") )
             {
-                if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") ) {
+                if( EQUAL(pszItemName, "TIFFTAG_RESOLUTIONUNIT") ) {
                     // ResolutionUnit can't be 0, which is the default if
                     // atoi() fails.  Set to 1=Unknown.
                     int v = atoi(pszItemValue);
@@ -10015,8 +10012,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                 else
                 {
                     bool bFoundTag = false;
-                    size_t iTag;
-                    for( iTag = 0;
+                    size_t iTag = 0;  // Used after for.
+                    for( ;
                          iTag < sizeof(asTIFFTags) / sizeof(asTIFFTags[0]);
                          ++iTag )
                     {
@@ -10049,7 +10046,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             }
             else if( nBand == 0 && EQUAL(pszItemName,GDALMD_AREA_OR_POINT) )
             {
-                /* do nothing, handled elsewhere */;
+                /* Do nothing, handled elsewhere. */;
             }
             else
             {
@@ -10067,8 +10064,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /* -------------------------------------------------------------------- */
         if( strlen(papszDomainList[iDomain]) == 0 && nBand == 0 )
         {
-            size_t iTag;
-            for( iTag = 0;
+            for( size_t iTag = 0;
                  iTag < sizeof(asTIFFTags) / sizeof(asTIFFTags[0]);
                  ++iTag )
             {
@@ -10112,7 +10108,6 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
                              char **papszCreationOptions,
                              bool bWriteOnlyInPAMIfNeeded )
 {
-
 /* -------------------------------------------------------------------- */
 /*      Handle RPC data written to an RPB file.                         */
 /* -------------------------------------------------------------------- */
@@ -10130,12 +10125,12 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
 
         // Write RPB file if explicitly asked, or if a non GDAL specific
         // profile is selected and RPCTXT is not asked.
-        int bRPBExplicitlyAsked =
-            CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
-        int bRPBExplicitlyDenied =
-            !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
+        bool bRPBExplicitlyAsked =
+            CPLFetchBool( papszCreationOptions, "RPB", false );
+        bool bRPBExplicitlyDenied =
+            !CPLFetchBool( papszCreationOptions, "RPB", true );
         if( (!EQUAL(pszProfile,"GDALGeoTIFF") &&
-             !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) &&
+             !CPLFetchBool( papszCreationOptions, "RPCTXT", false ) &&
              !bRPBExplicitlyDenied )
             || bRPBExplicitlyAsked )
         {
@@ -10144,7 +10139,7 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
             bRPCSerializedOtherWay = true;
         }
 
-        if( CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) )
+        if( CPLFetchBool( papszCreationOptions, "RPCTXT", false ) )
         {
             if( !bWriteOnlyInPAMIfNeeded )
                 GDALWriteRPCTXTFile( pszTIFFFilename, papszRPCMD );
@@ -11184,7 +11179,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Do we want blocks that are set to zero and that haven't yet being
     // allocated as tile/strip to remain implicit ?
-    if( CSLFetchBoolean( poOpenInfo->papszOpenOptions, "SPARSE_OK", FALSE ) )
+    if( CPLFetchBool( poOpenInfo->papszOpenOptions, "SPARSE_OK", false ) )
         poDS->bWriteEmptyTiles = false;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -13699,8 +13694,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( pszProfile == NULL )
         pszProfile = "GDALGeoTIFF";
 
-    const bool bTiled =
-        CPL_TO_BOOL( CSLFetchBoolean( papszParmList, "TILED", FALSE ) );
+    const bool bTiled = CPLFetchBool( papszParmList, "TILED", false );
 
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
@@ -13753,9 +13747,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
 /* -------------------------------------------------------------------- */
-    int bStreaming =
+    bool bStreaming =
         strcmp(pszFilename, "/vsistdout/") == 0 ||
-        CSLFetchBoolean(papszParmList, "STREAMABLE_OUTPUT", FALSE);
+        CPLFetchBool(papszParmList, "STREAMABLE_OUTPUT", false);
 #ifdef S_ISFIFO
     if( !bStreaming )
     {
@@ -13764,7 +13758,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
              S_ISFIFO(sStat.st_mode) )
         {
-            bStreaming = TRUE;
+            bStreaming = true;
         }
     }
 #endif
@@ -13777,16 +13771,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             "Streaming only supported to uncompressed TIFF" );
         return NULL;
     }
-    if( bStreaming &&
-        CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) )
+    if( bStreaming && CPLFetchBool(papszParmList, "SPARSE_OK", false) )
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "Streaming not supported with SPARSE_OK" );
         return NULL;
     }
-    if( bStreaming &&
-        CSLFetchBoolean(papszParmList, "COPY_SRC_OVERVIEWS", FALSE) )
+    if( bStreaming && CPLFetchBool(papszParmList, "COPY_SRC_OVERVIEWS", false) )
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -13827,7 +13819,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( nCompression == COMPRESSION_NONE &&
         dfUncompressedImageSize >= 1e9 &&
-        !CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) &&
+        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
     {
         GIntBig nFreeDiskSpace =
@@ -14723,7 +14715,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      Do we want to ensure all blocks get written out on close to     */
 /*      avoid sparse files?                                             */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean( papszParmList, "SPARSE_OK", FALSE ) )
+    if( !CPLFetchBool( papszParmList, "SPARSE_OK", false ) )
         poDS->bFillEmptyTilesAtClosing = true;
 
     poDS->bWriteEmptyTiles = bStreaming ||
@@ -14958,7 +14950,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     double dfExtraSpaceForOverviews = 0;
     if( nSrcOverviews != 0 &&
-        CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE) )
+        CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
         for( int j = 1; j <= nBands; ++j )
         {
@@ -15023,7 +15015,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly
     // useful for debugging purposes.
 #ifdef JPEG_DIRECT_COPY
-    if( CSLFetchBoolean(papszCreateOptions, "JPEG_DIRECT_COPY", FALSE) &&
+    if( CPLFetchBool(papszCreateOptions, "JPEG_DIRECT_COPY", false) &&
         GTIFF_CanDirectCopyFromJPEG(poSrcDS, papszCreateOptions) )
     {
         CPLDebug("GTiff", "Using special direct copy mode from a JPEG dataset");
@@ -15386,9 +15378,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a TFW file?                                          */
 /* -------------------------------------------------------------------- */
-        if( CSLFetchBoolean( papszOptions, "TFW", FALSE ) )
+        if( CPLFetchBool( papszOptions, "TFW", false ) )
             GDALWriteWorldFile( pszFilename, "tfw", adfGeoTransform );
-        else if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+        else if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
             GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
@@ -15424,8 +15416,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         pszProjection = poSrcDS->GetGCPProjection();
 
-        if( CSLFetchBoolean( papszOptions, "TFW", FALSE )
-            || CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+        if( CPLFetchBool( papszOptions, "TFW", false )
+            || CPLFetchBool( papszOptions, "WORLDFILE", false ) )
         {
             CPLError(
                 CE_Warning, CPLE_AppDefined,
@@ -15760,7 +15752,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( eErr == CE_None &&
         nSrcOverviews != 0 &&
-        CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE) )
+        CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
         eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
 
@@ -15991,7 +15983,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /*      Do we want to ensure all blocks get written out on close to     */
     /*      avoid sparse files?                                             */
     /* -------------------------------------------------------------------- */
-        if( !CSLFetchBoolean( papszOptions, "SPARSE_OK", FALSE ) )
+        if( !CPLFetchBool( papszOptions, "SPARSE_OK", false ) )
             poDS->bFillEmptyTilesAtClosing = true;
 
         poDS->bWriteEmptyTiles = bStreaming ||
