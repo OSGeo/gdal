@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Kompsat imagery.
@@ -30,7 +29,7 @@
 
 #include "reader_kompsat.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderKompsat()

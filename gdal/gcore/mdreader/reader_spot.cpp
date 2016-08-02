@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Spot imagery.
@@ -30,7 +29,7 @@
 
 #include "reader_spot.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderSpot()
