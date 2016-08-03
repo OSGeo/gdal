@@ -86,7 +86,8 @@ GDALMRFDataset::GDALMRFDataset()
     poSrcDS = NULL;
     poColorTable = NULL;
     bCrystalized = FALSE; // Assume not in create mode
-    bypass_cache = CSLTestBoolean(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"));
+    bypass_cache =
+        CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"));
     idxSize = 0;
     verCount = 0;
     Quality = 0;
@@ -299,7 +300,8 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             // last level that will be otherwised initialized to black
 	    if( !EQUAL(pszResampling, "NONE") &&
                 nOverviews != GetRasterBand(1)->GetOverviewCount() &&
-                CSLTestBoolean(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS", "YES")) )
+                CPLTestBool(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS",
+                                               "YES")) )
             {
                 bool bIncreasingPowers = true;
                 for (int i = 1; i < nOverviews; i++) {

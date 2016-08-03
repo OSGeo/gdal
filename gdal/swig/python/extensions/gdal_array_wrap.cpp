@@ -3624,7 +3624,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
     {
         if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
         {
@@ -6125,4 +6126,3 @@ SWIG_init(void) {
   return;
 #endif
 }
-

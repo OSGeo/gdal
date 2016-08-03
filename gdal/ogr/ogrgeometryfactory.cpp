@@ -147,8 +147,8 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE )
     {
-        if ( poGeom->hasCurveGeometry() &&
-             CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
+        if( poGeom->hasCurveGeometry() &&
+            CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
         {
             OGRGeometry* poNewGeom = poGeom->getLinearGeometry();
             delete poGeom;
@@ -342,8 +342,8 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE )
     {
-        if ( poGeom->hasCurveGeometry() &&
-             CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
+        if( poGeom->hasCurveGeometry() &&
+            CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
         {
             OGRGeometry* poNewGeom = poGeom->getLinearGeometry();
             delete poGeom;
@@ -1251,11 +1251,12 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return geom;
     }
 
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS", "NO")))
+    if( CPLTestBool(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS",
+                                       "NO")) )
     {
-        /* -------------------------------------------------------------------- */
-        /*      A wee bit of a warning.                                         */
-        /* -------------------------------------------------------------------- */
+        /* ------------------------------------------------------------------ */
+        /*      A wee bit of a warning.                                       */
+        /* ------------------------------------------------------------------ */
         static int firstTime = 1;
         if (!haveGEOS() && firstTime)
         {
@@ -2641,7 +2642,8 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
         }
     }
 
-    if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE",
+                                            "NO")) )
     {
         OGRwkbGeometryType eType = wkbFlatten(poSrcGeom->getGeometryType());
         OGRwkbGeometryType eNewType;

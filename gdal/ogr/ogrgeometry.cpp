@@ -339,8 +339,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             CPLFree( pszWkt );
         }
     }
-    else if (pszDisplayGeometry == NULL || CSLTestBoolean(pszDisplayGeometry) ||
-             EQUAL(pszDisplayGeometry, "ISO_WKT"))
+    else if( pszDisplayGeometry == NULL ||
+             CPLTestBool(pszDisplayGeometry) ||
+             EQUAL(pszDisplayGeometry, "ISO_WKT") )
     {
         if( exportToWkt( &pszWkt, wkbVariantIso ) == OGRERR_NONE )
         {
