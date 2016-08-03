@@ -436,7 +436,7 @@ void IRISDataset::LoadProjection()
     float fFlattening = 0.0f;
     float fPolarRadius = 0.0f;
 
-    if( fEquatorialRadius == 0 )
+    if( fEquatorialRadius == 0.0f )
     {
         // If Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS
         // versions).
@@ -447,7 +447,7 @@ void IRISDataset::LoadProjection()
     }
     else
     {
-        if( fInvFlattening == 0 )
+        if( fInvFlattening == 0.0f )
         {
             // When inverse flattening is infinite, they use 0.
             fFlattening = 0.0f;
@@ -456,7 +456,7 @@ void IRISDataset::LoadProjection()
         else
         {
             fFlattening = 1.0f / fInvFlattening;
-            fPolarRadius = fEquatorialRadius * (1.0 - fFlattening);
+            fPolarRadius = fEquatorialRadius * (1.0f - fFlattening);
         }
     }
 
