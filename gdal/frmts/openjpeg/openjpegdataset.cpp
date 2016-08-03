@@ -2628,7 +2628,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                  "GeoJP2 box was explicitly required but cannot be written due "
                  "to lack of georeferencing");
     }
-    cosnt bool bGeoBoxesAfter =
+    const bool bGeoBoxesAfter =
         CPLFetchBool(papszOptions, "GEOBOXES_AFTER_JP2C", bInspireTG);
     GDALJP2Box* poGMLJP2Box = NULL;
     if( eCodecFormat == OPJ_CODEC_JP2 && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
