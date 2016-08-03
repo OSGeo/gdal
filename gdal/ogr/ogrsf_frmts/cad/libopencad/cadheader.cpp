@@ -604,7 +604,7 @@ int CADHeader::getGroupCode(short code) const
     return -1;
 }
 
-const CADVariant &CADHeader::getValue(short code, const CADVariant& val) const
+const CADVariant CADHeader::getValue(short code, const CADVariant& val) const
 {
     auto it = valuesMap.find(code);
     if(it != valuesMap.end())

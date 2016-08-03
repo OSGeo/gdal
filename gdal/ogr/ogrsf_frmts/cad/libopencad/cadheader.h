@@ -702,7 +702,7 @@ public:
     int addValue(short code, double x, double y, double z = 0);
     int addValue(short code, long julianday, long milliseconds);
     int getGroupCode(short code) const;
-    const CADVariant& getValue(short code,
+    const CADVariant getValue(short code,
                                const CADVariant& val = CADVariant()) const;
     const char*     getValueName(short code) const;
     void            print() const;
