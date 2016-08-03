@@ -162,7 +162,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
         const CADHeader& header = poCADFile->getHeader();
         for(i = 0; i < header.getSize(); ++i)
         {
-            short nCode = header.getCode(i);
+            short nCode = header.getCode(static_cast<int>(i));
             const CADVariant& oVal = header.getValue(nCode);
             GDALDataset::SetMetadataItem(header.getValueName(nCode), oVal.getString().c_str());
         }
@@ -264,7 +264,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 if(NULL == papszMetadata)
                     SetMetadata(papszRasterMetadata, *papszDomainList);
                 else
-                    CSLMerge(papszMetadata, papszRasterMetadata);    
+                    papszMetadata = CSLMerge(papszMetadata, papszRasterMetadata);    
                 papszDomainList++;
             }
         }
@@ -297,7 +297,7 @@ int GDALCADDataset::TestCapability( const char * pszCap )
 
 char** GDALCADDataset::GetFileList()
 {
-    int i, j;
+    size_t i, j;
     char **papszFileList = GDALDataset::GetFileList();
 
     /* duplicated papszFileList = CSLAddString( papszFileList, osCADFilename );*/
