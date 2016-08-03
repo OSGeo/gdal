@@ -133,11 +133,13 @@ OGRFeature *OGRCADLayer::GetNextFeature()
     {
         return poFeature;
     }
+
+    return( NULL );
 }
 
 OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 {
-    if( poCADLayer.getGeometryCount() <= nFID
+    if( poCADLayer.getGeometryCount() <= static_cast<size_t>(nFID)
         || nFID < 0 )
     {
         return NULL;
