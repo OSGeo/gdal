@@ -238,7 +238,8 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const bool bWriteOGRAttributes =
+        CPLFetchBool(papszOptions, "OGR_WRITE_ATTRIBUTES", true);
     const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
 
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
