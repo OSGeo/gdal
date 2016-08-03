@@ -810,9 +810,10 @@ retry:
     /* HACK for mbtiles driver: http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, */
     /* as it is a redirect to AWS S3 signed URL, but those are only valid for a */
     /* given type of HTTP request, and thus GET. This is valid for any signed URL for AWS S3. */
-    else if (strstr(osURL, ".tiles.mapbox.com/") != NULL ||
+    else if( strstr(osURL, ".tiles.mapbox.com/") != NULL ||
              VSICurlIsS3SignedURL(osURL) ||
-             !CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
+             !CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD",
+                                             "YES")) )
     {
         sWriteFuncHeaderData.bDownloadHeaderOnly = true;
         osVerb = "GET";
@@ -896,8 +897,10 @@ retry:
         }
 
         if( bS3Redirect && response_code >= 200 && response_code < 300 &&
-            sWriteFuncHeaderData.nTimestampDate > 0 && pszEffectiveURL != NULL &&
-            CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")) )
+            sWriteFuncHeaderData.nTimestampDate > 0 &&
+            pszEffectiveURL != NULL &&
+            CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
+                                           "TRUE")) )
         {
             GIntBig nExpireTimestamp = VSICurlGetExpiresFromS3SigneURL(pszEffectiveURL);
             if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
@@ -1152,8 +1155,10 @@ retry:
         CPLDebug("VSICURL", "Effective URL: %s", pszEffectiveURL);
         if( response_code >= 200 && response_code < 300 &&
             sWriteFuncHeaderData.nTimestampDate > 0 &&
-            VSICurlIsS3SignedURL(pszEffectiveURL) && !VSICurlIsS3SignedURL(pszURL) &&
-            CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")) )
+            VSICurlIsS3SignedURL(pszEffectiveURL) &&
+            !VSICurlIsS3SignedURL(pszURL) &&
+            CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
+                                           "TRUE")) )
         {
             GIntBig nExpireTimestamp = VSICurlGetExpiresFromS3SigneURL(pszEffectiveURL);
             if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
@@ -1791,7 +1796,8 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler()
     hMutex = NULL;
     papsRegions = NULL;
     nRegions = 0;
-    bUseCacheDisk = CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO"));
+    bUseCacheDisk =
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO"));
 }
 
 /************************************************************************/
@@ -2126,8 +2132,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
-    const bool bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
-                              CSLTestBoolean(pszOptionVal);
+    const bool bSkipReadDir =
+        EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal);
 
     CPLString osFilename(pszFilename);
     bool bGotFileList = true;
@@ -2171,7 +2177,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         }
     }
 
-    if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
         return VSICreateCachedFile( poHandle );
     else
         return poHandle;
@@ -2621,7 +2627,9 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
         if( !(nMaxFiles > 0 && osFileList.Count() > nMaxFiles) )
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-            bIsTruncated = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false")));
+            bIsTruncated =
+                CPLTestBool(CPLGetXMLValue(psListBucketResult,
+                                           "IsTruncated", "false"));
         }
     }
     CPLDestroyXMLNode(psTree);
@@ -3028,8 +3036,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
-    const bool bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
-                              CSLTestBoolean(pszOptionVal);
+    const bool bSkipReadDir =
+        EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal);
 
     /* Does it look like a FTP directory ? */
     if (STARTS_WITH(osFilename, "/vsicurl/ftp") &&
@@ -3067,10 +3075,13 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     if( poHandle == NULL )
         return -1;
 
-    if ( poHandle->IsKnownFileSize() ||
-         ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
-           CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))) )
+    if( poHandle->IsKnownFileSize() ||
+        ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
+         CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE",
+                                        "YES"))) )
+    {
         pStatBuf->st_size = poHandle->GetFileSize();
+    }
 
     int nRet = poHandle->Exists((nFlags & VSI_STAT_SET_ERROR_FLAG) > 0) ? 0 : -1;
     pStatBuf->st_mtime = poHandle->GetMTime();

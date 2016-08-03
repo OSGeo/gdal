@@ -1182,7 +1182,8 @@ typedef struct
 void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 
 {
-    bool bAppend = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE")));
+    const bool bAppend =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
     char** papszFilenames = NULL;
 
     if( bAppend )
@@ -1240,7 +1241,8 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         return CE_Failure;
     }
 
-    int bCompressed = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
+    const int bCompressed =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
     int nErr = cpl_zipOpenNewFileInZip( psZip->hZip, pszFilename, NULL,
                                     NULL, 0, NULL, 0, "",

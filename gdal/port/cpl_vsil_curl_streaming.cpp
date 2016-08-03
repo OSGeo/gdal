@@ -942,7 +942,8 @@ void VSICurlStreamingHandle::DownloadInThread()
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = true;
     }
-    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    if( bSupportGZip &&
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
@@ -1510,7 +1511,7 @@ VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
         return VSICreateCachedFile( poHandle );
     else
         return poHandle;
@@ -1533,10 +1534,13 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     {
         return -1;
     }
-    if ( poHandle->IsKnownFileSize() ||
-         ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
-           CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))) )
+    if( poHandle->IsKnownFileSize() ||
+        ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
+         CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE",
+                                        "YES"))) )
+    {
         pStatBuf->st_size = poHandle->GetFileSize();
+    }
 
     int nRet = (poHandle->Exists()) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;

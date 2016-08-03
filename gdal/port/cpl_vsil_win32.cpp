@@ -278,7 +278,7 @@ int VSIWin32Handle::Flush()
     /* See http://trac.osgeo.org/gdal/ticket/5556 */
 
     // Add this as a hack to make ogr_mitab_30 and _31 tests pass
-    if( CSLTestBoolean(CPLGetConfigOption("VSI_FLUSH", "FALSE")) )
+    if( CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")) )
         FlushFileBuffers(hFile);
     return 0;
 }
@@ -592,8 +592,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*      converting to wide characters to open.                          */
 /* -------------------------------------------------------------------- */
     DWORD nLastError = 0;
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -662,7 +661,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*      of more direct io on the underlying file.                       */
 /* -------------------------------------------------------------------- */
     if( (EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb"))
-        && CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+        && CPLTestBool( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
     {
         return VSICreateCachedFile( poHandle );
     }
@@ -684,8 +683,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
     (void) nFlags;
 
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -753,8 +751,7 @@ int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
 
 {
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -779,8 +776,7 @@ int VSIWin32FilesystemHandler::Rename( const char *oldpath,
 
 {
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszOldPath =
             CPLRecodeToWChar( oldpath, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -809,8 +805,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
 {
     (void) nMode;
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -834,8 +829,7 @@ int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
 
 {
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -860,8 +854,7 @@ char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
 
 {
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         struct _wfinddata_t c_file;
         intptr_t hFile;

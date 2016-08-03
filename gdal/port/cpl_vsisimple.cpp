@@ -101,8 +101,7 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
     FILE *fp = NULL;
 
 #if defined(WIN32)
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -1187,8 +1186,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
 #if defined(WIN32)
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );

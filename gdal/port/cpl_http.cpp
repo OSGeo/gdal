@@ -163,8 +163,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
 {
     if( STARTS_WITH(pszURL, "/vsimem/") &&
-        /* Disabled by default for potential security issues */
-        CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        // Disabled by default for potential security issues.
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         CPLString osURL(pszURL);
         const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
@@ -333,7 +333,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     const char* pszNoBody = NULL;
     if ((pszNoBody = CSLFetchNameValue( papszOptions, "NO_BODY" )) != NULL)
     {
-        if (CSLTestBoolean(pszNoBody))
+        if( CPLTestBool(pszNoBody) )
         {
             CPLDebug ("HTTP", "HEAD Request: %s", pszURL);
             curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);
@@ -359,7 +359,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         bHasCheckVersion = true;
     }
     int bGZipRequested = false;
-    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    if( bSupportGZip &&
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
     {
         bGZipRequested = true;
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
@@ -491,7 +492,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
 void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
 {
-    if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
+    if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
     const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
@@ -535,7 +536,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     const char *pszHttpNetrc = CSLFetchNameValue( papszOptions, "NETRC" );
     if( pszHttpNetrc == NULL )
         pszHttpNetrc = CPLGetConfigOption( "GDAL_HTTP_NETRC", "YES" );
-    if( pszHttpNetrc == NULL || CSLTestBoolean(pszHttpNetrc) )
+    if( pszHttpNetrc == NULL || CPLTestBool(pszHttpNetrc) )
         curl_easy_setopt(http_handle, CURLOPT_NETRC, 1L);
 
     /* Support setting userid:password */
@@ -617,7 +618,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     const char *pszUnsafeSSL = CSLFetchNameValue( papszOptions, "UNSAFESSL" );
     if (pszUnsafeSSL == NULL)
         pszUnsafeSSL = CPLGetConfigOption("GDAL_HTTP_UNSAFESSL", NULL);
-    if (pszUnsafeSSL != NULL && CSLTestBoolean(pszUnsafeSSL))
+    if( pszUnsafeSSL != NULL && CPLTestBool(pszUnsafeSSL) )
     {
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
