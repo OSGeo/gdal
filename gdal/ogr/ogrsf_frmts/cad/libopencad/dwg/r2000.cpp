@@ -678,7 +678,7 @@ int DWGFileR2000::readClasses (enum OpenOptions eOptions)
         }
 
         fileIO->Read (&dSectionSize, 4);
-        DebugMsg ("Classes section length: %d\n", dSectionSize);
+        DebugMsg ("Classes section length: %zd\n", dSectionSize);
 
         pabySectionContent = new char[dSectionSize + 4];
         fileIO->Read (pabySectionContent, dSectionSize);
@@ -745,7 +745,7 @@ int DWGFileR2000::createFileMap ()
         fileIO->Read (&dSectionSize, 2);
         SwapEndianness (dSectionSize, sizeof (dSectionSize));
 
-        DebugMsg ("Object map section #%d size: %d\n", ++nSection,
+        DebugMsg ("Object map section #%d size: %zd\n", ++nSection,
                   dSectionSize);
 
         if ( dSectionSize == 2 )
