@@ -264,9 +264,11 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if( strlen(fileName) < 11 || !STARTS_WITH_CI(&fileName[7], ".hgt") )
+  if( strlen(fileName) < 11 || fileName[7] != '.' )
     return FALSE;
-
+  
+  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") )
+    return FALSE;
 /* -------------------------------------------------------------------- */
 /*	We check the file size to see if it is 25,934,402 bytes	        */
 /*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/
