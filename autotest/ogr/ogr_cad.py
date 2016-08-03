@@ -109,6 +109,7 @@ def ogr_cad_1():
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
+    gdaltest.cad_ds = None
     return 'success'
 
 ###############################################################################
@@ -255,6 +256,7 @@ def ogr_cad_2():
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
+    gdaltest.cad_ds = None
     return 'success'
    
 ###############################################################################
@@ -278,6 +280,7 @@ def ogr_cad_3():
         gdaltest.post_reason( 'got feature which doesnot fit expectations.' )
         return 'fail'
     
+    gdaltest.cad_ds = None
     return 'success'
 
 ###############################################################################
@@ -300,7 +303,8 @@ def ogr_cad_4():
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (50 50 0,100 100 0)' ):
         gdaltest.post_reason( 'got feature which doesnot fit expectations.' )
         return 'fail'
-
+        
+    gdaltest.cad_ds = None
     return 'success'
     
 ###############################################################################
