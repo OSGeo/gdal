@@ -47,7 +47,7 @@ typedef struct ctb {
     char      **papszFieldNames;
     char      **papszRecFields;
     int         iLastLine;
-    int         bNonUniqueKey;
+    bool        bNonUniqueKey;
 
     /* Cache for whole file */
     int         nLineCount;
@@ -56,7 +56,7 @@ typedef struct ctb {
     char       *pszRawData;
 } CSVTable;
 
-static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, bool bCanUseTLS,
                                  const char * pszFilename );
 
 /************************************************************************/
@@ -64,7 +64,7 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
 /************************************************************************/
 static void CSVFreeTLS( void* pData )
 {
-    CSVDeaccessInternal( static_cast<CSVTable **>( pData ), FALSE, NULL );
+    CSVDeaccessInternal( static_cast<CSVTable **>( pData ), false, NULL );
     CPLFree(pData);
 }
 
@@ -147,7 +147,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
         VSIFCloseL(fp);
         return NULL;
     }
-    psTable->bNonUniqueKey = FALSE; /* as far as we know now */
+    psTable->bNonUniqueKey = false;  // As far as we know now.
     psTable->psNext = *ppsCSVTableList;
 
     *ppsCSVTableList = psTable;
@@ -164,7 +164,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*                            CSVDeaccess()                             */
 /************************************************************************/
 
-static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, bool bCanUseTLS,
                                  const char * pszFilename )
 
 {
@@ -197,7 +197,7 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
 
     if( psTable == NULL )
     {
-        if (bCanUseTLS)
+        if( bCanUseTLS )
             CPLDebug( "CPL_CSV", "CPLDeaccess( %s ) - no match.", pszFilename );
         return;
     }
@@ -225,7 +225,7 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
 
     CPLFree( psTable );
 
-    if (bCanUseTLS)
+    if( bCanUseTLS )
         CPLReadLine( NULL );
 }
 
@@ -239,7 +239,7 @@ void CSVDeaccess( const char * pszFilename )
     CSVTable **ppsCSVTableList = static_cast<CSVTable **>(
         CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
 
-    CSVDeaccessInternal(ppsCSVTableList, TRUE, pszFilename);
+    CSVDeaccessInternal(ppsCSVTableList, true, pszFilename);
 }
 
 /************************************************************************/
@@ -885,7 +885,7 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
             while( iResult > 0
                    && psTable->panLineIndex[iResult-1] == nKeyValue )
             {
-                psTable->bNonUniqueKey = TRUE;
+                psTable->bNonUniqueKey = true;
                 iResult--;
             }
             break;
@@ -989,7 +989,7 @@ char **CSVGetNextLine( const char *pszFilename )
 /*      If we use CSVGetNextLine() we can pretty much assume we have    */
 /*      a non-unique key.                                               */
 /* -------------------------------------------------------------------- */
-    psTable->bNonUniqueKey = TRUE;
+    psTable->bNonUniqueKey = true;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a next line available?  This only works for          */
@@ -1243,7 +1243,7 @@ const char *CSVGetField( const char * pszFilename,
 typedef struct
 {
     char szPath[512];
-    int  bCSVFinderInitialized;
+    bool  bCSVFinderInitialized;
 } DefaultCSVFileNameTLS;
 
 
@@ -1301,7 +1301,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 
     if( !pTLSData->bCSVFinderInitialized )
     {
-        pTLSData->bCSVFinderInitialized = TRUE;
+        pTLSData->bCSVFinderInitialized = true;
 
         if( CPLGetConfigOption("GEOTIFF_CSV", NULL) != NULL )
             CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV", NULL));
