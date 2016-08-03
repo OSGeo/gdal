@@ -4331,7 +4331,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     int nBlockYSize = nHeight;
     const char* pszValue;
 
-    int bTiled = CSLFetchBoolean( papszOptions, "TILED", FALSE );
+    const bool bTiled = CPLFetchBool( papszOptions, "TILED", false );
     if( bTiled )
         nBlockXSize = nBlockYSize = 256;
 
@@ -4518,7 +4518,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
     const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const bool bWriteOGRAttributes =
+        CPLFetchBool(papszOptions, "OGR_WRITE_ATTRIBUTES", true);
 
     const char* pszExtraRasters = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS");
     const char* pszExtraRastersLayerName = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS_LAYER_NAME");
@@ -4548,7 +4549,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( bUseClippingExtent )
         poClippingDS = new GDALPDFClippingDataset(poSrcDS, adfClippingExtent);
 
-    if( CSLFetchBoolean(papszOptions, "WRITE_INFO", TRUE) )
+    if( CPLFetchBool(papszOptions, "WRITE_INFO", true) )
         oWriter.SetInfo(poSrcDS, papszOptions);
     oWriter.SetXMP(poClippingDS, pszXMP);
 
