@@ -11,7 +11,7 @@ OBJ		=	georaster_dataset.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(XTRA_OPT)  $(OCI_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(OCI_INCLUDE) $(XTRA_OPT) $(CPPFLAGS) -fPIC
 
 ifneq ($(JPEG_SETTING),no)
 CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED
@@ -28,7 +28,7 @@ clean:
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-PLUGIN_SO	= gdal_GEOR.$(SO_EXT)
+PLUGIN_SO	= gdal_GEOR.so
 
 plugin: $(PLUGIN_SO)
 
