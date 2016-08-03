@@ -177,7 +177,11 @@ CADFile* OpenCADFile( const char* pszFileName, enum CADFile::OpenOptions eOption
     return OpenCADFile (GetDefaultFileIO (pszFileName), eOptions);
 }
 
+#ifdef _DEBUG
 void DebugMsg(const char* format, ...)
+#else
+void DebugMsg(const char*, ...)
+#endif
 {
 #ifdef _DEBUG
     va_list argptr;
