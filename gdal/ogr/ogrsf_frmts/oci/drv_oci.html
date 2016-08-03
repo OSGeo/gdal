@@ -100,12 +100,13 @@ in USER_SDO_GEOM_METADATA and rebuilding the spatial index.<p>
 
 <ul>
 
-<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
-desired name to be destroyed before creating the requested layer.<p>
+<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer (=table) of the
+same desired name to be destroyed before creating the requested layer. 
+The default value is “NO"<p>
 
 <li> <b>TRUNCATE</b>: This may be "YES" to force the existing table to
 be reused, but to first truncate all records in the table, preserving
-indexes or dependencies.<p>
+indexes or dependencies. The default value is “NO".<p>
 
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
@@ -126,9 +127,10 @@ any of the layer features have valid geometries. The default is "YES".
 Note: option was called INDEX in releases before GDAL 2<p>
 
 <li> <b>INDEX_PARAMETERS</b>: This may be set to pass creation parameters
-when the spatial index is created.  For instance setting INDEX_PARAMETERS to
-SDO_LEVEL=5 would cause a 5 level tile index to be used.  By default no
-parameters are passed causing a default R-Tree spatial index to be created.<p>
+when the spatial index is created.  For instance setting INDEX_PARAMETERS
+to SDO_RTR_PCTFREE=0 would cause the rtree index to be created without any
+empty space. By default no parameters are passed causing a default R-Tree
+spatial index to be created.<p>
 
 <li> <b>ADD_LAYER_GTYPE</b>=YES/NO: (starting with GDAL 2.0) This may be
 set to NO to disable the constraints on the geometry type in the spatial index,
@@ -160,10 +162,15 @@ match the WKT the driver expects.<p>
 groups of 100 per SQL INSERT command, instead of each feature being a separate
 INSERT command.  Having this enabled is the fastest way to load data quickly.
 Multi-load mode is enabled by default, and may be forced off for existing
-layers or for new layers by setting to NO.<p>
+layers or for new layers by setting to NO. The number of rows in each group is defined by
+MULTI_LOAD_COUNT. To load one row at a time, set MULTI_LOAD to NO.<p>
 
-<li> <b>MULTI_LOAD_COUNT</b>: Define the number on each groups SQL INSERT command, 
-instead of the default 100 item defined by MULTI_LOAD.<p>
+<li> <b>MULTI_LOAD_COUNT</b>: Define the number of features on each ARRAY INSERT command, 
+instead of the default 100 item defined by MULTI_LOAD. Since each array insert will commit 
+a transaction, this options shouldn't be combined with ogr2ogr "-gt N". 
+Use "-gt unlimited" preferably when using MULTI_LOAD_COUNT. The default is 100. 
+If neither MULTI_LOAD nor MULTI_LOAD_COUNT are specified, then the loading happens
+in groups of 100 rows.<p>
     
 <li> <b>FIRST_ID</b>: Define the first numeric value of the id column on the first
 rows. It's also work as a open option when used to append or update an existing dataset.<p>
@@ -181,6 +188,16 @@ load performance.<p>
 <li> <b>GEOMETRY_NAME</b>: By default OGR creates new tables with the
 geometry column named ORA_GEOMETRY.  If you wish to use a different name,
 it can be supplied with the GEOMETRY_NAME layer creation option.<p>
+
+</ul>
+
+<h3>Layer Open Options</h3>
+
+<ul>
+
+<li> <b>FIRST_ID</b>: See Layer Create Options comments on FIRST_ID.<p>
+    
+<li> <b>MULTI_LOAD_COUNT</b>: See Layer Create Options comments on MULTI_LOAD_COUNT.<p>
 
 </ul>
 
