@@ -263,7 +263,22 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if( strlen(fileName) < 11 || !STARTS_WITH_CI(&fileName[7], ".hgt") )
+  if( strlen(fileName) < 11 )
+    return FALSE;
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      fileName[7] == '.' &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+    CPLString osNewName("/vsizip/");
+    osNewName += poOpenInfo->pszFilename;
+    osNewName += "/";
+    osNewName += CPLString(fileName).substr(0, 7);
+    osNewName += ".hgt";
+    GDALOpenInfo oOpenInfo(osNewName, GA_ReadOnly);
+    return Identify(&oOpenInfo);
+  }
+  
+  if( !STARTS_WITH_CI(&fileName[7], ".hgt") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -317,24 +332,35 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
+  
+  CPLString osFilename(poOpenInfo->pszFilename);
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+      osFilename = "/vsizip/";
+      osFilename += poOpenInfo->pszFilename;
+      osFilename += "/";
+      osFilename += CPLString(fileName).substr(0, 7);
+      osFilename += ".hgt";
+  }
 
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file api.                         */
 /* -------------------------------------------------------------------- */
   poDS->fpImage = VSIFOpenL(
-      poOpenInfo->pszFilename,
+      osFilename,
       (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb" );
   if(poDS->fpImage == NULL)
   {
       CPLError( CE_Failure, CPLE_OpenFailed,
                 "VSIFOpenL(%s) failed unexpectedly in srtmhgtdataset.cpp",
-                poOpenInfo->pszFilename );
+                osFilename.c_str() );
       delete poDS;
       return NULL;
   }
 
   VSIStatBufL fileStat;
-  if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
+  if(VSIStatL(osFilename, &fileStat) != 0)
   {
       delete poDS;
       return NULL;

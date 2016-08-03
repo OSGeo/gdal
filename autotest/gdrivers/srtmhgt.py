@@ -82,12 +82,29 @@ def srtmhgt_1():
 
 def srtmhgt_2():
 
-    ds = None
-    dsDst = None
-
     ds = gdal.Open( 'tmp/n43w080.hgt' )
     driver = gdal.GetDriverByName( "SRTMHGT" );
     dsDst = driver.CreateCopy( '/vsimem/n43w080.hgt', ds)
+
+    band = dsDst.GetRasterBand(1)
+    chksum = band.Checksum()
+
+    if chksum != 60918:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading from a .hgt.zip file
+
+def srtmhgt_3():
+
+    ds = gdal.Open( 'tmp/n43w080.hgt' )
+    driver = gdal.GetDriverByName( "SRTMHGT" );
+    driver.CreateCopy( '/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
+    
+    dsDst = gdal.Open('/vsimem/N43W080.SRTMGL1.hgt.zip')
 
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
@@ -105,6 +122,7 @@ def srtmhgt_cleanup():
     try:
         gdal.GetDriverByName( "SRTMHGT" ).Delete('tmp/n43w080.hgt')
         gdal.GetDriverByName( "SRTMHGT" ).Delete('/vsimem/n43w080.hgt')
+        gdal.Unlink('/vsimem/N43W080.SRTMGL1.hgt.zip')
         os.remove( 'tmp/n43.dt1.tif' )
     except:
         pass
@@ -113,6 +131,7 @@ def srtmhgt_cleanup():
 gdaltest_list = [
     srtmhgt_1,
     srtmhgt_2,
+    srtmhgt_3,
     srtmhgt_cleanup
     ]
 
