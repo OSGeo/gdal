@@ -2299,7 +2299,7 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
                 CPLFree( pabSuccess );
                 return OGRERR_FAILURE;
             }
-            else if (!CSLTestBoolean(pszEnablePartialReprojection))
+            else if( !CPLTestBool(pszEnablePartialReprojection) )
             {
                 CPLFree( xyz );
                 CPLFree( pabSuccess );

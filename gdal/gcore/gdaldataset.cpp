@@ -6100,7 +6100,8 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other
             // issues
-            if( CSLTestBoolean(CPLGetConfigOption( "GDAL_ENABLE_READ_WRITE_MUTEX", "YES") ) )
+            if( CPLTestBool(CPLGetConfigOption( "GDAL_ENABLE_READ_WRITE_MUTEX",
+                                                "YES") ) )
             {
                 psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
             }

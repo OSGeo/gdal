@@ -3061,7 +3061,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     char *pszLast = NULL;
 
     if( bWarn < 0 )
-        bWarn = CSLTestBoolean( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING", "YES" ) );
+        bWarn = CPLTestBool( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING",
+                                                 "YES" ) );
 
     if( poFDefn == NULL )
         return;
@@ -4192,7 +4193,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
 
     const char* pszDisplayFields =
             CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");
-    if (pszDisplayFields == NULL || CSLTestBoolean(pszDisplayFields))
+    if( pszDisplayFields == NULL || CPLTestBool(pszDisplayFields) )
     {
         for( int iField = 0; iField < GetFieldCount(); iField++ )
         {
@@ -4221,7 +4222,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
     {
         const char* pszDisplayStyle =
             CSLFetchNameValue(papszOptions, "DISPLAY_STYLE");
-        if (pszDisplayStyle == NULL || CSLTestBoolean(pszDisplayStyle))
+        if( pszDisplayStyle == NULL || CPLTestBool(pszDisplayStyle) )
         {
             fprintf( fpOut, "  Style = %s\n", GetStyleString() );
         }

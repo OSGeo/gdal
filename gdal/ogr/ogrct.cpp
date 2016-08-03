@@ -267,7 +267,7 @@ static bool LoadProjLibrary_unlocked()
         pfn_pj_ctx_free != NULL &&
         pfn_pj_init_plus_ctx != NULL &&
         pfn_pj_ctx_get_errno != NULL &&
-        CSLTestBoolean(CPLGetConfigOption("USE_PROJ_480_FEATURES", "YES")))
+        CPLTestBool(CPLGetConfigOption("USE_PROJ_480_FEATURES", "YES")))
     {
         CPLDebug("OGRCT", "PROJ >= 4.8.0 features enabled");
     }
@@ -649,7 +649,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
 
-    bCheckWithInvertProj = CSLTestBoolean(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
+    bCheckWithInvertProj =
+        CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
 
     /* The threshold is rather experimental... Works well with the cases of ticket #2305 */
     if (bSourceLatLong)
