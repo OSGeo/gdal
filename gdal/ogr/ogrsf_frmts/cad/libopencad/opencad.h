@@ -78,6 +78,6 @@
 #endif
 
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
-void DebugMsg(const char *, ...) CPL_PRINT_FUNC_FORMAT (1,2)
+void DebugMsg(const char *, ...) CPL_PRINT_FUNC_FORMAT (1,2);
 
 #endif // OPENCAD_H
