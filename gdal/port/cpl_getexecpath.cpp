@@ -43,8 +43,7 @@ CPL_CVSID("$Id$");
 
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszPathBuf = (wchar_t*)
             CPLCalloc(nMaxLength+1,sizeof(wchar_t));

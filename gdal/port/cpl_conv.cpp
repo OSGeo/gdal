@@ -2604,7 +2604,7 @@ int CPLSymlink( const char*
 CPLLocaleC::CPLLocaleC() :
     pszOldLocale(NULL)
 {
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
         return;
 
     pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));

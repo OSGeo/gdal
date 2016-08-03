@@ -1472,8 +1472,11 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             nSectorSize = 512;
         }
 
-        int bAddKeyCheck = CSLTestBoolean(GetArgument(pszFilename, "add_key_check",
-                                           CPLGetConfigOption("VSICRYPT_ADD_KEY_CHECK", "NO")));
+        const bool bAddKeyCheck =
+            CPLTestBool(
+                GetArgument(pszFilename, "add_key_check",
+                            CPLGetConfigOption("VSICRYPT_ADD_KEY_CHECK",
+                                               "NO")));
 
         /* Generate random initial vector */
         CryptoPP::BlockCipher* poBlock = GetEncBlockCipher(eAlg);
@@ -1513,11 +1516,13 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             CPLDebug("VSICRYPT", "Generating key. This might take some time...");
             CryptoPP::OS_GenerateRandomBlock(
                 /* we need cryptographic randomness (config option for speeding tests) */
-                CSLTestBoolean(CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM", "TRUE")) != FALSE,
+                CPLTestBool(CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM",
+                                               "TRUE")),
                 (byte*)osKey.c_str(), osKey.size());
 
             char* pszB64 = CPLBase64Encode(static_cast<int>(osKey.size()), (const GByte*)osKey.c_str());
-            if( CSLTestBoolean(CPLGetConfigOption("VSICRYPT_DISPLAY_GENERATED_KEY", "TRUE")) )
+            if( CPLTestBool(CPLGetConfigOption("VSICRYPT_DISPLAY_GENERATED_KEY",
+                                               "TRUE")) )
             {
                 fprintf(stderr, "BASE64 key '%s' has been generated, and installed in "
                         "the VSICRYPT_KEY_B64 configuration option.\n", pszB64);

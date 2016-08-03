@@ -132,6 +132,7 @@ int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
 
 /* TODO: Deprecate CSLTestBoolean.  Remove in GDAL 3.x. */
 int CPL_DLL CSLTestBoolean( const char *pszValue );
+/* Do not use CPLTestBoolean in C++ code.  Use CPLTestBool. */
 int CPL_DLL CPLTestBoolean( const char *pszValue );
 
 #ifdef __cplusplus
