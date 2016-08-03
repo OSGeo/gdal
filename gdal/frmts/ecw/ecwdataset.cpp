@@ -183,8 +183,10 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
         poDSIn->psFileInfo->pBands[2].nBits == 8 &&
         poDSIn->psFileInfo->pBands[3].nBits == 1 &&
         eBandInterp == GCI_AlphaBand &&
-        CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-            CPLTestBool(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+        CPLFetchBool(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+            CPLTestBool(
+                CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT",
+                                   "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -2833,7 +2835,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     if( bIsJPEG2000 && poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         poDS->LoadVectorLayers(
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+            CPLFetchBool(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML",
+                         false));
 
         // If file opened in vector-only mode and there's no vector,
         // return

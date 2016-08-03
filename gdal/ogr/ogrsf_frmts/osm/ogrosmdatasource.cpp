@@ -2707,7 +2707,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
     if( psParser == NULL )
         return FALSE;
 
-    if( CSLFetchBoolean(papszOpenOptionsIn, "INTERLEAVED_READING", FALSE) )
+    if( CPLFetchBool(papszOpenOptionsIn, "INTERLEAVED_READING", false) )
         bInterleavedReading = TRUE;
 
     /* The following 4 config options are only useful for debugging */

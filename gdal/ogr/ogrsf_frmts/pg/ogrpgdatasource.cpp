@@ -1491,7 +1491,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         osFIDColumnName = "ogc_fid";
     else
     {
-        if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+        if( CPLFetchBool(papszOptions,"LAUNDER", true) )
         {
             char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnNameIn, "PG");
             osFIDColumnName += pszLaunderedFid;
@@ -1567,7 +1567,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
 
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", true) )
           pszTableName = OGRPGCommonLaunderName( pszDotPos + 1, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
@@ -1575,7 +1575,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     else
     {
       pszSchemaName = NULL;
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", true) )
           pszTableName = OGRPGCommonLaunderName( pszLayerName, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
@@ -1720,12 +1720,12 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
-    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", false);
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
-    int bTemporary = CSLFetchBoolean( papszOptions, "TEMPORARY", FALSE );
-    if (bTemporary)
+    const bool bTemporary = CPLFetchBool( papszOptions, "TEMPORARY", false );
+    if( bTemporary )
     {
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup("pg_temp_1");
@@ -1733,10 +1733,13 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                              OGRPGEscapeColumnName(pszTableName).c_str());
     }
     else
+    {
         osCreateTable.Printf("CREATE%s TABLE %s.%s",
-                             CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
+                             CPLFetchBool( papszOptions, "UNLOGGED", false ) ?
+                             " UNLOGGED": "",
                              OGRPGEscapeColumnName(pszSchemaName).c_str(),
                              OGRPGEscapeColumnName(pszTableName).c_str());
+    }
 
     const char *suffix;
     if( (GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
@@ -1804,7 +1807,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( eType != wkbNone &&
         pszSI == NULL &&
-        CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) &&
+        CPLFetchBool( papszOptions, "UNLOGGED", false ) &&
         !(sPostgreSQLVersion.nMajor > 9 ||
          (sPostgreSQLVersion.nMajor == 9 && sPostgreSQLVersion.nMinor >= 3)) )
     {
@@ -1949,8 +1952,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                                    pszSchemaName, "", NULL, TRUE );
     poLayer->SetTableDefinition(osFIDColumnName, pszGFldName, eType,
                                 pszGeomType, nSRSId, GeometryTypeFlags);
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
     //poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);

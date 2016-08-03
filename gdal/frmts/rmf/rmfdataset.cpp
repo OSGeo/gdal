@@ -1734,7 +1734,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     GUInt32 nBlockYSize =
         ( nYSize < RMF_DEFAULT_BLOCKYSIZE ) ? nYSize : RMF_DEFAULT_BLOCKYSIZE;
 
-    if ( CSLFetchBoolean( papszParmList, "MTW", FALSE) )
+    if( CPLFetchBool( papszParmList, "MTW", false) )
         poDS->eRMFType = RMFT_MTW;
     else
         poDS->eRMFType = RMFT_RSW;

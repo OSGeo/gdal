@@ -2085,9 +2085,11 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
     CPLString osPEMKeyPassword = CSLFetchNameValueDef(papszOpenOptions, "SSL_PEM_KEY_PASSWORD", "");
     CPLString osCAFile = CSLFetchNameValueDef(papszOpenOptions, "SSL_CA_FILE", "");
     CPLString osCRLFile = CSLFetchNameValueDef(papszOpenOptions, "SSL_CRL_FILE", "");
-    int bAllowInvalidCertificates = CSLFetchBoolean(papszOpenOptions, "SSL_ALLOW_INVALID_CERTIFICATES", FALSE);
-    int bAllowInvalidHostnames = CSLFetchBoolean(papszOpenOptions, "SSL_ALLOW_INVALID_HOSTNAMES", FALSE);
-    int bFIPSMode = CSLFetchBoolean(papszOpenOptions, "FIPS_MODE", FALSE);
+    int bAllowInvalidCertificates =
+        CPLFetchBool(papszOpenOptions, "SSL_ALLOW_INVALID_CERTIFICATES", false);
+    int bAllowInvalidHostnames =
+        CPLFetchBool(papszOpenOptions, "SSL_ALLOW_INVALID_HOSTNAMES", false);
+    int bFIPSMode = CPLFetchBool(papszOpenOptions, "FIPS_MODE", false);
     if( bMongoInitialized < 0 )
     {
         Options options;
@@ -2352,13 +2354,13 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     m_nBatchSize = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_SIZE", "0"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
-    m_bJSonField = CSLFetchBoolean(papszOpenOptionsIn, "JSON_FIELD", FALSE);
-    m_bFlattenNestedAttributes = CPL_TO_BOOL(CSLFetchBoolean(
-            papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", TRUE));
+    m_bJSonField = CPLFetchBool(papszOpenOptionsIn, "JSON_FIELD", false);
+    m_bFlattenNestedAttributes =
+        CPLFetchBool(papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", true);
     m_osFID = CSLFetchNameValueDef(papszOpenOptionsIn, "FID", "ogc_fid");
-    m_bUseOGRMetadata = CSLFetchBoolean(
-            papszOpenOptionsIn, "USE_OGR_METADATA", TRUE);
-    m_bBulkInsert = CSLFetchBoolean(papszOpenOptionsIn, "BULK_INSERT", TRUE);
+    m_bUseOGRMetadata =
+        CPLFetchBool( papszOpenOptionsIn, "USE_OGR_METADATA", true);
+    m_bBulkInsert = CPLFetchBool(papszOpenOptionsIn, "BULK_INSERT", true);
 
     int bRet = TRUE;
     if( m_osDatabase.size() == 0 )
@@ -2481,10 +2483,14 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
     OGRMongoDBLayer* poLayer = new OGRMongoDBLayer(this, m_osDatabase, pszName);
 
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
-    poLayer->SetCreateLayerMetadata(CSLFetchBoolean(papszOptions, "WRITE_OGR_METADATA", TRUE));
-    poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
-    poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
-    poLayer->SetCreateSpatialIndex(CSLFetchBoolean(papszOptions, "SPATIAL_INDEX", TRUE));
+    poLayer->SetCreateLayerMetadata(
+        CPLFetchBool(papszOptions, "WRITE_OGR_METADATA", true));
+    poLayer->SetDotAsNestedField(
+        CPLFetchBool(papszOptions, "DOT_AS_NESTED_FIELD", true));
+    poLayer->SetIgnoreSourceID(
+        CPLFetchBool(papszOptions, "IGNORE_SOURCE_ID", false));
+    poLayer->SetCreateSpatialIndex(
+        CPLFetchBool(papszOptions, "SPATIAL_INDEX", true));
 
     if( eGType != wkbNone )
     {

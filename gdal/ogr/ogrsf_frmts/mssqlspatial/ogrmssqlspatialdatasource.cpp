@@ -263,7 +263,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
 
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", true) )
           pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
@@ -271,7 +271,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
     {
       pszSchemaName = NULL;
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", TRUE) )
           pszTableName = LaunderName( pszLayerName ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
@@ -349,7 +349,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if (!pszGeomColumn)
             pszGeomColumn = "ogr_geometry";
     }
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata tables                                  */
@@ -401,13 +402,13 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
      /* determine the FID column name */
     const char* pszFIDColumnNameIn = CSLFetchNameValueDef(papszOptions, "FID", "ogr_fid");
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", TRUE) )
         pszFIDColumnName = LaunderName( pszFIDColumnNameIn );
     else
         pszFIDColumnName = CPLStrdup( pszFIDColumnNameIn );
 
-    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
- 	const char* pszFIDType = bFID64 ? "bigint": "int";
+    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", FALSE);
+    const char* pszFIDType = bFID64 ? "bigint": "int";
 
     if( eType == wkbNone )
     {
@@ -420,7 +421,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
             "[%s] [%s] %s, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
             pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType,
-            bGeomNullable? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
+            bGeomNullable ? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
     }
 
     CPLFree( pszFIDColumnName );
@@ -455,8 +456,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
         poLayer->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
     if( bUseCopy )
         poLayer->SetUseCopy(nBCPSize);

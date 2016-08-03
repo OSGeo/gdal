@@ -319,7 +319,8 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 /*                       _CloseDataset()                                */
 /************************************************************************/
 
-void GDALDatasetPool::_CloseDataset(const char* pszFileName, CPL_UNUSED GDALAccess eAccess)
+void GDALDatasetPool::_CloseDataset( const char* pszFileName,
+                                     GDALAccess /* eAccess */ )
 {
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
@@ -560,7 +561,7 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
     nRasterYSize = nRasterYSizeIn;
     eAccess = eAccessIn;
 
-    bShared = static_cast<GByte>(bSharedIn);
+    bShared = CPL_TO_BOOL(bSharedIn);
 
     responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
@@ -613,7 +614,7 @@ GDALProxyPoolDataset::~GDALProxyPoolDataset()
     /* want ~GDALDataset() to try to release it from its */
     /* shared dataset hashset. This will save a */
     /* "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet" debug message */
-    bShared = FALSE;
+    bShared = false;
 
     CPLFree(pszProjectionRef);
     CPLFree(pszGCPProjection);
@@ -684,7 +685,8 @@ GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset()
 /*                    UnrefUnderlyingDataset()                        */
 /************************************************************************/
 
-void GDALProxyPoolDataset::UnrefUnderlyingDataset(CPL_UNUSED GDALDataset* poUnderlyingDataset)
+void GDALProxyPoolDataset::UnrefUnderlyingDataset(
+    CPL_UNUSED GDALDataset* poUnderlyingDataset )
 {
     if (cacheEntry != NULL)
     {
@@ -1191,7 +1193,8 @@ GDALRasterBand *GDALProxyPoolRasterBand::GetOverview(int nOverviewBand)
 /*                     GetRasterSampleOverview()                        */
 /* ******************************************************************** */
 
-GDALRasterBand *GDALProxyPoolRasterBand::GetRasterSampleOverview( CPL_UNUSED GUIntBig nDesiredSamples)
+GDALRasterBand *GDALProxyPoolRasterBand::GetRasterSampleOverview(
+    GUIntBig /* nDesiredSamples */ )
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "GDALProxyPoolRasterBand::GetRasterSampleOverview : not implemented yet");
@@ -1267,7 +1270,8 @@ GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand()
 /*                  UnrefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
+void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(
+    GDALRasterBand* /* poUnderlyingRasterBand */ )
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
@@ -1332,7 +1336,8 @@ GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand()
 /*                  UnrefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
+void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(
+    GDALRasterBand* /* poUnderlyingRasterBand */ )
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;

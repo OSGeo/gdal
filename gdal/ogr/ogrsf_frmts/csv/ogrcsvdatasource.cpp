@@ -125,7 +125,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
     const bool bHasXY = ( m_poCSVLayer->GetXField().size() != 0 &&
                           m_poCSVLayer->GetYField().size() != 0 );
     const bool bHasZ = ( m_poCSVLayer->GetZField().size() != 0 );
-    if( bHasXY && !CSLFetchBoolean(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", TRUE) )
+    if( bHasXY && !CPLFetchBool(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", true) )
     {
         if( poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(m_poCSVLayer->GetXField()) < 0 )
         {

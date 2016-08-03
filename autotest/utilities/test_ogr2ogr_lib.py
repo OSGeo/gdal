@@ -375,6 +375,20 @@ def test_ogr2ogr_lib_16():
 
     return 'success'
 
+###############################################################################
+# Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
+
+def test_ogr2ogr_lib_17():
+  
+    ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.VectorTranslate(ds, gdal.OpenEx('../ogr/data/poly.shp'))
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -391,7 +405,8 @@ gdaltest_list = [
     test_ogr2ogr_lib_13,
     test_ogr2ogr_lib_14,
     test_ogr2ogr_lib_15,
-    test_ogr2ogr_lib_16
+    test_ogr2ogr_lib_16,
+    test_ogr2ogr_lib_17
     ]
 
 if __name__ == '__main__':

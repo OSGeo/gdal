@@ -6905,6 +6905,7 @@ void GDALRegister_PDF()
 "   </Option>\n"
 "   <Option name='NEATLINE' type='string' description='Neatline'/>\n"
 "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"
+"   <Option name='WRITE_USERUNIT' type='boolean' description='Whether the UserUnit parameter must be written'/>\n"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type (for DEFLATE compression)'/>\n"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>\n"
 "   <Option name='JPEG2000_DRIVER' type='string'/>\n"

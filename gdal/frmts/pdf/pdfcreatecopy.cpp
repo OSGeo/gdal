@@ -1501,6 +1501,7 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
 
 int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
                              double dfDPI,
+                             bool bWriteUserUnit,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
                              PDFMargins* psMargins,
@@ -1541,9 +1542,10 @@ int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
     oDictPage.Add("Type", GDALPDFObjectRW::CreateName("Page"))
              .Add("Parent", nPageResourceId, 0)
              .Add("MediaBox", &((new GDALPDFArrayRW())
-                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)))
-             .Add("UserUnit", dfUserUnit)
-             .Add("Contents", nContentId, 0)
+                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)));
+    if( bWriteUserUnit )
+      oDictPage.Add("UserUnit", dfUserUnit);
+    oDictPage.Add("Contents", nContentId, 0)
              .Add("Resources", nResourcesId, 0)
              .Add("Annots", nAnnotsId, 0);
 
@@ -4329,7 +4331,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     int nBlockYSize = nHeight;
     const char* pszValue;
 
-    int bTiled = CSLFetchBoolean( papszOptions, "TILED", FALSE );
+    const bool bTiled = CPLFetchBool( papszOptions, "TILED", false );
     if( bTiled )
         nBlockXSize = nBlockYSize = 256;
 
@@ -4408,6 +4410,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     double dfDPI = DEFAULT_DPI;
     if( pszDPI != NULL )
         dfDPI = CPLAtof(pszDPI);
+
+    const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
+    bool bWriteUserUnit;
+    if( pszWriteUserUnit != NULL )
+        bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
+    else
+        bWriteUserUnit = ( pszDPI == NULL );
 
     double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
     double dfWidthInUserUnit = nWidth / dfUserUnit + sMargins.nLeft + sMargins.nRight;
@@ -4509,7 +4518,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
     const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const bool bWriteOGRAttributes =
+        CPLFetchBool(papszOptions, "OGR_WRITE_ATTRIBUTES", true);
 
     const char* pszExtraRasters = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS");
     const char* pszExtraRastersLayerName = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS_LAYER_NAME");
@@ -4519,7 +4529,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
     const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
-
+    
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -4539,12 +4549,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( bUseClippingExtent )
         poClippingDS = new GDALPDFClippingDataset(poSrcDS, adfClippingExtent);
 
-    if( CSLFetchBoolean(papszOptions, "WRITE_INFO", TRUE) )
+    if( CPLFetchBool(papszOptions, "WRITE_INFO", true) )
         oWriter.SetInfo(poSrcDS, papszOptions);
     oWriter.SetXMP(poClippingDS, pszXMP);
 
     oWriter.StartPage(poClippingDS,
                       dfDPI,
+                      bWriteUserUnit,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,

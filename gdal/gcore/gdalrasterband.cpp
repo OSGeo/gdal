@@ -811,28 +811,6 @@ int GDALRasterBand::InitBlockInfo()
 }
 
 /************************************************************************/
-/*                             AdoptBlock()                             */
-/*                                                                      */
-/*      Add a block to the raster band's block matrix.  If this         */
-/*      exceeds our maximum blocks for this layer, flush the oldest     */
-/*      block out.                                                      */
-/*                                                                      */
-/*      This method is protected.                                       */
-/************************************************************************/
-
-CPLErr GDALRasterBand::AdoptBlock( GDALRasterBlock * poBlock )
-
-{
-    if( !InitBlockInfo() )
-        return CE_Failure;
-
-    CPLErr eErr = poBandBlockCache->AdoptBlock(poBlock);
-    if( eErr == CE_None )
-        poBlock->Touch();
-    return eErr;
-}
-
-/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -1134,7 +1112,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return NULL;
         }
 
-        if ( AdoptBlock( poBlock ) != CE_None )
+        if ( poBandBlockCache->AdoptBlock(poBlock) != CE_None )
         {
             poBlock->DropLock();
             delete poBlock;
@@ -1380,7 +1358,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( CPL_UNUSED char ** papszNames )
+CPLErr GDALRasterBand::SetCategoryNames( char ** /* papszNames */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -1484,7 +1462,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
+CPLErr GDALRasterBand::SetNoDataValue( double /* dfNoData */ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -5561,7 +5539,8 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  * failing.
  */
 
-CPLErr GDALRasterBand::SetDefaultRAT( CPL_UNUSED const GDALRasterAttributeTable *poRAT )
+CPLErr GDALRasterBand::SetDefaultRAT(
+    const GDALRasterAttributeTable * /* poRAT */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,

@@ -902,7 +902,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     CPLString osTypeName;
     const char* pszBaseURL = NULL;
 
-    bEmptyAsNull = CSLFetchBoolean(papszOpenOptionsIn, "EMPTY_AS_NULL", TRUE);
+    bEmptyAsNull = CPLFetchBool(papszOpenOptionsIn, "EMPTY_AS_NULL", true);
 
     if (psXML == NULL)
     {
@@ -1503,9 +1503,13 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                     {
                         /* See http://trac.osgeo.org/gdal/ticket/4041 */
-                        int bTrustBounds =
-                            CSLFetchBoolean(papszOpenOptionsIn, "TRUST_CAPABILITIES_BOUNDS",
-                                CPLTestBool(CPLGetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "FALSE")));
+                        const bool bTrustBounds =
+                            CPLFetchBool(
+                                papszOpenOptionsIn,
+                                "TRUST_CAPABILITIES_BOUNDS",
+                                CPLTestBool(CPLGetConfigOption(
+                                    "OGR_WFS_TRUST_CAPABILITIES_BOUNDS",
+                                    "FALSE")));
 
                         if (((bTrustBounds || (dfMinX == -180 && dfMinY == -90 && dfMaxX == 180 && dfMaxY == 90)) &&
                             (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||

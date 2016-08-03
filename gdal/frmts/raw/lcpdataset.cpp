@@ -1145,13 +1145,9 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     // Calculate the stats for each band.  The binary file carries along
     // these metadata for display purposes(?).
-    bool bCalculateStats =
-        CPL_TO_BOOL(
-            CSLFetchBoolean( papszOptions, "CALCULATE_STATS", TRUE ));
+    bool bCalculateStats = CPLFetchBool(papszOptions, "CALCULATE_STATS", true);
 
-    const bool bClassifyData =
-        CPL_TO_BOOL(
-            CSLFetchBoolean( papszOptions, "CLASSIFY_DATA", TRUE ));
+    const bool bClassifyData = CPLFetchBool(papszOptions, "CLASSIFY_DATA", true);
 
     // We should have stats if we classify, we'll get them anyway.
     if( bClassifyData && !bCalculateStats )

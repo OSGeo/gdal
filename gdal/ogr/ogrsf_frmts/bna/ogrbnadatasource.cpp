@@ -322,7 +322,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
     }
 
     /* Multi line or single line format ? */
-    bMultiLine = CSLFetchBoolean( papszOptions, "MULTILINE", TRUE);
+    bMultiLine = CPLFetchBool( papszOptions, "MULTILINE", true);
 
     /* Number of identifiers per record */
     const char* pszNbOutID = CSLFetchNameValue ( papszOptions, "NB_IDS");
@@ -354,7 +354,8 @@ int OGRBNADataSource::Create( const char *pszFilename,
     }
 
     /* Ellipses export as ellipses or polygons ? */
-    bEllipsesAsEllipses = CSLFetchBoolean( papszOptions, "ELLIPSES_AS_ELLIPSES", TRUE);
+    bEllipsesAsEllipses =
+        CPLFetchBool( papszOptions, "ELLIPSES_AS_ELLIPSES", true);
 
     /* Number of coordinate pairs per line */
     const char* pszNbPairPerLine = CSLFetchNameValue( papszOptions, "NB_PAIRS_PER_LINE");

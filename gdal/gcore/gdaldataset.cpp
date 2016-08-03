@@ -191,10 +191,10 @@ GDALDataset::GDALDataset()
 GDALDataset::GDALDataset(int bForceCachedIOIn)
 
 {
-    Init(bForceCachedIOIn);
+    Init(CPL_TO_BOOL(bForceCachedIOIn));
 }
 
-void GDALDataset::Init(int bForceCachedIOIn)
+void GDALDataset::Init(bool bForceCachedIOIn)
 {
     poDriver = NULL;
     eAccess = GA_ReadOnly;
@@ -204,15 +204,15 @@ void GDALDataset::Init(int bForceCachedIOIn)
     papoBands = NULL;
     nRefCount = 1;
     nOpenFlags = 0;
-    bShared = FALSE;
-    bIsInternal = TRUE;
-    bSuppressOnClose = FALSE;
+    bShared = false;
+    bIsInternal = true;
+    bSuppressOnClose = false;
     papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
-    bForceCachedIO = (GByte)bForceCachedIOIn;
+    bForceCachedIO = bForceCachedIOIn;
 
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
@@ -339,7 +339,7 @@ void GDALDataset::AddToDatasetOpenList()
 /* -------------------------------------------------------------------- */
 /*      Add this dataset to the open dataset list.                      */
 /* -------------------------------------------------------------------- */
-    bIsInternal = FALSE;
+    bIsInternal = false;
 
     CPLMutexHolderD( &hDLMutex );
 
@@ -442,7 +442,8 @@ void GDALDataset::BlockBasedFlushCache()
         return;
     }
 
-    int  nBlockXSize, nBlockYSize;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     poBand1->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
 /* -------------------------------------------------------------------- */
@@ -450,7 +451,7 @@ void GDALDataset::BlockBasedFlushCache()
 /* -------------------------------------------------------------------- */
     for( int iBand = 1; iBand < nBands; ++iBand )
     {
-        GDALRasterBand *poBand = GetRasterBand( iBand+1 );
+        GDALRasterBand *poBand = GetRasterBand( iBand + 1 );
 
         int nThisBlockXSize, nThisBlockYSize;
         poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
@@ -472,9 +473,7 @@ void GDALDataset::BlockBasedFlushCache()
             {
                 GDALRasterBand *poBand = GetRasterBand( iBand+1 );
 
-                CPLErr    eErr;
-
-                eErr = poBand->FlushBlock( iX, iY );
+                const CPLErr eErr = poBand->FlushBlock( iX, iY );
 
                 if( eErr != CE_None )
                     return;
@@ -521,12 +520,10 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
  * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr GDALDataset::AddBand( GDALDataType eType, char ** papszOptions )
+CPLErr GDALDataset::AddBand( GDALDataType /* eType */ ,
+                             char ** /* papszOptions */ )
 
 {
-    (void) eType;
-    (void) papszOptions;
-
     ReportError( CE_Failure, CPLE_NotSupported,
               "Dataset does not support the AddBand() method." );
 
@@ -844,7 +841,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( CPL_UNUSED const char * pszProjection )
+CPLErr GDALDataset::SetProjection( const char * /* pszProjection */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -954,7 +951,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double * padfTransform )
+CPLErr GDALDataset::SetGeoTransform( double * /* padfTransform */ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -998,7 +995,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognized/supported.
  */
 
-void *GDALDataset::GetInternalHandle( CPL_UNUSED const char * pszHandleName )
+void *GDALDataset::GetInternalHandle( const char * /* pszHandleName */ )
 
 {
     return( NULL );
@@ -1147,11 +1144,7 @@ int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
  * @return TRUE if the GDALDataset is available for sharing, or FALSE if not.
  */
 
-int GDALDataset::GetShared()
-
-{
-    return bShared;
-}
+int GDALDataset::GetShared() const { return bShared; }
 
 /************************************************************************/
 /*                            MarkAsShared()                            */
@@ -1166,7 +1159,7 @@ void GDALDataset::MarkAsShared()
 {
     CPLAssert( !bShared );
 
-    bShared = TRUE;
+    bShared = true;
     if( bIsInternal )
         return;
 
@@ -1339,15 +1332,11 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  * not supported for this format).
  */
 
-CPLErr GDALDataset::SetGCPs( int nGCPCount,
-                             const GDAL_GCP *pasGCPList,
-                             const char * pszGCPProjection )
+CPLErr GDALDataset::SetGCPs( int /* nGCPCount */,
+                             const GDAL_GCP * /* pasGCPList */,
+                             const char * /* pszGCPProjection */)
 
 {
-    (void) nGCPCount;
-    (void) pasGCPList;
-    (void) pszGCPProjection;
-
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
                   "Dataset does not support the SetGCPs() method." );
@@ -1888,7 +1877,6 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
-    int i = 0;
     bool bNeedToFreeBandMap = false;
     CPLErr eErr = CE_None;
 
@@ -1957,7 +1945,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         if( nBandCount > 4 )
         {
-            panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
+            panBandMap = static_cast<int *>(
+                VSIMalloc2(sizeof(int), nBandCount));
             if (panBandMap == NULL)
             {
                 ReportError( CE_Failure, CPLE_OutOfMemory,
@@ -1965,13 +1954,15 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                 return CE_Failure;
             }
 
-            for( i = 0; i < nBandCount; ++i )
+            for( int i = 0; i < nBandCount; ++i )
                 panBandMap[i] = i+1;
 
             bNeedToFreeBandMap = true;
         }
         else
+        {
             panBandMap = anBandMap;
+        }
     }
 
     int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
@@ -4001,17 +3992,12 @@ specific.
  @since GDAL 2.0
 */
 
-OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
-                                      OGRSpatialReference * poSpatialRef,
-                                      OGRwkbGeometryType eGType,
-                                      char **papszOptions )
+OGRLayer *GDALDataset::ICreateLayer( const char * /* pszName */,
+                                     OGRSpatialReference * /* poSpatialRef */,
+                                     OGRwkbGeometryType /* eGType */,
+                                     char ** /* papszOptions */ )
 
 {
-    (void) eGType;
-    (void) poSpatialRef;
-    (void) pszName;
-    (void) papszOptions;
-
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateLayer() not supported by this dataset." );
 
@@ -4273,9 +4259,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     else
     {
       bool bStopTransfer = false;
-      bool bStopTransaction = false;
       int nFeatCount = 0; // Number of features in the temporary array
-      int nFeaturesToAdd = 0;
       OGRFeature **papoDstFeature =
           (OGRFeature **)VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions);
       if( papoDstFeature == NULL )
@@ -4340,10 +4324,10 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 poFeature = NULL;
             }
         }
-        nFeaturesToAdd = nFeatCount;
+        int nFeaturesToAdd = nFeatCount;
 
         CPLErrorReset();
-        bStopTransaction = false;
+        bool bStopTransaction = false;
         while( !bStopTransaction )
         {
             bStopTransaction = true;
@@ -4364,7 +4348,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                     break;
             }
             else
+            {
                 poDstLayer->RollbackTransaction();
+            }
         }
 
         for( int i = 0; i < nFeatCount; ++i )
@@ -4402,10 +4388,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
  layers is not supported for this datasource.
 
 */
-OGRErr GDALDataset::DeleteLayer( int iLayer )
+OGRErr GDALDataset::DeleteLayer( int /* iLayer */ )
 
 {
-    (void) iLayer;
     CPLError( CE_Failure, CPLE_NotSupported,
               "DeleteLayer() not supported by this dataset." );
 
@@ -5843,7 +5828,7 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 */
 
-OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
+OGRLayer* GDALDataset::GetLayer( int /* iLayer */ )
 {
     return NULL;
 }
@@ -5882,7 +5867,7 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
+int GDALDataset::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -5933,7 +5918,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
  @return OGRERR_NONE on success.
  @since GDAL 2.0
 */
-OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
+OGRErr GDALDataset::StartTransaction( int /* bForce */ )
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }

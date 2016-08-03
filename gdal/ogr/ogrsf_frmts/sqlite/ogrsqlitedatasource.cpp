@@ -823,10 +823,10 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 /*      Check that spatialite extensions are loaded if required to      */
 /*      create a spatialite database                                    */
 /* -------------------------------------------------------------------- */
-    int bSpatialite = CSLFetchBoolean( papszOptions, "SPATIALITE", FALSE );
-    int bMetadata = CSLFetchBoolean( papszOptions, "METADATA", TRUE );
+    bool bSpatialite = CPLFetchBool( papszOptions, "SPATIALITE", false );
+    int bMetadata = CPLFetchBool( papszOptions, "METADATA", true );
 
-    if (bSpatialite == TRUE)
+    if( bSpatialite )
     {
 #ifdef HAVE_SPATIALITE
 #ifndef SPATIALITE_412_OR_LATER
@@ -949,7 +949,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 /*      with the EPSG database                                          */
 /* -------------------------------------------------------------------- */
     if ( (bSpatialite || bMetadata) &&
-         CSLFetchBoolean( papszOptions, "INIT_WITH_EPSG", FALSE ) )
+         CPLFetchBool( papszOptions, "INIT_WITH_EPSG", false ) )
     {
         if (!InitWithEPSG())
             return FALSE;
@@ -2084,7 +2084,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
 
     CPLString osFIDColumnName;
     const char* pszFIDColumnNameIn = CSLFetchNameValueDef(papszOptions, "FID", "OGC_FID");
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", true) )
     {
         char* pszFIDColumnName = LaunderName(pszFIDColumnNameIn);
         osFIDColumnName = pszFIDColumnName;
@@ -2093,7 +2093,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     else
         osFIDColumnName = pszFIDColumnNameIn;
 
-    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
@@ -2126,7 +2126,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     }
     else
     {
-        if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+        if( CPLFetchBool(papszOptions,"LAUNDER", true) )
         {
             char* pszGeometryName = LaunderName(pszGeometryNameIn);
             osGeometryName = pszGeometryName;
@@ -2263,8 +2263,8 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     papoLayers[nLayers++] = poLayer;
 
     poLayer->InitFeatureCount();
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    if( CPLFetchBool(papszOptions, "COMPRESS_GEOM", false) )
         poLayer->SetUseCompressGeom( TRUE );
     if( bImmediateSpatialIndexCreation )
         poLayer->CreateSpatialIndex(0);

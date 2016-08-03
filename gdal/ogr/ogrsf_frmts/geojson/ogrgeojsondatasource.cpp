@@ -636,12 +636,12 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
     }
 
     reader.SetFlattenNestedAttributes(
-        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", FALSE)),
+        CPLFetchBool(papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", false),
         CSLFetchNameValueDef(papszOpenOptionsIn, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
 
-    const int bDefaultNativeData = bUpdatable_ ? TRUE : FALSE ;
+    const bool bDefaultNativeData = bUpdatable_;
     reader.SetStoreNativeData(
-        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData)));
+        CPLFetchBool(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData));
 
     reader.SetArrayAsString(
         CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "ARRAY_AS_STRING",

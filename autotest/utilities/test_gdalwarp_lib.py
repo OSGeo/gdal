@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 import os
 
@@ -1092,6 +1093,62 @@ def test_gdalwarp_lib_129():
     return 'success'
 
 ###############################################################################
+# Test automatic detection and setting of alpha channel, and setting RGB on
+# GTiff output
+
+def test_gdalwarp_lib_130():
+  
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/test_gdalwarp_lib_130.tif', 1, 1, 5, options = ['PHOTOMETRIC=RGB'])
+    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(1).Fill(1)
+    src_ds.GetRasterBand(2).Fill(2)
+    src_ds.GetRasterBand(3).Fill(3)
+    src_ds.GetRasterBand(4).Fill(4)
+    src_ds.GetRasterBand(5).Fill(255)
+  
+    ds = gdal.Warp('/vsimem/test_gdalwarp_lib_130_dst.tif', src_ds)
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('bad color interpretation')
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('bad color interpretation')
+        return 'fail'
+    expected_val = [1,2,3,4,255]
+    for i in range(5):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+
+    # Wrap onto existing file
+    for i in range(5):
+        ds.GetRasterBand(i+1).Fill(0)
+    gdal.Warp(ds, src_ds)
+    for i in range(5):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+
+    src_ds = None
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/test_gdalwarp_lib_130_dst.tif.aux.xml') is not None:
+        gdaltest.post_reason('got PAM file')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_130.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_130_dst.tif')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1169,6 +1226,7 @@ gdaltest_list = [
     test_gdalwarp_lib_127,
     test_gdalwarp_lib_128,
     test_gdalwarp_lib_129,
+    test_gdalwarp_lib_130,
     test_gdalwarp_lib_cleanup,
     ]
 

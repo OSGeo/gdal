@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM db based generic driver.
@@ -31,6 +30,8 @@
 
 #include "gnmdb.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 {
@@ -214,7 +215,7 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
                                       GDAL_OF_UPDATE, NULL, NULL, papszOptions );
     }
 
-    bool bOverwrite = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE));
+    const bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
 
     std::vector<int> anDeleteLayers;
     int i;
@@ -235,7 +236,7 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
     if(anDeleteLayers.empty())
         return FALSE;
 
-    if(bOverwrite)
+    if( bOverwrite )
     {
         for(i = (int)anDeleteLayers.size(); i > 0; i--)
         {

@@ -126,14 +126,15 @@ class CPL_DLL GDALMajorObject
     CPLString           sDescription;
     GDALMultiDomainMetadata oMDMD;
 
-    char               **BuildMetadataDomainList(char** papszList, int bCheckNonEmpty, ...) CPL_NULL_TERMINATED;
+    char               **BuildMetadataDomainList( char** papszList,
+                                                  int bCheckNonEmpty, ... ) CPL_NULL_TERMINATED;
 
   public:
                         GDALMajorObject();
     virtual            ~GDALMajorObject();
 
-    int                 GetMOFlags();
-    void                SetMOFlags(int nFlagsIn);
+    int                 GetMOFlags() const;
+    void                SetMOFlags( int nFlagsIn );
 
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
@@ -162,21 +163,21 @@ class CPL_DLL GDALDefaultOverviews
 
     CPLString   osOvrFilename;
 
-    int         bOvrIsAux;
+    bool        bOvrIsAux;
 
-    int         bCheckedForMask;
-    int         bOwnMaskDS;
+    bool        bCheckedForMask;
+    bool        bOwnMaskDS;
     GDALDataset *poMaskDS;
 
-    // for "overview datasets" we record base level info so we can
+    // For "overview datasets" we record base level info so we can
     // find our way back to get overview masks.
     GDALDataset *poBaseDS;
 
-    // Stuff for deferred initialize/overviewscans...
+    // Stuff for deferred initialize/overviewscans.
     bool        bCheckedForOverviews;
     void        OverviewScan();
     char       *pszInitName;
-    int         bInitNameIsOVR;
+    bool        bInitNameIsOVR;
     char      **papszInitSiblingFiles;
 
   public:
@@ -187,7 +188,7 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
-    void       TransferSiblingFiles(char** papszSiblingFiles);
+    void       TransferSiblingFiles( char** papszSiblingFiles );
 
     int        IsInitialized();
 
@@ -195,8 +196,8 @@ class CPL_DLL GDALDefaultOverviews
 
     // Overview Related
 
-    int        GetOverviewCount(int);
-    GDALRasterBand *GetOverview(int,int);
+    int        GetOverviewCount( int nBand );
+    GDALRasterBand *GetOverview( int nBand, int iOverview );
 
     CPLErr     BuildOverviews( const char * pszBasename,
                                const char * pszResampling,
@@ -309,7 +310,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void AddToDatasetOpenList();
 
-    void           Init(int bForceCachedIO);
+    void           Init( bool bForceCachedIO );
 
   protected:
     GDALDriver  *poDriver;
@@ -324,10 +325,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         nOpenFlags;
 
     int         nRefCount;
-    GByte       bForceCachedIO;
-    GByte       bShared;
-    GByte       bIsInternal;
-    GByte       bSuppressOnClose;
+    bool        bForceCachedIO;
+    bool        bShared;
+    bool        bIsInternal;
+    bool        bSuppressOnClose;
 
                 GDALDataset(void);
                 GDALDataset(int bForceCachedIO);
@@ -474,10 +475,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int           Dereference();
     GDALAccess    GetAccess() const { return eAccess; }
 
-    int           GetShared();
+    int           GetShared() const;
     void          MarkAsShared();
 
-    void          MarkSuppressOnClose() { bSuppressOnClose = TRUE; }
+    void          MarkSuppressOnClose() { bSuppressOnClose = true; }
 
     char        **GetOpenOptions() { return papszOpenOptions; }
 
@@ -491,7 +492,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual char ** GetMetadata(const char * pszDomain = "");
 
     virtual char ** GetMetadataDomainList();
-    
+
 private:
     void           *m_hPrivateData;
 
@@ -814,7 +815,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     int            InitBlockInfo();
 
-    CPLErr         AdoptBlock( GDALRasterBlock * );
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
     void           AddBlockToFreeList( GDALRasterBlock * );
 

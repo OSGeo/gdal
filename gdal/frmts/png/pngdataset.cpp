@@ -1923,7 +1923,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
     	double      adfGeoTransform[6];
 
@@ -2447,7 +2447,7 @@ GDALDataset *PNGDataset::Create
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
         poDS->m_bGeoTransformValid = TRUE;
 
 /* -------------------------------------------------------------------- */

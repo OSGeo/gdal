@@ -206,7 +206,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
         QuietDelete( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -1570,7 +1570,8 @@ int GDALValidateOptions( const char* pszOptionList,
         {
             if( bWarnIfMissingKey &&
                 (!EQUAL(pszErrorMessageOptionType, "open option") ||
-                 CSLFetchBoolean((char**)papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS", TRUE)) )
+                 CPLFetchBool((char**)papszOptionsToValidate,
+                              "VALIDATE_OPEN_OPTIONS", true)) )
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                         "%s does not support %s %s",

@@ -2330,7 +2330,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         }
     }
 
-    m_bLaunderReservedKeywords = CSLFetchBoolean( papszOptions, "LAUNDER_RESERVED_KEYWORDS", TRUE) == TRUE;
+    m_bLaunderReservedKeywords =
+        CPLFetchBool( papszOptions, "LAUNDER_RESERVED_KEYWORDS", true);
 
     /* XML node */
     CPLXMLNode *xml_xml = CPLCreateXMLNode(NULL, CXT_Element, "?xml");
@@ -2382,7 +2383,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         FGDB_CPLAddXMLAttribute(shape_xml, "xsi:type", "esri:Field");
         CPLCreateXMLElementAndValue(shape_xml, "Name", geometry_name.c_str());
         CPLCreateXMLElementAndValue(shape_xml, "Type", "esriFieldTypeGeometry");
-        if( CSLFetchBoolean( papszOptions, "GEOMETRY_NULLABLE", TRUE) )
+        if( CPLFetchBool( papszOptions, "GEOMETRY_NULLABLE", true) )
             CPLCreateXMLElementAndValue(shape_xml, "IsNullable", "true");
         else
             CPLCreateXMLElementAndValue(shape_xml, "IsNullable", "false");

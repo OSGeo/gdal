@@ -934,8 +934,9 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                     "TILEMATRIXSET", "");
     CPLString osStyle = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                     "STYLE", "");
-    int bExtendBeyondDateLine = CSLFetchBoolean(poOpenInfo->papszOpenOptions,
-                                    "EXTENDBEYONDDATELINE", FALSE);
+    int bExtendBeyondDateLine =
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "EXTENDBEYONDDATELINE", false);
 
     CPLString osOtherXML = "<Cache />"
                      "<UnsafeSSL>true</UnsafeSSL>"

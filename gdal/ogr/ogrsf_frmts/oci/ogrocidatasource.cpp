@@ -240,7 +240,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
     for( i = 0; papszTableList != NULL && papszTableList[i] != NULL; i++ )
     {
-        OpenTable( papszTableList[i], -1, bUpdate, FALSE );
+        OpenTable( papszTableList[i], -1, bUpdate, FALSE, papszOpenOptionsIn );
     }
 
     CSLDestroy( papszTableList );
@@ -253,7 +253,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName,
-                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
+                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen,
+                                 char** papszOpenOptionsIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -276,6 +277,8 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
     papoLayers = (OGROCILayer **)
         CPLRealloc( papoLayers,  sizeof(OGROCILayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
+
+    poLayer->SetOptions( papszOpenOptionsIn );
 
     return TRUE;
 }
@@ -482,13 +485,15 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     poSession->CleanName( pszSafeLayerName );
     CPLDebug( "OCI", "In Create Layer ..." );
 
+    bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
     int iLayer;
 
-    if( CSLFetchBoolean( papszOptions, "TRUNCATE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "TRUNCATE", false ) )
     {
         CPLDebug( "OCI", "Calling TruncateLayer for %s", pszLayerName );
         TruncateLayer( pszSafeLayerName );
@@ -539,7 +544,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -574,6 +580,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                      (!bGeomNullable) ? " NOT NULL":"");
         }
 
+        if (bNoLogging)
+        {
+            char     szCommand2[1024];
+
+            strncpy( szCommand2, szCommand, sizeof(szCommand) );
+
+            snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
+              "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
+              "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
+              szCommand2, pszGeometryName, pszGeometryName);
+        }
+
         if( oStatement.Execute( szCommand ) != CE_None )
         {
             CPLFree( pszSafeLayerName );
@@ -601,8 +619,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Set various options on the layer.                               */
 /* -------------------------------------------------------------------- */
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
     if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
         poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );

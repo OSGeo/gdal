@@ -910,9 +910,9 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     osBaseURL = pszBaseURL;
     osElementSetName = CSLFetchNameValueDef(papszOpenOptionsIn, "ELEMENTSETNAME",
                                             "full");
-    bFullExtentRecordsAsNonSpatial = CSLFetchBoolean(papszOpenOptionsIn,
-                                                     "FULL_EXTENT_RECORDS_AS_NON_SPATIAL",
-                                                     FALSE);
+    bFullExtentRecordsAsNonSpatial =
+        CPLFetchBool(papszOpenOptionsIn,
+                     "FULL_EXTENT_RECORDS_AS_NON_SPATIAL", false);
     osOutputSchema = CSLFetchNameValueDef(papszOpenOptionsIn, "OUTPUT_SCHEMA", "");
     if( EQUAL(osOutputSchema, "gmd") )
         osOutputSchema = "http://www.isotc211.org/2005/gmd";

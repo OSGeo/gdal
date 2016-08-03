@@ -1555,7 +1555,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
         poDS->bGeoTransformValid = TRUE;
 
     return (GDALDataset *) poDS;

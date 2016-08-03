@@ -200,7 +200,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     // Restore error state
     CPLErrorSetState( eLastErrorType, nLastErrorNo, osLastErrorMsg );
 
-    if( m_bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
+    if( m_bOverwrite || CPLFetchBool(papszOptions, "OVERWRITE", false) )
     {
         if( bMappingExists )
         {
@@ -271,8 +271,10 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     if( pszLayerMapping )
         poLayer->SetManualMapping();
 
-    poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
-    poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
+    poLayer->SetIgnoreSourceID(
+        CPLFetchBool(papszOptions, "IGNORE_SOURCE_ID", false));
+    poLayer->SetDotAsNestedField(
+        CPLFetchBool(papszOptions, "DOT_AS_NESTED_FIELD", true));
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
     poLayer->SetNextFID(0);
 
@@ -370,9 +372,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BATCH_SIZE", "100"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
-    m_bJSonField = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "JSON_FIELD", FALSE);
-    m_bFlattenNestedAttributes = CSLFetchBoolean(
-            poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
+    m_bJSonField =
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
+    m_bFlattenNestedAttributes = CPLFetchBool(
+            poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", true);
     m_osFID = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FID", "ogc_fid");
 
     CPLHTTPResult* psResult = CPLHTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), NULL);

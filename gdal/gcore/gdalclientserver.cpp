@@ -6131,7 +6131,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6230,7 +6230,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6328,7 +6328,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 static GDALDriver* poAPIPROXYDriver = NULL;
 
-static void GDALUnloadAPIPROXYDriver(CPL_UNUSED GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 {
     if( bRecycleChild )
     {

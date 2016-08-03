@@ -36,11 +36,9 @@ CPL_CVSID("$Id$");
 /*                          GDALMajorObject()                           */
 /************************************************************************/
 
-GDALMajorObject::GDALMajorObject()
-
-{
-    nFlags = GMO_VALID;
-}
+GDALMajorObject::GDALMajorObject() :
+    nFlags(GMO_VALID)
+{}
 
 /************************************************************************/
 /*                          ~GDALMajorObject()                          */
@@ -181,7 +179,7 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
                                                  int bCheckNonEmpty, ... )
 {
     va_list args;
-    const char* pszDomain;
+    const char* pszDomain = NULL;
     va_start(args, bCheckNonEmpty);
 
     while( (pszDomain = va_arg(args, const char*)) != NULL )
@@ -211,7 +209,7 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
  */
 
 char ** CPL_STDCALL
-GDALGetMetadataDomainList( GDALMajorObjectH hObject)
+GDALGetMetadataDomainList( GDALMajorObjectH hObject )
 
 {
     VALIDATE_POINTER1( hObject, "GetMetadataDomainList", NULL );
@@ -409,7 +407,7 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
 /*                             GetMOFlags()                             */
 /************************************************************************/
 
-int GDALMajorObject::GetMOFlags()
+int GDALMajorObject::GetMOFlags() const
 
 {
     return nFlags;

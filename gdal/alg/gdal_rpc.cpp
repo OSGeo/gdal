@@ -798,8 +798,8 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /* -------------------------------------------------------------------- */
 /*      Whether to apply vdatum shift                                   */
 /* -------------------------------------------------------------------- */
-    psTransform->bApplyDEMVDatumShift = CSLFetchBoolean(
-        papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT", TRUE );
+    psTransform->bApplyDEMVDatumShift =
+        CPLFetchBool( papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT", true );
 
 
     psTransform->nMaxIterations = atoi( CSLFetchNameValueDef(

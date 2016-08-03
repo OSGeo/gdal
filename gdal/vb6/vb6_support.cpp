@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL VB6 Bindings
  * Purpose:  Support functions for GDAL VB6 bindings.

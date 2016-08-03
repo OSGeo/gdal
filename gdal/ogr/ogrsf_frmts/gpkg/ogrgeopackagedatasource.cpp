@@ -3427,7 +3427,8 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
     if (pszGeomColumnName == NULL)
         pszGeomColumnName = "geom";
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
     /* Read FID option */
     const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
@@ -3499,8 +3500,9 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         poLayer->SetDeferredSpatialIndexCreation(true);
     }
 
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
-    poLayer->SetTruncateFieldsFlag( CSLFetchBoolean(papszOptions,"TRUNCATE_FIELDS",FALSE));
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true) );
+    poLayer->SetTruncateFieldsFlag(
+        CPLFetchBool(papszOptions, "TRUNCATE_FIELDS", false));
     if( eGType == wkbNone )
     {
         poLayer->SetRegisterAsAspatial( CPLFetchBool(

@@ -622,7 +622,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
         }
     }
 
-    bool fixAntiMeridian = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "FIX_ANTIMERIDIAN", FALSE ));
+    const bool fixAntiMeridian = CPLFetchBool( papszOptions, "FIX_ANTIMERIDIAN", false );
     if ( fixAntiMeridian && east < west )
     {
         east += 360;

@@ -2662,43 +2662,43 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 char** papszMD = GDALGetMetadata( hDriver, NULL );
 
                 if( nOptions == GDAL_OF_RASTER &&
-                    !CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+                    !CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
                     continue;
                 if( nOptions == GDAL_OF_VECTOR &&
-                    !CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+                    !CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
                     continue;
                 if( nOptions == GDAL_OF_GNM &&
-                    !CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+                    !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
                     continue;
 
-                if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+                if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
                     pszRFlag = "r";
 
-                if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
+                if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
                     pszWFlag = "w+";
-                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
+                else if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
                     pszWFlag = "w";
                 else
                     pszWFlag = "o";
 
-                if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
+                if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
                     pszVirtualIO = "v";
                 else
                     pszVirtualIO = "";
 
-                if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
+                if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
                     pszSubdatasets = "s";
                 else
                     pszSubdatasets = "";
 
-                if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) &&
-                    CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ))
+                if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) &&
+                    CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ))
                     pszKind = "raster,vector";
-                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+                else if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
                     pszKind = "raster";
-                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+                else if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
                     pszKind = "vector";
-                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+                else if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
                     pszKind = "geography network";
                 else
                     pszKind = "unknown kind";
@@ -2749,11 +2749,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );
 
             papszMD = GDALGetMetadata( hDriver, NULL );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
                 printf( "  Supports: Raster\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
                 printf( "  Supports: Vector\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
                 printf( "  Supports: Geography Network\n" );
 
             const char* pszExt = CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSIONS );
@@ -2768,15 +2768,15 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Help Topic: %s\n",
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
 
-            if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
                 printf( "  Supports: Subdatasets\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
                 printf( "  Supports: Open() - Open existing dataset.\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
                 printf( "  Supports: Create() - Create writable dataset.\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
                 printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
                 printf( "  Supports: Virtual IO - eg. /vsimem/\n" );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) )
                 printf( "  Creation Datatypes: %s\n",
@@ -2784,11 +2784,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) )
                 printf( "  Creation Field Datatypes: %s\n",
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_NOTNULL_FIELDS, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_FIELDS, false ) )
                 printf( "  Supports: Creating fields with NOT NULL constraint.\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_DEFAULT_FIELDS, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_DEFAULT_FIELDS, false ) )
                 printf( "  Supports: Creating fields with DEFAULT values.\n" );
-            if( CSLFetchBoolean( papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, FALSE ) )
+            if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, false ) )
                 printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
             {

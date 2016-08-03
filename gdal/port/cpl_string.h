@@ -137,18 +137,19 @@ int CPL_DLL CPLTestBoolean( const char *pszValue );
 #ifdef __cplusplus
 #ifdef DO_NOT_USE_DEBUG_BOOL
 #define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
+#define CPLFetchBool(list,key,default) CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
 #else
 /* Prefer these for C++ code. */
 #ifdef DEBUG_BOOL
 extern "C++" {
 #endif
 bool CPL_DLL CPLTestBool( const char *pszValue );
+bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
+                           bool bDefault );
 #ifdef DEBUG_BOOL
 }
 #endif
 #endif
-bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
-                           bool bDefault );
 #endif  /* __cplusplus */
 
 const char CPL_DLL *
