@@ -752,12 +752,14 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Should we promote alpha channel to 8 bits ?                     */
 /* -------------------------------------------------------------------- */
-    poDS->bPromoteTo8Bit = (poDS->nBands == 4 &&
-                            paiDepth[0] == 8 &&
-                            paiDepth[1] == 8 &&
-                            paiDepth[2] == 8 &&
-                            paiDepth[3] == 1 &&
-                            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION", TRUE));
+    poDS->bPromoteTo8Bit =
+        poDS->nBands == 4 &&
+        paiDepth[0] == 8 &&
+        paiDepth[1] == 8 &&
+        paiDepth[2] == 8 &&
+        paiDepth[3] == 1 &&
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "1BIT_ALPHA_PROMOTION", true);
     if( poDS->bPromoteTo8Bit )
         CPLDebug( "JPEG2000",  "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -796,7 +798,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         poDS->LoadVectorLayers(
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+            CPLFetchBool(poOpenInfo->papszOpenOptions,
+                         "OPEN_REMOTE_GML", false));
 
         // If file opened in vector-only mode and there's no vector,
         // return
@@ -1104,7 +1107,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 #ifdef HAVE_JASPER_UUID
         double  adfGeoTransform[6];
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) &&
+        if( CPLFetchBool( papszOptions, "GeoJP2", true ) &&
             ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
                  && (adfGeoTransform[0] != 0.0
                      || adfGeoTransform[1] != 1.0
@@ -1210,7 +1213,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if ( STARTS_WITH_CI(pszFormatName, "jp2") )
     {
         double  adfGeoTransform[6];
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&
+        if( CPLFetchBool( papszOptions, "GMLJP2", true ) &&
             poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             poSrcDS->GetProjectionRef() != NULL &&
             poSrcDS->GetProjectionRef()[0] != '\0' )
@@ -1290,7 +1293,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
         double      adfGeoTransform[6];
 
