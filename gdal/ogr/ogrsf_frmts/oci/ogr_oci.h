@@ -414,6 +414,10 @@ class OGROCITableLayer : public OGROCIWritableLayer
     CPLString           osTableName;
     CPLString           osOwner;
 
+    int                 nFirstId;
+    int                 nMultiLoadCount;
+    int                 bMultiLoad;
+
     OCIArray           *hOrdVARRAY;
     OCIArray           *hElemInfoVARRAY;
 
@@ -506,6 +510,7 @@ class OGROCIDataSource : public OGRDataSource
     char               *pszDBName;
 
     int                 bDSUpdate;
+    int                 bNoLogging;
 
     OGROCISession      *poSession;
 
@@ -524,7 +529,8 @@ class OGROCIDataSource : public OGRDataSource
     int                 Open( const char *, char** papszOpenOptions,
                               int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
-                                   int nSRID, int bUpdate, int bTestOpen );
+                                   int nSRID, int bUpdate, int bTestOpen,
+                                   char** papszOpenOptions );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
