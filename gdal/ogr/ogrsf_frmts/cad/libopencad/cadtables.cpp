@@ -165,7 +165,7 @@ int CADTables::readLayersTable( CADFile  * const file, long index)
         }
     }
 
-    DebugMsg ("Readed layers using LayerControl object count: %d\n",
+    DebugMsg ("Readed layers using LayerControl object count: %zd\n",
               layers.size ());
 
     return CADErrorCodes::SUCCESS;
