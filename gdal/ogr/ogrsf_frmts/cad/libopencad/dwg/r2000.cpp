@@ -745,7 +745,7 @@ int DWGFileR2000::createFileMap ()
         fileIO->Read (&dSectionSize, 2);
         SwapEndianness (dSectionSize, sizeof (dSectionSize));
 
-        DebugMsg ("Object map section #%d size: %zd\n", ++nSection,
+        DebugMsg ("Object map section #%zd size: %hu\n", ++nSection,
                   dSectionSize);
 
         if ( dSectionSize == 2 )
