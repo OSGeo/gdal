@@ -125,6 +125,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
     const char *pszPassword = "";
     const char *pszDatabase = "";
     char **papszTableList = NULL;
+    const char *pszWorkspace = "";
+
     int   i;
 
     if( pszNewName[4] == '\0' )
@@ -135,6 +137,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         const char* pszTables = CSLFetchNameValue(papszOpenOptionsIn, "TABLES");
         if( pszTables )
             papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
+        pszWorkspace = CSLFetchNameValueDef(papszOpenOptions, "WORKSPACE", "");
     }
     else
     {
@@ -197,6 +200,18 @@ int OGROCIDataSource::Open( const char * pszNewName,
         CPLFree(pszUserid);
         CSLDestroy(papszTableList);
         return FALSE;
+    }
+
+    if( EQUAL(pszWorkspace, "") == FALSE )
+    {
+        OGROCIStringBuf oValidateCmd;
+        OGROCIStatement oValidateStmt( GetSession() );
+
+        oValidateCmd.Append( "call DBMS_WM.GotoWorkspace('" );
+        oValidateCmd.Append( pszWorkspace );
+        oValidateCmd.Append( "')" );
+
+        oValidateStmt.Execute( oValidateCmd.GetString() );
     }
 
     pszName = CPLStrdup( pszNewName );
