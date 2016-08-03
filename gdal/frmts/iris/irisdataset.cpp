@@ -34,6 +34,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
 #include <sstream>
 
 CPL_CVSID("$Id$");
@@ -55,7 +56,7 @@ class IRISDataset : public GDALPamDataset
 
     VSILFILE              *fp;
     GByte                 abyHeader[640];
-    int                   bNoDataSet;
+    bool                  bNoDataSet;
     double                dfNoDataValue;
     static const char* const   aszProductNames[];
     static const char* const   aszDataTypeCodes[];
@@ -67,11 +68,11 @@ class IRISDataset : public GDALPamDataset
     float                 fNyquistVelocity;
     char*                 pszSRS_WKT;
     double                adfGeoTransform[6];
-    int                   bHasLoadedProjection;
+    bool                  bHasLoadedProjection;
     void                  LoadProjection();
-    std::pair <double,double> GeodesicCalculation(
+    std::pair<double, double> GeodesicCalculation(
         float fLat, float fLon, float fAngle, float fDist,
-        float fEquatorialRadius, float fPolarRadius, float fFlattening);
+        float fEquatorialRadius, float fPolarRadius, float fFlattening );
 
 public:
     IRISDataset();
@@ -148,7 +149,7 @@ class IRISRasterBand : public GDALPamRasterBand
     friend class IRISDataset;
 
     unsigned char*        pszRecord;
-    int                   bBufferAllocFailed;
+    bool                  bBufferAllocFailed;
 
 public:
     IRISRasterBand( IRISDataset *, int );
@@ -167,7 +168,7 @@ public:
 
 IRISRasterBand::IRISRasterBand( IRISDataset *poDSIn, int nBandIn ) :
     pszRecord(NULL),
-    bBufferAllocFailed(FALSE)
+    bBufferAllocFailed(false)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -210,7 +211,7 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
 
         if( pszRecord == NULL )
         {
-            bBufferAllocFailed = TRUE;
+            bBufferAllocFailed = true;
             return CE_Failure;
         }
     }
@@ -230,7 +231,8 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
 
     // If datatype is dbZ or dBT:
     // See point 3.3.3 at page 3.33 of the manual.
-    if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1){
+    if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1)
+    {
         for( int i = 0; i < nBlockXSize; i++)
         {
             float fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0f;
@@ -302,7 +304,9 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
         }
     // VEL (Velocity 1-Byte in PPI & others)
     // See point 3.3.37 at page 3.53 of the manual.
-    } else if(poGDS->nDataTypeCode == 3){
+    }
+    else if(poGDS->nDataTypeCode == 3)
+    {
         for( int i = 0; i < nBlockXSize; i++)
         {
             float fVal = static_cast<float>(*(pszRecord+i*nDataLength));
@@ -318,7 +322,9 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
         }
     //SHEAR (1-Byte Shear)
     //See point 3.3.23 at page 3.39 of the manual
-    } else if(poGDS->nDataTypeCode == 35){
+    }
+    else if(poGDS->nDataTypeCode == 35)
+    {
         for( int i = 0; i < nBlockXSize; i++)
         {
             float fVal = static_cast<float>(*(pszRecord+i*nDataLength));
@@ -344,10 +350,8 @@ CPLErr IRISRasterBand::SetNoDataValue( double dfNoData )
 
 {
     IRISDataset *poGDS = static_cast<IRISDataset *>(poDS);
-    // if( poGDS->bNoDataSet && poGDS->dfNoDataValue == dfNoData )
-    //   return CE_None;
 
-    poGDS->bNoDataSet = TRUE;
+    poGDS->bNoDataSet = true;
     poGDS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -384,11 +388,18 @@ double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 /*                            IRISDataset()                             */
 /************************************************************************/
 
-IRISDataset::IRISDataset()
-    : fp(NULL), bNoDataSet(0), dfNoDataValue(0.0), nProductCode(0),
-      nDataTypeCode(0), nProjectionCode(0), fNyquistVelocity(0.0),
-      pszSRS_WKT(NULL), bHasLoadedProjection(FALSE)
+IRISDataset::IRISDataset() :
+    fp(NULL),
+    bNoDataSet(false),
+    dfNoDataValue(0.0),
+    nProductCode(0),
+    nDataTypeCode(0),
+    nProjectionCode(0),
+    fNyquistVelocity(0.0),
+    pszSRS_WKT(NULL),
+    bHasLoadedProjection(false)
 {
+    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), 0);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -415,92 +426,110 @@ IRISDataset::~IRISDataset()
 /************************************************************************/
 void IRISDataset::LoadProjection()
 {
-    bHasLoadedProjection = TRUE;
-    float fEquatorialRadius = float( (CPL_LSBUINT32PTR (abyHeader+220+320+12)))/100; //They give it in cm
-    float fInvFlattening = float( (CPL_LSBUINT32PTR (abyHeader+224+320+12)))/1000000; //Point 3.2.27 pag 3-15
-    float fFlattening;
-    float fPolarRadius;
+    bHasLoadedProjection = true;
+    // They give the radius in cm.
+    float fEquatorialRadius =
+        float( (CPL_LSBUINT32PTR (abyHeader+220+320+12))) / 100;
+    // Point 3.2.27 pag 3-15.
+    float fInvFlattening =
+        float( (CPL_LSBUINT32PTR (abyHeader+224+320+12))) / 1000000;
+    float fFlattening = 0.0f;
+    float fPolarRadius = 0.0f;
 
-    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS versions)
-        fEquatorialRadius = 6371000;
+    if( fEquatorialRadius == 0 )
+    {
+        // If Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS
+        // versions).
+        fEquatorialRadius = 6371000.0f;
         fPolarRadius = fEquatorialRadius;
-        fInvFlattening = 0;
-        fFlattening = 0;
+        fInvFlattening = 0.0f;
+        fFlattening = 0.0f;
     }
     else
     {
         if( fInvFlattening == 0 )
         {
             // When inverse flattening is infinite, they use 0.
-            fFlattening = 0;
+            fFlattening = 0.0f;
             fPolarRadius = fEquatorialRadius;
         }
         else
         {
-            fFlattening = 1/fInvFlattening;
-            fPolarRadius = fEquatorialRadius * (1-fFlattening);
+            fFlattening = 1.0f / fInvFlattening;
+            fPolarRadius = fEquatorialRadius * (1.0 - fFlattening);
         }
     }
 
-    float fCenterLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+112+320+12))) / 4294967295LL;
-    float fCenterLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
+    const float fCenterLon =
+        360 * float((CPL_LSBUINT32PTR (abyHeader+112+320+12))) / 4294967295LL;
+    const float fCenterLat =
+        360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
 
-    float fProjRefLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+244+320+12))) / 4294967295LL;
-    float fProjRefLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL;
+    const float fProjRefLon =
+        360 * float((CPL_LSBUINT32PTR (abyHeader+244+320+12))) / 4294967295LL;
+    const float fProjRefLat =
+        360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL;
 
-    float fRadarLocX, fRadarLocY, fScaleX, fScaleY;
+    const float fRadarLocX =
+        float (CPL_LSBSINT32PTR (abyHeader + 112 + 12 )) / 1000;
+    const float fRadarLocY =
+        float (CPL_LSBSINT32PTR (abyHeader + 116 + 12 )) / 1000;
 
-    fRadarLocX = float (CPL_LSBSINT32PTR (abyHeader + 112 + 12 )) / 1000;
-    fRadarLocY = float (CPL_LSBSINT32PTR (abyHeader + 116 + 12 )) / 1000;
-
-    fScaleX = float (CPL_LSBSINT32PTR (abyHeader + 88 + 12 )) / 100;
-    fScaleY = float (CPL_LSBSINT32PTR (abyHeader + 92 + 12 )) / 100;
+    const float fScaleX = float (CPL_LSBSINT32PTR (abyHeader + 88 + 12 )) / 100;
+    const float fScaleY = float (CPL_LSBSINT32PTR (abyHeader + 92 + 12 )) / 100;
 
     OGRSpatialReference oSRSOut;
 
-    ////MERCATOR PROJECTION
-    if(EQUAL(aszProjections[nProjectionCode],"Mercator")){
-        OGRCoordinateTransformation *poTransform = NULL;
-        OGRSpatialReference oSRSLatLon;
-
-        oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown",
-                        "unnamed",
-                        fEquatorialRadius, fInvFlattening,
-                        "Greenwich", 0.0,
-                        "degree", 0.0174532925199433);
+    // Mercator projection.
+    if( EQUAL(aszProjections[nProjectionCode],"Mercator") )
+    {
+        oSRSOut.SetGeogCS(
+            "unnamed ellipse",
+            "unknown",
+            "unnamed",
+            fEquatorialRadius, fInvFlattening,
+            "Greenwich", 0.0,
+            "degree", 0.0174532925199433);
 
         oSRSOut.SetMercator(fProjRefLat,fProjRefLon,1,0,0);
         oSRSOut.exportToWkt(&pszSRS_WKT);
 
-        //The center coordinates are given in LatLon on the defined ellipsoid. Necessary to calculate geotransform.
+        // The center coordinates are given in LatLon on the defined
+        // ellipsoid. Necessary to calculate geotransform.
 
-        oSRSLatLon.SetGeogCS("unnamed ellipse",
-                        "unknown",
-                        "unnamed",
-                        fEquatorialRadius, fInvFlattening,
-                        "Greenwich", 0.0,
-                        "degree", 0.0174532925199433);
+        OGRSpatialReference oSRSLatLon;
+        oSRSLatLon.SetGeogCS(
+            "unnamed ellipse",
+            "unknown",
+            "unnamed",
+            fEquatorialRadius, fInvFlattening,
+            "Greenwich", 0.0,
+            "degree", 0.0174532925199433);
 
-        poTransform = OGRCreateCoordinateTransformation( &oSRSLatLon,
-                                                  &oSRSOut );
-        std::pair <double,double> oPositionX2 = GeodesicCalculation(fCenterLat, fCenterLon, 90, fScaleX, fEquatorialRadius, fPolarRadius, fFlattening);
-        std::pair <double,double> oPositionY2 = GeodesicCalculation(fCenterLat, fCenterLon, 0, fScaleY, fEquatorialRadius, fPolarRadius, fFlattening);
+        OGRCoordinateTransformation *poTransform =
+            OGRCreateCoordinateTransformation( &oSRSLatLon, &oSRSOut );
 
-        double dfLon2, dfLat2;
-        dfLon2 = oPositionX2.first;
-        dfLat2 = oPositionY2.second;
-        double dfX, dfY, dfX2, dfY2;
-        dfX = fCenterLon ;
-        dfY = fCenterLat ;
-        dfX2 = dfLon2;
-        dfY2 = dfLat2;
+        const std::pair<double, double> oPositionX2 =
+            GeodesicCalculation(
+                fCenterLat, fCenterLon, 90, fScaleX,
+                fEquatorialRadius, fPolarRadius, fFlattening);
+        const std::pair<double, double> oPositionY2 =
+            GeodesicCalculation(
+                fCenterLat, fCenterLon, 0, fScaleY,
+                fEquatorialRadius, fPolarRadius, fFlattening);
 
+        const double dfLon2 = oPositionX2.first;
+        const double dfLat2 = oPositionY2.second;
+
+        double dfX = fCenterLon ;
+        double dfY = fCenterLat ;
         if( poTransform == NULL || !poTransform->Transform( 1, &dfX, &dfY ) )
-             CPLError( CE_Failure, CPLE_None, "Transformation Failed\n" );
+             CPLError( CE_Failure, CPLE_None, "Transformation Failed" );
 
+        double dfX2 = dfLon2;
+        double dfY2 = dfLat2;
         if( poTransform == NULL || !poTransform->Transform( 1, &dfX2, &dfY2 ) )
-             CPLError( CE_Failure, CPLE_None, "Transformation Failed\n" );
+             CPLError( CE_Failure, CPLE_None, "Transformation Failed" );
 
         adfGeoTransform[0] = dfX - (fRadarLocX * (dfX2 - dfX));
         adfGeoTransform[1] = dfX2 - dfX;
@@ -510,15 +539,16 @@ void IRISDataset::LoadProjection()
         adfGeoTransform[5] = -1*(dfY2 - dfY);
 
         delete poTransform;
-
-    }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
-
-        oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown",
-                        "unnamed",
-                        fEquatorialRadius, fInvFlattening,
-                        "Greenwich", 0.0,
-                        "degree", 0.0174532925199433);
+    }
+    else if( EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant") )
+    {
+        oSRSOut.SetGeogCS(
+            "unnamed ellipse",
+            "unknown",
+            "unnamed",
+            fEquatorialRadius, fInvFlattening,
+            "Greenwich", 0.0,
+            "degree", 0.0174532925199433);
         oSRSOut.SetAE(fProjRefLat,fProjRefLon,0,0);
         oSRSOut.exportToWkt(&pszSRS_WKT) ;
         adfGeoTransform[0] = -1*(fRadarLocX*fScaleX);
@@ -527,8 +557,11 @@ void IRISDataset::LoadProjection()
         adfGeoTransform[3] = fRadarLocY*fScaleY;
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = -1*fScaleY;
-    //When the projection is different from Mercator or Azimutal equidistant, we set a standard geotransform
-    } else {
+        // When the projection is different from Mercator or Azimutal
+        // equidistant, we set a standard geotransform.
+    }
+    else
+    {
         adfGeoTransform[0] = -1*(fRadarLocX*fScaleX);
         adfGeoTransform[1] = fScaleX;
         adfGeoTransform[2] = 0.0;
@@ -555,23 +588,29 @@ void IRISDataset::LoadProjection()
 /*       http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf                                             */
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius, float fPolarRadius, float fFlattening)
+std::pair<double, double>
+IRISDataset::GeodesicCalculation(
+    float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius,
+    float fPolarRadius, float fFlattening )
 {
-    std::pair <double,double> oOutput;
-    double dfAlpha1 = DEG2RAD * fAngle;
-    double dfSinAlpha1 = sin(dfAlpha1);
-    double dfCosAlpha1 = cos(dfAlpha1);
+    const double dfAlpha1 = DEG2RAD * fAngle;
+    const double dfSinAlpha1 = sin(dfAlpha1);
+    const double dfCosAlpha1 = cos(dfAlpha1);
 
-    double dfTanU1 = (1-fFlattening) * tan(fLat*DEG2RAD);
-    double dfCosU1 = 1 / sqrt((1 + dfTanU1*dfTanU1));
-    double dfSinU1 = dfTanU1*dfCosU1;
+    const double dfTanU1 = (1-fFlattening) * tan(fLat*DEG2RAD);
+    const double dfCosU1 = 1 / sqrt((1 + dfTanU1*dfTanU1));
+    const double dfSinU1 = dfTanU1*dfCosU1;
 
-    double dfSigma1 = atan2(dfTanU1, dfCosAlpha1);
-    double dfSinAlpha = dfCosU1 * dfSinAlpha1;
-    double dfCosSqAlpha = 1 - dfSinAlpha*dfSinAlpha;
-    double dfUSq = dfCosSqAlpha * (fEquatorialRadius*fEquatorialRadius - fPolarRadius*fPolarRadius) / (fPolarRadius*fPolarRadius);
-    double dfA = 1 + dfUSq/16384*(4096+dfUSq*(-768+dfUSq*(320-175*dfUSq)));
-    double dfB = dfUSq/1024 * (256+dfUSq*(-128+dfUSq*(74-47*dfUSq)));
+    const double dfSigma1 = atan2(dfTanU1, dfCosAlpha1);
+    const double dfSinAlpha = dfCosU1 * dfSinAlpha1;
+    const double dfCosSqAlpha = 1 - dfSinAlpha*dfSinAlpha;
+    const double dfUSq =
+        dfCosSqAlpha * (fEquatorialRadius*fEquatorialRadius -
+                        fPolarRadius*fPolarRadius) /
+        (fPolarRadius*fPolarRadius);
+    const double dfA =
+        1 + dfUSq/16384*(4096+dfUSq*(-768+dfUSq*(320-175*dfUSq)));
+    const double dfB = dfUSq/1024 * (256+dfUSq*(-128+dfUSq*(74-47*dfUSq)));
 
     double dfSigma = fDist / (fPolarRadius*dfA);
     double dfSigmaP = 2*M_PI;
@@ -579,32 +618,41 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
     double dfSinSigma = 0.0;
     double dfCosSigma = 0.0;
     double dfCos2SigmaM = 0.0;
-    double dfDeltaSigma;
 
-    while (fabs(dfSigma-dfSigmaP) > 1e-12) {
+    while( fabs(dfSigma-dfSigmaP) > 1e-12 )
+    {
         dfCos2SigmaM = cos(2*dfSigma1 + dfSigma);
         dfSinSigma = sin(dfSigma);
         dfCosSigma = cos(dfSigma);
-        dfDeltaSigma = dfB*dfSinSigma*(dfCos2SigmaM+dfB/4*(dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM)-
-          dfB/6*dfCos2SigmaM*(-3+4*dfSinSigma*dfSinSigma)*(-3+4*dfCos2SigmaM*dfCos2SigmaM)));
+        const double dfDeltaSigma =
+            dfB*dfSinSigma*(dfCos2SigmaM+dfB/4*(
+                dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM) -
+                dfB/6*dfCos2SigmaM*(-3+4*dfSinSigma*dfSinSigma)*
+                (-3+4*dfCos2SigmaM*dfCos2SigmaM)));
         dfSigmaP = dfSigma;
         dfSigma = fDist / (fPolarRadius*dfA) + dfDeltaSigma;
     }
 
-    double dfTmp = dfSinU1*dfSinSigma - dfCosU1*dfCosSigma*dfCosAlpha1;
-    double dfLat2 = atan2(dfSinU1*dfCosSigma + dfCosU1*dfSinSigma*dfCosAlpha1,
-      (1-fFlattening)*sqrt(dfSinAlpha*dfSinAlpha + dfTmp*dfTmp));
-    double dfLambda = atan2(dfSinSigma*dfSinAlpha1, dfCosU1*dfCosSigma - dfSinU1*dfSinSigma*dfCosAlpha1);
-    double dfC = fFlattening/16*dfCosSqAlpha*(4+fFlattening*(4-3*dfCosSqAlpha));
-    double dfL = dfLambda - (1-dfC) * fFlattening * dfSinAlpha *
-      (dfSigma + dfC*dfSinSigma*(dfCos2SigmaM+dfC*dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM)));
+    const double dfTmp = dfSinU1*dfSinSigma - dfCosU1*dfCosSigma*dfCosAlpha1;
+    const double dfLat2 =
+        atan2(dfSinU1*dfCosSigma + dfCosU1*dfSinSigma*dfCosAlpha1,
+              (1-fFlattening)*sqrt(dfSinAlpha*dfSinAlpha + dfTmp*dfTmp));
+    const double dfLambda =
+        atan2(dfSinSigma*dfSinAlpha1,
+              dfCosU1*dfCosSigma - dfSinU1*dfSinSigma*dfCosAlpha1);
+    const double dfC =
+        fFlattening/16*dfCosSqAlpha*(4+fFlattening*(4-3*dfCosSqAlpha));
+    const double dfL = dfLambda - (1-dfC) * fFlattening * dfSinAlpha *
+        (dfSigma + dfC*dfSinSigma*(dfCos2SigmaM+dfC*dfCosSigma*
+                                   (-1+2*dfCos2SigmaM*dfCos2SigmaM)));
     double dfLon2 = fLon*DEG2RAD+dfL;
+
     if( dfLon2 > M_PI )
-        dfLon2 = dfLon2 - 2*M_PI;
+        dfLon2 = dfLon2 - 2 * M_PI;
     if( dfLon2 < -1*M_PI )
-        dfLon2 = dfLon2 + 2*M_PI;
-    oOutput.first = dfLon2*RAD2DEG;
-    oOutput.second = dfLat2*RAD2DEG;
+        dfLon2 = dfLon2 + 2 * M_PI;
+
+    std::pair<double, double> oOutput(dfLon2 * RAD2DEG, dfLat2 * RAD2DEG);
 
     return oOutput;
 }
@@ -640,21 +688,18 @@ const char *IRISDataset::GetProjectionRef()
 int IRISDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Confirm that the file is an IRIS file                           */
 /* -------------------------------------------------------------------- */
-    // TODO: Translate to English.
-    //Si no el posem, peta al fer el translate, quan s'obre Identify des de GDALIdentifyDriver
     if( poOpenInfo->nHeaderBytes < 640 )
         return FALSE;
 
-
-    short nId1 = CPL_LSBSINT16PTR(poOpenInfo->pabyHeader);
-    short nId2 = CPL_LSBSINT16PTR(poOpenInfo->pabyHeader+12);
+    const short nId1 = CPL_LSBSINT16PTR(poOpenInfo->pabyHeader);
+    const short nId2 = CPL_LSBSINT16PTR(poOpenInfo->pabyHeader+12);
     unsigned short nType = CPL_LSBUINT16PTR (poOpenInfo->pabyHeader+24);
 
-    /*Check if the two headers are 27 (product hdr) & 26 (product configuration), and the product type is in the range 1 -> 34*/
+    // Check if the two headers are 27 (product hdr) & 26 (product
+    // configuration), and the product type is in the range 1 -> 34.
     if( !(nId1 == 27 && nId2 == 26 && nType > 0 && nType < 35) )
         return FALSE;
 
@@ -665,10 +710,10 @@ int IRISDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                             FillString()                             */
 /************************************************************************/
 
-static void FillString(char* szBuffer, size_t nBufferSize, void* pSrcBuffer)
+static void FillString( char* szBuffer, size_t nBufferSize, void* pSrcBuffer )
 {
-    for(size_t i = 0; i < nBufferSize - 1; i++)
-        szBuffer[i] = ((char*)pSrcBuffer)[i];
+    for( size_t i = 0; i < nBufferSize - 1; i++ )
+        szBuffer[i] = static_cast<char *>(pSrcBuffer)[i];
     szBuffer[nBufferSize-1] = '\0';
 }
 
@@ -688,7 +733,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The IRIS driver does not support update access to existing"
-                  " datasets.\n" );
+                  " datasets." );
         return NULL;
     }
 
@@ -708,9 +753,9 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
     VSIFReadL( poDS->abyHeader, 1, 640, poDS->fp );
-    int nXSize = CPL_LSBSINT32PTR(poDS->abyHeader+100+12);
-    int nYSize = CPL_LSBSINT32PTR(poDS->abyHeader+104+12);
-    int nNumBands = CPL_LSBSINT32PTR(poDS->abyHeader+108+12);
+    const int nXSize = CPL_LSBSINT32PTR(poDS->abyHeader+100+12);
+    const int nYSize = CPL_LSBSINT32PTR(poDS->abyHeader+104+12);
+    const int nNumBands = CPL_LSBSINT32PTR(poDS->abyHeader+108+12);
 
     poDS->nRasterXSize = nXSize;
 
@@ -733,131 +778,172 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setting the Metadata                                            */
 /* -------------------------------------------------------------------- */
-    //See point 3.2.26 at page 3.12 of the manual
+    // See point 3.2.26 at page 3.12 of the manual.
     poDS->nProductCode = CPL_LSBUINT16PTR (poDS->abyHeader+12+12);
-    poDS->SetMetadataItem( "PRODUCT_ID", CPLString().Printf("%d", poDS->nProductCode ));
+    poDS->SetMetadataItem( "PRODUCT_ID",
+                           CPLString().Printf("%d", poDS->nProductCode ));
     if( poDS->nProductCode >= CPL_ARRAYSIZE(poDS->aszProductNames) )
     {
         delete poDS;
         return NULL;
     }
 
-    poDS->SetMetadataItem( "PRODUCT",poDS->aszProductNames[poDS->nProductCode]);
+    poDS->SetMetadataItem("PRODUCT", poDS->aszProductNames[poDS->nProductCode]);
 
-    poDS->nDataTypeCode = CPL_LSBUINT16PTR (poDS->abyHeader+130+12);
+    poDS->nDataTypeCode = CPL_LSBUINT16PTR(poDS->abyHeader+130+12);
     if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
     }
-    poDS->SetMetadataItem( "DATA_TYPE_CODE",poDS->aszDataTypeCodes[poDS->nDataTypeCode]);
+    poDS->SetMetadataItem("DATA_TYPE_CODE",
+                          poDS->aszDataTypeCodes[poDS->nDataTypeCode]);
 
     if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
     {
         delete poDS;
         return NULL;
     }
-    poDS->SetMetadataItem( "DATA_TYPE",poDS->aszDataTypes[poDS->nDataTypeCode]);
+    poDS->SetMetadataItem("DATA_TYPE",
+                          poDS->aszDataTypes[poDS->nDataTypeCode]);
 
-    unsigned short nDataTypeInputCode = CPL_LSBUINT16PTR (poDS->abyHeader+144+12);
+    const unsigned short nDataTypeInputCode =
+        CPL_LSBUINT16PTR(poDS->abyHeader+144+12);
     if( nDataTypeInputCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
     }
-    poDS->SetMetadataItem( "DATA_TYPE_INPUT_CODE",poDS->aszDataTypeCodes[nDataTypeInputCode]);
+    poDS->SetMetadataItem("DATA_TYPE_INPUT_CODE",
+                          poDS->aszDataTypeCodes[nDataTypeInputCode]);
 
-    unsigned short nDataTypeInput = CPL_LSBUINT16PTR (poDS->abyHeader+144+12);
+    const unsigned short nDataTypeInput =
+        CPL_LSBUINT16PTR(poDS->abyHeader+144+12);
     if( nDataTypeInput >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
     {
         delete poDS;
         return NULL;
     }
-    poDS->SetMetadataItem( "DATA_TYPE_INPUT",poDS->aszDataTypes[nDataTypeInput]);
+    poDS->SetMetadataItem("DATA_TYPE_INPUT",
+                          poDS->aszDataTypes[nDataTypeInput]);
 
-    poDS->nProjectionCode = * (unsigned char *) (poDS->abyHeader+146+12);
+    poDS->nProjectionCode =
+        * static_cast<unsigned char *>(poDS->abyHeader+146+12);
     if( poDS->nProjectionCode >= CPL_ARRAYSIZE(poDS->aszProjections) )
     {
         delete poDS;
         return NULL;
     }
 
-    ////TIMES
-    int nSeconds = CPL_LSBSINT32PTR(poDS->abyHeader+20+12);
+    // Times.
+    {
+        const int nSeconds = CPL_LSBSINT32PTR(poDS->abyHeader+20+12);
 
-    int nHour =  (nSeconds - (nSeconds%3600)) /3600;
-    int nMinute = ((nSeconds - nHour * 3600) - (nSeconds - nHour * 3600)%60)/ 60;
-    int nSecond = nSeconds - nHour * 3600 - nMinute * 60;
+        const int nHour = (nSeconds - (nSeconds%3600)) / 3600;
+        const int nMinute =
+            ((nSeconds - nHour * 3600) - (nSeconds - nHour * 3600)%60) / 60;
+        const int nSecond = nSeconds - nHour * 3600 - nMinute * 60;
 
-    short nYear = CPL_LSBSINT16PTR(poDS->abyHeader+26+12);
-    short nMonth = CPL_LSBSINT16PTR(poDS->abyHeader+28+12);
-    short nDay = CPL_LSBSINT16PTR(poDS->abyHeader+30+12);
+        const short nYear = CPL_LSBSINT16PTR(poDS->abyHeader+26+12);
+        const short nMonth = CPL_LSBSINT16PTR(poDS->abyHeader+28+12);
+        const short nDay = CPL_LSBSINT16PTR(poDS->abyHeader+30+12);
 
-    poDS->SetMetadataItem( "TIME_PRODUCT_GENERATED", CPLString().Printf("%d-%02d-%02d %02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond ) );
+        poDS->SetMetadataItem(
+            "TIME_PRODUCT_GENERATED",
+            CPLString().Printf("%d-%02d-%02d %02d:%02d:%02d",
+                               nYear, nMonth, nDay, nHour, nMinute, nSecond));
+    }
 
-    nSeconds = CPL_LSBSINT32PTR(poDS->abyHeader+32+12);
+    {
+        const int nSeconds = CPL_LSBSINT32PTR(poDS->abyHeader+32+12);
 
-    nHour =  (nSeconds - (nSeconds%3600)) /3600;
-    nMinute = ((nSeconds - nHour * 3600) - (nSeconds - nHour * 3600)%60)/ 60;
-    nSecond = nSeconds - nHour * 3600 - nMinute * 60;
+        const int nHour = (nSeconds - (nSeconds%3600)) / 3600;
+        const int nMinute =
+            ((nSeconds - nHour * 3600) - (nSeconds - nHour * 3600)%60) / 60;
+        const int nSecond = nSeconds - nHour * 3600 - nMinute * 60;
 
-    nYear = CPL_LSBSINT16PTR(poDS->abyHeader+26+12);
-    nMonth = CPL_LSBSINT16PTR(poDS->abyHeader+28+12);
-    nDay = CPL_LSBSINT16PTR(poDS->abyHeader+30+12);
+        const short nYear = CPL_LSBSINT16PTR(poDS->abyHeader+26+12);
+        const short nMonth = CPL_LSBSINT16PTR(poDS->abyHeader+28+12);
+        const short nDay = CPL_LSBSINT16PTR(poDS->abyHeader+30+12);
 
-    poDS->SetMetadataItem( "TIME_INPUT_INGEST_SWEEP", CPLString().Printf("%d-%02d-%02d %02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond ) );
+        poDS->SetMetadataItem(
+            "TIME_INPUT_INGEST_SWEEP",
+            CPLString().Printf("%d-%02d-%02d %02d:%02d:%02d",
+                               nYear, nMonth, nDay, nHour, nMinute, nSecond));
+    }
 
-    ///Site and task information
+    // Site and task information.
 
-    char szSiteName[17] = ""; //Must have one extra char for string end!
-    char szVersionName[9] = "";
+    char szSiteName[17] = {};  // Must have one extra char for string end.
+    char szVersionName[9] = {};
 
     FillString(szSiteName, sizeof(szSiteName), poDS->abyHeader+320+12);
     FillString(szVersionName, sizeof(szVersionName), poDS->abyHeader+16+320+12);
-    poDS->SetMetadataItem( "PRODUCT_SITE_NAME",szSiteName);
-    poDS->SetMetadataItem( "PRODUCT_SITE_IRIS_VERSION",szVersionName);
+    poDS->SetMetadataItem("PRODUCT_SITE_NAME", szSiteName);
+    poDS->SetMetadataItem("PRODUCT_SITE_IRIS_VERSION", szVersionName);
 
     FillString(szSiteName, sizeof(szSiteName), poDS->abyHeader+90+320+12);
     FillString(szVersionName, sizeof(szVersionName), poDS->abyHeader+24+320+12);
-    poDS->SetMetadataItem( "INGEST_SITE_NAME",szSiteName);
-    poDS->SetMetadataItem( "INGEST_SITE_IRIS_VERSION",szVersionName);
+    poDS->SetMetadataItem("INGEST_SITE_NAME", szSiteName);
+    poDS->SetMetadataItem("INGEST_SITE_IRIS_VERSION", szVersionName);
 
     FillString(szSiteName, sizeof(szSiteName), poDS->abyHeader+74+320+12);
-    poDS->SetMetadataItem( "INGEST_HARDWARE_NAME",szSiteName);
+    poDS->SetMetadataItem("INGEST_HARDWARE_NAME", szSiteName);
 
-    char szConfigFile[13] = "";
+    char szConfigFile[13] = {};
     FillString(szConfigFile, sizeof(szConfigFile), poDS->abyHeader+62+12);
-    poDS->SetMetadataItem( "PRODUCT_CONFIGURATION_NAME",szConfigFile);
+    poDS->SetMetadataItem("PRODUCT_CONFIGURATION_NAME", szConfigFile);
 
-    char szTaskName[13] = "";
+    char szTaskName[13] = {};
     FillString(szTaskName, sizeof(szTaskName), poDS->abyHeader+74+12);
-    poDS->SetMetadataItem( "TASK_NAME",szTaskName);
+    poDS->SetMetadataItem("TASK_NAME", szTaskName);
 
     const short nRadarHeight = CPL_LSBSINT16PTR(poDS->abyHeader+284+320+12);
-    poDS->SetMetadataItem( "RADAR_HEIGHT",CPLString().Printf("%d m",nRadarHeight));
+    poDS->SetMetadataItem("RADAR_HEIGHT",
+                          CPLString().Printf("%d m",nRadarHeight));
+    // Ground height over the sea level.
     const short nGroundHeight = CPL_LSBSINT16PTR(poDS->abyHeader+118+320+12);
-    poDS->SetMetadataItem( "GROUND_HEIGHT",CPLString().Printf("%d m",nRadarHeight-nGroundHeight)); //Ground height over the sea level
+    poDS->SetMetadataItem(
+        "GROUND_HEIGHT",
+        CPLString().Printf("%d m",nRadarHeight-nGroundHeight));
 
     unsigned short nFlags = CPL_LSBUINT16PTR (poDS->abyHeader+86+12);
-    //Get eleventh bit
-    nFlags=nFlags<<4;
-    nFlags=nFlags>>15;
+    // Get eleventh bit
+    nFlags = nFlags << 4;
+    nFlags = nFlags >> 15;
     if( nFlags == 1 )
     {
-        poDS->SetMetadataItem( "COMPOSITED_PRODUCT","YES");
-        unsigned int compositedMask = CPL_LSBUINT32PTR (poDS->abyHeader+232+320+12);
-        poDS->SetMetadataItem( "COMPOSITED_PRODUCT_MASK",CPLString().Printf("0x%08x",compositedMask));
+        poDS->SetMetadataItem("COMPOSITED_PRODUCT", "YES");
+        const unsigned int compositedMask =
+            CPL_LSBUINT32PTR (poDS->abyHeader+232+320+12);
+        poDS->SetMetadataItem(
+            "COMPOSITED_PRODUCT_MASK",
+            CPLString().Printf("0x%08x",compositedMask));
     }
     else
     {
         poDS->SetMetadataItem( "COMPOSITED_PRODUCT","NO");
     }
 
-    //Wave values
-    poDS->SetMetadataItem( "PRF",CPLString().Printf("%d Hz",CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12)));
-    poDS->SetMetadataItem( "WAVELENGTH",CPLString().Printf("%4.2f cm",(float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/100));
-    const unsigned short nPolarizationType = CPL_LSBUINT16PTR (poDS->abyHeader+172+320+12);
-    float fNyquist = (CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12))*((float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/10000)/4; //See section 3.3.37 & 3.2.54
+    // Wave values.
+    poDS->SetMetadataItem(
+        "PRF",
+        CPLString().Printf("%d Hz",
+                           CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12)));
+    poDS->SetMetadataItem(
+        "WAVELENGTH",
+        CPLString().Printf(
+            "%4.2f cm",
+            static_cast<float>(
+                CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)) / 100));
+    const unsigned short nPolarizationType =
+        CPL_LSBUINT16PTR(poDS->abyHeader+172+320+12);
+
+    // See section 3.3.37 & 3.2.54.
+    float fNyquist =
+        (CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12)) *
+        (static_cast<float>(CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12))
+         / 10000) / 4;
     if( nPolarizationType == 1 )
         fNyquist = fNyquist * 2;
     else if( nPolarizationType == 2 )
@@ -865,116 +951,169 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( nPolarizationType == 3 )
         fNyquist = fNyquist * 4;
     poDS->fNyquistVelocity = fNyquist;
-    poDS->SetMetadataItem( "NYQUIST_VELOCITY",CPLString().Printf("%.2f m/s",fNyquist));
+    poDS->SetMetadataItem("NYQUIST_VELOCITY",
+                          CPLString().Printf("%.2f m/s",fNyquist));
 
     // Product dependent metadata (stored in 80 bytes from 162 bytes
     // at the product header) See point 3.2.30 at page 3.19 of the
     // manual.
-    //See point 3.2.25 at page 3.12 of the manual.
-    if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"PPI") )
+    // See point 3.2.25 at page 3.12 of the manual.
+    if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "PPI") )
     {
         // Degrees = 360 * (Binary Angle)*2^N
-        // float fElevation = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+164+12))) / 65536;
-        float fElevation = 360 * float((CPL_LSBSINT16PTR (poDS->abyHeader+164+12))) / 65536;
+        const float fElevation =
+            360 * float((CPL_LSBSINT16PTR (poDS->abyHeader+164+12))) / 65536;
 
-        poDS->SetMetadataItem( "PPI_ELEVATION_ANGLE",CPLString().Printf("%f",fElevation));
+        poDS->SetMetadataItem("PPI_ELEVATION_ANGLE",
+                              CPLString().Printf("%f", fElevation));
         if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
-            poDS->SetMetadataItem( "DATA_TYPE_UNITS","dBZ");
+            poDS->SetMetadataItem( "DATA_TYPE_UNITS", "dBZ");
         else
-            poDS->SetMetadataItem( "DATA_TYPE_UNITS","m/s");
-        //See point 3.2.2 at page 3.2 of the manual
+            poDS->SetMetadataItem("DATA_TYPE_UNITS", "m/s");
+        // See point 3.2.2 at page 3.2 of the manual.
     }
-    else if ( EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI") )
+    else if ( EQUAL(poDS->aszProductNames[poDS->nProductCode], "CAPPI") )
     {
-        const float fElevation = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
-        poDS->SetMetadataItem( "CAPPI_BOTTOM_HEIGHT",CPLString().Printf("%.1f m",fElevation));
-        const float fAzimuthSmoothingForShear = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12))) / 65536;
-        poDS->SetMetadataItem( "AZIMUTH_SMOOTHING_FOR_SHEAR" ,CPLString().Printf("%.1f", fAzimuthSmoothingForShear));
-        const unsigned int  nMaxAgeVVPCorrection = CPL_LSBUINT32PTR (poDS->abyHeader+24+164+12);
-        poDS->SetMetadataItem( "MAX_AGE_FOR_SHEAR_VVP_CORRECTION" ,CPLString().Printf("%d s", nMaxAgeVVPCorrection));
-        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
-            poDS->SetMetadataItem( "DATA_TYPE_UNITS","dBZ");
+        const float fElevation =
+            (static_cast<float>(
+                CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12)))/100;
+        poDS->SetMetadataItem("CAPPI_BOTTOM_HEIGHT",
+                              CPLString().Printf("%.1f m", fElevation));
+        const float fAzimuthSmoothingForShear =
+            360 * static_cast<float>(
+                CPL_LSBUINT16PTR(poDS->abyHeader+10+164+12)) / 65536;
+        poDS->SetMetadataItem(
+            "AZIMUTH_SMOOTHING_FOR_SHEAR",
+            CPLString().Printf("%.1f", fAzimuthSmoothingForShear));
+        const unsigned int nMaxAgeVVPCorrection =
+            CPL_LSBUINT32PTR(poDS->abyHeader+24+164+12);
+        poDS->SetMetadataItem(
+            "MAX_AGE_FOR_SHEAR_VVP_CORRECTION",
+            CPLString().Printf("%d s", nMaxAgeVVPCorrection));
+        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode], "dBZ") )
+            poDS->SetMetadataItem( "DATA_TYPE_UNITS", "dBZ");
         else
-            poDS->SetMetadataItem( "DATA_TYPE_UNITS","m/s");
+            poDS->SetMetadataItem( "DATA_TYPE_UNITS", "m/s");
         //See point 3.2.32 at page 3.19 of the manual
     }
     else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAIN1") ||
              EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN") )
     {
         const short nNumProducts = CPL_LSBSINT16PTR(poDS->abyHeader+170+320+12);
-        poDS->SetMetadataItem( "NUM_FILES_USED",CPLString().Printf("%d",nNumProducts));
+        poDS->SetMetadataItem("NUM_FILES_USED",
+                              CPLString().Printf("%d",nNumProducts));
 
-        const float fMinZAcum= (float)((CPL_LSBUINT32PTR (poDS->abyHeader+164+12))-32768)/1000;
-        poDS->SetMetadataItem( "MINIMUM_Z_TO_ACUMULATE",CPLString().Printf("%f",fMinZAcum));
+        const float fMinZAcum =
+            static_cast<float>((CPL_LSBUINT32PTR(
+                poDS->abyHeader+164+12))-32768)/1000;
+        poDS->SetMetadataItem("MINIMUM_Z_TO_ACUMULATE",
+                              CPLString().Printf("%f", fMinZAcum));
 
-        const unsigned short nSecondsOfAccumulation = CPL_LSBUINT16PTR (poDS->abyHeader+6+164+12);
-        poDS->SetMetadataItem( "SECONDS_OF_ACCUMULATION",CPLString().Printf("%d s",nSecondsOfAccumulation));
+        const unsigned short nSecondsOfAccumulation =
+            CPL_LSBUINT16PTR(poDS->abyHeader+6+164+12);
+        poDS->SetMetadataItem("SECONDS_OF_ACCUMULATION",
+                              CPLString().Printf("%d s",
+                                                 nSecondsOfAccumulation));
 
-        const unsigned int nSpanInputFiles = CPL_LSBUINT32PTR (poDS->abyHeader+24+164+12);
-        poDS->SetMetadataItem( "SPAN_OF_INPUT_FILES",CPLString().Printf("%d s",nSpanInputFiles));
-        poDS->SetMetadataItem( "DATA_TYPE_UNITS","mm");
+        const unsigned int nSpanInputFiles =
+            CPL_LSBUINT32PTR(poDS->abyHeader+24+164+12);
+        poDS->SetMetadataItem("SPAN_OF_INPUT_FILES",
+                              CPLString().Printf("%d s", nSpanInputFiles));
+        poDS->SetMetadataItem("DATA_TYPE_UNITS", "mm");
 
         char szInputProductName[13] = "";
         for(int k=0; k<12;k++)
-            szInputProductName[k] = * (char *) (poDS->abyHeader+k+12+164+12);
-        poDS->SetMetadataItem( "INPUT_PRODUCT_NAME",CPLString().Printf("%s",szInputProductName));
+            szInputProductName[k] = *reinterpret_cast<char *>(
+                poDS->abyHeader+k+12+164+12);
 
-        if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN") )
+        poDS->SetMetadataItem("INPUT_PRODUCT_NAME",
+                              CPLString().Printf("%s", szInputProductName));
+
+        if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "RAINN") )
              poDS->SetMetadataItem(
                  "NUM_HOURS_ACCUMULATE",
-                 CPLString().Printf("%d",CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12)));
+                 CPLString().Printf(
+                     "%d", CPL_LSBUINT16PTR(poDS->abyHeader+10+164+12)));
 
     // See point 3.2.73 at page 3.36 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"VIL") )
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "VIL") )
     {
-        const float fBottomHeightInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
+        const float fBottomHeightInterval = static_cast<float>(
+            CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12)) / 100;
         // TYPO in metadata key: FIXME ?
-        poDS->SetMetadataItem( "BOTTOM_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fBottomHeightInterval));
-        const float fTopHeightInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12) / 100;
+        poDS->SetMetadataItem(
+            "BOTTOM_OF_HEIGTH_INTERVAL",
+            CPLString().Printf("%.1f m",fBottomHeightInterval));
+        const float fTopHeightInterval =
+            static_cast<float>(CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12)) /
+            100;
         // TYPO in metadata key: FIXME ?
-        poDS->SetMetadataItem( "TOP_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fTopHeightInterval));
-        poDS->SetMetadataItem( "VIL_DENSITY_NOT_AVAILABLE_VALUE","-1");
-        poDS->SetMetadataItem( "DATA_TYPE_UNITS","mm");
+        poDS->SetMetadataItem("TOP_OF_HEIGTH_INTERVAL",
+                              CPLString().Printf("%.1f m", fTopHeightInterval));
+        poDS->SetMetadataItem("VIL_DENSITY_NOT_AVAILABLE_VALUE", "-1");
+        poDS->SetMetadataItem("DATA_TYPE_UNITS","mm");
     //See point 3.2.68 at page 3.36 of the manual
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"TOPS") )
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "TOPS") )
     {
-        const float fZThreshold = (float) CPL_LSBSINT16PTR(poDS->abyHeader+4+164+12) / 16;
-        poDS->SetMetadataItem( "Z_THRESHOLD",CPLString().Printf("%.1f dBZ",fZThreshold));
-        poDS->SetMetadataItem( "ECHO_TOPS_NOT_AVAILABLE_VALUE","-1");
-        poDS->SetMetadataItem( "DATA_TYPE_UNITS","km");
+        const float fZThreshold =
+            static_cast<float>(CPL_LSBSINT16PTR(poDS->abyHeader+4+164+12)) / 16;
+        poDS->SetMetadataItem("Z_THRESHOLD",
+                              CPLString().Printf("%.1f dBZ", fZThreshold));
+        poDS->SetMetadataItem("ECHO_TOPS_NOT_AVAILABLE_VALUE", "-1");
+        poDS->SetMetadataItem("DATA_TYPE_UNITS", "km");
     // See point 3.2.20 at page 3.10 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"MAX") )
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "MAX") )
     {
-        const float fBottomInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
-        poDS->SetMetadataItem( "BOTTOM_OF_INTERVAL",CPLString().Printf("%.1f m",fBottomInterval));
-        const float fTopInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12) / 100;
-        poDS->SetMetadataItem( "TOP_OF_INTERVAL",CPLString().Printf("%.1f m",fTopInterval));
+        const float fBottomInterval =
+            static_cast<float>(CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12)) /
+            100;
+        poDS->SetMetadataItem( "BOTTOM_OF_INTERVAL",
+                               CPLString().Printf("%.1f m", fBottomInterval));
+        const float fTopInterval =
+            static_cast<float>(CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12)) /
+            100;
+        poDS->SetMetadataItem("TOP_OF_INTERVAL",
+                              CPLString().Printf("%.1f m",fTopInterval));
         const int nNumPixelsSidePanels = CPL_LSBSINT32PTR(poDS->abyHeader+12+164+12);
-        poDS->SetMetadataItem( "NUM_PIXELS_SIDE_PANELS",CPLString().Printf("%d",nNumPixelsSidePanels));
+        poDS->SetMetadataItem("NUM_PIXELS_SIDE_PANELS",
+                              CPLString().Printf("%d", nNumPixelsSidePanels));
         const short nHorizontalSmootherSidePanels = CPL_LSBSINT16PTR(poDS->abyHeader+16+164+12);
-        poDS->SetMetadataItem( "HORIZONTAL_SMOOTHER_SIDE_PANELS",CPLString().Printf("%d",nHorizontalSmootherSidePanels));
-        const short nVerticalSmootherSidePanels = CPL_LSBSINT16PTR(poDS->abyHeader+18+164+12);
-        poDS->SetMetadataItem( "VERTICAL_SMOOTHER_SIDE_PANELS",CPLString().Printf("%d",nVerticalSmootherSidePanels));
+        poDS->SetMetadataItem(
+            "HORIZONTAL_SMOOTHER_SIDE_PANELS",
+            CPLString().Printf("%d", nHorizontalSmootherSidePanels));
+        const short nVerticalSmootherSidePanels =
+            CPL_LSBSINT16PTR(poDS->abyHeader+18+164+12);
+        poDS->SetMetadataItem(
+            "VERTICAL_SMOOTHER_SIDE_PANELS",
+            CPLString().Printf("%d",nVerticalSmootherSidePanels));
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    /* coverity[tainted_data] */
-    for (int iBandNum = 1; iBandNum <= nNumBands; iBandNum++) {
+    // coverity[tainted_data]
+    for( int iBandNum = 1; iBandNum <= nNumBands; iBandNum++ )
+    {
         poDS->SetBand( iBandNum, new IRISRasterBand( poDS, iBandNum ));
 
         poDS->GetRasterBand(iBandNum)->SetNoDataValue(-9999);
-        //Calculating the band height to include it in the band metadata. Only for the CAPPI product
+        // Calculating the band height to include it in the band metadata.  Only
+        // for the CAPPI product.
         if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI") )
         {
-            const float fScaleZ = float (CPL_LSBSINT32PTR (poDS->abyHeader + 96 + 12 )) / 100;
-            const float fOffset = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
+            const float fScaleZ = static_cast<float>(
+                CPL_LSBSINT32PTR(poDS->abyHeader + 96 + 12)) / 100;
+            const float fOffset = static_cast<float>(
+                CPL_LSBSINT32PTR(poDS->abyHeader + 4 + 164 + 12)) / 100;
 
-            poDS->GetRasterBand(iBandNum)->SetMetadataItem("height",CPLString().Printf("%.0f m",fOffset + fScaleZ*(iBandNum-1)));
+            poDS->GetRasterBand(iBandNum)->
+                SetMetadataItem(
+                    "height",
+                    CPLString().Printf("%.0f m",
+                                       fOffset + fScaleZ*(iBandNum-1)));
         }
     }
 /* -------------------------------------------------------------------- */
@@ -988,7 +1127,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
