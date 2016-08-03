@@ -2357,14 +2357,19 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     poDS->FetchCopyParm( szGridMappingValue,
                                          CF_PP_FALSE_NORTHING, 0.0 );
 
-                oSRS.SetProjCS( "LAEA (WGS84) " );
-
                 bGotCfSRS = true;
                 oSRS.SetLAEA( dfCenterLat, dfCenterLon,
                               dfFalseEasting, dfFalseNorthing );
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
+                
+                if( oSRS.GetAttrValue("DATUM") != NULL &&
+                    EQUAL(oSRS.GetAttrValue("DATUM"), "WGS_1984") )
+                {
+                    oSRS.SetProjCS( "LAEA (WGS84)" );
+                }
+
             }
 
 /* -------------------------------------------------------------------- */
@@ -3172,6 +3177,23 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         }
     }
 
+    // Some netCDF files have a srid attribute (#6613) like urn:ogc:def:crs:EPSG::6931
+    snprintf(szTemp,sizeof(szTemp), "%s#%s", szGridMappingValue,"srid");
+    const char* pszSRID = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+    if( pszSRID != NULL )
+    {
+        oSRS.Clear();
+        if( oSRS.SetFromUserInput(pszSRID) == OGRERR_NONE )
+        {
+            char* pszWKTExport = NULL;
+            CPLDebug( "GDAL_netCDF", "Got SRS from %s", szTemp);
+            oSRS.exportToWkt( &pszWKTExport );
+            SetProjection( pszWKTExport );
+            CPLFree(pszWKTExport);
+        }
+    }    
+    
+    
     // Set GeoTransform if we got a complete one - after projection has been set
     if ( bGotCfGT || bGotGdalGT ) {
         SetGeoTransform( adfTempGeoTransform );
