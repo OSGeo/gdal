@@ -29,14 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef DEG2RAD
-#  define DEG2RAD (M_PI/180.0)
-#endif
-
-#ifndef RAD2DEG
-#  define RAD2DEG (180.0/M_PI)
-#endif
-
+#include "cpl_port.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
@@ -45,7 +38,8 @@
 
 CPL_CVSID("$Id$");
 
-#define ARRAY_ELEMENT_COUNT(x) ((sizeof(x))/sizeof(x[0]))
+static double DEG2RAD = M_PI / 180.0;
+static double RAD2DEG = 180.0 / M_PI;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -75,7 +69,9 @@ class IRISDataset : public GDALPamDataset
     double                adfGeoTransform[6];
     int                   bHasLoadedProjection;
     void                  LoadProjection();
-    std::pair <double,double> GeodesicCalculation(float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius, float fPolarRadius, float fFlattening);
+    std::pair <double,double> GeodesicCalculation(
+        float fLat, float fLon, float fAngle, float fDist,
+        float fEquatorialRadius, float fPolarRadius, float fFlattening);
 
 public:
     IRISDataset();
@@ -84,17 +80,17 @@ public:
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 
-const char* const IRISDataset::aszProductNames[]= {
+const char* const IRISDataset::aszProductNames[] = {
     "", "PPI", "RHI", "CAPPI", "CROSS", "TOPS", "TRACK", "RAIN1", "RAINN",
     "VVP", "VIL", "SHEAR", "WARN", "CATCH", "RTI", "RAW", "MAX", "USER",
     "USERV", "OTHER", "STATUS", "SLINE", "WIND", "BEAM", "TEXT", "FCAST",
     "NDOP", "IMAGE", "COMP", "TDWR", "GAGE", "DWELL", "SRI", "BASE", "HMAX"};
 
-const char* const IRISDataset::aszDataTypeCodes[]={
+const char* const IRISDataset::aszDataTypeCodes[] = {
     "XHDR", "DBT" ,"dBZ", "VEL", "WIDTH", "ZDR", "ORAIN", "dBZC", "DBT2",
     "dBZ2", "VEL2", "WIDTH2", "ZDR2", "RAINRATE2", "KDP", "KDP2", "PHIDP",
     "VELC", "SQI", "RHOHV", "RHOHV2", "dBZC2", "VELC2", "SQI2", "PHIDP2",
@@ -104,11 +100,14 @@ const char* const IRISDataset::aszDataTypeCodes[]={
     "RHOV2", "PHIH", "PHIH2", "PHIV", "PHIV2", "USER2", "HCLASS", "HCLASS2",
     "ZDRC", "ZDRC2", "TEMPERATURE16", "VIR16", "DBTV8", "DBTV16", "DBZV8",
     "DBZV16", "SNR8", "SNR16", "ALBEDO8", "ALBEDO16", "VILD16", "TURB16"};
-const char* const IRISDataset::aszDataTypes[]={
-    "Extended Headers","Total H power (1 byte)","Clutter Corrected H reflectivity (1 byte)",
-    "Velocity (1 byte)","Width (1 byte)","Differential reflectivity (1 byte)",
-    "Old Rainfall rate (stored as dBZ)","Fully corrected reflectivity (1 byte)",
-    "Uncorrected reflectivity (2 byte)","Corrected reflectivity (2 byte)",
+
+const char* const IRISDataset::aszDataTypes[] = {
+    "Extended Headers", "Total H power (1 byte)",
+    "Clutter Corrected H reflectivity (1 byte)",
+    "Velocity (1 byte)", "Width (1 byte)", "Differential reflectivity (1 byte)",
+    "Old Rainfall rate (stored as dBZ)",
+    "Fully corrected reflectivity (1 byte)",
+    "Uncorrected reflectivity (2 byte)", "Corrected reflectivity (2 byte)",
     "Velocity (2 byte)","Width (2 byte)","Differential reflectivity (2 byte)",
     "Rainfall rate (2 byte)","Kdp (specific differential phase)(1 byte)",
     "Kdp (specific differential phase)(2 byte)","PHIdp (differential phase)(1 byte)",
@@ -131,11 +130,12 @@ const char* const IRISDataset::aszDataTypes[]={
     "Clutter Corrected V Reflectivity (1 byte)", "Clutter Corrected V Reflectivity (2 byte)",
     "Signal to Noise ratio (1 byte)", "Signal to Noise ratio (2 byte)", "Albedo (1 byte)",
     "Albedo (2 byte)", "VIL Density (2 byte)", "Turbulence (2 byte)"};
-const char* const IRISDataset::aszProjections[]={
-    "Azimutal equidistant","Mercator","Polar Stereographic","UTM",
+
+const char* const IRISDataset::aszProjections[] = {
+    "Azimutal equidistant","Mercator","Polar Stereographic", "UTM",
     // FIXME: is it a typo here or in IRIS itself: Perspective or Prespective ?
-    "Prespective from geosync","Equidistant cylindrical","Gnomonic",
-    "Gauss conformal","Lambert conformal conic"};
+    "Prespective from geosync", "Equidistant cylindrical", "Gnomonic",
+    "Gauss conformal", "Lambert conformal conic"};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -152,7 +152,7 @@ class IRISRasterBand : public GDALPamRasterBand
 
 public:
     IRISRasterBand( IRISDataset *, int );
-    ~IRISRasterBand();
+    virtual ~IRISRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 
@@ -165,15 +165,15 @@ public:
 /*                           IRISRasterBand()                           */
 /************************************************************************/
 
-IRISRasterBand::IRISRasterBand( IRISDataset *poDSIn, int nBandIn )
+IRISRasterBand::IRISRasterBand( IRISDataset *poDSIn, int nBandIn ) :
+    pszRecord(NULL),
+    bBufferAllocFailed(FALSE)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Float32;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-    pszRecord = NULL;
-    bBufferAllocFailed = FALSE;
 }
 
 IRISRasterBand::~IRISRasterBand()
@@ -185,115 +185,128 @@ IRISRasterBand::~IRISRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
                                    int nBlockYOff,
                                    void * pImage )
 
 {
-    IRISDataset *poGDS = (IRISDataset *) poDS;
+    IRISDataset *poGDS = static_cast<IRISDataset *>(poDS);
 
-    //Every product type has its own size. TODO: Move it like dataType
+    // Every product type has its own size. TODO: Move it like dataType.
     int nDataLength = 1;
-    if(poGDS->nDataTypeCode == 2){nDataLength=1;}
-    else if(poGDS->nDataTypeCode == 37){nDataLength=2;}
-    else if(poGDS->nDataTypeCode == 33){nDataLength=2;}
-    else if(poGDS->nDataTypeCode == 32){nDataLength=1;}
+    if( poGDS->nDataTypeCode == 2 ) nDataLength = 1;
+    else if( poGDS->nDataTypeCode == 37 ) nDataLength = 2;
+    else if( poGDS->nDataTypeCode == 33 ) nDataLength = 2;
+    else if( poGDS->nDataTypeCode == 32 ) nDataLength = 1;
 
-    int i;
-    //We allocate space for storing a record:
-    if (pszRecord == NULL)
+    // We allocate space for storing a record:
+    if( pszRecord == NULL )
     {
-        if (bBufferAllocFailed)
+        if( bBufferAllocFailed )
             return CE_Failure;
 
-        pszRecord = (unsigned char *) VSI_MALLOC_VERBOSE(nBlockXSize*nDataLength);
+        pszRecord = static_cast<unsigned char *>(
+            VSI_MALLOC_VERBOSE(nBlockXSize*nDataLength));
 
-        if (pszRecord == NULL)
+        if( pszRecord == NULL )
         {
             bBufferAllocFailed = TRUE;
             return CE_Failure;
         }
     }
 
-    //Prepare to read (640 is the header size in bytes) and read (the y axis in the IRIS files in the inverse direction)
-    //The previous bands are also added as an offset
+    // Prepare to read (640 is the header size in bytes) and read (the
+    // y axis in the IRIS files in the inverse direction).  The
+    // previous bands are also added as an offset
 
-    VSIFSeekL( poGDS->fp, 640 + (vsi_l_offset)nDataLength*poGDS->GetRasterXSize()*poGDS->GetRasterYSize()*(this->nBand-1) +
-                                (vsi_l_offset)nBlockXSize*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
+    VSIFSeekL( poGDS->fp,
+               640 +
+               static_cast<vsi_l_offset>(nDataLength)*poGDS->GetRasterXSize()*poGDS->GetRasterYSize()*(this->nBand-1) +
+               static_cast<vsi_l_offset>(nBlockXSize)*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
 
-    if( (int)VSIFReadL( pszRecord, nBlockXSize*nDataLength, 1, poGDS->fp ) != 1 )
+    if( static_cast<int>(VSIFReadL( pszRecord, nBlockXSize*nDataLength, 1,
+                                    poGDS->fp )) != 1 )
         return CE_Failure;
 
-    //If datatype is dbZ or dBT:
-    //See point 3.3.3 at page 3.33 of the manual
+    // If datatype is dbZ or dBT:
+    // See point 3.3.3 at page 3.33 of the manual.
     if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1){
-        float fVal;
-        for (i=0;i<nBlockXSize;i++){
-            fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0f;
-            if (fVal == 95.5f)
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            float fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0f;
+            if( fVal == 95.5f )
                 fVal = -9999.0f;
             ((float *) pImage)[i] = fVal;
         }
-    //If datatype is dbZ2 or dBT2:
-    //See point 3.3.4 at page 3.33 of the manual
-    } else if(poGDS->nDataTypeCode == 8 || poGDS->nDataTypeCode == 9){
-        float fVal;
-        for (i=0;i<nBlockXSize;i++){
-            fVal = (((float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength)) - 32768)/100.0f;
-            if (fVal == 327.67f)
+    // If datatype is dbZ2 or dBT2:
+    // See point 3.3.4 at page 3.33 of the manual.
+    }
+    else if(poGDS->nDataTypeCode == 8 || poGDS->nDataTypeCode == 9)
+    {
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            float fVal = (((float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength)) - 32768)/100.0f;
+            if( fVal == 327.67f )
                 fVal = -9999.0f;
             ((float *) pImage)[i] = fVal;
         }
-    //Fliquid2 (Rain1 & Rainn products)
-    //See point 3.3.11 at page 3.43 of the manual
-    } else if(poGDS->nDataTypeCode == 37){
-        unsigned short nVal, nExp, nMantissa;
-        float fVal2=0;
-        for (i=0;i<nBlockXSize;i++){
-            nVal = CPL_LSBUINT16PTR(pszRecord+i*nDataLength);
-            nExp = nVal>>12;
-            nMantissa = nVal - (nExp<<12);
-            if (nVal == 65535)
+    // Fliquid2 (Rain1 & Rainn products)
+    // See point 3.3.11 at page 3.43 of the manual.
+    }
+    else if(poGDS->nDataTypeCode == 37)
+    {
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            const unsigned short nVal = CPL_LSBUINT16PTR(pszRecord+i*nDataLength);
+            const unsigned short nExp = nVal>>12;
+            const unsigned short nMantissa = nVal - (nExp<<12);
+            float fVal2 = 0.0f;
+            if( nVal == 65535 )
                 fVal2 = -9999.0f;
-            else if (nExp == 0)
+            else if( nExp == 0 )
                 fVal2 = (float) nMantissa / 1000.0f;
             else
                 fVal2 = (float)((nMantissa+4096)<<(nExp-1))/1000.0f;
             ((float *) pImage)[i] = fVal2;
         }
-    //VIL2 (VIL products)
-    //See point 3.3.41 at page 3.54 of the manual
-    } else if(poGDS->nDataTypeCode == 33){
-        float fVal;
-        for (i=0;i<nBlockXSize;i++){
-            fVal = (float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength);
-            if (fVal == 65535.0f)
+    // VIL2 (VIL products)
+    // See point 3.3.41 at page 3.54 of the manual.
+    }
+    else if( poGDS->nDataTypeCode == 33 )
+    {
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            float fVal =
+                static_cast<float>(CPL_LSBUINT16PTR(pszRecord+i*nDataLength));
+            if( fVal == 65535.0f )
                 ((float *) pImage)[i] = -9999.0f;
-            else if (fVal == 0)
+            else if( fVal == 0 )
                 ((float *) pImage)[i] = -1.0f;
             else
                 ((float *) pImage)[i] = (fVal-1)/1000.0f;
         }
-    //HEIGHT (TOPS products)
-    //See point 3.3.14 at page 3.46 of the manual
-    } else if(poGDS->nDataTypeCode == 32){
-        unsigned char nVal;
-        for (i=0;i<nBlockXSize;i++){
-            nVal =  *(pszRecord+i*nDataLength) ;
-            if (nVal == 255)
+    // HEIGHT (TOPS products)
+    // See point 3.3.14 at page 3.46 of the manual.
+    }
+    else if( poGDS->nDataTypeCode == 32 )
+    {
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            unsigned char nVal = *(pszRecord+i*nDataLength);
+            if( nVal == 255 )
                 ((float *) pImage)[i] = -9999.0f;
-            else if (nVal == 0)
+            else if( nVal == 0 )
                 ((float *) pImage)[i] = -1.0f;
             else
                 ((float *) pImage)[i] = ((float) nVal - 1) / 10.0f;
         }
-    //VEL (Velocity 1-Byte in PPI & others)
-    //See point 3.3.37 at page 3.53 of the manual
+    // VEL (Velocity 1-Byte in PPI & others)
+    // See point 3.3.37 at page 3.53 of the manual.
     } else if(poGDS->nDataTypeCode == 3){
-          float fVal;
-        for (i=0;i<nBlockXSize;i++){
-            fVal = (float) *(pszRecord+i*nDataLength);
-            if (fVal == 0.0f)
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            float fVal = static_cast<float>(*(pszRecord+i*nDataLength));
+            if( fVal == 0.0f )
                 fVal = -9997.0f;
             else if(fVal == 1.0f)
                 fVal = -9998.0f;
@@ -306,12 +319,12 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     //SHEAR (1-Byte Shear)
     //See point 3.3.23 at page 3.39 of the manual
     } else if(poGDS->nDataTypeCode == 35){
-        float fVal;
-        for (i=0;i<nBlockXSize;i++){
-            fVal = (float) *(pszRecord+i*nDataLength);
-            if (fVal == 0.0f)
+        for( int i = 0; i < nBlockXSize; i++)
+        {
+            float fVal = static_cast<float>(*(pszRecord+i*nDataLength));
+            if( fVal == 0.0f )
                 fVal = -9998.0f;
-            else if (fVal == 255.0f)
+            else if( fVal == 255.0f )
                 fVal = -9999.0f;
             else
                 fVal = (fVal - 128.0f) * 0.2f;
@@ -330,10 +343,9 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 CPLErr IRISRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    IRISDataset *poGDS = (IRISDataset *) poDS;
-   // if( poGDS->bNoDataSet && poGDS->dfNoDataValue == dfNoData )
-   //   return CE_None;
-
+    IRISDataset *poGDS = static_cast<IRISDataset *>(poDS);
+    // if( poGDS->bNoDataSet && poGDS->dfNoDataValue == dfNoData )
+    //   return CE_None;
 
     poGDS->bNoDataSet = TRUE;
     poGDS->dfNoDataValue = dfNoData;
@@ -348,8 +360,7 @@ CPLErr IRISRasterBand::SetNoDataValue( double dfNoData )
 double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    IRISDataset *poGDS = (IRISDataset *) poDS;
-
+    IRISDataset *poGDS = static_cast<IRISDataset *>(poDS);
 
     if( poGDS->bNoDataSet )
     {
@@ -415,11 +426,17 @@ void IRISDataset::LoadProjection()
         fPolarRadius = fEquatorialRadius;
         fInvFlattening = 0;
         fFlattening = 0;
-    } else {
-        if (fInvFlattening == 0){ //When inverse flattening is infinite, they use 0
+    }
+    else
+    {
+        if( fInvFlattening == 0 )
+        {
+            // When inverse flattening is infinite, they use 0.
             fFlattening = 0;
             fPolarRadius = fEquatorialRadius;
-        } else {
+        }
+        else
+        {
             fFlattening = 1/fInvFlattening;
             fPolarRadius = fEquatorialRadius * (1-fFlattening);
         }
@@ -454,7 +471,7 @@ void IRISDataset::LoadProjection()
                         "degree", 0.0174532925199433);
 
         oSRSOut.SetMercator(fProjRefLat,fProjRefLon,1,0,0);
-	oSRSOut.exportToWkt(&pszSRS_WKT);
+        oSRSOut.exportToWkt(&pszSRS_WKT);
 
         //The center coordinates are given in LatLon on the defined ellipsoid. Necessary to calculate geotransform.
 
@@ -582,9 +599,9 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
     double dfL = dfLambda - (1-dfC) * fFlattening * dfSinAlpha *
       (dfSigma + dfC*dfSinSigma*(dfCos2SigmaM+dfC*dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM)));
     double dfLon2 = fLon*DEG2RAD+dfL;
-    if (dfLon2 > M_PI)
+    if( dfLon2 > M_PI )
         dfLon2 = dfLon2 - 2*M_PI;
-    if (dfLon2 < -1*M_PI)
+    if( dfLon2 < -1*M_PI )
         dfLon2 = dfLon2 + 2*M_PI;
     oOutput.first = dfLon2*RAD2DEG;
     oOutput.second = dfLat2*RAD2DEG;
@@ -599,7 +616,7 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
 CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if (!bHasLoadedProjection)
+    if( !bHasLoadedProjection )
         LoadProjection();
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     return CE_None;
@@ -609,8 +626,9 @@ CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *IRISDataset::GetProjectionRef(){
-    if (!bHasLoadedProjection)
+const char *IRISDataset::GetProjectionRef()
+{
+    if( !bHasLoadedProjection )
         LoadProjection();
     return pszSRS_WKT;
 }
@@ -661,7 +679,7 @@ static void FillString(char* szBuffer, size_t nBufferSize, void* pSrcBuffer)
 GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo))
+    if( !Identify(poOpenInfo) )
         return NULL;
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -680,7 +698,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     IRISDataset *poDS = new IRISDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if (poDS->fp == NULL)
+    if( poDS->fp == NULL )
     {
         delete poDS;
         return NULL;
@@ -697,7 +715,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nXSize;
 
     poDS->nRasterYSize = nYSize;
-    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    if( poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid dimensions : %d x %d",
@@ -718,7 +736,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     //See point 3.2.26 at page 3.12 of the manual
     poDS->nProductCode = CPL_LSBUINT16PTR (poDS->abyHeader+12+12);
     poDS->SetMetadataItem( "PRODUCT_ID", CPLString().Printf("%d", poDS->nProductCode ));
-    if( poDS->nProductCode >= ARRAY_ELEMENT_COUNT(poDS->aszProductNames) )
+    if( poDS->nProductCode >= CPL_ARRAYSIZE(poDS->aszProductNames) )
     {
         delete poDS;
         return NULL;
@@ -727,14 +745,14 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "PRODUCT",poDS->aszProductNames[poDS->nProductCode]);
 
     poDS->nDataTypeCode = CPL_LSBUINT16PTR (poDS->abyHeader+130+12);
-    if( poDS->nDataTypeCode >= ARRAY_ELEMENT_COUNT(poDS->aszDataTypeCodes) )
+    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
     }
     poDS->SetMetadataItem( "DATA_TYPE_CODE",poDS->aszDataTypeCodes[poDS->nDataTypeCode]);
 
-    if( poDS->nDataTypeCode >= ARRAY_ELEMENT_COUNT(poDS->aszDataTypes) )
+    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
     {
         delete poDS;
         return NULL;
@@ -742,7 +760,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DATA_TYPE",poDS->aszDataTypes[poDS->nDataTypeCode]);
 
     unsigned short nDataTypeInputCode = CPL_LSBUINT16PTR (poDS->abyHeader+144+12);
-    if( nDataTypeInputCode >= ARRAY_ELEMENT_COUNT(poDS->aszDataTypeCodes) )
+    if( nDataTypeInputCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
@@ -750,7 +768,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DATA_TYPE_INPUT_CODE",poDS->aszDataTypeCodes[nDataTypeInputCode]);
 
     unsigned short nDataTypeInput = CPL_LSBUINT16PTR (poDS->abyHeader+144+12);
-    if( nDataTypeInput >= ARRAY_ELEMENT_COUNT(poDS->aszDataTypes) )
+    if( nDataTypeInput >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
     {
         delete poDS;
         return NULL;
@@ -758,7 +776,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DATA_TYPE_INPUT",poDS->aszDataTypes[nDataTypeInput]);
 
     poDS->nProjectionCode = * (unsigned char *) (poDS->abyHeader+146+12);
-    if( poDS->nProjectionCode >= ARRAY_ELEMENT_COUNT(poDS->aszProjections) )
+    if( poDS->nProjectionCode >= CPL_ARRAYSIZE(poDS->aszProjections) )
     {
         delete poDS;
         return NULL;
@@ -824,11 +842,14 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     //Get eleventh bit
     nFlags=nFlags<<4;
     nFlags=nFlags>>15;
-    if (nFlags == 1){
+    if( nFlags == 1 )
+    {
         poDS->SetMetadataItem( "COMPOSITED_PRODUCT","YES");
         unsigned int compositedMask = CPL_LSBUINT32PTR (poDS->abyHeader+232+320+12);
         poDS->SetMetadataItem( "COMPOSITED_PRODUCT_MASK",CPLString().Printf("0x%08x",compositedMask));
-    } else{
+    }
+    else
+    {
         poDS->SetMetadataItem( "COMPOSITED_PRODUCT","NO");
     }
 
@@ -837,11 +858,11 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "WAVELENGTH",CPLString().Printf("%4.2f cm",(float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/100));
     const unsigned short nPolarizationType = CPL_LSBUINT16PTR (poDS->abyHeader+172+320+12);
     float fNyquist = (CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12))*((float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/10000)/4; //See section 3.3.37 & 3.2.54
-    if (nPolarizationType == 1)
+    if( nPolarizationType == 1 )
         fNyquist = fNyquist * 2;
-    else if(nPolarizationType == 2)
+    else if( nPolarizationType == 2 )
         fNyquist = fNyquist * 3;
-    else if(nPolarizationType == 3)
+    else if( nPolarizationType == 3 )
         fNyquist = fNyquist * 4;
     poDS->fNyquistVelocity = fNyquist;
     poDS->SetMetadataItem( "NYQUIST_VELOCITY",CPLString().Printf("%.2f m/s",fNyquist));
@@ -850,30 +871,36 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     // at the product header) See point 3.2.30 at page 3.19 of the
     // manual.
     //See point 3.2.25 at page 3.12 of the manual.
-    if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"PPI")){
-        //Degrees = 360 * (Binary Angle)*2^N
-        //float fElevation = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+164+12))) / 65536;
+    if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"PPI") )
+    {
+        // Degrees = 360 * (Binary Angle)*2^N
+        // float fElevation = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+164+12))) / 65536;
         float fElevation = 360 * float((CPL_LSBSINT16PTR (poDS->abyHeader+164+12))) / 65536;
 
         poDS->SetMetadataItem( "PPI_ELEVATION_ANGLE",CPLString().Printf("%f",fElevation));
-        if (EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ"))
+        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
             poDS->SetMetadataItem( "DATA_TYPE_UNITS","dBZ");
         else
             poDS->SetMetadataItem( "DATA_TYPE_UNITS","m/s");
         //See point 3.2.2 at page 3.2 of the manual
-    } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI")){
+    }
+    else if ( EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI") )
+    {
         const float fElevation = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
         poDS->SetMetadataItem( "CAPPI_BOTTOM_HEIGHT",CPLString().Printf("%.1f m",fElevation));
         const float fAzimuthSmoothingForShear = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12))) / 65536;
         poDS->SetMetadataItem( "AZIMUTH_SMOOTHING_FOR_SHEAR" ,CPLString().Printf("%.1f", fAzimuthSmoothingForShear));
         const unsigned int  nMaxAgeVVPCorrection = CPL_LSBUINT32PTR (poDS->abyHeader+24+164+12);
         poDS->SetMetadataItem( "MAX_AGE_FOR_SHEAR_VVP_CORRECTION" ,CPLString().Printf("%d s", nMaxAgeVVPCorrection));
-        if (EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ"))
+        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
             poDS->SetMetadataItem( "DATA_TYPE_UNITS","dBZ");
         else
             poDS->SetMetadataItem( "DATA_TYPE_UNITS","m/s");
         //See point 3.2.32 at page 3.19 of the manual
-    } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAIN1") || EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN")){
+    }
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAIN1") ||
+             EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN") )
+    {
         const short nNumProducts = CPL_LSBSINT16PTR(poDS->abyHeader+170+320+12);
         poDS->SetMetadataItem( "NUM_FILES_USED",CPLString().Printf("%d",nNumProducts));
 
@@ -892,11 +919,15 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
             szInputProductName[k] = * (char *) (poDS->abyHeader+k+12+164+12);
         poDS->SetMetadataItem( "INPUT_PRODUCT_NAME",CPLString().Printf("%s",szInputProductName));
 
-        if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN"))
-             poDS->SetMetadataItem( "NUM_HOURS_ACCUMULATE",CPLString().Printf("%d",CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12)));
+        if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN") )
+             poDS->SetMetadataItem(
+                 "NUM_HOURS_ACCUMULATE",
+                 CPLString().Printf("%d",CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12)));
 
-    //See point 3.2.73 at page 3.36 of the manual
-    } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"VIL")){
+    // See point 3.2.73 at page 3.36 of the manual.
+    }
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"VIL") )
+    {
         const float fBottomHeightInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
         // TYPO in metadata key: FIXME ?
         poDS->SetMetadataItem( "BOTTOM_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fBottomHeightInterval));
@@ -906,13 +937,17 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "VIL_DENSITY_NOT_AVAILABLE_VALUE","-1");
         poDS->SetMetadataItem( "DATA_TYPE_UNITS","mm");
     //See point 3.2.68 at page 3.36 of the manual
-    } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"TOPS")){
+    }
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"TOPS") )
+    {
         const float fZThreshold = (float) CPL_LSBSINT16PTR(poDS->abyHeader+4+164+12) / 16;
         poDS->SetMetadataItem( "Z_THRESHOLD",CPLString().Printf("%.1f dBZ",fZThreshold));
         poDS->SetMetadataItem( "ECHO_TOPS_NOT_AVAILABLE_VALUE","-1");
         poDS->SetMetadataItem( "DATA_TYPE_UNITS","km");
-    //See point 3.2.20 at page 3.10 of the manual
-    } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"MAX")){
+    // See point 3.2.20 at page 3.10 of the manual.
+    }
+    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"MAX") )
+    {
         const float fBottomInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
         poDS->SetMetadataItem( "BOTTOM_OF_INTERVAL",CPLString().Printf("%.1f m",fBottomInterval));
         const float fTopInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12) / 100;
@@ -934,7 +969,8 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->GetRasterBand(iBandNum)->SetNoDataValue(-9999);
         //Calculating the band height to include it in the band metadata. Only for the CAPPI product
-        if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI")){
+        if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI") )
+        {
             const float fScaleZ = float (CPL_LSBSINT32PTR (poDS->abyHeader + 96 + 12 )) / 100;
             const float fOffset = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
 
