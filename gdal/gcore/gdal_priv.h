@@ -801,6 +801,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) CPL_WARN_UNUSED_RESULT;
+
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
+
     CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
                                      void *, int, int, GDALDataType,
                                      GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) CPL_WARN_UNUSED_RESULT;
@@ -920,6 +926,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
                                                char **papszOptions ) CPL_WARN_UNUSED_RESULT;
+
+    int GetDataCoverageStatus( int nXOff, int nYOff,
+                               int nXSize, int nYSize,
+                               int nMaskFlagStop = 0,
+                               double* pdfDataPct = NULL );
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 

@@ -7,6 +7,11 @@ OBJ += pixelfunctions.o
 
 CPPFLAGS := -I../raw $(CPPFLAGS)
 
+ifeq ($(HAVE_GEOS),yes)
+CPPFLAGS        :=      -DHAVE_GEOS=1 $(CPPFLAGS)
+endif
+
+
 default: $(OBJ:.o=.$(OBJ_EXT))
 
 clean:

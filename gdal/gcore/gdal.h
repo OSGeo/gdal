@@ -822,6 +822,30 @@ CPLErr CPL_DLL CPL_STDCALL
 #define GMF_ALPHA         0x04
 #define GMF_NODATA        0x08
 
+/** Flag returned by GDALGetDataCoverageStatus() when the driver does not
+ * implement GetDataCoverageStatus(). This flag should be returned together
+ * with GDAL_DATA_COVERAGE_STATUS_DATA */
+#define GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED 0x01
+
+/** Flag returned by GDALGetDataCoverageStatus() when there is (potentially)
+ * data in the queried window. Can be combined with the binary or operator
+ * with GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED or
+ * GDAL_DATA_COVERAGE_STATUS_EMPTY */
+#define GDAL_DATA_COVERAGE_STATUS_DATA          0x02
+
+/** Flag returned by GDALGetDataCoverageStatus() when there is nodata in the
+ * queried window. This is typically identified by the concept of missing block
+ * in formats that supports it.
+ * Can be combined with the binary or operator with
+ * GDAL_DATA_COVERAGE_STATUS_DATA */
+#define GDAL_DATA_COVERAGE_STATUS_EMPTY         0x04
+
+int CPL_DLL CPL_STDCALL GDALGetDataCoverageStatus( GDALRasterBandH hBand,
+                                                   int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   int nMaskFlagStop,
+                                                   double* pdfDataPct );
+
 /* ==================================================================== */
 /*     GDALAsyncReader                                                  */
 /* ==================================================================== */
