@@ -259,7 +259,8 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
                     1, nToReadInFile);
             const size_t nRead = nReadInBuffer + nReadInFile;
 
-            nBufferSize = static_cast<int>( MIN(nRead, MAX_BUFFER_SIZE) );
+            nBufferSize = static_cast<int>(
+                MIN(nRead, static_cast<size_t>(MAX_BUFFER_SIZE)) );
             nBufferOffset = nCurOffset + nRead - nBufferSize;
             memcpy(pabyBuffer,
                    static_cast<GByte *>(pBuffer) + nRead - nBufferSize,
@@ -290,7 +291,8 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
             return 0;
         bNeedBaseHandleSeek = false;
         const size_t nReadInFile = m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
-        nBufferSize = static_cast<int>( MIN(nReadInFile, MAX_BUFFER_SIZE) );
+        nBufferSize = static_cast<int>(
+            MIN(nReadInFile, static_cast<size_t>(MAX_BUFFER_SIZE)) );
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
         memcpy(pabyBuffer, (GByte*)pBuffer + nReadInFile - nBufferSize, nBufferSize);
 
