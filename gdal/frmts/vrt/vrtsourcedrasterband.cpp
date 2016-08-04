@@ -287,7 +287,7 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
     if( pdfDataPct != NULL )
         *pdfDataPct = -1.0;
 #ifndef HAVE_GEOS
-    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA;
 #else
     int nStatus = 0;
 
