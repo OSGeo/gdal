@@ -389,8 +389,8 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
     }
     delete poPolyNonCoveredBySources;
     return nStatus;
-#endif
 }
+#endif  // HAVE_GEOS
 
 /************************************************************************/
 /*                             IReadBlock()                             */
