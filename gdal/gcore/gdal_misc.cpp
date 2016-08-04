@@ -759,6 +759,13 @@ GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
 /*                     GDALGetRandomRasterSample()                      */
 /************************************************************************/
 
+
+/** Undocumented 
+ * @param hBand undocumented.
+ * @param nSamples undocumented.
+ * @param pafSampleBuf undocumented.
+ * @return undocumented
+ */
 int CPL_STDCALL
 GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                            float *pafSampleBuf )
@@ -929,6 +936,16 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 /*                            GDALInitGCPs()                            */
 /************************************************************************/
 
+/** Initialize an array of GCPs.
+ * 
+ * Numeric values are initialized to 0 and strings to the empty string ""
+ * allocated with CPLStrdup()
+ * An array initialized with GDALInitGCPs() must be de-initialized with
+ * GDALDeinitGCPs().
+ * 
+ * @param nCount number of GCPs in psGCP
+ * @param psGCP array of GCPs of size nCount.
+ */
 void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP *psGCP )
 
 {
@@ -950,6 +967,11 @@ void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP *psGCP )
 /*                           GDALDeinitGCPs()                           */
 /************************************************************************/
 
+/** De-initialize an array of GCPs (initialized with GDALInitGCPs())
+ * 
+ * @param nCount number of GCPs in psGCP
+ * @param psGCP array of GCPs of size nCount.
+ */
 void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP *psGCP )
 
 {
@@ -970,8 +992,14 @@ void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP *psGCP )
 /*                         GDALDuplicateGCPs()                          */
 /************************************************************************/
 
-GDAL_GCP * CPL_STDCALL
-GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
+/** Duplicate an array of GCPs
+ * 
+ * The return must be freed with GDALDeinitGCPs() followed by CPLFree()
+ * 
+ * @param nCount number of GCPs in psGCP
+ * @param pasGCPList array of GCPs of size nCount.
+ */
+GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 {
     GDAL_GCP *pasReturn = static_cast<GDAL_GCP *>(
@@ -1072,6 +1100,15 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 /************************************************************************/
 
 
+/** Helper function for translator implementer wanting support for OZI .map
+ *
+ * @param pszFilename filename of .tab file
+ * @param padfGeoTransform output geotransform. Must hold 6 doubles.
+ * @param ppszWKT output pointer to a string that will be allocated with CPLMalloc().
+ * @param pnGCPCount output pointer to GCP count.
+ * @param ppasGCPs outputer pointer to an array of GCPs.
+ * @return TRUE in case of success, FALSE otherwise.
+ */
 int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -1269,6 +1306,15 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 /*                       GDALReadOziMapFile()                           */
 /************************************************************************/
 
+/** Helper function for translator implementer wanting support for OZI .map
+ *
+ * @param pszBaseFilename filename whose basename will help building the .map filename.
+ * @param padfGeoTransform output geotransform. Must hold 6 doubles.
+ * @param ppszWKT output pointer to a string that will be allocated with CPLMalloc().
+ * @param pnGCPCount output pointer to GCP count.
+ * @param ppasGCPs outputer pointer to an array of GCPs.
+ * @return TRUE in case of success, FALSE otherwise.
+ */
 int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -1303,11 +1349,18 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 /************************************************************************/
 /*                         GDALLoadTabFile()                            */
 /*                                                                      */
-/*      Helper function for translator implementer wanting              */
-/*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
 
-
+/** Helper function for translator implementer wanting support for MapInfo
+ * .tab files.
+ *
+ * @param pszFilename filename of .tab
+ * @param padfGeoTransform output geotransform. Must hold 6 doubles.
+ * @param ppszWKT output pointer to a string that will be allocated with CPLMalloc().
+ * @param pnGCPCount output pointer to GCP count.
+ * @param ppasGCPs outputer pointer to an array of GCPs.
+ * @return TRUE in case of success, FALSE otherwise.
+ */
 int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -1450,11 +1503,19 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 
 /************************************************************************/
 /*                         GDALReadTabFile()                            */
-/*                                                                      */
-/*      Helper function for translator implementer wanting              */
-/*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
 
+
+/** Helper function for translator implementer wanting support for MapInfo
+ * .tab files.
+ *
+ * @param pszBaseFilename filename whose basename will help building the .tab filename.
+ * @param padfGeoTransform output geotransform. Must hold 6 doubles.
+ * @param ppszWKT output pointer to a string that will be allocated with CPLMalloc().
+ * @param pnGCPCount output pointer to GCP count.
+ * @param ppasGCPs outputer pointer to an array of GCPs.
+ * @return TRUE in case of success, FALSE otherwise.
+ */
 int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -2019,11 +2080,10 @@ int CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 /************************************************************************/
 /*                            GDALDecToDMS()                            */
-/*                                                                      */
-/*      Translate a decimal degrees value to a DMS string with          */
-/*      hemisphere.                                                     */
 /************************************************************************/
 
+/** Translate a decimal degrees value to a DMS string with hemisphere.
+ */
 const char * CPL_STDCALL GDALDecToDMS( double dfAngle, const char * pszAxis,
                           int nPrecision )
 
@@ -2939,12 +2999,16 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
 
 /************************************************************************/
 /*                         GDALExtractRPCInfo()                         */
-/*                                                                      */
-/*      Extract RPC info from metadata, and apply to an RPCInfo         */
-/*      structure.  The inverse of this function is RPCInfoToMD() in    */
-/*      alg/gdal_rpc.cpp (should it be needed).                         */
 /************************************************************************/
 
+/** Extract RPC info from metadata, and apply to an RPCInfo structure.
+ *
+ * The inverse of this function is RPCInfoToMD() in alg/gdal_rpc.cpp
+ * 
+ * @param papszMD Dictionary of metadata representing RPC
+ * @param psRPC (output) Pointer to structure to hold the RPC values.
+ * @return TRUE in case of success. FALSE in case of failure.
+ */
 int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 
 {

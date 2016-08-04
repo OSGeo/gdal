@@ -3325,6 +3325,15 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 
+/** Undocumented 
+ * @param hSrcBand undocumented.
+ * @param nSampleStep undocumented.
+ * @param pdfMean undocumented.
+ * @param pdfStdDev undocumented.
+ * @param pfnProgress undocumented.
+ * @param pProgressData undocumented.
+ * @return undocumented
+ */
 CPLErr CPL_STDCALL
 GDALComputeBandStats( GDALRasterBandH hSrcBand,
                       int nSampleStep,
@@ -3454,6 +3463,15 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /*      the given band to match the base layer approximately.           */
 /************************************************************************/
 
+
+/** Undocumented 
+ * @param hBaseBand undocumented.
+ * @param nOverviewCount undocumented.
+ * @param pahOverviews undocumented.
+ * @param pfnProgress undocumented.
+ * @param pProgressData undocumented.
+ * @return undocumented
+ */
 CPLErr
 GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                  int nOverviewCount,

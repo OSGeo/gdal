@@ -223,6 +223,7 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce )
         return GetExtentInternal(iGeomField, psExtent, bForce);
 }
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce )
 
 {
@@ -296,6 +297,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
 
     return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
 }
+//! @endcond
 
 /************************************************************************/
 /*                          OGR_L_GetExtent()                           */
@@ -410,6 +412,7 @@ static int ContainGeomSpecialField(swq_expr_node* expr,
 /*                AttributeFilterEvaluationNeedsGeometry()              */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 {
     if( !m_poAttrQuery )
@@ -420,6 +423,7 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
 }
+//! @endcond
 
 /************************************************************************/
 /*                      OGR_L_SetAttributeFilter()                      */
@@ -1259,6 +1263,7 @@ void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
 /*      way from the current one.                                       */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
 {
@@ -1334,6 +1339,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
     return TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           FilterGeometry()                           */
@@ -1343,6 +1349,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 /*      envelope.                                                       */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
 
 {
@@ -1454,6 +1461,7 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
             return TRUE;
     }
 }
+//! @endcond
 
 /************************************************************************/
 /*                         OGR_L_ResetReading()                         */
@@ -1480,6 +1488,7 @@ void OGR_L_ResetReading( OGRLayerH hLayer )
 /*      datasources can do it too if that is more appropriate.          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
 
 {
@@ -1499,6 +1508,7 @@ OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             SyncToDisk()                             */
@@ -1557,11 +1567,13 @@ OGRErr OGR_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID )
 /*                          GetFeaturesRead()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GIntBig OGRLayer::GetFeaturesRead()
 
 {
     return m_nFeaturesRead;
 }
+//! @endcond
 
 /************************************************************************/
 /*                       OGR_L_GetFeaturesRead()                        */

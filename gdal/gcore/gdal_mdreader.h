@@ -156,11 +156,13 @@ protected:
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
                                          const char *pszValue);
 protected:
+//! @cond Doxygen_Suppress
     char **m_papszIMDMD;
     char **m_papszRPCMD;
     char **m_papszIMAGERYMD;
     char **m_papszDEFAULTMD;
     bool m_bIsMetadataLoad;
+//! @endcond
 };
 
 /**
@@ -187,7 +189,9 @@ public:
                                         char **papszSiblingFiles,
                                         GUInt32 nType = MDR_ANY);
 protected:
+//! @cond Doxygen_Suppress
     GDALMDReaderBase *m_pReader;
+//! @endcond
 };
 
 // misc

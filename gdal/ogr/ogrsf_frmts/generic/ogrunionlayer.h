@@ -30,6 +30,8 @@
 #ifndef OGRUNIONLAYER_H_INCLUDED
 #define OGRUNIONLAYER_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
@@ -149,5 +151,7 @@ class OGRUnionLayer : public OGRLayer
 
     virtual OGRErr      SyncToDisk();
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif // OGRUNIONLAYER_H_INCLUDED

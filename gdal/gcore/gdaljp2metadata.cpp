@@ -41,6 +41,8 @@
 #include "ogr_spatialref.h"
 #include <set>
 
+/*! @cond Doxygen_Suppress */
+
 CPL_CVSID("$Id$");
 
 static const unsigned char msi_uuid2[16] = {
@@ -3179,3 +3181,5 @@ int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)
 {
     return memcmp(abyUUID, xmp_uuid, 16) == 0;
 }
+
+/*! @endcond */

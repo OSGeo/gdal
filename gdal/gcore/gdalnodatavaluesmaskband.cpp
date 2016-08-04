@@ -33,6 +33,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                   GDALNoDataValuesMaskBand()                         */
 /************************************************************************/
@@ -318,3 +319,4 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 
     return CE_None;
 }
+//! @endcond

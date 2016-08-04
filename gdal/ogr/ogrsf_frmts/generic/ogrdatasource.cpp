@@ -46,11 +46,13 @@ OGRDataSource::OGRDataSource()
 /*                         DestroyDataSource()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRDataSource::DestroyDataSource( OGRDataSource *poDS )
 
 {
     delete poDS;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           OGR_DS_Destroy()                           */

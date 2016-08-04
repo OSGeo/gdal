@@ -446,6 +446,21 @@ OGRGeometry *OGRFeature::StealGeometry()
         return NULL;
 }
 
+/**
+ * \brief Take away ownership of geometry.
+ *
+ * Fetch the geometry from this feature, and clear the reference to the
+ * geometry on the feature.  This is a mechanism for the application to
+ * take over ownership of the geometry from the feature without copying.
+ * Sort of an inverse to SetGeometryDirectly().
+ *
+ * After this call the OGRFeature will have a NULL geometry.
+ * 
+ * @param iGeomField index of the geometry field.
+ *
+ * @return the pointer to the geometry.
+ */
+
 OGRGeometry *OGRFeature::StealGeometry(int iGeomField)
 
 {
@@ -1386,6 +1401,20 @@ OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::GetFieldAsInteger( const char* pszFName )
+ * \brief Fetch field value as integer.
+ *
+ * OFTString features will be translated using atoi().  OFTReal fields
+ * will be cast to integer. OFTInteger64 are demoted to 32 bit, with
+ * clamping if out-of-range. Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+
+/**
  * \brief Fetch field value as integer.
  *
  * OFTString features will be translated using atoi().  OFTReal fields
@@ -1503,6 +1532,20 @@ int OGR_F_GetFieldAsInteger( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::GetFieldAsInteger64( const char* pszFName )
+ * \brief Fetch field value as integer 64 bit.
+ *
+ * OFTInteger are promoted to 64 bit.
+ * OFTString features will be translated using CPLAtoGIntBig().  OFTReal fields
+ * will be cast to integer.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+
+/**
  * \brief Fetch field value as integer 64 bit.
  *
  * OFTInteger are promoted to 64 bit.
@@ -1600,6 +1643,19 @@ GIntBig OGR_F_GetFieldAsInteger64( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 /*                          GetFieldAsDouble()                          */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::GetFieldAsDouble( const char* pszFName )
+ * \brief Fetch field value as a double.
+ *
+ * OFTString features will be translated using CPLAtof().  OFTInteger and OFTInteger64 fields
+ * will be cast to double.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
 
 /**
  * \brief Fetch field value as a double.
@@ -1747,6 +1803,20 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
 /************************************************************************/
 /*                          GetFieldAsString()                          */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::GetFieldAsString( const char* pszFName )
+ * \brief Fetch field value as a string.
+ * 
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ */
 
 /**
  * \brief Fetch field value as a string.
@@ -2123,6 +2193,23 @@ const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::GetFieldAsIntegerList( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of integers.
+ * 
+ * Currently this method only works for OFTIntegerList fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of integers) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ */
+
+/**
  * \brief Fetch field value as a list of integers.
  *
  * Currently this method only works for OFTIntegerList fields.
@@ -2192,6 +2279,20 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                      GetFieldAsInteger64List()                       */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsInteger64List( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of 64 bit integers.
+ * 
+ * Currently this method only works for OFTInteger64List fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of integers) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ * @since GDAL 2.0
+ */
 
 /**
  * \brief Fetch field value as a list of 64 bit integers.
@@ -2265,6 +2366,19 @@ const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                        GetFieldAsDoubleList()                        */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsDoubleList( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of doubles.
+ *
+ * Currently this method only works for OFTRealList fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of doubles) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ */
 
 /**
  * \brief Fetch field value as a list of doubles.
@@ -2336,6 +2450,20 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                        GetFieldAsStringList()                        */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsStringList( const char* pszFName )
+ * \brief Fetch field value as a list of strings.
+ *
+ * Currently this method only works for OFTStringList fields.
+ *
+ * The returned list is terminated by a NULL pointer. The number of
+ * elements can also be calculated using CSLCount().
+ * 
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ */
 
 /**
  * \brief Fetch field value as a list of strings.
@@ -2545,6 +2673,25 @@ int OGRFeature::GetFieldAsDateTime( int iField,
     }
 }
 
+/**
+ * \brief Fetch field value as date and time.
+ *
+ * Currently this method only works for OFTDate, OFTTime and OFTDateTime fields.
+ *
+ * This method is the same as the C function OGR_F_GetFieldAsDateTime().
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnYear (including century)
+ * @param pnMonth (1-12)
+ * @param pnDay (1-31)
+ * @param pnHour (0-23)
+ * @param pnMinute (0-59)
+ * @param pnSecond (0-59)
+ * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
 int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnYear, int *pnMonth, int *pnDay,
                                     int *pnHour, int *pnMinute, int *pnSecond,
@@ -2679,6 +2826,18 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nValue )
+ * \brief Set field to integer value.
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nValue the value to assign.
+ */
+
+/**
  * \brief Set field to integer value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
@@ -2790,6 +2949,18 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, GIntBig nValue )
+ * \brief Set field to 64 bit integer value.
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nValue the value to assign.
+ */
 
 /**
  * \brief Set field to 64 bit integer value.
@@ -2923,6 +3094,19 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, double dfValue )
+ * \brief Set field to double value.
+ *
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param dfValue the value to assign.
+ */
+
+/**
  * \brief Set field to double value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
@@ -3038,6 +3222,19 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, const char * pszValue )
+ * \brief Set field to string value.
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
+ * OFTReal fields will be set based on an CPLAtof() conversion of the string.
+ * Other field types may be unaffected.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param pszValue the value to assign.
+ */
 
 /**
  * \brief Set field to string value.
@@ -3244,6 +3441,18 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, int *panValues )
+ * \brief Set field to list of integers value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List
+ * and OFTRealList fields.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param panValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -3368,6 +3577,18 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const GIntBig *panValues )
+ * \brief Set field to list of 64 bit integers value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List
+ * and OFTRealList fields.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param panValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of 64 bit integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -3483,6 +3704,18 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, double * padfValues )
+ * \brief Set field to list of doubles value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
+ * OFTRealList fields.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param padfValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of doubles value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
@@ -3583,6 +3816,16 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName,  char ** papszValues )
+ * \brief Set field to list of strings value.
+ *
+ * This method currently on has an effect of OFTStringList fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param papszValues the values to assign.
+ */
 
 /**
  * \brief Set field to list of strings value.
@@ -3700,6 +3943,17 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nBytes, GByte *pabyData )
+ * \brief Set field to binary data.
+ *
+ * This method currently on has an effect of OFTBinary fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nBytes bytes of data being set.
+ * @param pabyData the raw data being applied.
+ */
+
+/**
  * \brief Set field to binary data.
  *
  * This method currently on has an effect of OFTBinary fields.
@@ -3771,6 +4025,25 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, int nYear, int nMonth, int nDay,
+ *                          int nHour, int nMinute, float fSecond,
+ *                          int nTZFlag )
+ * \brief Set field to date.
+ *
+ * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
+ * fields.
+ * 
+ * @param pszFName the name of the field to set.
+ * @param nYear (including century)
+ * @param nMonth (1-12)
+ * @param nDay (1-31)
+ * @param nHour (0-23)
+ * @param nMinute (0-59)
+ * @param fSecond (0-59, with millisecond accuracy)
+ * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
 
 /**
  * \brief Set field to date.
@@ -3910,6 +4183,18 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, OGRField * puValue )
+ * \brief Set field.
+ *
+ * The passed value OGRField must be of exactly the same type as the
+ * target field, or an application crash may occur.  The passed value
+ * is copied, and will not be affected.  It remains the responsibility of
+ * the caller.
+ * @param pszFName the name of the field to set.
+ * @param puValue the value to assign.
+ */
 
 /**
  * \brief Set field.
@@ -5146,6 +5431,10 @@ void OGR_F_SetStyleStringDirectly( OGRFeatureH hFeat, char *pszStyle )
 //************************************************************************/
 /*                           SetStyleTable()                            */
 /************************************************************************/
+
+/** Set style table.
+ * @param poStyleTable new style table (will be cloned)
+ */
 void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 {
     if ( m_poStyleTable )
@@ -5157,6 +5446,9 @@ void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 /*                          SetStyleTableDirectly()                      */
 /************************************************************************/
 
+/** Set style table.
+ * @param poStyleTable new style table (ownership transferred to the object)
+ */
 void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 {
     if ( m_poStyleTable )

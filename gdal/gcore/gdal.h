@@ -158,7 +158,9 @@ typedef struct
     double                 dfYSize;
 } GDALRasterIOExtraArg;
 
+#ifndef DOXYGEN_SKIP
 #define RASTERIO_EXTRA_ARG_CURRENT_VERSION  1
+#endif
 
 /** Macro to initialize an instance of GDALRasterIOExtraArg structure.
   * @since GDAL 2.0
@@ -209,8 +211,14 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 /* "well known" metadata items. */
 
+/** Metadata item for dataset that indicates the spatial interpreation of a
+ *  pixel */
 #define GDALMD_AREA_OR_POINT   "AREA_OR_POINT"
+/** Value for GDALMD_AREA_OR_POINT that indicates that a pixel represents an
+ * area */
 #  define GDALMD_AOP_AREA      "Area"
+/** Value for GDALMD_AREA_OR_POINT that indicates that a pixel represents a
+ * point */
 #  define GDALMD_AOP_POINT     "Point"
 
 /* -------------------------------------------------------------------- */
@@ -218,7 +226,9 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /*                                                                      */
 /*      error codes 100 to 299 reserved for GDAL.                       */
 /* -------------------------------------------------------------------- */
+#ifndef DOXYGEN_SKIP
 #define CPLE_WrongFormat        (CPLErrorNum)200
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
@@ -450,8 +460,14 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  */
 #define     GDAL_OF_HASHSET_BLOCK_ACCESS  0x200
 
+#ifndef DOXYGEN_SKIP
+/* Reserved for a potential future alternative to GDAL_OF_ARRAY_BLOCK_ACCESS
+ * and GDAL_OF_HASHSET_BLOCK_ACCESS */
 #define     GDAL_OF_RESERVED_1            0x300
+
+/** Mask to detect the block access method */
 #define     GDAL_OF_BLOCK_ACCESS_MASK     0x300
+#endif
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
                                              unsigned int nOpenFlags,
@@ -468,7 +484,9 @@ void        CPL_DLL CPL_STDCALL GDALDestroyDriver( GDALDriverH );
 int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDestroyDriverManager( void );
+#ifndef DOXYGEN_SKIP
 void        CPL_DLL             GDALDestroy( void );
+#endif
 CPLErr      CPL_DLL CPL_STDCALL GDALDeleteDataset( GDALDriverH, const char * );
 CPLErr      CPL_DLL CPL_STDCALL GDALRenameDataset( GDALDriverH,
                                                    const char * pszNewName,
@@ -549,6 +567,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
+/** Name of driver metadata item for layer creation option list */
 #define GDAL_DS_LAYER_CREATIONOPTIONLIST "DS_LAYER_CREATIONOPTIONLIST"
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
@@ -686,6 +705,8 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
       (eSrcType == GDT_CFloat64 ? \
           ((double *)papoSource)[ii * 2] : 0)))))))))))
 
+/** Type of functions to pass to GDALAddDerivedBandPixelFunc.
+ * @since GDAL 2.2 */
 typedef CPLErr
 (*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
                         int nBufXSize, int nBufYSize,
@@ -817,9 +838,16 @@ int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
 CPLErr CPL_DLL CPL_STDCALL
                        GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags );
 
+/** Flag returned by GDALGetMaskFlags() to indicate that all pixels are valid */
 #define GMF_ALL_VALID     0x01
+/** Flag returned by GDALGetMaskFlags() to indicate that the mask band is
+ * valid for all bands */
 #define GMF_PER_DATASET   0x02
+/** Flag returned by GDALGetMaskFlags() to indicate that the mask band is
+ * an alpha band */
 #define GMF_ALPHA         0x04
+/** Flag returned by GDALGetMaskFlags() to indicate that the mask band is
+ * computed from nodata values */
 #define GMF_NODATA        0x08
 
 /** Flag returned by GDALGetDataCoverageStatus() when the driver does not
@@ -869,8 +897,10 @@ void CPL_DLL CPL_STDCALL GDALSwapWordsEx( void *pData, int nWordSize, size_t nWo
                                   int nWordSkip );
 
 void CPL_DLL CPL_STDCALL
-    GDALCopyWords( const void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
-                   void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
+    GDALCopyWords( const void * CPL_RESTRICT pSrcData,
+                   GDALDataType eSrcType, int nSrcPixelOffset,
+                   void * CPL_RESTRICT pDstData,
+                   GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
 void CPL_DLL
@@ -899,7 +929,9 @@ double CPL_DLL CPL_STDCALL GDALDecToPackedDMS( double );
 /* Note to developers : please keep this section in sync with ogr_core.h */
 
 #ifndef GDAL_VERSION_INFO_DEFINED
+#ifndef DOXYGEN_SKIP
 #define GDAL_VERSION_INFO_DEFINED
+#endif
 const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
 #endif
 
@@ -916,28 +948,30 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
+/** Strucutre to store Rational Polynomial Coefficients / Rigorous Projection
+ * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct {
-    double      dfLINE_OFF;
-    double      dfSAMP_OFF;
-    double      dfLAT_OFF;
-    double      dfLONG_OFF;
-    double      dfHEIGHT_OFF;
+    /*! Line offset */         double      dfLINE_OFF;
+    /*! Sample/Pixel offset */ double      dfSAMP_OFF;
+    /*! Latitude offset */     double      dfLAT_OFF;
+    /*! Longitude offset */    double      dfLONG_OFF;
+    /*! Height offset */       double      dfHEIGHT_OFF;
 
-    double      dfLINE_SCALE;
-    double      dfSAMP_SCALE;
-    double      dfLAT_SCALE;
-    double      dfLONG_SCALE;
-    double      dfHEIGHT_SCALE;
+     /*! Line scale */         double      dfLINE_SCALE;
+    /*! Sample/Pixel scale */  double      dfSAMP_SCALE;
+    /*! Latitude scale */      double      dfLAT_SCALE;
+    /*! Longitude scale */     double      dfLONG_SCALE;
+    /*! Height scale */        double      dfHEIGHT_SCALE;
 
-    double      adfLINE_NUM_COEFF[20];
-    double      adfLINE_DEN_COEFF[20];
-    double      adfSAMP_NUM_COEFF[20];
-    double      adfSAMP_DEN_COEFF[20];
+     /*! Line Numerator Coefficients */          double  adfLINE_NUM_COEFF[20];
+    /*! Line Denominator Coefficients */         double  adfLINE_DEN_COEFF[20];
+    /*! Sample/Pixel Numerator Coefficients */   double  adfSAMP_NUM_COEFF[20];
+    /*! Sample/Pixel Denominator Coefficients */ double  adfSAMP_DEN_COEFF[20];
 
-    double      dfMIN_LONG;
-    double      dfMIN_LAT;
-    double      dfMAX_LONG;
-    double      dfMAX_LAT;
+    /*! Minimum longitude */   double      dfMIN_LONG;
+    /*! Minimum latitude */    double      dfMIN_LAT;
+    /*! Maximum longitude */   double      dfMAX_LONG;
+    /*! Maximum latitude */    double      dfMAX_LAT;
 
 } GDALRPCInfo;
 
@@ -1126,6 +1160,7 @@ CPLVirtualMem CPL_DLL* GDALGetVirtualMemAuto( GDALRasterBandH hBand,
                                               GIntBig *pnLineSpace,
                                               char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
+/**! Enumeration to describe the tile organization */
 typedef enum
 {
     /*! Tile Interleaved by Pixel: tile (0,0) with internal band interleaved by pixel organization, tile (1, 0), ...  */

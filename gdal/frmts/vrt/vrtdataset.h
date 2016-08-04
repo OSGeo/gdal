@@ -31,6 +31,8 @@
 #ifndef VIRTUALDATASET_H_INCLUDED
 #define VIRTUALDATASET_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_hash_set.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
@@ -1057,5 +1059,7 @@ public:
 
     float               fNoDataValue;
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef VIRTUALDATASET_H_INCLUDED */

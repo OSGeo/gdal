@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrwarpedlayer.h"
 
 CPL_CVSID("$Id$");
@@ -569,3 +571,5 @@ void OGRWarpedLayer::SetExtent( double dfXMin, double dfYMin,
     sStaticEnvelope.MaxX = dfXMax;
     sStaticEnvelope.MaxY = dfYMax;
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

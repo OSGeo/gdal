@@ -31,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALRescaledAlphaBand()                       */
 /************************************************************************/
@@ -142,3 +143,4 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                                       eBufType,
                                       nPixelSpace, nLineSpace, psExtraArg );
 }
+//! @endcond

@@ -21,6 +21,8 @@
 #ifndef SWQ_H_INCLUDED_
 #define SWQ_H_INCLUDED_
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_core.h"
@@ -385,5 +387,7 @@ const char *swq_select_summarize( swq_select *select_info,
 int swq_is_reserved_keyword(const char* pszStr);
 
 char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey);
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* def SWQ_H_INCLUDED_ */

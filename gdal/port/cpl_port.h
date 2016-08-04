@@ -102,11 +102,13 @@
 /*      faster than iconv() for encodings it supports.                  */
 /* ==================================================================== */
 
+/*! @cond Doxygen_Suppress */
 #if defined(HAVE_ICONV)
 #  define CPL_RECODE_ICONV
 #endif
 
 #define CPL_RECODE_STUB
+/*! @endcond */
 
 /* ==================================================================== */
 /*      MinGW stuff                                                     */
@@ -184,17 +186,25 @@
 typedef long            GInt32;
 typedef unsigned long   GUInt32;
 #else
+/** Int32 type */
 typedef int             GInt32;
+/** Unsigned int32 type */
 typedef unsigned int    GUInt32;
 #endif
 
+/** Int16 type */
 typedef short           GInt16;
+/** Unsigned int16 type */
 typedef unsigned short  GUInt16;
+/** Unsigned byte type */
 typedef unsigned char   GByte;
 /* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
 /* in include/poppler/goo/gtypes.h */
 #ifndef CPL_GBOOL_DEFINED
+/*! @cond Doxygen_Suppress */
 #define CPL_GBOOL_DEFINED
+/*! @endcond */
+/** Type for boolean values (alias to int) */
 typedef int             GBool;
 #endif
 
@@ -208,17 +218,25 @@ typedef int             GBool;
 typedef __int64          GIntBig;
 typedef unsigned __int64 GUIntBig;
 
+/** Minimum GIntBig value */
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
+/** Maximum GIntBig value */
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+/** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 #elif HAVE_LONG_LONG
 
+/** 64-bit integer type */
 typedef long long        GIntBig;
+/** 64-bit unsigned integer type */
 typedef unsigned long long GUIntBig;
 
+/** Minimum GIntBig value */
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
+/** Maximum GIntBig value */
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+/** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 #else
@@ -232,40 +250,51 @@ typedef unsigned long    GUIntBig;
 #endif
 
 #if SIZEOF_VOIDP == 8
+/** Integer type large enough to hold the difference between 2 addresses */
 typedef GIntBig          GPtrDiff_t;
 #else
+/** Integer type large enough to hold the difference between 2 addresses */
 typedef int              GPtrDiff_t;
 #endif
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "I64"
 #elif HAVE_LONG_LONG
+/** Printf formatting suffix for GIntBig */
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "ll"
 #else
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "l"
 #endif
 
+/** Printf formatting for GIntBig */
 #define CPL_FRMT_GIB     "%" CPL_FRMT_GB_WITHOUT_PREFIX "d"
+/** Printf formatting for GUIntBig */
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
+/*! @cond Doxygen_Suppress */
 /* Workaround VC6 bug */
 #if defined(_MSC_VER) && (_MSC_VER <= 1200)
 #define GUINTBIG_TO_DOUBLE(x) (double)(GIntBig)(x)
 #else
 #define GUINTBIG_TO_DOUBLE(x) (double)(x)
 #endif
+/*! @endcond */
 
+/*! @cond Doxygen_Suppress */
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
 #define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
 #else
 #define CPL_INT64_FITS_ON_INT32(x) (((GIntBig)(int)(x)) == (x))
 #endif
+/*! @endcond */
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
 /* ==================================================================== */
 #ifdef __cplusplus
+/** Macro to start a block of C symbols */
 #  define CPL_C_START           extern "C" {
+/** Macro to end a block of C symbols */
 #  define CPL_C_END             }
 #else
 #  define CPL_C_START
@@ -284,12 +313,14 @@ typedef int              GPtrDiff_t;
 #endif
 #endif
 
+/*! @cond Doxygen_Suppress */
 /* Should optional (normally private) interfaces be exported? */
 #ifdef CPL_OPTIONAL_APIS
 #  define CPL_ODLL CPL_DLL
 #else
 #  define CPL_ODLL
 #endif
+/*! @endcond */
 
 #ifndef CPL_STDCALL
 #if defined(_MSC_VER) && !defined(CPL_DISABLE_STDCALL)
@@ -299,12 +330,15 @@ typedef int              GPtrDiff_t;
 #endif
 #endif
 
+/*! @cond Doxygen_Suppress */
 #ifdef _MSC_VER
 #  define FORCE_CDECL  __cdecl
 #else
 #  define FORCE_CDECL
 #endif
+/*! @endcond */
 
+/*! @cond Doxygen_Suppress */
 /* TODO : support for other compilers needed */
 #if (defined(__GNUC__) && !defined(__NO_INLINE__)) || defined(_MSC_VER)
 #define HAS_CPL_INLINE  1
@@ -315,7 +349,9 @@ typedef int              GPtrDiff_t;
 #else
 #define CPL_INLINE
 #endif
+/*! @endcond*/
 
+/*! @cond Doxygen_Suppress */
 // Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
 // to detect misuses of NULL
 #if defined(NULL_AS_NULLPTR) && HAVE_CXX11
@@ -359,18 +395,22 @@ extern "C++" {
 #  define NULL  0
 #endif
 #endif /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
-
+/*! @endcond */
 
 #ifndef MAX
+/** Macro to compute the minimum of 2 values */
 #  define MIN(a,b)      (((a)<(b)) ? (a) : (b))
+/** Macro to compute the maximum of 2 values */
 #  define MAX(a,b)      (((a)>(b)) ? (a) : (b))
 #endif
 
 #ifndef ABS
+/** Macro to compute the absolute value */
 #  define ABS(x)        (((x)<0) ? (-1*(x)) : (x))
 #endif
 
 #ifndef M_PI
+/** PI definition */
 # define M_PI		3.14159265358979323846
 /* 3.1415926535897932384626433832795 */
 #endif
@@ -380,9 +420,11 @@ extern "C++" {
 /*      We use fabs() function instead of ABS() macro to avoid side     */
 /*      effects.                                                        */
 /* -------------------------------------------------------------------- */
+/*! @cond Doxygen_Suppress */
 #ifndef CPLIsEqual
 #  define CPLIsEqual(x,y) (fabs((x) - (y)) < 0.0000000000001)
 #endif
+/*! @endcond */
 
 /* -------------------------------------------------------------------- */
 /*      Provide macros for case insensitive string comparisons.         */
@@ -513,10 +555,14 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #    define STRCASECMP(a,b)         (stricmp(a,b))
 #    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
 #  else
+/** Alias for strcasecmp() */
 #    define STRCASECMP(a,b)         (strcasecmp(a,b))
+/** Alias for strncasecmp() */
 #    define STRNCASECMP(a,b,n)      (strncasecmp(a,b,n))
 #  endif
+/** Alias for strncasecmp() == 0 */
 #  define EQUALN(a,b,n)           (STRNCASECMP(a,b,n)==0)
+/** Alias for strcasecmp() == 0 */
 #  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
 #endif
 
@@ -525,13 +571,17 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
  * with CI, it is a case-insensitive comparison.
  *--------------------------------------------------------------------- */
 #ifndef STARTS_WITH_CI
+/** Returns whether a starts with b */
 #define STARTS_WITH(a,b)               (strncmp(a,b,strlen(b)) == 0)
+/** Returns whether a starts with b (case insensitive comparison) */
 #define STARTS_WITH_CI(a,b)            EQUALN(a,b,strlen(b))
 #endif
 
+/*! @cond Doxygen_Suppress */
 #ifndef CPL_THREADLOCAL
 #  define CPL_THREADLOCAL
 #endif
+/*! @endcond */
 
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
@@ -591,6 +641,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 
 #ifdef __cplusplus
 
+/*! @cond Doxygen_Suppress */
 extern "C++" {
 
 template <bool b> struct CPLStaticAssert {};
@@ -600,6 +651,7 @@ template<> struct CPLStaticAssert<true>
 };
 
 } /* extern "C++" */
+/*! @endcond */
 
 #define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
 #define CPL_STATIC_ASSERT_IF_AVAILABLE(x) CPL_STATIC_ASSERT(x)
@@ -906,6 +958,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #  define CPL_FALLTHROUGH
 #endif
 
+/*! @cond Doxygen_Suppress */
 // Define DEBUG_BOOL to compile in "MSVC mode", ie error out when
 // a integer is assigned to a bool
 // WARNING: use only at compilation time, since it is know to not work
@@ -987,5 +1040,6 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #define VOLATILE_BOOL volatile bool
 
 #endif /* defined(__cplusplus) && defined(DEBUG_BOOL) */
+/*! @endcond */
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

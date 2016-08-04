@@ -31,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 /* ******************************************************************** */
 /*                        GDALProxyDataset                              */
 /* ******************************************************************** */
@@ -404,3 +405,5 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
 void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
     GDALRasterBand* /* poUnderlyingRasterBand */ )
 {}
+
+/*! @endcond */

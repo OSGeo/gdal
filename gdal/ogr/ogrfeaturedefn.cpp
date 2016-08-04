@@ -1334,6 +1334,10 @@ void OGR_FD_SetStyleIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /*                         CreateFeatureDefn()                          */
 /************************************************************************/
 
+/** Create a new feature definition object.
+ * @param pszName name
+ * @return new feature definition object.
+ */
 OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 
 {
@@ -1344,6 +1348,9 @@ OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 /*                         DestroyFeatureDefn()                         */
 /************************************************************************/
 
+/** Destroy a feature definition.
+ * @param poDefn feature definition.
+ */
 void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
 
 {

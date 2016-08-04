@@ -35,6 +35,8 @@
 #include "cpl_time.h"
 #include <vector>
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 
@@ -2274,3 +2276,5 @@ void OGRGenSQLResultsLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGe
     else
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
 }
+
+//! @endcond

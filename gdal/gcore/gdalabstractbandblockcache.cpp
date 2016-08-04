@@ -30,6 +30,8 @@
 #include "cpl_multiproc.h"
 #include <new>
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 #ifdef DEBUG_VERBOSE_ABBC
@@ -187,3 +189,4 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
             poBand, nXBlockOff, nYBlockOff );
     return poBlock;
 }
+//! @endcond

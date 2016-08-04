@@ -163,6 +163,7 @@ void GDALPamDataset::FlushCache()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 
 {
@@ -972,6 +973,7 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 
     return CE_None;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -1026,6 +1028,7 @@ char **GDALPamDataset::GetFileList()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                         int nOverviews, int *panOverviewList,
                                         int nListBands, int *panBandList,
@@ -1062,7 +1065,7 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                          nListBands, panBandList,
                                          pfnProgress, pProgressData );
 }
-
+//! @endcond
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -1320,6 +1323,7 @@ char **GDALPamDataset::GetMetadata( const char *pszDomain )
 /*                             TryLoadAux()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
 {
@@ -1478,3 +1482,4 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
     return CE_Failure;
 }
+//! @endcond

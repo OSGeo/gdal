@@ -758,6 +758,7 @@ static int GDALRasterIOTransformer( void *pTransformerArg,
 /*                          RasterIOResampled()                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALRasterBand::RasterIOResampled(
     GDALRWFlag /* eRWFlag */,
     int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1670,6 +1671,7 @@ CPLErr GDALDataset::RasterIOResampled(
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           GDALSwapWords()                            */
@@ -2795,6 +2797,7 @@ int GDALBandGetBestOverviewLevel2( GDALRasterBand* poBand,
 /*      available but it doesn't emit any error messages.               */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
@@ -3366,6 +3369,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                  GDALCopyWholeRasterGetSwathSize()                   */

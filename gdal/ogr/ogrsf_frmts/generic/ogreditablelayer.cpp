@@ -31,6 +31,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                  ~IOGREditableLayerSynchronizer()                    */
 /************************************************************************/
@@ -813,3 +815,5 @@ const char *OGREditableLayer::GetGeometryColumn()
 {
     return OGRLayer::GetGeometryColumn();
 }
+
+//! @endcond

@@ -29,6 +29,8 @@
 #ifndef CPL_SHA256_INCLUDED_H
 #define CPL_SHA256_INCLUDED_H
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_port.h"
 
 #define CPL_SHA256_HASH_SIZE 32     /* 256 bit */
@@ -64,5 +66,7 @@ void CPL_DLL CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
                              GByte abyDigest[CPL_SHA256_HASH_SIZE]);
 
 CPL_C_END
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif  /* CPL_SHA256_INCLUDED_H */

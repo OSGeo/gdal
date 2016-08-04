@@ -41,6 +41,7 @@
  * @since GDAL 2.1
  */
 
+#ifndef DOXYGEN_SKIP
 class CPLWorkerThreadPool;
 
 typedef struct
@@ -68,6 +69,7 @@ typedef enum
     CPLWTS_STOP,
     CPLWTS_ERROR
 } CPLWorkerThreadState;
+#endif
 
 class CPL_DLL CPLWorkerThreadPool
 {
@@ -97,6 +99,7 @@ class CPL_DLL CPLWorkerThreadPool
         bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
 
+        /** Return the number of threads setup */
         int GetThreadCount() const { return (int)aWT.size(); }
 };
 

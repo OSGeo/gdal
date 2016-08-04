@@ -36,6 +36,7 @@ CPL_CVSID("$Id$");
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor */
 OGRLinearRing::OGRLinearRing()
 
 {
@@ -72,6 +73,9 @@ OGRLinearRing::~OGRLinearRing()
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor
+ * @param poSrcRing source ring.
+ */
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
@@ -531,6 +535,8 @@ int OGRLinearRing::isClockwise() const
 /*                             reverseWindingOrder()                    */
 /************************************************************************/
 
+/** Reverse order of points.
+ */
 void OGRLinearRing::reverseWindingOrder()
 
 {
@@ -571,6 +577,12 @@ void OGRLinearRing::closeRings()
 /*                              isPointInRing()                         */
 /************************************************************************/
 
+/** Returns whether the point is inside the ring.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
@@ -639,6 +651,12 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
 /*                       isPointOnRingBoundary()                        */
 /************************************************************************/
 
+/** Returns whether the point is on the ring boundary.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )

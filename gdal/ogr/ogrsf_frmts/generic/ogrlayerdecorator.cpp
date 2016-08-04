@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrlayerdecorator.h"
 
 CPL_CVSID("$Id$");
@@ -293,3 +295,5 @@ CPLErr      OGRLayerDecorator::SetMetadataItem( const char * pszName,
     if( !m_poDecoratedLayer ) return CE_Failure;
     return m_poDecoratedLayer->SetMetadataItem(pszName, pszValue, pszDomain);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

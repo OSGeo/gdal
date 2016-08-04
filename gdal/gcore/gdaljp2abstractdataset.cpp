@@ -33,6 +33,8 @@
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
 /************************************************************************/
@@ -651,3 +653,5 @@ OGRLayer* GDALJP2AbstractDataset::GetLayer( int i )
 {
     return poMemDS != NULL ? poMemDS->GetLayer(i) : NULL;
 }
+
+/*! @endcond */

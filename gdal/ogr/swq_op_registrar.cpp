@@ -33,6 +33,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 static swq_field_type SWQColumnFuncChecker(
     swq_expr_node *poNode, int bAllowMismatchTypeOnFieldComparison );
 
@@ -123,3 +124,4 @@ static swq_field_type SWQColumnFuncChecker(
               poOp != NULL ? poOp->pszName : "" );
     return SWQ_ERROR;
 }
+//! @endcond

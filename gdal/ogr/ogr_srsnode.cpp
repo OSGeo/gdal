@@ -67,6 +67,8 @@ OGR_SRSNode::~OGR_SRSNode()
 /*                           ClearChildren()                            */
 /************************************************************************/
 
+/** Clear children nodes
+ */
 void OGR_SRSNode::ClearChildren()
 
 {
@@ -115,6 +117,16 @@ OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
 
     return papoChildNodes[iChild];
 }
+
+/**
+ * Fetch requested child.
+ *
+ * @param iChild the index of the child to fetch, from 0 to
+ * GetChildCount() - 1.
+ *
+ * @return a pointer to the child OGR_SRSNode, or NULL if there is no such
+ * child.
+ */
 
 const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
 
@@ -175,6 +187,23 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 
     return NULL;
 }
+
+/**
+ * Find named node in tree.
+ *
+ * This method does a pre-order traversal of the node tree searching for
+ * a node with this exact value (case insensitive), and returns it.  Leaf
+ * nodes are not considered, under the assumption that they are just
+ * attribute value nodes.
+ *
+ * If a node appears more than once in the tree (such as UNIT for instance),
+ * the first encountered will be returned.  Use GetNode() on a subtree to be
+ * more specific.
+ *
+ * @param pszName the name of the node to search for.
+ *
+ * @return a pointer to the node found, or NULL if none.
+ */
 
 const OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName ) const
 
@@ -465,6 +494,20 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /************************************************************************/
 /*                         exportToPrettyWkt()                          */
 /************************************************************************/
+
+/**
+ * Convert this tree of nodes into pretty WKT format.
+ *
+ * Note that the returned WKT string should be freed with OGRFree() or
+ * CPLFree() when no longer needed.  It is the responsibility of the caller.
+ *
+ * @param ppszResult the resulting string is returned in this pointer.
+ * 
+ * @param nDepth depth of the node
+ *
+ * @return currently OGRERR_NONE is always returned, but the future it
+ * is possible error conditions will develop.
+ */
 
 OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 

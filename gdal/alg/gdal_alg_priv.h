@@ -32,6 +32,8 @@
 #ifndef GDAL_ALG_PRIV_H_INCLUDED
 #define GDAL_ALG_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "gdal_alg.h"
 
 CPL_C_START
@@ -205,5 +207,7 @@ struct FloatEqualityTest
 {
     bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */

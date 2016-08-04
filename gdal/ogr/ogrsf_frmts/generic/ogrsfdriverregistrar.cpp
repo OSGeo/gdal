@@ -56,6 +56,7 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 {
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetRegistrar()                             */
 /************************************************************************/
@@ -410,3 +411,4 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
     return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
+//! @endcond

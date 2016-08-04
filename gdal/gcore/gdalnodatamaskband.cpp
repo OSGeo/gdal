@@ -32,6 +32,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALNoDataMaskBand()                          */
 /************************************************************************/
@@ -274,3 +275,4 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
                                       eBufType,
                                       nPixelSpace, nLineSpace, psExtraArg );
 }
+//! @endcond

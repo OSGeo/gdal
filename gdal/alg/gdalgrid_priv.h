@@ -27,8 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GDALGRID_PRIV_H
+#define GDALGRID_PRIV_H
+
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
+
+//! @cond Doxygen_Suppress
 
 typedef struct
 {
@@ -104,3 +109,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
        : "0" (level))
 #endif
 #endif
+
+//! @endcond
+
+#endif // GDALGRID_PRIV_H

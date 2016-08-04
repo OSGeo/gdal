@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                            ~OGRSFDriver()                            */
 /************************************************************************/
@@ -230,3 +232,5 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
 
     return (OGRDataSourceH)poODS;
 }
+
+//! @endcond

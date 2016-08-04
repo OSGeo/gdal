@@ -1248,6 +1248,7 @@ OGRStyleTable *OGRStyleTable::Clone()
 /*                            ResetStyleStringReading()                 */
 /************************************************************************/
 
+/** Reset the next style pointer to 0 */
 void OGRStyleTable::ResetStyleStringReading()
 
 {
@@ -1278,6 +1279,12 @@ void OGR_STBL_ResetStyleStringReading( OGRStyleTableH hStyleTable )
 /************************************************************************/
 /*                           GetNextStyle()                             */
 /************************************************************************/
+
+/**
+ * \brief Get the next style string from the table.
+ *
+ * @return the next style string or NULL on error.
+ */
 
 const char *OGRStyleTable::GetNextStyle()
 {
@@ -1331,6 +1338,13 @@ const char *OGR_STBL_GetNextStyle( OGRStyleTableH hStyleTable)
 /*                           GetLastStyleName()                         */
 /************************************************************************/
 
+/**
+ * Get the style name of the last style string fetched with
+ * OGR_STBL_GetNextStyle.
+ *
+ * @return the Name of the last style string or NULL on error.
+ */
+
 const char *OGRStyleTable::GetLastStyleName()
 {
     return osLastRequestedStyleName;
@@ -1363,6 +1377,8 @@ const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 /*                          OGRStyleTool::OGRStyleTool()                    */
 /*                                                                          */
 /****************************************************************************/
+
+/** Constructor */
 OGRStyleTool::OGRStyleTool(OGRSTClassId eClassId)
 {
     m_eClassId = eClassId;
@@ -1435,6 +1451,10 @@ void OGR_ST_Destroy( OGRStyleToolH hST )
 /*      void OGRStyleTool::SetStyleString(const char *pszStyleString)       */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param pszStyleString undocumented.
+ */
 void OGRStyleTool::SetStyleString(const char *pszStyleString)
 {
     m_pszStyleString = CPLStrdup(pszStyleString);
@@ -1445,6 +1465,14 @@ void OGRStyleTool::SetStyleString(const char *pszStyleString)
 /*                          OGRStyleValue *pasStyleValue, int nSize)        */
 /*                                                                          */
 /****************************************************************************/
+
+
+/** Undocumented
+ * @param pasStyleParam undocumented.
+ * @param pasStyleValue undocumented.
+ * @param nSize undocumented.
+ * @return undocumented.
+ */
 const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
                                          OGRStyleValue *pasStyleValue,
                                          int nSize)
@@ -1541,7 +1569,21 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
 /************************************************************************/
 /*                          GetRGBFromString()                          */
 /************************************************************************/
-
+/**
+ * \brief Return the r,g,b,a components of a color encoded in \#RRGGBB[AA] format
+ *
+ * Maps to OGRStyleTool::GetRGBFromString().
+ *
+ * @param pszColor the color to parse
+ * @param nRed reference to an int in which the red value will be returned
+ * @param nGreen reference to an int in which the green value will be returned
+ * @param nBlue reference to an int in which the blue value will be returned
+ * @param nTransparance reference to an int in which the (optional) alpha value will
+ * be returned
+ *
+ * @return TRUE if the color could be successfully parsed, or FALSE in case of
+ * errors.
+ */
 GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
                                      int &nGreen ,int & nBlue,
                                      int &nTransparance)
@@ -1569,6 +1611,11 @@ GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
 /*      sensitive)                                                      */
 /************************************************************************/
 
+/** Undocumented
+ * @param pszId Undocumented
+ * @param pszWanted Undocumented
+ * @return Undocumented
+ */
 int OGRStyleTool::GetSpecificId(const char *pszId, const char *pszWanted)
 {
     const char *pszRealWanted = pszWanted;
@@ -1597,6 +1644,14 @@ int OGRStyleTool::GetSpecificId(const char *pszId, const char *pszWanted)
 /************************************************************************/
 /*                              GetType()                               */
 /************************************************************************/
+
+/**
+ * \brief Determine type of Style Tool
+ *
+ * @return the style tool type, one of OGRSTCPen (1), OGRSTCBrush (2),
+ * OGRSTCSymbol (3) or OGRSTCLabel (4). Returns OGRSTCNone (0) if the
+ * OGRStyleToolH is invalid.
+ */
 OGRSTClassId OGRStyleTool::GetType()
 {
     return m_eClassId;
@@ -1626,6 +1681,15 @@ OGRSTClassId OGR_ST_GetType( OGRStyleToolH hST )
 /************************************************************************/
 /*                           OGR_ST_GetUnit()                           */
 /************************************************************************/
+
+/**
+ * \fn OGRStyleTool::GetUnit()
+ * \brief Get Style Tool units
+ *
+ * @return the style tool units.
+ */
+
+
 /**
  * \brief Get Style Tool units
  *
@@ -1645,10 +1709,18 @@ OGRSTUnitId OGR_ST_GetUnit( OGRStyleToolH hST )
 /************************************************************************/
 /*                              SetUnit()                               */
 /************************************************************************/
-void OGRStyleTool::SetUnit(OGRSTUnitId eUnit,double dfScale)
+
+/**
+ * \brief Set Style Tool units
+ *
+ * @param eUnit the new unit.
+ * @param dfGroundPaperScale ground to paper scale factor.
+ *
+ */
+void OGRStyleTool::SetUnit(OGRSTUnitId eUnit,double dfGroundPaperScale)
 {
-    m_dfScale = dfScale;
     m_eUnit = eUnit;
+    m_dfScale = dfGroundPaperScale;
 }
 
 /************************************************************************/
@@ -1980,6 +2052,13 @@ int   OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)
 /************************************************************************/
 /*                            GetParamStr()                             */
 /************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param bValueIsNull undocumented.
+ * @return Undocumented.
+ */
 const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam ,
                                       OGRStyleValue &sStyleValue,
                                       GBool &bValueIsNull)
@@ -2029,6 +2108,13 @@ const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam ,
 /*                               GBool &bValueIsNull)                       */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param bValueIsNull undocumented.
+ * @return Undocumented.
+ */
 int OGRStyleTool::GetParamNum(const OGRStyleParamId &sStyleParam ,
                               OGRStyleValue &sStyleValue,
                               GBool &bValueIsNull)
@@ -2042,6 +2128,13 @@ int OGRStyleTool::GetParamNum(const OGRStyleParamId &sStyleParam ,
 /*                               GBool &bValueIsNull)                       */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param bValueIsNull undocumented.
+ * @return Undocumented.
+ */
 double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam ,
                                  OGRStyleValue &sStyleValue,
                                  GBool &bValueIsNull)
@@ -2092,6 +2185,13 @@ double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam ,
 /*                             const char *pszParamString)                  */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param pszParamString undocumented.
+ * @return Undocumented.
+ */
 void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                const char *pszParamString)
@@ -2125,6 +2225,13 @@ void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
 /*                             int nParam)                                  */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param nParam undocumented.
+ * @return Undocumented.
+ */
 void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                int nParam)
@@ -2159,6 +2266,13 @@ void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
 /*                             double dfParam)                              */
 /*                                                                          */
 /****************************************************************************/
+
+/** Undocumented
+ * @param sStyleParam undocumented.
+ * @param sStyleValue undocumented.
+ * @param dfParam undocumented.
+ * @return Undocumented.
+ */
 void OGRStyleTool::SetParamDbl(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                double dfParam)
@@ -2478,6 +2592,17 @@ void OGR_ST_SetParamDbl( OGRStyleToolH hST, int eParam, double dfValue )
 /************************************************************************/
 /*                           OGR_ST_GetStyleString()                    */
 /************************************************************************/
+
+/**
+ * \fn OGRStyleTool::GetStyleString()
+ * \brief Get the style string for this Style Tool
+ *
+ * Maps to the OGRStyleTool subclasses' GetStyleString() methods.
+ *
+ * @return the style string for this style tool or "" if the hST is invalid.
+ */
+
+
 /**
  * \brief Get the style string for this Style Tool
  *

@@ -44,6 +44,7 @@
  * Simple container for a bounding region.
  */
 
+/*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 class CPL_DLL OGREnvelope
 {
@@ -279,46 +280,51 @@ typedef struct
     double      MaxZ;
 } OGREnvelope3D;
 #endif
-
+/*! @endcond */
 
 CPL_C_START
 
+/*! @cond Doxygen_Suppress */
 void CPL_DLL *OGRMalloc( size_t );
 void CPL_DLL *OGRCalloc( size_t, size_t );
 void CPL_DLL *OGRRealloc( void *, size_t );
 char CPL_DLL *OGRStrdup( const char * );
 void CPL_DLL OGRFree( void * );
+/*! @endcond */
 
 #ifdef STRICT_OGRERR_TYPE
+/** Type for a OGR error */
 typedef enum
 {
-    OGRERR_NONE,
-    OGRERR_NOT_ENOUGH_DATA,
-    OGRERR_NOT_ENOUGH_MEMORY,
-    OGRERR_UNSUPPORTED_GEOMETRY_TYPE,
-    OGRERR_UNSUPPORTED_OPERATION,
-    OGRERR_CORRUPT_DATA,
-    OGRERR_FAILURE,
-    OGRERR_UNSUPPORTED_SRS,
-    OGRERR_INVALID_HANDLE,
-    OGRERR_NON_EXISTING_FEATURE
+    OGRERR_NONE,                       /**< Success */
+    OGRERR_NOT_ENOUGH_DATA,            /**< Not enough data to deserialize */
+    OGRERR_NOT_ENOUGH_MEMORY,          /**< Not enough memory */
+    OGRERR_UNSUPPORTED_GEOMETRY_TYPE,  /**< Unsupported geometry type */
+    OGRERR_UNSUPPORTED_OPERATION,      /**< Unsupported operation */
+    OGRERR_CORRUPT_DATA,               /**< Corrupt data */
+    OGRERR_FAILURE,                    /**< Failure */
+    OGRERR_UNSUPPORTED_SRS,            /**< Unsupported SRS */
+    OGRERR_INVALID_HANDLE,             /**< Invalid handle */
+    OGRERR_NON_EXISTING_FEATURE        /**< Non existing feature. Added in GDAL 2.0 */
 } OGRErr;
 #else
+/** Type for a OGR error */
 typedef int OGRErr;
 
-#define OGRERR_NONE                0
-#define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
-#define OGRERR_NOT_ENOUGH_MEMORY   2
-#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
-#define OGRERR_UNSUPPORTED_OPERATION 4
-#define OGRERR_CORRUPT_DATA        5
-#define OGRERR_FAILURE             6
-#define OGRERR_UNSUPPORTED_SRS     7
-#define OGRERR_INVALID_HANDLE      8
-#define OGRERR_NON_EXISTING_FEATURE 9   /* added in GDAL 2.0 */
+#define OGRERR_NONE                0       /**< Success */
+#define OGRERR_NOT_ENOUGH_DATA     1       /**< Not enough data to deserialize */
+#define OGRERR_NOT_ENOUGH_MEMORY   2       /**< Not enough memory */
+#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3 /**< Unsupported geometry type */
+#define OGRERR_UNSUPPORTED_OPERATION 4     /**< Unsupported operation */
+#define OGRERR_CORRUPT_DATA        5       /**< Corrupt data */
+#define OGRERR_FAILURE             6       /**< Failure */
+#define OGRERR_UNSUPPORTED_SRS     7       /**< Unsupported SRS */
+#define OGRERR_INVALID_HANDLE      8       /**< Invalid handle */
+#define OGRERR_NON_EXISTING_FEATURE 9      /**< Non existing feature. Added in GDAL 2.0 */
 
 #endif
 
+/** Type for a OGR boolean */
 typedef int     OGRBoolean;
 
 /* -------------------------------------------------------------------- */
@@ -444,8 +450,8 @@ typedef enum
 } OGRwkbVariant;
 
 
-/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbSetZ() instead */
 #ifndef GDAL_COMPILATION
+/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbSetZ() instead */
 #define wkb25DBit 0x80000000
 #endif
 
@@ -472,7 +478,9 @@ typedef enum
   */
 #define wkbSetM(x)     OGR_GT_SetM(x)
 
+#ifndef DOXYGEN_SKIP
 #define ogrZMarker 0x21125711
+#endif
 
 const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGRMergeGeometryTypes( OGRwkbGeometryType eMain,
@@ -495,11 +503,14 @@ OGRwkbGeometryType CPL_DLL OGR_GT_GetCollection( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetCurve( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 
+/** Enumeration to describe byte order */
 typedef enum
 {
-    wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
-    wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
+    wkbXDR = 0,         /**< MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbNDR = 1          /**< LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
+
+#ifndef DOXYGEN_SKIP
 
 #ifndef NO_HACK_FOR_IBM_DB2_V72
 #  define HACK_FOR_IBM_DB2_V72
@@ -512,6 +523,8 @@ typedef enum
 #  define DB2_V72_FIX_BYTE_ORDER(x) (x)
 #  define DB2_V72_UNFIX_BYTE_ORDER(x) (x)
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 /** Alter field name.
  * Used by OGR_L_AlterFieldDefn().
@@ -648,7 +661,9 @@ typedef enum
     OJRight = 2
 } OGRJustification;
 
+/** Special value for a unset FID */
 #define OGRNullFID            -1
+/** Special value for OGRField.Set.nMarker1 and nMarker2 */
 #define OGRUnsetMarker        -21121
 
 /************************************************************************/
@@ -660,6 +675,7 @@ typedef enum
  */
 
 typedef union {
+/*! @cond Doxygen_Suppress */
     int         Integer;
     GIntBig     Integer64;
     double      Real;
@@ -706,8 +722,10 @@ typedef union {
         GByte   Reserved; /* must be set to 0 */
         float   Second; /* with millisecond accuracy. at the end of the structure, so as to keep it 12 bytes on 32 bit */
     } Date;
+/*! @endcond */
 } OGRField;
 
+/** Return the number of milliseconds from a datetime with decimal seconds */
 #define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
 
 int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
@@ -716,35 +734,35 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 /* -------------------------------------------------------------------- */
 /*      Constants from ogrsf_frmts.h for capabilities.                  */
 /* -------------------------------------------------------------------- */
-#define OLCRandomRead          "RandomRead"
-#define OLCSequentialWrite     "SequentialWrite"
-#define OLCRandomWrite         "RandomWrite"
-#define OLCFastSpatialFilter   "FastSpatialFilter"
-#define OLCFastFeatureCount    "FastFeatureCount"
-#define OLCFastGetExtent       "FastGetExtent"
-#define OLCCreateField         "CreateField"
-#define OLCDeleteField         "DeleteField"
-#define OLCReorderFields       "ReorderFields"
-#define OLCAlterFieldDefn      "AlterFieldDefn"
-#define OLCTransactions        "Transactions"
-#define OLCDeleteFeature       "DeleteFeature"
-#define OLCFastSetNextByIndex  "FastSetNextByIndex"
-#define OLCStringsAsUTF8       "StringsAsUTF8"
-#define OLCIgnoreFields        "IgnoreFields"
-#define OLCCreateGeomField     "CreateGeomField"
-#define OLCCurveGeometries     "CurveGeometries"
-#define OLCMeasuredGeometries  "MeasuredGeometries"
+#define OLCRandomRead          "RandomRead"         /**< Layer capability for random read */
+#define OLCSequentialWrite     "SequentialWrite"    /**< Layer capability for sequential write */
+#define OLCRandomWrite         "RandomWrite"        /**< Layer capability for random write */
+#define OLCFastSpatialFilter   "FastSpatialFilter"  /**< Layer capability for fast spatial filter */
+#define OLCFastFeatureCount    "FastFeatureCount"   /**< Layer capability for fast feature count retrieval */
+#define OLCFastGetExtent       "FastGetExtent"      /**< Layer capability for fast extent retrieval */
+#define OLCCreateField         "CreateField"        /**< Layer capability for field creation */
+#define OLCDeleteField         "DeleteField"        /**< Layer capability for field deletion */
+#define OLCReorderFields       "ReorderFields"      /**< Layer capability for field reordering */
+#define OLCAlterFieldDefn      "AlterFieldDefn"     /**< Layer capability for field alteration */
+#define OLCTransactions        "Transactions"       /**< Layer capability for transactions */
+#define OLCDeleteFeature       "DeleteFeature"      /**< Layer capability for feature deletion */
+#define OLCFastSetNextByIndex  "FastSetNextByIndex" /**< Layer capability for setting next feature index */
+#define OLCStringsAsUTF8       "StringsAsUTF8"      /**< Layer capability for strings returned with UTF-8 encoding */
+#define OLCIgnoreFields        "IgnoreFields"       /**< Layer capability for field ignoring */
+#define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
+#define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
+#define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
 
-#define ODsCCreateLayer        "CreateLayer"
-#define ODsCDeleteLayer        "DeleteLayer"
-#define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer"
-#define ODsCCurveGeometries    "CurveGeometries"
-#define ODsCTransactions       "Transactions"
-#define ODsCEmulatedTransactions "EmulatedTransactions"
-#define ODsCMeasuredGeometries "MeasuredGeometries"
+#define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
+#define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */
+#define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer" /**< Dataset capability for geometry field creation support */
+#define ODsCCurveGeometries    "CurveGeometries"    /**< Dataset capability for curve geometries support */
+#define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
+#define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
+#define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
 
-#define ODrCCreateDataSource   "CreateDataSource"
-#define ODrCDeleteDataSource   "DeleteDataSource"
+#define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
+#define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */
 
 /* -------------------------------------------------------------------- */
 /*      Layer metadata items.                                           */
@@ -765,12 +783,12 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 
 typedef enum ogr_style_tool_class_id
 {
-    OGRSTCNone   = 0,
-    OGRSTCPen    = 1,
-    OGRSTCBrush  = 2,
-    OGRSTCSymbol = 3,
-    OGRSTCLabel  = 4,
-    OGRSTCVector = 5
+    OGRSTCNone   = 0, /**< None */
+    OGRSTCPen    = 1, /**< Pen */
+    OGRSTCBrush  = 2, /**< Brush */
+    OGRSTCSymbol = 3, /**< Symbol */
+    OGRSTCLabel  = 4, /**< Label */
+    OGRSTCVector = 5  /**< Vector */
 } OGRSTClassId;
 
 /**
@@ -778,12 +796,12 @@ typedef enum ogr_style_tool_class_id
  */
 typedef enum ogr_style_tool_units_id
 {
-    OGRSTUGround = 0,
-    OGRSTUPixel  = 1,
-    OGRSTUPoints = 2,
-    OGRSTUMM     = 3,
-    OGRSTUCM     = 4,
-    OGRSTUInches = 5
+    OGRSTUGround = 0, /**< Ground unit */
+    OGRSTUPixel  = 1, /**< Pixel */
+    OGRSTUPoints = 2, /**< Points */
+    OGRSTUMM     = 3, /**< Millimeter */
+    OGRSTUCM     = 4, /**< Centimeter */
+    OGRSTUInches = 5  /**< Inch */
 } OGRSTUnitId;
 
 /**
@@ -791,16 +809,17 @@ typedef enum ogr_style_tool_units_id
  */
 typedef enum ogr_style_tool_param_pen_id
 {
-    OGRSTPenColor       = 0,
-    OGRSTPenWidth       = 1,
-    OGRSTPenPattern     = 2,
-    OGRSTPenId          = 3,
-    OGRSTPenPerOffset   = 4,
-    OGRSTPenCap         = 5,
-    OGRSTPenJoin        = 6,
-    OGRSTPenPriority    = 7,
+    OGRSTPenColor       = 0, /**< Color */
+    OGRSTPenWidth       = 1, /**< Width */
+    OGRSTPenPattern     = 2, /**< Pattern */
+    OGRSTPenId          = 3, /**< Id */
+    OGRSTPenPerOffset   = 4, /**< Perpendicular offset */
+    OGRSTPenCap         = 5, /**< Cap */
+    OGRSTPenJoin        = 6, /**< Join */
+    OGRSTPenPriority    = 7, /**< Priority */
+#ifndef DOXYGEN_SKIP
     OGRSTPenLast        = 8
-
+#endif
 } OGRSTPenParam;
 
 /**
@@ -808,15 +827,17 @@ typedef enum ogr_style_tool_param_pen_id
  */
 typedef enum ogr_style_tool_param_brush_id
 {
-    OGRSTBrushFColor    = 0,
-    OGRSTBrushBColor    = 1,
-    OGRSTBrushId        = 2,
-    OGRSTBrushAngle     = 3,
-    OGRSTBrushSize      = 4,
-    OGRSTBrushDx        = 5,
-    OGRSTBrushDy        = 6,
-    OGRSTBrushPriority  = 7,
+    OGRSTBrushFColor    = 0, /**< Foreground color */
+    OGRSTBrushBColor    = 1, /**< Backgorund color */
+    OGRSTBrushId        = 2, /**< Id */
+    OGRSTBrushAngle     = 3, /**< Angle */
+    OGRSTBrushSize      = 4, /**< Size */
+    OGRSTBrushDx        = 5, /**< Dx */
+    OGRSTBrushDy        = 6, /**< Dy */
+    OGRSTBrushPriority  = 7, /**< Priority */
+#ifndef DOXYGEN_SKIP
     OGRSTBrushLast      = 8
+#endif
 
 } OGRSTBrushParam;
 
@@ -826,20 +847,21 @@ typedef enum ogr_style_tool_param_brush_id
  */
 typedef enum ogr_style_tool_param_symbol_id
 {
-    OGRSTSymbolId       = 0,
-    OGRSTSymbolAngle    = 1,
-    OGRSTSymbolColor    = 2,
-    OGRSTSymbolSize     = 3,
-    OGRSTSymbolDx       = 4,
-    OGRSTSymbolDy       = 5,
-    OGRSTSymbolStep     = 6,
-    OGRSTSymbolPerp     = 7,
-    OGRSTSymbolOffset   = 8,
-    OGRSTSymbolPriority = 9,
-    OGRSTSymbolFontName = 10,
-    OGRSTSymbolOColor   = 11,
+    OGRSTSymbolId       = 0, /**< Id */
+    OGRSTSymbolAngle    = 1, /**< Angle */
+    OGRSTSymbolColor    = 2, /**< Color */
+    OGRSTSymbolSize     = 3, /**< Size */
+    OGRSTSymbolDx       = 4, /**< Dx */
+    OGRSTSymbolDy       = 5, /**< Dy */
+    OGRSTSymbolStep     = 6, /**< Step */
+    OGRSTSymbolPerp     = 7, /**< Perpendicular */
+    OGRSTSymbolOffset   = 8, /**< Offset */
+    OGRSTSymbolPriority = 9, /**< Priority */
+    OGRSTSymbolFontName = 10, /**< Font name */
+    OGRSTSymbolOColor   = 11, /**< Outline color */
+#ifndef DOXYGEN_SKIP
     OGRSTSymbolLast     = 12
-
+#endif
 } OGRSTSymbolParam;
 
 /**
@@ -847,34 +869,37 @@ typedef enum ogr_style_tool_param_symbol_id
  */
 typedef enum ogr_style_tool_param_label_id
 {
-    OGRSTLabelFontName  = 0,
-    OGRSTLabelSize      = 1,
-    OGRSTLabelTextString = 2,
-    OGRSTLabelAngle     = 3,
-    OGRSTLabelFColor    = 4,
-    OGRSTLabelBColor    = 5,
-    OGRSTLabelPlacement = 6,
-    OGRSTLabelAnchor    = 7,
-    OGRSTLabelDx        = 8,
-    OGRSTLabelDy        = 9,
-    OGRSTLabelPerp      = 10,
-    OGRSTLabelBold      = 11,
-    OGRSTLabelItalic    = 12,
-    OGRSTLabelUnderline = 13,
-    OGRSTLabelPriority  = 14,
-    OGRSTLabelStrikeout = 15,
-    OGRSTLabelStretch   = 16,
-    OGRSTLabelAdjHor    = 17,
-    OGRSTLabelAdjVert   = 18,
-    OGRSTLabelHColor    = 19,
-    OGRSTLabelOColor    = 20,
+    OGRSTLabelFontName  = 0, /**< Font name */
+    OGRSTLabelSize      = 1, /**< Size */
+    OGRSTLabelTextString = 2, /**< Text string */
+    OGRSTLabelAngle     = 3, /**< Angle */
+    OGRSTLabelFColor    = 4, /**< Foreground color */
+    OGRSTLabelBColor    = 5, /**< Background color */
+    OGRSTLabelPlacement = 6, /**< Placement */
+    OGRSTLabelAnchor    = 7, /**< Anchor */
+    OGRSTLabelDx        = 8, /**< Dx */
+    OGRSTLabelDy        = 9, /**< Dy */
+    OGRSTLabelPerp      = 10, /**< Perpendicular */
+    OGRSTLabelBold      = 11, /**< Bold */
+    OGRSTLabelItalic    = 12, /**< Italic */
+    OGRSTLabelUnderline = 13, /**< Underline */
+    OGRSTLabelPriority  = 14, /**< Priority */
+    OGRSTLabelStrikeout = 15, /**< Strike out */
+    OGRSTLabelStretch   = 16, /**< Stretch */
+    OGRSTLabelAdjHor    = 17, /**< Horizontal adjustment */
+    OGRSTLabelAdjVert   = 18, /**< Vectical adjustment */
+    OGRSTLabelHColor    = 19, /**< Highlight color */
+    OGRSTLabelOColor    = 20, /**< Outline color */
+#ifndef DOXYGEN_SKIP
     OGRSTLabelLast      = 21
-
+#endif
 } OGRSTLabelParam;
 
 /* ------------------------------------------------------------------- */
 /*                        Version checking                             */
 /* -------------------------------------------------------------------- */
+
+#ifndef DOXYGEN_SKIP
 
 /* Note to developers : please keep this section in sync with gdal.h */
 
@@ -904,6 +929,8 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
  GDALCheckVersion(GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR, pszCallingComponentName)
 
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 CPL_C_END
 
