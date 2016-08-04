@@ -386,26 +386,26 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     if( pszPassword == NULL )
         pszPassword = "";
 
-    int bFailed = FALSE;
+    bool bFailed = false;
     if( strstr(pszDSN,"=") != NULL )
     {
         SQLCHAR szOutConnString[1024];
         SQLSMALLINT nOutConnStringLen = 0;
 
         CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
-        bFailed = Failed(
+        bFailed = CPL_TO_BOOL(Failed(
             SQLDriverConnect( m_hDBC, NULL,
                               (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
                               szOutConnString, sizeof(szOutConnString),
-                              &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
+                              &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ));
     }
     else
     {
         CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
-        bFailed = Failed(
+        bFailed = CPL_TO_BOOL(Failed(
             SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS,
                         (SQLCHAR *) pszUserid, SQL_NTS,
-                        (SQLCHAR *) pszPassword, SQL_NTS ) );
+                        (SQLCHAR *) pszPassword, SQL_NTS ) ));
     }
 
     if( bFailed )
