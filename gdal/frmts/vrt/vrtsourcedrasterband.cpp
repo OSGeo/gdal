@@ -277,6 +277,20 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                         IGetDataCoverageStatus()                     */
 /************************************************************************/
 
+#ifndef HAVE_GEOS
+int  VRTSourcedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
+                                                   int /* nYOff */,
+                                                   int /* nXSize */,
+                                                   int /* nYSize */,
+                                                   int /* nMaskFlagStop */,
+                                                   double* pdfDataPct)
+{
+    // TODO(rouault): Should this set pdfDataPct?
+    if( pdfDataPct != NULL )
+        *pdfDataPct = -1.0;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA;
+}
+#else
 int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
                                                    int nYOff,
                                                    int nXSize,
@@ -286,9 +300,6 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
 {
     if( pdfDataPct != NULL )
         *pdfDataPct = -1.0;
-#ifndef HAVE_GEOS
-    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA;
-#else
     int nStatus = 0;
 
     OGRPolygon* poPolyNonCoveredBySources = new OGRPolygon();
