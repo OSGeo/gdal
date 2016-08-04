@@ -118,21 +118,10 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDSIn, int nBandIn) :
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                                      void* pImage)
 {
   SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
-
-  CPLAssert(nBlockXOff == 0);
-  if(nBlockXOff != 0)
-  {
-      CPLError(CE_Failure, CPLE_NotSupported,
-               "unhandled nBlockXOff value : %d", nBlockXOff);
-      return CE_Failure;
-  }
-
-  if((poGDS == NULL) || (poGDS->fpImage == NULL))
-    return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
@@ -150,18 +139,11 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff, void* pImage)
 {
     SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
 
-    CPLAssert(nBlockXOff == 0);
-    if(nBlockXOff != 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "unhandled nBlockXOff value : %d", nBlockXOff);
-        return CE_Failure;
-    }
-
-    if((poGDS == NULL) || (poGDS->fpImage == NULL) || (poGDS->eAccess != GA_Update))
+    if( poGDS->eAccess != GA_Update )
         return CE_Failure;
 
     VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
@@ -304,6 +286,17 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       return NULL;
 
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+      CPLString osFilename ("/vsizip/");
+      osFilename += poOpenInfo->pszFilename;
+      osFilename += "/";
+      osFilename += CPLString(fileName).substr(0, 7);
+      osFilename += ".hgt";
+      GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
+      return Open(&oOpenInfo);
+  }
 
   char latLonValueString[4];
   memset(latLonValueString, 0, 4);
@@ -332,34 +325,11 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
   
-  CPLString osFilename(poOpenInfo->pszFilename);
-  if( !STARTS_WITH(fileName, "/vsizip/") &&
-      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
-  {
-      osFilename = "/vsizip/";
-      osFilename += poOpenInfo->pszFilename;
-      osFilename += "/";
-      osFilename += CPLString(fileName).substr(0, 7);
-      osFilename += ".hgt";
-  }
-
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file api.                         */
-/* -------------------------------------------------------------------- */
-  poDS->fpImage = VSIFOpenL(
-      osFilename,
-      (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb" );
-  if(poDS->fpImage == NULL)
-  {
-      CPLError( CE_Failure, CPLE_OpenFailed,
-                "VSIFOpenL(%s) failed unexpectedly in srtmhgtdataset.cpp",
-                osFilename.c_str() );
-      delete poDS;
-      return NULL;
-  }
-
+  poDS->fpImage = poOpenInfo->fpL;
+  poOpenInfo->fpL = NULL;
+  
   VSIStatBufL fileStat;
-  if(VSIStatL(osFilename, &fileStat) != 0)
+  if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
   {
       delete poDS;
       return NULL;
@@ -384,9 +354,9 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 
   poDS->adfGeoTransform[0] = southWestLon - 0.5 / (numPixels - 1);
   poDS->adfGeoTransform[1] = 1.0 / (numPixels-1);
-  poDS->adfGeoTransform[2] = 0.0000000000;
+  poDS->adfGeoTransform[2] = 0.0;
   poDS->adfGeoTransform[3] = southWestLat + 1 + 0.5 / (numPixels - 1);
-  poDS->adfGeoTransform[4] = 0.0000000000;
+  poDS->adfGeoTransform[4] = 0.0;
   poDS->adfGeoTransform[5] = -1.0 / (numPixels-1);
 
   poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
@@ -418,13 +388,10 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
                                           GDALDataset *poSrcDS,
                                           int bStrict,
-                                          CPL_UNUSED char ** papszOptions,
+                                          char ** /* papszOptions*/,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {
-    if( pfnProgress && !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
