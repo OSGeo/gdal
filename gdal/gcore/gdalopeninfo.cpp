@@ -51,6 +51,11 @@ using std::vector;
 /*                            GDALOpenInfo()                            */
 /************************************************************************/
 
+/** Constructor/
+ * @param pszFilenameIn filename
+ * @param nOpenFlagsIn open flags
+ * @param papszSiblingsIn list of sibling files, or NULL.
+ */
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
                             char **papszSiblingsIn ) :
     bHasGotSiblingFiles(false),
@@ -260,6 +265,9 @@ GDALOpenInfo::~GDALOpenInfo()
 /*                         GetSiblingFiles()                            */
 /************************************************************************/
 
+/** Return sibling files.
+ * @return sibling files. Ownership below to the object.
+ */
 char** GDALOpenInfo::GetSiblingFiles()
 {
     if( bHasGotSiblingFiles )
@@ -298,6 +306,9 @@ char** GDALOpenInfo::GetSiblingFiles()
 /*      member variable is set to NULL.                                 */
 /************************************************************************/
 
+/** Return sibling files and steal reference
+ * @return sibling files. Ownership below to the caller (must be freed with CSLDestroy)
+ */
 char** GDALOpenInfo::StealSiblingFiles()
 {
     char** papszRet = GetSiblingFiles();
@@ -309,6 +320,9 @@ char** GDALOpenInfo::StealSiblingFiles()
 /*                        AreSiblingFilesLoaded()                       */
 /************************************************************************/
 
+/** Return whether sibling files have been loaded.
+ * @return true or false.
+ */
 bool GDALOpenInfo::AreSiblingFilesLoaded() const
 {
     return bHasGotSiblingFiles;
@@ -318,6 +332,10 @@ bool GDALOpenInfo::AreSiblingFilesLoaded() const
 /*                           TryToIngest()                              */
 /************************************************************************/
 
+/** Ingest bytes from the file.
+ * @param nBytes number of bytes to ingest.
+ * @return TRUE if successful
+ */
 int GDALOpenInfo::TryToIngest(int nBytes)
 {
     if( fpL == NULL )

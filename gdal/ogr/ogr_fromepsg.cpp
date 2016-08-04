@@ -2434,13 +2434,15 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 
 /************************************************************************/
 /*                           GetEPSGGeogCS()                            */
-/*                                                                      */
-/*      Try to establish what the EPSG code for this coordinate         */
-/*      systems GEOGCS might be.  Returns -1 if no reasonable guess     */
-/*      can be made.                                                    */
-/*                                                                      */
-/*      TODO: We really need to do some name lookups.                   */
 /************************************************************************/
+
+/** Try to establish what the EPSG code for this coordinate systems 
+ * GEOGCS might be.  Returns -1 if no reasonable guess can be made.
+ * 
+ * @return EPSG code
+ */
+
+// TODO: We really need to do some name lookups.
 
 int OGRSpatialReference::GetEPSGGeogCS()
 

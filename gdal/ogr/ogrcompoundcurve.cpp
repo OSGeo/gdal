@@ -461,23 +461,31 @@ OGRCurve    *OGRCompoundCurve::getCurve( int iRing )
  *
  * Relates to the ISO SQL/MM ST_CurveN() function.
  *
- * @param iRing curve index from 0 to getNumCurves() - 1.
+ * @param iCurve curve index from 0 to getNumCurves() - 1.
  *
  * @return pointer to curve.  May be NULL.
  */
 
-const OGRCurve *OGRCompoundCurve::getCurve( int iRing ) const
+const OGRCurve *OGRCompoundCurve::getCurve( int iCurve ) const
 {
-    return oCC.getCurve(iRing);
+    return oCC.getCurve(iCurve);
 }
 
 /************************************************************************/
 /*                           stealCurve()                               */
 /************************************************************************/
 
-OGRCurve* OGRCompoundCurve::stealCurve( int i )
+/**
+ * \brief "Steal" reference to curve.
+ *
+ * @param iCurve curve index from 0 to getNumCurves() - 1.
+ *
+ * @return pointer to curve.  May be NULL.
+ */
+
+OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 {
-    return oCC.stealCurve(i);
+    return oCC.stealCurve(iCurve);
 }
 
 /************************************************************************/
@@ -845,6 +853,9 @@ double OGRCompoundCurve::get_Area() const
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 
+/** Return area of curve segments
+ * @return area.
+ */
 double OGRCompoundCurve::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;

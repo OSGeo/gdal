@@ -30,6 +30,8 @@
 #ifndef GDAL_PAM_H_INCLUDED
 #define GDAL_PAM_H_INCLUDED
 
+//! @cond Doxygen_Suppress
+
 #include "gdal_priv.h"
 
 class GDALPamRasterBand;
@@ -102,11 +104,13 @@ public:
 
     int         bHasMetadata;
 };
+//! @endcond
 
 /* ******************************************************************** */
 /*                           GDALPamDataset                             */
 /* ******************************************************************** */
 
+/** PAM dataset */
 class CPL_DLL GDALPamDataset : public GDALDataset
 {
     friend class GDALPamRasterBand;
@@ -115,8 +119,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     int IsPamFilenameAPotentialSiblingFile();
 
   protected:
-                GDALPamDataset(void);
 
+                GDALPamDataset(void);
+//! @cond Doxygen_Suppress
     int         nPamFlags;
     GDALDatasetPamInfo *psPam;
 
@@ -138,6 +143,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     const char *GetPhysicalFilename();
     void   SetSubdatasetName( const char *);
     const char *GetSubdatasetName();
+//! @endcond
 
   public:
     virtual     ~GDALPamDataset();
@@ -167,6 +173,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual char      **GetFileList(void);
 
+//! @cond Doxygen_Suppress
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
     virtual CPLErr IBuildOverviews( const char *pszResampling,
@@ -175,17 +182,18 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
     GDALDatasetPamInfo *GetPamInfo() { return psPam; }
     int    GetPamFlags() { return nPamFlags; }
     void   SetPamFlags(int nValue ) { nPamFlags = nValue; }
+//! @endcond
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset);
 };
 
+//! @cond Doxygen_Suppress
 /* ==================================================================== */
 /*      GDALRasterBandPamInfo                                           */
 /*                                                                      */
@@ -223,16 +231,18 @@ typedef struct {
     GDALRasterAttributeTable *poDefaultRAT;
 
 } GDALRasterBandPamInfo;
-
+//! @endcond
 /* ******************************************************************** */
 /*                          GDALPamRasterBand                           */
 /* ******************************************************************** */
+
+/** PAM raster band */
 class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 {
     friend class GDALPamDataset;
 
   protected:
-
+//! @cond Doxygen_Suppress
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
@@ -240,10 +250,13 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     void   PamClear();
 
     GDALRasterBandPamInfo *psPam;
+//! @endcond
 
   public:
                 GDALPamRasterBand();
+//! @cond Doxygen_Suppress
                 GDALPamRasterBand(int bForceCachedIO);
+//! @endcond
     virtual     ~GDALPamRasterBand();
 
     virtual void        SetDescription( const char * );
@@ -291,16 +304,18 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
+//! @cond Doxygen_Suppress
     // new in GDALPamRasterBand.
     virtual CPLErr CloneInfo( GDALRasterBand *poSrcBand, int nCloneInfoFlags );
 
     // "semi private" methods.
     GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
-
+//! @endcond
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand);
 };
 
+//! @cond Doxygen_Suppress
 // These are mainly helper functions for internal use.
 int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem,
                                double *pdfMin, double *pdfMax,
@@ -320,5 +335,7 @@ const char CPL_DLL * PamGetProxy( const char * );
 const char CPL_DLL * PamAllocateProxy( const char * );
 const char CPL_DLL * PamDeallocateProxy( const char * );
 void CPL_DLL PamCleanProxyDB( void );
+
+//! @endcond
 
 #endif /* ndef GDAL_PAM_H_INCLUDED */

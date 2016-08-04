@@ -35,6 +35,8 @@
 #include "swq.h"
 #include "cpl_hash_set.h"
 
+/*! @cond Doxygen_Suppress */
+
 #define GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poFDefn, iGeom) \
     ((poFDefn)->GetFieldCount() + SPECIAL_FIELD_COUNT + (iGeom))
 
@@ -124,5 +126,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
 };
+
+/*! @endcond */
 
 #endif /* ndef OGR_GENSQL_H_INCLUDED */

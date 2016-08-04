@@ -117,6 +117,7 @@ typedef int
 
 #define GDAL_GTI2_SIGNATURE     "GTI2"
 
+/*! @cond Doxygen_Suppress */
 typedef struct {
     GByte abySignature[4];
     const char *pszClassName;
@@ -125,6 +126,7 @@ typedef struct {
     CPLXMLNode *(*pfnSerialize)( void * pTransformerArg );
     void* (*pfnCreateSimilar)( void* pTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
 } GDALTransformerInfo;
+/*! @endcond */
 
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
 int  CPL_DLL GDALUseTransformer( void *pTransformerArg,
@@ -289,6 +291,7 @@ CPLErr CPL_DLL GDAL_CG_FeedLine( GDALContourGeneratorH hCG,
                                  double *padfScanline );
 void CPL_DLL GDAL_CG_Destroy( GDALContourGeneratorH hCG );
 
+/*! @cond Doxygen_Suppress */
 typedef struct
 {
     void   *hLayer;
@@ -299,6 +302,7 @@ typedef struct
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
+/*! @endcond */
 
 CPLErr CPL_DLL
 OGRContourWriter( double, int, double *, double *, void *pInfo );
@@ -537,34 +541,38 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /*  Delaunay triangulation interface.                                   */
 /************************************************************************/
 
+/** Triangle fact */
 typedef struct
 {
-    int anVertexIdx[3];   /* index to the padfX/padfY arrays */
-    int anNeighborIdx[3]; /* index to GDALDelaunayTriangulation.pasFacets, or -1 */
+    int anVertexIdx[3];   /**< index to the padfX/padfY arrays */
+    int anNeighborIdx[3]; /**< index to GDALDelaunayTriangulation.pasFacets, or -1 */
                           /* anNeighborIdx[k] is the triangle to the opposite side */
                           /* of the opposite segment of anVertexIdx[k] */
 } GDALTriFacet;
 
-/* Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
-   l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
-   l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
-   l3 = 1 - l1 - l2
-*/
+/** Triangle barycentric coefficients.
+ * 
+ * Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
+ *  l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
+ *  l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
+ *  l3 = 1 - l1 - l2
+ */
 typedef struct
 {
-    double      dfMul1X;
-    double      dfMul1Y;
-    double      dfMul2X;
-    double      dfMul2Y;
-    double      dfCstX;
-    double      dfCstY;
+    double      dfMul1X; /**< dfMul1X */
+    double      dfMul1Y; /**< dfMul1Y */
+    double      dfMul2X; /**< dfMul2X */
+    double      dfMul2Y; /**< dfMul2Y */
+    double      dfCstX;  /**< dfCstX */
+    double      dfCstY;  /**< dfCstY */
 } GDALTriBarycentricCoefficients;
 
+/** Triangulation structure */
 typedef struct
 {
-    int                             nFacets;
-    GDALTriFacet                   *pasFacets;     /* nFacets elements */
-    GDALTriBarycentricCoefficients *pasFacetCoefficients; /* nFacets elements */
+    int                             nFacets;       /**< number of facets */
+    GDALTriFacet                   *pasFacets;     /**< array of nFacets facets */
+    GDALTriBarycentricCoefficients *pasFacetCoefficients; /**< arra of nFacets barycentric coefficients */
 } GDALTriangulation;
 
 int CPL_DLL GDALHasTriangulation(void);

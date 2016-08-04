@@ -30,6 +30,8 @@
 #ifndef GDAL_PROXY_H_INCLUDED
 #define GDAL_PROXY_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "gdal.h"
 
 #ifdef __cplusplus
@@ -369,7 +371,6 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
 
 #endif
 
-
 /* ******************************************************************** */
 /*            C types and methods declarations                          */
 /* ******************************************************************** */
@@ -392,5 +393,7 @@ void CPL_DLL GDALProxyPoolDatasetAddSrcBandDescription( GDALProxyPoolDatasetH hP
                                                         int nBlockXSize, int nBlockYSize);
 
 CPL_C_END
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_PROXY_H_INCLUDED */

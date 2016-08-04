@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrmutexeddatasource.h"
 #include "cpl_multiproc.h"
 
@@ -239,3 +241,5 @@ void OGRRegisterMutexedDataSource()
     delete new OGRMutexedDataSource(NULL, FALSE, NULL, FALSE);
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */

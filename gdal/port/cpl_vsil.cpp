@@ -639,6 +639,20 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, int bSe
 /************************************************************************/
 
 /**
+ * \fn VSIVirtualHandle::Close()
+ * \brief Close file.
+ *
+ * This function closes the indicated file.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fclose() function.
+ *
+ * @return 0 on success or -1 on failure.
+ */
+
+/**
  * \brief Close file.
  *
  * This function closes the indicated file.
@@ -673,6 +687,23 @@ int VSIFCloseL( VSILFILE * fp )
 /************************************************************************/
 
 /**
+ * \fn VSIVirtualHandle::Seek()
+ * \brief Seek to requested offset.
+ *
+ * Seek to the desired offset (nOffset) in the indicated file.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fseek() call.
+ *
+ * @param nOffset offset in bytes.
+ * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.
+ *
+ * @return 0 on success or -1 one failure.
+ */
+
+/**
  * \brief Seek to requested offset.
  *
  * Seek to the desired offset (nOffset) in the indicated file.
@@ -700,6 +731,21 @@ int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
 /************************************************************************/
 /*                             VSIFTellL()                              */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::Tell()
+ * \brief Tell current file offset.
+ *
+ * Returns the current file read/write offset in bytes from the beginning of
+ * the file.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX ftell() call.
+ *
+ * @return file offset in bytes.
+ */
 
 /**
  * \brief Tell current file offset.
@@ -750,6 +796,21 @@ void VSIRewindL( VSILFILE * fp )
 /************************************************************************/
 
 /**
+ * \fn VSIVirtualHandle::Flush()
+ * \brief Flush pending writes to disk.
+ *
+ * For files in write or update mode and on filesystem types where it is
+ * applicable, all pending output on the file is flushed to the physical disk.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fflush() call.
+ *
+ * @return 0 on success or -1 on error.
+ */
+
+/**
  * \brief Flush pending writes to disk.
  *
  * For files in write or update mode and on filesystem types where it is
@@ -776,6 +837,26 @@ int VSIFFlushL( VSILFILE * fp )
 /************************************************************************/
 /*                             VSIFReadL()                              */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::Read()
+ * \brief Read bytes from file.
+ *
+ * Reads nCount objects of nSize bytes from the indicated file at the
+ * current offset into the indicated buffer.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fread() call.
+ *
+ * @param pBuffer the buffer into which the data should be read (at least
+ * nCount * nSize bytes in size.
+ * @param nSize size of objects to read in bytes.
+ * @param nCount number of objects to read.
+ *
+ * @return number of objects successfully read.
+ */
 
 /**
  * \brief Read bytes from file.
@@ -809,6 +890,29 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 /************************************************************************/
 /*                       VSIFReadMultiRangeL()                          */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::ReadMultiRange()
+ * \brief Read several ranges of bytes from file.
+ *
+ * Reads nRanges objects of panSizes[i] bytes from the indicated file at the
+ * offset panOffsets[i] into the buffer ppData[i].
+ *
+ * Ranges must be sorted in ascending start offset, and must not overlap each
+ * other.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory or /vsicurl/.
+ *
+ * @param nRanges number of ranges to read.
+ * @param ppData array of nRanges buffer into which the data should be read
+ *               (ppData[i] must be at list panSizes[i] bytes).
+ * @param panOffsets array of nRanges offsets at which the data should be read.
+ * @param panSizes array of nRanges sizes of objects to read (in bytes).
+ *
+ * @return 0 in case of success, -1 otherwise.
+ * @since GDAL 1.9.0
+ */
 
 /**
  * \brief Read several ranges of bytes from file.
@@ -847,6 +951,26 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
 /************************************************************************/
 
 /**
+ * \fn VSIVirtualHandle::Write()
+ * \brief Write bytes to file.
+ *
+ * Writess nCount objects of nSize bytes to the indicated file at the
+ * current offset into the indicated buffer.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fwrite() call.
+ *
+ * @param pBuffer the buffer from which the data should be written (at least
+ * nCount * nSize bytes in size.
+ * @param nSize size of objects to read in bytes.
+ * @param nCount number of objects to read.
+ *
+ * @return number of objects successfully written.
+ */
+
+/**
  * \brief Write bytes to file.
  *
  * Writess nCount objects of nSize bytes to the indicated file at the
@@ -879,6 +1003,22 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
 /************************************************************************/
 
 /**
+ * \fn VSIVirtualHandle::Eof()
+ * \brief Test for end of file.
+ *
+ * Returns TRUE (non-zero) if an end-of-file condition occurred during the
+ * previous read operation. The end-of-file flag is cleared by a successful
+ * VSIFSeekL() call.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX feof() call.
+ *
+ * @return TRUE if at EOF else FALSE.
+ */
+
+/**
  * \brief Test for end of file.
  *
  * Returns TRUE (non-zero) if an end-of-file condition occurred during the
@@ -906,6 +1046,21 @@ int VSIFEofL( VSILFILE * fp )
 /************************************************************************/
 /*                            VSIFTruncateL()                           */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::Truncate()
+ * \brief Truncate/expand the file to the specified size
+
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX ftruncate() call.
+ *
+ * @param nNewSize new size in bytes.
+ *
+ * @return 0 on success
+ * @since GDAL 1.9.0
+ */
 
 /**
  * \brief Truncate/expand the file to the specified size
@@ -991,9 +1146,29 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
     return static_cast<int>(VSIFWriteL(&cChar, 1, 1, fp));
 }
 
+
 /************************************************************************/
 /*                        VSIFGetRangeStatusL()                        */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::GetRangeStatus()
+ * \brief Return if a given file range contains data or holes filled with zeroes
+ *
+ * This uses the filesystem capabilities of querying which regions of a sparse
+ * file are allocated or not. This is currently only implemented for Linux (and no
+ * other Unix derivatives) and Windows.
+ *
+ * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the exte,t is filled
+ * with zeroes ! It must be interpreted as "may contain non-zero data".
+ *
+ * @param nOffset offset of the start of the extent.
+ * @param nLength extent length.
+ *
+ * @return extent status: VSI_RANGE_STATUS_UNKNOWN, VSI_RANGE_STATUS_DATA or
+ *         VSI_RANGE_STATUS_HOLE
+ * @since GDAL 2.2
+ */
 
 /**
  * \brief Return if a given file range contains data or holes filled with zeroes
@@ -1214,6 +1389,19 @@ int VSIIngestFile( VSILFILE* fp,
 /************************************************************************/
 /*                        VSIFGetNativeFileDescriptorL()                */
 /************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::GetNativeFileDescriptor()
+ * \brief Returns the "native" file descriptor for the virtual handle.
+ *
+ * This will only return a non-NULL value for "real" files handled by the
+ * operating system (to be opposed to GDAL virtual file systems).
+ *
+ * On POSIX systems, this will be a integer value ("fd") cast as a void*.
+ * On Windows systems, this will be the HANDLE.
+ *
+ * @return the native file descriptor, or NULL.
+ */
 
 /**
  * \brief Returns the "native" file descriptor for the virtual handle.

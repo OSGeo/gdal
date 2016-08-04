@@ -30,6 +30,8 @@
 #ifndef GDALSSE_PRIV_H_INCLUDED
 #define GDALSSE_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_port.h"
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
@@ -870,5 +872,7 @@ class XMMReg4Double
         high.Store2Val(ptr+2);
     }
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDALSSE_PRIV_H_INCLUDED */

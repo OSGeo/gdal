@@ -30,6 +30,8 @@
 #ifndef OGRMUTEXEDLAYER_H_INCLUDED
 #define OGRMUTEXEDLAYER_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrlayerdecorator.h"
 #include "cpl_multiproc.h"
 
@@ -116,5 +118,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
                                          const char * pszValue,
                                          const char * pszDomain = "" );
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif // OGRMUTEXEDLAYER_H_INCLUDED

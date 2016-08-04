@@ -2441,6 +2441,27 @@ form depending on the limitations of the format driver.
 
 /**
 
+ \fn OGRErr OGRLayer::StartTransaction():
+
+ \brief For datasources which support transactions, StartTransaction creates a transaction.
+
+ If starting the transaction fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_NONE. 
+
+ Note: as of GDAL 2.0, use of this API is discouraged when the dataset offers
+ dataset level transaction with GDALDataset::StartTransaction(). The reason is
+ that most drivers can only offer transactions at dataset level, and not layer level.
+ Very few drivers really support transactions at layer scope.
+ 
+ This function is the same as the C function OGR_L_StartTransaction().
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
  \fn OGRErr OGR_L_StartTransaction( OGRLayerH hLayer );
 
  \brief For datasources which support transactions, StartTransaction creates a transaction.
@@ -2464,6 +2485,22 @@ form depending on the limitations of the format driver.
 
 /**
 
+ \fn OGRErr OGRLayer::CommitTransaction():
+
+ \brief For datasources which support transactions, CommitTransaction commits a transaction.
+
+ If no transaction is active, or the commit fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_NONE. 
+ 
+ This function is the same as the C function OGR_L_CommitTransaction().
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
  \fn OGRErr OGR_L_CommitTransaction( OGRLayerH hLayer );
 
  \brief For datasources which support transactions, CommitTransaction commits a transaction.
@@ -2475,6 +2512,21 @@ form depending on the limitations of the format driver.
  This function is the same as the C++ method OGRLayer::CommitTransaction().
 
  @param hLayer handle to the layer
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::RollbackTransaction():
+
+ \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction. 
+ If no transaction is active, or the rollback fails, will return  
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE. 
+
+ This function is the same as the C function OGR_L_RollbackTransaction().
 
  @return OGRERR_NONE on success.
 

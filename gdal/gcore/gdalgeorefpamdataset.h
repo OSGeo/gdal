@@ -31,6 +31,8 @@
 #ifndef GDAL_GEOREF_PAM_DATASET_H_INCLUDED
 #define GDAL_GEOREF_PAM_DATASET_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "gdal_pam.h"
 
 class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
@@ -81,5 +83,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
 
 
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_GEOREF_PAM_DATASET_H_INCLUDED */

@@ -150,6 +150,20 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
         return NULL;
 }
 
+/**
+ * \brief Fetch reference to external polygon ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRPolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ *
+ * @return pointer to external ring.  May be NULL if the OGRPolygon is empty.
+ */
+
 const OGRLinearRing *OGRPolygon::getExteriorRing() const
 
 {
@@ -205,6 +219,22 @@ OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
     else
         return (OGRLinearRing*) oCC.papoCurves[iRing+1];
 }
+
+/**
+ * \brief Fetch reference to indicated internal ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRPolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_InternalRing() method.
+ *
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
+ *
+ * @return pointer to interior ring.  May be NULL.
+ */
 
 const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
 
@@ -714,6 +744,9 @@ OGRErr OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
 /*                           IsPointOnSurface()                           */
 /************************************************************************/
 
+/** Return whether the point is on the surface.
+ * @return TRUE or FALSE
+ */
 OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt) const
 {
     if ( NULL == pt)

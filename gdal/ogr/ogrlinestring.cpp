@@ -550,6 +550,21 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
     }
 }
 
+/**
+ * \brief Set the location of a vertex in line string.
+ *
+ * If iPoint is larger than the number of necessary the number of existing
+ * points in the line string, the point count will be increased to
+ * accommodate the request.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iPoint the index of the vertex to assign (zero based).
+ * @param xIn input X coordinate to assign.
+ * @param yIn input Y coordinate to assign.
+ * @param mIn input M coordinate to assign (defaults to zero).
+ */
+
 void OGRSimpleCurve::setPointM( int iPoint, double xIn, double yIn, double mIn )
 
 {
@@ -575,6 +590,22 @@ void OGRSimpleCurve::setPointM( int iPoint, double xIn, double yIn, double mIn )
         padfM[iPoint] = mIn;
     }
 }
+
+/**
+ * \brief Set the location of a vertex in line string.
+ *
+ * If iPoint is larger than the number of necessary the number of existing
+ * points in the line string, the point count will be increased to
+ * accommodate the request.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iPoint the index of the vertex to assign (zero based).
+ * @param xIn input X coordinate to assign.
+ * @param yIn input Y coordinate to assign.
+ * @param zIn input Z coordinate to assign (defaults to zero).
+ * @param mIn input M coordinate to assign (defaults to zero).
+ */
 
 void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn, double mIn )
 
@@ -608,6 +639,20 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn, d
     }
 }
 
+/**
+ * \brief Set the location of a vertex in line string.
+ *
+ * If iPoint is larger than the number of necessary the number of existing
+ * points in the line string, the point count will be increased to
+ * accommodate the request.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iPoint the index of the vertex to assign (zero based).
+ * @param xIn input X coordinate to assign.
+ * @param yIn input Y coordinate to assign.
+ */
+
 void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn )
 
 {
@@ -625,6 +670,19 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn )
 /************************************************************************/
 /*                                setZ()                                */
 /************************************************************************/
+
+/**
+ * \brief Set the Z of a vertex in line string.
+ *
+ * If iPoint is larger than the number of necessary the number of existing
+ * points in the line string, the point count will be increased to
+ * accommodate the request.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iPoint the index of the vertex to assign (zero based).
+ * @param zIn input Z coordinate to assign.
+ */
 
 void OGRSimpleCurve::setZ( int iPoint, double zIn )
 {
@@ -645,6 +703,19 @@ void OGRSimpleCurve::setZ( int iPoint, double zIn )
 /************************************************************************/
 /*                                setM()                                */
 /************************************************************************/
+
+/**
+ * \brief Set the M of a vertex in line string.
+ *
+ * If iPoint is larger than the number of necessary the number of existing
+ * points in the line string, the point count will be increased to
+ * accommodate the request.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iPoint the index of the vertex to assign (zero based).
+ * @param mIn input M coordinate to assign.
+ */
 
 void OGRSimpleCurve::setM( int iPoint, double mIn )
 {
@@ -701,6 +772,7 @@ void OGRSimpleCurve::addPoint( OGRPoint * poPoint )
  * @param x the X coordinate to assign to the new point.
  * @param y the Y coordinate to assign to the new point.
  * @param z the Z coordinate to assign to the new point (defaults to zero).
+ * @param m the M coordinate to assign to the new point (defaults to zero).
  */
 
 void OGRSimpleCurve::addPoint( double x, double y, double z, double m )
@@ -709,11 +781,36 @@ void OGRSimpleCurve::addPoint( double x, double y, double z, double m )
     setPoint( nPointCount, x, y, z, m );
 }
 
+/**
+ * \brief Add a point to a line string.
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param x the X coordinate to assign to the new point.
+ * @param y the Y coordinate to assign to the new point.
+ * @param z the Z coordinate to assign to the new point (defaults to zero).
+ */
+
 void OGRSimpleCurve::addPoint( double x, double y, double z )
 
 {
     setPoint( nPointCount, x, y, z );
 }
+
+/**
+ * \brief Add a point to a line string.
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param x the X coordinate to assign to the new point.
+ * @param y the Y coordinate to assign to the new point.
+ */
 
 void OGRSimpleCurve::addPoint( double x, double y )
 
@@ -755,7 +852,7 @@ void OGRSimpleCurve::addPointM( double x, double y, double m )
  *
  * @param nPointsIn number of points being passed in paoPointsIn
  * @param paoPointsIn list of points being assigned.
- * @param padfM the M values that go with the points.
+ * @param padfMIn the M values that go with the points.
  */
 
 void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
@@ -803,8 +900,8 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
  *
  * @param nPointsIn number of points being passed in paoPointsIn
  * @param paoPointsIn list of points being assigned.
- * @param padfZ the Z values that go with the points.
- * @param padfM the M values that go with the points.
+ * @param padfZIn the Z values that go with the points.
+ * @param padfMIn the M values that go with the points.
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
@@ -866,7 +963,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  *
  * @param nPointsIn number of points being passed in paoPointsIn
  * @param paoPointsIn list of points being assigned.
- * @param padfZ the Z values that go with the points (optional, may be NULL).
+ * @param padfZIn the Z values that go with the points (optional, may be NULL).
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
@@ -914,7 +1011,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * @param nPointsIn number of points being passed in padfX and padfY.
  * @param padfX list of X coordinates of points being assigned.
  * @param padfY list of Y coordinates of points being assigned.
- * @param padfZ list of Z coordinates of points being assigned (defaults to
+ * @param padfZIn list of Z coordinates of points being assigned (defaults to
  * NULL for 2D objects).
  */
 
@@ -966,7 +1063,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
  * @param nPointsIn number of points being passed in padfX and padfY.
  * @param padfX list of X coordinates of points being assigned.
  * @param padfY list of Y coordinates of points being assigned.
- * @param padfM list of M coordinates of points being assigned.
+ * @param padfMIn list of M coordinates of points being assigned.
  */
 
 void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
@@ -1017,8 +1114,8 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
  * @param nPointsIn number of points being passed in padfX and padfY.
  * @param padfX list of X coordinates of points being assigned.
  * @param padfY list of Y coordinates of points being assigned.
- * @param padfZ list of Z coordinates of points being assigned.
- * @param padfM list of M coordinates of points being assigned.
+ * @param padfZIn list of Z coordinates of points being assigned.
+ * @param padfMIn list of M coordinates of points being assigned.
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
@@ -1154,6 +1251,28 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
         }
     }
 }
+
+/**
+ * \brief Returns all points of line string.
+ *
+ * This method copies all points into user arrays. The user provides the
+ * stride between 2 consecutive elements of the array.
+ *
+ * On some CPU architectures, care must be taken so that the arrays are properly aligned.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount) bytes, may be NULL.
+ * @param nXStride the number of bytes between 2 elements of pabyX.
+ * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount) bytes, may be NULL.
+ * @param nYStride the number of bytes between 2 elements of pabyY.
+ * @param pabyZ a buffer of at last size (sizeof(double) * nZStride * nPointCount) bytes, may be NULL.
+ * @param nZStride the number of bytes between 2 elements of pabyZ.
+ * @param pabyM a buffer of at last size (sizeof(double) * nMStride * nPointCount) bytes, may be NULL.
+ * @param nMStride the number of bytes between 2 elements of pabyM.
+ *
+ * @since OGR 2.1.0
+ */
 
 void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,

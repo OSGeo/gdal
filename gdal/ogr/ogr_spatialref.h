@@ -73,6 +73,9 @@ class CPL_DLL OGR_SRSNode
                 OGR_SRSNode(const char * = NULL);
                 ~OGR_SRSNode();
 
+    /** Return whether this is a leaf node.
+     * @return TRUE or FALSE
+     */
     int         IsLeafNode() const { return nChildren == 0; }
 
     int         GetChildCount() const { return nChildren; }
@@ -186,9 +189,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
-#define USGS_ANGLE_DECIMALDEGREES 0
-#define USGS_ANGLE_PACKEDDMS      TRUE /* 1 */
-#define USGS_ANGLE_RADIANS        2
+      
+#define USGS_ANGLE_DECIMALDEGREES 0     /**< Angle is in decimal degrees. */
+#define USGS_ANGLE_PACKEDDMS      TRUE  /**< Angle is in packed degree minute second. */
+#define USGS_ANGLE_RADIANS        2     /**< Angle is in radians. */
     OGRErr      importFromUSGS( long iProjSys, long iZone,
                                 double *padfPrjParams, long iDatum,
                                 int nUSGSAngleFormat = USGS_ANGLE_PACKEDDMS );
@@ -224,7 +228,10 @@ class CPL_DLL OGRSpatialReference
                          OGRAxisOrientation eYAxisOrientation );
 
     // Machinery for accessing parse nodes
+    
+    //! Return root node
     OGR_SRSNode *GetRoot() { return poRoot; }
+    //! Return root node
     const OGR_SRSNode *GetRoot() const { return poRoot; }
     void        SetRoot( OGR_SRSNode * );
 
@@ -347,13 +354,15 @@ class CPL_DLL OGRSpatialReference
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    /** Eckert I-VI */
+    /** Eckert I */
     OGRErr      SetEckert( int nVariation, double dfCentralMeridian,
                            double dfFalseEasting, double dfFalseNorthing );
 
+    /** Eckert IV */
     OGRErr      SetEckertIV( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
+    /** Eckert VI */
     OGRErr      SetEckertVI( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
@@ -395,12 +404,14 @@ class CPL_DLL OGRSpatialReference
                         double dfScale,
                         double dfFalseEasting, double dfFalseNorthing );
 
+    /**  Hotine Oblique Mercator 2 points */
     OGRErr      SetHOM2PNO( double dfCenterLat,
                             double dfLat1, double dfLong1,
                             double dfLat2, double dfLong2,
                             double dfScale,
                             double dfFalseEasting, double dfFalseNorthing );
 
+    /** Oblique Mercator */
     OGRErr      SetOM( double dfCenterLat, double dfCenterLong,
                        double dfAzimuth, double dfRectToSkew,
                        double dfScale,
@@ -447,11 +458,12 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetMC( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    /** Mercator */
+    /** Mercator 1SP */
     OGRErr      SetMercator( double dfCenterLat, double dfCenterLong,
                              double dfScale,
                              double dfFalseEasting, double dfFalseNorthing );
 
+    /** Mercator 2SP */
     OGRErr      SetMercator2SP( double dfStdP1,
                                 double dfCenterLat, double dfCenterLong,
                                 double dfFalseEasting, double dfFalseNorthing );
@@ -547,9 +559,12 @@ class CPL_DLL OGRSpatialReference
                                const char *pszOverrideUnitName = NULL,
                                double dfOverrideUnit = 0.0 );
 
+    /** ImportFromESRIStatePlaneWKT */
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,
         int nPCSCode, const char* pszCSName = NULL );
+    
+    /** ImportFromESRIWisconsinWKT */
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
         const char* pszUnitsName, const char* pszCSName = NULL );

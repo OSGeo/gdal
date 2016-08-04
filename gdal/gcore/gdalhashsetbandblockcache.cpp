@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /* ******************************************************************** */
 /*                        GDALHashSetBandBlockCache                     */
 /* ******************************************************************** */
@@ -309,3 +311,5 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
     poBlock->Touch();
     return poBlock;
 }
+
+//! @endcond

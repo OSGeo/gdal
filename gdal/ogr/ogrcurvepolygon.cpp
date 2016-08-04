@@ -207,6 +207,19 @@ OGRCurve *OGRCurvePolygon::getExteriorRingCurve()
     return oCC.getCurve(0);
 }
 
+/**
+ * \brief Fetch reference to external polygon ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRCurvePolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ *
+ * @return pointer to external ring.  May be NULL if the OGRCurvePolygon is empty.
+ */
 const OGRCurve *OGRCurvePolygon::getExteriorRingCurve() const
 
 {
@@ -260,6 +273,22 @@ OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing )
 {
     return oCC.getCurve(iRing + 1);
 }
+
+/**
+ * \brief Fetch reference to indicated internal ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRCurvePolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_InternalRing() method.
+ *
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
+ *
+ * @return pointer to interior ring.  May be NULL.
+ */
 
 const OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing ) const
 

@@ -158,19 +158,27 @@ int        CPL_DLL CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
 CPL_C_END
 
 #ifdef __cplusplus
-// Manage a tree of XML nodes so that all nodes are freed when the instance goes
-// out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
+/** Manage a tree of XML nodes so that all nodes are freed when the instance goes
+ * out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
+ */
 class CPLXMLTreeCloser {
  public:
+  /** Constructor */
   explicit CPLXMLTreeCloser(CPLXMLNode* data) { the_data_ = data; }
 
+  /** Destructor */
   ~CPLXMLTreeCloser() {
     if (the_data_) CPLDestroyXMLNode(the_data_);
   }
 
-  // Modifying the contents pointed to by the return is allowed.
+  /** Returns the node pointer/
+   * Modifying the contents pointed to by the return is allowed.
+   * @return the node pointer */
   CPLXMLNode* get() const { return the_data_; }
 
+  /** Returns the node pointer/
+   * Modifying the contents pointed to by the return is allowed.
+   * @return the node pointer */
   CPLXMLNode* operator->() const { return get(); }
 
  private:

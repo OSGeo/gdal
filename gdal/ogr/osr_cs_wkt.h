@@ -30,6 +30,8 @@
 #ifndef OSR_CS_WKT_H_INCLUDED_
 #define OSR_CS_WKT_H_INCLUDED_
 
+#ifndef DOXYGEN_SKIP
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,5 +53,7 @@ int osr_cs_wkt_parse(osr_cs_wkt_parse_context *context);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /*  OSR_CS_WKT_H_INCLUDED_ */

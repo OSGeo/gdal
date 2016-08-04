@@ -407,6 +407,9 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
 /*                             GetMOFlags()                             */
 /************************************************************************/
 
+/** Returns the GMO_ flags.
+ * @return flags
+ */
 int GDALMajorObject::GetMOFlags() const
 
 {
@@ -417,6 +420,9 @@ int GDALMajorObject::GetMOFlags() const
 /*                             SetMOFlags()                             */
 /************************************************************************/
 
+/** Assign GMO_flags.
+ * @param nNewFlags new flags.
+ */
 void GDALMajorObject::SetMOFlags( int nNewFlags )
 
 {

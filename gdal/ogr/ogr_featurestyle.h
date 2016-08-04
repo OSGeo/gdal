@@ -46,6 +46,7 @@ class OGRFeature;
  * All OGRStyleTool param lists are defined in ogr_core.h.
  */
 
+/** OGR Style type */
 typedef enum ogr_style_type
 {
     OGRSTypeString,
@@ -54,6 +55,7 @@ typedef enum ogr_style_type
     OGRSTypeBoolean
 }  OGRSType;
 
+//! @cond Doxygen_Suppress
 typedef struct ogr_style_param
 {
     int              eParam;
@@ -71,7 +73,7 @@ typedef struct ogr_style_value
     GBool            bValid;
     OGRSTUnitId      eUnit;
 } OGRStyleValue;
-
+//! @endcond
 
 // Every time a pszStyleString given in parameter is NULL,
 // the StyleString defined in the Mgr will be use.
@@ -147,11 +149,11 @@ class CPL_DLL OGRStyleMgr
 
     /* It could have a reference counting process us for the OGRStyleTable, if
       needed. */
-
+//! @cond Doxygen_Suppress
     OGRStyleTable *GetDataSetStyleTable(){return m_poDataSetStyleTable;}
 
     OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString);
-
+//! @endcond
 };
 
 /**
@@ -170,9 +172,11 @@ class CPL_DLL OGRStyleTool
     virtual GBool Parse() = 0;
 
   protected:
+#ifndef DOXYGEN_SKIP
     GBool Parse(const OGRStyleParamId* pasStyle,
                 OGRStyleValue* pasValue,
                 int nCount);
+#endif
 
   public:
 
@@ -184,15 +188,19 @@ class CPL_DLL OGRStyleTool
                            int &nBlue, int &nTransparence);
     int   GetSpecificId(const char *pszId, const char *pszWanted);
 
+#ifndef DOXYGEN_SKIP
     GBool IsStyleModified() {return m_bModified;}
     void  StyleModified() {m_bModified = TRUE;}
 
     GBool IsStyleParsed() {return m_bParsed;}
     void  StyleParsed() {m_bParsed = TRUE;}
+#endif
 
     OGRSTClassId GetType();
 
+#ifndef DOXYGEN_SKIP
     void SetInternalInputUnitFromParam(char *pszString);
+#endif
 
     void SetUnit(OGRSTUnitId,double dfScale = 1.0); //the dfScale will be
          //used if we are working with Ground Unit ( ground = paper * scale);
@@ -231,11 +239,13 @@ class CPL_DLL OGRStyleTool
     void SetParamDbl(const OGRStyleParamId &sStyleParam ,
                      OGRStyleValue &sStyleValue,
                      double dfParam);
-
+#ifndef DOXYGEN_SKIP
     double ComputeWithUnit(double, OGRSTUnitId);
     int    ComputeWithUnit(int , OGRSTUnitId);
-
+#endif
 };
+
+//! @cond Doxygen_Suppress
 
 /**
  * This class represents a style pen
@@ -462,5 +472,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
      void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
      const char *GetStyleString();
 };
+
+//! @endcond
 
 #endif /* OGR_FEATURESTYLE_INCLUDE */

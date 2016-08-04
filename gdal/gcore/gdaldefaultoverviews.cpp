@@ -33,6 +33,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALDefaultOverviews()                        */
 /************************************************************************/
@@ -1126,3 +1127,4 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 
     return TRUE;
 }
+//! @endcond

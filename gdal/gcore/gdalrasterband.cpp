@@ -48,6 +48,9 @@ GDALRasterBand::GDALRasterBand()
     Init(CPLTestBool( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
 }
 
+/** Constructor. Applications should never create GDALRasterBands directly.
+ * @param bForceCachedIOIn Whether cached IO should be forced.
+ */
 GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
 
 {
@@ -107,6 +110,84 @@ GDALRasterBand::~GDALRasterBand()
 /************************************************************************/
 /*                              RasterIO()                              */
 /************************************************************************/
+
+/**
+ * \fn GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+ *                                int nXOff, int nYOff, int nXSize, int nYSize,
+ *                                void * pData, int nBufXSize, int nBufYSize,
+ *                                GDALDataType eBufType,
+ *                                GSpacing nPixelSpace,
+ *                                GSpacing nLineSpace,
+ *                                GDALRasterIOExtraArg* psExtraArg )
+ * \brief Read/write a region of image data for this band.
+ *
+ * This method allows reading a region of a GDALRasterBand into a buffer,
+ * or writing data from a buffer into a region of a GDALRasterBand. It
+ * automatically takes care of data type translation if the data type
+ * (eBufType) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (nBufXSize x nBufYSize) is different than the size of the
+ * region being accessed (nXSize x nYSize).
+ *
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers. This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format.
+ *
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ *
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * This method is the same as the C GDALRasterIO() or GDALRasterIOEx() functions.
+ *
+ * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to
+ * write a region of data.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed. This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed. This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param pData The buffer into which the data should be read, or from which
+ * it should be written. This buffer must contain at least nBufXSize *
+ * nBufYSize words of type eBufType. It is organized in left to right,
+ * top to bottom pixel order. Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer. The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline. If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next. If defaulted (0) the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg structure with additional
+ * arguments to specify resampling and progress callback, or NULL for default
+ * behaviour. The GDAL_RASTERIO_RESAMPLING configuration option can also be defined
+ * to override the default resampling to one of BILINEAR, CUBIC, CUBICSPLINE,
+ * LANCZOS, AVERAGE or MODE.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ */
 
 /**
  * \brief Read/write a region of image data for this band.
@@ -497,13 +578,36 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                            IWriteBlock()                             */
-/*                                                                      */
-/*      Default internal implementation ... to be overridden by         */
-/*      subclasses that support writing.                                */
+/*                            IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GDALRasterBand::IWriteBlock( int, int, void * )
+/** \fn GDALRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pData )
+ * \brief Read a block of data.
+ *
+ * Default internal implementation ... to be overridden by
+ * subclasses that support writing.
+ * @param nBlockXOff Block X Offset
+ * @param nBlockYOff Block Y Offset
+ * @param pData Pixel buffer to write
+ * @return error code.
+ */
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+/** Write a block of data.
+ *
+ * Default internal implementation ... to be overridden by
+ * subclasses that support writing.
+ * @param nBlockXOff Block X Offset
+ * @param nBlockYOff Block Y Offset
+ * @param pData Pixel buffer to write
+ * @return error code.
+ */
+CPLErr GDALRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
+                                    CPL_UNUSED int nBlockYOff,
+                                    CPL_UNUSED void *pData )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -732,6 +836,7 @@ GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 /*                           InitBlockInfo()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int GDALRasterBand::InitBlockInfo()
 
 {
@@ -809,6 +914,7 @@ int GDALRasterBand::InitBlockInfo()
         return FALSE;
     return poBandBlockCache->Init();
 }
+//! @endcond
 
 /************************************************************************/
 /*                             FlushCache()                             */
@@ -906,18 +1012,24 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
 /*      method.                                                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void GDALRasterBand::AddBlockToFreeList( GDALRasterBlock * poBlock )
 {
     CPLAssert(poBandBlockCache && poBandBlockCache->IsInitOK());
     return poBandBlockCache->AddBlockToFreeList( poBlock );
 }
+//! @endcond
 
 /************************************************************************/
 /*                             FlushBlock()                             */
-/*                                                                      */
-/*      Flush a block out of the block cache.                           */
 /************************************************************************/
 
+/** Flush a block out of the block cache.
+ * @param nXBlockOff block x offset
+ * @param nYBlockOff blocky offset
+ * @param bWriteDirtyBlock whether the block should be written to disk if dirty.
+ * @return CE_None in case of success, an error code otherwise.
+ */
 CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff,
                                    int bWriteDirtyBlock )
 
@@ -1358,7 +1470,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( char ** /* papszNames */ )
+CPLErr GDALRasterBand::SetCategoryNames( CPL_UNUSED char ** papszNames )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -1462,7 +1574,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( double /* dfNoData */ )
+CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1508,8 +1620,6 @@ GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
  * \brief Remove the no data value for this band.
  *
  * This method is the same as the C function GDALDeleteRasterNoDataValue().
- *
- * @param dfNoData the value to set.
  *
  * @return CE_None on success, or CE_Failure on failure.  If unsupported
  * by the driver, CE_Failure is returned by no error message will have
@@ -1790,7 +1900,7 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
  */
 
 CPLErr GDALRasterBand::SetColorInterpretation(
-    GDALColorInterp /* eColorInterp */ )
+    CPL_UNUSED GDALColorInterp eColorInterp )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1881,7 +1991,7 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
  * error is issued.
  */
 
-CPLErr GDALRasterBand::SetColorTable( GDALColorTable * /* poCT */ )
+CPLErr GDALRasterBand::SetColorTable( CPL_UNUSED GDALColorTable * poCT )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -2163,11 +2273,11 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  */
 
-CPLErr GDALRasterBand::BuildOverviews( const char * /* pszResampling */,
-                                       int /* nOverviews */,
-                                       int * /* panOverviewList */,
-                                       GDALProgressFunc /* pfnProgress */,
-                                       void * /* pProgressData */)
+CPLErr GDALRasterBand::BuildOverviews( CPL_UNUSED const char* pszResampling,
+                                       CPL_UNUSED int nOverviews,
+                                       CPL_UNUSED int* panOverviewList,
+                                       CPL_UNUSED GDALProgressFunc pfnProgress,
+                                       CPL_UNUSED void * pProgressData )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,
@@ -2246,7 +2356,7 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterBand::SetOffset( double /* dfNewOffset */ )
+CPLErr GDALRasterBand::SetOffset( CPL_UNUSED double dfNewOffset )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -2345,7 +2455,7 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterBand::SetScale( double /* dfNewScale */ )
+CPLErr GDALRasterBand::SetScale( CPL_UNUSED double dfNewScale )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -2436,7 +2546,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
  * unsupported.
  */
 
-CPLErr GDALRasterBand::SetUnitType( const char * /* pszNewValue */ )
+CPLErr GDALRasterBand::SetUnitType( CPL_UNUSED const char * pszNewValue )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -3402,10 +3512,14 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
  */
 
 CPLErr GDALRasterBand::AdviseRead(
-    int /* nXOff */, int /* nYOff */,
-    int /* nXSize */, int /* nYSize */,
-    int /* nBufXSize */, int /* nBufYSize */,
-    GDALDataType /* eBufType */, char ** /* papszOptions */ )
+    CPL_UNUSED int nXOff,
+    CPL_UNUSED int nYOff,
+    CPL_UNUSED int nXSize,
+    CPL_UNUSED int nYSize,
+    CPL_UNUSED int nBufXSize,
+    CPL_UNUSED int nBufYSize,
+    CPL_UNUSED GDALDataType eBufType,
+    CPL_UNUSED char ** papszOptions )
 {
     return CE_None;
 }
@@ -5057,7 +5171,7 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 
 
 CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
-                                            double adfMinMax[2] )
+                                            double* adfMinMax )
 {
     double dfMin = 0.0;
     double dfMax = 0.0;
@@ -5540,7 +5654,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  */
 
 CPLErr GDALRasterBand::SetDefaultRAT(
-    const GDALRasterAttributeTable * /* poRAT */ )
+    CPL_UNUSED const GDALRasterAttributeTable * poRAT )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -5879,6 +5993,7 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 /*                         InvalidateMaskBand()                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void GDALRasterBand::InvalidateMaskBand()
 {
     if (bOwnMask)
@@ -5887,6 +6002,7 @@ void GDALRasterBand::InvalidateMaskBand()
     nMaskFlags = 0;
     poMask = NULL;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           CreateMaskBand()                           */
@@ -6404,6 +6520,87 @@ int CPL_STDCALL GDALGetDataCoverageStatus( GDALRasterBandH hBand,
 /************************************************************************/
 /*                          GetDataCoverageStatus()                     */
 /************************************************************************/
+
+/**
+ * \fn GDALRasterBand::IGetDataCoverageStatus( int nXOff,
+ *                                           int nYOff,
+ *                                           int nXSize,
+ *                                           int nYSize,
+ *                                           int nMaskFlagStop,
+ *                                           double* pdfDataPct)
+ * \brief Get the coverage status of a sub-window of the raster.
+ *
+ * Returns whether a sub-window of the raster contains only data, only empty
+ * blocks or a mix of both. This function can be used to determine quickly
+ * if it is worth issuing RasterIO / ReadBlock requests in datasets that may
+ * be sparse.
+ *
+ * Empty blocks are blocks that contain only pixels whose value is the nodata
+ * value when it is set, or whose value is 0 when the nodata value is not set.
+ *
+ * The query is done in an efficient way without reading the actual pixel
+ * values. If not possible, or not implemented at all by the driver,
+ * GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA will
+ * be returned.
+ *
+ * The values that can be returned by the function are the following,
+ * potentially combined with the binary or operator :
+ * <ul>
+ * <li>GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED : the driver does not implement
+ * GetDataCoverageStatus(). This flag should be returned together with
+ * GDAL_DATA_COVERAGE_STATUS_DATA.</li>
+ * <li>GDAL_DATA_COVERAGE_STATUS_DATA: There is (potentially) data in the queried
+ * window.</li>
+ * <li>GDAL_DATA_COVERAGE_STATUS_EMPTY: There is nodata in the queried window.
+ * This is typically identified by the concept of missing block in formats that
+ * supports it.
+ * </li>
+ * </ul>
+ *
+ * Note that GDAL_DATA_COVERAGE_STATUS_DATA might have false positives and
+ * should be interpreted more as hint of potential presence of data. For example
+ * if a GeoTIFF file is created with blocks filled with zeroes (or set to the
+ * nodata value), instead of using the missing block mechanism,
+ * GDAL_DATA_COVERAGE_STATUS_DATA will be returned. On the contrary,
+ * GDAL_DATA_COVERAGE_STATUS_EMPTY should have no false positives.
+ *
+ * The nMaskFlagStop should be generally set to 0. It can be set to a
+ * binary-or'ed mask of the above mentioned values to enable a quick exiting of
+ * the function as soon as the computed mask matches the nMaskFlagStop. For
+ * example, you can issue a request on the whole raster with nMaskFlagStop =
+ * GDAL_DATA_COVERAGE_STATUS_EMPTY. As soon as one missing block is encountered,
+ * the function will exit, so that you can potentially refine the requested area
+ * to find which particular region(s) have missing blocks.
+ *
+ * @see GDALGetDataCoverageStatus()
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be queried. This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be queried. This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be queried in pixels.
+ *
+ * @param nYSize The height of the region of the band to be queried in lines.
+ *
+ * @param nMaskFlagStop 0, or a binary-or'ed mask of possible values
+ * GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED,
+ * GDAL_DATA_COVERAGE_STATUS_DATA and GDAL_DATA_COVERAGE_STATUS_EMPTY. As soon
+ * as the computation of the coverage matches the mask, the computation will be
+ * stopped. *pdfDataPct will not be valid in that case.
+ *
+ * @param pdfDataPct Optional output parameter whose pointed value will be set
+ * to the (approximate) percentage in [0,100] of pixels in the queried
+ * sub-window that have valid values. The implementation might not always be
+ * able to compute it, in which case it will be set to a negative value.
+ *
+ * @return a binary-or'ed combination of possible values
+ * GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED,
+ * GDAL_DATA_COVERAGE_STATUS_DATA and GDAL_DATA_COVERAGE_STATUS_EMPTY
+ *
+ * @note Added in GDAL 2.2
+ */
 
 /**
  * \brief Get the coverage status of a sub-window of the raster.

@@ -31,6 +31,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /* ==================================================================== */
 /*                           OGRLayerAttrIndex                          */
@@ -81,3 +83,5 @@ OGRAttrIndex::OGRAttrIndex()
 OGRAttrIndex::~OGRAttrIndex()
 {
 }
+
+//! @endcond
