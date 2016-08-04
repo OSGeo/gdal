@@ -62,7 +62,7 @@ struct _CPLLock
     } u;
 
 #ifdef DEBUG_CONTENTION
-    int      bDebugPerf;
+    bool     bDebugPerf;
     GUIntBig nStartTime;
     GIntBig  nMaxDiff;
     double   dfAvgDiff;
@@ -206,10 +206,11 @@ int CPLCreateOrAcquireMutex( CPLMutex **phMutex, double dfWaitInSeconds )
 static CPLMutex *hCOAMutex = NULL;
 #endif
 
-int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds, int nOptions )
+int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
+                               int nOptions )
 
 {
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
 #ifndef MUTEX_NONE
 
@@ -258,7 +259,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
                                      CPLLockType eType )
 
 {
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
 #ifndef MUTEX_NONE
 
@@ -302,7 +303,9 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     {
         CPLReleaseMutex( hCOAMutex );
 
-        bSuccess = CPLAcquireMutex( (*phLock)->u.hMutex, dfWaitInSeconds );
+        bSuccess =
+            CPL_TO_BOOL(CPLAcquireMutex( (*phLock)->u.hMutex,
+                                         dfWaitInSeconds ));
     }
 #endif /* ndef MUTEX_NONE */
 
@@ -1283,18 +1286,19 @@ int CPLGetNumCPUs()
 /************************************************************************/
 
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
-static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions);
+static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
+                                         int nOptions );
 
 int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
                                int nOptions )
 
 {
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
     pthread_mutex_lock(&global_mutex);
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutexInternal(TRUE, nOptions);
+        *phMutex = CPLCreateMutexInternal(true, nOptions);
         bSuccess = *phMutex != NULL;
         pthread_mutex_unlock(&global_mutex);
     }
@@ -1302,7 +1306,7 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
     {
         pthread_mutex_unlock(&global_mutex);
 
-        bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+        bSuccess = CPL_TO_BOOL(CPLAcquireMutex( *phMutex, dfWaitInSeconds ));
     }
 
     return bSuccess;
@@ -1316,7 +1320,7 @@ static
 int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
                                      CPLLockType eType )
 {
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
     pthread_mutex_lock(&global_mutex);
     if( *phLock == NULL )
@@ -1325,7 +1329,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
         if( *phLock )
         {
             (*phLock)->eType = eType;
-            (*phLock)->u.hMutex = CPLCreateMutexInternal(TRUE,
+            (*phLock)->u.hMutex = CPLCreateMutexInternal(true,
                 (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
             if( (*phLock)->u.hMutex == NULL )
             {
@@ -1340,7 +1344,8 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     {
         pthread_mutex_unlock(&global_mutex);
 
-        bSuccess = CPLAcquireMutex( (*phLock)->u.hMutex, dfWaitInSeconds );
+        bSuccess = CPL_TO_BOOL(
+            CPLAcquireMutex( (*phLock)->u.hMutex, dfWaitInSeconds ));
     }
 
     return bSuccess;
@@ -1419,7 +1424,8 @@ static void CPLInitMutex(MutexLinkedElt* psItem)
 #endif
 }
 
-static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions)
+static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
+                                         int nOptions )
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) malloc(sizeof(MutexLinkedElt));
     if (psItem == NULL)
@@ -1449,12 +1455,12 @@ static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions)
 
 CPLMutex *CPLCreateMutex()
 {
-    return CPLCreateMutexInternal(FALSE, CPL_MUTEX_RECURSIVE);
+    return CPLCreateMutexInternal(false, CPL_MUTEX_RECURSIVE);
 }
 
 CPLMutex *CPLCreateMutexEx(int nOptions)
 {
-    return CPLCreateMutexInternal(FALSE, nOptions);
+    return CPLCreateMutexInternal(false, nOptions);
 }
 
 /************************************************************************/
@@ -2233,7 +2239,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->eType = eType;
             psLock->u.hMutex = hMutex;
 #ifdef DEBUG_CONTENTION
-            psLock->bDebugPerf = FALSE;
+            psLock->bDebugPerf = false;
 #endif
             return psLock;
         }
@@ -2252,7 +2258,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->eType = eType;
             psLock->u.hSpinLock = hSpinLock;
 #ifdef DEBUG_CONTENTION
-            psLock->bDebugPerf = FALSE;
+            psLock->bDebugPerf = false;
 #endif
             return psLock;
         }
@@ -2324,7 +2330,7 @@ int  CPLAcquireLock( CPLLock* psLock )
 void  CPLReleaseLock( CPLLock* psLock )
 {
 #ifdef DEBUG_CONTENTION
-    int bHitMaxDiff = FALSE;
+    bool bHitMaxDiff = false;
     GIntBig nMaxDiff = 0;
     double dfAvgDiff = 0;
     GUIntBig nIters = 0;
@@ -2334,7 +2340,7 @@ void  CPLReleaseLock( CPLLock* psLock )
         GIntBig nDiffTime = (GIntBig)(nStopTime - psLock->nStartTime);
         if( nDiffTime > psLock->nMaxDiff )
         {
-            bHitMaxDiff = TRUE;
+            bHitMaxDiff = true;
             psLock->nMaxDiff = nDiffTime;
         }
         nMaxDiff = psLock->nMaxDiff;
@@ -2361,7 +2367,7 @@ void  CPLReleaseLock( CPLLock* psLock )
 /*                          CPLDestroyLock()                            */
 /************************************************************************/
 
-void  CPLDestroyLock( CPLLock* psLock )
+void CPLDestroyLock( CPLLock* psLock )
 {
     if( psLock->eType == LOCK_SPIN )
         CPLDestroySpinLock( psLock->u.hSpinLock );
@@ -2377,7 +2383,7 @@ void  CPLDestroyLock( CPLLock* psLock )
 #ifdef DEBUG_CONTENTION
 void CPLLockSetDebugPerf(CPLLock* psLock, int bEnableIn)
 {
-    psLock->bDebugPerf = bEnableIn;
+    psLock->bDebugPerf = CPL_TO_BOOL(bEnableIn);
 }
 #else
 void CPLLockSetDebugPerf(CPLLock* /* psLock */, int bEnableIn)
