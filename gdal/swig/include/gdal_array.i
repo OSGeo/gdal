@@ -32,6 +32,12 @@
 
 %module gdal_array
 
+%{
+#ifdef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+%}
+
 %include constraints.i
 
 %import typemaps_python.i
@@ -54,10 +60,6 @@ typedef int GDALRIOResampleAlg;
 %include "python_strings.i"
 
 %{
-#ifdef DEBUG_BOOL
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include "gdal_priv.h"
 #ifdef _DEBUG
 #undef _DEBUG
