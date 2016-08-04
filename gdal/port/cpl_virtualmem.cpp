@@ -83,7 +83,7 @@ struct CPLVirtualMem
     void        *pDataToFree;  // returned by mmap(), potentially lower than pData
     size_t       nSize;        // requested size (unrounded)
 
-    int          bSingleThreadUsage;
+    bool         bSingleThreadUsage;
 
     void                         *pCbkUserData;
     CPLVirtualMemFreeUserData     pfnFreeUserData;
@@ -380,7 +380,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
     ctxt->sBase.pData = ALIGN_UP(pData, nPageSize);
     ctxt->sBase.nPageSize = nPageSize;
     ctxt->sBase.nSize = nSize;
-    ctxt->sBase.bSingleThreadUsage = bSingleThreadUsage;
+    ctxt->sBase.bSingleThreadUsage = CPL_TO_BOOL(bSingleThreadUsage);
     ctxt->sBase.pfnFreeUserData = pfnFreeUserData;
     ctxt->sBase.pCbkUserData = pCbkUserData;
 
@@ -2046,7 +2046,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     ctxt->pDataToFree = addr;
     ctxt->nSize = static_cast<size_t>(nLength);
     ctxt->nPageSize = CPLGetPageSize();
-    ctxt->bSingleThreadUsage = FALSE;
+    ctxt->bSingleThreadUsage = false;
     ctxt->pfnFreeUserData = pfnFreeUserData;
     ctxt->pCbkUserData = pCbkUserData;
 
@@ -2212,7 +2212,7 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(CPLVirtualMem* pVMemBase,
     ctxt->pDataToFree = NULL;
     ctxt->nSize = static_cast<size_t>(nSize);
     ctxt->nPageSize = pVMemBase->nPageSize;
-    ctxt->bSingleThreadUsage = pVMemBase->bSingleThreadUsage;
+    ctxt->bSingleThreadUsage = CPL_TO_BOOL(pVMemBase->bSingleThreadUsage);
     ctxt->pfnFreeUserData = pfnFreeUserData;
     ctxt->pCbkUserData = pCbkUserData;
 
