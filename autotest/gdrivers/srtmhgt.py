@@ -92,7 +92,19 @@ def srtmhgt_2():
     if chksum != 60918:
         gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
         return 'fail'
+    dsDst = None
+    
+    # Test update support
+    dsDst = gdal.Open( '/vsimem/n43w080.hgt', gdal.GA_Update )
+    dsDst.WriteRaster(0, 0, dsDst.RasterXSize, dsDst.RasterYSize,
+                      dsDst.ReadRaster())
+    dsDst.FlushCache()
 
+    if chksum != 60918:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+    dsDst = None
+    
     return 'success'
 
 ###############################################################################
