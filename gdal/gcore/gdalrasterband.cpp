@@ -6385,7 +6385,7 @@ CPLVirtualMem * GDALGetVirtualMemAuto( GDALRasterBandH hBand,
  * @note Added in GDAL 2.2
  */
 
-int GDALGetDataCoverageStatus( GDALRasterBandH hBand,
+int CPL_STDCALL GDALGetDataCoverageStatus( GDALRasterBandH hBand,
                                int nXOff, int nYOff,
                                int nXSize,
                                int nYSize,
