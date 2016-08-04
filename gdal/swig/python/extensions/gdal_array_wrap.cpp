@@ -8,6 +8,10 @@
  * interface file instead.
  * ----------------------------------------------------------------------------- */
 
+#ifdef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+
 #define SWIGPYTHON
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
@@ -3046,7 +3050,6 @@ namespace swig {
     }
   };
 }
-
 
 #include "gdal.h"
 
