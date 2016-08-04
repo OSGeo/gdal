@@ -27,9 +27,10 @@
  ****************************************************************************/
 
 #ifdef DEBUG_BOOL
-#undef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
 #endif
 
+#include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
 CPL_C_START
