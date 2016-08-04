@@ -2284,6 +2284,10 @@ class Band(MajorObject):
         """
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
 
+    def GetDataCoverageStatus(self, *args):
+        """GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
+        return _gdal.Band_GetDataCoverageStatus(self, *args)
+
     def ReadRaster1(self, *args, **kwargs):
         """
         ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, 

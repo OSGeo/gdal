@@ -3609,10 +3609,15 @@ static void GDALCopyWholeRasterGetSwathSize(
  * in particular "chunking" the copy in substantial blocks and, if appropriate,
  * performing the transfer in a pixel interleaved fashion.
  *
- * Currently the only papszOptions value supported are : "INTERLEAVE=PIXEL" to
- * force pixel interleaved operation and "COMPRESSED=YES" to force alignment on
- * target dataset block sizes to achieve best compression.  More options may be
- * supported in the future.
+ * Currently the only papszOptions value supported are :
+ * <ul>
+ * <li>"INTERLEAVE=PIXEL" to force pixel interleaved operation</li>
+ * <li>"COMPRESSED=YES" to force alignment on target dataset block sizes to
+ * achieve best compression.</li>
+ * <li>"SKIP_HOLES=YES" to skip chunks for which GDALGetDataCoverageStatus()
+ * returns GDAL_DATA_COVERAGE_STATUS_EMPTY (GDAL &gt;= 2.2)</li>
+ * </ul>
+ * More options may be supported in the future.
  *
  * @param hSrcDS the source dataset
  * @param hDstDS the destination dataset
@@ -3745,6 +3750,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /*      Band oriented (uninterleaved) case.                             */
 /* ==================================================================== */
     CPLErr eErr = CE_None;
+    const bool bCheckHoles = CPLTestBool( CSLFetchNameValueDef(
+                                        papszOptions, "SKIP_HOLES", "NO" ) );
 
     if( !bInterleave )
     {
@@ -3777,32 +3784,43 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                     if( iX + nThisCols > nXSize )
                         nThisCols = nXSize - iX;
 
-                    sExtraArg.pfnProgress = GDALScaledProgress;
-                    sExtraArg.pProgressData =
-                        GDALCreateScaledProgress(
-                            nBlocksDone / static_cast<double>(nTotalBlocks),
-                            (nBlocksDone + 0.5) /
-                            static_cast<double>(nTotalBlocks),
-                            pfnProgress,
-                            pProgressData );
-                    if( sExtraArg.pProgressData == NULL )
-                        sExtraArg.pfnProgress = NULL;
+                    int nStatus = GDAL_DATA_COVERAGE_STATUS_DATA;
+                    if( bCheckHoles )
+                    {
+                        nStatus = poSrcDS->GetRasterBand(nBand)->GetDataCoverageStatus(
+                              iX, iY, nThisCols, nThisLines,
+                              GDAL_DATA_COVERAGE_STATUS_DATA);
+                    }
+                    if( nStatus & GDAL_DATA_COVERAGE_STATUS_DATA )
+                    {
+                        sExtraArg.pfnProgress = GDALScaledProgress;
+                        sExtraArg.pProgressData =
+                            GDALCreateScaledProgress(
+                                nBlocksDone / static_cast<double>(nTotalBlocks),
+                                (nBlocksDone + 0.5) /
+                                static_cast<double>(nTotalBlocks),
+                                pfnProgress,
+                                pProgressData );
+                        if( sExtraArg.pProgressData == NULL )
+                            sExtraArg.pfnProgress = NULL;
 
-                    eErr = poSrcDS->RasterIO( GF_Read,
-                                              iX, iY, nThisCols, nThisLines,
-                                              pSwathBuf, nThisCols, nThisLines,
-                                              eDT, 1, &nBand,
-                                              0, 0, 0, &sExtraArg );
-
-                    GDALDestroyScaledProgress( sExtraArg.pProgressData );
-
-                    if( eErr == CE_None )
-                        eErr = poDstDS->RasterIO( GF_Write,
+                        eErr = poSrcDS->RasterIO( GF_Read,
                                                   iX, iY, nThisCols, nThisLines,
-                                                  pSwathBuf, nThisCols,
-                                                  nThisLines,
+                                                  pSwathBuf, nThisCols, nThisLines,
                                                   eDT, 1, &nBand,
-                                                  0, 0, 0, NULL );
+                                                  0, 0, 0, &sExtraArg );
+
+                        GDALDestroyScaledProgress( sExtraArg.pProgressData );
+
+                        if( eErr == CE_None )
+                            eErr = poDstDS->RasterIO( GF_Write,
+                                                      iX, iY, nThisCols, nThisLines,
+                                                      pSwathBuf, nThisCols,
+                                                      nThisLines,
+                                                      eDT, 1, &nBand,
+                                                      0, 0, 0, NULL );
+                    }
+
                     nBlocksDone++;
                     if( eErr == CE_None
                         && !pfnProgress(
@@ -3845,30 +3863,45 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                 if( iX + nThisCols > nXSize )
                     nThisCols = nXSize - iX;
 
-                sExtraArg.pfnProgress = GDALScaledProgress;
-                sExtraArg.pProgressData =
-                    GDALCreateScaledProgress(
-                        nBlocksDone / static_cast<double>(nTotalBlocks),
-                        (nBlocksDone + 0.5) / static_cast<double>(nTotalBlocks),
-                        pfnProgress,
-                        pProgressData );
-                if( sExtraArg.pProgressData == NULL )
-                    sExtraArg.pfnProgress = NULL;
+                int nStatus = GDAL_DATA_COVERAGE_STATUS_DATA;
+                if( bCheckHoles )
+                {
+                    for( int iBand = 0; iBand < nBandCount; iBand++ )
+                    {
+                        nStatus |= poSrcDS->GetRasterBand(iBand+1)->GetDataCoverageStatus(
+                          iX, iY, nThisCols, nThisLines,
+                          GDAL_DATA_COVERAGE_STATUS_DATA);
+                        if( nStatus & GDAL_DATA_COVERAGE_STATUS_DATA )
+                            break;
+                    }
+                }
+                if( nStatus & GDAL_DATA_COVERAGE_STATUS_DATA )
+                {
+                    sExtraArg.pfnProgress = GDALScaledProgress;
+                    sExtraArg.pProgressData =
+                        GDALCreateScaledProgress(
+                            nBlocksDone / static_cast<double>(nTotalBlocks),
+                            (nBlocksDone + 0.5) / static_cast<double>(nTotalBlocks),
+                            pfnProgress,
+                            pProgressData );
+                    if( sExtraArg.pProgressData == NULL )
+                        sExtraArg.pfnProgress = NULL;
 
-                eErr = poSrcDS->RasterIO( GF_Read,
-                                          iX, iY, nThisCols, nThisLines,
-                                          pSwathBuf, nThisCols, nThisLines,
-                                          eDT, nBandCount, NULL,
-                                          0, 0, 0, &sExtraArg );
-
-                GDALDestroyScaledProgress( sExtraArg.pProgressData );
-
-                if( eErr == CE_None )
-                    eErr = poDstDS->RasterIO( GF_Write,
+                    eErr = poSrcDS->RasterIO( GF_Read,
                                               iX, iY, nThisCols, nThisLines,
                                               pSwathBuf, nThisCols, nThisLines,
                                               eDT, nBandCount, NULL,
-                                              0, 0, 0, NULL );
+                                              0, 0, 0, &sExtraArg );
+
+                    GDALDestroyScaledProgress( sExtraArg.pProgressData );
+
+                    if( eErr == CE_None )
+                        eErr = poDstDS->RasterIO( GF_Write,
+                                                  iX, iY, nThisCols, nThisLines,
+                                                  pSwathBuf, nThisCols, nThisLines,
+                                                  eDT, nBandCount, NULL,
+                                                  0, 0, 0, NULL );
+                }
 
                 nBlocksDone++;
                 if( eErr == CE_None &&
@@ -3908,9 +3941,13 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
  * It implements efficient copying, in particular "chunking" the copy in
  * substantial blocks.
  *
- * Currently the only papszOptions value supported is : "COMPRESSED=YES" to
- * force alignment on target dataset block sizes to achieve best compression.
- * More options may be supported in the future.
+ * Currently the only papszOptions value supported are :
+ * <ul>
+ * <li>"COMPRESSED=YES" to force alignment on target dataset block sizes to
+ * achieve best compression.</li>
+ * <li>"SKIP_HOLES=YES" to skip chunks for which GDALGetDataCoverageStatus()
+ * returns GDAL_DATA_COVERAGE_STATUS_EMPTY (GDAL &gt;= 2.2)</li>
+ * </ul>
  *
  * @param hSrcBand the source band
  * @param hDstBand the destination band
@@ -3997,6 +4034,9 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
               "GDALRasterBandCopyWholeRaster(): %d*%d swaths",
               nSwathCols, nSwathLines );
 
+    const bool bCheckHoles = CPLTestBool( CSLFetchNameValueDef(
+                    papszOptions, "SKIP_HOLES", "NO" ) );
+
 /* ==================================================================== */
 /*      Band oriented (uninterleaved) case.                             */
 /* ==================================================================== */
@@ -4015,16 +4055,26 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
             if( iX + nThisCols > nXSize )
                 nThisCols = nXSize - iX;
 
-            eErr = poSrcBand->RasterIO( GF_Read,
-                                        iX, iY, nThisCols, nThisLines,
-                                        pSwathBuf, nThisCols, nThisLines,
-                                        eDT, 0, 0, NULL );
-
-            if( eErr == CE_None )
-                eErr = poDstBand->RasterIO( GF_Write,
+            int nStatus = GDAL_DATA_COVERAGE_STATUS_DATA;
+            if( bCheckHoles )
+            {
+                nStatus = poSrcBand->GetDataCoverageStatus(
+                        iX, iY, nThisCols, nThisLines,
+                        GDAL_DATA_COVERAGE_STATUS_DATA);
+            }
+            if( nStatus & GDAL_DATA_COVERAGE_STATUS_DATA )
+            {
+                eErr = poSrcBand->RasterIO( GF_Read,
                                             iX, iY, nThisCols, nThisLines,
                                             pSwathBuf, nThisCols, nThisLines,
                                             eDT, 0, 0, NULL );
+
+                if( eErr == CE_None )
+                    eErr = poDstBand->RasterIO( GF_Write,
+                                                iX, iY, nThisCols, nThisLines,
+                                                pSwathBuf, nThisCols, nThisLines,
+                                                eDT, 0, 0, NULL );
+            }
 
             if( eErr == CE_None
                 && !pfnProgress(

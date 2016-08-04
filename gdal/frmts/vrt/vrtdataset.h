@@ -484,6 +484,11 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg);
 
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
+
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );

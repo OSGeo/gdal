@@ -8,7 +8,7 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = 	-I..\raw
+EXTRAFLAGS = 	-I..\raw  $(GEOS_CFLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

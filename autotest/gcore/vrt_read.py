@@ -1091,6 +1091,70 @@ def vrt_read_24():
 
     return 'success'
 
+###############################################################################
+# Test GetDataCoverageStatus()
+
+def vrt_read_25():
+
+    import ogrtest
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="2000" rasterYSize="200">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="1000" yOff="30" xSize="10" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="1010" yOff="30" xSize="10" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0,0,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(1005,35,10,10)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(100,100,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 0.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(10,10,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 25.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    return 'success'
+
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -1122,6 +1186,7 @@ gdaltest_list.append( vrt_read_21 )
 gdaltest_list.append( vrt_read_22 )
 gdaltest_list.append( vrt_read_23 )
 gdaltest_list.append( vrt_read_24 )
+gdaltest_list.append( vrt_read_25 )
 
 if __name__ == '__main__':
 

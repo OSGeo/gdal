@@ -676,6 +676,24 @@ CPLErr SetDefaultHistogram( double min, double max,
 
 #endif /* #if defined(SWIGPYTHON) */
 
+#if defined(SWIGPYTHON)
+    // Check with other bindings how to return both the integer status and
+    // *pdfDataPct
+
+    %apply (double *OUTPUT) {(double *)};
+    int GetDataCoverageStatus( int nXOff, int nYOff,
+                               int nXSize, int nYSize,
+                               int nMaskFlagStop = 0,
+                               double* pdfDataPct = NULL)
+    {
+        return GDALGetDataCoverageStatus(self, nXOff, nYOff,
+                                         nXSize, nYSize,
+                                         nMaskFlagStop,
+                                         pdfDataPct);
+    }
+    %clear (double *);
+#endif
+
 } /* %extend */
 
 };

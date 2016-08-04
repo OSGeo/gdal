@@ -3834,6 +3834,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
   SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED",SWIG_From_int((int)(0x01)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_DATA",SWIG_From_int((int)(0x02)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_EMPTY",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GARIO_PENDING",SWIG_From_int((int)(GARIO_PENDING)));
   SWIG_Python_SetConstant(d, "GARIO_UPDATE",SWIG_From_int((int)(GARIO_UPDATE)));
   SWIG_Python_SetConstant(d, "GARIO_ERROR",SWIG_From_int((int)(GARIO_ERROR)));
