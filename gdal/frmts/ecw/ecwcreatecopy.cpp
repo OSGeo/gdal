@@ -1002,7 +1002,7 @@ CPLErr GDALECWCompressor::Initialize(
         }
 
         m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename,
-			  0, -1 );
+                          0, -1 );
     }
     else
     {
@@ -1526,7 +1526,7 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ECWWriteDataset				*/
+/*                              ECWWriteDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 

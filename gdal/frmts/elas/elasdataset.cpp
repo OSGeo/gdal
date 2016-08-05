@@ -40,35 +40,35 @@ typedef struct ELASHeader {
     ELASHeader();
 
     GInt32      NBIH;   /* bytes in header, normally 1024 */
-    GInt32      NBPR;	/* bytes per data record (all bands of scanline) */
-    GInt32	IL;	/* initial line - normally 1 */
-    GInt32	LL;	/* last line */
+    GInt32      NBPR;   /* bytes per data record (all bands of scanline) */
+    GInt32      IL;     /* initial line - normally 1 */
+    GInt32      LL;     /* last line */
     GInt32      IE;     /* initial element (pixel), normally 1 */
-    GInt32	LE;	/* last element (pixel) */
-    GInt32	NC;	/* number of channels (bands) */
-    GInt32	H4321;	/* header record identifier - always 4321. */
-    char	YLabel[4]; /* Should be "NOR" for UTM */
+    GInt32      LE;     /* last element (pixel) */
+    GInt32      NC;     /* number of channels (bands) */
+    GInt32      H4321;  /* header record identifier - always 4321. */
+    char        YLabel[4]; /* Should be "NOR" for UTM */
     GInt32      YOffset;/* topleft pixel center northing */
-    char	XLabel[4]; /* Should be "EAS" for UTM */
+    char        XLabel[4]; /* Should be "EAS" for UTM */
     GInt32      XOffset;/* topleft pixel center easting */
-    float	YPixSize;/* height of pixel in georef units */
-    float	XPixSize;/* width of pixel in georef units */
-    float	Matrix[4]; /* 2x2 transformation matrix.  Should be
+    float       YPixSize;/* height of pixel in georef units */
+    float       XPixSize;/* width of pixel in georef units */
+    float       Matrix[4]; /* 2x2 transformation matrix.  Should be
                               1,0,0,1 for pixel/line, or
                               1,0,0,-1 for UTM */
-    GByte	IH19[4];/* data type, and size flags */
-    GInt32	IH20;	/* number of secondary headers */
-    char	unused1[8];
-    GInt32	LABL;	/* used by LABL module */
-    char	HEAD;	/* used by HEAD module */
-    char	Comment1[64];
-    char	Comment2[64];
-    char	Comment3[64];
-    char	Comment4[64];
-    char	Comment5[64];
-    char	Comment6[64];
-    GUInt16	ColorTable[256];  /* RGB packed with 4 bits each */
-    char	unused2[32];
+    GByte       IH19[4];  /* data type, and size flags */
+    GInt32      IH20;   /* number of secondary headers */
+    char        unused1[8];
+    GInt32      LABL;   /* used by LABL module */
+    char        HEAD;   /* used by HEAD module */
+    char        Comment1[64];
+    char        Comment2[64];
+    char        Comment3[64];
+    char        Comment4[64];
+    char        Comment5[64];
+    char        Comment6[64];
+    GUInt16     ColorTable[256];  /* RGB packed with 4 bits each */
+    char        unused2[32];
 } _ELASHeader;
 
 ELASHeader::ELASHeader() :
@@ -105,7 +105,7 @@ ELASHeader::ELASHeader() :
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ELASDataset				*/
+/*                              ELASDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -115,17 +115,17 @@ class ELASDataset : public GDALPamDataset
 {
     friend class ELASRasterBand;
 
-    VSILFILE	*fp;
+    VSILFILE    *fp;
 
     ELASHeader  sHeader;
-    int		bHeaderModified;
+    int         bHeaderModified;
 
     GDALDataType eRasterDataType;
 
-    int		nLineOffset;
-    int		nBandOffset;     // within a line.
+    int         nLineOffset;
+    int         nBandOffset;  // Within a line.
 
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
   public:
                  ELASDataset();
@@ -192,7 +192,7 @@ CPLErr ELASRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     CPLAssert( nBlockXOff == 0 );
 
-    ELASDataset	*poGDS = (ELASDataset *) poDS;
+    ELASDataset *poGDS = (ELASDataset *) poDS;
 
     int nDataSize = GDALGetDataTypeSize(eDataType) * poGDS->GetRasterXSize() / 8;
     long nOffset = poGDS->nLineOffset * nBlockYOff + 1024 + (nBand-1) * nDataSize;
@@ -225,7 +225,7 @@ CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     CPLAssert( nBlockXOff == 0 );
     CPLAssert( eAccess == GA_Update );
 
-    ELASDataset	*poGDS = (ELASDataset *) poDS;
+    ELASDataset *poGDS = (ELASDataset *) poDS;
 
     int nDataSize = GDALGetDataTypeSize(eDataType) * poGDS->GetRasterXSize() / 8;
     long nOffset = poGDS->nLineOffset * nBlockYOff + 1024 + (nBand-1) * nDataSize;
@@ -415,8 +415,8 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Band offsets are always multiples of 256 within a multi-band	*/
-/*	scanline of data.						*/
+/*      Band offsets are always multiples of 256 within a multi-band    */
+/*      scanline of data.                                               */
 /* -------------------------------------------------------------------- */
     poDS->nBandOffset =
         (poDS->nRasterXSize * GDALGetDataTypeSize(poDS->eRasterDataType)/8);
@@ -437,7 +437,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Extract the projection coordinates, if present.			*/
+/*      Extract the projection coordinates, if present.                 */
 /* -------------------------------------------------------------------- */
     if( poDS->sHeader.XOffset != 0 )
     {
@@ -529,7 +529,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*	How long will each band of a scanline be?			*/
+/*      How long will each band of a scanline be?                       */
 /* -------------------------------------------------------------------- */
     int nBandOffset = nXSize * GDALGetDataTypeSize(eType)/8;
 
@@ -544,7 +544,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /*      Note that CPL_MSBWORD32() will swap little endian words to      */
 /*      big endian on little endian platforms.                          */
 /* -------------------------------------------------------------------- */
-    ELASHeader	sHeader;
+    ELASHeader sHeader;
 
     memset( &sHeader, 0, 1024 );
 

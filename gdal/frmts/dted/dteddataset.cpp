@@ -77,8 +77,8 @@ class DTEDRasterBand : public GDALPamRasterBand
 {
     friend class DTEDDataset;
 
-    int 	bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
 
