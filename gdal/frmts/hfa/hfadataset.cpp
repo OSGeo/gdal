@@ -3660,16 +3660,30 @@ CPLErr HFADataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
-        sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
-        sPro.proName = (char*) "Oblique Mercator (Hotine)";
-        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
-        /* hopefully the rectified grid angle is zero */
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
-        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
-        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
-        sPro.proParams[12] = 1.0;
+        if (oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE) == 0.0) 
+        {
+            sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
+            sPro.proName = (char*) "Oblique Mercator (Hotine)";
+            sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
+            sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+            sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
+            sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+            sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+            sPro.proParams[12] = 1.0;
+        }
+        else 
+        {
+            sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR_VARIANT_A;
+            sPro.proName = (char*) "Hotine Oblique Mercator (Variant A)";
+            sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
+            sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+            sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
+            sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+            sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+            sPro.proParams[8] = oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE)*D2R;
+        }
     }
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER) )
     {
@@ -3971,6 +3985,17 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = 0;
         sPro.proParams[7] = 0;
     }
+else if (EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED))
+	{
+		sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED;
+		sPro.proName = (char*) "Transverse Mercator (South Orientated)";
+		sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+		sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
+		sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+		sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+		sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+	}
+
     // Anything we can't map, we store as an ESRI PE_STRING
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
@@ -4892,6 +4917,19 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         oSRS.SetMercator( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
                           1.0,
                           psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_HOTINE_OBLIQUE_MERCATOR_VARIANT_A:
+        oSRS.SetHOM(psPro->proParams[5] * R2D, psPro->proParams[4] * R2D,
+            psPro->proParams[3] * R2D, psPro->proParams[8] * R2D,
+            psPro->proParams[2],
+            psPro->proParams[6], psPro->proParams[7]);
+        break;
+
+      case EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED:
+        oSRS.SetTMSO(psPro->proParams[5] * R2D, psPro->proParams[4] * R2D,
+            psPro->proParams[2],
+            psPro->proParams[6], psPro->proParams[7]);
         break;
 
       default:

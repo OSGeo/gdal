@@ -1158,6 +1158,64 @@ def hfa_camera_md():
     return 'success'
 
 ###############################################################################
+# Verify dataset's projection matches expected
+
+def hfa_verify_dataset_projection(dataset_path, exp_wkt):
+
+    ds = gdal.Open( dataset_path )
+    srs_wkt = ds.GetProjectionRef()
+    if not gdaltest.equal_srs_from_wkt(exp_wkt, srs_wkt):
+        gdaltest.post_reason( 'wrong outputProjection' )
+        return 'fail'
+
+    ds = None
+    return 'success'	
+
+###############################################################################
+# Verify can read Transverse Mercator (South Orientated) projections
+
+def hfa_read_tmso_projection():
+    exp_wkt = 'PROJCS["Transverse Mercator (South Orientated)",GEOGCS["Cape-1",DATUM["Cape-1",SPHEROID["Clarke 1880 Arc",6378249.145,293.4663077168331],TOWGS84[-136,-108,-292,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator_South_Orientated"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",21],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
+    return hfa_verify_dataset_projection('../gcore/data/22281.aux', exp_wkt)
+
+###############################################################################
+# Verify can write Transverse Mercator (South Orientated) projections to aux files
+
+def hfa_write_tmso_projection():
+    dataset_path = 'tmp/tmso.img'
+    out_ds = gdal.GetDriverByName('HFA').Create(dataset_path, 1, 1 )
+    gt = (0, 1, 0, 0, 0, 1)
+    out_ds.SetGeoTransform(gt)
+    out_ds.SetProjection('PROJCS["Hartebeesthoek94 / Lo15",GEOGCS["Hartebeesthoek94",DATUM["Hartebeesthoek94",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6148"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4148"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator_South_Orientated"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",15],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],AUTHORITY["EPSG","2046"],AXIS["Y",WEST],AXIS["X",SOUTH]]')
+    out_ds = None
+    exp_wkt = 'PROJCS["Hartebeesthoek94 / Lo15",GEOGCS["Hartebeesthoek94",DATUM["Hartebeesthoek94",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6148"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4148"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator_South_Orientated"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",15],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],AUTHORITY["EPSG","2046"],AXIS["Y",WEST],AXIS["X",SOUTH]]'
+    ret = hfa_verify_dataset_projection(dataset_path, exp_wkt)
+    gdal.GetDriverByName('HFA').Delete(dataset_path)
+    return ret
+
+###############################################################################
+# Verify can read Hotine Oblique Mercator (Variant A) projections
+
+def hfa_read_homva_projection():
+    exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
+    return hfa_verify_dataset_projection('../gcore/data/3376.tif', exp_wkt)
+
+###############################################################################
+# Verify can write Transverse Mercator (South Orientated) projections to aux files
+
+def hfa_write_homva_projection():
+    dataset_path = 'tmp/homva.img'
+    out_ds = gdal.GetDriverByName('HFA').Create(dataset_path, 1, 1 )
+    gt = (0, 1, 0, 0, 0, 1)
+    out_ds.SetGeoTransform(gt)
+    out_ds.SetProjection('PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]')
+    out_ds = None
+    exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
+    ret = hfa_verify_dataset_projection(dataset_path, exp_wkt)
+    gdal.GetDriverByName('HFA').Delete(dataset_path)
+    return ret
+
+###############################################################################
 # Check that overviews with an .rde file are properly supported in file list,
 # and fetching actual overviews.
 
@@ -1374,7 +1432,11 @@ gdaltest_list = [
     hfa_rde_overviews,
     hfa_copyfiles,
     hfa_write_rat,
-    hfa_createcopy_statistics ]
+    hfa_createcopy_statistics,
+    hfa_read_tmso_projection,
+    hfa_read_homva_projection,
+    hfa_write_tmso_projection,
+    hfa_write_homva_projection ]
 
 if __name__ == '__main__':
 
