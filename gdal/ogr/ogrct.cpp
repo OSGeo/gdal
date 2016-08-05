@@ -304,13 +304,13 @@ static bool LoadProjLibrary()
 
 /************************************************************************/
 /*                         OCTProj4Normalize()                          */
-/*                                                                      */
-/*      This function is really just here since we already have all     */
-/*      the code to load libproj.so.  It is intended to "normalize"     */
-/*      a proj.4 definition, expanding +init= definitions and so        */
-/*      forth as possible.                                              */
 /************************************************************************/
 
+/** This function is really just here since we already have all
+ * the code to load libproj.so.  It is intended to "normalize"
+ * a proj.4 definition, expanding +init= definitions and so
+ * forth as possible.
+ */
 static char *OCTProj4NormalizeInternal( const char *pszProj4Src )
 {
     char        *pszNewProj4Def, *pszCopy;
@@ -928,6 +928,15 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 /*                            OCTTransform()                            */
 /************************************************************************/
 
+/** Transform an array of points
+ * 
+ * @param hTransform Transformation object
+ * @param nCount Number of points
+ * @param x Array of nCount x values.
+ * @param y Array of nCount y values.
+ * @param z Array of nCount z values.
+ * @return TRUE or FALSE
+ */
 int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
                               int nCount, double *x, double *y, double *z )
 
@@ -942,6 +951,15 @@ int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
 /*                            TransformEx()                             */
 /************************************************************************/
 
+/** Transform an array of points
+ * 
+ * @param nCount Number of points
+ * @param x Array of nCount x values.
+ * @param y Array of nCount y values.
+ * @param z Array of nCount z values.
+ * @param pabSuccess Output array of nCount value that will be set to TRUE/FALSE
+ * @return TRUE or FALSE
+ */
 int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                              int *pabSuccess )
 
@@ -1200,6 +1218,17 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /*                           OCTTransformEx()                           */
 /************************************************************************/
 
+
+/** Transform an array of points
+ * 
+ * @param hTransform Transformation object
+ * @param nCount Number of points
+ * @param x Array of nCount x values.
+ * @param y Array of nCount y values.
+ * @param z Array of nCount z values.
+ * @param pabSuccess Output array of nCount value that will be set to TRUE/FALSE
+ * @return TRUE or FALSE
+ */
 int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
                                 int nCount, double *x, double *y, double *z,
                                 int *pabSuccess )

@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          VRTFilteredSource                           */
@@ -664,3 +666,5 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
     return NULL;
 }
+
+/*! @endcond */

@@ -957,7 +957,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
 
 int OGRParseDate( const char *pszInput,
                   OGRField *psField,
-                  int /* nOptions */ )
+                  CPL_UNUSED int nOptions )
 {
     psField->Date.Year = 0;
     psField->Date.Month = 0;

@@ -33,6 +33,8 @@
 
 #include <algorithm>
 
+/*! @cond Doxygen_Suppress */
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1174,3 +1176,5 @@ int VRTRasterBand::CloseDependentDatasets()
 {
     return FALSE;
 }
+
+/*! @endcond */

@@ -41,12 +41,13 @@
 #include <odbcinst.h>
 #include "cpl_string.h"
 
+/*! @cond Doxygen_Suppress */
 #ifdef PATH_MAX
 #  define ODBC_FILENAME_MAX PATH_MAX
 #else
 #  define ODBC_FILENAME_MAX (255 + 1) /* Max path length */
 #endif
-
+/*! @endcond */
 
 /**
  * \file cpl_odbc.h
@@ -109,25 +110,28 @@ class CPL_DLL CPLODBCDriverInstaller
     int RemoveDriver( const char* pszDriverName, int fRemoveDSN = FALSE );
 
 
-    // The usage count of the driver after this function has been called
+    /** The usage count of the driver after this function has been called */
     int GetUsageCount() const {  return m_nUsageCount; }
 
 
-    // Path of the target directory where the driver should be installed.
-    // For details, see ODBC API Reference and lpszPathOut
-    // parameter of SQLInstallDriverEx
+    /** Path of the target directory where the driver should be installed.
+     * For details, see ODBC API Reference and lpszPathOut
+     * parameter of SQLInstallDriverEx
+     */
     const char* GetPathOut() const { return m_szPathOut; }
 
 
-    // If InstallDriver returns FALSE, then GetLastError then
-    // error message can be obtained by calling this function.
-    // Internally, it calls ODBC's SQLInstallerError function.
+    /** If InstallDriver returns FALSE, then GetLastError then
+     * error message can be obtained by calling this function.
+     * Internally, it calls ODBC's SQLInstallerError function.
+     */
     const char* GetLastError() const { return m_szError; }
 
-    // If InstallDriver returns FALSE, then GetLastErrorCode then
-    // error code can be obtained by calling this function.
-    // Internally, it calls ODBC's SQLInstallerError function.
-    // See ODBC API Reference for possible error flags.
+    /** If InstallDriver returns FALSE, then GetLastErrorCode then
+     * error code can be obtained by calling this function.
+     * Internally, it calls ODBC's SQLInstallerError function.
+     * See ODBC API Reference for possible error flags.
+     */
     DWORD GetLastErrorCode() const { return m_nErrorCode; }
 };
 
@@ -141,6 +145,7 @@ class CPLODBCStatement;
 #  define MISSING_SQLULEN
 #endif
 
+/*! @cond Doxygen_Suppress */
 #if !defined(MISSING_SQLULEN)
 /* ODBC types to support 64 bit compilation */
 #  define CPL_SQLULEN SQLULEN
@@ -149,7 +154,7 @@ class CPLODBCStatement;
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
 #endif	/* ifdef SQLULEN */
-
+/*! @endcond */
 
 /**
  * A class representing an ODBC database session.
@@ -179,6 +184,7 @@ class CPL_DLL CPLODBCSession {
     int         BeginTransaction();
     int         CommitTransaction();
     int         RollbackTransaction();
+    /** Returns whether a transaction is active */
     int         IsInTransaction() { return m_bInTransaction; }
 
     // Essentially internal.
@@ -186,7 +192,9 @@ class CPL_DLL CPLODBCSession {
     int         CloseSession();
 
     int         Failed( int, HSTMT = NULL );
+    /** Return connection handle */
     HDBC        GetConnection() { return m_hDBC; }
+    /** Return GetEnvironment handle */
     HENV        GetEnvironment()  { return m_hEnv; }
 };
 
@@ -226,6 +234,7 @@ class CPL_DLL CPLODBCStatement {
     CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
 
+    /** Return statement handle */
     HSTMT          GetStatement() { return m_hStmt; }
 
     // Command buffer related.
@@ -235,6 +244,7 @@ class CPL_DLL CPLODBCStatement {
     void           Append( int );
     void           Append( double );
     int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+    /** Return statement string */
     const char    *GetCommand() { return m_pszStatement; }
 
     int            ExecuteSQL( const char * = NULL );

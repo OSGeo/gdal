@@ -176,6 +176,7 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 /*      method!                                                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                       unsigned char * pabyData,
                                       int nBytesAvailable )
@@ -394,6 +395,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
     else
         return 4 + 16 * nPointCount;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               clone()                                */
@@ -737,6 +739,7 @@ OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
     return TransferMembersAndDestroy(poLR, new OGRLineString());
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -752,3 +755,4 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
 }
+//! @endcond

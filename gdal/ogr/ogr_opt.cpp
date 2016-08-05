@@ -596,7 +596,7 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
  * @return TRUE if parameter found, or FALSE otherwise.
  */
 
-int OPTGetParameterInfo( const char * /* pszProjectionMethod */,
+int OPTGetParameterInfo( CPL_UNUSED const char * pszProjectionMethod,
                          const char * pszParameterName,
                          char ** ppszUserName,
                          char ** ppszType,

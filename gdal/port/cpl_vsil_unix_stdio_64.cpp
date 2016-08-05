@@ -35,6 +35,8 @@
  *
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 //#define VSI_COUNT_BYTES_READ
 
 // Some unusual filesystems do not work if _FORTIFY_SOURCE in GCC or
@@ -822,3 +824,5 @@ void VSIInstallLargeFileHandler()
 }
 
 #endif /* ndef WIN32 */
+
+//! @endcond

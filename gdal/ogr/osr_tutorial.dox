@@ -178,7 +178,7 @@ The following code (from ogr_srs_proj4.cpp) demonstrates use
 of GetAttrValue() to get the projection, and GetProjParm() to get projection
 parameters.  The GetAttrValue() method searches for the first "value" 
 node associated with the named entry in the WKT text representation.  
-The #define'ed constants for projection parameters (such as 
+The \#define'ed constants for projection parameters (such as 
 SRS_PP_CENTRAL_MERIDIAN) should be used when fetching projection parameter
 with GetProjParm().   The code for the Set methods of the various projections
 in ogrspatialreference.cpp can be consulted to find which parameters apply to 

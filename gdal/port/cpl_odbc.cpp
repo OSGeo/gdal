@@ -157,6 +157,7 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemove
 /*                           CPLODBCSession()                           */
 /************************************************************************/
 
+/** Constructor */
 CPLODBCSession::CPLODBCSession()
 
 {
@@ -171,6 +172,7 @@ CPLODBCSession::CPLODBCSession()
 /*                          ~CPLODBCSession()                           */
 /************************************************************************/
 
+/** Destructor */
 CPLODBCSession::~CPLODBCSession()
 
 {
@@ -181,6 +183,7 @@ CPLODBCSession::~CPLODBCSession()
 /*                            CloseSession()                            */
 /************************************************************************/
 
+/** Close session */
 int CPLODBCSession::CloseSession()
 
 {
@@ -207,6 +210,7 @@ int CPLODBCSession::CloseSession()
 /*                       ClearTransaction()                             */
 /************************************************************************/
 
+/** Clear transaction */
 int CPLODBCSession::ClearTransaction()
 
 {
@@ -238,6 +242,7 @@ int CPLODBCSession::ClearTransaction()
 /*                       CommitTransaction()                            */
 /************************************************************************/
 
+/** Begin transaction */
 int CPLODBCSession::BeginTransaction()
 
 {
@@ -266,6 +271,7 @@ int CPLODBCSession::BeginTransaction()
 /*                       CommitTransaction()                            */
 /************************************************************************/
 
+/** Commit transaction */
 int CPLODBCSession::CommitTransaction()
 
 {
@@ -288,6 +294,7 @@ int CPLODBCSession::CommitTransaction()
 /*                       RollbackTransaction()                          */
 /************************************************************************/
 
+/** Rollback transaction */
 int CPLODBCSession::RollbackTransaction()
 
 {
@@ -308,11 +315,11 @@ int CPLODBCSession::RollbackTransaction()
 
 /************************************************************************/
 /*                               Failed()                               */
-/*                                                                      */
-/*      Test if a return code indicates failure, return TRUE if that    */
-/*      is the case. Also update error text.                            */
 /************************************************************************/
 
+/** Test if a return code indicates failure, return TRUE if that
+ * is the case. Also update error text.
+ */
 int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 
 {
@@ -446,6 +453,7 @@ const char *CPLODBCSession::GetLastError()
 /*                          CPLODBCStatement()                          */
 /************************************************************************/
 
+/** Constructor */
 CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
 
 {
@@ -479,6 +487,7 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
 /*                         ~CPLODBCStatement()                          */
 /************************************************************************/
 
+/** Destructor */
 CPLODBCStatement::~CPLODBCStatement()
 
 {
@@ -545,6 +554,7 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 /*                         CollectResultsInfo()                         */
 /************************************************************************/
 
+/** CollectResultsInfo */
 int CPLODBCStatement::CollectResultsInfo()
 
 {
@@ -612,6 +622,7 @@ int CPLODBCStatement::CollectResultsInfo()
 /*                            GetRowCountAffected()                     */
 /************************************************************************/
 
+/** GetRowCountAffected */
 int CPLODBCStatement::GetRowCountAffected()
 {
     SQLLEN nResultCount=0;
@@ -1079,6 +1090,7 @@ const char *CPLODBCStatement::GetColData( const char *pszColName,
 /*                          GetColDataLength()                          */
 /************************************************************************/
 
+/** GetColDataLength */
 int CPLODBCStatement::GetColDataLength( int iCol )
 
 {
@@ -1119,6 +1131,7 @@ int CPLODBCStatement::GetColId( const char *pszColName )
 /*                          ClearColumnData()                           */
 /************************************************************************/
 
+/** ClearColumnData */
 void CPLODBCStatement::ClearColumnData()
 
 {
@@ -1139,6 +1152,7 @@ void CPLODBCStatement::ClearColumnData()
 /*                               Failed()                               */
 /************************************************************************/
 
+/** Failed */
 int CPLODBCStatement::Failed( int nResultCode )
 
 {

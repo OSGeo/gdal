@@ -626,7 +626,7 @@ const char *CPLReadLineL( VSILFILE * fp )
  */
 
 const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
-                           const char * const * /* papszOptions */ )
+                           CPL_UNUSED const char * const * papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1367,18 +1367,13 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  *
  * @param dfValue Numerical value to print.
  *
- * @param pszLocale Pointer to a character string containing locale name
- * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL we will not
- * manipulate with locale settings and current process locale will be used for
- * printing. With the pszLocale option we can control what exact locale
- * will be used for printing a numeric value to the string (in most cases
- * it should be C/POSIX).
+ * @param pszLocale Unused.
  *
  * @return Number of characters printed.
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, const char * /* pszLocale */ )
+                    double dfValue, CPL_UNUSED const char * pszLocale )
 {
     if ( !pszBuffer )
         return 0;
@@ -1635,6 +1630,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 /*                   CPLGetThreadLocalConfigOption()                    */
 /************************************************************************/
 
+/** Same as CPLGetConfigOption() but only with options set with
+ * CPLSetThreadLocalConfigOption() */
 const char * CPL_STDCALL
 CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 
@@ -1781,10 +1778,9 @@ void CPL_STDCALL CPLFreeConfig()
 
 /************************************************************************/
 /*                              CPLStat()                               */
-/*                                                                      */
-/*      Same as VSIStat() except it works on "C:" as if it were         */
-/*      "C:\".                                                          */
 /************************************************************************/
+
+/** Same as VSIStat() except it works on "C:" as if it were "C:\". */
 
 int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 
@@ -1837,6 +1833,7 @@ proj_strtod(char *nptr, char **endptr)
 static const char*sym = "NnEeSsWw";
 static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 
+/** CPLDMSToDec */
 double CPLDMSToDec( const char *is )
 
 {
@@ -1907,10 +1904,9 @@ double CPLDMSToDec( const char *is )
 
 /************************************************************************/
 /*                            CPLDecToDMS()                             */
-/*                                                                      */
-/*      Translate a decimal degrees value to a DMS string with          */
-/*      hemisphere.                                                     */
 /************************************************************************/
+
+/** Translate a decimal degrees value to a DMS string with hemisphere. */
 
 const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
                          int nPrecision )
@@ -2055,6 +2051,7 @@ double CPLDecToPackedDMS( double dfDec )
 /*                         CPLStringToComplex()                         */
 /************************************************************************/
 
+/** Fetch the real and imaginary part of a serialized complex number */
 void CPL_DLL CPLStringToComplex( const char *pszString,
                                  double *pdfReal, double *pdfImag )
 
@@ -2331,7 +2328,8 @@ void CPLDumpSharedList( FILE *fp )
 /*                           CPLUnlinkTree()                            */
 /************************************************************************/
 
-/**
+/** Recursively unlink a directory.
+ * 
  * @return 0 on successful completion, -1 if function fails.
  */
 
@@ -2419,6 +2417,7 @@ int CPLUnlinkTree( const char *pszPath )
 /*                            CPLCopyFile()                             */
 /************************************************************************/
 
+/** Copy a file */
 int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2480,6 +2479,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /*                            CPLCopyTree()                             */
 /************************************************************************/
 
+/** Recursively copy a tree */
 int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2557,6 +2557,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 /*                            CPLMoveFile()                             */
 /************************************************************************/
 
+/** Move a file */
 int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2574,6 +2575,7 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLSymlink()                             */
 /************************************************************************/
 
+/** Create a symbolic link */
 int CPLSymlink( const char*
 #ifndef WIN32
                 pszOldPath
@@ -2597,6 +2599,7 @@ int CPLSymlink( const char*
 /* ==================================================================== */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                             CPLLocaleC()                             */
 /************************************************************************/
@@ -2692,7 +2695,7 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
 
 #endif
 }
-
+//! @endcond
 
 /************************************************************************/
 /*                          CPLsetlocale()                              */

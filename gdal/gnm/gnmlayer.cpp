@@ -134,6 +134,7 @@ int GNMGenericLayer::AttributeFilterEvaluationNeedsGeometry()
     return m_poLayer->AttributeFilterEvaluationNeedsGeometry();
 }
 
+//! @cond Doxygen_Suppress
 OGRErr GNMGenericLayer::InitializeIndexSupport(const char *pszVal)
 {
     return m_poLayer->InitializeIndexSupport(pszVal);
@@ -172,6 +173,7 @@ OGRErr GNMGenericLayer::ICreateFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     return m_poLayer->CreateFeature(poFeature);
 }
+//! @endcond
 
 OGRGeometry *GNMGenericLayer::GetSpatialFilter()
 {

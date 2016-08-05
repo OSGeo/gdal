@@ -384,14 +384,14 @@ INPUT                  = port \
                          alg \
                          frmts/vrt \
                          doc \
-			 apps \
+                         apps \
                          ogr \
                          ogr/ogrsf_frmts \
                          ogr/ogrsf_frmts/generic \
                          ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
                          ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
-			 swig/python/scripts \
-			 gnm 
+                         swig/python/scripts \
+                         gnm 
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -591,7 +591,7 @@ HTML_STYLESHEET        =
 # files or namespaces will be aligned in HTML using tables. If set to 
 # NO a bullet list will be used.
 
-HTML_ALIGN_MEMBERS     = YES
+# HTML_ALIGN_MEMBERS     = YES
 
 # If the GENERATE_HTMLHELP tag is set to YES, additional index files 
 # will be generated that can be used as input for tools like the 
@@ -941,7 +941,10 @@ PREDEFINED             = HAVE_DLFCN_H \
                          DOXYGEN_SKIP \
                          HAVE_CURL \
                          CPL_UNUSED= \
-                         UNUSED_IF_NO_GEOS=
+                         UNUSED_IF_NO_GEOS= \
+                         isinf \
+                         HAVE_LIBXML2 \
+                         HAVE_RECENT_LIBXML2
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

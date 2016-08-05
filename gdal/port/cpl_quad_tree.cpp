@@ -798,6 +798,7 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
 /*                         CPLQuadTreeDump()                            */
 /************************************************************************/
 
+/** Dump quad tree */
 void CPLQuadTreeDump(const CPLQuadTree *hQuadTree,
                      CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
                      void* pUserData)
@@ -834,6 +835,7 @@ void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode,
 /*                    CPLQuadTreeGetStats()                             */
 /************************************************************************/
 
+/** Get stats */
 void CPLQuadTreeGetStats(const CPLQuadTree *hQuadTree,
                          int* pnFeatureCount,
                          int* pnNodeCount,

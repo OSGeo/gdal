@@ -30,6 +30,8 @@
 #include "cpl_vsi_virtual.h"
 #include <map>
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -514,6 +516,8 @@ int VSICachedFile::Flush()
 {
     return 0;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                        VSICreateCachedFile()                         */

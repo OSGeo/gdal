@@ -32,6 +32,8 @@
 #include <map>
 #include <set>
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -658,3 +660,5 @@ char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
     CPLFree(archiveFilename);
     return oDir.StealList();
 }
+
+//! @endcond

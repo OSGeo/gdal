@@ -115,9 +115,9 @@ typedef int
                         int bDstToSrc, int nPointCount,
                         double *x, double *y, double *z, int *panSuccess );
 
+/*! @cond Doxygen_Suppress */
 #define GDAL_GTI2_SIGNATURE     "GTI2"
 
-/*! @cond Doxygen_Suppress */
 typedef struct {
     GByte abySignature[4];
     const char *pszClassName;
@@ -128,13 +128,14 @@ typedef struct {
 } GDALTransformerInfo;
 /*! @endcond */
 
+/*! @cond Doxygen_Suppress */
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
 int  CPL_DLL GDALUseTransformer( void *pTransformerArg,
                                  int bDstToSrc, int nPointCount,
                                  double *x, double *y, double *z,
                                  int *panSuccess );
 void* GDALCreateSimilarTransformer( void* psTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
-
+/*! @endcond */
 
 /* High level transformer for going from image coordinates on one file
    to image coordinates on another, potentially doing reprojection,
@@ -196,7 +197,9 @@ int CPL_DLL GDALTPSTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
+/*! @cond Doxygen_Suppress */
 char CPL_DLL ** RPCInfoToMD( GDALRPCInfo *psRPCInfo );
+/*! @endcond */
 
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
@@ -257,11 +260,13 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           double *padfExtents,
                           int nOptions );
 
+/*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL *
 GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
 CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree,
                                            GDALTransformerFunc *ppfnFunc,
                                            void **ppTransformArg );
+/*! @endond */
 
 CPLErr CPL_DLL
 GDALTransformGeolocations( GDALRasterBandH hXBand,
@@ -277,9 +282,11 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
 /*      Contour Line Generation                                         */
 /* -------------------------------------------------------------------- */
 
+/** Contour writer callback type */
 typedef CPLErr (*GDALContourWriter)( double dfLevel, int nPoints,
                                      double *padfX, double *padfY, void * );
 
+/** Contour generator opaque type */
 typedef void *GDALContourGeneratorH;
 
 GDALContourGeneratorH CPL_DLL
@@ -302,10 +309,10 @@ typedef struct
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
-/*! @endcond */
 
 CPLErr CPL_DLL
 OGRContourWriter( double, int, double *, double *, void *pInfo );
+/*! @endcond */
 
 CPLErr CPL_DLL
 GDALContourGenerate( GDALRasterBandH hBand,
@@ -411,6 +418,7 @@ typedef struct
     double  dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
 
+/** Inverse distance to a power, with nearest neighbour search, control options */
 typedef struct
 {
     /*! Weighting power. */
@@ -516,6 +524,7 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
 
+/** Grid context opaque type */
 typedef struct GDALGridContext GDALGridContext;
 
 GDALGridContext CPL_DLL*
@@ -603,8 +612,10 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
                                                 int* panOutputFacetIdx );
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
+/*! @cond Doxygen_Suppress */
 // GDAL internal use only
 void GDALTriangulationTerminate(void);
+/*! @endcond */
 
 CPL_C_END
 

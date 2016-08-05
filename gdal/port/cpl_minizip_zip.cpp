@@ -1179,6 +1179,7 @@ typedef struct
 /*                            CPLCreateZip()                            */
 /************************************************************************/
 
+/** Create ZIP file */
 void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 
 {
@@ -1225,6 +1226,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 /*                         CPLCreateFileInZip()                         */
 /************************************************************************/
 
+/** Create a file in a ZIP file */
 CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
                            char **papszOptions )
 
@@ -1259,6 +1261,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 /*                         CPLWriteFileInZip()                          */
 /************************************************************************/
 
+/** Write in current file inside a ZIP file */
 CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
 {
@@ -1280,6 +1283,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 /*                         CPLCloseFileInZip()                          */
 /************************************************************************/
 
+/** Close current file inside ZIP file */
 CPLErr CPLCloseFileInZip( void *hZip )
 
 {
@@ -1300,6 +1304,7 @@ CPLErr CPLCloseFileInZip( void *hZip )
 /*                            CPLCloseZip()                             */
 /************************************************************************/
 
+/** Close ZIP file */
 CPLErr CPLCloseZip( void *hZip )
 
 {

@@ -2235,6 +2235,11 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /*                        OGR_G_CreateFromFgf()                         */
 /************************************************************************/
 
+/**
+ * \brief Create a geometry object of the appropriate type from it's FGF
+ * (FDO Geometry Format) binary representation.
+ * 
+ * See OGRGeometryFactory::createFromFgf() */
 OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,

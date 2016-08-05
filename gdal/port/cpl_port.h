@@ -604,9 +604,12 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsInf(x)    __builtin_isinf(x)
 #  define CPLIsFinite(x) __builtin_isfinite(x)
 #else
+/** Return whether a floating-pointer number is NaN */
 #  define CPLIsNan(x) isnan(x)
 #  ifdef isinf
+/** Return whether a floating-pointer number is +/- infinty */
 #    define CPLIsInf(x) isinf(x)
+/** Return whether a floating-pointer number is finite */
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
 #  elif defined(__sun__)
 #    include <ieeefp.h>
@@ -618,6 +621,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  endif
 #endif
 
+/*! @cond Doxygen_Suppress */
 /*---------------------------------------------------------------------
  *                         CPL_LSB and CPL_MSB
  * Only one of these 2 macros should be defined and specifies the byte
@@ -638,6 +642,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #else
 #  define CPL_IS_LSB 0
 #endif
+/*! @endcond */
 
 #ifdef __cplusplus
 
@@ -651,7 +656,6 @@ template<> struct CPLStaticAssert<true>
 };
 
 } /* extern "C++" */
-/*! @endcond */
 
 #define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
 #define CPL_STATIC_ASSERT_IF_AVAILABLE(x) CPL_STATIC_ASSERT(x)
@@ -661,11 +665,13 @@ template<> struct CPLStaticAssert<true>
 #define CPL_STATIC_ASSERT_IF_AVAILABLE(x)
 
 #endif  /* __cplusplus */
+/*! @endcond */
 
 /*---------------------------------------------------------------------
  *        Little endian <==> big endian byte swap macros.
  *--------------------------------------------------------------------*/
 
+/** Byte-swap a 16bit unsigned integer */
 #define CPL_SWAP16(x) ((GUInt16)( ((GUInt16)(x) << 8) | ((GUInt16)(x) >> 8) ))
 
 #if defined(HAVE_GCC_BSWAP) && (defined(__i386__) || defined(__x86_64__))
@@ -673,14 +679,17 @@ template<> struct CPLStaticAssert<true>
 /* that the intrinsic is indeed efficient */
 /* GCC (at least 4.6  or above) need that include */
 #include <x86intrin.h>
+/** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
 /* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
+/** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
 #elif defined(_MSC_VER)
 #define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
 /* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
 #define CPL_SWAP64(x) ((GUIntBig)(_byteswap_uint64((GUIntBig)(x))))
 #else
+/** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) \
         ((GUInt32)( \
             (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
@@ -689,6 +698,7 @@ template<> struct CPLStaticAssert<true>
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 #endif
 
+/** Byte-swap a 16 bit pointer */
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
@@ -699,6 +709,7 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[1] = byTemp;                                       \
 }
 
+/** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
@@ -712,6 +723,7 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[2] = byTemp;                                       \
 }
 
+/** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
@@ -748,6 +760,7 @@ template<> struct CPLStaticAssert<true>
             (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
 */
 
+/** Byte-swap a 64 bit pointer */
 #define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
 
 #ifdef CPL_MSB
@@ -762,15 +775,25 @@ template<> struct CPLStaticAssert<true>
 #  define CPL_MSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
 #  define CPL_LSBPTR64(x)       CPL_SWAP64PTR(x)
 #else
+/** Return a 16bit word from a originally LSB ordered word */
 #  define CPL_LSBWORD16(x)      (x)
+/** Return a 16bit word from a originally MSB ordered word */
 #  define CPL_MSBWORD16(x)      CPL_SWAP16(x)
+/** Return a 32bit word from a originally LSB ordered word */
 #  define CPL_LSBWORD32(x)      (x)
+/** Return a 32bit word from a originally MSB ordered word */
 #  define CPL_MSBWORD32(x)      CPL_SWAP32(x)
+/** Byte-swap if necessary a 16bit word at the location pointed from a originally LSB ordered pointer */
 #  define CPL_LSBPTR16(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2)
+/** Byte-swap if necessary a 16bit word at the location pointed from a originally MSB ordered pointer */
 #  define CPL_MSBPTR16(x)       CPL_SWAP16PTR(x)
+/** Byte-swap if necessary a 32bit word at the location pointed from a originally LSB ordered pointer */
 #  define CPL_LSBPTR32(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4)
+/** Byte-swap if necessary a 32bit word at the location pointed from a originally MSB ordered pointer */
 #  define CPL_MSBPTR32(x)       CPL_SWAP32PTR(x)
+/** Byte-swap if necessary a 64bit word at the location pointed from a originally LSB ordered pointer */
 #  define CPL_LSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
+/** Byte-swap if necessary a 64bit word at the location pointed from a originally MSB ordered pointer */
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
@@ -793,7 +816,7 @@ template<> struct CPLStaticAssert<true>
 /** Return a unsigned Int32 from the 4 bytes ordered in LSB order at address x */
 #define CPL_LSBUINT32PTR(x) ((GUInt32)CPL_LSBINT32PTR(x))
 
-
+/*! @cond Doxygen_Suppress */
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */
 #ifndef UNREFERENCED_PARAM
 #  ifdef UNREFERENCED_PARAMETER /* May be defined by Windows API */
@@ -802,6 +825,7 @@ template<> struct CPLStaticAssert<true>
 #    define UNREFERENCED_PARAM(param) ((void)param)
 #  endif /* UNREFERENCED_PARAMETER */
 #endif /* UNREFERENCED_PARAM */
+/*! @endcond */
 
 /***********************************************************************
  * Define CPL_CVSID() macro.  It can be disabled during a build by
@@ -811,6 +835,7 @@ template<> struct CPLStaticAssert<true>
  * being unused.
  */
 
+/*! @cond Doxygen_Suppress */
 #ifndef DISABLE_CVSID
 #if defined(__GNUC__) && __GNUC__ >= 4
 #  define CPL_CVSID(string)     static const char cpl_cvsid[] __attribute__((used)) = string;
@@ -821,74 +846,99 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #else
 #  define CPL_CVSID(string)
 #endif
+/*! @endcond */
 
-/* Null terminated variadic */
 /* We exclude mingw64 4.6 which seems to be broken regarding this */
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP) && !(defined(__MINGW64__) && __GNUC__ == 4 && __GNUC_MINOR__ == 6)
+/** Null terminated variadic */
 #   define CPL_NULL_TERMINATED     __attribute__((__sentinel__))
 #else
+/** Null terminated variadic */
 #   define CPL_NULL_TERMINATED
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+/** Tag a function to have printf() formatting */
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+/** Tag a function to have scanf() formatting */
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__scanf__, format_idx, arg_idx)))
 #else
+/** Tag a function to have printf() formatting */
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+/** Tag a function to have scanf() formatting */
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+/** Qualifier to warn when the return value of a function is not used */
 #define CPL_WARN_UNUSED_RESULT                        __attribute__((warn_unused_result))
 #else
+/** Qualifier to warn when the return value of a function is not used */
 #define CPL_WARN_UNUSED_RESULT
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4
+/** Qualifier for an argument that is unused */
 #  define CPL_UNUSED __attribute((__unused__))
 #else
 /* TODO: add cases for other compilers */
+/** Qualifier for an argument that is unused */
 #  define CPL_UNUSED
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+/** Qualifier for a function that does not return at all (terminates the process) */
 #define CPL_NO_RETURN                                __attribute__((noreturn))
 #else
+/** Qualifier for a function that does not return at all (terminates the process) */
 #define CPL_NO_RETURN
 #endif
 
+/*! @cond Doxygen_Suppress */
 /* Clang __has_attribute */
 #ifndef __has_attribute
   #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
 #endif
+/*! @endcond */
 
 #if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
+/** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
+/** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL
 #endif
 
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+/** restrict keyword to declare that pointers do not alias */
 #define CPL_RESTRICT __restrict__
 #else
+/** restrict keyword to declare that pointers do not alias */
 #define CPL_RESTRICT
 #endif
 
-/* Helper to remove the copy and assignment constructors so that the compiler
+#ifdef __cplusplus
+
+#if HAVE_CXX11
+/** C++11 final qualifier */
+#  define CPL_FINAL final
+/** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
    Must be placed in the private section of a class and should be at the end.
 */
-#ifdef __cplusplus
-
-#if HAVE_CXX11
-#  define CPL_FINAL final
 #  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
 #else
+/** C++11 final qualifier */
 #  define CPL_FINAL
+/** Helper to remove the copy and assignment constructors so that the compiler
+   will not generate the default versions.
+
+   Must be placed in the private section of a class and should be at the end.
+*/
 #  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
     ClassName &operator=( const ClassName & );
@@ -924,15 +974,19 @@ CPL_C_END
 #endif /* !defined(_MSC_VER) && !defined(__APPLE__) */
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
+/*! @cond Doxygen_Suppress */
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
+/*! @endcond */
+/** Returns whether a double fits on a int */
 #define CPL_IS_DOUBLE_A_INT(d)  ( (d) >= INT_MIN && (d) <= INT_MAX && (double)(int)(d) == (d) )
 #else
 /* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
+/** Returns whether a double fits on a int */
 #define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
 #ifdef __cplusplus
-/* The size of C style arrays. */
+/** Returns the size of C style arrays. */
 #define CPL_ARRAYSIZE(array) \
   ((sizeof(array) / sizeof(*(array))) / \
   static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
@@ -953,8 +1007,10 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #endif
 
 #if defined(__clang__)
+/** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
+/** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH
 #endif
 

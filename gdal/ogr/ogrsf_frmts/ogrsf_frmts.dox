@@ -84,6 +84,58 @@
 
 */
 
+
+/**
+ 
+  \fn OGRDataSourceH OGROpenShared( const char *pszName, int bUpdate,
+                        OGRSFDriverH *pahDriverList );
+
+  \brief Open a file / data source with one of the registered drivers if not
+  already opened, or increment reference count of already opened data source
+  previously opened with OGROpenShared()
+
+  This function loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the given data source.
+
+  If this function fails, CPLGetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+
+  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
+  Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
+  *NOT* OGRSFDriver*.
+
+  @deprecated Use GDALOpenEx() in GDAL 2.0
+
+  @param pszName the name of the file, or data source to open.
+  @param bUpdate FALSE for read-only access (the default) or TRUE for 
+         read-write access.
+  @param pahDriverList if non-NULL, this argument will be updated with a 
+         pointer to the driver which was used to open the data source.
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise an handle to a GDALDataset.  This GDALDataset should be
+  closed by deleting the object when it is no longer needed.
+
+  <b>Example:</b>
+
+  <pre>
+    OGRDataSourceH  hDS;
+    OGRSFDriverH        *pahDriver;
+
+    hDS = OGROpenShared( "polygon.shp", 0, pahDriver );
+    if( hDS == NULL )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    OGRReleaseDataSource( hDS );
+  </pre>
+
+*/
+
 /**
 
   \fn int OGRGetDriverCount();

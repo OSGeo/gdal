@@ -497,7 +497,7 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * Currently, this will return FALSE only for Windows real filenames. Other
  * VSI virtual filesystems are case sensitive.
  *
- * This methods avoid ugly #ifndef WIN32 / #endif code, that is wrong when
+ * This methods avoid ugly \#ifndef WIN32 / \#endif code, that is wrong when
  * dealing with virtual filenames.
  *
  * @param pszFilename the path of the filesystem object to be tested.  UTF-8 encoded.
@@ -577,6 +577,8 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
     return VSIFOpenExL(pszFilename, pszAccess, false);
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                               Open()                                 */
 /************************************************************************/
@@ -586,6 +588,8 @@ VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
 {
     return Open(pszFilename, pszAccess, false);
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                             VSIFOpenExL()                              */
@@ -1452,6 +1456,8 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 /* ==================================================================== */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 /*
 ** Notes on Multithreading:
 **
@@ -1682,3 +1688,5 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
 
     return nRet;
 }
+
+//! @endcond

@@ -102,7 +102,7 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  *      w=\frac{1}{r^p}
  *  \f]
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridInverseDistanceToAPowerOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -112,7 +112,7 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
- * @param hExtraParamsIn extra parameters.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -123,7 +123,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
                                  const double *padfZ,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue,
-                                 void* /* hExtraParamsIn */ )
+                                 CPL_UNUSED void* hExtraParamsIn)
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -235,7 +235,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
  *      w=\frac{1}{r^p}
  *  \f]
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridInverseDistanceToAPowerNearestNeighborOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -510,7 +510,7 @@ GDALGridInverseDistanceToAPowerNoSearch(
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridMovingAverageOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -520,6 +520,7 @@ GDALGridInverseDistanceToAPowerNoSearch(
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -529,7 +530,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
                        const double *padfX, const double *padfY,
                        const double *padfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue,
-                       void * /* hExtraParamsIn */ )
+                       CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -598,7 +599,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
  * and returns it as a result. If there are no points found, the specified
  * NODATA value will be returned.
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridNearestNeighborOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -608,6 +609,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -750,7 +752,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -760,6 +762,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn unused.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -769,7 +772,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue,
-                           void * /* hExtraParamsIn */ )
+                           CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -857,7 +860,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -867,6 +870,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -876,7 +880,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue,
-                           void* /* hExtraParamsIn */ )
+                           CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -966,7 +970,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -976,6 +980,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -985,7 +990,7 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
                          const double *padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue,
-                         void * /* hExtraParamsIn */ )
+                         CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1073,7 +1078,7 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -1083,6 +1088,7 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -1090,9 +1096,9 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
-                         const double * /* padfZ */,
+                         CPL_UNUSED const double * padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue,
-                         void * /* hExtraParamsIn */ )
+                         CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1172,16 +1178,17 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
  * @param padfY Input array of Y coordinates.
- * @param padfZ Input array of Z values.
+ * @param padfZ Input array of Z values (unused)
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -1189,10 +1196,10 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
                                    const double *padfX, const double *padfY,
-                                   const double * /* padfZ */,
+                                   CPL_UNUSED const double * padfZ,
                                    double dfXPoint, double dfYPoint,
                                    double *pdfValue,
-                                   void * /* hExtraParamsIn */ )
+                                   CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1276,16 +1283,17 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
  * @param padfY Input array of Y coordinates.
- * @param padfZ Input array of Z values.
+ * @param padfZ Input array of Z values (unused)
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters (unused)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -1293,10 +1301,10 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
                                       const double *padfX, const double *padfY,
-                                      const double * /* padfZ */,
+                                      CPL_UNUSED const double * padfZ,
                                       double dfXPoint, double dfYPoint,
                                       double *pdfValue,
-                                      void * /* hExtraParamsIn */ )
+                                      CPL_UNUSED void * hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1394,7 +1402,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
  * If the point is not in any triangle, depending on the radius, the
  * algorithm will use the value of the nearest point or the nodata value.
  *
- * @param poOptions Algorithm parameters. This should point to
+ * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridLinearOptions object.
  * @param nPoints Number of elements in input arrays.
  * @param padfX Input array of X coordinates.
@@ -1404,6 +1412,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParams extra parameters
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  *
@@ -2395,12 +2404,11 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
 /************************************************************************/
 /*                      ParseAlgorithmAndOptions()                      */
-/*                                                                      */
-/*      Translates mnemonic gridding algorithm names into               */
-/*      GDALGridAlgorithm code, parse control parameters and assign     */
-/*      defaults.                                                       */
 /************************************************************************/
 
+/** Translates mnemonic gridding algorithm names into GDALGridAlgorithm code,
+ * parse control parameters and assign defaults.
+ */
 CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                                  GDALGridAlgorithm *peAlgorithm,
                                  void **ppOptions )

@@ -276,6 +276,8 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
     return poDS;
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          VRTWarpedDataset                            */
@@ -1004,6 +1006,8 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
     return eErr;
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                      GDALInitializeWarpedVRT()                       */
 /************************************************************************/
@@ -1033,6 +1037,8 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
 
     return reinterpret_cast<VRTWarpedDataset *>( hDS )->Initialize( psWO );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                              XMLInit()                               */
@@ -1675,3 +1681,5 @@ GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
 
     return poWDS->m_papoOverviews[iOverview]->GetRasterBand( nBand );
 }
+
+/*! @endcond */

@@ -397,9 +397,9 @@ class CPL_DLL OGRCurve : public OGRGeometry
 
     friend class OGRCurvePolygon;
     friend class OGRCompoundCurve;
+//! @endcond
     virtual int    ContainsPoint( const OGRPoint* p ) const;
     virtual double get_AreaOfCurveSegments() const = 0;
-//! @endcond
 
   public:
     virtual ~OGRCurve();
@@ -462,11 +462,12 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                                        OGRRawPoint*& paoPointsIn, int& nMaxPoints,
                                        double*& padfZIn );
 
+//! @endcond
+
     virtual double get_LinearArea() const;
 
                 OGRSimpleCurve();
                 OGRSimpleCurve( const OGRSimpleCurve& other );
-//! @endcond
 
   public:
     virtual     ~OGRSimpleCurve();
@@ -574,13 +575,13 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
                                             OGRLineString* poSrc,
                                             OGRLineString* poDst);
 
-    static OGRLinearRing* CastToLinearRing(OGRLineString* poLS);
-
     virtual OGRCurveCasterToLineString GetCasterToLineString() const;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
 
     virtual double get_AreaOfCurveSegments() const;
 //! @endcond
+
+    static OGRLinearRing* CastToLinearRing(OGRLineString* poLS);
 
   public:
                 OGRLineString();
@@ -636,11 +637,11 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr _exportToWkb( OGRwkbByteOrder, int _flags,
                                  unsigned char * ) const;
 
-    static OGRLineString* CastToLineString(OGRLinearRing* poLR);
-
     virtual OGRCurveCasterToLineString GetCasterToLineString() const;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
 //! @endcond
+
+    static OGRLineString* CastToLineString(OGRLinearRing* poLR);
 
   public:
                         OGRLinearRing();
@@ -964,11 +965,11 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     friend class OGRPolygon;
     OGRCurveCollection oCC;
 
-    static OGRPolygon* CastToPolygon(OGRCurvePolygon* poCP);
-
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
 //! @endcond
+
+    static OGRPolygon* CastToPolygon(OGRCurvePolygon* poCP);
 
   public:
                 OGRCurvePolygon();

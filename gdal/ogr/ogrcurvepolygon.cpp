@@ -790,6 +790,7 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
     return poPoly;
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
@@ -805,3 +806,4 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const {
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const {
     return (OGRSurfaceCasterToCurvePolygon) OGRGeometry::CastToIdentity;
 }
+//! @endcond

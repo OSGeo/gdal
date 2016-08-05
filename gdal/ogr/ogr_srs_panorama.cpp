@@ -146,6 +146,11 @@ static const int aoEllips[] =
 /*                        OSRImportFromPanorama()                       */
 /************************************************************************/
 
+/** Import coordinate system from "Panorama" GIS projection definition.
+ * 
+ * See OGRSpatialReference::importFromPanorama()
+ */
+
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
                               long iProjSys, long iDatum, long iEllips,
                               double *padfPrjParams )
@@ -489,6 +494,12 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /************************************************************************/
 /*                      OSRExportToPanorama()                           */
 /************************************************************************/
+
+
+/** Export coordinate system in "Panorama" GIS projection definition.
+ * 
+ * See OGRSpatialReference::exportToPanorama()
+ */
 
 OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
                             long *piProjSys, long *piDatum, long *piEllips,

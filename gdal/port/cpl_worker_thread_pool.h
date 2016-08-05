@@ -71,6 +71,7 @@ typedef enum
 } CPLWorkerThreadState;
 #endif
 
+/** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
 {
         std::vector<CPLWorkerThread> aWT;

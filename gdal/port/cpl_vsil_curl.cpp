@@ -73,6 +73,8 @@ int VSICurlUninstallReadCbk(CPL_UNUSED VSILFILE* fp)
 
 #else
 
+//! @cond Doxygen_Suppress
+
 #include <curl/curl.h>
 
 void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
@@ -3211,6 +3213,8 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
     return ReadDirInternal(pszDirname, nMaxFiles, NULL);
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                   VSIInstallCurlFileHandler()                        */
 /************************************************************************/
@@ -3258,6 +3262,8 @@ void VSIInstallCurlFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
 }
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
@@ -4274,6 +4280,8 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 {
     bIsDirectory = strstr(pszContent, "ListBucketResult") != NULL;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                      VSIInstallS3FileHandler()                       */

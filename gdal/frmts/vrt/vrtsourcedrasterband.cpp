@@ -34,6 +34,8 @@
 #include "vrtdataset.h"
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          VRTSourcedRasterBand                        */
@@ -873,6 +875,8 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
     return CE_None;
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                              VRTAddSource()                          */
 /************************************************************************/
@@ -889,6 +893,8 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
     return reinterpret_cast<VRTSourcedRasterBand *>( hVRTBand )->
         AddSource( reinterpret_cast<VRTSource *>( hNewSource ) );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                              XMLInit()                               */
@@ -1138,6 +1144,8 @@ CPLErr VRTSourcedRasterBand::AddMaskBandSource(
     return AddSource( poSimpleSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddSimpleSource()                         */
 /************************************************************************/
@@ -1166,6 +1174,8 @@ CPLErr CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH hVRTBand,
             nDstXSize, nDstYSize,
             pszResampling, dfNoDataValue );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                          AddComplexSource()                          */
@@ -1213,6 +1223,8 @@ CPLErr VRTSourcedRasterBand::AddComplexSource(
     return AddSource( poSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddComplexSource()                        */
 /************************************************************************/
@@ -1244,6 +1256,8 @@ CPLErr CPL_STDCALL VRTAddComplexSource( VRTSourcedRasterBandH hVRTBand,
             dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                           AddFuncSource()                            */
 /************************************************************************/
@@ -1268,6 +1282,8 @@ CPLErr VRTSourcedRasterBand::AddFuncSource(
     return AddSource( poFuncSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                          VRTAddFuncSource()                          */
 /************************************************************************/
@@ -1286,6 +1302,7 @@ CPLErr CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH hVRTBand,
         AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
@@ -1636,3 +1653,5 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 
     return TRUE;
 }
+
+/*! @endcond */

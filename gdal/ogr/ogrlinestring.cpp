@@ -38,6 +38,7 @@ CPL_CVSID("$Id$");
 /*                           OGRSimpleCurve()                           */
 /************************************************************************/
 
+/** Constructor */
 OGRSimpleCurve::OGRSimpleCurve() :
     nPointCount(0), paoPoints(NULL), padfZ(NULL), padfM(NULL)
 { }
@@ -196,6 +197,8 @@ int OGRSimpleCurve::WkbSize() const
     return 5 + 4 + 8 * nPointCount * CoordinateDimension();
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                               Make2D()                               */
 /************************************************************************/
@@ -273,6 +276,8 @@ void OGRSimpleCurve::AddM()
     }
     flags |= OGR_G_MEASURED;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                              getPoint()                              */
@@ -1707,6 +1712,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
     return OGRERR_NONE;
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        importFromWKTListOnly()                       */
 /*                                                                      */
@@ -1766,6 +1772,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput, int bHasZ, int 
 
     return OGRERR_NONE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            exportToWkt()                             */
@@ -2746,7 +2753,7 @@ OGRGeometry* OGRLineString::getCurveGeometry(const char* const* papszOptions) co
 /************************************************************************/
 /*                      TransferMembersAndDestroy()                     */
 /************************************************************************/
-
+//! @cond Doxygen_Suppress
 OGRLineString* OGRLineString::TransferMembersAndDestroy(
                                             OGRLineString* poSrc,
                                             OGRLineString* poDst)
@@ -2763,7 +2770,7 @@ OGRLineString* OGRLineString::TransferMembersAndDestroy(
     delete poSrc;
     return poDst;
 }
-
+//! @endcond
 /************************************************************************/
 /*                         CastToLinearRing()                           */
 /************************************************************************/
@@ -2789,6 +2796,8 @@ OGRLinearRing* OGRLineString::CastToLinearRing(OGRLineString* poLS)
     return (OGRLinearRing*)TransferMembersAndDestroy(poLS, new OGRLinearRing());
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -2804,6 +2813,7 @@ OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRLineString::CastToLinearRing;
 }
+
 
 /************************************************************************/
 /*                            get_Area()                                */
@@ -2822,3 +2832,4 @@ double OGRLineString::get_AreaOfCurveSegments() const
 {
     return 0;
 }
+//! @endcond

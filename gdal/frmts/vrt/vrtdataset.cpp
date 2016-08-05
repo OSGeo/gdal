@@ -36,6 +36,8 @@
 #include <algorithm>
 #include <typeinfo>
 
+/*! @cond Doxygen_Suppress */
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -69,6 +71,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
     poDriver = reinterpret_cast<GDALDriver *>( GDALGetDriverByName( "VRT" ) );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                              VRTCreate()                             */
 /************************************************************************/
@@ -82,6 +86,8 @@ VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 {
     return ( new VRTDataset(nXSize, nYSize) );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                            ~VRTDataset()                            */
@@ -191,6 +197,8 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
     return GDALDataset::GetMetadata(pszDomain);
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                            VRTFlushCache()                           */
 /************************************************************************/
@@ -205,6 +213,8 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 
     reinterpret_cast<VRTDataset *>( hDataset )->FlushCache();
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                           SerializeToXML()                           */
@@ -299,6 +309,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
     return psDSTree;
 }
 
+/*! @endcond */
 /************************************************************************/
 /*                          VRTSerializeToXML()                         */
 /************************************************************************/
@@ -315,7 +326,7 @@ CPLXMLNode * CPL_STDCALL VRTSerializeToXML( VRTDatasetH hDataset,
     return reinterpret_cast<VRTDataset *>(
         hDataset )->SerializeToXML(pszVRTPath);
 }
-
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
@@ -1074,7 +1085,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         return CE_None;
     }
 }
-
+/*! @endcond */
 /************************************************************************/
 /*                              VRTAddBand()                            */
 /************************************************************************/
@@ -1092,7 +1103,7 @@ int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,
     return reinterpret_cast<VRTDataset *>(
         hDataset )->AddBand( eType, papszOptions );
 }
-
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -1735,3 +1746,5 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                                          pfnProgress,
                                          pProgressData );
 }
+
+/*! @endcond */

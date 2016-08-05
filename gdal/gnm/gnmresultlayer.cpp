@@ -32,6 +32,7 @@
 
 CPL_CVSID("$Id$");
 
+/** Constructor */
 OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDSIn,
                                                    OGRLayer* poLayerIn)
 {
@@ -120,6 +121,7 @@ OGRSpatialReference *OGRGNMWrappedResultLayer::GetSpatialRef()
     return poLayer->GetSpatialRef();
 }
 
+/** Undocumented */
 OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
                                               const CPLString &soLayerName,
                                               int nPathNo, bool bIsEdge)

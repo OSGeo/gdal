@@ -725,6 +725,7 @@ OGRPointIterator* OGRCompoundCurve::getPointIterator() const
 /*                         CastToLineString()                        */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
 {
     for(int i=0;i<poCC->oCC.nCurveCount;i++)
@@ -809,6 +810,7 @@ OGRCurveCasterToLineString OGRCompoundCurve::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRCompoundCurve::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRCompoundCurve::CastToLinearRing;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           get_Area()                                 */

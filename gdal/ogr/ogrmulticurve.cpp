@@ -134,6 +134,7 @@ OGRBoolean OGRMultiCurve::isCompatibleSubType(
     return OGR_GT_IsCurve(eGeomType);
 }
 
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                       addCurveDirectlyFromWkt()                      */
 /************************************************************************/
@@ -148,6 +149,7 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
     }
     return poGeometry->addGeometryDirectly(poCurve);
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                           importFromWkt()                            */

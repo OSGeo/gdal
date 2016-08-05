@@ -49,6 +49,8 @@ void VSIInstallS3StreamingFileHandler(void)
 
 #else
 
+//! @cond Doxygen_Suppress
+
 #include <curl/curl.h>
 
 void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
@@ -1549,6 +1551,8 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     return nRet;
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                   VSIInstallCurlFileHandler()                        */
 /************************************************************************/
@@ -1587,6 +1591,7 @@ void VSIInstallCurlStreamingFileHandler(void)
     VSIFileManager::InstallHandler( "/vsicurl_streaming/", new VSICurlStreamingFSHandler );
 }
 
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */
@@ -1719,6 +1724,8 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetE
     }
     return false;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                   VSIInstallS3StreamingFileHandler()                 */

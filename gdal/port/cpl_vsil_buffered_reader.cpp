@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 // The intent of this class is to be a wrapper around an underlying virtual
 // handle and add very basic caching of last read bytes, so that a backward
 // seek of a few bytes doesn't require a seek on the underlying virtual handle.
@@ -69,6 +71,8 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     virtual int       Close();
 };
 
+//! @endcond
+
 /************************************************************************/
 /*                    VSICreateBufferedReaderHandle()                   */
 /************************************************************************/
@@ -87,6 +91,8 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(
                                        pabyBeginningContent,
                                        nCheatFileSizeIn);
 }
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                        VSIBufferedReaderHandle()                     */
@@ -354,3 +360,5 @@ int VSIBufferedReaderHandle::Close()
     }
     return 0;
 }
+
+//! @endcond

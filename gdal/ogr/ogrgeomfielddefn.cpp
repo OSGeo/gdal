@@ -101,6 +101,7 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
 /*                             Initialize()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
                                    OGRwkbGeometryType eTypeIn )
 
@@ -111,6 +112,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
     bIgnore = FALSE;
     bNullable = TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~OGRGeomFieldDefn()                          */
