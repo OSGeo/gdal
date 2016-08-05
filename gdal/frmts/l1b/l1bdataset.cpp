@@ -1689,7 +1689,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         }
 
         // Determine the spacecraft name
-		// See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
+        // See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
         int iWord = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF);
         switch ( iWord )
         {
