@@ -135,7 +135,7 @@ const char* const IRISDataset::aszDataTypes[] = {
 const char* const IRISDataset::aszProjections[] = {
     "Azimutal equidistant","Mercator","Polar Stereographic", "UTM",
     // FIXME: is it a typo here or in IRIS itself: Perspective or Prespective ?
-    "Prespective from geosync", "Equidistant cylindrical", "Gnomonic",
+    "Perspective from geosync", "Equidistant cylindrical", "Gnomonic",
     "Gauss conformal", "Lambert conformal conic"};
 
 /************************************************************************/

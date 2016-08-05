@@ -828,7 +828,7 @@ typedef enum ogr_style_tool_param_pen_id
 typedef enum ogr_style_tool_param_brush_id
 {
     OGRSTBrushFColor    = 0, /**< Foreground color */
-    OGRSTBrushBColor    = 1, /**< Backgorund color */
+    OGRSTBrushBColor    = 1, /**< Background color */
     OGRSTBrushId        = 2, /**< Id */
     OGRSTBrushAngle     = 3, /**< Angle */
     OGRSTBrushSize      = 4, /**< Size */

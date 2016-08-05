@@ -132,7 +132,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a overridding AIS file location, apply it now.       */
+/*      If we have a overriding AIS file location, apply it now.       */
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
     {
