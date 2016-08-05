@@ -109,7 +109,7 @@ typedef int CPLErrorNum;
 #define CPLE_AssertionFailed            7
 /** No write access */
 #define CPLE_NoWriteAccess              8
-/** User interruped */
+/** User interrupted */
 #define CPLE_UserInterrupt              9
 /** NULL object */
 #define CPLE_ObjectNull                 10

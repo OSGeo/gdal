@@ -3432,7 +3432,7 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
                                 poDDSDesc[derivedId].pszDatasetName,GetDescription()));
 
                     CPLString osDesc(CPLSPrintf("%s from %s",
-                                    poDDSDesc[derivedId].pszDatasetDescritpion,
+                                    poDDSDesc[derivedId].pszDatasetDescription,
                                     GetDescription()));
                     oDerivedMetadataList.SetNameValue(
                         CPLSPrintf("DERIVED_SUBDATASET_%d_DESC",nNumDataset),

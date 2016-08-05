@@ -277,7 +277,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
 
     for (k = 0; k < nK - 1; ++k) // -1 because we have already found one
     {
-        std::map<GNMGFID, double> mDeletedEdges; // for infinity costs assignement
+        std::map<GNMGFID, double> mDeletedEdges; // for infinity costs assignment
         itAk = A[k].begin();
 
         for (i = 0; i < A[k].size() - 1; ++i) // avoid end node
