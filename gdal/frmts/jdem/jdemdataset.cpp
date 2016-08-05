@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 static int JDEMGetField( char *pszField, int nWidth )
 
 {
-    char	szWork[32];
+    char szWork[32];
 
     CPLAssert( nWidth < (int) sizeof(szWork) );
 
@@ -56,7 +56,7 @@ static int JDEMGetField( char *pszField, int nWidth )
 static double JDEMGetAngle( char *pszField )
 
 {
-    int		nAngle = JDEMGetField( pszField, 7 );
+    int nAngle = JDEMGetField( pszField, 7 );
 
     // Note, this isn't very general purpose, but it would appear
     // from the field widths that angles are never negative.  Nice
@@ -71,7 +71,7 @@ static double JDEMGetAngle( char *pszField )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				JDEMDataset				*/
+/*                              JDEMDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -81,8 +81,8 @@ class JDEMDataset : public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
-    VSILFILE	*fp;
-    GByte	abyHeader[1012];
+    VSILFILE    *fp;
+    GByte       abyHeader[1012];
 
   public:
                      JDEMDataset();
@@ -91,7 +91,7 @@ class JDEMDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 
@@ -111,7 +111,7 @@ class JDEMRasterBand : public GDALPamRasterBand
 
   public:
 
-    		JDEMRasterBand( JDEMDataset *, int );
+                JDEMRasterBand( JDEMDataset *, int );
                 ~JDEMRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -200,7 +200,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				JDEMDataset				*/
+/*                              JDEMDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
