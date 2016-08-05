@@ -88,7 +88,7 @@ void GDALRegister_HDF5()
 }
 
 /************************************************************************/
-/*                           HDF5Dataset()                      	*/
+/*                           HDF5Dataset()                              */
 /************************************************************************/
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
@@ -997,7 +997,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
 /*      List all objects in HDF5                                        */
 /************************************************************************/
 CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
-					  int bSUBDATASET )
+                                          int bSUBDATASET )
 {
     HDF5Dataset *poDS = this;
 

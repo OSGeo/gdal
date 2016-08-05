@@ -1115,10 +1115,10 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
             }
             else
             {
-//            	geotransform[1] : width of pixel
-//            	geotransform[4] : rotational coefficient, zero for north up images.
-//            	geotransform[2] : rotational coefficient, zero for north up images.
-//            	geotransform[5] : height of pixel (but negative)
+                // geotransform[1] : width of pixel
+                // geotransform[4] : rotational coefficient, zero for north up images.
+                // geotransform[2] : rotational coefficient, zero for north up images.
+                // geotransform[5] : height of pixel (but negative)
 
                 adfGeoTransform[0] = pdOutUL[0];
                 adfGeoTransform[1] = pdLineSpacing[0];
@@ -1208,7 +1208,7 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
                         CPLFree( pasGCPList[i].pszId );
                     if( pasGCPList[i].pszInfo )
                         CPLFree( pasGCPList[i].pszInfo );
-	            }
+                }
                 CPLFree( pasGCPList );
                 pasGCPList = NULL;
                 nGCPCount = 0;

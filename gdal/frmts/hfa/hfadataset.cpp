@@ -38,10 +38,10 @@
 CPL_CVSID("$Id$");
 
 #ifndef R2D
-#  define R2D	(180/M_PI)
+#  define R2D (180/M_PI)
 #endif
 #ifndef D2R
-#  define D2R	(M_PI/180)
+#  define D2R (M_PI/180)
 #endif
 
 #define ARCSEC2RAD (M_PI/648000)
@@ -249,7 +249,7 @@ static const int anUsgsEsriZones[] =
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HFADataset				*/
+/*                              HFADataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -259,13 +259,13 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 {
     friend class HFARasterBand;
 
-    HFAHandle	hHFA;
+    HFAHandle   hHFA;
 
     int         bMetadataDirty;
 
     int         bGeoDirty;
     double      adfGeoTransform[6];
-    char	*pszProjection;
+    char        *pszProjection;
 
     int         bIgnoreUTM;
 
@@ -273,8 +273,8 @@ class HFADataset CPL_FINAL : public GDALPamDataset
     CPLErr      WriteProjection();
     int         bForceToPEString;
 
-    int		nGCPCount;
-    GDAL_GCP	asGCPList[36];
+    int         nGCPCount;
+    GDAL_GCP    asGCPList[36];
 
     void        UseXFormStack( int nStepCount,
                                Efga_Polynomial *pasPolyListForward,
@@ -342,15 +342,15 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 
     GDALColorTable *poCT;
 
-    EPTType	eHFADataType;
+    EPTType     eHFADataType;
 
     int         nOverviews;
-    int		nThisOverview;
+    int         nThisOverview;
     HFARasterBand **papoOverviewBands;
 
     CPLErr      CleanOverviews();
 
-    HFAHandle	hHFA;
+    HFAHandle   hHFA;
 
     int         bMetadataDirty;
 
@@ -415,7 +415,7 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
 {
 private:
 
-    HFAHandle	hHFA;
+    HFAHandle   hHFA;
     HFAEntry   *poDT;
     CPLString   osName;
     int         nBand;
@@ -2496,7 +2496,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    CPLErr	eErr;
+    CPLErr eErr;
 
     if( nThisOverview == -1 )
         eErr = HFAGetRasterBlockEx( hHFA, nBand, nBlockXOff, nBlockYOff,
@@ -2512,7 +2512,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( eErr == CE_None && eHFADataType == EPT_u4 )
     {
-        GByte	*pabyData = (GByte *) pImage;
+        GByte *pabyData = (GByte *) pImage;
 
         for( int ii = nBlockXSize * nBlockYSize - 2; ii >= 0; ii -= 2 )
         {
@@ -2523,7 +2523,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     if( eErr == CE_None && eHFADataType == EPT_u2 )
     {
-        GByte	*pabyData = (GByte *) pImage;
+        GByte *pabyData = (GByte *) pImage;
 
         for( int ii = nBlockXSize * nBlockYSize - 4; ii >= 0; ii -= 4 )
         {
@@ -2536,7 +2536,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     if( eErr == CE_None && eHFADataType == EPT_u1)
     {
-        GByte	*pabyData = (GByte *) pImage;
+        GByte *pabyData = (GByte *) pImage;
 
         for( int ii = nBlockXSize * nBlockYSize - 1; ii >= 0; ii-- )
         {
@@ -2729,7 +2729,7 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
     }
 
     HFASetPCT( hHFA, nBand, nColors,
-	       padfRed, padfGreen, padfBlue, padfAlpha);
+               padfRed, padfGreen, padfBlue, padfAlpha);
 
     CPLFree( padfRed );
     CPLFree( padfGreen );
@@ -3108,7 +3108,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         HFAEntry *poColumn = poDT->GetNamedChild(pszName);
 
         if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
-	    poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
+            poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszName, "Edsc_Column",
                                      poDT );
 
@@ -3332,8 +3332,8 @@ void HFADataset::FlushCache()
 CPLErr HFADataset::WriteProjection()
 
 {
-    OGRSpatialReference	oSRS;
-    char		*pszP = pszProjection;
+    OGRSpatialReference oSRS;
+    char *pszP = pszProjection;
     bool bPEStringStored = false;
 
     bGeoDirty = FALSE;
@@ -3348,9 +3348,9 @@ CPLErr HFADataset::WriteProjection()
 /* -------------------------------------------------------------------- */
 /*      Initialize projection and datum.                                */
 /* -------------------------------------------------------------------- */
-    Eprj_Datum	        sDatum;
+    Eprj_Datum          sDatum;
     Eprj_ProParameters  sPro;
-    Eprj_MapInfo	sMapInfo;
+    Eprj_MapInfo        sMapInfo;
     memset( &sPro, 0, sizeof(sPro) );
     memset( &sDatum, 0, sizeof(sDatum) );
     memset( &sMapInfo, 0, sizeof(sMapInfo) );
@@ -3464,7 +3464,7 @@ CPLErr HFADataset::WriteProjection()
     /* FIXME/NOTDEF/TODO: Add State Plane */
     else if( !bIgnoreUTM && oSRS.GetUTMZone( NULL ) != 0 )
     {
-        int	bNorth, nZone;
+        int bNorth, nZone;
 
         nZone = oSRS.GetUTMZone( &bNorth );
         sPro.proNumber = EPRJ_UTM;
@@ -3985,16 +3985,16 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = 0;
         sPro.proParams[7] = 0;
     }
-else if (EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED))
-	{
-		sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED;
-		sPro.proName = (char*) "Transverse Mercator (South Orientated)";
-		sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
-		sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
-		sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
-		sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
-		sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
-	}
+    else if (EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED))
+    {
+        sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED;
+        sPro.proName = (char*) "Transverse Mercator (South Orientated)";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
 
     // Anything we can't map, we store as an ESRI PE_STRING
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
@@ -4204,7 +4204,7 @@ void ClearSR(HFAHandle hHFA)
 {
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry	*poMIEntry;
+        HFAEntry *poMIEntry;
         if( hHFA->papoBand[iBand]->poNode && (poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection")) != NULL )
         {
             poMIEntry->MarkDirty();
@@ -4403,7 +4403,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 /* -------------------------------------------------------------------- */
     const char *pszDatumName = psPro->proSpheroid.sphereName;
     const char *pszEllipsoidName = psPro->proSpheroid.sphereName;
-    double	dfInvFlattening;
+    double dfInvFlattening;
 
     if( psDatum != NULL )
     {
@@ -4544,7 +4544,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         break;
 
       case EPRJ_EQUIDISTANT_CONIC:
-        double		dfStdParallel2;
+        double dfStdParallel2;
 
         if( psPro->proParams[8] != 0.0 )
             dfStdParallel2 = psPro->proParams[3]*R2D;
@@ -5185,7 +5185,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    HFAHandle	hHFA;
+    HFAHandle hHFA;
 
     if( poOpenInfo->eAccess == GA_Update )
         hHFA = HFAOpen( poOpenInfo->pszFilename, "r+" );
@@ -5198,7 +5198,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    HFADataset 	*poDS = new HFADataset();
+    HFADataset *poDS = new HFADataset();
 
     poDS->hHFA = hHFA;
     poDS->eAccess = poOpenInfo->eAccess;
@@ -5228,8 +5228,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get geotransform, or if that fails, try to find XForms to 	*/
-/*	build gcps, and metadata.					*/
+/*      Get geotransform, or if that fails, try to find XForms to       */
+/*      build gcps, and metadata.                                       */
 /* -------------------------------------------------------------------- */
     if( !HFAGetGeoTransform( hHFA, poDS->adfGeoTransform ) )
     {
@@ -5661,7 +5661,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
 /* -------------------------------------------------------------------- */
-    EPTType	eHfaDataType;
+    EPTType eHfaDataType;
     switch( eType )
     {
       case GDT_Byte:
@@ -5963,7 +5963,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy projection information.                                    */
 /* -------------------------------------------------------------------- */
-    double	adfGeoTransform[6];
+    double adfGeoTransform[6];
 
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0

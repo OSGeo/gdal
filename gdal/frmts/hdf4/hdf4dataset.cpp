@@ -114,11 +114,11 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 
 /************************************************************************/
 /*                           SPrintArray()                              */
-/*	Prints numerical arrays in string buffer.			*/
-/*	This function takes pfaDataArray as a pointer to printed array,	*/
-/*	nValues as a number of values to print and pszDelimiter as a	*/
-/*	field delimiting strings.					*/
-/*	Pointer to filled buffer will be returned.			*/
+/*      Prints numerical arrays in string buffer.                       */
+/*      This function takes pfaDataArray as a pointer to printed array, */
+/*      nValues as a number of values to print and pszDelimiter as a    */
+/*      field delimiting strings.                                       */
+/*      Pointer to filled buffer will be returned.                      */
 /************************************************************************/
 
 char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
@@ -226,29 +226,29 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-	    return "8-bit character";
-	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-	    return "8-bit unsigned character";
+            return "8-bit character";
+        case DFNT_UCHAR8: // The same as DFNT_UCHAR
+            return "8-bit unsigned character";
         case DFNT_INT8:
-	    return "8-bit integer";
+            return "8-bit integer";
         case DFNT_UINT8:
-	    return "8-bit unsigned integer";
+            return "8-bit unsigned integer";
         case DFNT_INT16:
-	    return "16-bit integer";
+            return "16-bit integer";
         case DFNT_UINT16:
-	    return "16-bit unsigned integer";
+            return "16-bit unsigned integer";
         case DFNT_INT32:
-	    return "32-bit integer";
+            return "32-bit integer";
         case DFNT_UINT32:
-	    return "32-bit unsigned integer";
+            return "32-bit unsigned integer";
         case DFNT_INT64:
-	    return "64-bit integer";
+            return "64-bit integer";
         case DFNT_UINT64:
-	    return "64-bit unsigned integer";
+            return "64-bit unsigned integer";
         case DFNT_FLOAT32:
-	    return "32-bit floating-point";
+            return "32-bit floating-point";
         case DFNT_FLOAT64:
-	    return "64-bit floating-point";
+            return "64-bit floating-point";
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -268,21 +268,21 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-	case DFNT_UCHAR8: // The same as DFNT_UCHAR
+        case DFNT_UCHAR8: // The same as DFNT_UCHAR
         case DFNT_INT8:
         case DFNT_UINT8:
-	    return 1;
+            return 1;
         case DFNT_INT16:
         case DFNT_UINT16:
-	    return 2;
+            return 2;
         case DFNT_INT32:
         case DFNT_UINT32:
         case DFNT_FLOAT32:
-	    return 4;
+            return 4;
         case DFNT_INT64:
         case DFNT_UINT64:
         case DFNT_FLOAT64:
-	    return 8;
+            return 8;
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -381,13 +381,13 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
                 bInBracket = TRUE;
                 continue;
             }
-	    else if ( *pszString == ')' )
+            else if ( *pszString == ')' )
             {
-		bInBracket = FALSE;
+                bInBracket = FALSE;
                 continue;
             }
 
-	    if( nTokenLen >= nTokenMax - 2 )
+            if( nTokenLen >= nTokenMax - 2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
                 pszToken = static_cast<char *>(
@@ -538,25 +538,25 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     char ** papszAttrs = papszAttrList;
     while ( papszAttrs )
     {
-	papszAttrs = HDF4EOSGetObject( papszAttrs, &pszAttrName,
+        papszAttrs = HDF4EOSGetObject( papszAttrs, &pszAttrName,
                                        &pszAttrClass, &pszAttrValue );
-	if ( pszAttrName && pszAttrValue )
+        if ( pszAttrName && pszAttrValue )
         {
-	    // Now we should recognize special type of HDF EOS metastructures:
-	    // ADDITIONALATTRIBUTENAME = <name>
-	    // PARAMETERVALUE = <value>
-	    if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
-		pszAddAttrName = pszAttrValue;
-	    else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
+            // Now we should recognize special type of HDF EOS metastructures:
+            // ADDITIONALATTRIBUTENAME = <name>
+            // PARAMETERVALUE = <value>
+            if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
+                pszAddAttrName = pszAttrValue;
+            else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
             {
-		papszMetadata =
-		    CSLAddNameValue( papszMetadata, pszAddAttrName, pszAttrValue );
-		pszAddAttrName = NULL;
+                papszMetadata =
+                    CSLAddNameValue( papszMetadata, pszAddAttrName, pszAttrValue );
+                pszAddAttrName = NULL;
             }
             else
             {
                 // Add class suffix to the key name if applicable
-		papszMetadata = CSLAddNameValue( papszMetadata,
+                papszMetadata = CSLAddNameValue( papszMetadata,
                     pszAttrClass ?
                     CPLSPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
                     pszAttrValue );
@@ -638,18 +638,18 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
         SDattrinfo( iHandler, iAttribute, szAttrName, &iNumType, &nValues );
 
         if ( STARTS_WITH_CI(szAttrName, "coremetadata")    ||
-	     STARTS_WITH_CI(szAttrName, "archivemetadata.") ||
-	     STARTS_WITH_CI(szAttrName, "productmetadata.") ||
+             STARTS_WITH_CI(szAttrName, "archivemetadata.") ||
+             STARTS_WITH_CI(szAttrName, "productmetadata.") ||
              STARTS_WITH_CI(szAttrName, "badpixelinformation") ||
-	     STARTS_WITH_CI(szAttrName, "product_summary") ||
-	     STARTS_WITH_CI(szAttrName, "dem_specific") ||
-	     STARTS_WITH_CI(szAttrName, "bts_specific") ||
-	     STARTS_WITH_CI(szAttrName, "etse_specific") ||
-	     STARTS_WITH_CI(szAttrName, "dst_specific") ||
-	     STARTS_WITH_CI(szAttrName, "acv_specific") ||
-	     STARTS_WITH_CI(szAttrName, "act_specific") ||
-	     STARTS_WITH_CI(szAttrName, "etst_specific") ||
-	     STARTS_WITH_CI(szAttrName, "level_1_carryover") )
+             STARTS_WITH_CI(szAttrName, "product_summary") ||
+             STARTS_WITH_CI(szAttrName, "dem_specific") ||
+             STARTS_WITH_CI(szAttrName, "bts_specific") ||
+             STARTS_WITH_CI(szAttrName, "etse_specific") ||
+             STARTS_WITH_CI(szAttrName, "dst_specific") ||
+             STARTS_WITH_CI(szAttrName, "acv_specific") ||
+             STARTS_WITH_CI(szAttrName, "act_specific") ||
+             STARTS_WITH_CI(szAttrName, "etst_specific") ||
+             STARTS_WITH_CI(szAttrName, "level_1_carryover") )
         {
             bIsHDFEOS = true;
             papszGlobalMetadata
@@ -659,7 +659,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 
         // Skip "StructMetadata.N" records. We will fetch information
         // from them using HDF-EOS API
-	else if ( STARTS_WITH_CI(szAttrName, "structmetadata.") )
+        else if ( STARTS_WITH_CI(szAttrName, "structmetadata.") )
         {
             bIsHDFEOS = true;
             continue;
@@ -667,8 +667,8 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 
         else
         {
-	    papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
-		iAttribute, szAttrName,	iNumType, nValues, papszGlobalMetadata );
+            papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
+                iAttribute, szAttrName, iNumType, nValues, papszGlobalMetadata );
         }
     }
 
@@ -782,43 +782,43 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( pszValue != NULL && EQUAL( pszValue, pszGDALSignature ) )
     {
-	poDS->iSubdatasetType = H4ST_GDAL;
-	poDS->pszSubdatasetType = "GDAL_HDF4";
+        poDS->iSubdatasetType = H4ST_GDAL;
+        poDS->pszSubdatasetType = "GDAL_HDF4";
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
-	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+         && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
-	poDS->iSubdatasetType = H4ST_SEAWIFS_L1A;
-	poDS->pszSubdatasetType = "SEAWIFS_L1A";
+        poDS->iSubdatasetType = H4ST_SEAWIFS_L1A;
+        poDS->pszSubdatasetType = "SEAWIFS_L1A";
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
-	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
+        && EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
     {
-	poDS->iSubdatasetType = H4ST_SEAWIFS_L2;
-	poDS->pszSubdatasetType = "SEAWIFS_L2";
+        poDS->iSubdatasetType = H4ST_SEAWIFS_L2;
+        poDS->pszSubdatasetType = "SEAWIFS_L2";
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
-	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
+        && EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
     {
-	poDS->iSubdatasetType = H4ST_SEAWIFS_L3;
-	poDS->pszSubdatasetType = "SEAWIFS_L3";
+        poDS->iSubdatasetType = H4ST_SEAWIFS_L3;
+        poDS->pszSubdatasetType = "SEAWIFS_L3";
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
                                             "L1 File Generated By")) != NULL
-	&& STARTS_WITH_CI(pszValue, "HYP version ") )
+        && STARTS_WITH_CI(pszValue, "HYP version ") )
     {
-	poDS->iSubdatasetType = H4ST_HYPERION_L1;
-	poDS->pszSubdatasetType = "HYPERION_L1";
+        poDS->iSubdatasetType = H4ST_HYPERION_L1;
+        poDS->pszSubdatasetType = "HYPERION_L1";
     }
 
     else
     {
-	poDS->iSubdatasetType = H4ST_UNKNOWN;
-	poDS->pszSubdatasetType = "UNKNOWN";
+        poDS->iSubdatasetType = H4ST_UNKNOWN;
+        poDS->pszSubdatasetType = "UNKNOWN";
     }
 
 /* -------------------------------------------------------------------- */
