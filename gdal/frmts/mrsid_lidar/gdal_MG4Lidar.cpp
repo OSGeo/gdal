@@ -52,7 +52,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				MG4LidarDataset				*/
+/*                              MG4LidarDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -85,7 +85,7 @@ public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
-   CPLErr 	GetGeoTransform( double * padfTransform );
+   CPLErr         GetGeoTransform( double * padfTransform );
    const char *GetProjectionRef();
 
 protected:
@@ -771,7 +771,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    /* -------------------------------------------------------------------- */
    /*      Create a corresponding GDALDataset.                             */
    /* -------------------------------------------------------------------- */
-   MG4LidarDataset 	*poDS;
+   MG4LidarDataset *poDS;
 
    poDS = new MG4LidarDataset();
    poDS->poXMLPCView = pxmlPCView;

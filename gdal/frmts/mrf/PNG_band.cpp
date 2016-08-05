@@ -238,7 +238,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
     png_set_asm_flags(pngp, flags | mask); // use flags &~mask to disable all
 
     // Test that the MMX is compiled into PNG
-    //	fprintf(stderr,"MMX support is %d\n", png_mmx_support());
+    // fprintf(stderr,"MMX support is %d\n", png_mmx_support());
 
 #endif
 

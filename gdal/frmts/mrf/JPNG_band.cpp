@@ -190,12 +190,12 @@ JPNG_Band::JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level
     rgb(FALSE), sameres(FALSE), optimize(false)
 {   // Check error conditions
     if (image.dt != GDT_Byte) {
-	CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
-	return;
+        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
+        return;
     }
     if (image.order != IL_Interleaved || (image.pagesize.c != 4 && image.pagesize.c != 2)) {
-	CPLError(CE_Failure, CPLE_NotSupported, "MRF JPNG can only handle 2 or 4 interleaved bands");
-	return;
+        CPLError(CE_Failure, CPLE_NotSupported, "MRF JPNG can only handle 2 or 4 interleaved bands");
+        return;
     }
 
     if (img.pagesize.c == 4) { // RGBA can have storage flavors
