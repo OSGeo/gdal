@@ -79,9 +79,9 @@ const char * const * GetHFAAuxMetaDataList()
 static char * HFAGetDictionary( HFAHandle hHFA )
 
 {
-    int		nDictMax = 100;
-    char	*pszDictionary = (char *) CPLMalloc(nDictMax);
-    int		nDictSize = 0;
+    int nDictMax = 100;
+    char *pszDictionary = (char *) CPLMalloc(nDictMax);
+    int nDictSize = 0;
 
     if( VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET ) < 0 )
     {
@@ -120,9 +120,9 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 
 {
     VSILFILE *fp;
-    char	szHeader[16];
-    HFAInfo_t	*psInfo;
-    GUInt32	nHeaderPos;
+    char szHeader[16];
+    HFAInfo_t *psInfo;
+    GUInt32 nHeaderPos;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -173,13 +173,13 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
     psInfo->fp = fp;
     if( EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb" ) )
-	psInfo->eAccess = HFA_ReadOnly;
+        psInfo->eAccess = HFA_ReadOnly;
     else
-	psInfo->eAccess = HFA_Update;
+        psInfo->eAccess = HFA_Update;
     psInfo->bTreeDirty = FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	Where is the header?						*/
+/*      Where is the header?                                            */
 /* -------------------------------------------------------------------- */
     bool bRet = VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &nHeaderPos );
@@ -322,7 +322,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Try to open the dependent file.                                 */
 /* -------------------------------------------------------------------- */
-    char	*pszDependent;
+    char *pszDependent;
     VSILFILE *fp;
     const char* pszMode = psBase->eAccess == HFA_Update ? "r+b" : "rb";
 
@@ -352,7 +352,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
 
 {
-    HFAEntry	*poNode;
+    HFAEntry *poNode;
 
 /* -------------------------------------------------------------------- */
 /*      Find the first band node.                                       */
@@ -402,7 +402,7 @@ int HFAClose( HFAHandle hHFA )
 
 {
     int nRet = 0;
-    int		i;
+    int i;
 
     if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty ||
         (hHFA->poDictionary != NULL && hHFA->poDictionary->bDictionaryTextDirty)) )
@@ -584,7 +584,7 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, EPTType * peDataType,
 /* -------------------------------------------------------------------- */
     if( pnCompressionType != NULL )
     {
-        HFAEntry	*poDMS;
+        HFAEntry *poDMS;
 
         *pnCompressionType = 0;
 
@@ -652,7 +652,7 @@ CPLErr HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue )
 int HFAGetOverviewCount( HFAHandle hHFA, int nBand )
 
 {
-    HFABand	*poBand;
+    HFABand *poBand;
 
     if( nBand < 0 || nBand > hHFA->nBands )
     {
@@ -676,7 +676,7 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
                            EPTType * peHFADataType )
 
 {
-    HFABand	*poBand;
+    HFABand *poBand;
 
     if( nBand < 0 || nBand > hHFA->nBands )
     {
@@ -930,7 +930,7 @@ const char *HFAGetDataTypeName( EPTType eDataType )
 const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 
 {
-    HFAEntry	*poMIEntry;
+    HFAEntry *poMIEntry;
     Eprj_MapInfo *psMapInfo;
 
     if( hHFA->nBands < 1 )
@@ -1159,7 +1159,7 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry	*poMIEntry;
+        HFAEntry *poMIEntry;
 
 /* -------------------------------------------------------------------- */
 /*      Create a new Map_Info if there isn't one present already.       */
@@ -1176,7 +1176,7 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int	nSize;
+        int nSize;
         GByte   *pabyData;
 
         nSize = static_cast<int>(48 + 40
@@ -1390,9 +1390,9 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 
 {
-    HFAEntry	*poMIEntry;
+    HFAEntry *poMIEntry;
     Eprj_ProParameters *psProParms;
-    int		i;
+    int i;
 
     if( hHFA->nBands < 1 )
         return NULL;
@@ -1426,7 +1426,7 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 
     for( i = 0; i < 15; i++ )
     {
-        char	szFieldName[40];
+        char szFieldName[40];
 
         snprintf( szFieldName, sizeof(szFieldName), "proParams[%d]", i );
         psProParms->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
@@ -1458,7 +1458,7 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry	*poMIEntry;
+        HFAEntry *poMIEntry;
 
 /* -------------------------------------------------------------------- */
 /*      Create a new Projection if there isn't one present already.     */
@@ -1475,8 +1475,8 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int	nSize;
-        GByte   *pabyData;
+        int nSize;
+        GByte *pabyData;
 
         nSize = static_cast<int>(34 + 15 * 8
             + 8 + strlen(poPro->proName) + 1
@@ -1541,9 +1541,9 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
 
 {
-    HFAEntry	*poMIEntry;
-    Eprj_Datum	*psDatum;
-    int		i;
+    HFAEntry *poMIEntry;
+    Eprj_Datum *psDatum;
+    int i;
 
     if( hHFA->nBands < 1 )
         return NULL;
@@ -1581,7 +1581,7 @@ const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
 
     for( i = 0; i < 7; i++ )
     {
-        char	szFieldName[30];
+        char szFieldName[30];
 
         snprintf( szFieldName, sizeof(szFieldName), "params[%d]", i );
         psDatum->params[i] = poMIEntry->GetDoubleField(szFieldName);
@@ -1606,7 +1606,7 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry	*poDatumEntry=NULL, *poProParms;
+        HFAEntry *poDatumEntry=NULL, *poProParms;
 
 /* -------------------------------------------------------------------- */
 /*      Create a new Projection if there isn't one present already.     */
@@ -1632,8 +1632,8 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int	nSize;
-        GByte   *pabyData;
+        int nSize;
+        GByte *pabyData;
 
         nSize = static_cast<int>(26 + strlen(poDatum->datumname) + 1 + 7*8);
 
@@ -1677,7 +1677,7 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 
 CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
                   double **ppadfRed, double **ppadfGreen,
-		  double **ppadfBlue , double **ppadfAlpha,
+                  double **ppadfBlue , double **ppadfAlpha,
                   double **ppadfBins )
 
 {
@@ -1686,7 +1686,7 @@ CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
 
     return( hHFA->papoBand[nBand-1]->GetPCT( pnColors, ppadfRed,
                                              ppadfGreen, ppadfBlue,
-					     ppadfAlpha, ppadfBins ) );
+                                             ppadfAlpha, ppadfBins ) );
 }
 
 /************************************************************************/
@@ -1697,7 +1697,7 @@ CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
 
 CPLErr HFASetPCT( HFAHandle hHFA, int nBand, int nColors,
                   double *padfRed, double *padfGreen, double *padfBlue,
-		  double *padfAlpha )
+                  double *padfAlpha )
 
 {
     if( nBand < 1 || nBand > hHFA->nBands )
@@ -1711,11 +1711,11 @@ CPLErr HFASetPCT( HFAHandle hHFA, int nBand, int nColors,
 /*                          HFAGetDataRange()                           */
 /************************************************************************/
 
-CPLErr	HFAGetDataRange( HFAHandle hHFA, int nBand,
+CPLErr HFAGetDataRange( HFAHandle hHFA, int nBand,
                          double * pdfMin, double *pdfMax )
 
 {
-    HFAEntry	*poBinInfo;
+    HFAEntry *poBinInfo;
 
     if( nBand < 1 || nBand > hHFA->nBands )
         return CE_Failure;
@@ -1738,12 +1738,12 @@ CPLErr	HFAGetDataRange( HFAHandle hHFA, int nBand,
 /*                            HFADumpNode()                             */
 /************************************************************************/
 
-static void	HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
-                             FILE * fp )
+static void HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
+                         FILE * fp )
 
 {
-    char	szSpaces[256];
-    int		i;
+    char szSpaces[256];
+    int i;
 
     for( i = 0; i < nIndent*2; i++ )
         szSpaces[i] = ' ';
@@ -1805,12 +1805,12 @@ void HFADumpDictionary( HFAHandle hHFA, FILE * fpOut )
 void HFAStandard( int nBytes, void * pData )
 
 {
-    int		i;
-    GByte	*pabyData = (GByte *) pData;
+    int i;
+    GByte *pabyData = (GByte *) pData;
 
     for( i = nBytes/2-1; i >= 0; i-- )
     {
-        GByte	byTemp;
+        GByte byTemp;
 
         byTemp = pabyData[i];
         pabyData[i] = pabyData[nBytes-i-1];
@@ -1886,7 +1886,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write out the Ehfa_HeaderTag                                    */
 /* -------------------------------------------------------------------- */
-    GInt32	nHeaderPos;
+    GInt32 nHeaderPos;
 
     bool bRet = VSIFWriteL( (void *) "EHFA_HEADER_TAG", 1, 16, fp ) > 0;
 
@@ -1897,9 +1897,9 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write the Ehfa_File node, locked in at offset 20.               */
 /* -------------------------------------------------------------------- */
-    GInt32	nVersion = 1, nFreeList = 0, nRootEntry = 0;
-    GInt16      nEntryHeaderLength = 128;
-    GInt32	nDictionaryPtr = 38;
+    GInt32 nVersion = 1, nFreeList = 0, nRootEntry = 0;
+    GInt16 nEntryHeaderLength = 128;
+    GInt32 nDictionaryPtr = 38;
 
     psInfo->nEntryHeaderLength = nEntryHeaderLength;
     psInfo->nRootPos = 0;
@@ -2008,7 +2008,7 @@ GUInt32 HFAAllocateSpace( HFAInfo_t *psInfo, GUInt32 nBytes )
 CPLErr HFAFlush( HFAHandle hHFA )
 
 {
-    CPLErr	eErr;
+    CPLErr eErr;
 
     if( !hHFA->bTreeDirty && !hHFA->poDictionary->bDictionaryTextDirty )
         return CE_None;
@@ -2048,8 +2048,8 @@ CPLErr HFAFlush( HFAHandle hHFA )
     if( hHFA->nRootPos != hHFA->poRoot->GetFilePos()
         || nNewDictionaryPos != hHFA->nDictionaryPos )
     {
-        GUInt32		nOffset;
-        GUInt32         nHeaderPos;
+        GUInt32 nOffset;
+        GUInt32 nHeaderPos;
 
         bRet &= VSIFSeekL( hHFA->fp, 16, SEEK_SET ) >= 0;
         bRet &= VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp ) > 0;
@@ -2092,7 +2092,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 
 {
 
-    HFAEntry	*poEimg_Layer;
+    HFAEntry *poEimg_Layer;
     const char *pszLayerType;
 
     if( bOverview )
@@ -2109,7 +2109,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
-    int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+    int nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
@@ -2138,9 +2138,9 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /* -------------------------------------------------------------------- */
     if ( !bCreateLargeRaster && !bDependentLayer )
     {
-        int	nDmsSize;
+        int nDmsSize;
         HFAEntry *poEdms_State;
-        GByte	*pabyData;
+        GByte *pabyData;
 
         poEdms_State =
             HFAEntry::New( psInfo, "RasterDMS", "Edms_State", poEimg_Layer );
@@ -2169,7 +2169,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poEdms_State->SetPosition();
 
         /* Set block info headers */
-        GUInt32		nValue;
+        GUInt32 nValue;
 
         /* blockinfo count */
         nValue = nBlocks;
@@ -2185,7 +2185,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
         {
             GInt16  nValue16;
-            int	    nOffset = 22 + 14 * iBlock;
+            int nOffset = 22 + 14 * iBlock;
 
             /* fileCode */
             nValue16 = 0;
@@ -2347,8 +2347,8 @@ HFAHandle HFACreate( const char * pszFilename,
                      EPTType eDataType, char ** papszOptions )
 
 {
-    HFAHandle	psInfo;
-    int		nBlockSize = 64;
+    HFAHandle psInfo;
+    int nBlockSize = 64;
     const char * pszValue = CSLFetchNameValue( papszOptions, "BLOCKSIZE" );
 
     if ( pszValue != NULL )
@@ -2397,7 +2397,7 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
-    int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+    int nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
@@ -2406,8 +2406,8 @@ HFAHandle HFACreate( const char * pszFilename,
                       * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
     CPLDebug( "HFACreate", "Blocks per row %d, blocks per column %d, "
-	      "total number of blocks %d, bytes per block %d.",
-	      nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock );
+              "total number of blocks %d, bytes per block %d.",
+              nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock );
 
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with         */
@@ -2456,21 +2456,21 @@ HFAHandle HFACreate( const char * pszFilename,
         if( !HFACreateSpillStack( psInfo, nXSize, nYSize, nBands,
                                   nBlockSize, eDataType,
                                   &nValidFlagsOffset, &nDataOffset ) )
-	{
-	    CPLFree( pszRawFilename );
-	    CPLFree( pszFullFilename );
-	    return NULL;
-	}
+        {
+            CPLFree( pszRawFilename );
+            CPLFree( pszFullFilename );
+            return NULL;
+        }
     }
 
 /* ==================================================================== */
 /*      Create each band (layer)                                        */
 /* ==================================================================== */
-    int		iBand;
+    int iBand;
 
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        char		szName[128];
+        char szName[128];
 
         snprintf( szName, sizeof(szName), "Layer_%d", iBand + 1 );
 
@@ -2641,7 +2641,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /*      Create the Descriptor table.                                    */
 /*      Check we have no table with this name already                   */
 /* -------------------------------------------------------------------- */
-    HFAEntry	*poEdsc_Table = poNode->GetNamedChild( "GDAL_MetaData" );
+    HFAEntry *poEdsc_Table = poNode->GetNamedChild( "GDAL_MetaData" );
 
     if( poEdsc_Table == NULL || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
         poEdsc_Table = HFAEntry::New( hHFA, "GDAL_MetaData", "Edsc_Table",
@@ -2671,7 +2671,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     poEdsc_BinFunction->SetDoubleField( "maxLimit", 0.0 );
 
 /* -------------------------------------------------------------------- */
-/*      Process each metadata item as a separate column.		*/
+/*      Process each metadata item as a separate column.                */
 /* -------------------------------------------------------------------- */
     bool bRet = true;
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
@@ -3132,8 +3132,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
-    int	nBlocksPerRow, nBlocksPerColumn, /* nBlocks, */ nBytesPerBlock;
-    int	nBytesPerRow, nBlockMapSize /* , iFlagsSize */;
+    int nBlocksPerRow, nBlocksPerColumn, /* nBlocks, */ nBytesPerBlock;
+    int nBytesPerRow, nBlockMapSize /* , iFlagsSize */;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
@@ -3191,12 +3191,12 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     memset( pabyBlockMap, 0xff, nBlockMapSize );
     for ( iBand = 0; iBand < nLayers; iBand++ )
     {
-        int		    i, iRemainder;
+        int i, iRemainder;
 
-        nValue32 = 1;	// Unknown
+        nValue32 = 1;  // Unknown
         HFAStandard( 4, &nValue32 );
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
-        nValue32 = 0;	// Unknown
+        nValue32 = 0;  // Unknown
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
         nValue32 = nBlocksPerColumn;
         HFAStandard( 4, &nValue32 );
@@ -3204,7 +3204,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         nValue32 = nBlocksPerRow;
         HFAStandard( 4, &nValue32 );
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
-        nValue32 = 0x30000;	// Unknown
+        nValue32 = 0x30000;  // Unknown
         HFAStandard( 4, &nValue32 );
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
 
@@ -3691,7 +3691,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
         for( i = 0; i < 7; i++ )
         {
-            char	szFieldName[60];
+            char szFieldName[60];
 
             snprintf( szFieldName, sizeof(szFieldName), "earthModel.datum.params[%d]", i );
             sDatum.params[i] = poProjInfo->GetDoubleField(szFieldName);
@@ -3715,7 +3715,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
         for( i = 0; i < 15; i++ )
         {
-            char	szFieldName[40];
+            char szFieldName[40];
 
             snprintf( szFieldName, sizeof(szFieldName), "projectionObject.proParams[%d]", i );
             sPro.proParams[i] = poProjInfo->GetDoubleField(szFieldName);

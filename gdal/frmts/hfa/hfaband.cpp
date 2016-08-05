@@ -95,7 +95,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
 /*      Check for nodata.  This is really an RDO (ESRI Raster Data      */
 /*      Objects?), not used by Imagine itself.                          */
 /* -------------------------------------------------------------------- */
-    HFAEntry	*poNDNode = poNode->GetNamedChild("Eimg_NonInitializedValue");
+    HFAEntry *poNDNode = poNode->GetNamedChild("Eimg_NonInitializedValue");
 
     if( poNDNode != NULL )
     {
@@ -146,7 +146,7 @@ CPLErr HFABand::LoadOverviews()
 /* -------------------------------------------------------------------- */
 /*      Does this band have overviews?  Try to find them.               */
 /* -------------------------------------------------------------------- */
-    HFAEntry	*poRRDNames = poNode->GetNamedChild( "RRDNamesList" );
+    HFAEntry *poRRDNames = poNode->GetNamedChild( "RRDNamesList" );
 
     if( poRRDNames != NULL )
     {
@@ -304,7 +304,7 @@ CPLErr HFABand::LoadOverviews()
 /*                           LoadBlockInfo()                            */
 /************************************************************************/
 
-CPLErr	HFABand::LoadBlockInfo()
+CPLErr HFABand::LoadBlockInfo()
 
 {
     if( panBlockFlag != NULL )
@@ -340,8 +340,8 @@ CPLErr	HFABand::LoadBlockInfo()
     for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
         CPLErr  eErr = CE_None;
-        char	szVarName[64];
-        int	nLogvalid, nCompressType;
+        char szVarName[64];
+        int nLogvalid, nCompressType;
 
         snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock );
         panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName, &eErr);
@@ -394,7 +394,7 @@ CPLErr	HFABand::LoadBlockInfo()
 /*                       LoadExternalBlockInfo()                        */
 /************************************************************************/
 
-CPLErr	HFABand::LoadExternalBlockInfo()
+CPLErr HFABand::LoadExternalBlockInfo()
 
 {
     if( panBlockFlag != NULL )
@@ -421,9 +421,9 @@ CPLErr	HFABand::LoadExternalBlockInfo()
     }
 
     if( psInfo->eAccess == HFA_ReadOnly )
-	fpExternal = VSIFOpenL( pszFullFilename, "rb" );
+        fpExternal = VSIFOpenL( pszFullFilename, "rb" );
     else
-	fpExternal = VSIFOpenL( pszFullFilename, "r+b" );
+        fpExternal = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpExternal == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -435,7 +435,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Verify header.                                                  */
 /* -------------------------------------------------------------------- */
-    char	szHeader[49];
+    char szHeader[49];
 
     if( VSIFReadL( szHeader, 49, 1, fpExternal ) != 1 ||
         !STARTS_WITH( szHeader, "ERDAS_IMG_EXTERNAL_RASTER") )
@@ -560,7 +560,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /* -------------------------------------------------------------------- */
         for( nPixelsOutput = 0; nPixelsOutput < nMaxPixels; nPixelsOutput++ )
         {
-            int	nDataValue, nRawValue;
+            int nDataValue, nRawValue;
 
 /* -------------------------------------------------------------------- */
 /*      Extract the data value in a way that depends on the number      */
@@ -721,8 +721,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /* -------------------------------------------------------------------- */
     for( int iRun = 0; iRun < nNumRuns; iRun++ )
     {
-        int	nRepeatCount = 0;
-        int	nDataValue;
+        int nRepeatCount = 0;
+        int nDataValue;
 
 /* -------------------------------------------------------------------- */
 /*      Get the repeat count.  This can be stored as one, two, three    */
@@ -1100,8 +1100,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     int iBlock = nXBlock + nYBlock * nBlocksPerRow;
 
 /* -------------------------------------------------------------------- */
-/*      If the block isn't valid, we just return all zeros, and an	*/
-/*	indication of success.                        			*/
+/*      If the block isn't valid, we just return all zeros, and an      */
+/*      indication of success.                                          */
 /* -------------------------------------------------------------------- */
     if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
     {
@@ -1113,7 +1113,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 /*      Otherwise we really read the data.                              */
 /* -------------------------------------------------------------------- */
     vsi_l_offset    nBlockOffset;
-    VSILFILE	*fpData;
+    VSILFILE *fpData;
 
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
@@ -1133,7 +1133,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
         // XXX: We will not report error here, because file just may be
-	// in update state and data for this block will be available later
+        // in update state and data for this block will be available later
         if ( psInfo->eAccess == HFA_Update )
         {
             memset( pData, 0,
@@ -1152,8 +1152,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     }
 
 /* -------------------------------------------------------------------- */
-/*	If the block is compressed, read into an intermediate buffer	*/
-/*	and convert.							*/
+/*      If the block is compressed, read into an intermediate buffer    */
+/*      and convert.                                                    */
 /* -------------------------------------------------------------------- */
     if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
@@ -1167,7 +1167,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
         {
             CPLFree( pabyCData );
 
-	    // XXX: Suppose that file in update state
+            // XXX: Suppose that file in update state
             if ( psInfo->eAccess == HFA_Update )
             {
                 memset( pData, 0,
@@ -1208,8 +1208,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 
     if( VSIFReadL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
     {
-	memset( pData, 0,
-	    HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
+        memset( pData, 0,
+            HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
 
         if( fpData != fpExternal )
             CPLDebug( "HFABand",
@@ -1219,7 +1219,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
                       (int) (nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
 
-	return CE_None;
+        return CE_None;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1283,7 +1283,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     panBlockSize[iBlock] = nSize;
 
     // need to re - write this info to the RasterDMS node
-    HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+    HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
 
     if (!poDMS)
     {
@@ -1291,7 +1291,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
         return;
     }
 
-    char	szVarName[64];
+    char szVarName[64];
     snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock );
     poDMS->SetIntField( szVarName, (int) panBlockStart[iBlock] );
 
@@ -1364,7 +1364,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
         /* ------------------------------------------------------------ */
-        /*      Write compressed data.				        */
+        /*      Write compressed data.                                  */
         /* ------------------------------------------------------------ */
         int nInBlockSize = (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(eDataType) + 7 ) / 8;
 
@@ -1456,7 +1456,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             nBlockSize = panBlockSize[iBlock];
 
             /* Need to change the RasterDMS entry */
-            HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+            HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
 
             if (!poDMS)
             {
@@ -1464,7 +1464,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
                 return CE_Failure;
             }
 
-            char	szVarName[64];
+            char szVarName[64];
             snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].compressionType", iBlock );
             poDMS->SetIntField( szVarName, 0 );
         }
@@ -1474,8 +1474,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
         if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
         {
-            char	szVarName[64];
-            HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+            char szVarName[64];
+            HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
 
             if (!poDMS)
             {
@@ -1540,7 +1540,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #endif /* def CPL_MSB */
 
 /* -------------------------------------------------------------------- */
-/*      Write uncompressed data.				        */
+/*      Write uncompressed data.                                        */
 /* -------------------------------------------------------------------- */
         if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {
@@ -1558,8 +1558,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
         if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
         {
-            char	szVarName[64];
-            HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+            char szVarName[64];
+            HFAEntry    *poDMS = poNode->GetNamedChild( "RasterDMS" );
             if (poDMS == NULL) {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Unable to get RasterDMS when trying to mark "
@@ -1804,7 +1804,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Blue");
             else if( iColumn == 3 ) {
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Opacity");
-	    }
+            }
 
             if( poColumnEntry == NULL )
             {
@@ -1871,12 +1871,12 @@ CPLErr HFABand::GetPCT( int * pnColors,
 CPLErr HFABand::SetPCT( int nColors,
                         double *padfRed,
                         double *padfGreen,
-                        double *padfBlue ,
-			double *padfAlpha)
+                        double *padfBlue,
+                        double *padfAlpha )
 
 {
     static const char * const apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
-    HFAEntry	*poEdsc_Table;
+    HFAEntry *poEdsc_Table;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to try and clear any existing color table?           */
@@ -1934,7 +1934,7 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
     for( int iColumn = 0; iColumn < 4; iColumn++ )
     {
-        double	    *padfValues=NULL;
+        double *padfValues=NULL;
         const char      *pszName = apszColNames[iColumn];
 
         if( iColumn == 0 )
@@ -2051,9 +2051,9 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1,
                                   64, eOverviewDataType,
                                   &nValidFlagsOffset, &nDataOffset ) )
-	{
-	    return -1;
-	}
+        {
+            return -1;
+        }
     }
 
 /* -------------------------------------------------------------------- */

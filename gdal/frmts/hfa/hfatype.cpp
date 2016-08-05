@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*      		       HFAType					*/
+/*                             HFAType                                  */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -94,7 +94,7 @@ const char *HFAType::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
     while( pszInput != NULL && *pszInput != '}' )
     {
-        HFAField	*poNewField = new HFAField();
+        HFAField *poNewField = new HFAField();
 
         pszInput = poNewField->Initialize( pszInput );
         if( pszInput != NULL )
@@ -208,7 +208,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
     if( strchr(pszFieldPath,'[') != NULL )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'[');
+        const char *pszEnd = strchr(pszFieldPath,'[');
 
         nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
@@ -220,7 +220,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 
     else if( strchr(pszFieldPath,'.') != NULL )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'.');
+        const char *pszEnd = strchr(pszFieldPath,'.');
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
@@ -281,9 +281,9 @@ HFAType::GetInstCount( const char * pszFieldPath,
                        CPL_UNUSED GUInt32 nDataOffset,
                        int nDataSize )
 {
-    /* int		nArrayIndex = 0; */
-    int		nNameLen;
-    /*const char	*pszRemainder;*/
+    /* int nArrayIndex = 0; */
+    int nNameLen;
+    /*const char *pszRemainder;*/
 
 /* -------------------------------------------------------------------- */
 /*      Parse end of field name, possible index value and               */
@@ -291,7 +291,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
     if( strchr(pszFieldPath,'[') != NULL )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'[');
+        const char *pszEnd = strchr(pszFieldPath,'[');
 
         /* nArrayIndex = atoi(pszEnd+1); */
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
@@ -303,7 +303,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 
     else if( strchr(pszFieldPath,'.') != NULL )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'.');
+        const char *pszEnd = strchr(pszFieldPath,'.');
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
@@ -390,7 +390,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
         && (pszFirstDot == NULL
             || pszFirstDot > pszFirstArray) )
     {
-        const char	*pszEnd = pszFirstArray;
+        const char *pszEnd = pszFirstArray;
 
         nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
@@ -402,7 +402,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 
     else if( pszFirstDot != NULL )
     {
-        const char	*pszEnd = pszFirstDot;
+        const char *pszEnd = pszFirstDot;
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
@@ -467,7 +467,7 @@ void HFAType::DumpInstValue( FILE * fpOut,
 {
     for ( int iField = 0; iField < nFields && nDataSize > 0; iField++ )
     {
-        HFAField	*poField = papoFields[iField];
+        HFAField *poField = papoFields[iField];
 
         poField->DumpInstValue( fpOut, pabyData, nDataOffset,
                                 nDataSize, pszPrefix );
@@ -497,11 +497,11 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
     if( nBytes >= 0 )
         return( nBytes );
 
-    int	nTotal = 0;
+    int nTotal = 0;
 
     for( int iField = 0; iField < nFields && nTotal < nDataSize; iField++ )
     {
-        HFAField	*poField = papoFields[iField];
+        HFAField *poField = papoFields[iField];
 
         const int nInstBytes = poField->GetInstBytes( pabyData,
                                                       nDataSize - nTotal );

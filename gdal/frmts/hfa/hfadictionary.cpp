@@ -82,7 +82,7 @@ static const char * const apszDefDefn[] = {
 
 /************************************************************************/
 /* ==================================================================== */
-/*	                       HFADictionary                            */
+/*                             HFADictionary                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -101,7 +101,7 @@ HFADictionary::HFADictionary( const char * pszString ) :
 /* -------------------------------------------------------------------- */
     while( pszString != NULL && *pszString != '.' )
     {
-        HFAType	*poNewType = new HFAType();
+        HFAType *poNewType = new HFAType();
         pszString = poNewType->Initialize( pszString );
 
         if( pszString != NULL )

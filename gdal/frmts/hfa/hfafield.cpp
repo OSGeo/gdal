@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*		                HFAField				*/
+/*                              HFAField                                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -174,7 +174,7 @@ const char *HFAField::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
     if( chItemType == 'e' )
     {
-        int	nEnumCount = atoi(pszInput);
+        int nEnumCount = atoi(pszInput);
 
         if (nEnumCount < 0 || nEnumCount > 100000)
             return NULL;
@@ -281,7 +281,7 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
 void HFAField::Dump( FILE * fp )
 
 {
-    const char	*pszTypeName;
+    const char *pszTypeName;
 
     switch( chItemType )
     {
@@ -388,12 +388,12 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
 {
 /* -------------------------------------------------------------------- */
-/*	If this field contains a pointer, then we will adjust the	*/
-/*	data offset relative to it.    					*/
+/*      If this field contains a pointer, then we will adjust the       */
+/*      data offset relative to it.                                     */
 /* -------------------------------------------------------------------- */
     if( chPointer != '\0' )
     {
-        GUInt32		nCount;
+        GUInt32 nCount;
 
         // The count returned for BASEDATA's are the contents,
         // but here we really want to mark it as one BASEDATA instance
@@ -424,7 +424,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         }
 
         // we will update the object count iff we are writing beyond the end
-        GUInt32		nOffset;
+        GUInt32 nOffset;
         memcpy( &nOffset, pabyData, 4 );
         HFAStandard( 4, &nOffset );
         if( nOffset < nCount )
@@ -453,7 +453,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 /* -------------------------------------------------------------------- */
     if( (chItemType == 'c' || chItemType == 'C') && chReqType == 's' )
     {
-        int	nBytesToCopy;
+        int nBytesToCopy;
 
         if( nBytes == -1 )
         {
@@ -485,7 +485,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 /* -------------------------------------------------------------------- */
 /*      Translate the passed type into different representations.       */
 /* -------------------------------------------------------------------- */
-    int		nIntValue;
+    int nIntValue;
     double      dfDoubleValue;
 
     if( chReqType == 's' )
@@ -604,7 +604,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       case 't':
       case 'l':
       {
-          GUInt32	nNumber = nIntValue;
+          GUInt32 nNumber = nIntValue;
 
           if( nIndexValue*4 + 4 > nDataSize )
           {
@@ -622,7 +622,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'L':
       {
-          GInt32	nNumber = nIntValue;
+          GInt32 nNumber = nIntValue;
 
           if( nIndexValue*4 + 4 > nDataSize )
           {
@@ -640,7 +640,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'f':
       {
-          float		fNumber = (float) dfDoubleValue;
+          float fNumber = (float) dfDoubleValue;
 
           if( nIndexValue*4 + 4 > nDataSize )
           {
@@ -658,7 +658,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'd':
       {
-          double	dfNumber = dfDoubleValue;
+          double dfNumber = dfDoubleValue;
 
           if( nIndexValue*8 + 8 > nDataSize )
           {
@@ -756,8 +756,8 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       case 'o':
         if( poItemObjectType != NULL )
         {
-            int		nExtraOffset = 0;
-            int		iIndexCounter;
+            int nExtraOffset = 0;
+            int iIndexCounter;
 
             if( poItemObjectType->nBytes > 0 )
             {
@@ -826,11 +826,11 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                            char chReqType, void *pReqReturn, int *pnRemainingDataSize )
 
 {
-    char		*pszStringRet = NULL;
-    int			nIntRet = 0;
-    double		dfDoubleRet = 0.0;
-    int			nInstItemCount = GetInstCount( pabyData, nDataSize );
-    GByte		*pabyRawData = NULL;
+    char *pszStringRet = NULL;
+    int nIntRet = 0;
+    double dfDoubleRet = 0.0;
+    int nInstItemCount = GetInstCount( pabyData, nDataSize );
+    GByte *pabyRawData = NULL;
 
     if (pnRemainingDataSize)
         *pnRemainingDataSize = -1;
@@ -849,12 +849,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     }
 
 /* -------------------------------------------------------------------- */
-/*	If this field contains a pointer, then we will adjust the	*/
-/*	data offset relative to it.    					*/
+/*      If this field contains a pointer, then we will adjust the       */
+/*      data offset relative to it.                                     */
 /* -------------------------------------------------------------------- */
     if( chPointer != '\0' )
     {
-        GUInt32		nOffset;
+        GUInt32 nOffset;
 
         if (nDataSize < 8)
         {
@@ -949,7 +949,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
       case 't':
       case 'l':
       {
-          GUInt32	nNumber;
+          GUInt32 nNumber;
           if (nIndexValue*4 + 4 > nDataSize)
           {
               CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -964,7 +964,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
       case 'L':
       {
-          GInt32	nNumber;
+          GInt32 nNumber;
           if (nIndexValue*4 + 4 > nDataSize)
           {
               CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -979,7 +979,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
       case 'f':
       {
-          float		fNumber;
+          float fNumber;
           if (nIndexValue*4 + 4 > nDataSize)
           {
               CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -994,7 +994,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
       case 'd':
       {
-          double	dfNumber;
+          double dfNumber;
           if (nIndexValue*8 + 8 > nDataSize)
           {
               CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -1214,8 +1214,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
       case 'o':
         if( poItemObjectType != NULL )
         {
-            int		nExtraOffset = 0;
-            int		iIndexCounter;
+            int nExtraOffset = 0;
+            int iIndexCounter;
 
             if( poItemObjectType->nBytes > 0 )
             {
@@ -1315,8 +1315,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 
 {
-    int		nCount;
-    int		nInstBytes = 0;
+    int nCount;
+    int nInstBytes = 0;
 
     if( nBytes > -1 )
         return nBytes;
@@ -1385,13 +1385,13 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
     }
     else
     {
-        int		i;
+        int i;
 
         for( i = 0; i < nCount &&
                     nInstBytes < nDataSize &&
                     nInstBytes >= 0; i++ )
         {
-            int	nThisBytes;
+            int nThisBytes;
 
             nThisBytes =
                 poItemObjectType->GetInstBytes( pabyData,
@@ -1464,9 +1464,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
                            const char *pszPrefix )
 
 {
-    int		iEntry, nEntries;
-    void	*pReturn;
-    char	szLongFieldName[256];
+    int iEntry, nEntries;
+    void *pReturn;
+    char szLongFieldName[256];
 
     nEntries = GetInstCount( pabyData, nDataSize );
 
@@ -1574,7 +1574,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
             }
             else
             {
-                int		nByteOffset;
+                int nByteOffset;
 
                 CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "\n" ));
 
