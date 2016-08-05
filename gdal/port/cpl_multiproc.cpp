@@ -243,7 +243,7 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
     {
         CPLReleaseMutex( hCOAMutex );
 
-        bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+        bSuccess = CPL_TO_BOOL(CPLAcquireMutex( *phMutex, dfWaitInSeconds ));
     }
 #endif /* ndef MUTEX_NONE */
 
