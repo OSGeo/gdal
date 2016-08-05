@@ -306,6 +306,8 @@ char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 #define EPRJ_LAMBERT_CONFORMAL_CONIC_1SP        67
 #define EPRJ_PSEUDO_MERCATOR                    68
 #define EPRJ_MERCATOR_VARIANT_A                 69
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR_VARIANT_A                70
+#define EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED             71
 
 #define EPRJ_EXTERNAL_RSO			"eprj_rso"
 #define EPRJ_EXTERNAL_NZMG                      "nzmg"
