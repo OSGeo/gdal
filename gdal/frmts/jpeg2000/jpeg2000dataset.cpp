@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 #define JP2_FTYP_MAXCOMPATCODES 32
 #define JP2_BOX_IHDR    0x69686472      /* Image Header */
 #define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
-#define	JP2_BOX_PCLR	0x70636c72	/* Palette */
+#define JP2_BOX_PCLR    0x70636c72      /* Palette */
 #define JP2_BOX_UUID    0x75756964      /* UUID */
 extern "C" {
 typedef struct {

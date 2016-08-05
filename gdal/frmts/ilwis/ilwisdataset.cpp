@@ -128,16 +128,16 @@ void IniFile::SetKeyValue(const string& section, const string& key, const string
 
 string IniFile::GetKeyValue(const string& section, const string& key)
 {
-	Sections::iterator iterSect = sections.find(section);
-	if (iterSect != sections.end())
-	{
-		SectionEntries *entries = (*iterSect).second;
-		SectionEntries::iterator iterEntry = (*entries).find(key);
-		if (iterEntry != (*entries).end())
-			return (*iterEntry).second;
-	}
+    Sections::iterator iterSect = sections.find(section);
+    if (iterSect != sections.end())
+    {
+        SectionEntries *entries = (*iterSect).second;
+        SectionEntries::iterator iterEntry = (*entries).find(key);
+        if (iterEntry != (*entries).end())
+            return (*iterEntry).second;
+    }
 
-	return string();
+    return string();
 }
 
 void IniFile::RemoveKeyValue(const string& section, const string& key)
@@ -651,13 +651,13 @@ CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
 
 static bool CheckASCII(unsigned char * buf, int size)
 {
-	for (int i = 0; i < size; ++i)
-        {
-            if (!isascii(buf[i]))
-                return false;
-        }
+    for (int i = 0; i < size; ++i)
+    {
+        if (!isascii(buf[i]))
+            return false;
+    }
 
-	return true;
+    return true;
 }
 /************************************************************************/
 /*                       Open()                                         */
@@ -683,7 +683,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     if( ilwistype.length() == 0)
         return NULL;
 
-    string sFileType;	//map or map list
+    string sFileType;  // map or map list
     int    iBandCount;
     string mapsize;
     const string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
@@ -736,8 +736,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             GetStoreType(string(poOpenInfo->pszFilename), stStoreType) != CE_None )
         {
             //CPLError( CE_Failure, CPLE_AppDefined,
-            //			"Unsupported ILWIS data file. \n"
-            //			"can't treat as raster.\n" );
+            //          "Unsupported ILWIS data file. \n"
+            //          "can't treat as raster.\n" );
             return NULL;
         }
     }
@@ -794,7 +794,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (pszGeoRef.length() != 0) && !EQUAL(pszGeoRef.c_str(),"none"))
     {
 
-        //	Fetch coordinate system
+        // Fetch coordinate system
         string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
         string pszProj;
 
@@ -882,7 +882,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
-/*	Determine store type of ILWIS raster                            */
+/*      Determine store type of ILWIS raster                            */
 /* -------------------------------------------------------------------- */
     string sDomain= "value.dom";
     double stepsize = 1;
@@ -1486,9 +1486,9 @@ CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Handle the case of a strip in a writable file that doesn't          */
-/*	exist yet, but that we want to read.  Just set to zeros and         */
-/*	return.                                                             */
+/*      Handle the case of a strip in a writable file that doesn't      */
+/*      exist yet, but that we want to read.  Just set to zeros and     */
+/*      return.                                                         */
 /* -------------------------------------------------------------------- */
     ILWISDataset* poIDS = (ILWISDataset*) poDS;
 
@@ -1894,7 +1894,7 @@ ValueRange::ValueRange(string sRng) :
     delete [] sRange;
 }
 
-ValueRange::ValueRange(double min, double max)	// step = 1
+ValueRange::ValueRange(double min, double max)  // step = 1
 {
     _rLo = min;
     _rHi = max;

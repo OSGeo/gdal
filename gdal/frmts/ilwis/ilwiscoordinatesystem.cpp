@@ -37,7 +37,7 @@ using std::string;
 typedef struct
 {
     const char  *pszIlwisDatum;
-		const char  *pszWKTDatum;
+                const char  *pszWKTDatum;
     int   nEPSGCode;
 } IlwisDatums;
 
@@ -45,8 +45,8 @@ typedef struct
 {
     const char  *pszIlwisEllips;
     int   nEPSGCode;
-		double semiMajor;
-		double invFlattening;
+                double semiMajor;
+                double invFlattening;
 } IlwisEllips;
 
 string ReadElement(string section, string entry, string filename);
@@ -58,150 +58,150 @@ static const IlwisDatums iwDatums[] =
 {
     { "Adindan", "Adindan", 4201 },
     { "Afgooye", "Afgooye", 4205 },
-		//AGREF --- skipped
+    // AGREF --- skipped
     { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },
-		{ "American Samoa 1962", "American_Samoa_1962", 4169 },
-		//Anna 1 Astro 1965 --- skipped
-		{ "Antigua Island Astro 1943", "Antigua_1943", 4601 },
-		{ "Arc 1950", "Arc_1950", 4209 },    //Arc 1950
-		{ "Arc 1960", "Arc_1960", 4210 },    //Arc 1960
-		//Ascension Island 1958
-		//Astro Beacon E 1945
-		//Astro DOS 71/4
-		//Astro Tern Island (FRIG) 1961
-		//Astronomical Station 1952
-		{ "Australian Geodetic 1966", "Australian_Geodetic_Datum_1966", 4202 },
-		{ "Australian Geodetic 1984", "Australian_Geodetic_Datum_1984", 4203 },
-		//Ayabelle Lighthouse
-		//Bellevue (IGN)
-		{ "Bermuda 1957", "Bermuda_1957", 4216 },
-		{ "Bissau", "Bissau", 4165 },
-		{ "Bogota Observatory  (1975)", "Bogota", 4218 },
-		{ "Bukit Rimpah", "Bukit_Rimpah", 4219 },
-		//Camp Area Astro
-		{ "Campo Inchauspe", "Campo_Inchauspe", 4221 },
-		//Canton Astro 1966
-		{ "Cape", "Cape", 4222 },
-		//Cape Canaveral
-		{ "Carthage", "Carthage", 4223 },
-		{ "CH1903", "CH1903", 4149 },
-		//Chatham Island Astro 1971
-		{ "Chua Astro", "Chua", 4224 },
-		{ "Corrego Alegre", "Corrego_Alegre", 4225 },
-		//Croatia
-		//D-PAF (Orbits)
-		{ "Dabola", "Dabola_1981", 4155 },
-		//Deception Island
-		//Djakarta (Batavia)
-		//DOS 1968
-		//Easter Island 1967
-		//Estonia 1937
-		{ "European 1950 (ED 50)", "European_Datum_1950", 4154 },
-		//European 1979 (ED 79
-		//Fort Thomas 1955
-		{ "Gan 1970", "Gandajika_1970", 4233 },
-		//Geodetic Datum 1949
-		//Graciosa Base SW 1948
-		//Guam 1963
-		{ "Gunung Segara", "Gunung_Segara", 4613 },
-		//GUX 1 Astro
-		{ "Herat North", "Herat_North", 4255 },
-		//Hermannskogel
-		//Hjorsey 1955
-		//Hong Kong 1963
-		{ "Hu-Tzu-Shan", "Hu_Tzu_Shan", 4236 },
-		//Indian (Bangladesh)
-		//Indian (India, Nepal)
-		//Indian (Pakistan)
-		{ "Indian 1954", "Indian_1954", 4239 },
-		{ "Indian 1960", "Indian_1960", 4131 },
-		{ "Indian 1975", "Indian_1975", 4240 },
-		{ "Indonesian 1974", "Indonesian_Datum_1974", 4238 },
-		//Ireland 1965
-		//ISTS 061 Astro 1968
-		//ISTS 073 Astro 1969
-		//Johnston Island 1961
-		{ "Kandawala", "Kandawala", 4244 },
-		//Kerguelen Island 1949
-		{ "Kertau 1948", "Kertau", 4245 },
-		//Kusaie Astro 1951
-		//L. C. 5 Astro 1961
-		{ "Leigon", "Leigon", 4250 },
-		{ "Liberia 1964", "Liberia_1964", 4251 },
-		{ "Luzon", "Luzon_1911", 4253 },
-		//M'Poraloko
-		{ "Mahe 1971", "Mahe_1971", 4256 },
-		{ "Massawa", "Massawa", 4262 },
-		{ "Merchich", "Merchich", 4261 },
-		{ "MGI (Hermannskogel)", "Militar_Geographische_Institute",4312 },
-		//Midway Astro 1961
-		{ "Minna", "Minna", 4263 },
-		{ "Montserrat Island Astro 1958", "Montserrat_1958", 4604 },
-		{ "Nahrwan", "Nahrwan_1967", 4270 },
-		{ "Naparima BWI", "Naparima_1955", 4158 },
-		{ "North American 1927 (NAD 27)", "North_American_Datum_1927", 4267 },
-		{ "North American 1983 (NAD 83)", "North_American_Datum_1983", 4269 },
-		//North Sahara 1959
-		{ "NTF (Nouvelle Triangulation de France)", "Nouvelle_Triangulation_Francaise", 4807 },
-		//Observatorio Meteorologico 1939
-		//Old Egyptian 1907
-		{ "Old Hawaiian", "Old_Hawaiian", 4135 },
-		//Oman
-		//Ordnance Survey Great Britain 1936
-		//Pico de las Nieves
-		//Pitcairn Astro 1967
-		//Point 58
-		{ "Pointe Noire 1948", "Pointe_Noire", 4282 },
-		{ "Porto Santo 1936", "Porto_Santo",4615 },
-		//Potsdam (Rauenburg)
-		{ "Potsdam (Rauenburg)", "Deutsches_Hauptdreiecksnetz", 4314 },
-		{ "Provisional South American 1956", "Provisional_South_American_Datum_1956", 4248 },
-		//Provisional South Chilean 1963
-		{ "Puerto Rico", "Puerto_Rico", 4139 },
-		{ "Pulkovo 1942", "Pulkovo_1942", 4178 },
-		//{ "Qatar National", "Qatar_National_Datum_1995", 4614 },
-		{ "Qornoq", "Qornoq", 4287 },
-		{ "Puerto Rico", "Puerto_Rico", 4139 },
-		//Reunion
-		{ "Rome 1940", "Monte_Mario", 4806 },
-		{ "RT90", "Rikets_koordinatsystem_1990", 4124 },
-		{ "Rijks Driehoeksmeting", "Amersfoort", 4289 },
-		{ "S-42 (Pulkovo 1942)", "Pulkovo_1942", 4178 },
-		//{ "S-JTSK", "Jednotne_Trigonometricke_Site_Katastralni", 4156 },
-		//Santo (DOS) 1965
-		//Sao Braz
-		{ "Sapper Hill 1943", "Sapper_Hill_1943", 4292 },
-		{ "Schwarzeck", "Schwarzeck", 4293 },
-		{ "Selvagem Grande 1938", "Selvagem_Grande", 4616 },
-		//vSGS 1985
-		//Sierra Leone 1960
-		{ "South American 1969", "South_American_Datum_1969", 4291 },
-		//South Asia
-		{ "Tananarive Observatory 1925", "Tananarive_1925", 4297 },
-		{ "Timbalai 1948", "Timbalai_1948", 4298 },
-		{ "Tokyo", "Tokyo", 4301 },
-		//Tristan Astro 1968
-		//Viti Levu 1916
-		{ "Voirol 1874", "Voirol_1875", 4304 },
-		//Voirol 1960
-		//Wake Island Astro 1952
-		//Wake-Eniwetok 1960
-		{ "WGS 1972", "WGS_1972", 4322 },
-		{ "WGS 1984", "WGS_1984", 4326 },
-		{ "Yacare", "Yacare", 4309 },
-		{ "Zanderij", "Zanderij", 4311 },
+    { "American Samoa 1962", "American_Samoa_1962", 4169 },
+    //Anna 1 Astro 1965 --- skipped
+    { "Antigua Island Astro 1943", "Antigua_1943", 4601 },
+    { "Arc 1950", "Arc_1950", 4209 },    //Arc 1950
+    { "Arc 1960", "Arc_1960", 4210 },    //Arc 1960
+    //Ascension Island 1958
+    //Astro Beacon E 1945
+    //Astro DOS 71/4
+    //Astro Tern Island (FRIG) 1961
+    //Astronomical Station 1952
+    { "Australian Geodetic 1966", "Australian_Geodetic_Datum_1966", 4202 },
+    { "Australian Geodetic 1984", "Australian_Geodetic_Datum_1984", 4203 },
+    //Ayabelle Lighthouse
+    //Bellevue (IGN)
+    { "Bermuda 1957", "Bermuda_1957", 4216 },
+    { "Bissau", "Bissau", 4165 },
+    { "Bogota Observatory  (1975)", "Bogota", 4218 },
+    { "Bukit Rimpah", "Bukit_Rimpah", 4219 },
+    //Camp Area Astro
+    { "Campo Inchauspe", "Campo_Inchauspe", 4221 },
+    //Canton Astro 1966
+    { "Cape", "Cape", 4222 },
+    //Cape Canaveral
+    { "Carthage", "Carthage", 4223 },
+    { "CH1903", "CH1903", 4149 },
+    //Chatham Island Astro 1971
+    { "Chua Astro", "Chua", 4224 },
+    { "Corrego Alegre", "Corrego_Alegre", 4225 },
+    //Croatia
+    //D-PAF (Orbits)
+    { "Dabola", "Dabola_1981", 4155 },
+    //Deception Island
+    //Djakarta (Batavia)
+    //DOS 1968
+    //Easter Island 1967
+    //Estonia 1937
+    { "European 1950 (ED 50)", "European_Datum_1950", 4154 },
+    //European 1979 (ED 79
+    //Fort Thomas 1955
+    { "Gan 1970", "Gandajika_1970", 4233 },
+    //Geodetic Datum 1949
+    //Graciosa Base SW 1948
+    //Guam 1963
+    { "Gunung Segara", "Gunung_Segara", 4613 },
+    //GUX 1 Astro
+    { "Herat North", "Herat_North", 4255 },
+    //Hermannskogel
+    //Hjorsey 1955
+    //Hong Kong 1963
+    { "Hu-Tzu-Shan", "Hu_Tzu_Shan", 4236 },
+    //Indian (Bangladesh)
+    //Indian (India, Nepal)
+    //Indian (Pakistan)
+    { "Indian 1954", "Indian_1954", 4239 },
+    { "Indian 1960", "Indian_1960", 4131 },
+    { "Indian 1975", "Indian_1975", 4240 },
+    { "Indonesian 1974", "Indonesian_Datum_1974", 4238 },
+    //Ireland 1965
+    //ISTS 061 Astro 1968
+    //ISTS 073 Astro 1969
+    //Johnston Island 1961
+    { "Kandawala", "Kandawala", 4244 },
+    //Kerguelen Island 1949
+    { "Kertau 1948", "Kertau", 4245 },
+    //Kusaie Astro 1951
+    //L. C. 5 Astro 1961
+    { "Leigon", "Leigon", 4250 },
+    { "Liberia 1964", "Liberia_1964", 4251 },
+    { "Luzon", "Luzon_1911", 4253 },
+    //M'Poraloko
+    { "Mahe 1971", "Mahe_1971", 4256 },
+    { "Massawa", "Massawa", 4262 },
+    { "Merchich", "Merchich", 4261 },
+    { "MGI (Hermannskogel)", "Militar_Geographische_Institute",4312 },
+    //Midway Astro 1961
+    { "Minna", "Minna", 4263 },
+    { "Montserrat Island Astro 1958", "Montserrat_1958", 4604 },
+    { "Nahrwan", "Nahrwan_1967", 4270 },
+    { "Naparima BWI", "Naparima_1955", 4158 },
+    { "North American 1927 (NAD 27)", "North_American_Datum_1927", 4267 },
+    { "North American 1983 (NAD 83)", "North_American_Datum_1983", 4269 },
+    //North Sahara 1959
+    { "NTF (Nouvelle Triangulation de France)", "Nouvelle_Triangulation_Francaise", 4807 },
+    //Observatorio Meteorologico 1939
+    //Old Egyptian 1907
+    { "Old Hawaiian", "Old_Hawaiian", 4135 },
+    //Oman
+    //Ordnance Survey Great Britain 1936
+    //Pico de las Nieves
+    //Pitcairn Astro 1967
+    //Point 58
+    { "Pointe Noire 1948", "Pointe_Noire", 4282 },
+    { "Porto Santo 1936", "Porto_Santo",4615 },
+    //Potsdam (Rauenburg)
+    { "Potsdam (Rauenburg)", "Deutsches_Hauptdreiecksnetz", 4314 },
+    { "Provisional South American 1956", "Provisional_South_American_Datum_1956", 4248 },
+    //Provisional South Chilean 1963
+    { "Puerto Rico", "Puerto_Rico", 4139 },
+    { "Pulkovo 1942", "Pulkovo_1942", 4178 },
+    //{ "Qatar National", "Qatar_National_Datum_1995", 4614 },
+    { "Qornoq", "Qornoq", 4287 },
+    { "Puerto Rico", "Puerto_Rico", 4139 },
+    //Reunion
+    { "Rome 1940", "Monte_Mario", 4806 },
+    { "RT90", "Rikets_koordinatsystem_1990", 4124 },
+    { "Rijks Driehoeksmeting", "Amersfoort", 4289 },
+    { "S-42 (Pulkovo 1942)", "Pulkovo_1942", 4178 },
+    //{ "S-JTSK", "Jednotne_Trigonometricke_Site_Katastralni", 4156 },
+    //Santo (DOS) 1965
+    //Sao Braz
+    { "Sapper Hill 1943", "Sapper_Hill_1943", 4292 },
+    { "Schwarzeck", "Schwarzeck", 4293 },
+    { "Selvagem Grande 1938", "Selvagem_Grande", 4616 },
+    //vSGS 1985
+    //Sierra Leone 1960
+    { "South American 1969", "South_American_Datum_1969", 4291 },
+    //South Asia
+    { "Tananarive Observatory 1925", "Tananarive_1925", 4297 },
+    { "Timbalai 1948", "Timbalai_1948", 4298 },
+    { "Tokyo", "Tokyo", 4301 },
+    //Tristan Astro 1968
+    //Viti Levu 1916
+    { "Voirol 1874", "Voirol_1875", 4304 },
+    //Voirol 1960
+    //Wake Island Astro 1952
+    //Wake-Eniwetok 1960
+    { "WGS 1972", "WGS_1972", 4322 },
+    { "WGS 1984", "WGS_1984", 4326 },
+    { "Yacare", "Yacare", 4309 },
+    { "Zanderij", "Zanderij", 4311 },
     { NULL, NULL, 0 }
 };
 
 static const IlwisEllips iwEllips[] =
 {
-    { "Sphere", 7035, 6371007, 0.0  },	//rad 6370997 m (normal sphere)
+    { "Sphere", 7035, 6371007, 0.0  },  //rad 6370997 m (normal sphere)
     { "Airy 1830", 7031, 6377563.396, 299.3249646 },
     { "Modified Airy", 7002, 6377340.189, 299.3249646 },
     { "ATS77", 7204, 6378135.0, 298.257000006 },
     { "Australian National", 7003, 6378160, 298.249997276 },
     { "Bessel 1841", 7042, 6377397.155, 299.1528128},
-		{ "Bessel 1841 (Japan By Law)", 7046 , 6377397.155, 299.152815351 },
+    { "Bessel 1841 (Japan By Law)", 7046 , 6377397.155, 299.152815351 },
     { "Bessel 1841 (Namibia)", 7006, 6377483.865, 299.1528128 },
     { "Clarke 1866", 7008, 6378206.4, 294.9786982 },
     { "Clarke 1880", 7034, 6378249.145, 293.465 },
@@ -211,35 +211,35 @@ static const IlwisEllips iwEllips[] =
     // FIXME: Du Plessis Reconstituted --- skipped
     { "Everest (India 1830)", 7015, 6377276.345, 300.8017 },
     // Everest (India 1956) --- skipped
-		// Everest (Malaysia 1969) --- skipped
+    // Everest (Malaysia 1969) --- skipped
     { "Everest (E. Malaysia and Brunei)", 7016, 6377298.556, 300.8017 },
     { "Everest (Malay. and Singapore 1948)", 7018, 6377304.063, 300.8017 },
-		{ "Everest (Pakistan)", 7044, 6377309.613, 300.8017 },
-		// Everest (Sabah Sarawak) --- skipped
-		// Fischer 1960 --- skipped
-		// Fischer 1960 (Modified) --- skipped
-		// Fischer 1968 --- skipped
-		{ "GRS 80", 7019, 6378137, 298.257222101  },
-		{ "Helmert 1906", 7020, 6378200, 298.3 },
-		// Hough 1960 --- skipped
-		{ "Indonesian 1974", 7021, 6378160, 298.247 },
-		{ "International 1924", 7022, 6378388, 297 },
-		{ "Krassovsky 1940", 7024, 6378245, 298.3 },
-		// New_International 1967
-		// SGS 85
-		// South American 1969
-		// WGS 60
-		// WGS 66
-		{ "WGS 72", 7020, 6378135.0, 298.259998590  },
-		{ "WGS 84", 7030, 6378137, 298.257223563 },
+    { "Everest (Pakistan)", 7044, 6377309.613, 300.8017 },
+    // Everest (Sabah Sarawak) --- skipped
+    // Fischer 1960 --- skipped
+    // Fischer 1960 (Modified) --- skipped
+    // Fischer 1968 --- skipped
+    { "GRS 80", 7019, 6378137, 298.257222101  },
+    { "Helmert 1906", 7020, 6378200, 298.3 },
+    // Hough 1960 --- skipped
+    { "Indonesian 1974", 7021, 6378160, 298.247 },
+    { "International 1924", 7022, 6378388, 297 },
+    { "Krassovsky 1940", 7024, 6378245, 298.3 },
+    // New_International 1967
+    // SGS 85
+    // South American 1969
+    // WGS 60
+    // WGS 66
+    { "WGS 72", 7020, 6378135.0, 298.259998590  },
+    { "WGS 84", 7030, 6378137, 298.257223563 },
     { NULL, 0, 0.0, 0.0 }
 };
 
 #ifndef R2D
-#  define R2D	(180/M_PI)
+#  define R2D (180/M_PI)
 #endif
 #ifndef D2R
-#  define D2R	(M_PI/180)
+#  define D2R (M_PI/180)
 #endif
 
 /* ==================================================================== */
@@ -521,17 +521,17 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     {
         // should use 1.0 for scale factor in Ilwis definition
         oSRS.SetProjCS("Lambert Conformal Conic");
-        oSRS.SetLCC(	padfPrjParams[7], padfPrjParams[8],
-                        padfPrjParams[5], padfPrjParams[6],
-                        padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetLCC( padfPrjParams[7], padfPrjParams[8],
+                     padfPrjParams[5], padfPrjParams[6],
+                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Cylind EqualArea") )
     {
         // Latitude_Of_True_Scale used for dfStdP1 ?
         oSRS.SetProjCS("Lambert Conformal Conic");
-        oSRS.SetCEA(	padfPrjParams[10],
-                        padfPrjParams[6],
-                        padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetCEA( padfPrjParams[10],
+                     padfPrjParams[6],
+                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Mercator") )
     {
@@ -539,28 +539,28 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         // Latitude_Of_True_Scale
         scaleFromLATTS( pszEllips, padfPrjParams[10], padfPrjParams[9] );
         oSRS.SetProjCS("Mercator");
-        oSRS.SetMercator(	0, padfPrjParams[6],
-                                padfPrjParams[9],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetMercator( 0, padfPrjParams[6],
+                          padfPrjParams[9],
+                          padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Miller") )
     {
         // use 0 for CenterLat
         oSRS.SetProjCS("Miller");
-        oSRS.SetMC(	0, padfPrjParams[6],
-                        padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetMC( 0, padfPrjParams[6],
+                    padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Mollweide") )
     {
         oSRS.SetProjCS("Mollweide");
-        oSRS.SetMollweide(	padfPrjParams[6],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetMollweide( padfPrjParams[6],
+                           padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Orthographic") )
     {
         oSRS.SetProjCS("Orthographic");
-        oSRS.SetOrthographic (	padfPrjParams[5], padfPrjParams[6],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetOrthographic( padfPrjParams[5], padfPrjParams[6],
+                              padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Plate Carree") ||
              STARTS_WITH_CI(pszProj.c_str(), "Plate Rectangle"))
@@ -568,41 +568,41 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         // set 0.0 for CenterLat for Plate Carree projection
         // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
         oSRS.SetProjCS(pszProj.c_str());
-        oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6],
-                                        padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetEquirectangular( padfPrjParams[5], padfPrjParams[6],
+                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "PolyConic") )
     {
         // skipp scale factor
         oSRS.SetProjCS("PolyConic");
-        oSRS.SetPolyconic(	padfPrjParams[5], padfPrjParams[6],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetPolyconic( padfPrjParams[5], padfPrjParams[6],
+                           padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Robinson") )
     {
         oSRS.SetProjCS("Robinson");
-        oSRS.SetRobinson(	padfPrjParams[6],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetRobinson( padfPrjParams[6],
+                          padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Sinusoidal") )
     {
         oSRS.SetProjCS("Sinusoidal");
-        oSRS.SetSinusoidal(	padfPrjParams[6],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetSinusoidal( padfPrjParams[6],
+                            padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Stereographic") )
     {
         oSRS.SetProjCS("Stereographic");
-        oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
-                                padfPrjParams[9],
+        oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
+                               padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Transverse Mercator") )
     {
         oSRS.SetProjCS("Transverse Mercator");
-        oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
-                                padfPrjParams[9],
-                                padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
+                               padfPrjParams[9],
+                               padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "UTM") )
     {
@@ -615,8 +615,8 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "VanderGrinten") )
     {
-        oSRS.SetVDG(	padfPrjParams[6],
-                        padfPrjParams[3], padfPrjParams[4] );
+        oSRS.SetVDG( padfPrjParams[6],
+                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "GeoStationary Satellite") )
     {
@@ -696,7 +696,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 
 /* -------------------------------------------------------------------- */
 /*      If no matching for ellipsoid definition, fetch info about an    */
-/*			user defined ellipsoid. If cannot find, default to WGS 84       */
+/*      user defined ellipsoid. If cannot find, default to WGS 84       */
 /* -------------------------------------------------------------------- */
         if ( !piwEllips->pszIlwisEllips )
         {
@@ -748,7 +748,7 @@ static void WriteProjectionName(string csFileName, string stProjection)
 
 static void WriteUTM(string csFileName, OGRSpatialReference oSRS)
 {
-    int	bNorth;
+    int bNorth;
 
     int nZone = oSRS.GetUTMZone( &bNorth );
     WriteElement("CoordSystem", "Type", csFileName, "Projection");
@@ -995,7 +995,7 @@ CPLErr ILWISDataset::WriteProjection()
 {
     OGRSpatialReference oSRS;
     OGRSpatialReference *poGeogSRS = NULL;
-    char		*pszP = pszProjection;
+    char                *pszP = pszProjection;
 
     string csFileName = CPLResetExtension(osFileName, "csy" );
     string pszBaseName = string(CPLGetBasename( osFileName ));
@@ -1054,7 +1054,7 @@ CPLErr ILWISDataset::WriteProjection()
         csy = "unknown.csy";
 
 /* -------------------------------------------------------------------- */
-/*	Determine to write a geo-referencing file for the dataset to create */
+/*  Determine to write a geo-referencing file for the dataset to create */
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0

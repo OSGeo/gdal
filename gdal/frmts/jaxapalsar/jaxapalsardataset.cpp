@@ -43,15 +43,15 @@ CPL_CVSID("$Id$");
 /* read binary fields */
 #ifdef CPL_LSB
 #define READ_WORD(f, x) \
-	do { \
-		VSIFReadL( &(x), 4, 1, (f) ); \
-		(x) = CPL_SWAP32( (x) ); \
-	} while (0);
+        do { \
+                VSIFReadL( &(x), 4, 1, (f) ); \
+                (x) = CPL_SWAP32( (x) ); \
+        } while (0);
 #define READ_SHORT(f, x) \
-	do { \
-		VSIFReadL( &(x), 2, 1, (f) ); \
-		(x) = CPL_SWAP16( (x) ); \
-	} while (0);
+        do { \
+                VSIFReadL( &(x), 2, 1, (f) ); \
+                (x) = CPL_SWAP16( (x) ); \
+        } while (0);
 #else
 #define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while (0);
 #define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while (0);
@@ -60,30 +60,30 @@ CPL_CVSID("$Id$");
 
 /* read floating point value stored as ASCII */
 #define READ_CHAR_FLOAT(n, l, f) \
-	do {\
-		char psBuf[(l+1)]; \
-		psBuf[(l)] = '\0'; \
-		VSIFReadL( &psBuf, (l), 1, (f) );\
-		(n) = CPLAtof( psBuf );\
-	} while (0);
+        do {\
+                char psBuf[(l+1)]; \
+                psBuf[(l)] = '\0'; \
+                VSIFReadL( &psBuf, (l), 1, (f) );\
+                (n) = CPLAtof( psBuf );\
+        } while (0);
 
 /* read numbers stored as ASCII */
 #define READ_CHAR_VAL(x, n, f) \
-	do { \
-		char psBuf[(n+1)]; \
-		psBuf[(n)] = '\0';\
-		VSIFReadL( &psBuf, (n), 1, (f) ); \
-		(x) = atoi(psBuf); \
-	} while (0);
+        do { \
+                char psBuf[(n+1)]; \
+                psBuf[(n)] = '\0';\
+                VSIFReadL( &psBuf, (n), 1, (f) ); \
+                (x) = atoi(psBuf); \
+        } while (0);
 
 /* read string fields
  * note: string must be size of field to be extracted + 1
  */
 #define READ_STRING(s, n, f) \
-	do { \
-		VSIFReadL( &(s), 1, (n), (f) ); \
-		(s)[(n)] = '\0'; \
-	} while (0);
+        do { \
+                VSIFReadL( &(s), 1, (n), (f) ); \
+                (s)[(n)] = '\0'; \
+        } while (0);
 
 /*************************************************************************/
 /* a few key offsets in the volume directory file */
@@ -134,17 +134,17 @@ CPL_CVSID("$Id$");
 
 /* a few useful enums */
 enum eFileType {
-	level_11 = 0,
-	level_15,
-        level_10,
-        level_unknown = 999,
+    level_11 = 0,
+    level_15,
+    level_10,
+    level_unknown = 999,
 };
 
 enum ePolarization {
-	hh = 0,
-	hv,
-	vh,
-	vv
+    hh = 0,
+    hv,
+    vh,
+    vv
 };
 
 /************************************************************************/
@@ -335,7 +335,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/* 			PALSARJaxaDataset			     	*/
+/*                      PALSARJaxaDataset                               */
 /* ==================================================================== */
 /************************************************************************/
 
