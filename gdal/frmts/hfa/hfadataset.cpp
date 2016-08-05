@@ -4117,84 +4117,90 @@ CPLErr HFADataset::WriteProjection()
 /************************************************************************/
 /*                       WritePeStringIfNeeded()                        */
 /************************************************************************/
-int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA)
+int WritePeStringIfNeeded( OGRSpatialReference* poSRS, HFAHandle hHFA )
 {
-  OGRBoolean ret = FALSE;
-  if(!poSRS || !hHFA)
-    return ret;
+    if( !poSRS || !hHFA )
+        return FALSE;
 
-  const char *pszGEOGCS = poSRS->GetAttrValue( "GEOGCS" );
-  const char *pszDatum = poSRS->GetAttrValue( "DATUM" );
-  size_t gcsNameOffset = 0;
-  size_t datumNameOffset = 0;
-  if( pszGEOGCS == NULL )
-      pszGEOGCS = "";
-  if( pszDatum == NULL )
-      pszDatum = "";
-  if(STARTS_WITH(pszGEOGCS, "GCS_"))
-    gcsNameOffset = strlen("GCS_");
-  if(STARTS_WITH(pszDatum, "D_"))
-    datumNameOffset = strlen("D_");
+    const char *pszGEOGCS = poSRS->GetAttrValue( "GEOGCS" );
+    if( pszGEOGCS == NULL )
+        pszGEOGCS = "";
 
-  if(!EQUAL(pszGEOGCS+gcsNameOffset, pszDatum+datumNameOffset))
-    ret = TRUE;
-  else
-  {
-    const char* name = poSRS->GetAttrValue("PRIMEM");
-    if(name && !EQUAL(name,"Greenwich"))
-      ret = TRUE;
-    if(!ret)
+    const char *pszDatum = poSRS->GetAttrValue( "DATUM" );
+    if( pszDatum == NULL )
+        pszDatum = "";
+
+    const size_t gcsNameOffset =
+        STARTS_WITH(pszGEOGCS, "GCS_") ? strlen("GCS_") : 0;
+
+    const size_t datumNameOffset =
+        STARTS_WITH(pszDatum, "D_") ? strlen("D_") : 0;
+
+    OGRBoolean ret = FALSE;
+    // TODO(schwehr): Address CID 164976 - overrun-local.
+    // Need to check pszGEOGCS and pszDatum are one longer than the STARTS_WITH.
+    if( !EQUAL(pszGEOGCS + gcsNameOffset, pszDatum + datumNameOffset) )
     {
-      OGR_SRSNode * poAUnits = poSRS->GetAttrNode( "GEOGCS|UNIT" );
-      name = poAUnits->GetChild(0)->GetValue();
-      if(name && !EQUAL(name,"Degree"))
         ret = TRUE;
     }
-    if(!ret)
+    else
     {
-      name = poSRS->GetAttrValue("UNIT");
-      if(name)
-      {
-        ret = TRUE;
-        for(int i=0; apszUnitMap[i] != NULL; i+=2)
-          if(EQUAL(name, apszUnitMap[i]))
-            ret = FALSE;
-      }
-    }
-    if(!ret)
-    {
-        int nGCS = poSRS->GetEPSGGeogCS();
-        switch(nGCS)
+        const char* name = poSRS->GetAttrValue("PRIMEM");
+        if( name && !EQUAL(name,"Greenwich") )
+            ret = TRUE;
+
+        if( !ret )
         {
-          case 4326:
-            if(!EQUAL(pszDatum+datumNameOffset, "WGS_84"))
-              ret = TRUE;
-            break;
-          case 4322:
-            if(!EQUAL(pszDatum+datumNameOffset, "WGS_72"))
-              ret = TRUE;
-            break;
-          case 4267:
-            if(!EQUAL(pszDatum+datumNameOffset, "North_America_1927"))
-              ret = TRUE;
-            break;
-          case 4269:
-            if(!EQUAL(pszDatum+datumNameOffset, "North_America_1983"))
-              ret = TRUE;
-            break;
+            OGR_SRSNode * poAUnits = poSRS->GetAttrNode( "GEOGCS|UNIT" );
+            name = poAUnits->GetChild(0)->GetValue();
+            if( name && !EQUAL(name,"Degree") )
+                ret = TRUE;
+        }
+        if( !ret )
+        {
+            name = poSRS->GetAttrValue("UNIT");
+            if( name )
+            {
+                ret = TRUE;
+                for( int i = 0; apszUnitMap[i] != NULL; i+=2 )
+                    if( EQUAL(name, apszUnitMap[i]) )
+                        ret = FALSE;
+            }
+        }
+        if( !ret )
+        {
+            int nGCS = poSRS->GetEPSGGeogCS();
+            switch(nGCS)
+            {
+            case 4326:
+                if( !EQUAL(pszDatum+datumNameOffset, "WGS_84") )
+                    ret = TRUE;
+                break;
+            case 4322:
+                if( !EQUAL(pszDatum+datumNameOffset, "WGS_72") )
+                    ret = TRUE;
+                break;
+            case 4267:
+                if( !EQUAL(pszDatum+datumNameOffset, "North_America_1927") )
+                    ret = TRUE;
+                break;
+            case 4269:
+                if( !EQUAL(pszDatum+datumNameOffset, "North_America_1983") )
+                    ret = TRUE;
+                break;
+            }
         }
     }
-  }
-  if(ret)
-  {
-    char *pszPEString = NULL;
-    poSRS->morphToESRI();
-    poSRS->exportToWkt( &pszPEString );
-    HFASetPEString( hHFA, pszPEString );
-    CPLFree( pszPEString );
-  }
+    if( ret )
+    {
+        char *pszPEString = NULL;
+        poSRS->morphToESRI();
+        poSRS->exportToWkt( &pszPEString );
+        HFASetPEString( hHFA, pszPEString );
+        CPLFree( pszPEString );
+    }
 
-  return ret;
+    return ret;
 }
 
 /************************************************************************/
