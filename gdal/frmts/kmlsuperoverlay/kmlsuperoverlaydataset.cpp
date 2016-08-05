@@ -588,7 +588,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     double east = 0.0;
     double west = 0.0;
 
-    double	adfGeoTransform[6];
+    double adfGeoTransform[6];
 
     if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
     {
