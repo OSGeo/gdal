@@ -986,15 +986,15 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                 oLTIBuffer.myGetTotalBandData( static_cast<lt_uint16>(panBandMap[iBand] - 1) );
 
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
-	    {
+            {
                 GDALCopyWords( pabySrcBand + iLine*nTmpPixelSize*sceneWidth,
                                eDataType, nTmpPixelSize,
                                ((GByte *)pData) + iLine*nLineSpace
                                + iBand * nBandSpace,
                                eBufType, static_cast<int>(nPixelSpace),
                                nBufXSize );
-	    }
-	}
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1003,16 +1003,16 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     else
     {
         for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
-	{
+        {
             int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize)*sceneHeight);
 
             for( iBufPixel = 0; iBufPixel < nBufXSize; iBufPixel++ )
-	    {
+            {
                 int iTmpPixel = (int)
                     floor(((iBufPixel+0.5) / nBufXSize) * sceneWidth);
 
                 for( int iBand = 0; iBand < nBandCount; iBand++ )
-		{
+                {
                     GByte *pabySrc, *pabyDst;
 
                     pabyDst = ((GByte *) pData)
@@ -1029,9 +1029,9 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                     else
                         GDALCopyWords( pabySrc, eDataType, 0,
                                        pabyDst, eBufType, 0, 1 );
-		}
-	    }
-	}
+                }
+            }
+        }
     }
 
     return CE_None;
@@ -1045,11 +1045,11 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
                                       int, int *, GDALProgressFunc,
                                       void * )
 {
-	CPLError( CE_Warning, CPLE_AppDefined,
-			  "MrSID overviews are built-in, so building external "
-			  "overviews is unnecessary. Ignoring.\n" );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                          "MrSID overviews are built-in, so building external "
+                          "overviews is unnecessary. Ignoring.\n" );
 
-	return CE_None;
+        return CE_None;
 }
 
 /************************************************************************/

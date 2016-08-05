@@ -46,10 +46,10 @@ class CPL_DLL MAPDataset : public GDALDataset
     GDALDataset *poImageDS;
 
     char        *pszWKT;
-    int	        bGeoTransformValid;
+    int         bGeoTransformValid;
     double      adfGeoTransform[6];
     int         nGCPCount;
-    GDAL_GCP	*pasGCPList;
+    GDAL_GCP    *pasGCPList;
     OGRPolygon  *poNeatLine;
     CPLString   osImgFilename;
 
@@ -318,7 +318,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Create and fill the neatline polygon */
     if (bNeatLine)
     {
-        poDS->poNeatLine = new OGRPolygon();	/* Create a polygon to store the neatline */
+        poDS->poNeatLine = new OGRPolygon();   /* Create a polygon to store the neatline */
         OGRLinearRing* poRing = new OGRLinearRing();
 
         if ( poDS->bGeoTransformValid )        /* Compute the projected coordinates of the corners */

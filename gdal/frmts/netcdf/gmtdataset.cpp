@@ -38,7 +38,7 @@ extern CPLMutex *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 
 /************************************************************************/
 /* ==================================================================== */
-/*			     GMTDataset				        */
+/*                           GMTDataset                                 */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -53,11 +53,11 @@ class GMTDataset : public GDALPamDataset
     int         cdfid;
 
                 GMTDataset() : z_id(0), cdfid(0) { }
-		~GMTDataset();
+                ~GMTDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
 };
 
 /************************************************************************/
@@ -175,7 +175,7 @@ CPLErr GMTRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GMTDataset				*/
+/*                              GMTDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -283,7 +283,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with GDALDataset own mutex
 
-    GMTDataset 	*poDS = new GMTDataset();
+    GMTDataset *poDS = new GMTDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
 
     poDS->cdfid = cdfid;
@@ -493,7 +493,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "spacing", NC_DOUBLE, 1, dims, &inc_id));
     CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "dimension", NC_LONG, 1, dims, &nm_id));
 
-    dims[0]		= xysize_dim;
+    dims[0] = xysize_dim;
     CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "z", nc_datatype, 1, dims, &z_id));
 
 /* -------------------------------------------------------------------- */

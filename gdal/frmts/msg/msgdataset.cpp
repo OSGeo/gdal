@@ -710,25 +710,25 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
   {
     double rRadiance = rOffset + (iDN * rSlope);
 
-		if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
-		{
-			const double rC1 = 1.19104e-5;
-			const double rC2 = 1.43877e+0;
+                if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
+                {
+                        const double rC1 = 1.19104e-5;
+                        const double rC2 = 1.43877e+0;
 
-			double cc2 = rC2 * poGDS->rVc[iIndex];
-			double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
-			double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
-			return rTemperature;
-		}
-		else // Channels 1,2,3 and 12 (visual): Reflectance
-		{
+                        double cc2 = rC2 * poGDS->rVc[iIndex];
+                        double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+                        double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
+                        return rTemperature;
+                }
+                else // Channels 1,2,3 and 12 (visual): Reflectance
+                {
       double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // X, in "geos" meters
       double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // Y, in "geos" meters
       if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
-	      return m_rc->rGetReflectance(rRadiance, rLat, rLon);
-			else
-				return 0;
-		}
+              return m_rc->rGetReflectance(rRadiance, rLat, rLon);
+                        else
+                                return 0;
+                }
   }
   else // radiometric
   {
