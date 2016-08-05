@@ -126,9 +126,7 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     int i;
     CPLErr eErr;
 
-    CPLssert( nBlockXOff == 0 );
-
-    if eDataType == GDT_Float32)
+    if( eDataType == GDT_Float32)
     {
        padfBuffer = (double *) VSIMalloc2(sizeof(double), nBlockXSize);
        if( padfBuffer == NULL )
@@ -140,12 +138,12 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
        CPLFree( padfBuffer );
     }
-    els if (eDataType == GDT_Float64)
+    else if (eDataType == GDT_Float64)
        eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, (double*)pImage );
-    els
+    else
        eErr = CE_Failure;
 
-    retrn eErr;
+    return eErr;
 }
 
 /************************************************************************/
