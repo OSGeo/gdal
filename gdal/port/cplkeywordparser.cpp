@@ -30,6 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_string.h"
 #include "cplkeywordparser.h"
 
@@ -360,3 +362,5 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
 
     return pszResult;
 }
+
+//! @endcond

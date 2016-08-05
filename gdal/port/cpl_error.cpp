@@ -209,6 +209,7 @@ void    CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
 /*                             CPLErrorV()                              */
 /************************************************************************/
 
+/** Same as CPLError() but with a va_list */
 void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                    va_list args )
 {
@@ -776,6 +777,7 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
+/** Default error handler. */
 void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
@@ -839,6 +841,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
 /*                        CPLQuietErrorHandler()                        */
 /************************************************************************/
 
+/** Error handler that does not do anything, except for debug messages. */
 void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError,
                            const char * pszErrorMsg )
 
@@ -851,6 +854,9 @@ void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError,
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
+/** Error handler that logs into the file defined by the CPL_LOG configuration
+ * option, or stderr otherwise.
+ */
 void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
@@ -926,6 +932,8 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
  *                      CPLTurnFailureIntoWarning()                   *
  **********************************************************************/
 
+/**  Whether failures should be turned into warnings.
+ */
 void CPLTurnFailureIntoWarning( int bOn )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();

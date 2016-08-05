@@ -41,6 +41,7 @@
 
 CPL_C_START
 
+/** Opaque type for a geocoding session */
 typedef struct _OGRGeocodingSessionHS *OGRGeocodingSessionH;
 
 OGRGeocodingSessionH CPL_DLL OGRGeocodeCreateSession(char** papszOptions);

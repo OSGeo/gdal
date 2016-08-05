@@ -268,6 +268,7 @@ OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
     return poRet;
 }
 
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                            checkRing()                               */
 /************************************************************************/
@@ -282,6 +283,7 @@ int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
 
     return TRUE;
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                              WkbSize()                               */
@@ -455,6 +457,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
     return eErr;
 }
 
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                        importFromWKTListOnly()                       */
 /*                                                                      */
@@ -588,6 +591,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHas
     *ppszInput = (char *) pszInput;
     return OGRERR_NONE;
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                            exportToWkt()                             */
@@ -827,6 +831,7 @@ OGRGeometry* OGRPolygon::getCurveGeometry(const char* const* papszOptions) const
     return poCC;
 }
 
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                        CastToCurvePolygon()                          */
 /************************************************************************/
@@ -876,3 +881,4 @@ OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const {
 OGRSurfaceCasterToCurvePolygon OGRPolygon::GetCasterToCurvePolygon() const {
     return (OGRSurfaceCasterToCurvePolygon) OGRPolygon::CastToCurvePolygon;
 }
+/*! @endcond */

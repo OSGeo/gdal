@@ -3943,17 +3943,6 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nBytes, GByte *pabyData )
- * \brief Set field to binary data.
- *
- * This method currently on has an effect of OFTBinary fields.
- *
- * @param pszFName the name of the field to set.
- * @param nBytes bytes of data being set.
- * @param pabyData the raw data being applied.
- */
-
-/**
  * \brief Set field to binary data.
  *
  * This method currently on has an effect of OFTBinary fields.
@@ -5456,6 +5445,8 @@ void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
     m_poStyleTable = poStyleTable;
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                            RemapFields()                             */
 /*                                                                      */
@@ -5557,6 +5548,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
 
     return OGRERR_NONE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         OGR_F_GetStyleTable()                        */

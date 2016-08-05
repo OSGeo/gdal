@@ -545,6 +545,7 @@ int OGR_G_Intersects( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
     return ((OGRGeometry *) hGeom)->Intersects( (const OGRGeometry *) hOtherGeom );
 }
 
+//! @cond Doxygen_Suppress
 int OGR_G_Intersect( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
 
 {
@@ -553,6 +554,7 @@ int OGR_G_Intersect( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
 
     return ((OGRGeometry *) hGeom)->Intersects( (const OGRGeometry *) hOtherGeom );
 }
+//! @endcond
 
 /************************************************************************/
 /*                            transformTo()                             */

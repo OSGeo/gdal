@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_aws.h"
 #include "cpl_vsi_error.h"
 #include "cpl_sha256.h"
@@ -640,3 +642,5 @@ void VSIS3HandleHelper::SetObjectKey(const CPLString &osStr)
 }
 
 #endif
+
+//! @endcond

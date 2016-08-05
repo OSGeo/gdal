@@ -339,9 +339,9 @@ void GDALSimpleSURF::SetDescriptor(
 /**
  * Find corresponding points (equal points in two collections).
  *
- * @param poMatched Resulting collection for matched points
- * @param poFirstCollection Points on the first image
- * @param poSecondCollection Points on the second image
+ * @param poMatchPairs Resulting collection for matched points
+ * @param poFirstCollect Points on the first image
+ * @param poSecondCollect Points on the second image
  * @param dfThreshold Value from 0 to 1. Threshold affects to number of
  * matched points. If threshold is higher, amount of corresponding
  * points is larger, and vice versa

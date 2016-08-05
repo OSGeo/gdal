@@ -33,6 +33,8 @@
 #include "gdal_proxy.h"
 #include "vrtdataset.h"
 
+/*! @cond Doxygen_Suppress */
+
 // #define DEBUG_VERBOSE 1
 
 // See #5459
@@ -2841,3 +2843,4 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
     delete poSource;
     return NULL;
 }
+/*! @endcond */

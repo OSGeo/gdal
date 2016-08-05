@@ -741,6 +741,8 @@ OGRStyleToolH OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId,
 /* create a Style tool from the given StyleString, it should contain only a */
 /* part of a StyleString.                                                    */
 /****************************************************************************/
+
+//! @cond Doxygen_Suppress
 OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
                                                           pszStyleString)
 {
@@ -767,7 +769,7 @@ OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
 
     return poStyleTool;
 }
-
+//! @endcond
 /* ======================================================================== */
 /*                OGRStyleTable                                             */
 /*     Object Used to manage and store a styletable                         */
@@ -1925,6 +1927,7 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
 /*                   SetInternalInputUnitFromParam()                    */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRStyleTool::SetInternalInputUnitFromParam(char *pszString)
 {
 
@@ -2048,6 +2051,7 @@ int   OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)
 {
     return (int) ComputeWithUnit((double )nValue, eUnit);
 }
+//! @endcond
 
 /************************************************************************/
 /*                            GetParamStr()                             */
@@ -2675,7 +2679,7 @@ int OGR_ST_GetRGBFromString( OGRStyleToolH hST, const char *pszColor,
                                                     *pnBlue, *pnAlpha );
 }
 
-
+//! @cond Doxygen_Suppress
 /* ======================================================================== */
 /*                OGRStylePen                                               */
 /*       Specific parameter (Set/Get) for the StylePen                      */
@@ -3067,3 +3071,4 @@ const char *OGRStyleLabel::GetStyleString()
 {   return OGRStyleTool::GetStyleString(asStyleLabel,m_pasStyleValue,
                                         (int)OGRSTLabelLast);
 }
+//! @endcond

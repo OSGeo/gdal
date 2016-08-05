@@ -77,6 +77,7 @@ public:
     GDALFeaturePoint(int nX, int nY, int nScale, int nRadius, int nSign);
     virtual ~GDALFeaturePoint();
 
+    /** Assignment operator */
     GDALFeaturePoint& operator=(const GDALFeaturePoint& point);
 
     /**
@@ -90,7 +91,7 @@ public:
      */
     double& operator[](int nIndex);
 
-    // Descriptor length
+    /** Descriptor length */
     static const int DESC_SIZE = 64;
 
     /**

@@ -34,6 +34,8 @@
 #include "ogr_p.h"
 #include "ogr_attrind.h"
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -737,3 +739,5 @@ char **OGRFeatureQuery::GetUsedFields( )
 
     return FieldCollector( pSWQExpr, NULL );
 }
+
+//! @endcond

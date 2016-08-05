@@ -127,6 +127,7 @@ static FindFileTLS* CPLFinderInit()
 /*                           CPLFinderClean()                           */
 /************************************************************************/
 
+/** CPLFinderClean */
 void CPLFinderClean()
 
 {
@@ -141,6 +142,7 @@ void CPLFinderClean()
 /*                         CPLDefaultFindFile()                         */
 /************************************************************************/
 
+/** CPLDefaultFindFile */
 const char *CPLDefaultFindFile( const char * /* pszClass */,
                                 const char *pszBasename )
 
@@ -168,6 +170,7 @@ const char *CPLDefaultFindFile( const char * /* pszClass */,
 /*                            CPLFindFile()                             */
 /************************************************************************/
 
+/** CPLFindFile */
 const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 
 {
@@ -190,6 +193,7 @@ const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 /*                         CPLPushFileFinder()                          */
 /************************************************************************/
 
+/** CPLPushFileFinder */
 void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
 {
@@ -224,6 +228,7 @@ CPLFileFinder CPLPopFileFinderInternal(FindFileTLS* pTLSData)
     return pfnReturn;
 }
 
+/** CPLPopFileFinder */
 CPLFileFinder CPLPopFileFinder()
 
 {
@@ -234,6 +239,7 @@ CPLFileFinder CPLPopFileFinder()
 /*                       CPLPushFinderLocation()                        */
 /************************************************************************/
 
+/** CPLPushFinderLocation */
 void CPLPushFinderLocation( const char *pszLocation )
 
 {
@@ -274,6 +280,7 @@ static void CPLPopFinderLocationInternal( FindFileTLS* pTLSData )
     }
 }
 
+/** CPLPopFinderLocation */
 void CPLPopFinderLocation()
 {
     CPLPopFinderLocationInternal(CPLFinderInit());

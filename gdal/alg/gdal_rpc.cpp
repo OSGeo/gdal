@@ -701,7 +701,7 @@ retry:
  * is always exact given the equations). Starting with GDAL 2.1, this may also
  * be set through the RPC_PIXEL_ERROR_THRESHOLD transformer option.
  *
- * @param papszOptions Other transformer options (i.e. RPC_HEIGHT=<z>).
+ * @param papszOptions Other transformer options (i.e. RPC_HEIGHT=z).
  *
  * @return transformer callback data (deallocate with GDALDestroyTransformer()).
  */
@@ -906,6 +906,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*                 GDALDestroyReprojectionTransformer()                 */
 /************************************************************************/
 
+/** Destroy RPC tranformer */
 void GDALDestroyRPCTransformer( void *pTransformAlg )
 
 {
@@ -1649,6 +1650,7 @@ static int GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTrans
 /*                          GDALRPCTransform()                          */
 /************************************************************************/
 
+/** RPC transform */
 int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                       int nPointCount,
                       double *padfX, double *padfY, double *padfZ,

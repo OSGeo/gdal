@@ -48,14 +48,19 @@ CPL_C_START
 
 /* Types */
 
+/** Opaque type for a hash set */
 typedef struct _CPLHashSet CPLHashSet;
 
+/** CPLHashSetHashFunc */
 typedef unsigned long (*CPLHashSetHashFunc)(const void* elt);
 
+/** CPLHashSetEqualFunc */
 typedef int          (*CPLHashSetEqualFunc)(const void* elt1, const void* elt2);
 
+/** CPLHashSetFreeEltFunc */
 typedef void         (*CPLHashSetFreeEltFunc)(void* elt);
 
+/** CPLHashSetIterEltFunc */
 typedef int          (*CPLHashSetIterEltFunc)(void* elt, void* user_data);
 
 /* Functions */

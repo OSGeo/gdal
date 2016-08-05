@@ -44,6 +44,8 @@ static const char VSICRYPT_PREFIX[] = "/vsicrypt/";
 
 #if defined(HAVE_CRYPTOPP) || defined(DOXYGEN_SKIP)
 
+//! @cond Doxygen_Suppress
+
 /* Increase Major in case of backward incompatible changes */
 static const int VSICRYPT_CURRENT_MAJOR = 1;
 static const int VSICRYPT_CURRENT_MINOR = 0;
@@ -167,6 +169,8 @@ typedef enum
     MODE_MAX = MODE_CBC_CTS
 } VSICryptMode;
 
+//! @endcond
+
 /************************************************************************/
 /*                          VSISetCryptKey()                            */
 /************************************************************************/
@@ -202,6 +206,8 @@ void VSISetCryptKey(const GByte* pabyKey, int nKeySize)
         nGlobalKeySize = nKeySize;
     }
 }
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                             GetAlg()                                 */
@@ -1715,6 +1721,8 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 }
 
 #endif
+
+//! @endcond
 
 /************************************************************************/
 /*                   VSIInstallCryptFileHandler()                       */

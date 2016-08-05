@@ -334,6 +334,12 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
 /*               GDALTriangulationComputeBarycentricCoordinates()       */
 /************************************************************************/
 
+#define BARYC_COORD_L1(psCoeffs, dfX, dfY) \
+        (psCoeffs->dfMul1X * ((dfX) - psCoeffs->dfCstX) + psCoeffs->dfMul1Y * ((dfY) - psCoeffs->dfCstY))
+#define BARYC_COORD_L2(psCoeffs, dfX, dfY) \
+        (psCoeffs->dfMul2X * ((dfX) - psCoeffs->dfCstX) + psCoeffs->dfMul2Y * ((dfY) - psCoeffs->dfCstY))
+#define BARYC_COORD_L3(l1, l2)  (1 - (l1) - (l2))
+
 /** Computes the barycentric coordinates of a point.
  *
  * @param psDT triangulation.
@@ -348,12 +354,6 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
  *
  * @since GDAL 2.1
  */
-
-#define BARYC_COORD_L1(psCoeffs, dfX, dfY) \
-        (psCoeffs->dfMul1X * ((dfX) - psCoeffs->dfCstX) + psCoeffs->dfMul1Y * ((dfY) - psCoeffs->dfCstY))
-#define BARYC_COORD_L2(psCoeffs, dfX, dfY) \
-        (psCoeffs->dfMul2X * ((dfX) - psCoeffs->dfCstX) + psCoeffs->dfMul2Y * ((dfY) - psCoeffs->dfCstY))
-#define BARYC_COORD_L3(l1, l2)  (1 - (l1) - (l2))
 
 int  GDALTriangulationComputeBarycentricCoordinates(const GDALTriangulation* psDT,
                                                     int nFacetIdx,

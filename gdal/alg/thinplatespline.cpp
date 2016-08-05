@@ -30,6 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/*! @cond Doxygen_Suppress */
+
 #ifdef HAVE_ARMADILLO
 /* Include before #define A(r,c) because armadillo uses A in its include files */
 #include "armadillo"
@@ -856,3 +858,5 @@ static int matrixInvert( int N, double input[], double output[] )
     return true;
 }
 #endif
+
+/*! @endcond */

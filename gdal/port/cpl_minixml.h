@@ -40,6 +40,7 @@
 
 CPL_C_START
 
+/** XML node type */
 typedef enum
 {
     /*! Node is an element */           CXT_Element = 0,

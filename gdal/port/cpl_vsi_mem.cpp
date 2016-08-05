@@ -33,6 +33,8 @@
 #include <time.h>
 #include <map>
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 /*
@@ -771,6 +773,8 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
         nRet = -1;
     return nRet;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                     VSIInstallLargeFileHandler()                     */

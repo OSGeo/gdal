@@ -36,6 +36,7 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                             VRTDriver()                              */
@@ -395,3 +396,5 @@ void GDALRegister_VRT()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
+
+/*! @endcond */

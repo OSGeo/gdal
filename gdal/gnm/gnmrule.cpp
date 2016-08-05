@@ -32,6 +32,7 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 GNMRule::GNMRule()
 {
     m_bValid = false;
@@ -185,3 +186,4 @@ bool GNMRule::ParseRuleString()
 
     return true;
 }
+/*! @endcond */

@@ -41,12 +41,16 @@
 #include "cpl_port.h"
 #include "gdal.h"
 
+/** Special value to indicate that nodata is not set */
 #define VRT_NODATA_UNSET -1234.56
 
 CPL_C_START
 
+/*! @cond Doxygen_Suppress */
 void GDALRegister_VRT();
+/*! @endcond */
 
+/** Type for a function that returns the pixel data in a provided window */
 typedef CPLErr
 (*VRTImageReadFunc)( void *hCBData,
                      int nXOff, int nYOff, int nXSize, int nYSize,
@@ -55,10 +59,10 @@ typedef CPLErr
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various VRT dataset classes.     */
 /* -------------------------------------------------------------------- */
+/*! @cond Doxygen_Suppress */
 typedef void *VRTAveragedSourceH;
 typedef void *VRTAverageFilteredSourceH;
 typedef void *VRTComplexSourceH;
-typedef void *VRTDatasetH;
 typedef void *VRTDerivedRasterBandH;
 typedef void *VRTDriverH;
 typedef void *VRTFilteredSourceH;
@@ -68,9 +72,14 @@ typedef void *VRTRasterBandH;
 typedef void *VRTRawRasterBandH;
 typedef void *VRTSimpleSourceH;
 typedef void *VRTSourceH;
-typedef void *VRTSourcedRasterBandH;
 typedef void *VRTWarpedDatasetH;
 typedef void *VRTWarpedRasterBandH;
+/*! @endcond */
+
+/** Opaque type for a VRT dataset */
+typedef void *VRTDatasetH;
+/** Opaque type for a VRT sourced raster band */
+typedef void *VRTSourcedRasterBandH;
 
 /* ==================================================================== */
 /*      VRTDataset class.                                               */

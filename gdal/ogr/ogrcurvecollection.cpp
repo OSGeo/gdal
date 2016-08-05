@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                         OGRCurveCollection()                         */
 /************************************************************************/
@@ -711,3 +713,5 @@ OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
     }
     return FALSE;
 }
+
+//! @endcond

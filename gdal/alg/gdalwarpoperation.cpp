@@ -159,6 +159,7 @@ GDALWarpOperation::~GDALWarpOperation()
 /*                             GetOptions()                             */
 /************************************************************************/
 
+/** Return warp options */
 const GDALWarpOptions *GDALWarpOperation::GetOptions()
 
 {
@@ -1261,13 +1262,6 @@ CPLErr GDALWarpOperation::CollectChunkList(
 /************************************************************************/
 
 /**
- * \fn CPLErr GDALWarpOperation::WarpRegion(int nDstXOff, int nDstYOff,
-                                            int nDstXSize, int nDstYSize,
-                                            int nSrcXOff=0, int nSrcYOff=0,
-                                            int nSrcXSize=0, int nSrcYSize=0,
-                                            double dfProgressBase = 0,
-                                            double dfProgressScale = 1);
- *
  * This method requests the indicated region of the output file be generated.
  *
  * Note that WarpRegion() will produce the requested area in one low level warp
@@ -1310,6 +1304,37 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                       0, 0,
                       dfProgressBase, dfProgressScale);
 }
+
+/**
+ * This method requests the indicated region of the output file be generated.
+ *
+ * Note that WarpRegion() will produce the requested area in one low level warp
+ * operation without verifying that this does not exceed the stated memory
+ * limits for the warp operation.  Applications should take care not to call
+ * WarpRegion() on too large a region!  This function
+ * is normally called by ChunkAndWarpImage(), the normal entry point for
+ * applications.  Use it instead if staying within memory constraints is
+ * desired.
+ *
+ * Progress is reported from dfProgressBase to dfProgressBase + dfProgressScale
+ * for the indicated region.
+ *
+ * @param nDstXOff X offset to window of destination data to be produced.
+ * @param nDstYOff Y offset to window of destination data to be produced.
+ * @param nDstXSize Width of output window on destination file to be produced.
+ * @param nDstYSize Height of output window on destination file to be produced.
+ * @param nSrcXOff source window X offset (computed if window all zero)
+ * @param nSrcYOff source window Y offset (computed if window all zero)
+ * @param nSrcXSize source window X size (computed if window all zero)
+ * @param nSrcYSize source window Y size (computed if window all zero)
+ * @param nSrcXExtraSize  Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation
+ * @param nSrcYExtraSize  Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation
+ * @param dfProgressBase minimum progress value reported
+ * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
+ *                        maximum progress value reported
+ *
+ * @return CE_None on success or CE_Failure if an error occurs.
+ */
 
 CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize,
@@ -1531,16 +1556,6 @@ CPLErr GDALWarpRegion( GDALWarpOperationH hOperation,
 /************************************************************************/
 
 /**
- * \fn CPLErr GDALWarpOperation::WarpRegionToBuffer(
-                                  int nDstXOff, int nDstYOff,
-                                  int nDstXSize, int nDstYSize,
-                                  void *pDataBuf,
-                                  GDALDataType eBufDataType,
-                                  int nSrcXOff=0, int nSrcYOff=0,
-                                  int nSrcXSize=0, int nSrcYSize=0,
-                                  double dfProgressBase = 0,
-                                  double dfProgressScale = 1 );
- *
  * This method requests that a particular window of the output dataset
  * be warped and the result put into the provided data buffer.  The output
  * dataset doesn't even really have to exist to use this method as long as
@@ -1579,6 +1594,36 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                               nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, 0, 0,
                               dfProgressBase, dfProgressScale);
 }
+
+/**
+ * This method requests that a particular window of the output dataset
+ * be warped and the result put into the provided data buffer.  The output
+ * dataset doesn't even really have to exist to use this method as long as
+ * the transformation function in the GDALWarpOptions is setup to map to
+ * a virtual pixel/line space.
+ *
+ * This method will do the whole region in one chunk, so be wary of the
+ * amount of memory that might be used.
+ *
+ * @param nDstXOff X offset to window of destination data to be produced.
+ * @param nDstYOff Y offset to window of destination data to be produced.
+ * @param nDstXSize Width of output window on destination file to be produced.
+ * @param nDstYSize Height of output window on destination file to be produced.
+ * @param pDataBuf the data buffer to place result in, of type eBufDataType.
+ * @param eBufDataType the type of the output data buffer.  For now this
+ * must match GDALWarpOptions::eWorkingDataType.
+ * @param nSrcXOff source window X offset (computed if window all zero)
+ * @param nSrcYOff source window Y offset (computed if window all zero)
+ * @param nSrcXSize source window X size (computed if window all zero)
+ * @param nSrcYSize source window Y size (computed if window all zero)
+ * @param nSrcXExtraSize  Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation
+ * @param nSrcYExtraSize  Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation
+ * @param dfProgressBase minimum progress value reported
+ * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
+ *                        maximum progress value reported
+ *
+ * @return CE_None on success or CE_Failure if an error occurs.
+ */
 
 CPLErr GDALWarpOperation::WarpRegionToBuffer(
     int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize,

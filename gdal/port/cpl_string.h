@@ -83,11 +83,17 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
                                    const char *pszDelimiter,
                                    int nCSLTFlags ) CPL_WARN_UNUSED_RESULT;
 
+/** Flag for CSLTokenizeString2() to honour strings */
 #define CSLT_HONOURSTRINGS      0x0001
+/** Flag for CSLTokenizeString2() to allow empty tokens */
 #define CSLT_ALLOWEMPTYTOKENS   0x0002
+/** Flag for CSLTokenizeString2() to preserve quotes */
 #define CSLT_PRESERVEQUOTES     0x0004
+/** Flag for CSLTokenizeString2() to preserve escape characters */
 #define CSLT_PRESERVEESCAPES    0x0008
+/** Flag for CSLTokenizeString2() to strip leading spaces */
 #define CSLT_STRIPLEADSPACES    0x0010
+/** Flag for CSLTokenizeString2() to strip trailaing spaces */
 #define CSLT_STRIPENDSPACES     0x0020
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
@@ -187,11 +193,17 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 
 char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
 
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for backlash quoting */
 #define CPLES_BackslashQuotable 0
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping */
 #define CPLES_XML               1
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for URL encoding */
 #define CPLES_URL               2
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for SQL escaping */
 #define CPLES_SQL               3
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV escaping */
 #define CPLES_CSV               4
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping (preserving quotes) */
 #define CPLES_XML_BUT_QUOTES    5
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
@@ -208,11 +220,12 @@ char CPL_DLL *CPLBase64Encode( int nBytes,
                                const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLBase64DecodeInPlace( GByte* pszBase64 );
 
+/** Type of value */
 typedef enum
 {
-    CPL_VALUE_STRING,
-    CPL_VALUE_REAL,
-    CPL_VALUE_INTEGER
+    CPL_VALUE_STRING,  /**< String */
+    CPL_VALUE_REAL,    /**< Real number */
+    CPL_VALUE_INTEGER  /**< Integer */
 } CPLValueType;
 
 CPLValueType CPL_DLL CPLGetValueType(const char* pszValue);
@@ -228,6 +241,7 @@ int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt,
                          va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
 int CPL_DLL CPLsnprintf(char *str, size_t size,
                         const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);
+/*! @cond Doxygen_Suppress */
 #if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
 int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
     CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
@@ -235,10 +249,14 @@ int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
 int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
+/*! @endcond */
 int CPL_DLL CPLprintf(const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+
+/* For some reason Doxygen_Suppress is needed to avoid warning. Not sure why */
+/*! @cond Doxygen_Suppress */
 /* caution: only works with limited number of formats */
-int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
-    CPL_SCAN_FUNC_FORMAT(2, 3);
+int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...) CPL_SCAN_FUNC_FORMAT(2, 3);
+/*! @endcond */
 
 const char CPL_DLL *CPLSPrintf(const char *fmt, ...)
     CPL_PRINT_FUNC_FORMAT(1, 2) CPL_WARN_UNUSED_RESULT;
@@ -250,16 +268,25 @@ int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args )
 /* -------------------------------------------------------------------- */
 /*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
 /* -------------------------------------------------------------------- */
+/** Encoding of the current locale */
 #define CPL_ENC_LOCALE     ""
+/** UTF-8 encoding */
 #define CPL_ENC_UTF8       "UTF-8"
+/** UTF-16 encoding */
 #define CPL_ENC_UTF16      "UTF-16"
+/** UCS-2 encoding */
 #define CPL_ENC_UCS2       "UCS-2"
+/** UCS-4 encoding */
 #define CPL_ENC_UCS4       "UCS-4"
+/** ASCII encoding */
 #define CPL_ENC_ASCII      "ASCII"
+/** ISO-8859-1 (LATIN1) encoding */
 #define CPL_ENC_ISO8859_1  "ISO-8859-1"
 
 int CPL_DLL  CPLEncodingCharSize( const char *pszEncoding );
+/*! @cond Doxygen_Suppress */
 void CPL_DLL  CPLClearRecodeWarningFlags( void );
+/*! @endcond */
 char CPL_DLL *CPLRecode(
     const char *pszSource, const char *pszSrcEncoding,
     const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
@@ -309,7 +336,9 @@ CPL_C_END
     using std::string;
 # define gdal_std_string string
 #else
+/*! @cond Doxygen_Suppress */
 # define gdal_std_string std::string
+/*! @endcond */
 #endif
 
 //! Convenient string class based on std::string.
@@ -317,37 +346,47 @@ class CPL_DLL CPLString : public gdal_std_string
 {
 public:
 
+    /** Constructor */
     CPLString(void) {}
+    /** Constructor */
     CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
+    /** Constructor */
     CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
 
+    /** Return string as zero terminated character array */
     operator const char* (void) const { return c_str(); }
 
+    /** Return character at specified index */
     char& operator[](std::string::size_type i)
     {
         return gdal_std_string::operator[](i);
     }
 
+    /** Return character at specified index */
     const char& operator[](std::string::size_type i) const
     {
         return gdal_std_string::operator[](i);
     }
 
+    /** Return character at specified index */
     char& operator[](int i)
     {
         return gdal_std_string::operator[](
             static_cast<std::string::size_type>(i));
     }
 
+    /** Return character at specified index */
     const char& operator[](int i) const
     {
         return gdal_std_string::operator[](
             static_cast<std::string::size_type>(i));
     }
 
+    /** Clear the string */
     void Clear() { resize(0); }
 
-    // NULL safe assign and free.
+    /** Assign specified string and take ownership of it (assumed to be
+     * allocated with CPLMalloc()). NULL can be safely passed to clear the string */
     void Seize(char *pszValue)
     {
         if (pszValue == NULL )
@@ -418,6 +457,7 @@ class CPL_DLL CPLStringList
 
     CPLStringList &Clear();
 
+    /** Return size of list */
     int    size() const { return Count(); }
     int    Count() const;
 
@@ -431,8 +471,10 @@ class CPL_DLL CPLStringList
     // CPLStringList &InsertStrings( int nInsertAtLineNo, char **papszNewLines );
     // CPLStringList &RemoveStrings( int nFirstLineToDelete, int nNumToRemove=1 );
 
+    /** Return index of pszTarget in the list, or -1 */
     int    FindString( const char *pszTarget ) const
     { return CSLFindString( papszList, pszTarget ); }
+    /** Return index of pszTarget in the list (using partial search), or -1 */
     int    PartialFindString( const char *pszNeedle ) const
     { return CSLPartialFindString( papszList, pszNeedle ); }
 
@@ -447,22 +489,31 @@ class CPL_DLL CPLStringList
     CPLStringList &SetNameValue( const char *pszKey, const char *pszValue );
 
     CPLStringList &Assign( char **papszListIn, int bTakeOwnership=TRUE );
+    /** Assignment operator */
     CPLStringList &operator=(char **papszListIn) {
       return Assign( papszListIn, TRUE ); }
+    /** Assignment operator */
     CPLStringList &operator=(const CPLStringList& oOther);
 
+    /** Return string at specified index */
     char * operator[](int i);
+    /** Return string at specified index */
     char * operator[](size_t i) { return (*this)[static_cast<int>(i)]; }
+    /** Return string at specified index */
     const char * operator[](int i) const;
+    /** Return string at specified index */
     const char * operator[](size_t i) const {
       return (*this)[static_cast<int>(i)]; }
 
+    /** Return list. Ownership remains to the object */
     char **List() { return papszList; }
     char **StealList();
 
     CPLStringList &Sort();
+    /** Returns whether the list is sorted */
     int    IsSorted() const { return bIsSorted; }
 
+    /** Return lists */
     operator char**(void) { return List(); }
 };
 

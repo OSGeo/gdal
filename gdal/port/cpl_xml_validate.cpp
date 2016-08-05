@@ -1045,7 +1045,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
  *
  * @param pszXMLFilename the filename of the XML file to validate.
  * @param pszXSDFilename the filename of the XSD schema.
- * @param papszOptions unused for now.
+ * @param papszOptions unused for now. Set to NULL.
  * @return TRUE if the XML file validates against the XML schema.
  *
  * @since GDAL 1.10.0
@@ -1053,7 +1053,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 
 int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
-                    char** /* papszOptions */ )
+                    CPL_UNUSED char** papszOptions )
 {
     char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;

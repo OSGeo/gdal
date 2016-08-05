@@ -300,6 +300,9 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder, bReversed, FALSE, -1, -1);
 }
 
+/** Create GCP based polynomial transformer, with a tolerance threshold to
+ * discard GCPs that transform badly.
+ */
 void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, double dfTolerance, int nMinimumGcps)
 

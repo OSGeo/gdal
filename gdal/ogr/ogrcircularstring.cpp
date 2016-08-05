@@ -614,6 +614,7 @@ OGRGeometry* OGRCircularString::getLinearGeometry(double dfMaxAngleStepSizeDegre
     return CurveToLine(dfMaxAngleStepSizeDegrees, papszOptions);
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -629,6 +630,7 @@ OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToError;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            IsFullCircle()                            */
@@ -680,6 +682,7 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 double OGRCircularString::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;
@@ -703,6 +706,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
     }
     return dfArea;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           get_Area()                                 */
@@ -745,6 +749,7 @@ double OGRCircularString::get_Area() const
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
 {
     double cx, cy, square_R;
@@ -756,3 +761,4 @@ int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
     }
     return -1;
 }
+//! @endcond

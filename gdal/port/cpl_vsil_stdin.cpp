@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
@@ -377,6 +379,8 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     pStatBuf->st_mode = S_IFREG;
     return 0;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                       VSIInstallStdinHandler()                       */

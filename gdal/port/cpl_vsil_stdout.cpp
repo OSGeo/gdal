@@ -59,6 +59,7 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
     pWriteStream = stream;
 }
 
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /* ==================================================================== */
@@ -402,6 +403,8 @@ int VSIStdoutRedirectFilesystemHandler::Stat( CPL_UNUSED const char * pszFilenam
 
     return -1;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                       VSIInstallStdoutHandler()                      */
