@@ -35,7 +35,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CEOSDataset				*/
+/*                              CEOSDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -45,7 +45,7 @@ class CEOSDataset : public GDALPamDataset
 {
     friend class CEOSRasterBand;
 
-    CEOSImage	*psCEOS;
+    CEOSImage   *psCEOS;
 
   public:
                  CEOSDataset();
@@ -65,7 +65,7 @@ class CEOSRasterBand : public GDALPamRasterBand
 
   public:
 
-    		CEOSRasterBand( CEOSDataset *, int );
+                CEOSRasterBand( CEOSDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -95,7 +95,7 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                    int nBlockYOff,
                                    void * pImage )
 {
-    CEOSDataset	*poCEOS_DS = (CEOSDataset *) poDS;
+    CEOSDataset *poCEOS_DS = (CEOSDataset *) poDS;
 
     CPLAssert( nBlockXOff == 0 );
 
