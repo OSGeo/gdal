@@ -2905,9 +2905,9 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 /*                   ReadFileMetaDataFromFile()                         */
 /*                                                                      */
-/* Gets relevant information from NCSFileMetadata and populates			*/
-/* GDAL metadata														*/
-/*																		*/
+/* Gets relevant information from NCSFileMetadata and populates         */
+/* GDAL metadata.                                                       */
+/*                                                                      */
 /************************************************************************/
 #if ECWSDK_VERSION >= 50
 void ECWDataset::ReadFileMetaDataFromFile()
@@ -3306,7 +3306,8 @@ void ECWInitialize()
     if( !CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 #if ECWSDK_VERSION>= 50
-	NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT, "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+    NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT,
+                    "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
 #endif
 /* -------------------------------------------------------------------- */
 /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
@@ -3320,10 +3321,10 @@ void ECWInitialize()
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
 
     /* -------------------------------------------------------------------- */
-    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and         */
-    /*      projection to EPSG code using internal mapping.					*/
-    /*		Version 5.x do so we provide means to achieve old		*/
-    /*		behaviour.														*/
+    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
+    /*      projection to EPSG code using internal mapping.                 */
+    /*      Version 5.x do so we provide means to achieve old               */
+    /*      behaviour.                                                      */
     /* -------------------------------------------------------------------- */
     #if ECWSDK_VERSION >= 50
     if( CPLTestBool( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE)

@@ -150,14 +150,14 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				EnvisatDataset				*/
+/*                              EnvisatDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
 class EnvisatDataset : public RawDataset
 {
     EnvisatFile *hEnvisatFile;
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -169,13 +169,13 @@ class EnvisatDataset : public RawDataset
 
     void        UnwrapGCPs();
 
-    void	CollectMetadata( EnvisatFile_HeaderFlag );
+    void        CollectMetadata( EnvisatFile_HeaderFlag );
     void        CollectDSDMetadata();
     void        CollectADSMetadata();
 
   public:
-    		EnvisatDataset();
-    	        ~EnvisatDataset();
+                EnvisatDataset();
+                ~EnvisatDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -189,12 +189,12 @@ class EnvisatDataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				EnvisatDataset				*/
+/*                              EnvisatDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
 /************************************************************************/
-/*                            EnvisatDataset()                             */
+/*                            EnvisatDataset()                          */
 /************************************************************************/
 
 EnvisatDataset::EnvisatDataset() :
@@ -207,7 +207,7 @@ EnvisatDataset::EnvisatDataset() :
 }
 
 /************************************************************************/
-/*                            ~EnvisatDataset()                            */
+/*                            ~EnvisatDataset()                         */
 /************************************************************************/
 
 EnvisatDataset::~EnvisatDataset()
@@ -300,11 +300,11 @@ void EnvisatDataset::ScanForGCPs_ASAR()
         return;
 
 /* -------------------------------------------------------------------- */
-/*      Collect the first GCP set from each record.			*/
+/*      Collect the first GCP set from each record.                     */
 /* -------------------------------------------------------------------- */
-    GByte	abyRecord[521];
-    int  	nRange=0, nRangeOffset=0;
-    GUInt32 	unValue;
+    GByte       abyRecord[521];
+    int         nRange=0, nRangeOffset=0;
+    GUInt32     unValue;
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),(nNumDSR+1) * 11);
@@ -452,7 +452,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get subset of TP ADS records matching the MDS records	*/
+/*      Get subset of TP ADS records matching the MDS records           */
 /* -------------------------------------------------------------------- */
 
     /* get the MDS line sampling time interval */
@@ -510,10 +510,10 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect the first GCP set from each record.			*/
+/*      Collect the first GCP set from each record.                     */
 /* -------------------------------------------------------------------- */
 
-    GByte	*pabyRecord = (GByte *) CPLMalloc(nDSRSize-13);
+    GByte *pabyRecord = (GByte *) CPLMalloc(nDSRSize-13);
 
     GUInt32 *tpLat = ((GUInt32*)pabyRecord) + nTPPerLine*0 ; /* latitude */
     GUInt32 *tpLon = ((GUInt32*)pabyRecord) + nTPPerLine*1 ; /* longitude */
@@ -666,7 +666,7 @@ char **EnvisatDataset::GetMetadata( const char * pszDomain )
 void EnvisatDataset::CollectDSDMetadata()
 
 {
-    char	*pszDSName, *pszFilename;
+    char *pszDSName, *pszFilename;
 
     for( int iDSD = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, iDSD, &pszDSName, NULL,
@@ -852,7 +852,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    EnvisatFile	*hEnvisatFile;
+    EnvisatFile *hEnvisatFile;
     if( EnvisatFile_Open( &hEnvisatFile, poOpenInfo->pszFilename, "r" )
         == FAILURE )
         return NULL;

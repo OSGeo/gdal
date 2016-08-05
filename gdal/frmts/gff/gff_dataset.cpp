@@ -2,7 +2,7 @@
  *
  * Project:  Ground-based SAR Applitcations Testbed File Format driver
  * Purpose:  Support in GDAL for Sandia National Laboratory's GFF format
- * 	     blame Tisham for putting me up to this
+ *           blame Tisham for putting me up to this
  * Author:   Philippe Vachon <philippe@cowpig.ca>
  *
  ******************************************************************************
@@ -107,7 +107,7 @@ public:
 /*                           GFFRasterBand()                            */
 /************************************************************************/
 GFFRasterBand::GFFRasterBand( GFFDataset *poDSIn, int nBandIn,
-	GDALDataType eDataTypeIn )
+                              GDALDataType eDataTypeIn )
 {
     this->poDS = poDSIn;
     this->nBand = nBandIn;

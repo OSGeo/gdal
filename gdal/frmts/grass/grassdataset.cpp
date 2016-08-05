@@ -53,7 +53,7 @@ int Grass2CPLErrorHook( char * pszMessage, int bFatal )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				GRASSDataset				*/
+/*                              GRASSDataset                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -63,9 +63,9 @@ class GRASSDataset : public GDALDataset
 {
     friend class GRASSRasterBand;
 
-    char	*pszProjection;
+    char        *pszProjection;
 
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
   public:
                  GRASSDataset();
@@ -87,16 +87,16 @@ class GRASSRasterBand : public GDALRasterBand
 {
     friend class GRASSDataset;
 
-    int		hCell;
+    int         hCell;
     int         nGRSType;
 
     GDALColorTable *poCT;
 
-    int		bHaveMinMax;
-    double	dfCellMin;
-    double	dfCellMax;
+    int         bHaveMinMax;
+    double      dfCellMin;
+    double      dfCellMax;
 
-    double	dfNoData;
+    double      dfNoData;
 
   public:
 
@@ -122,7 +122,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
                                   const char * pszCellName )
 
 {
-    struct Cell_head	sCellInfo;
+    struct Cell_head sCellInfo;
 
     this->poDS = poDS;
     this->nBand = nBand;
@@ -204,7 +204,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         poCT = new GDALColorTable();
         for( int iColor = 0; iColor < 256; iColor++ )
         {
-            int	nRed, nGreen, nBlue;
+            int nRed, nGreen, nBlue;
             GDALColorEntry    sColor;
 
             if( G_get_color( iColor, &nRed, &nGreen, &nBlue, &sGrassColors ) )
@@ -449,8 +449,8 @@ typedef int (*GrassErrorHandler)();
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    static int	bDoneGISInit = FALSE;
-    char	*pszMapset = NULL, *pszCell = NULL;
+    static int  bDoneGISInit = FALSE;
+    char        *pszMapset = NULL, *pszCell = NULL;
     char        **papszCells = NULL;
     char        **papszMapsets = NULL;
 
@@ -500,9 +500,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GRASSDataset 	*poDS;
-
-    poDS = new GRASSDataset();
+    GRASSDataset *poDS = new GRASSDataset();
 
     /* notdef: should only allow read access to an existing cell, right? */
     poDS->eAccess = poOpenInfo->eAccess;
@@ -510,7 +508,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    struct Cell_head	sCellInfo;
+    struct Cell_head sCellInfo;
 
     if( G_get_cellhd( papszCells[0], papszMapsets[0], &sCellInfo ) != 0 )
     {
@@ -533,9 +531,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to get a projection definition.                             */
 /* -------------------------------------------------------------------- */
-    char	*pszProj4;
-
-    pszProj4 = G_get_cell_as_proj4( papszCells[0], papszMapsets[0] );
+    char *pszProj4 = G_get_cell_as_proj4( papszCells[0], papszMapsets[0] );
     if( pszProj4 != NULL )
     {
         OGRSpatialReference   oSRS;

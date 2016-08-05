@@ -43,7 +43,7 @@ using namespace gstEndian;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				FITDataset				*/
+/*                              FITDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -53,8 +53,8 @@ class FITDataset : public GDALPamDataset
 {
     friend class FITRasterBand;
 
-    VSILFILE	*fp;
-    FITinfo	*info;
+    VSILFILE    *fp;
+    FITinfo     *info;
     double      adfGeoTransform[6];
 
   public:
@@ -197,7 +197,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     uint64 tilenum = 0;
 
@@ -259,7 +259,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFSeekL( poFIT_DS->fp, offset, SEEK_SET ) == -1 ) {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT - 64bit file seek failure, handle=%p", poFIT_DS->fp );
-	    return CE_Failure;
+            return CE_Failure;
     }
 
     // XXX - should handle status
@@ -488,7 +488,7 @@ CPLErr FITRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     return CE_None;
 }
@@ -501,7 +501,7 @@ CPLErr FITRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     return CE_None;
 }
@@ -556,7 +556,7 @@ double FITRasterBand::GetMaximum( int *pbSuccess )
 
 GDALColorInterp FITRasterBand::GetColorInterpretation()
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     if ((! poFIT_DS) || (! poFIT_DS->info))
         return GCI_Undefined;
@@ -814,19 +814,19 @@ public:
     DeleteGuard( T *p ) : _ptr( p ) { }
     ~DeleteGuard()
     {
-	    delete _ptr;
+        delete _ptr;
     }
 
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = NULL;
-	    return tmp;
+        ptr = NULL;
+        return tmp;
     }
 
 private:
     T *_ptr;
-	// prevent default copy constructor and assignment operator
+    // prevent default copy constructor and assignment operator
     DeleteGuard( const DeleteGuard & );
     DeleteGuard &operator=( const DeleteGuard & );
 };
@@ -840,20 +840,20 @@ public:
     FreeGuard( T *p ) : _ptr( p ) { }
     ~FreeGuard()
     {
-	    if ( _ptr )
-			free( _ptr );
+        if ( _ptr )
+            free( _ptr );
     }
 
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = NULL;
-	    return tmp;
+        ptr = NULL;
+        return tmp;
     }
 
 private:
     T *_ptr;
-	// prevent default copy constructor and assignment operator
+    // prevent default copy constructor and assignment operator
     FreeGuard( const FreeGuard & );
     FreeGuard &operator=( const FreeGuard & );
 };
@@ -865,8 +865,8 @@ private:
 GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
 
     if( poOpenInfo->nHeaderBytes < 5 )
@@ -888,20 +888,21 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    FITDataset 	*poDS = new FITDataset();
+    FITDataset *poDS = new FITDataset();
     DeleteGuard<FITDataset> guard( poDS );
 
-	// re-open file for large file (64bit) access
+    // Re-open file for large file (64bit) access.
     if ( poOpenInfo->eAccess == GA_ReadOnly )
-	poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     else
-	poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
 
-    if ( !poDS->fp ) {
-	    CPLError( CE_Failure, CPLE_OpenFailed,
-		"Failed to re-open %s with FIT driver.\n",
-		poOpenInfo->pszFilename );
-	    return NULL;
+    if ( !poDS->fp )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to re-open %s with FIT driver.\n",
+                  poOpenInfo->pszFilename );
+        return NULL;
     }
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -923,11 +924,11 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("FIT", "Loading file with header version 02");
 
         gst_swapb(head->minValue);
-	info->minValue = head->minValue;
+        info->minValue = head->minValue;
         gst_swapb(head->maxValue);
-	info->maxValue = head->maxValue;
+        info->maxValue = head->maxValue;
         gst_swapb(head->dataOffset);
-	info->dataOffset = head->dataOffset;
+        info->dataOffset = head->dataOffset;
 
         info->userOffset = sizeof(FIThead02);
     }
@@ -939,9 +940,9 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("FIT", "Loading file with header version 01");
 
         // map old style header into new header structure
-	FIThead01* head01 = (FIThead01*)head;
+        FIThead01* head01 = (FIThead01*)head;
         gst_swapb(head->dataOffset);
-	info->dataOffset = head01->dataOffset;
+        info->dataOffset = head01->dataOffset;
 
         info->userOffset = sizeof(FIThead01);
     }
