@@ -69,7 +69,7 @@ class RS2Dataset : public GDALPamDataset
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
     char          *pszGCPProjection;
-    char	**papszSubDatasets;
+    char        **papszSubDatasets;
     char          *pszProjection;
     double      adfGeoTransform[6];
     bool        bHaveGeoTransform;
@@ -669,7 +669,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         //the GDALOpenInfo check would have failed because of the calibration string on the filename
         VSIStatBufL  sStat;
         if( VSIStatL( pszFilename, &sStat ) == 0 )
-        	poOpenInfo->bIsDirectory = VSI_ISDIR( sStat.st_mode );
+            poOpenInfo->bIsDirectory = VSI_ISDIR( sStat.st_mode );
     }
 
     CPLString osMDFilename;

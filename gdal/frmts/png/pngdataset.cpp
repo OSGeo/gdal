@@ -77,7 +77,7 @@ static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 
 /************************************************************************/
 /* ==================================================================== */
-/*				PNGDataset				*/
+/*                              PNGDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -107,7 +107,7 @@ class PNGDataset : public GDALPamDataset
 
     GDALColorTable *poColorTable;
 
-    int	   bGeoTransformValid;
+    int    bGeoTransformValid;
     double adfGeoTransform[6];
 
 
@@ -166,12 +166,12 @@ class PNGDataset : public GDALPamDataset
 #ifdef SUPPORT_CREATE
     int        m_nBitDepth;
     GByte      *m_pabyBuffer;
-    png_byte	*m_pabyAlpha;
+    png_byte    *m_pabyAlpha;
     png_structp m_hPNG;
     png_infop   m_psPNGInfo;
-    png_color	*m_pasPNGColors;
+    png_color   *m_pasPNGColors;
     VSILFILE        *m_fpImage;
-    int	   m_bGeoTransformValid;
+    int    m_bGeoTransformValid;
     double m_adfGeoTransform[6];
     char        *m_pszFilename;
     int         m_nColorType; /* PNG_COLOR_TYPE_* */
@@ -181,7 +181,7 @@ class PNGDataset : public GDALPamDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType, char** papszParmList );
   protected:
-	CPLErr write_png_header();
+        CPLErr write_png_header();
 
 #endif
 };
@@ -212,8 +212,8 @@ class PNGRasterBand : public GDALPamRasterBand
     CPLErr SetNoDataValue( double dfNewValue );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 
-    int		bHaveNoData;
-    double 	dfNoDataValue;
+    int         bHaveNoData;
+    double      dfNoDataValue;
 
 
 #ifdef SUPPORT_CREATE
@@ -221,14 +221,14 @@ class PNGRasterBand : public GDALPamRasterBand
     virtual CPLErr IWriteBlock( int, int, void * );
 
   protected:
-	int m_bBandProvided[5];
-	void reset_band_provision_flags()
-	{
+        int m_bBandProvided[5];
+        void reset_band_provision_flags()
+        {
             PNGDataset& ds = *reinterpret_cast<PNGDataset *>( poDS );
 
             for(size_t i = 0; i < static_cast<size_t>( ds.nBands ); i++)
                 m_bBandProvided[i] = FALSE;
-	}
+        }
 #endif
 };
 
@@ -253,7 +253,7 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDSIn, int nBandIn ) :
     nBlockYSize = 1;
 
 #ifdef SUPPORT_CREATE
-	this->reset_band_provision_flags();
+    this->reset_band_provision_flags();
 #endif
 }
 
@@ -1119,7 +1119,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    PNGDataset 	*poDS = new PNGDataset();
+    PNGDataset *poDS = new PNGDataset();
 
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
@@ -1158,7 +1158,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Read pre-image data after ensuring the file is rewound.         */
+/*      Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
     /* we should likely do a setjmp() here */
 
@@ -1925,9 +1925,9 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
-    	double      adfGeoTransform[6];
+        double adfGeoTransform[6];
 
-	if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
@@ -2307,7 +2307,7 @@ CPLErr PNGDataset::write_png_header()
         GDALColorTable *poCT = GetRasterBand(1)->GetColorTable();
 
         int bHaveNoData = FALSE;
-        double	dfNoDataValue = GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+        double dfNoDataValue = GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
         m_pasPNGColors = reinterpret_cast<png_color *>(
             CPLMalloc( sizeof(png_color) * poCT->GetColorEntryCount() ) );

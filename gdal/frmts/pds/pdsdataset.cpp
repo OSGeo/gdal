@@ -58,13 +58,13 @@ enum PDSLayout
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       PDSDataset	                        */
+/*                             PDSDataset                               */
 /* ==================================================================== */
 /************************************************************************/
 
 class PDSDataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
     GDALDataset *poCompressedDS;
 
     NASAKeywordHandler  oKeywords;
@@ -80,7 +80,7 @@ class PDSDataset : public RawDataset
 
     void        ParseSRS();
     int         ParseCompressedImage();
-    int	        ParseImage( CPLString osPrefix, CPLString osFilenamePrefix );
+    int         ParseImage( CPLString osPrefix, CPLString osFilenamePrefix );
     static void        CleanString( CPLString &osInput );
 
     const char *GetKeyword( std::string osPath,
@@ -665,9 +665,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     // ^IMAGE = 3
     // ^IMAGE             = "GLOBAL_ALBEDO_8PPD.IMG"
     // ^IMAGE             = "MEGT90N000CB.IMG"
-    // ^IMAGE		  = ("BLAH.IMG",1)	 -- start at record 1 (1 based)
-    // ^IMAGE		  = ("BLAH.IMG")	 -- still start at record 1 (equiv of "BLAH.IMG")
-    // ^IMAGE		  = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
+    // ^IMAGE             = ("BLAH.IMG",1)       -- start at record 1 (1 based)
+    // ^IMAGE             = ("BLAH.IMG")         -- still start at record 1 (equiv of "BLAH.IMG")
+    // ^IMAGE             = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
     // ^IMAGE             = 10851 <BYTES>
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
@@ -739,7 +739,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     /** if not NULL then CORE_ITEMS keyword i.e. (234,322,2)  **/
     /***********************************************************/
     int eLayout = PDS_BSQ; //default to band seq.
-    int	nRows, nCols, l_nBands = 1;
+    int nRows, nCols, l_nBands = 1;
 
     CPLString value = GetKeyword( osPrefix+osImageKeyword+".AXIS_NAME", "" );
     if (EQUAL(value,"(SAMPLE,LINE,BAND)") ) {
