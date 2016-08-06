@@ -848,7 +848,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "AGS:"))
     {
-		return NULL;
+        return NULL;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "IIP:"))

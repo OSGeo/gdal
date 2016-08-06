@@ -198,7 +198,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
         else
         {
             pixel = *iPtr++;
-    	memset(oPtr, pixel, count);
+            memset(oPtr, pixel, count);
         }
         oPtr += count;
         xsizeCount += count;
@@ -209,7 +209,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SGIDataset				*/
+/*                              SGIDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -221,7 +221,7 @@ class SGIDataset : public GDALPamDataset
 
     VSILFILE*  fpImage;
 
-    int	   bGeoTransformValid;
+    int    bGeoTransformValid;
     double adfGeoTransform[6];
 
     ImageRec image;
@@ -279,9 +279,9 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SGIRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
-                                 int nBlockYOff,
-				 void*  pImage)
+CPLErr SGIRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
+                                  void* pImage )
 {
     SGIDataset* poGDS = reinterpret_cast<SGIDataset *>( poDS );
 
@@ -532,8 +532,8 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
 {
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if(poOpenInfo->nHeaderBytes < 12)
         return NULL;
@@ -585,7 +585,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
 /* -------------------------------------------------------------------- */
-/*	Read pre-image data after ensuring the file is rewound.         */
+/*      Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
     VSIFSeekL(poDS->fpImage, 0, SEEK_SET);
     if(VSIFReadL(reinterpret_cast<void*>( &(poDS->image) ),

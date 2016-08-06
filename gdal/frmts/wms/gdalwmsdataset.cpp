@@ -525,12 +525,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     }
 
     if (ret == CE_None) {
-    	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
-    	if (v == -1) {
-	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
-	    ret = CE_Failure;
+        const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
+        if (v == -1) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
+            ret = CE_Failure;
         } else {
-	    m_unsafeSsl = v;
+            m_unsafeSsl = v;
         }
     }
 
@@ -568,7 +568,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
     m_hint.m_sy = sy;
     m_hint.m_overview = -1;
     m_hint.m_valid = true;
-    //	printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
+    // printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
     ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map,
                                  nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
     m_hint.m_valid = false;

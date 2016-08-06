@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SRTMHGTDataset				*/
+/*                              SRTMHGTDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -83,8 +83,8 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 
-    int	        bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
@@ -258,13 +258,13 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     GDALOpenInfo oOpenInfo(osNewName, GA_ReadOnly);
     return Identify(&oOpenInfo);
   }
-  
+
   if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	We check the file size to see if it is 25,934,402 bytes	        */
-/*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/
+/*      We check the file size to see if it is 25,934,402 bytes         */
+/*      (SRTM 1) or 2,884,802 bytes (SRTM 3)                            */
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
 

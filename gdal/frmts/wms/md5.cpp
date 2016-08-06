@@ -37,7 +37,7 @@ this file is only about 3k of object code.  */
 #include "config.h"
 #endif
 
-#include <string.h>	/* for memcpy() and memset() */
+#include <string.h>  /* for memcpy() and memset() */
 
 #include "md5.h"
 #include "cpl_port.h"
@@ -100,10 +100,10 @@ struct cvs_MD5Context *ctx,
 
     t = ctx->bits[0];
     if ((ctx->bits[0] = (t + ((cvs_uint32)len << 3)) & 0xffffffff) < t)
-        ctx->bits[1]++;	/* Carry from low to high */
+        ctx->bits[1]++;  /* Carry from low to high */
     ctx->bits[1] += len >> 29;
 
-    t = (t >> 3) & 0x3f;	/* Bytes already in shsInfo->data */
+    t = (t >> 3) & 0x3f;  /* Bytes already in shsInfo->data */
 
     /* Handle any leading odd-sized chunks */
 
@@ -180,7 +180,7 @@ struct cvs_MD5Context *ctx)
     putu32(ctx->buf[1], digest + 4);
     putu32(ctx->buf[2], digest + 8);
     putu32(ctx->buf[3], digest + 12);
-    memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
+    memset(ctx, 0, sizeof(*ctx));  /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5
