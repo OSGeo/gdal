@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				WCSDataset				*/
+/*                              WCSDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -86,7 +86,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg);
 
-    int		DescribeCoverage();
+    int         DescribeCoverage();
     int         ExtractGridInfo100();
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
@@ -736,7 +736,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
 
 /* -------------------------------------------------------------------- */
-/*      Construct a "simple" GetCoverage request (WCS 1.0).		*/
+/*      Construct a "simple" GetCoverage request (WCS 1.0).             */
 /* -------------------------------------------------------------------- */
     CPLString osRequest;
 
@@ -2160,7 +2160,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    WCSDataset 	*poDS;
+    WCSDataset *poDS;
 
     poDS = new WCSDataset();
 

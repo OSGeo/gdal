@@ -32,7 +32,7 @@
 CPL_CVSID("$Id$");
 
 GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale) {
-    //	printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
+    // printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
     m_parent_dataset = parent_dataset;
     m_scale = scale;
     m_overview = -1;
@@ -253,7 +253,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.\n"
                         "Add the HTTP status code to <ZeroBlockHttpCodes> to ignore that error (see http://www.gdal.org/frmt_wms.html).",
                         download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus,
-		    download_requests[i].pszError ? download_requests[i].pszError : "(null)");
+                             download_requests[i].pszError ? download_requests[i].pszError : "(null)");
                     ret = CE_Failure;
                 }
             }
@@ -378,10 +378,10 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
     int x1 = MAX(0, (x + 1) * nBlockXSize);
     int y1 = MAX(0, (y + 1) * nBlockYSize);
     if (m_parent_dataset->m_clamp_requests) {
-	x0 = MIN(x0, nRasterXSize);
-	y0 = MIN(y0, nRasterYSize);
-	x1 = MIN(x1, nRasterXSize);
-	y1 = MIN(y1, nRasterYSize);
+        x0 = MIN(x0, nRasterXSize);
+        y0 = MIN(y0, nRasterYSize);
+        x1 = MIN(x1, nRasterXSize);
+        y1 = MIN(y1, nRasterYSize);
     }
 
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
@@ -664,15 +664,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         int line_space = pixel_space * nBlockXSize;
                         if (color_table == NULL) {
                             if( ib <= ds->GetRasterCount()) {
-				GDALDataType dt=eDataType;
-				// Get the data from the PNG as stored instead of converting, if the server asks for that
+                                GDALDataType dt=eDataType;
+                                // Get the data from the PNG as stored instead of converting, if the server asks for that
                                 // TODO: This hack is from #3493 - not sure it really belongs here.
-				if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
-				    dt=GDT_UInt16;
-				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, NULL) != CE_None) {
-				    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
-				    ret = CE_Failure;
-				}
+                                if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
+                                    dt=GDT_UInt16;
+                                if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, NULL) != CE_None) {
+                                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                                    ret = CE_Failure;
+                                }
                             }
                             else
                             {  // parent expects 4 bands but file only has 3 so generate a all "opaque" 4th band

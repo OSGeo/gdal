@@ -299,9 +299,9 @@ SDEDataset::SDEDataset(  )
     paohSDERasterBands  = NULL;
     hStream             = NULL;
     hRasterColumn       = NULL;
-    pszWKT		= NULL;
-    pszLayerName 	= NULL;
-    pszColumnName 	= NULL;
+    pszWKT              = NULL;
+    pszLayerName        = NULL;
+    pszColumnName       = NULL;
     nBands              = 0;
     nRasterXSize        = 0;
     nRasterYSize        = 0;

@@ -41,7 +41,7 @@ static unsigned char *ParseXPM( const char *pszInput,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				XPMDataset				*/
+/*                              XPMDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -160,7 +160,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    XPMDataset 	*poDS = new XPMDataset();
+    XPMDataset *poDS = new XPMDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -375,7 +375,7 @@ XPMCreateCopy( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Dump image.							*/
+/*      Dump image.                                                     */
 /* -------------------------------------------------------------------- */
     GByte *pabyScanline = reinterpret_cast<GByte *>( CPLMalloc( nXSize ) );
 

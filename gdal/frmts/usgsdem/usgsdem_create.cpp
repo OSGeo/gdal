@@ -67,7 +67,7 @@ typedef struct
     double      dfVertStepSize;
     double      dfElevStepSize;
 
-    char 	**papszOptions;
+    char        **papszOptions;
     int         bStrict;
 
     VSILFILE  *fp;

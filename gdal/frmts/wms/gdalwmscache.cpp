@@ -70,7 +70,7 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
 
 CPLErr GDALWMSCache::Write(const char *key, const CPLString &file_name) {
     CPLString cache_file(KeyToCacheFile(key));
-    //	printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
+    // printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
     if (CPLCopyFile(cache_file.c_str(), file_name.c_str()) != CE_None) {
         MakeDirs(cache_file.c_str());
         CPLCopyFile(cache_file.c_str(), file_name.c_str());
