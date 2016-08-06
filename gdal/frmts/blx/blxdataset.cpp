@@ -374,7 +374,6 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for(int i=0; (i < ctx->cell_rows) && (eErr == CE_None); i++)
         for(int j=0; j < ctx->cell_cols; j++) {
-            blxdata *celldata;
             GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
             eErr = poBand->RasterIO( GF_Read, j*ctx->cell_xsize, i*ctx->cell_ysize,
                                      ctx->cell_xsize, ctx->cell_ysize,
@@ -382,7 +381,7 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      0, 0, NULL );
             if(eErr >= CE_Failure)
                  break;
-            celldata = pabyTile;
+            blxdata *celldata = pabyTile;
             if (blx_writecell(ctx, celldata, i, j) != 0)
             {
                 eErr = CE_Failure;

@@ -677,9 +677,8 @@ class BMPComprRasterBand : public BMPRasterBand
     GByte           *pabyUncomprBuf;
 
   public:
-
                 BMPComprRasterBand( BMPDataset *, int );
-                ~BMPComprRasterBand();
+    virtual    ~BMPComprRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
 //    virtual CPLErr        IWriteBlock( int, int, void * );

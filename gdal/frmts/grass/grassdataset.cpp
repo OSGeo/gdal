@@ -255,12 +255,10 @@ GRASSRasterBand::~GRASSRasterBand()
 /************************************************************************/
 
 CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                    void * pImage )
 
 {
-    char *pachNullBuf;
-
-    pachNullBuf = (char *) CPLMalloc(nBlockXSize);
+    char *pachNullBuf = (char *) CPLMalloc(nBlockXSize);
     G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
 
     if( eDataType == GDT_Float32 || eDataType == GDT_Float64

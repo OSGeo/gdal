@@ -523,7 +523,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     //  Create Statement handler
     //  -----------------------------------------------------------
 
-    OCIStmt* hStatement;
+    OCIStmt* hStatement = NULL;
 
     CheckError( OCIHandleAlloc( (dvoid*) poConnection->hEnv,
         (dvoid**) (dvoid*) &hStatement,

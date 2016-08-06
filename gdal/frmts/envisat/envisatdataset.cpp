@@ -440,7 +440,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
     for( ; true; nMDSIndex++ )
     {
-        char *pszDSType;
+        char *pszDSType = NULL;
         if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDSIndex,
             NULL, &pszDSType, NULL, NULL, NULL, NULL, NULL ) == FAILURE )
         {
@@ -852,7 +852,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    EnvisatFile *hEnvisatFile;
+    EnvisatFile *hEnvisatFile = NULL;
     if( EnvisatFile_Open( &hEnvisatFile, poOpenInfo->pszFilename, "r" )
         == FAILURE )
         return NULL;
@@ -862,7 +862,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      raster band.                                                    */
 /* -------------------------------------------------------------------- */
     int         dsr_size, num_dsr, ds_offset;
-    char        *pszDSType;
+    char        *pszDSType = NULL;
 
     int ds_index = 0;
     for( ; true; ds_index++ )

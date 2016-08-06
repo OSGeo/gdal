@@ -145,20 +145,20 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     // Map bands
     for(int nBand = 1; nBand <= nbBands; ++nBand)
     {
-        VRTDerivedRasterBand * poBand;
-
-        poBand = new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
+        VRTDerivedRasterBand *poBand =
+            new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
         poDS->SetBand(nBand,poBand);
 
         poBand->SetPixelFunctionName(pixelFunctionName);
         poBand->SetSourceTransferType(poTmpDS->GetRasterBand(nBand)->GetRasterDataType());
 
-        GDALProxyPoolDataset* proxyDS;
-        proxyDS = new GDALProxyPoolDataset(         odFilename,
-                                                    poDS->nRasterXSize,
-                                                    poDS->nRasterYSize,
-                                                    GA_ReadOnly,
-                                                    TRUE);
+        GDALProxyPoolDataset* proxyDS =
+            new GDALProxyPoolDataset(
+                odFilename,
+                poDS->nRasterXSize,
+                poDS->nRasterYSize,
+                GA_ReadOnly,
+                TRUE);
         for(int j=0;j<nbBands;++j)
         {
             int blockXSize, blockYSize;

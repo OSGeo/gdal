@@ -292,9 +292,7 @@ GDALDataset *BPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    BPGDataset  *poDS;
-
-    poDS = new BPGDataset();
+    BPGDataset *poDS = new BPGDataset();
     poDS->nRasterXSize = imageInfo.width;
     poDS->nRasterYSize = imageInfo.height;
     poDS->fpImage = poOpenInfo->fpL;

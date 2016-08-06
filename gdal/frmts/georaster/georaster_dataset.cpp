@@ -149,10 +149,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Create a corresponding GDALDataset
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset *poGRD;
-
-    poGRD = new GeoRasterDataset();
-
+    GeoRasterDataset *poGRD = new GeoRasterDataset();
     if( ! poGRD )
     {
         return NULL;
@@ -843,13 +840,13 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //  Create a GeoRaster on the server or select one to overwrite
     //  -----------------------------------------------------------
 
-    GeoRasterDataset *poDstDS;
-
-    poDstDS = (GeoRasterDataset *) GeoRasterDataset::Create( pszFilename,
-        poSrcDS->GetRasterXSize(),
-        poSrcDS->GetRasterYSize(),
-        poSrcDS->GetRasterCount(),
-        eType, papszOptions );
+    GeoRasterDataset *poDstDS =
+        (GeoRasterDataset *) GeoRasterDataset::Create(
+            pszFilename,
+            poSrcDS->GetRasterXSize(),
+            poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(),
+            eType, papszOptions );
 
     if( poDstDS == NULL )
     {

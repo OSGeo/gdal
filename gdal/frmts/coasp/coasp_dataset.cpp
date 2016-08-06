@@ -178,7 +178,7 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
         if (nCurrentItem >= nMetadataCount)
             return NULL;
 
-        COASPMetadataItem *poMetadata;
+        COASPMetadataItem *poMetadata = NULL;
 
         char **papszMDTokens
             = CSLTokenizeString2(papszMetadata[nCurrentItem], " ",
