@@ -324,10 +324,10 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
-  
+
   poDS->fpImage = poOpenInfo->fpL;
   poOpenInfo->fpL = NULL;
-  
+
   VSIStatBufL fileStat;
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
   {

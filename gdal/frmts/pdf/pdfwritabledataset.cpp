@@ -209,7 +209,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
         bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
     else
         bWriteUserUnit = ( pszDPI == NULL );
-    
+
     const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
 
     int nMargin = atoi(CSLFetchNameValueDef(papszOptions, "MARGIN", "0"));

@@ -2363,7 +2363,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
-                
+
                 if( oSRS.GetAttrValue("DATUM") != NULL &&
                     EQUAL(oSRS.GetAttrValue("DATUM"), "WGS_1984") )
                 {
@@ -3191,9 +3191,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             SetProjection( pszWKTExport );
             CPLFree(pszWKTExport);
         }
-    }    
-    
-    
+    }
+
     // Set GeoTransform if we got a complete one - after projection has been set
     if ( bGotCfGT || bGotGdalGT ) {
         SetGeoTransform( adfTempGeoTransform );

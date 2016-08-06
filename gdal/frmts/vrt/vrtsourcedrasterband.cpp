@@ -321,7 +321,7 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
             return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
         }
         VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>(papoSources[iSource]);
-        // Check if the AOI is fully inside the source 
+        // Check if the AOI is fully inside the source
         if( nXOff >= poSS->m_dfDstXOff &&
             nYOff >= poSS->m_dfDstYOff &&
             nXOff + nXSize <= poSS->m_dfDstXOff + poSS->m_dfDstXSize &&

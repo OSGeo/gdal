@@ -359,7 +359,7 @@ void GDALRegister_VRT()
 {
     // First register the pixel functions
     GDALRegisterDefaultPixelFunc();
-  
+
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
 

@@ -2244,15 +2244,15 @@ void GeoRasterWrapper::GetSpatialReference()
     int i;
 
     CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, "spatialReferenceInfo" );
-    
+
     if( phSRSInfo == NULL )
     {
         return;
     }
-    
-    const char* pszMCL = CPLGetXMLValue( phSRSInfo, "modelCoordinateLocation", 
+
+    const char* pszMCL = CPLGetXMLValue( phSRSInfo, "modelCoordinateLocation",
                                                     "CENTER" );
-    
+
     if( EQUAL( pszMCL, "CENTER" ) )
     {
       eModelCoordLocation = MCL_CENTER;
@@ -2263,7 +2263,7 @@ void GeoRasterWrapper::GetSpatialReference()
     }
 
     const char* pszModelType = CPLGetXMLValue( phSRSInfo, "modelType", "None" );
-    
+
     if( EQUAL( pszModelType, "FunctionalFitting" ) == false )
     {
         return;
@@ -2285,21 +2285,21 @@ void GeoRasterWrapper::GetSpatialReference()
 
     int nNumCoeff = atoi( CPLGetXMLValue( phPolynomial, "nCoefficients", "0" ));
 
-    if ( nNumCoeff != 3 ) 
+    if ( nNumCoeff != 3 )
     {
         return;
     }
 
-    const char* pszPolyCoeff = CPLGetXMLValue( phPolynomial, 
-                                             "polynomialCoefficients", "None" );
+    const char* pszPolyCoeff = CPLGetXMLValue(phPolynomial,
+                                              "polynomialCoefficients", "None");
 
     if ( EQUAL( pszPolyCoeff, "None" ) )
     {
         return;
     }
 
-    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", 
-                                           CSLT_STRIPLEADSPACES );
+    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ",
+                                            CSLT_STRIPLEADSPACES );
 
     if( CSLCount( papszCeoff ) < 3 )
     {
@@ -2307,7 +2307,7 @@ void GeoRasterWrapper::GetSpatialReference()
     }
 
     double adfPCoef[3];
-    
+
     for( i = 0; i < 3; i++ )
     {
         adfPCoef[i] = CPLAtof( papszCeoff[i] );
@@ -2333,7 +2333,7 @@ void GeoRasterWrapper::GetSpatialReference()
     {
         return;
     }
-    
+
     double adfRCoef[3];
 
     for( i = 0; i < 3; i++ )
@@ -2348,7 +2348,7 @@ void GeoRasterWrapper::GetSpatialReference()
     double adfVal[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
 
     double dfDet = adfRCoef[1] * adfPCoef[2] - adfRCoef[2] * adfPCoef[1];
-   
+
     if( CPLIsEqual( dfDet, 0.0 ) )
     {
         dfDet = 0.0000000001; // to avoid divide by zero
@@ -2365,26 +2365,26 @@ void GeoRasterWrapper::GetSpatialReference()
     //  -------------------------------------------------------------------
     //  Adjust Model Coordinate Location
     //  -------------------------------------------------------------------
-    
+
     if ( eModelCoordLocation == MCL_CENTER )
     {
         adfVal[2] -= adfVal[0] / 2.0;
         adfVal[5] -= adfVal[4] / 2.0;
     }
 /*
-    CPLDebug("GEOR", "m = [%g, %g, %g, %g, %g, %g]", adfRCoef[1], adfRCoef[2], 
+    CPLDebug("GEOR", "m = [%g, %g, %g, %g, %g, %g]", adfRCoef[1], adfRCoef[2],
              adfRCoef[0], adfPCoef[1], adfPCoef[2], adfPCoef[0]);
-    
-    CPLDebug("GEOR", "i = [%g, %g, %g, %g, %g, %g]", adfVal[0], adfVal[1], 
+
+    CPLDebug("GEOR", "i = [%g, %g, %g, %g, %g, %g]", adfVal[0], adfVal[1],
              adfVal[2], adfVal[3], adfVal[4], adfVal[5]);
-*/    
+*/
     dfXCoefficient[0] = adfVal[0];
     dfXCoefficient[1] = adfVal[1];
     dfXCoefficient[2] = adfVal[2];
     dfYCoefficient[0] = adfVal[3];
     dfYCoefficient[1] = adfVal[4];
     dfYCoefficient[2] = adfVal[5];
-    
+
     //  -------------------------------------------------------------------
     //  Apply ULTCoordinate
     //  -------------------------------------------------------------------

@@ -330,7 +330,7 @@ private:
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
-    
+
     void                GetSpatialReference();
 
 public:

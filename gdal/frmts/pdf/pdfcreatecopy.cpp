@@ -4529,7 +4529,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
     const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
