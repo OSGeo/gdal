@@ -31,6 +31,8 @@
 #ifndef VIRTUALDATASET_H_INCLUDED
 #define VIRTUALDATASET_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_hash_set.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
@@ -483,6 +485,11 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg);
+
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -1052,5 +1059,7 @@ public:
 
     float               fNoDataValue;
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef VIRTUALDATASET_H_INCLUDED */

@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrunionlayer.h"
 #include "ogrwarpedlayer.h"
 #include "ogr_p.h"
@@ -1286,3 +1288,5 @@ OGRErr OGRUnionLayer::SyncToDisk()
 
     return OGRERR_NONE;
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

@@ -35,7 +35,7 @@ CPL_C_START
 typedef struct
 {
   const char * pszDatasetName;
-  const char * pszDatasetDescritpion;
+  const char * pszDatasetDescription;
   const char * pszPixelFunction;
   const char * pszInputPixelType;
   const char * pszOutputPixelType;

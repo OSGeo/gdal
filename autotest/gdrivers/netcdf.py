@@ -2816,6 +2816,24 @@ def netcdf_67():
 
     return result
 
+
+###############################################################################
+# Test reading SRS from srid attribute (#6613)
+
+def netcdf_68():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/srid.nc')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('6933') < 0:
+        gdaltest.post_reason('failure')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 ###############################################################################
@@ -2893,7 +2911,8 @@ gdaltest_list = [
     netcdf_65,
     netcdf_66,
     netcdf_66_ncdump_check,
-    netcdf_67
+    netcdf_67,
+    netcdf_68
 ]
 
 ###############################################################################

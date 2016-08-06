@@ -50,12 +50,12 @@ ReflectanceCalculator::ReflectanceCalculator(std::string sTimeStamp, double rRTO
   m_iYear = atoi(sYear.c_str());
   int iMonth = atoi(sMonth.c_str());
   m_iDay = atoi(sDay.c_str());
-	for (int i = 1; i < iMonth; ++i)
-		m_iDay += iDaysInMonth(i, m_iYear);
+  for (int i = 1; i < iMonth; ++i)
+      m_iDay += iDaysInMonth(i, m_iYear);
   int iHours = atoi(sHours.c_str());
   int iMins = atoi(sMins.c_str());
 
-	m_rHours = iHours + iMins / 60.0;
+        m_rHours = iHours + iMins / 60.0;
 }
 
 ReflectanceCalculator::~ReflectanceCalculator()
@@ -119,8 +119,8 @@ const double ReflectanceCalculator::rSunDistance() const
 {
   int iJulianDay = m_iDay - 1;
   double theta = 2*M_PI *(iJulianDay - 3) / 365.25;
-	// rE0 is the inverse of the square of the sun-distance ratio
-	double rE0 = 1.000110 + 0.034221*cos(theta)+0.00128*sin(theta) + 0.000719*cos(2*theta)+0.000077*sin(2*theta);
+        // rE0 is the inverse of the square of the sun-distance ratio
+        double rE0 = 1.000110 + 0.034221*cos(theta)+0.00128*sin(theta) + 0.000719*cos(2*theta)+0.000077*sin(2*theta);
   // The calculated distance is expressed as a factor of the "average sun-distance" (on 1 Jan approx. 0.98, on 1 Jul approx. 1.01)
   return 1 / sqrt(rE0);
 }

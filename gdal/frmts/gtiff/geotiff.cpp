@@ -1035,6 +1035,11 @@ public:
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                       int nXSize, int nYSize,
+                                       int nMaskFlagStop,
+                                       double* pdfDataPct);
+
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
@@ -3930,6 +3935,82 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     poGDS->bLoadingOtherBands = false;
 
     return eErr;
+}
+
+/************************************************************************/
+/*                       IGetDataCoverageStatus()                       */
+/************************************************************************/
+
+int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
+                                             int nXSize, int nYSize,
+                                             int nMaskFlagStop,
+                                             double* pdfDataPct)
+{
+    if( eAccess == GA_Update )
+        poGDS->FlushCache();
+
+    const int iXBlockStart = nXOff / nBlockXSize;
+    const int iXBlockEnd = (nXOff + nXSize - 1) / nBlockXSize;
+    const int iYBlockStart = nYOff / nBlockYSize;
+    const int iYBlockEnd = (nYOff + nYSize - 1) / nBlockYSize;
+    int nStatus = 0;
+    VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
+    GIntBig nPixelsData = 0;
+    for( int iY = iYBlockStart; iY <= iYBlockEnd; ++iY )
+    {
+        for( int iX = iXBlockStart; iX <= iXBlockEnd; ++iX )
+        {
+            const int nBlockIdBand0 =
+                iX + iY * nBlocksPerRow;
+            int nBlockId = nBlockIdBand0;
+            if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+                nBlockId = nBlockIdBand0 + (nBand-1) * poGDS->nBlocksPerBand;
+            vsi_l_offset nOffset = 0;
+            vsi_l_offset nLength = 0;
+            bool bHasData = false;
+            if( !poGDS->IsBlockAvailable(nBlockId,&nOffset,&nLength) )
+            {
+                nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+            }
+            else
+            {
+                if( poGDS->nCompression == COMPRESSION_NONE &&
+                    poGDS->eAccess == GA_ReadOnly &&
+                    (!bNoDataSet || dfNoDataValue == 0.0) )
+                {
+                    VSIRangeStatus eStatus =
+                          VSIFGetRangeStatusL( fp, nOffset, nLength );
+                    if( eStatus == VSI_RANGE_STATUS_HOLE )
+                    {
+                        nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+                    }
+                    else
+                    {
+                        bHasData = true;
+                    }
+                }
+                else
+                {
+                    bHasData = true;
+                }
+            }
+            if( bHasData )
+            {
+                nPixelsData += (MIN( (iX + 1) * nBlockXSize, nXOff + nXSize ) - MAX( iX * nBlockXSize, nXOff )) *
+                               (MIN( (iY + 1) * nBlockYSize, nYOff + nYSize ) - MAX( iY * nBlockYSize, nYOff ));
+                nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+            }
+            if( nMaskFlagStop != 0 && (nMaskFlagStop & nStatus) != 0 )
+            {
+                if( pdfDataPct )
+                    *pdfDataPct = -1.0;
+                return nStatus;
+            }
+        }
+    }
+    if( pdfDataPct )
+        *pdfDataPct = 100.0 * nPixelsData / ((GIntBig)nXSize * nYSize);
+    return nStatus;
 }
 
 /************************************************************************/
@@ -15972,17 +16053,20 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else if( bTryCopy && eErr == CE_None )
     {
-        char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+        char* papszCopyWholeRasterOptions[3] = { NULL, NULL, NULL };
+        int iNextOption = 0;
+        papszCopyWholeRasterOptions[iNextOption++] =
+                const_cast<char *>( "SKIP_HOLES=YES" );
         if( nCompression != COMPRESSION_NONE )
         {
-            papszCopyWholeRasterOptions[0] =
+            papszCopyWholeRasterOptions[iNextOption++] =
                 const_cast<char *>( "COMPRESSED=YES" );
         }
         // For streaming with separate, we really want that bands are written
         // after each other, even if the source is pixel interleaved.
         else if( bStreaming && poDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
         {
-            papszCopyWholeRasterOptions[0] =
+            papszCopyWholeRasterOptions[iNextOption++] =
                 const_cast<char *>("INTERLEAVE=BAND");
         }
 

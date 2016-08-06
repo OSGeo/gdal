@@ -30,6 +30,8 @@
 #include "gdal_proxy.h"
 #include "cpl_multiproc.h"
 
+//! @cond Doxygen_Suppress
+
 CPL_CVSID("$Id$");
 
 /* We *must* share the same mutex as the gdaldataset.cpp file, as we are */
@@ -1342,3 +1344,5 @@ void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
 }
+
+//! @endcond

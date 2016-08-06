@@ -79,7 +79,7 @@ public:
      *
      * @return the column name or an empty string for invalid column numbers.
      */
-    virtual const char   *GetNameOfCol( int ) const = 0;
+    virtual const char   *GetNameOfCol( int iCol ) const = 0;
 
     /**
      * \brief Fetch column usage value.
@@ -90,7 +90,7 @@ public:
      *
      * @return the column usage, or GFU_Generic for improper column numbers.
      */
-    virtual GDALRATFieldUsage GetUsageOfCol( int ) const = 0;
+    virtual GDALRATFieldUsage GetUsageOfCol( int iCol ) const = 0;
 
     /**
      * \brief Fetch column type.
@@ -101,7 +101,7 @@ public:
      *
      * @return column type or GFT_Integer if the column index is illegal.
      */
-    virtual GDALRATFieldType GetTypeOfCol( int ) const = 0;
+    virtual GDALRATFieldType GetTypeOfCol( int iCol ) const = 0;
 
     /**
      * \brief Fetch column index for given usage.
@@ -115,7 +115,7 @@ public:
      *
      * @return column index, or -1 on failure.
      */
-    virtual int           GetColOfUsage( GDALRATFieldUsage ) const = 0;
+    virtual int           GetColOfUsage( GDALRATFieldUsage eUsage ) const = 0;
 
     /**
      * \brief Fetch row count.
@@ -279,7 +279,7 @@ public:
 /*                                                                      */
 /*      (private)                                                       */
 /************************************************************************/
-
+//! @cond Doxygen_Suppress
 class GDALRasterAttributeField
 {
  public:
@@ -293,6 +293,7 @@ class GDALRasterAttributeField
     std::vector<double> adfValues;
     std::vector<CPLString> aosValues;
 };
+//! @endcond
 
 /************************************************************************/
 /*                    GDALDefaultRasterAttributeTable                   */

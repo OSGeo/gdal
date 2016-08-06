@@ -35,6 +35,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 GNMGenericNetwork::GNMGenericNetwork() :
     GNMNetwork(),
     m_nVersion(0),
@@ -1525,3 +1526,4 @@ CPLErr CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
 
     return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
+//! @endcond

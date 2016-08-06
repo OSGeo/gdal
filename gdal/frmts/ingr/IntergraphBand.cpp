@@ -703,7 +703,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     }
 
     // ----------------------------------------------------------------
-	// Calculate the resulting image dimmention
+    // Calculate the resulting image dimmention
     // ----------------------------------------------------------------
 
     int nVirtualXSize = nBlockXSize;
@@ -890,23 +890,23 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
     // Set a black and white Color Table
     // ----------------------------------------------------------------
 
-	if( eFormat == CCITTGroup4 )
-	{
+    if( eFormat == CCITTGroup4 )
+    {
         BlackWhiteCT( true );
-	}
+    }
 
     // ----------------------------------------------------------------
     // Read JPEG Quality from Application Data
     // ----------------------------------------------------------------
 
-	if( eFormat == JPEGGRAY ||
-		eFormat == JPEGRGB  ||
-		eFormat == JPEGCMYK )
-	{
+    if( eFormat == JPEGGRAY ||
+        eFormat == JPEGRGB  ||
+        eFormat == JPEGCMYK )
+    {
         nQuality = INGR_ReadJpegQuality( poDSIn->fp,
-            hHeaderTwo.ApplicationPacketPointer,
-            nDataOffset );
-	}
+                                         hHeaderTwo.ApplicationPacketPointer,
+                                         nDataOffset );
+    }
 }
 
 //  ----------------------------------------------------------------------------
@@ -957,7 +957,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
     // ----------------------------------------------------------------
-	// Load the block of a tile or a whole image
+    // Load the block of a tile or a whole image
     // ----------------------------------------------------------------
     if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
         return CE_None;
@@ -976,7 +976,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     }
 
     // ----------------------------------------------------------------
-	// Calculate the resulting image dimmention
+    // Calculate the resulting image dimmention
     // ----------------------------------------------------------------
 
     int nVirtualXSize = nBlockXSize;
@@ -993,7 +993,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     }
 
     // ----------------------------------------------------------------
-	// Create an in memory small tiff file (~400K)
+    // Create an in memory small tiff file (~400K)
     // ----------------------------------------------------------------
 
     poGDS->hVirtual = INGR_CreateVirtualFile( poGDS->pszFilename,
@@ -1011,13 +1011,13 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
         memset( pImage, 0, nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_AppDefined,
-			"Unable to open virtual file.\n"
-			"Is the GTIFF and JPEG driver available?" );
+                  "Unable to open virtual file.\n"
+                  "Is the GTIFF and JPEG driver available?" );
         return CE_Failure;
     }
 
     // ----------------------------------------------------------------
-	// Read the unique block from the in memory file and release it
+    // Read the unique block from the in memory file and release it
     // ----------------------------------------------------------------
 
     if( poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0,
@@ -1322,27 +1322,27 @@ void IntergraphRasterBand::FlushBandHeader( void )
 
 void IntergraphRasterBand::BlackWhiteCT( bool bReverse )
 {
-	GDALColorEntry oBlack;
-	GDALColorEntry oWhite;
+    GDALColorEntry oBlack;
+    GDALColorEntry oWhite;
 
     oWhite.c1 = (short) 255;
-	oWhite.c2 = (short) 255;
-	oWhite.c3 = (short) 255;
-	oWhite.c4 = (short) 255;
+    oWhite.c2 = (short) 255;
+    oWhite.c3 = (short) 255;
+    oWhite.c4 = (short) 255;
 
-	oBlack.c1 = (short) 0;
-	oBlack.c2 = (short) 0;
-	oBlack.c3 = (short) 0;
-	oBlack.c4 = (short) 255;
+    oBlack.c1 = (short) 0;
+    oBlack.c2 = (short) 0;
+    oBlack.c3 = (short) 0;
+    oBlack.c4 = (short) 255;
 
     if( bReverse )
     {
         poColorTable->SetColorEntry( 0, &oWhite );
-	    poColorTable->SetColorEntry( 1, &oBlack );
+        poColorTable->SetColorEntry( 1, &oBlack );
     }
     else
     {
         poColorTable->SetColorEntry( 0, &oBlack );
-	    poColorTable->SetColorEntry( 1, &oWhite );
+        poColorTable->SetColorEntry( 1, &oWhite );
     }
 }

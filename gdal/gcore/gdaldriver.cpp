@@ -278,6 +278,7 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 /*                          DefaultCopyMasks()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
                                      GDALDataset *poDstDS,
                                      int bStrict )
@@ -658,6 +659,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
     return poDstDS;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             CreateCopy()                             */
@@ -1046,6 +1048,7 @@ CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver,
 /*      there is no format specific implementation.                     */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultRename( const char * pszNewName,
                                   const char *pszOldName )
 
@@ -1106,6 +1109,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               Rename()                               */
@@ -1173,6 +1177,7 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
 /*      there is no format specific implementation.                     */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultCopyFiles( const char *pszNewName,
                                      const char *pszOldName )
 
@@ -1234,6 +1239,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char *pszNewName,
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             CopyFiles()                              */

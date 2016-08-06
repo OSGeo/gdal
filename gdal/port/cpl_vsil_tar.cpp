@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
@@ -458,6 +460,8 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
 
     return (VSIVirtualHandle* )VSIFOpenL(osSubFileName, "rb");
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                    VSIInstallTarFileHandler()                        */

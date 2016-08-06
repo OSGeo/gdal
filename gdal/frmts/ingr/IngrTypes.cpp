@@ -201,7 +201,7 @@ GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
     for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
-		if( eCode == INGR_FormatTable[i].eFormatCode )
+        if( eCode == INGR_FormatTable[i].eFormatCode )
         {
             return INGR_FormatTable[i].eDataType;
         }
@@ -921,7 +921,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
 // -----------------------------------------------------------------------------
 //                                                        INGR_Decode()
 //
-//	Decode the various RLE compression options.
+//  Decode the various RLE compression options.
 //
 //  Pass NULL as pabyDstData to obtain pnBytesConsumed and bypass decompression.
 // -----------------------------------------------------------------------------

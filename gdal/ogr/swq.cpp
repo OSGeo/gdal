@@ -667,7 +667,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 /* -------------------------------------------------------------------- */
 /*      When there is no ambiguity, try to accept quoting errors...     */
 /* -------------------------------------------------------------------- */
-    if( bOneMoreTimeOK && !CSLTestBoolean(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
+    if( bOneMoreTimeOK &&
+        !CPLTestBool(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
     {
         if( table_name[0] )
         {

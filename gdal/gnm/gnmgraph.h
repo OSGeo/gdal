@@ -42,20 +42,22 @@ typedef const std::vector<GNMGFID>* LPGNMCONSTVECTOR;
 typedef std::pair<GNMGFID,GNMGFID> EDGEVERTEXPAIR;
 typedef std::vector< EDGEVERTEXPAIR > GNMPATH;
 
+/** Edge */
 struct GNMStdEdge
 {
-    GNMGFID nSrcVertexFID;
-    GNMGFID nTgtVertexFID;
-    bool bIsBidir;
-    double dfDirCost;
-    double dfInvCost;
-    bool bIsBloked;
+    GNMGFID nSrcVertexFID; /**< Source vertex FID */
+    GNMGFID nTgtVertexFID; /**< Target vertex FID */
+    bool bIsBidir;         /**< Whether the edge is bidirectonal */
+    double dfDirCost;      /**< Direct cost */
+    double dfInvCost;      /**< Inverse cost */
+    bool bIsBloked;        /**< Whether the edge is blocked */
 };
 
+/** Vertex */
 struct GNMStdVertex
 {
-    GNMVECTOR anOutEdgeFIDs;
-    bool bIsBloked;
+    GNMVECTOR anOutEdgeFIDs; /**< TODO */
+    bool bIsBloked;          /**< Whether the vertex is blocked */
 };
 
 /**
@@ -115,7 +117,7 @@ public:
 
     /**
      * @brief Change edge properties
-     * @param nConFID Edge identificator
+     * @param nFID Edge identificator
      * @param dfCost Cost
      * @param dfInvCost Inverse cost
      */
@@ -124,7 +126,7 @@ public:
     /**
      * @brief Change the block state of edge or vertex
      * @param nFID Identificator
-     * @param bIsBlock Block or unblock
+     * @param bBlock Block or unblock
      */
     virtual void ChangeBlockState (GNMGFID nFID, bool bBlock);
 
@@ -140,7 +142,7 @@ public:
      *
      * This is mainly use for unblock all vertices and edges.
      *
-     * @param bIsBlock Block or unblock
+     * @param bBlock Block or unblock
      */
     virtual void ChangeAllBlockState (bool bBlock = false);
 
@@ -172,7 +174,7 @@ public:
      * first in a pair is a vertex identificator and the second is an edge
      * identificator leading to this vertex. The elements in a path array are
      * sorted by the path segments order, i.e. the first is the pair (nStartFID,
-     * -1) and the last is (nEndFID, <some edge>).
+     * -1) and the last is (nEndFID, &lt;some edge&gt;).
      * If there is no any path between start and end vertex the returned array
      * of paths will be empty. Also the actual amount of paths in the returned
      * array can be less or equal than the nK parameter.
@@ -195,6 +197,7 @@ public:
      */
     virtual GNMPATH ConnectedComponents(const GNMVECTOR &anEmittersIDs);
 
+    /** Clear */
     virtual void Clear();
 protected:
     /**
@@ -205,7 +208,8 @@ protected:
      * state of features, i.e. the blocked features are the barriers during the
      * routing process.
      *
-     * @param nFID - Vertex identificator from which to start tree building.
+     * @param nFID - Vertex identificator from which to start tree building
+     * @param mstEdges - TODO
      * @param mnPathTree - means < vertex id, edge id >
      * @return std::map where the first is vertex identificator and the second
      * is the edge identificator, which is the best way to the current vertex.
@@ -215,9 +219,10 @@ protected:
     virtual void DijkstraShortestPathTree(GNMGFID nFID,
                                   const std::map<GNMGFID, GNMStdEdge> &mstEdges,
                                         std::map<GNMGFID, GNMGFID> &mnPathTree);
+    /** DijkstraShortestPath */
     virtual GNMPATH DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID,
                                  const std::map<GNMGFID, GNMStdEdge> &mstEdges);
-
+//! @cond Doxygen_Suppress
     virtual LPGNMCONSTVECTOR GetOutEdges(GNMGFID nFID) const;
     virtual GNMGFID GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const;
     virtual void TraceTargets(std::queue<GNMGFID> &vertexQueue,
@@ -226,4 +231,5 @@ protected:
 protected:
     std::map<GNMGFID, GNMStdVertex> m_mstVertices;
     std::map<GNMGFID, GNMStdEdge>   m_mstEdges;
+//! @endcond
 };

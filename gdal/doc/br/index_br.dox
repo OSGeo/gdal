@@ -70,18 +70,18 @@ Download:
 <ul>
 <li> Raster topics:
   <ul>
-    <li> <a href="gdal_tutorial_br.html">Tutorial da API raster</a>
-    <li> <a href="gdal_drivertut.html">Implementa&ccedil;&atilde;o de driver raster</a>
-    <li> <a href="gdal_vrttut.html">Formato virtual raster (VRT)</a>
-    <li> <a href="warptut.html">Tutorial de Reproje&ccedil;&atilde;o em raster
+    <li> <a href="gdal_tutorial_br.html">Tutorial da API raster</a></li>
+    <li> <a href="gdal_drivertut.html">Implementa&ccedil;&atilde;o de driver raster</a></li>
+    <li> <a href="gdal_vrttut.html">Formato virtual raster (VRT)</a></li>
+    <li> <a href="warptut.html">Tutorial de Reproje&ccedil;&atilde;o em raster</a></li>
   </ul>
 </li>
 <li> Vector topics:
   <ul>
-    <li> <a href="ogr_apitut.html">Tutorial da API vetorial</a>
-    <li> <a href="ogr_drivertut.html">Implementa&ccedil;&atilde;o de driver vetorial</a>
-    <li> <a href="drv_vrt.html">Formato virtual vetorial (VRT)</a>
-    <li> <a href="ogr_feature_style.html">Especifica&ccedil;&atilde;o de estilo vetorial</a>
+    <li> <a href="ogr_apitut.html">Tutorial da API vetorial</a></li>
+    <li> <a href="ogr_drivertut.html">Implementa&ccedil;&atilde;o de driver vetorial</a></li>
+    <li> <a href="drv_vrt.html">Formato virtual vetorial (VRT)</a></li>
+    <li> <a href="ogr_feature_style.html">Especifica&ccedil;&atilde;o de estilo vetorial</a></li>
    </ul>
 </li>
 <li> <a href="osr_tutorial.html"> Tutorial de Refer&ecirc;ncia Espacial</a> (OSR - OGRSpatialReference)
@@ -90,13 +90,13 @@ Download:
 \subsection index_devdocs_api Documenta&ccedil;&atilde;o da API
 
 <ul>
-<li> <a href="hierarchy.html">Documenta&ccedil;&atilde;o de referencia da API</a>
-<li> <a href="gdal_8h.html">API raster para C</a>
-<li> <a href="ogr_api_8h.html">API vector para C</a>
-<li> <a href="classGDALDataset.html">GDALDataset para C++</a>
-<li> <a href="classGDALRasterBand.html">GDALRasterBand para C++</a>
-<li> <a href="classOGRLayer.html">OGRLayer para C++</a>
-<li> Dialeto <a href="ogr_sql.html">OGR SQL</a> e dialeto <a href="ogr_sql_sqlite.html">SQLITE SQL</a>
+<li> <a href="hierarchy.html">Documenta&ccedil;&atilde;o de referencia da API</a></li>
+<li> <a href="gdal_8h.html">API raster para C</a></li>
+<li> <a href="ogr_api_8h.html">API vector para C</a></li>
+<li> <a href="classGDALDataset.html">GDALDataset para C++</a></li>
+<li> <a href="classGDALRasterBand.html">GDALRasterBand para C++</a></li>
+<li> <a href="classOGRLayer.html">OGRLayer para C++</a></li>
+<li> Dialeto <a href="ogr_sql.html">OGR SQL</a> e dialeto <a href="ogr_sql_sqlite.html">SQLITE SQL</a></li>
 </ul>
 
 <!--
@@ -125,7 +125,7 @@ ou na p&aacute;gina
 <a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.<p>
 
 Usu&aacute;rios e desenvolvedores da GDAL/OGR podem constantemente ser achados no canal IRC
-<a href="irc://irc.freenode.net/#gdal">#gdal</a> do irc.freenode.net.<p>
+<a href="irc://irc.freenode.net/#gdal">\#gdal</a> do irc.freenode.net.<p>
 
 \section index_bugs Como Reportar Problemas (Bugs)
 

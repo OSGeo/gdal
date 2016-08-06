@@ -57,6 +57,8 @@
 #ifndef CPL_MINIZIP_UNZIP_H_INCLUDED
 #define CPL_MINIZIP_UNZIP_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_vsi.h"
 #define uLong64 vsi_l_offset
 
@@ -378,5 +380,7 @@ extern int ZEXPORT cpl_unzSetOffset (unzFile file, uLong64 pos);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* CPL_MINIZIP_UNZIP_H_INCLUDED */

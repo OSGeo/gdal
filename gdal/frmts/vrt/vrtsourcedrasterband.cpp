@@ -29,9 +29,12 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "ogr_geometry.h"
 
 #include "vrtdataset.h"
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -271,6 +274,125 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     return eErr;
 }
+
+/************************************************************************/
+/*                         IGetDataCoverageStatus()                     */
+/************************************************************************/
+
+#ifndef HAVE_GEOS
+int  VRTSourcedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
+                                                   int /* nYOff */,
+                                                   int /* nXSize */,
+                                                   int /* nYSize */,
+                                                   int /* nMaskFlagStop */,
+                                                   double* pdfDataPct)
+{
+    // TODO(rouault): Should this set pdfDataPct?
+    if( pdfDataPct != NULL )
+        *pdfDataPct = -1.0;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA;
+}
+#else
+int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
+                                                   int nYOff,
+                                                   int nXSize,
+                                                   int nYSize,
+                                                   int nMaskFlagStop,
+                                                   double* pdfDataPct)
+{
+    if( pdfDataPct != NULL )
+        *pdfDataPct = -1.0;
+    int nStatus = 0;
+
+    OGRPolygon* poPolyNonCoveredBySources = new OGRPolygon();
+    OGRLinearRing* poLR = new OGRLinearRing();
+    poLR->addPoint( nXOff, nYOff );
+    poLR->addPoint( nXOff, nYOff + nYSize );
+    poLR->addPoint( nXOff + nXSize, nYOff + nYSize );
+    poLR->addPoint( nXOff + nXSize, nYOff );
+    poLR->addPoint( nXOff, nYOff );
+    poPolyNonCoveredBySources->addRingDirectly(poLR);
+
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        if( !papoSources[iSource]->IsSimpleSource() )
+        {
+            delete poPolyNonCoveredBySources;
+            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+        }
+        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>(papoSources[iSource]);
+        // Check if the AOI is fully inside the source 
+        if( nXOff >= poSS->m_dfDstXOff &&
+            nYOff >= poSS->m_dfDstYOff &&
+            nXOff + nXSize <= poSS->m_dfDstXOff + poSS->m_dfDstXSize &&
+            nYOff + nYSize <= poSS->m_dfDstYOff + poSS->m_dfDstYSize )
+        {
+            if( pdfDataPct )
+                *pdfDataPct = 100.0;
+            delete poPolyNonCoveredBySources;
+            return GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+        // Check intersection of bounding boxes.
+        if( poSS->m_dfDstXOff + poSS->m_dfDstXSize > nXOff &&
+            poSS->m_dfDstYOff + poSS->m_dfDstYSize > nYOff &&
+            poSS->m_dfDstXOff < nXOff + nXSize &&
+            poSS->m_dfDstYOff < nYOff + nYSize )
+        {
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+            if( poPolyNonCoveredBySources != NULL )
+            {
+                OGRPolygon oPolySource;
+                poLR = new OGRLinearRing();
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff );
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
+                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
+                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
+                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
+                                poSS->m_dfDstYOff );
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff );
+                oPolySource.addRingDirectly(poLR);
+                OGRGeometry* poRes = poPolyNonCoveredBySources->Difference(&oPolySource);
+                if( poRes != NULL && poRes->IsEmpty() )
+                {
+                    delete poRes;
+                    if( pdfDataPct )
+                        *pdfDataPct = 100.0;
+                    delete poPolyNonCoveredBySources;
+                    return GDAL_DATA_COVERAGE_STATUS_DATA;
+                }
+                else if( poRes != NULL && poRes->getGeometryType() == wkbPolygon )
+                {
+                    delete poPolyNonCoveredBySources;
+                    poPolyNonCoveredBySources = reinterpret_cast<OGRPolygon*>(poRes);
+                }
+                else
+                {
+                    delete poRes;
+                    delete poPolyNonCoveredBySources;
+                    poPolyNonCoveredBySources = NULL;
+                }
+            }
+        }
+        if( nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0 )
+        {
+            delete poPolyNonCoveredBySources;
+            return nStatus;
+        }
+    }
+    if( poPolyNonCoveredBySources != NULL )
+    {
+        if( !poPolyNonCoveredBySources->IsEmpty() )
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+        if( pdfDataPct != NULL )
+            *pdfDataPct = 100.0 * (1.0 - poPolyNonCoveredBySources->get_Area() / nXSize / nYSize);
+    }
+    delete poPolyNonCoveredBySources;
+    return nStatus;
+}
+#endif  // HAVE_GEOS
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -753,6 +875,8 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
     return CE_None;
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                              VRTAddSource()                          */
 /************************************************************************/
@@ -769,6 +893,8 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
     return reinterpret_cast<VRTSourcedRasterBand *>( hVRTBand )->
         AddSource( reinterpret_cast<VRTSource *>( hNewSource ) );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                              XMLInit()                               */
@@ -1018,6 +1144,8 @@ CPLErr VRTSourcedRasterBand::AddMaskBandSource(
     return AddSource( poSimpleSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddSimpleSource()                         */
 /************************************************************************/
@@ -1046,6 +1174,8 @@ CPLErr CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH hVRTBand,
             nDstXSize, nDstYSize,
             pszResampling, dfNoDataValue );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                          AddComplexSource()                          */
@@ -1093,6 +1223,8 @@ CPLErr VRTSourcedRasterBand::AddComplexSource(
     return AddSource( poSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddComplexSource()                        */
 /************************************************************************/
@@ -1124,6 +1256,8 @@ CPLErr CPL_STDCALL VRTAddComplexSource( VRTSourcedRasterBandH hVRTBand,
             dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                           AddFuncSource()                            */
 /************************************************************************/
@@ -1148,6 +1282,8 @@ CPLErr VRTSourcedRasterBand::AddFuncSource(
     return AddSource( poFuncSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                          VRTAddFuncSource()                          */
 /************************************************************************/
@@ -1166,6 +1302,7 @@ CPLErr CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH hVRTBand,
         AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
@@ -1516,3 +1653,5 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 
     return TRUE;
 }
+
+/*! @endcond */

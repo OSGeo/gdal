@@ -418,8 +418,8 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
@@ -1120,8 +1120,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
         if( psImage->bIsBoxCenterOfPixel )
         {
-            psGCPs[0].dfGCPPixel	= 0.5;
-            psGCPs[0].dfGCPLine		= 0.5;
+            psGCPs[0].dfGCPPixel = 0.5;
+            psGCPs[0].dfGCPLine = 0.5;
             psGCPs[1].dfGCPPixel = poDS->nRasterXSize-0.5;
             psGCPs[1].dfGCPLine = 0.5;
             psGCPs[2].dfGCPPixel = poDS->nRasterXSize-0.5;
@@ -1131,8 +1131,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         }
         else
         {
-            psGCPs[0].dfGCPPixel	= 0.0;
-            psGCPs[0].dfGCPLine		= 0.0;
+            psGCPs[0].dfGCPPixel = 0.0;
+            psGCPs[0].dfGCPLine = 0.0;
             psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
             psGCPs[1].dfGCPLine = 0.0;
             psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
@@ -1141,17 +1141,17 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             psGCPs[3].dfGCPLine = poDS->nRasterYSize;
         }
 
-        psGCPs[0].dfGCPX		= psImage->dfULX;
-        psGCPs[0].dfGCPY		= psImage->dfULY;
+        psGCPs[0].dfGCPX = psImage->dfULX;
+        psGCPs[0].dfGCPY = psImage->dfULY;
 
-        psGCPs[1].dfGCPX		= psImage->dfURX;
-        psGCPs[1].dfGCPY		= psImage->dfURY;
+        psGCPs[1].dfGCPX = psImage->dfURX;
+        psGCPs[1].dfGCPY = psImage->dfURY;
 
-        psGCPs[2].dfGCPX		= psImage->dfLRX;
-        psGCPs[2].dfGCPY		= psImage->dfLRY;
+        psGCPs[2].dfGCPX = psImage->dfLRX;
+        psGCPs[2].dfGCPY = psImage->dfLRY;
 
-        psGCPs[3].dfGCPX		= psImage->dfLLX;
-        psGCPs[3].dfGCPY		= psImage->dfLLY;
+        psGCPs[3].dfGCPX = psImage->dfLLX;
+        psGCPs[3].dfGCPY = psImage->dfLLY;
 
 /* -------------------------------------------------------------------- */
 /*      ESRI desires to use the RPCs to produce a denser and more       */
@@ -4883,7 +4883,7 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1) );
 
     /* -------------------------------------------------------------------- */
-    /*	Assume no extended data such as SXSHDL, SXSHD						*/
+    /*  Assume no extended data such as SXSHDL, SXSHD                       */
     /* -------------------------------------------------------------------- */
 
     /* ==================================================================== */
@@ -5180,8 +5180,8 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 
             // if ID matches, read the header information and exit the loop
             if (bIsSameId) {
-            	pszHeaderBuffer = CPLParseNameValue( papszList[iOpt2], NULL);
-            	break;
+                pszHeaderBuffer = CPLParseNameValue( papszList[iOpt2], NULL);
+                break;
             }
         }
 
@@ -5238,7 +5238,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                 else if (STARTS_WITH(pszOrigMonth, "NOV")) strncpy(pszNewMonth,"11",2);
                 else if (STARTS_WITH(pszOrigMonth, "DEC")) strncpy(pszNewMonth,"12",2);
 
-                PLACE( achTSH+ 12, TXTDT         , achNewDate          		);
+                PLACE( achTSH+ 12, TXTDT         , achNewDate                );
 
             }
         } else { // Use default value if header information is not found

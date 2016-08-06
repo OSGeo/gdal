@@ -35,7 +35,7 @@
 
 #include <debug.h>
 
-#include <BaseType.h>		// DODS
+#include <BaseType.h>  // DODS
 #include <Byte.h>
 #include <Int16.h>
 #include <UInt16.h>
@@ -85,8 +85,8 @@ const char *nlat = "Northernmost_Latitude"; ///<
 const char *slat = "Southernmost_Latitude"; ///<
 const char *wlon = "Westernmost_Longitude"; ///<
 const char *elon = "Easternmost_Longitude"; ///<
-const char *gcs = "GeographicCS";	    ///<
-const char *pcs = "ProjectionCS";	    ///<
+const char *gcs = "GeographicCS";           ///<
+const char *pcs = "ProjectionCS";           ///<
 const char *norm_proj_param = "Norm_Proj_Param"; ///<
 const char *spatial_ref = "spatial_ref";    ///<
 //@}
@@ -116,13 +116,13 @@ get_variable(DDS &dds, const string &n)
 {
     BaseType *poBT = dds.var(www2id(n));
     if (!poBT) {
-	try {
-	    string leaf = n.substr(n.find_last_of('.')+1);
-	    poBT = dds.var(www2id(leaf));
-	}
-	catch (const std::exception &e) {
-	    poBT = 0;
-	}
+        try {
+            string leaf = n.substr(n.find_last_of('.')+1);
+            poBT = dds.var(www2id(leaf));
+        }
+        catch (const std::exception &e) {
+            poBT = 0;
+        }
     }
 
     return poBT;
@@ -207,12 +207,12 @@ static int GetDimension( string oCE, const char *pszDimName,
 class DODSDataset : public GDALDataset
 {
 private:
-    AISConnect *poConnect; 	//< Virtual connection to the data source
+    AISConnect *poConnect;      //< Virtual connection to the data source
 
-    string oURL;		//< data source URL
+    string oURL;                //< data source URL
     double adfGeoTransform[6];
     int    bGotGeoTransform;
-    string oWKT;		//< Constructed WKT string
+    string oWKT;                //< Constructed WKT string
 
     DAS    oDAS;
     DDS   *poDDS;
@@ -264,14 +264,14 @@ class DODSRasterBand : public GDALRasterBand
 {
 private:
     string oVarName;
-    string oCE;		        // Holds the CE (with [x] and [y] still there
+    string oCE;                 // Holds the CE (with [x] and [y] still there
 
     friend class DODSDataset;
 
     GDALColorInterp eColorInterp;
     GDALColorTable  *poCT;
 
-    int		   nOverviewCount;
+    int    nOverviewCount;
     DODSRasterBand **papoOverviewBand;
 
     int    nOverviewFactor;     // 1 for base, or 2/4/8 for overviews.
@@ -293,7 +293,7 @@ public:
     virtual CPLErr IReadBlock(int, int, void *);
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-		virtual CPLErr          SetNoDataValue( double );
+    virtual CPLErr          SetNoDataValue( double );
     virtual double          GetNoDataValue( int * );
 };
 
@@ -348,8 +348,8 @@ DODSDataset::connect_to_server() throw(Error)
 {
     // does the string start with 'http?'
     if (oURL.find("http://") == string::npos
-	&& oURL.find("https://") == string::npos)
-	throw Error(
+        && oURL.find("https://") == string::npos)
+        throw Error(
             "The URL does not start with 'http' or 'https,' I won't try connecting.");
 
 /* -------------------------------------------------------------------- */
@@ -368,7 +368,7 @@ DODSDataset::connect_to_server() throw(Error)
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a overridding AIS file location, apply it now.       */
+/*      If we have a overriding AIS file location, apply it now.       */
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
     {
@@ -706,16 +706,16 @@ void DODSDataset::HarvestDAS()
     {
         poFileInfo = oDAS.get_table( "NC_GLOBAL" );
 
-	if( poFileInfo == NULL )
-	{
-	    poFileInfo = oDAS.get_table( "HDF_GLOBAL" );
+        if( poFileInfo == NULL )
+        {
+            poFileInfo = oDAS.get_table( "HDF_GLOBAL" );
 
-	    if( poFileInfo == NULL )
-	    {
-	        CPLDebug( "DODS", "No GLOBAL DAS info." );
-	        return;
-	    }
-	}
+            if( poFileInfo == NULL )
+            {
+                CPLDebug( "DODS", "No GLOBAL DAS info." );
+                return;
+            }
+        }
     }
 #else
     AttrTable *poFileInfo = oDAS.find_container( "GLOBAL" );
@@ -724,16 +724,16 @@ void DODSDataset::HarvestDAS()
     {
         poFileInfo = oDAS.find_container( "NC_GLOBAL" );
 
-	if( poFileInfo == NULL )
-	{
-	    poFileInfo = oDAS.find_container( "HDF_GLOBAL" );
+        if( poFileInfo == NULL )
+        {
+            poFileInfo = oDAS.find_container( "HDF_GLOBAL" );
 
-	    if( poFileInfo == NULL )
-	    {
-	        CPLDebug( "DODS", "No GLOBAL DAS info." );
-	        return;
-	    }
-	}
+            if( poFileInfo == NULL )
+            {
+                CPLDebug( "DODS", "No GLOBAL DAS info." );
+                return;
+            }
+        }
     }
 #endif
 
@@ -1003,9 +1003,9 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*      Get the AISConnect instance and the DAS and DDS for this        */
 /*      server.                                                         */
 /* -------------------------------------------------------------------- */
-	poDS->poConnect = poDS->connect_to_server();
-	poDS->poConnect->request_das(poDS->oDAS);
-	poDS->poConnect->request_dds(*(poDS->poDDS));
+        poDS->poConnect = poDS->connect_to_server();
+        poDS->poConnect->request_das(poDS->oDAS);
+        poDS->poConnect->request_dds(*(poDS->poDDS));
 
 /* -------------------------------------------------------------------- */
 /*      If we are given a constraint/projection list, then parse it     */
@@ -1037,7 +1037,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->nRasterXSize = poBaseBand->GetXSize();
         poDS->nRasterYSize = poBaseBand->GetYSize();
 
-	poDS->SetBand(1, poBaseBand );
+        poDS->SetBand(1, poBaseBand );
 
         for( int iBand = 1; papszVarConstraintList[iBand*2] != NULL; iBand++ )
         {
@@ -1186,7 +1186,7 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
       case dods_float32_c: eDataType = GDT_Float32; break;
       case dods_float64_c: eDataType = GDT_Float64; break;
       default:
-	throw Error("The DODS GDAL driver supports only numeric data types.");
+        throw Error("The DODS GDAL driver supports only numeric data types.");
     }
 
 /* -------------------------------------------------------------------- */
@@ -1365,10 +1365,10 @@ void DODSRasterBand::HarvestDAS()
 /* -------------------------------------------------------------------- */
 /* Try _FillValue                                                       */
 /* -------------------------------------------------------------------- */
-	oValue = poBandInfo->get_attr( "_FillValue" );
-	if( oValue != "" ) {
-	    SetNoDataValue( CPLAtof(oValue.c_str()) );
-	}
+        oValue = poBandInfo->get_attr( "_FillValue" );
+        if( oValue != "" ) {
+            SetNoDataValue( CPLAtof(oValue.c_str()) );
+        }
     }
 
 
@@ -1493,9 +1493,10 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /* -------------------------------------------------------------------- */
         BaseType *poBt = get_variable(data, oVarName );
         if (!poBt)
-            throw Error(string("I could not read the variable '")
-		    + oVarName		    + string("' from the data source at:\n")
-		    + poDODS->GetUrl() );
+            throw Error(
+                string("I could not read the variable '")
+                + oVarName + string("' from the data source at:\n")
+                + poDODS->GetUrl() );
 
         Array *poA;
         switch (poBt->type()) {
@@ -1523,7 +1524,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /*      Dump the contents of the Array data into our output image buffer.*/
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-        poA->buf2val(&pImage);	// !Suck the data out of the Array!
+        poA->buf2val(&pImage);  // !Suck the data out of the Array!
 
 /* -------------------------------------------------------------------- */
 /*      If the [x] dimension comes before [y], we need to transpose     */

@@ -3321,6 +3321,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 /*                      OGR_G_CreateFromGMLTree()                       */
 /************************************************************************/
 
+/** Create geometry from GML */
 OGRGeometryH OGR_G_CreateFromGMLTree( const CPLXMLNode *psTree )
 
 {

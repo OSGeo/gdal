@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrlayerpool.h"
 
 CPL_CVSID("$Id$");
@@ -581,3 +583,5 @@ OGRErr      OGRProxiedLayer::SetIgnoredFields( const char **papszFields )
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->SetIgnoredFields(papszFields);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

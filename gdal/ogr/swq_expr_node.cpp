@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "swq.h"
@@ -827,3 +829,5 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     papoSubExpr[1]->PushSubExpression(poExpr0->Clone());
     papoSubExpr[1]->PushSubExpression(poExpr2);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

@@ -957,7 +957,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
 
 int OGRParseDate( const char *pszInput,
                   OGRField *psField,
-                  int /* nOptions */ )
+                  CPL_UNUSED int nOptions )
 {
     psField->Date.Year = 0;
     psField->Date.Month = 0;
@@ -1432,9 +1432,9 @@ char* OGRGetXMLDateTime(const OGRField* psField)
 
 char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 {
-    char *pszEscaped;
+    char *pszEscaped = NULL;
     if( !CPLIsUTF8(pszString, -1) &&
-         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
+         CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
     {
         static bool bFirstTime = true;
         if( bFirstTime )

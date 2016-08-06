@@ -438,13 +438,13 @@ char **VSISubFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
  * A special form of the filename is used to indicate a subportion
  * of another file:
  *
- *   /vsisubfile/<offset>[_<size>],<filename>
+ *   /vsisubfile/&lt;offset&gt;[_&lt;size&gt;],&lt;filename&gt;
  *
  * The size parameter is optional.  Without it the remainder of the
  * file from the start offset as treated as part of the subfile.  Otherwise
- * only <size> bytes from <offset> are treated as part of the subfile.
- * The <filename> portion may be a relative or absolute path using normal
- * rules.   The <offset> and <size> values are in bytes.
+ * only &lt;size&gt; bytes from &lt;offset&gt; are treated as part of the subfile.
+ * The &lt;filename&gt; portion may be a relative or absolute path using normal
+ * rules.   The &lt;offset&gt; and &lt;size&gt; values are in bytes.
  *
  * eg.
  *   /vsisubfile/1000_3000,/data/abc.ntf

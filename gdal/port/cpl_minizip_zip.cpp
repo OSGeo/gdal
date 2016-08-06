@@ -1179,10 +1179,12 @@ typedef struct
 /*                            CPLCreateZip()                            */
 /************************************************************************/
 
+/** Create ZIP file */
 void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 
 {
-    bool bAppend = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE")));
+    const bool bAppend =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
     char** papszFilenames = NULL;
 
     if( bAppend )
@@ -1224,6 +1226,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 /*                         CPLCreateFileInZip()                         */
 /************************************************************************/
 
+/** Create a file in a ZIP file */
 CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
                            char **papszOptions )
 
@@ -1240,7 +1243,8 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         return CE_Failure;
     }
 
-    int bCompressed = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
+    const int bCompressed =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
     int nErr = cpl_zipOpenNewFileInZip( psZip->hZip, pszFilename, NULL,
                                     NULL, 0, NULL, 0, "",
@@ -1257,6 +1261,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 /*                         CPLWriteFileInZip()                          */
 /************************************************************************/
 
+/** Write in current file inside a ZIP file */
 CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
 {
@@ -1278,6 +1283,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 /*                         CPLCloseFileInZip()                          */
 /************************************************************************/
 
+/** Close current file inside ZIP file */
 CPLErr CPLCloseFileInZip( void *hZip )
 
 {
@@ -1298,6 +1304,7 @@ CPLErr CPLCloseFileInZip( void *hZip )
 /*                            CPLCloseZip()                             */
 /************************************************************************/
 
+/** Close ZIP file */
 CPLErr CPLCloseZip( void *hZip )
 
 {

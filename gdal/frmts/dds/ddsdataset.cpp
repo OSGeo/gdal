@@ -48,7 +48,7 @@ enum { DDS_COLOR_TYPE_RGB,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DDSDataset				*/
+/*                              DDSDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -148,7 +148,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             fmt = cCRNFmtDXT3;
         else if (EQUAL(pszFormat, "dxt5"))
             fmt = cCRNFmtDXT5;
-	else if (EQUAL(pszFormat, "etc1"))
+        else if (EQUAL(pszFormat, "etc1"))
             fmt = cCRNFmtETC1;
         else
         {

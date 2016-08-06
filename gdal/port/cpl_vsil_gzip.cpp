@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 /* gzio.c -- IO on .gz files
   Copyright (C) 1995-2005 Jean-loup Gailly.
 
@@ -1589,6 +1591,7 @@ char** VSIGZipFilesystemHandler::ReadDirEx( const char * /*pszDirname*/,
     return NULL;
 }
 
+//! @endcond
 /************************************************************************/
 /*                   VSIInstallGZipFileHandler()                        */
 /************************************************************************/
@@ -1612,7 +1615,7 @@ void VSIInstallGZipFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsigzip/", new VSIGZipFilesystemHandler );
 }
-
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2370,6 +2373,8 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
 {
     poChildInWriting = poSubFile;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                    VSIInstallZipFileHandler()                        */

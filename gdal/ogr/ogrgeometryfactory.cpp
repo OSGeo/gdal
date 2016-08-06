@@ -147,8 +147,8 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE )
     {
-        if ( poGeom->hasCurveGeometry() &&
-             CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
+        if( poGeom->hasCurveGeometry() &&
+            CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
         {
             OGRGeometry* poNewGeom = poGeom->getLinearGeometry();
             delete poGeom;
@@ -342,8 +342,8 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE )
     {
-        if ( poGeom->hasCurveGeometry() &&
-             CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
+        if( poGeom->hasCurveGeometry() &&
+            CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")) )
         {
             OGRGeometry* poNewGeom = poGeom->getLinearGeometry();
             delete poGeom;
@@ -1251,11 +1251,12 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return geom;
     }
 
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS", "NO")))
+    if( CPLTestBool(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS",
+                                       "NO")) )
     {
-        /* -------------------------------------------------------------------- */
-        /*      A wee bit of a warning.                                         */
-        /* -------------------------------------------------------------------- */
+        /* ------------------------------------------------------------------ */
+        /*      A wee bit of a warning.                                       */
+        /* ------------------------------------------------------------------ */
         static int firstTime = 1;
         if (!haveGEOS() && firstTime)
         {
@@ -1801,6 +1802,11 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
 /*                           createFromGEOS()                           */
 /************************************************************************/
 
+/** Builds a OGRGeometry* from a GEOSGeom.
+ * @param hGEOSCtxt GEOS context
+ * @param geosGeom GEOS geometry
+ * @return a OGRGeometry*
+ */
 OGRGeometry *
 OGRGeometryFactory::createFromGEOS( UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
                                     UNUSED_IF_NO_GEOS GEOSGeom geosGeom )
@@ -2229,6 +2235,11 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /*                        OGR_G_CreateFromFgf()                         */
 /************************************************************************/
 
+/**
+ * \brief Create a geometry object of the appropriate type from it's FGF
+ * (FDO Geometry Format) binary representation.
+ * 
+ * See OGRGeometryFactory::createFromFgf() */
 OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,
@@ -2626,6 +2637,12 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
 /*                       transformWithOptions()                         */
 /************************************************************************/
 
+/** Transform a geometry.
+ * @param poSrcGeom source geometry
+ * @param poCT coordinate transformation object.
+ * @param papszOptions options. Including WRAPDATELINE=YES.
+ * @return (new) transformed geometry.
+ */
 OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcGeom,
                                                        OGRCoordinateTransformation *poCT,
                                                        char** papszOptions )
@@ -2641,7 +2658,8 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
         }
     }
 
-    if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE",
+                                            "NO")) )
     {
         OGRwkbGeometryType eType = wkbFlatten(poSrcGeom->getGeometryType());
         OGRwkbGeometryType eNewType;
@@ -3248,21 +3266,20 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
 /*                         GetCurveParmeters()                          */
 /************************************************************************/
 
+#define DISTANCE(x1,y1,x2,y2) sqrt(((x2)-(x1))*((x2)-(x1))+((y2)-(y1))*((y2)-(y1)))
+
 /**
  * \brief Returns the parameter of an arc circle.
  *
  * @param x0 x of first point
  * @param y0 y of first point
- * @param z0 z of first point
  * @param x1 x of intermediate point
  * @param y1 y of intermediate point
- * @param z1 z of intermediate point
  * @param x2 x of final point
  * @param y2 y of final point
- * @param z2 z of final point
  * @param R radius (output)
  * @param cx x of arc center (output)
- * @param cx y of arc center (output)
+ * @param cy y of arc center (output)
  * @param alpha0 angle between center and first point (output)
  * @param alpha1 angle between center and intermediate point (output)
  * @param alpha2 angle between center and final point (output)
@@ -3270,8 +3287,6 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
  *
  * @since GDAL 2.0
  */
-
-#define DISTANCE(x1,y1,x2,y2) sqrt(((x2)-(x1))*((x2)-(x1))+((y2)-(y1))*((y2)-(y1)))
 
 int OGRGeometryFactory::GetCurveParmeters(
     double x0, double y0, double x1, double y1, double x2, double y2,

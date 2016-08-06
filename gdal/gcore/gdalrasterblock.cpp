@@ -1024,12 +1024,14 @@ void GDALRasterBlock::MarkClean() { bDirty = false; }
 /*                          DestroyRBMutex()                           */
 /************************************************************************/
 
+/*! @cond Doxygen_Suppress */
 void GDALRasterBlock::DestroyRBMutex()
 {
     if( hRBLock != NULL )
         DESTROY_LOCK;
     hRBLock = NULL;
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                              TakeLock()                              */

@@ -90,6 +90,7 @@ Download:
 <li> <a href="gdal_8h.html">gdal.h: Raster C API</a>
 <li> <a href="ogr__api_8h.html">ogr_api.h: Vector C API</a>
 <li> <a href="gdal__alg_8h.html">gdal_alg.h: GDAL Algorithms C API</a>
+<li> <a href="ogr__srs__api_8h.html">ogr_srs_api.h: Spatial Reference System C API</a>
 <li> <a href="gdal__utils_8h.html">gdal_utils.h: GDAL Utilities C API</a>
 <li> <a href="classGDALDataset.html">GDALDataset C++ API</a>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand C++ API</a>
@@ -141,7 +142,7 @@ and by HTTP at
 Archives since 2005 are searchable on <a href="http://osgeo-org.1560.n6.nabble.com/GDAL-Dev-f3742093.html">Nabble</a>.<p>
 
 Some GDAL/OGR users and developers can also often be found in the 
-<a href="irc://irc.freenode.net/#gdal">#gdal</a> IRC channel on irc.freenode.net.<p>
+<a href="irc://irc.freenode.net/#gdal">\#gdal</a> IRC channel on irc.freenode.net.<p>
 
 \section index_bugs Bug Reporting
 

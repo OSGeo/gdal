@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_aws.h"
 #include "cpl_vsi_error.h"
 #include "cpl_sha256.h"
@@ -424,11 +426,11 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     {
         return NULL;
     }
-    bool bUseHTTPS = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES")));
+    bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
     bool bIsValidNameForVirtualHosting = (osBucket.find('.') == std::string::npos);
-    bool bUseVirtualHosting = CPL_TO_BOOL(CSLTestBoolean(
-            CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
-                               bIsValidNameForVirtualHosting ? "TRUE" : "FALSE")));
+    bool bUseVirtualHosting = CPLTestBool(
+        CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
+                           bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId, osSessionToken,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
@@ -640,3 +642,5 @@ void VSIS3HandleHelper::SetObjectKey(const CPLString &osStr)
 }
 
 #endif
+
+//! @endcond

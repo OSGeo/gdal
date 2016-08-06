@@ -36,6 +36,7 @@ CPL_CVSID("$Id$");
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor */
 OGRLinearRing::OGRLinearRing()
 
 {
@@ -72,6 +73,9 @@ OGRLinearRing::~OGRLinearRing()
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor
+ * @param poSrcRing source ring.
+ */
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
@@ -172,6 +176,7 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 /*      method!                                                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                       unsigned char * pabyData,
                                       int nBytesAvailable )
@@ -390,6 +395,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
     else
         return 4 + 16 * nPointCount;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               clone()                                */
@@ -531,6 +537,8 @@ int OGRLinearRing::isClockwise() const
 /*                             reverseWindingOrder()                    */
 /************************************************************************/
 
+/** Reverse order of points.
+ */
 void OGRLinearRing::reverseWindingOrder()
 
 {
@@ -571,6 +579,12 @@ void OGRLinearRing::closeRings()
 /*                              isPointInRing()                         */
 /************************************************************************/
 
+/** Returns whether the point is inside the ring.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
@@ -639,6 +653,12 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
 /*                       isPointOnRingBoundary()                        */
 /************************************************************************/
 
+/** Returns whether the point is on the ring boundary.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
@@ -719,6 +739,7 @@ OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
     return TransferMembersAndDestroy(poLR, new OGRLineString());
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -734,3 +755,4 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
 }
+//! @endcond

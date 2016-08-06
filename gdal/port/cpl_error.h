@@ -45,6 +45,7 @@
 
 CPL_C_START
 
+/** Error category */
 typedef enum
 {
     CE_None = 0,
@@ -87,28 +88,46 @@ typedef enum
 
 #else
 
+/** Error number */
 typedef int CPLErrorNum;
 
+/** No error */
 #define CPLE_None                       0
+/** Application defined error */
 #define CPLE_AppDefined                 1
+/** Out of memory error */
 #define CPLE_OutOfMemory                2
+/** File I/O error */
 #define CPLE_FileIO                     3
+/** Open failed */
 #define CPLE_OpenFailed                 4
+/** Illegal argument */
 #define CPLE_IllegalArg                 5
+/** Not supported */
 #define CPLE_NotSupported               6
+/** Assertion failed */
 #define CPLE_AssertionFailed            7
+/** No write access */
 #define CPLE_NoWriteAccess              8
+/** User interrupted */
 #define CPLE_UserInterrupt              9
+/** NULL object */
 #define CPLE_ObjectNull                 10
 
 /*
  * Filesystem-specific errors
  */
+/** HTTP response */
 #define CPLE_HttpResponse               11
+/** AWSBucketNotFound */
 #define CPLE_AWSBucketNotFound          12
+/** AWSObjectNotFound */
 #define CPLE_AWSObjectNotFound          13
+/** AWSAccessDenied */
 #define CPLE_AWSAccessDenied            14
+/** AWSInvalidCredentials */
 #define CPLE_AWSInvalidCredentials      15
+/** AWSSignatureDoesNotMatch */
 #define CPLE_AWSSignatureDoesNotMatch    16
 
 /* 100 - 299 reserved for GDAL */
@@ -124,8 +143,11 @@ CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
 const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
 void CPL_DLL * CPL_STDCALL CPLGetErrorHandlerUserData(void);
 void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no, const char* pszMsg );
+/*! @cond Doxygen_Suppress */
 void CPL_DLL CPLCleanupErrorMutex( void );
+/*! @endcond */
 
+/** Callback for a custom error handler */
 typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, CPLErrorNum, const char*);
 
 void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, CPLErrorNum, const char * );
@@ -144,13 +166,16 @@ void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
 #ifdef DEBUG
+/** Assert on an expression. Only enabled in DEBUG mode */
 #  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))
 #else
+/** Assert on an expression. Only enabled in DEBUG mode */
 #  define CPLAssert(expr)
 #endif
 
 CPL_C_END
 
+/*! @cond Doxygen_Suppress */
 /*
  * Helper macros used for input parameters validation.
  */
@@ -159,7 +184,9 @@ CPL_C_END
 #else
 #  define VALIDATE_POINTER_ERR CE_Failure
 #endif
+/*! @endcond */
 
+/** Validate that a pointer is not NULL */
 #define VALIDATE_POINTER0(ptr, func) \
    do { if( NULL == ptr ) \
       { \
@@ -168,6 +195,7 @@ CPL_C_END
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
          return; }} while(0)
 
+/** Validate that a pointer is not NULL, and return rc if it is NULL */
 #define VALIDATE_POINTER1(ptr, func, rc) \
    do { if( NULL == ptr ) \
       { \

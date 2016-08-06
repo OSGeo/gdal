@@ -92,7 +92,7 @@ gdal_edit -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
 
 \if man
 \section gdal_edit_author AUTHORS
-Even Rouault <even dot rouault at mines dash paris dot org>
+Even Rouault &lt;even dot rouault at mines dash paris dot org&gt;
 \endif
 */
 

@@ -184,7 +184,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
-	// in update state and data for this block will be available later
+        // in update state and data for this block will be available later
         if( poGDS->eAccess == GA_Update )
             return CE_None;
 

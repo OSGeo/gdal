@@ -59,7 +59,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     else
         nBCPSize = 1000;
 #ifdef MSSQL_BCP_SUPPORTED
-    bUseCopy = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "TRUE"));
+    bUseCopy = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "TRUE"));
 #else
     bUseCopy = FALSE;
 #endif

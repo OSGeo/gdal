@@ -899,7 +899,8 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
     if( poGFldDefn == NULL )
         return wkbNone;
     OGRwkbGeometryType eType = poGFldDefn->GetType();
-    if( eType == (wkbUnknown | wkb25DBitInternalUse) && CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    if( eType == (wkbUnknown | wkb25DBitInternalUse) &&
+        CPLTestBool(CPLGetConfigOption("QGIS_HACK", "NO")) )
         eType = wkbUnknown;
     return eType;
 }
@@ -1333,6 +1334,10 @@ void OGR_FD_SetStyleIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /*                         CreateFeatureDefn()                          */
 /************************************************************************/
 
+/** Create a new feature definition object.
+ * @param pszName name
+ * @return new feature definition object.
+ */
 OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 
 {
@@ -1343,6 +1348,9 @@ OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 /*                         DestroyFeatureDefn()                         */
 /************************************************************************/
 
+/** Destroy a feature definition.
+ * @param poDefn feature definition.
+ */
 void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
 
 {

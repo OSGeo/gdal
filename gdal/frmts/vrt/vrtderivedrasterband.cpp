@@ -34,6 +34,8 @@
 
 #include <map>
 
+/*! @cond Doxygen_Suppress */
+
 CPL_CVSID("$Id$");
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
@@ -80,6 +82,8 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
 /*                           AddPixelFunction()                         */
 /************************************************************************/
 
+/*! @endcond */
+
 /**
  * This adds a pixel function to the global list of available pixel
  * functions for derived bands.  Pixel functions must be registered
@@ -110,6 +114,8 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
 
     return CE_None;
 }
+
+/*! @cond Doxygen_Suppress */
 
 /**
  * This adds a pixel function to the global list of available pixel
@@ -451,3 +457,5 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML( const char *pszVRTPath )
 
     return psTree;
 }
+
+/*! @endcond */

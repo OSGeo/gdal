@@ -29,6 +29,7 @@
 
 #include "gdalgeorefpamdataset.h"
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                       GDALGeorefPamDataset()                         */
 /************************************************************************/
@@ -332,3 +333,4 @@ int GDALGeorefPamDataset::GetPAMGeorefSrcIndex()
     }
     return m_nPAMGeorefSrcIndex;
 }
+//! @endcond

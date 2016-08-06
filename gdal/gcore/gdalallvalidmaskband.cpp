@@ -31,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALAllValidMaskBand()                        */
 /************************************************************************/
@@ -86,3 +87,4 @@ int GDALAllValidMaskBand::GetMaskFlags()
 {
     return GMF_ALL_VALID;
 }
+//! @endcond

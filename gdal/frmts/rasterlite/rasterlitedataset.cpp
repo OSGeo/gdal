@@ -714,15 +714,15 @@ int RasterliteDataset::CloseDependentDatasets()
 
 void RasterliteDataset::AddSubDataset( const char* pszDSName)
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 }
 

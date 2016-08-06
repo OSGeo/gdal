@@ -197,162 +197,162 @@ static const ReferenceTab aoUSStateTable[] = {
 //---- The origin table for USA State Plane Systems
 struct OriginTab83 {
     double longitude;
-	double latitude;
-	const char *spcs;
+    double latitude;
+    const char *spcs;
 };
 
 static const int ORIGIN_COUNT = 148;
 
 //---- USA State plane coordinate system in IDRISI
 static const OriginTab83 SPCS83Origin[] = {
-	{85.83,   30.50,    "SPC83AL1"},
-	{87.50,   30.00,    "SPC83AL2"},
-	{176.00,  51.00,    "SPC83AK0"},
-	{142.00,  54.00,    "SPC83AK2"},
-	{146.00,  54.00,    "SPC83AK3"},
-	{150.00,  54.00,    "SPC83AK4"},
-	{154.00,  54.00,    "SPC83AK5"},
-	{158.00,  54.00,    "SPC83AK6"},
-	{162.00,  54.00,    "SPC83AK7"},
-	{166.00,  54.00,    "SPC83AK8"},
-	{170.00,  54.00,    "SPC83AK9"},
-	{110.17,  31.00,    "SPC83AZ1"},
-	{111.92,  31.00,    "SPC83AZ2"},
-	{113.75,  31.00,    "SPC83AZ3"},
-	{92.00,   34.33,    "SPC83AR1"},
-	{92.00,   32.67,    "SPC83AR2"},
-	{122.00,  39.33,    "SPC83CA1"},
-	{122.00,  37.67,    "SPC83CA2"},
-	{120.50,  36.50,    "SPC83CA3"},
-	{119.00,  35.33,    "SPC83CA4"},
-	{118.00,  33.50,    "SPC83CA5"},
-	{116.25,  32.17,    "SPC83CA6"},
-	{105.50,  39.33,    "SPC83CO1"},
-	{105.50,  37.83,    "SPC83CO2"},
-	{105.50,  36.67,    "SPC83CO3"},
-	{72.75,   40.83,    "SPC83CT1"},
-	{75.42,   38.00,    "SPC83DE1"},
-	{81.00,   24.33,    "SPC83FL1"},
-	{82.00,   24.33,    "SPC83FL2"},
-	{84.50,   29.00,    "SPC83FL3"},
-	{82.17,   30.00,    "SPC83GA1"},
-	{84.17,   30.00,    "SPC83GA2"},
-	{155.50,  18.83,    "SPC83HI1"},
-	{156.67,  20.33,    "SPC83HI2"},
-	{158.00,  21.17,    "SPC83HI3"},
-	{159.50,  21.83,    "SPC83HI4"},
-	{160.17,  21.67,    "SPC83HI5"},
-	{112.17,  41.67,    "SPC83ID1"},
-	{114.00,  41.67,    "SPC83ID2"},
-	{115.75,  41.67,    "SPC83ID3"},
-	{88.33,   36.67,    "SPC83IL1"},
-	{90.17,   36.67,    "SPC83IL1"},
-	{85.67,   37.50,    "SPC83IN1"},
-	{87.08,   37.50,    "SPC83IN2"},
-	{93.50,   41.50,    "SPC83IA1"},
-	{93.50,   40.00,    "SPC83IA1"},
-	{98.00,   38.33,    "SPC83KS1"},
-	{98.50,   36.67,    "SPC83KS2"},
-	{84.25,   37.50,    "SPC83KY1"},
-	{85.75,   36.33,    "SPC83KY2"},
-	{92.50,   30.50,    "SPC83LA1"},
-	{91.33,   28.50,    "SPC83LA2"},
-	{91.33,   25.50,    "SPC83LA3"},
-	{92.50,   30.67,    "SPC27LA1"},//NAD27 system
-	{91.33,   28.67,    "SPC27LA2"},
-	{91.33,   25.67,    "SPC27LA3"},//
-	{68.50,   43.67,    "SPC83ME1"},
-	{68.50,   43.83,    "SPC27ME1"},//NAD27
-	{70.17,   42.83,    "SPC83ME2"},
-	{77.00,   37.67,    "SPC83MD1"},//
-	{77.00,   37.83,    "SPC27MD1"},//NAD27
+        {85.83,   30.50,    "SPC83AL1"},
+        {87.50,   30.00,    "SPC83AL2"},
+        {176.00,  51.00,    "SPC83AK0"},
+        {142.00,  54.00,    "SPC83AK2"},
+        {146.00,  54.00,    "SPC83AK3"},
+        {150.00,  54.00,    "SPC83AK4"},
+        {154.00,  54.00,    "SPC83AK5"},
+        {158.00,  54.00,    "SPC83AK6"},
+        {162.00,  54.00,    "SPC83AK7"},
+        {166.00,  54.00,    "SPC83AK8"},
+        {170.00,  54.00,    "SPC83AK9"},
+        {110.17,  31.00,    "SPC83AZ1"},
+        {111.92,  31.00,    "SPC83AZ2"},
+        {113.75,  31.00,    "SPC83AZ3"},
+        {92.00,   34.33,    "SPC83AR1"},
+        {92.00,   32.67,    "SPC83AR2"},
+        {122.00,  39.33,    "SPC83CA1"},
+        {122.00,  37.67,    "SPC83CA2"},
+        {120.50,  36.50,    "SPC83CA3"},
+        {119.00,  35.33,    "SPC83CA4"},
+        {118.00,  33.50,    "SPC83CA5"},
+        {116.25,  32.17,    "SPC83CA6"},
+        {105.50,  39.33,    "SPC83CO1"},
+        {105.50,  37.83,    "SPC83CO2"},
+        {105.50,  36.67,    "SPC83CO3"},
+        {72.75,   40.83,    "SPC83CT1"},
+        {75.42,   38.00,    "SPC83DE1"},
+        {81.00,   24.33,    "SPC83FL1"},
+        {82.00,   24.33,    "SPC83FL2"},
+        {84.50,   29.00,    "SPC83FL3"},
+        {82.17,   30.00,    "SPC83GA1"},
+        {84.17,   30.00,    "SPC83GA2"},
+        {155.50,  18.83,    "SPC83HI1"},
+        {156.67,  20.33,    "SPC83HI2"},
+        {158.00,  21.17,    "SPC83HI3"},
+        {159.50,  21.83,    "SPC83HI4"},
+        {160.17,  21.67,    "SPC83HI5"},
+        {112.17,  41.67,    "SPC83ID1"},
+        {114.00,  41.67,    "SPC83ID2"},
+        {115.75,  41.67,    "SPC83ID3"},
+        {88.33,   36.67,    "SPC83IL1"},
+        {90.17,   36.67,    "SPC83IL1"},
+        {85.67,   37.50,    "SPC83IN1"},
+        {87.08,   37.50,    "SPC83IN2"},
+        {93.50,   41.50,    "SPC83IA1"},
+        {93.50,   40.00,    "SPC83IA1"},
+        {98.00,   38.33,    "SPC83KS1"},
+        {98.50,   36.67,    "SPC83KS2"},
+        {84.25,   37.50,    "SPC83KY1"},
+        {85.75,   36.33,    "SPC83KY2"},
+        {92.50,   30.50,    "SPC83LA1"},
+        {91.33,   28.50,    "SPC83LA2"},
+        {91.33,   25.50,    "SPC83LA3"},
+        {92.50,   30.67,    "SPC27LA1"},//NAD27 system
+        {91.33,   28.67,    "SPC27LA2"},
+        {91.33,   25.67,    "SPC27LA3"},//
+        {68.50,   43.67,    "SPC83ME1"},
+        {68.50,   43.83,    "SPC27ME1"},//NAD27
+        {70.17,   42.83,    "SPC83ME2"},
+        {77.00,   37.67,    "SPC83MD1"},//
+        {77.00,   37.83,    "SPC27MD1"},//NAD27
         {71.50,   41.00,    "SPC83MA1"},
         {70.50,   41.00,    "SPC83MA2"},
-	{87.00,   44.78,    "SPC83MI1"},
-	{84.37,   43.32,    "SPC83MI2"},
-	{84.37,   41.50,    "SPC83MI3"},
-	{84.33,   43.32,    "SPC27MI2"},//NAD27 L
-	{84.33,   41.50,    "SPC27MI3"},//NAD27 L
-	{83.67,   41.50,    "SPC27MI4"},//NAD27 TM
-	{85.75,   41.50,    "SPC27MI5"},//NAD27 TM
-	{88.75,   41.50,    "SPC27MI6"},//NAD27 TM
-	{93.10,   46.50,    "SPC83MN1"},
-	{94.25,   45.00,    "SPC83MN2"},
-	{94.00,   43.00,    "SPC83MN3"},
-	{88.83,   29.50,    "SPC83MS1"},
-	{90.33,   29.50,    "SPC83MS2"},
-	{88.83,   29.67,    "SPC83MS1"},//NAD27
-	{90.33,   30.50,    "SPC83MS2"},//
-	{90.50,   35.83,    "SPC83MO1"},
-	{92.50,   35.83,    "SPC83MO2"},
-	{94.50,   36.17,    "SPC83MO3"},
-	{109.50,  44.25,    "SPC83MT1"},
-	{109.50,  47.00,    "SPC27MT1"},//NAD27
-	{109.50,  45.83,    "SPC27MT2"},
-	{109.50,  44.00,    "SPC27MT3"},//
-	{100.00,  39.83,    "SPC83NE1"},
-	{115.58,  34.75,    "SPC83NV1"},
-	{116.67,  34.75,    "SPC83NV2"},
-	{118.58,  34.75,    "SPC83NV3"},
-	{71.67,   42.50,    "SPC83NH1"},
-	{74.50,   38.83,    "SPC83NJ1"},
-	{74.67,   38.83,    "SPC27NJ1"},//NAD27
-	{104.33,  31.00,    "SPC83NM1"},
-	{106.25,  31.00,    "SPC83NM2"},
-	{107.83,  31.00,    "SPC83NM3"},
-	{74.50,   38.83,    "SPC83NY1"},
-	{76.58,   40.00,    "SPC83NY2"},
-	{78.58,   40.00,    "SPC83NY3"},
-	{74.00,   40.17,    "SPC83NY4"},
-	{74.33,   40.00,    "SPC27NY1"},//NAD27
-	{74.00,   40.50,    "SPC27NY4"},//
-	{79.00,   33.75,    "SPC83NC1"},
-	{100.50,  47.00,    "SPC83ND1"},
-	{100.50,  45.67,    "SPC83ND2"},
-	{82.50,   39.67,    "SPC83OH1"},
-	{82.50,   38.00,    "SPC83OH2"},
-	{98.00,   35.00,    "SPC83OK1"},
-	{98.00,   33.33,    "SPC83OK2"},
-	{120.50,  43.67,    "SPC83OR1"},
-	{120.50,  41.67,    "SPC83OR2"},
-	{77.75,   40.17,    "SPC83PA1"},
-	{77.75,   39.33,    "SPC83PA2"},
-	{71.50,   41.08,    "SPC83RI1"},
-	{81.00,   31.83,    "SPC83SC1"},
-	{81.00,   33.00,    "SPC27SC1"},//NAD27
-	{81.00,   31.83,    "SPC27SC2"},//NAD27
-	{100.00,  43.83,    "SPC83SD1"},
-	{100.33,  42.33,    "SPC83SD2"},
-	{86.00,   34.33,    "SPC83TN1"},
-	{86.00,   34.67,    "SPC27TN1"},//NAD27
-	{101.50,  34.00,    "SPC83TX1"},//
-	{98.50,   31.67,    "SPC83TX2"},
-	{100.33,  29.67,    "SPC83TX3"},
-	{99.00,   27.83,    "SPC83TX4"},
-	{98.50,   25.67,    "SPC83TX5"},
-	{97.50,   31.67,    "SPC27TX2"},//NAD27
-	{111.50,  40.33,    "SPC83UT1"},
-	{111.50,  38.33,    "SPC83UT2"},
-	{111.50,  36.67,    "SPC83UT3"},
-	{72.50,   42.50,    "SPC83VT1"},
-	{78.50,   37.67,    "SPC83VA1"},
-	{78.50,   36.33,    "SPC83VA2"},
-	{120.83,  47.00,    "SPC83WA1"},
-	{120.50,  45.33,    "SPC83WA2"},
-	{79.50,   38.50,    "SPC83WV1"},
-	{81.00,   37.00,    "SPC83WV2"},
-	{90.00,   45.17,    "SPC83WI1"},
-	{90.00,   43.83,    "SPC83WI2"},
-	{90.00,   42.00,    "SPC83WI3"},
-	{105.17,  40.50,    "SPC83WY1"},
-	{107.33,  40.50,    "SPC83WY2"},
-	{108.75,  40.50,    "SPC83WY3"},
-	{110.08,  40.50,    "SPC83WY4"},
-	{105.17,  40.67,    "SPC27WY1"},//NAD27
-	{105.33,  40.67,    "SPC27WY2"},
-	{108.75,  40.67,    "SPC27WY3"},
-	{110.08,  40.67,    "SPC27WY4"},//
-	{66.43,   17.83,    "SPC83PR1"}
+        {87.00,   44.78,    "SPC83MI1"},
+        {84.37,   43.32,    "SPC83MI2"},
+        {84.37,   41.50,    "SPC83MI3"},
+        {84.33,   43.32,    "SPC27MI2"},//NAD27 L
+        {84.33,   41.50,    "SPC27MI3"},//NAD27 L
+        {83.67,   41.50,    "SPC27MI4"},//NAD27 TM
+        {85.75,   41.50,    "SPC27MI5"},//NAD27 TM
+        {88.75,   41.50,    "SPC27MI6"},//NAD27 TM
+        {93.10,   46.50,    "SPC83MN1"},
+        {94.25,   45.00,    "SPC83MN2"},
+        {94.00,   43.00,    "SPC83MN3"},
+        {88.83,   29.50,    "SPC83MS1"},
+        {90.33,   29.50,    "SPC83MS2"},
+        {88.83,   29.67,    "SPC83MS1"},//NAD27
+        {90.33,   30.50,    "SPC83MS2"},//
+        {90.50,   35.83,    "SPC83MO1"},
+        {92.50,   35.83,    "SPC83MO2"},
+        {94.50,   36.17,    "SPC83MO3"},
+        {109.50,  44.25,    "SPC83MT1"},
+        {109.50,  47.00,    "SPC27MT1"},//NAD27
+        {109.50,  45.83,    "SPC27MT2"},
+        {109.50,  44.00,    "SPC27MT3"},//
+        {100.00,  39.83,    "SPC83NE1"},
+        {115.58,  34.75,    "SPC83NV1"},
+        {116.67,  34.75,    "SPC83NV2"},
+        {118.58,  34.75,    "SPC83NV3"},
+        {71.67,   42.50,    "SPC83NH1"},
+        {74.50,   38.83,    "SPC83NJ1"},
+        {74.67,   38.83,    "SPC27NJ1"},//NAD27
+        {104.33,  31.00,    "SPC83NM1"},
+        {106.25,  31.00,    "SPC83NM2"},
+        {107.83,  31.00,    "SPC83NM3"},
+        {74.50,   38.83,    "SPC83NY1"},
+        {76.58,   40.00,    "SPC83NY2"},
+        {78.58,   40.00,    "SPC83NY3"},
+        {74.00,   40.17,    "SPC83NY4"},
+        {74.33,   40.00,    "SPC27NY1"},//NAD27
+        {74.00,   40.50,    "SPC27NY4"},//
+        {79.00,   33.75,    "SPC83NC1"},
+        {100.50,  47.00,    "SPC83ND1"},
+        {100.50,  45.67,    "SPC83ND2"},
+        {82.50,   39.67,    "SPC83OH1"},
+        {82.50,   38.00,    "SPC83OH2"},
+        {98.00,   35.00,    "SPC83OK1"},
+        {98.00,   33.33,    "SPC83OK2"},
+        {120.50,  43.67,    "SPC83OR1"},
+        {120.50,  41.67,    "SPC83OR2"},
+        {77.75,   40.17,    "SPC83PA1"},
+        {77.75,   39.33,    "SPC83PA2"},
+        {71.50,   41.08,    "SPC83RI1"},
+        {81.00,   31.83,    "SPC83SC1"},
+        {81.00,   33.00,    "SPC27SC1"},//NAD27
+        {81.00,   31.83,    "SPC27SC2"},//NAD27
+        {100.00,  43.83,    "SPC83SD1"},
+        {100.33,  42.33,    "SPC83SD2"},
+        {86.00,   34.33,    "SPC83TN1"},
+        {86.00,   34.67,    "SPC27TN1"},//NAD27
+        {101.50,  34.00,    "SPC83TX1"},//
+        {98.50,   31.67,    "SPC83TX2"},
+        {100.33,  29.67,    "SPC83TX3"},
+        {99.00,   27.83,    "SPC83TX4"},
+        {98.50,   25.67,    "SPC83TX5"},
+        {97.50,   31.67,    "SPC27TX2"},//NAD27
+        {111.50,  40.33,    "SPC83UT1"},
+        {111.50,  38.33,    "SPC83UT2"},
+        {111.50,  36.67,    "SPC83UT3"},
+        {72.50,   42.50,    "SPC83VT1"},
+        {78.50,   37.67,    "SPC83VA1"},
+        {78.50,   36.33,    "SPC83VA2"},
+        {120.83,  47.00,    "SPC83WA1"},
+        {120.50,  45.33,    "SPC83WA2"},
+        {79.50,   38.50,    "SPC83WV1"},
+        {81.00,   37.00,    "SPC83WV2"},
+        {90.00,   45.17,    "SPC83WI1"},
+        {90.00,   43.83,    "SPC83WI2"},
+        {90.00,   42.00,    "SPC83WI3"},
+        {105.17,  40.50,    "SPC83WY1"},
+        {107.33,  40.50,    "SPC83WY2"},
+        {108.75,  40.50,    "SPC83WY3"},
+        {110.08,  40.50,    "SPC83WY4"},
+        {105.17,  40.67,    "SPC27WY1"},//NAD27
+        {105.33,  40.67,    "SPC27WY2"},
+        {108.75,  40.67,    "SPC27WY3"},
+        {110.08,  40.67,    "SPC27WY4"},//
+        {66.43,   17.83,    "SPC83PR1"}
 };
 
 //Get IDRISI State Plane name by origin
@@ -905,10 +905,10 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
 /************************************************************************/
 
 GDALDataset *IdrisiDataset::Create( const char *pszFilename,
-                                   int nXSize,
-                                   int nYSize,
-                                   int nBands,
-                                   GDALDataType eType,
+                                    int nXSize,
+                                    int nYSize,
+                                    int nBands,
+                                    GDALDataType eType,
                                     char ** /* papszOptions */ )
 {
     // --------------------------------------------------------------------
@@ -917,18 +917,18 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
 
     if( nBands != 1 && nBands != 3)
     {
-		CPLError( CE_Failure, CPLE_AppDefined,
+      CPLError( CE_Failure, CPLE_AppDefined,
                 "Attempt to create IDRISI dataset with an illegal number of bands(%d)."
                 " Try again by selecting a specific band if possible. \n", nBands);
-		return NULL;
+                return NULL;
     }
 
-	if( nBands == 3 && eType != GDT_Byte )
+    if( nBands == 3 && eType != GDT_Byte )
     {
-		CPLError( CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an unsupported combination "
-                "of the number of bands(%d) and data type(%s). \n",
-                nBands, GDALGetDataTypeName( eType ) );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create IDRISI dataset with an unsupported combination "
+                  "of the number of bands(%d) and data type(%s). \n",
+                  nBands, GDALGetDataTypeName( eType ) );
         return NULL;
     }
 
@@ -952,35 +952,35 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
     case GDT_Float32:
         pszLDataType = rstREAL;
         break;
-	//--- process compatible data types
-	case (GDT_UInt16):
-		pszLDataType = rstINTEGER;
-		CPLError( CE_Warning, CPLE_AppDefined,
-			      "This process requires a conversion from %s to signed 16-bit %s, "
-				  "which may cause data loss.\n",
-				  GDALGetDataTypeName( eType ), rstINTEGER);
-		break;
-	case GDT_UInt32:
-		pszLDataType = rstINTEGER;
-		CPLError( CE_Warning, CPLE_AppDefined,
-			      "This process requires a conversion from %s to signed 16-bit %s, "
-				  "which may cause data loss.\n",
-				  GDALGetDataTypeName( eType ), rstINTEGER);
-		break;
-	case GDT_Int32:
-		pszLDataType = rstINTEGER;
-		CPLError( CE_Warning, CPLE_AppDefined,
-			      "This process requires a conversion from %s to signed 16-bit %s, "
-				  "which may cause data loss.\n",
-				  GDALGetDataTypeName( eType ), rstINTEGER);
-		break;
-	case GDT_Float64:
-		pszLDataType = rstREAL;
-		CPLError( CE_Warning, CPLE_AppDefined,
-			      "This process requires a conversion from %s to float 32-bit %s, "
-				  "which may cause data loss.\n",
-				  GDALGetDataTypeName( eType ), rstREAL);
-		break;
+        //--- process compatible data types
+        case (GDT_UInt16):
+                pszLDataType = rstINTEGER;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "This process requires a conversion from %s to signed 16-bit %s, "
+                          "which may cause data loss.\n",
+                          GDALGetDataTypeName( eType ), rstINTEGER);
+                break;
+        case GDT_UInt32:
+                pszLDataType = rstINTEGER;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "This process requires a conversion from %s to signed 16-bit %s, "
+                          "which may cause data loss.\n",
+                          GDALGetDataTypeName( eType ), rstINTEGER);
+                break;
+        case GDT_Int32:
+                pszLDataType = rstINTEGER;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "This process requires a conversion from %s to signed 16-bit %s, "
+                          "which may cause data loss.\n",
+                          GDALGetDataTypeName( eType ), rstINTEGER);
+                break;
+        case GDT_Float64:
+                pszLDataType = rstREAL;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "This process requires a conversion from %s to float 32-bit %s, "
+                          "which may cause data loss.\n",
+                          GDALGetDataTypeName( eType ), rstREAL);
+                break;
     default:
         CPLError( CE_Failure, CPLE_AppDefined,
             "Attempt to create IDRISI dataset with an illegal "
@@ -1071,10 +1071,10 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
          ( poSrcDS->GetRasterBand( 2 )->GetRasterDataType() != GDT_Byte ) ||
          ( poSrcDS->GetRasterBand( 3 )->GetRasterDataType() != GDT_Byte ) ) )
     {
-		CPLError( CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an unsupported "
-                "data type when there are three bands. Only BYTE allowed.\n"
-			    "Try again by selecting a specific band to convert if possible.\n");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create IDRISI dataset with an unsupported "
+                  "data type when there are three bands. Only BYTE allowed.\n"
+                  "Try again by selecting a specific band to convert if possible.\n");
         return NULL;
     }
 
@@ -1110,7 +1110,7 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
                 eType != GDT_Float64 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-					"Attempt to create IDRISI dataset with an illegal data type(%s).\n",
+                          "Attempt to create IDRISI dataset with an illegal data type(%s).\n",
                     GDALGetDataTypeName( eType ) );
                 return NULL;
             }
@@ -1318,7 +1318,7 @@ CPLErr  IdrisiDataset::GetGeoTransform( double * padfTransform )
     if( GDALPamDataset::GetGeoTransform( padfTransform ) != CE_None )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof( double ) * 6 );
-		/*
+                /*
         if( adfGeoTransform[0] == 0.0
         &&  adfGeoTransform[1] == 1.0
         &&  adfGeoTransform[2] == 0.0
@@ -1326,7 +1326,7 @@ CPLErr  IdrisiDataset::GetGeoTransform( double * padfTransform )
         &&  adfGeoTransform[4] == 0.0
         &&  adfGeoTransform[5] == 1.0 )
             return CE_Failure;
-		*/
+                */
     }
 
     return CE_None;

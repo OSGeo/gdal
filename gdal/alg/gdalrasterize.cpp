@@ -539,17 +539,19 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
  * @param padfGeomBurnValue the array of values to burn into the raster.
  * There should be nBandCount values for each geometry.
  * @param papszOptions special options controlling rasterization
- * <dl>
- * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched
+ * <ul>
+ * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
- * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use the Z values of the
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
+ * <li>"BURN_VALUE_FROM":May be set to "Z" to use the Z values of the
  * geometries. dfBurnValue is added to this before burning.
  * Defaults to GDALBurnValueSrc.GBV_UserBurnValue in which case just the
  * dfBurnValue is burned. This is implemented only for points and lines for
- * now. The M value may be supported in the future.</dd>
- * <dt>"MERGE_ALG":</dt> <dd>May be REPLACE (the default) or ADD.  REPLACE results in overwriting of value, while ADD adds the new value to the existing raster, suitable for heatmaps for instance.</dd>
- * </dl>
+ * now. The M value may be supported in the future.</li>
+ * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
+ * overwriting of value, while ADD adds the new value to the existing raster,
+ * suitable for heatmaps for instance.</li>
+ * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
  *
@@ -750,28 +752,30 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * @param padfLayerBurnValues the array of values to burn into the raster.
  * There should be nBandCount values for each layer.
  * @param papszOptions special options controlling rasterization:
- * <dl>
- * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
+ * <ul>
+ * <li>"ATTRIBUTE":Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
- * pointer.</dd>
- * <dt>"CHUNKYSIZE":</dt> <dd>The height in lines of the chunk to operate on.
+ * pointer.</li>
+ * <li>"CHUNKYSIZE":The height in lines of the chunk to operate on.
  * The larger the chunk size the less times we need to make a pass through all
  * the shapes. If it is not set or set to zero the default chunk size will be
  * used. Default size will be estimated based on the GDAL cache buffer size
  * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
- * not exceed the cache.</dd>
- * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched
+ * not exceed the cache.</li>
+ * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
- * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use the Z values of the
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.
+ * <li>"BURN_VALUE_FROM":May be set to "Z" to use the Z values of the</li>
  * geometries. The value from padfLayerBurnValues or the attribute field value
  * is added to this before burning. In default case dfBurnValue is burned as it
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may be
- * supported in the future.</dd>
- * <dt>"MERGE_ALG":</dt> <dd>May be REPLACE (the default) or ADD.  REPLACE results in overwriting of value, while ADD adds the new value to the existing raster, suitable for heatmaps for instance.</dd>
- * </dl>
+ * supported in the future.</li>
+ * <"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
+ * overwriting of value, while ADD adds the new value to the existing raster,
+ * suitable for heatmaps for instance.</li>
+ * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
  *
@@ -1125,25 +1129,24 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * @param dfBurnValue the value to burn into the raster.
  *
  * @param papszOptions special options controlling rasterization:
- * <dl>
- * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
+ * <ul>
+ * <li>"ATTRIBUTE":Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
- * pointer.</dd>
- * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched
+ * pointer.</li>
+ * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
- * </dl>
- * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
+ * <li>"BURN_VALUE_FROM":May be set to "Z" to use
  * the Z values of the geometries. dfBurnValue or the attribute field value is
  * added to this before burning. In default case dfBurnValue is burned as it
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may
- * be supported in the future.</dd>
- * <dt>"MERGE_ALG":</dt> <dd>May be REPLACE (the default) or ADD.  REPLACE
+ * be supported in the future.</li>
+ * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE
  * results in overwriting of value, while ADD adds the new value to the
- * existing raster, suitable for heatmaps for instance.</dd>
- * </dl>
+ * existing raster, suitable for heatmaps for instance.</li>
+ * </ul>
  *
  * @param pfnProgress the progress function to report completion.
  *

@@ -54,8 +54,8 @@ gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 
 \if man
 \section gdal_edit_author AUTHORS
-Chris Yesson <chris dot yesson at ioz dot ac dot uk>
-Etienne Tourigny <etourigny dot dev at gmail dot com>
+Chris Yesson &lt;chris dot yesson at ioz dot ac dot uk&gt;
+Etienne Tourigny &lt;etourigny dot dev at gmail dot com&gt;
 \endif
 */
 

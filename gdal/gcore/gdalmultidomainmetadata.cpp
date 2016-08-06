@@ -34,6 +34,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                      GDALMultiDomainMetadata()                       */
 /************************************************************************/
@@ -338,3 +339,4 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
 
     return psFirst;
 }
+//! @endcond

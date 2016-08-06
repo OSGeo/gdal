@@ -143,6 +143,7 @@ class CPL_DLL OGRFieldDefn
 class CPL_DLL OGRGeomFieldDefn
 {
 protected:
+//! @cond Doxygen_Suppress
         char                *pszName;
         OGRwkbGeometryType   eGeomType; /* all values possible except wkbNone */
         OGRSpatialReference* poSRS;
@@ -151,6 +152,7 @@ protected:
         int                 bNullable;
 
         void                Initialize( const char *, OGRwkbGeometryType );
+//! @endcond
 
 public:
                             OGRGeomFieldDefn( const char *pszNameIn,
@@ -207,6 +209,7 @@ public:
 class CPL_DLL OGRFeatureDefn
 {
   protected:
+//! @cond Doxygen_Suppress
     volatile int nRefCount;
 
     int         nFieldCount;
@@ -218,6 +221,7 @@ class CPL_DLL OGRFeatureDefn
     char        *pszFeatureClassName;
 
     int         bIgnoreStyle;
+//! @endcond
 
   public:
                 OGRFeatureDefn( const char * pszName = NULL );
@@ -288,9 +292,11 @@ class CPL_DLL OGRFeature
     bool                SetFieldInternal( int i, OGRField * puValue );
 
   protected:
+//! @cond Doxygen_Suppress
     char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
     char *              m_pszTmpFieldValue;
+//! @endcond
 
   public:
                         OGRFeature( OGRFeatureDefn * );
@@ -430,10 +436,12 @@ class CPL_DLL OGRFeature
     OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
     OGRErr              SetFieldsFrom( OGRFeature *, int *, int = TRUE );
 
+//! @cond Doxygen_Suppress
     OGRErr              RemapFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
     OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
+//! @endcond
 
     int                 Validate( int nValidateFlags,
                                   int bEmitError );
@@ -443,6 +451,10 @@ class CPL_DLL OGRFeature
     virtual const char *GetStyleString();
     virtual void        SetStyleString( const char * );
     virtual void        SetStyleStringDirectly( char * );
+    
+    /** Return style table.
+     * @return style table.
+     */
     virtual OGRStyleTable *GetStyleTable() { return m_poStyleTable; }
     virtual void        SetStyleTable( OGRStyleTable *poStyleTable );
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
@@ -464,6 +476,7 @@ class CPL_DLL OGRFeature
 /*                           OGRFeatureQuery                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 class OGRLayer;
 class swq_expr_node;
 class swq_custom_func_registrar;
@@ -499,5 +512,6 @@ class CPL_DLL OGRFeatureQuery
 
     void       *GetSWQExpr() { return pSWQExpr; }
 };
+//! @endcond
 
 #endif /* ndef OGR_FEATURE_H_INCLUDED */

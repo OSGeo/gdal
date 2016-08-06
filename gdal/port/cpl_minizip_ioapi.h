@@ -20,6 +20,8 @@
 #ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
 #define CPL_MINIZIP_IOAPI_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_vsi.h"
 #define uLong64 vsi_l_offset
 
@@ -80,5 +82,7 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* CPL_MINIZIP_IOAPI_H_INCLUDED */

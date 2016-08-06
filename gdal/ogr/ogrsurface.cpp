@@ -61,6 +61,7 @@ CPL_CVSID("$Id$");
 /*                          CastToPolygon()                             */
 /************************************************************************/
 
+/*! @cond Doxygen_Suppress */
 /**
  * \brief Cast to polygon
  *
@@ -96,3 +97,4 @@ OGRCurvePolygon* OGRSurface::CastToCurvePolygon( OGRSurface* poSurface )
     OGRSurfaceCasterToCurvePolygon pfn = poSurface->GetCasterToCurvePolygon();
     return pfn(poSurface);
 }
+/*! @endcond */

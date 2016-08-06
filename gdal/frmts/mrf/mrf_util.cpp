@@ -61,15 +61,15 @@ NAMESPACE_MRF_START
 // These have to be positionally in sync with the enums in marfa.h
 static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DEFLATE", "TIF",
 #if defined(LERC)
-	"LERC",
+        "LERC",
 #endif
-	"Unknown" };
+        "Unknown" };
 
 static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".pjp", ".til", ".pzp", ".ptf",
 #if defined(LERC)
-	".lrc" ,
+        ".lrc" ,
 #endif
-	"" };
+        "" };
 
 static const char * const ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
 
@@ -100,10 +100,10 @@ ILCompression CompToken(const char *opt, ILCompression def)
     int i;
     if (NULL==opt) return def;
     for (i=0; ILCompression(i) < IL_ERR_COMP; i++)
-	if (EQUAL(opt,ILComp_Name[i]))
-	    break;
+        if (EQUAL(opt,ILComp_Name[i]))
+            break;
     if (IL_ERR_COMP == ILCompression(i))
-	return def;
+        return def;
     return ILCompression(i);
 }
 
@@ -115,10 +115,10 @@ ILOrder OrderToken(const char *opt, ILOrder def)
     int i;
     if (NULL==opt) return def;
     for (i=0; ILOrder(i)<IL_ERR_ORD; i++)
-	if (EQUAL(opt,ILOrder_Name[i]))
-	    break;
+        if (EQUAL(opt,ILOrder_Name[i]))
+            break;
     if (IL_ERR_ORD==ILOrder(i))
-	return def;
+        return def;
     return ILOrder(i);
 }
 
@@ -128,7 +128,7 @@ ILOrder OrderToken(const char *opt, ILOrder def)
 std::ostream& operator<<(std::ostream &out, const ILSize& sz)
 {
     out << "X=" << sz.x << ",Y=" << sz.y << ",Z=" << sz.z
-	<< ",C=" << sz.c << ",L=" << sz.l;
+        << ",C=" << sz.c << ",L=" << sz.l;
     return out;
 }
 
@@ -175,10 +175,10 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
     GIntBig sz = img.pagecount.l;
     while (scale != 0 && 1 != img.pagecount.x * img.pagecount.y)
     {
-	img.size.x = pcount(img.size.x, scale);
-	img.size.y = pcount(img.size.y, scale);
-	img.pagecount = pcount(img.size, img.pagesize);
-	sz += img.pagecount.l;
+        img.size.x = pcount(img.size.x, scale);
+        img.size.y = pcount(img.size.y, scale);
+        img.pagecount = pcount(img.size, img.pagesize);
+        sz += img.pagecount.l;
     }
     return sz*sizeof(ILIdx);
 }
@@ -211,14 +211,14 @@ ILImage::ILImage()
 CPLString getFname(const CPLString &in, const char *ext)
 {
     if (strlen(in) < strlen(ext))
-	return CPLString(ext);
+        return CPLString(ext);
 
     CPLString ret(in);
     // Is it a web file with parameters?
     size_t extlen = strlen(ext);
     size_t qmark = ret.find_first_of('?');
     if (!(qmark != std::string::npos && 0 == in.find("/vsicurl/http") && qmark >= extlen))
-	qmark = ret.size();
+        qmark = ret.size();
     return ret.replace(qmark - extlen, extlen, ext);
 }
 
@@ -236,15 +236,15 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
 {
     CPLString fn = CPLGetXMLValue(node, token, "");
     if (fn.size() == 0) // Not provided
-	return getFname(in, def);
+        return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 
     // Does it look like an absolute path or we wont't find the basename of in
-    if (slashPos == 0				    // Starts with slash
-	|| (slashPos == 2 && fn[1] == ':')	    // Starts with disk letter column
-	|| !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
-	|| in.find_first_of("\\/") == in.npos)      // We con't get a basename from in
-	return fn;
+    if (slashPos == 0                               // Starts with slash
+        || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
+        || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
+        || in.find_first_of("\\/") == in.npos)      // We con't get a basename from in
+        return fn;
 
     // Relative path, prepand the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
@@ -271,7 +271,7 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 {
     return img.idxoffset + sizeof(ILIdx) *
-	(pos.c + img.pagecount.c * (
+        (pos.c + img.pagecount.c * (
          pos.x+img.pagecount.x * (
          pos.y+img.pagecount.y *
          static_cast<GIntBig>(pos.z)
@@ -282,8 +282,8 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
     // Add here all endianness dependent compressions
     if (IL_ZLIB == comp || IL_NONE == comp)
-	if (GDALGetDataTypeSize( dt ) > 8)
-	    return true;
+        if (GDALGetDataTypeSize( dt ) > 8)
+            return true;
     return false;
 }
 
@@ -305,13 +305,13 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
     default:
-	return NULL;
+        return NULL;
     }
 
     // If something was flagged during band creation
     if (CPLGetLastErrorNo() != CE_None) {
-	delete bnd;
-	return NULL;
+        delete bnd;
+        return NULL;
     }
 
     // Copy the RW mode from the dataset
@@ -359,7 +359,7 @@ CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
 
 {
     if( psRoot == NULL || pszElement == NULL )
-	return NULL;
+        return NULL;
 
     // If the strings starts with '=', skip it and test the root
     // If not, start testing with the next sibling
@@ -367,10 +367,10 @@ CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
     else psRoot=psRoot->psNext;
 
     for (;psRoot!=NULL;psRoot=psRoot->psNext)
-	if ((psRoot->eType == CXT_Element ||
-	     psRoot->eType == CXT_Attribute)
-	     && EQUAL(pszElement,psRoot->pszValue))
-	    return psRoot;
+        if ((psRoot->eType == CXT_Element ||
+             psRoot->eType == CXT_Attribute)
+             && EQUAL(pszElement,psRoot->pszValue))
+            return psRoot;
 
     return NULL;
 }
@@ -382,7 +382,7 @@ char **CSLAddIfMissing(char **papszList,
     const char *pszName, const char *pszValue)
 {
     if (CSLFetchNameValue(papszList, pszName))
-	return papszList;
+        return papszList;
     return CSLSetNameValue(papszList, pszName, pszValue);
 }
 
@@ -417,7 +417,7 @@ void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
 
     //  Unfortunately the %a doesn't work in VisualStudio scanf or strtod
     //    if (strtod(sVal.c_str(),0) != val)
-    //	sVal.Printf("%a",val);
+    //  sVal.Printf("%a",val);
 }
 
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
@@ -427,7 +427,7 @@ CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
     XMLSetAttributeVal(node, "x", sz.x, frmt);
     XMLSetAttributeVal(node, "y", sz.y, frmt);
     if (sz.z != 1)
-	XMLSetAttributeVal(node, "z", sz.z, frmt);
+        XMLSetAttributeVal(node, "z", sz.z, frmt);
     XMLSetAttributeVal(node, "c", sz.c, frmt);
     return node;
 }
@@ -440,19 +440,19 @@ void XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, std::vector<double> const &values)
 {
     if (values.empty())
-	return;
+        return;
 
     CPLString value;
     double val = values[0];
     int single_val = true;
     for (int i = 0; i < int(values.size()); i++) {
-	if (val != values[i])
-	    single_val = false;
-	value.append(PrintDouble(values[i]) + " ");
-	value.resize(value.size() - 1); // Cut the last space
+        if (val != values[i])
+            single_val = false;
+        value.append(PrintDouble(values[i]) + " ");
+        value.resize(value.size() - 1); // Cut the last space
     }
     if (single_val)
-	value = PrintDouble(values[0]);
+        value = PrintDouble(values[0]);
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
     CPLSetXMLValue(parent, pszName, value);
 }
@@ -481,13 +481,13 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 
     VSIStatBufL statb;
     if (VSIStatL(fname, &statb))
-	return false;
+        return false;
     if (statb.st_size >= sz)
-	return true;
+        return true;
 
     // Don't change anything unless updating
     if (eAccess != GA_Update)
-	return false;
+        return false;
 
     // There is no ftruncate in VSI, only truncate()
     VSILFILE *ifp = VSIFOpenL(fname, "r+b");
@@ -532,8 +532,8 @@ int ZPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 
     err = deflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END) {
-	deflateEnd(&stream);
-	return false;
+        deflateEnd(&stream);
+        return false;
     }
     dst.size = stream.total_out;
     err = deflateEnd(&stream);
@@ -560,8 +560,8 @@ int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 
     err = inflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END) {
-	inflateEnd(&stream);
-	return false;
+        inflateEnd(&stream);
+        return false;
     }
     dst.size = stream.total_out;
     err = inflateEnd(&stream);
@@ -599,30 +599,30 @@ void GDALRegister_mrf(void)
         driver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
             "<CreationOptionList>"
             "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
-            "	    <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
-            "	    <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
+            "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
+            "       <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
 #if defined(LERC)
-            "	    <Value>LERC</Value>"
+            "       <Value>LERC</Value>"
 #endif
             "   </Option>"
             "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
             "       <Value>PIXEL</Value>"
             "       <Value>BAND</Value>"
             "   </Option>\n"
-            "	<Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
+            "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
             "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
-            "	<Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
+            "   <Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
             "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
             "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
             "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
             "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
-            "	<Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
-            "	<Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
-            "	<Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
+            "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
+            "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
+            "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
             "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
-            "	    <Value>MULTISPECTRAL</Value>"
-            "	    <Value>RGB</Value>"
-            "	    <Value>YCC</Value>"
+            "       <Value>MULTISPECTRAL</Value>"
+            "       <Value>RGB</Value>"
+            "       <Value>YCC</Value>"
             "   </Option>\n"
             "</CreationOptionList>\n"
             );

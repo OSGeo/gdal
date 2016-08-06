@@ -62,7 +62,7 @@ typedef struct
 
 class ECRGTOCDataset : public GDALPamDataset
 {
-  char	    **papszSubDatasets;
+  char      **papszSubDatasets;
   double      adfGeoTransform[6];
 
   char      **papszFileList;
@@ -181,7 +181,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
                                     const char* pszScale)
 
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );

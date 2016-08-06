@@ -101,8 +101,7 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
     FILE *fp = NULL;
 
 #if defined(WIN32)
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -428,6 +427,7 @@ static GIntBig nMaxCumulAllocSize = -1;
 /*                             VSICalloc()                              */
 /************************************************************************/
 
+/** Analog of calloc(). Use VSIFree() to free */
 void *VSICalloc( size_t nCount, size_t nSize )
 
 {
@@ -528,6 +528,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
 /************************************************************************/
 
 #ifndef DEBUG_VSIMALLOC
+/** Analog of malloc(). Use VSIFree() to free */
 void *VSIMalloc( size_t nSize )
 
 {
@@ -641,6 +642,7 @@ static void VSICheckMarkerEnd(char* ptr, size_t nEnd)
 /*                             VSIRealloc()                             */
 /************************************************************************/
 
+/** Analog of realloc(). Use VSIFree() to free */
 void * VSIRealloc( void * pData, size_t nNewSize )
 
 {
@@ -775,6 +777,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 /*                              VSIFree()                               */
 /************************************************************************/
 
+/** Analog of free() for data allocated with VSIMalloc(), VSICalloc(), VSIRealloc() */
 void VSIFree( void * pData )
 
 {
@@ -895,6 +898,7 @@ void* VSIMallocAlignedAuto( size_t nSize )
 /*                        VSIMallocAlignedAutoVerbose()                 */
 /************************************************************************/
 
+/** See VSIMallocAlignedAuto() */
 void *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile, int nLine )
 {
     void* pRet = VSIMallocAlignedAuto(nSize);
@@ -937,6 +941,7 @@ void VSIFreeAligned( void* ptr )
 /*                             VSIStrdup()                              */
 /************************************************************************/
 
+/** Analog of strdup(). Use VSIFree() to free */
 char *VSIStrdup( const char * pszString )
 
 {
@@ -1187,8 +1192,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
 #if defined(WIN32)
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
@@ -1271,6 +1275,7 @@ struct tm *VSILocalTime( const time_t *pnTime, struct tm *poBrokenTime )
 /*                            VSIStrerror()                             */
 /************************************************************************/
 
+/** Return the error string corresponding to the error number. Do not free it */
 char *VSIStrerror( int nErrno )
 
 {

@@ -467,10 +467,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
 /************************************************************************/
 /*                   OGR_G_ExportEnvelopeToGMLTree()                    */
-/*                                                                      */
-/*      Export the envelope of a geometry as a gml:Box.                 */
 /************************************************************************/
 
+/** Export the envelope of a geometry as a gml:Box. */
 CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 
 {
@@ -1049,6 +1048,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /*                       OGR_G_ExportToGMLTree()                        */
 /************************************************************************/
 
+/**  Convert a geometry into GML format. */
 CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 
 {

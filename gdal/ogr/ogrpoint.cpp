@@ -51,11 +51,17 @@ OGRPoint::OGRPoint()
     flags = 0;
 }
 
+
 /************************************************************************/
 /*                              OGRPoint()                              */
-/*                                                                      */
-/*      Initialize point to value.                                      */
 /************************************************************************/
+
+/**
+ * \brief Create a point.
+ * @param xIn x
+ * @param yIn y
+ * @param zIn z
+ */
 
 OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
     x(xIn),
@@ -68,9 +74,13 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
 
 /************************************************************************/
 /*                              OGRPoint()                              */
-/*                                                                      */
-/*      Initialize point to value.                                      */
 /************************************************************************/
+
+/**
+ * \brief Create a point.
+ * @param xIn x
+ * @param yIn y
+ */
 
 OGRPoint::OGRPoint( double xIn, double yIn ) :
     x(xIn),
@@ -83,9 +93,15 @@ OGRPoint::OGRPoint( double xIn, double yIn ) :
 
 /************************************************************************/
 /*                              OGRPoint()                              */
-/*                                                                      */
-/*      Initialize point to value.                                      */
 /************************************************************************/
+
+/**
+ * \brief Create a point.
+ * @param xIn x
+ * @param yIn y
+ * @param zIn z
+ * @param mIn m
+ */
 
 OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
     x(xIn),

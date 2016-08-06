@@ -38,8 +38,8 @@ NAMESPACE_MRF_START
 template<typename T> int MatchCount(T *buff, int sz, T val) {
     int ncount=0;
     for (int i=0; i < sz; i++)
-	if (buff[i] == val)
-	    ncount++;
+        if (buff[i] == val)
+            ncount++;
     return ncount;
 }
 
@@ -50,12 +50,12 @@ template<typename T> int MatchCount(T *buff, int sz, T val) {
 template<typename T> void NearByFour(T *buff, int xsz, int ysz) {
     T *obuff = buff;
     for (int line = 0; line < ysz; line++) {
-		// Copy every other pixel
-		for (int col = 0; col < xsz; col++, buff++) {
-			*obuff++ = *buff++;
-		}
-		// Skip every other line
-		buff += xsz * 2;
+                // Copy every other pixel
+                for (int col = 0; col < xsz; col++, buff++) {
+                        *obuff++ = *buff++;
+                }
+                // Skip every other line
+                buff += xsz * 2;
     }
 }
 
@@ -67,21 +67,21 @@ template<typename T> void NearByFour(T *buff, int xsz, int ysz, T ndv) {
     T *evenline = buff;
 
     for (int line = 0; line<ysz; line++) {
-	T *oddline = evenline + xsz * 2;
-	for (int col = 0; col<xsz; col++) {
+        T *oddline = evenline + xsz * 2;
+        for (int col = 0; col<xsz; col++) {
 
-	    if (evenline[0] != ndv)
-		*obuff++ = evenline[0];
-	    else if (evenline[1] != ndv)
-		*obuff++ = evenline[1];
-	    else if (oddline[0] != ndv)
-		*obuff++ = oddline[0];
-	    else
-		*obuff++ = oddline[1];
+            if (evenline[0] != ndv)
+                *obuff++ = evenline[0];
+            else if (evenline[1] != ndv)
+                *obuff++ = evenline[1];
+            else if (oddline[0] != ndv)
+                *obuff++ = oddline[0];
+            else
+                *obuff++ = oddline[1];
 
-	    evenline += 2; oddline += 2;
-	}
-	evenline += xsz * 2;  // Skips the other input line
+            evenline += 2; oddline += 2;
+        }
+        evenline += xsz * 2;  // Skips the other input line
     }
 }
 
@@ -98,12 +98,12 @@ template<typename T> void AverageByFour(T *buff, int xsz, int ysz) {
     T *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	T *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    *obuff++ = (2 + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
-	    evenline +=2; oddline +=2;
-	}
-	evenline += xsz*2;  // Skips the other line
+        T *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            *obuff++ = (2 + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
+            evenline +=2; oddline +=2;
+        }
+        evenline += xsz*2;  // Skips the other line
     }
 }
 
@@ -113,12 +113,12 @@ template<> void AverageByFour<GInt32>(GInt32 *buff, int xsz, int ysz) {
     GInt32 *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	GInt32 *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
-	    evenline +=2; oddline +=2;
-	}
-	evenline += xsz*2;  // Skips the other line
+        GInt32 *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
+            evenline +=2; oddline +=2;
+        }
+        evenline += xsz*2;  // Skips the other line
     }
 }
 
@@ -128,12 +128,12 @@ template<> void AverageByFour<GUInt32>(GUInt32 *buff, int xsz, int ysz) {
     GUInt32 *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	GUInt32 *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
-	    evenline +=2; oddline +=2;
-	}
-	evenline += xsz*2;  // Skips the other line
+        GUInt32 *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] + oddline[1]) / 4;
+            evenline +=2; oddline +=2;
+        }
+        evenline += xsz*2;  // Skips the other line
     }
 }
 
@@ -143,12 +143,12 @@ template<> void AverageByFour<float>(float *buff, int xsz, int ysz) {
     float *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	float *oddline = evenline + xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    *obuff++ = (evenline[0] + evenline[1] + oddline[0] + oddline[1]) * 0.25f;
-	    evenline +=2; oddline +=2;
-	}
-	evenline += xsz*2;  // Skips the other line
+        float *oddline = evenline + xsz*2;
+        for (int col=0; col<xsz; col++) {
+            *obuff++ = (evenline[0] + evenline[1] + oddline[0] + oddline[1]) * 0.25f;
+            evenline +=2; oddline +=2;
+        }
+        evenline += xsz*2;  // Skips the other line
     }
 }
 
@@ -158,12 +158,12 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz) {
     double *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	double *oddline = evenline + xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    *obuff++ = (evenline[0] + evenline[1] + oddline[0] + oddline[1]) * 0.25;
-	    evenline +=2; oddline +=2;
-	}
-	evenline += xsz*2;  // Skips the other line
+        double *oddline = evenline + xsz*2;
+        for (int col=0; col<xsz; col++) {
+            *obuff++ = (evenline[0] + evenline[1] + oddline[0] + oddline[1]) * 0.25;
+            evenline +=2; oddline +=2;
+        }
+        evenline += xsz*2;  // Skips the other line
     }
 }
 
@@ -177,21 +177,21 @@ template<typename T> void AverageByFour(T *buff, int xsz, int ysz, T ndv) {
     T *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	T *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    GIntBig acc = 0;
-	    int count = 0;
+        T *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            GIntBig acc = 0;
+            int count = 0;
 
 // Temporary macro to accumulate the sum, uses the value, increments the pointer
 // Careful with this one, it has side effects
 #define use(valp) if (*valp != ndv) { acc += *valp; count++; }; valp++;
-	    use(evenline); use(evenline); use(oddline); use(oddline);
+            use(evenline); use(evenline); use(oddline); use(oddline);
 #undef use
-	    // The count/2 is the bias to obtain correct rounding
-	    *obuff++ = T((count != 0) ? ((acc + count/2) / count) : ndv);
+            // The count/2 is the bias to obtain correct rounding
+            *obuff++ = T((count != 0) ? ((acc + count/2) / count) : ndv);
 
-	}
-	evenline += xsz*2;  // Skips every other line
+        }
+        evenline += xsz*2;  // Skips every other line
     }
 }
 
@@ -201,20 +201,20 @@ template<> void AverageByFour<float>(float *buff, int xsz, int ysz, float ndv) {
     float *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	float *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    double acc = 0;
-	    double count = 0;
+        float *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            double acc = 0;
+            double count = 0;
 
 // Temporary macro to accumulate the sum, uses the value, increments the pointer
 // Careful with this one, it has side effects
 #define use(valp) if (*valp != ndv) { acc += *valp; count += 1.0; }; valp++;
-	    use(evenline); use(evenline); use(oddline); use(oddline);
+            use(evenline); use(evenline); use(oddline); use(oddline);
 #undef use
-	    // Output value is eiher accumulator divided by count or the NoDataValue
-	    *obuff++ = float((count != 0.0) ? acc/count : ndv);
-	}
-	evenline += xsz*2;  // Skips every other line
+            // Output value is eiher accumulator divided by count or the NoDataValue
+            *obuff++ = float((count != 0.0) ? acc/count : ndv);
+        }
+        evenline += xsz*2;  // Skips every other line
     }
 }
 
@@ -224,20 +224,20 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz, double ndv
     double *evenline=buff;
 
     for (int line=0; line<ysz; line++) {
-	double *oddline=evenline+xsz*2;
-	for (int col=0; col<xsz; col++) {
-	    double acc = 0;
-	    double count = 0;
+        double *oddline=evenline+xsz*2;
+        for (int col=0; col<xsz; col++) {
+            double acc = 0;
+            double count = 0;
 
 // Temporary macro to accumulate the sum, uses the value, increments the pointer
 // Careful with this one, it has side effects
 #define use(valp) if (*valp != ndv) { acc += *valp; count += 1.0; }; valp++;
-	    use(evenline); use(evenline); use(oddline); use(oddline);
+            use(evenline); use(evenline); use(oddline); use(oddline);
 #undef use
-	    // Output value is eiher accumulator divided by count or the NoDataValue
-	    *obuff++ = ((count != 0.0) ? acc/count : ndv);
-	}
-	evenline += xsz*2;  // Skips every other line
+            // Output value is eiher accumulator divided by count or the NoDataValue
+            *obuff++ = ((count != 0.0) ? acc/count : ndv);
+        }
+        evenline += xsz*2;  // Skips every other line
     }
 }
 
@@ -249,13 +249,13 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz, double ndv
  */
 
 CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
-				      int Width,int Height,
-				      int srcLevel, int recursive,
-				      int sampling_mode)
+                                     int Width,int Height,
+                                     int srcLevel, int recursive,
+                                     int sampling_mode)
 {
     GDALRasterBand *b0=GetRasterBand(1);
     if ( b0->GetOverviewCount() <= srcLevel)
-	return CE_None;
+        return CE_None;
 
     int BlockXOut = BlockX/2 ; // Round down
     Width += BlockX & 1; // Increment width if rounding down
@@ -279,11 +279,11 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
     vector<GDALRasterBand *> dst_b;
 
     for (int band=1; band<=bands; band++) {
-	if (srcLevel==0)
-	    src_b.push_back(GetRasterBand(band));
-	else
-	    src_b.push_back(GetRasterBand(band)->GetOverview(srcLevel-1));
-	dst_b.push_back(GetRasterBand(band)->GetOverview(srcLevel));
+        if (srcLevel==0)
+            src_b.push_back(GetRasterBand(band));
+        else
+            src_b.push_back(GetRasterBand(band)->GetOverview(srcLevel-1));
+        dst_b.push_back(GetRasterBand(band)->GetOverview(srcLevel));
     }
 
     // Allocate space for four blocks
@@ -294,137 +294,137 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
     // There is no penalty for separate bands either.
     //
     for (int y=0; y<HeightOut; y++) {
-	int dst_offset_y = BlockYOut+y;
-	int src_offset_y = dst_offset_y *2;
-	for (int x=0; x<WidthOut; x++) {
-	    int dst_offset_x = BlockXOut + x;
-	    int src_offset_x = dst_offset_x * 2;
+        int dst_offset_y = BlockYOut+y;
+        int src_offset_y = dst_offset_y *2;
+        for (int x=0; x<WidthOut; x++) {
+            int dst_offset_x = BlockXOut + x;
+            int src_offset_x = dst_offset_x * 2;
 
-	    // Do it band at a time so we can work in grayscale
-	    for (int band=0; band<bands; band++) { // Counting from zero in a vector
+            // Do it band at a time so we can work in grayscale
+            for (int band=0; band<bands; band++) { // Counting from zero in a vector
 
-		int sz_x = 2*tsz_x ,sz_y = 2*tsz_y ;
-		GDALMRFRasterBand *bsrc = static_cast<GDALMRFRasterBand *>(src_b[band]);
-		GDALMRFRasterBand *bdst = static_cast<GDALMRFRasterBand *>(dst_b[band]);
+                int sz_x = 2*tsz_x ,sz_y = 2*tsz_y ;
+                GDALMRFRasterBand *bsrc = static_cast<GDALMRFRasterBand *>(src_b[band]);
+                GDALMRFRasterBand *bdst = static_cast<GDALMRFRasterBand *>(dst_b[band]);
 
-		//
-		// Clip to the size to the input image
-		// This is one of the worst features of GDAL, it doesn't tolerate any padding
-		//
-		bool adjusted = false;
-		if (bsrc->GetXSize() < (src_offset_x + 2) * tsz_x) {
-		    sz_x = bsrc->GetXSize() - src_offset_x * tsz_x;
-		    adjusted = true;
-		}
-		if (bsrc->GetYSize() < (src_offset_y + 2) * tsz_y) {
-		    sz_y = bsrc->GetYSize() - src_offset_y * tsz_y;
-		    adjusted = true;
-		}
+                //
+                // Clip to the size to the input image
+                // This is one of the worst features of GDAL, it doesn't tolerate any padding
+                //
+                bool adjusted = false;
+                if (bsrc->GetXSize() < (src_offset_x + 2) * tsz_x) {
+                    sz_x = bsrc->GetXSize() - src_offset_x * tsz_x;
+                    adjusted = true;
+                }
+                if (bsrc->GetYSize() < (src_offset_y + 2) * tsz_y) {
+                    sz_y = bsrc->GetYSize() - src_offset_y * tsz_y;
+                    adjusted = true;
+                }
 
-		if (adjusted) { // Fill with no data for partial buffer, instead of padding afterwards
-		    size_t bsb = bsrc->blockSizeBytes();
-		    char *b=static_cast<char *>(buffer);
-		    bsrc->FillBlock(b);
-		    bsrc->FillBlock(b + bsb);
-		    bsrc->FillBlock(b + 2*bsb);
-		    bsrc->FillBlock(b + 3*bsb);
-		}
+                if (adjusted) { // Fill with no data for partial buffer, instead of padding afterwards
+                    size_t bsb = bsrc->blockSizeBytes();
+                    char *b=static_cast<char *>(buffer);
+                    bsrc->FillBlock(b);
+                    bsrc->FillBlock(b + bsb);
+                    bsrc->FillBlock(b + 2*bsb);
+                    bsrc->FillBlock(b + 3*bsb);
+                }
 
-		int hasNoData = 0;
-		double ndv = bsrc->GetNoDataValue(&hasNoData);
+                int hasNoData = 0;
+                double ndv = bsrc->GetNoDataValue(&hasNoData);
 
-		CPLErr eErr = bsrc->RasterIO( GF_Read,
-		    src_offset_x*tsz_x, src_offset_y*tsz_y, // offset in input image
-		    sz_x, sz_y, // Size in output image
-		    buffer, sz_x, sz_y, // Buffer and size in buffer
-		    eDataType, // Requested type
-		    pixel_size, 2 * line_size
+                CPLErr eErr = bsrc->RasterIO( GF_Read,
+                    src_offset_x*tsz_x, src_offset_y*tsz_y, // offset in input image
+                    sz_x, sz_y, // Size in output image
+                    buffer, sz_x, sz_y, // Buffer and size in buffer
+                    eDataType, // Requested type
+                    pixel_size, 2 * line_size
 #if GDAL_VERSION_MAJOR >= 2
-		    ,NULL
+                    ,NULL
 #endif
-		    ); // Pixel and line space
+                    ); // Pixel and line space
                 if( eErr != CE_None )
                 {
                     // TODO ?
                     CPLError(CE_Failure, CPLE_AppDefined, "RasterIO() failed");
                 }
 
-		// Count the NoData values
-		int count = 0; // Assume all points are data
-		if (sampling_mode == SAMPLING_Avg) {
+                // Count the NoData values
+                int count = 0; // Assume all points are data
+                if (sampling_mode == SAMPLING_Avg) {
 
 // Dispatch based on data type
 // Use an ugly temporary macro to make it look easy
 // Runs the optimized version if the page is full with data
 #define resample(T)\
     if (hasNoData) {\
-	count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
-	if (4 * tsz_x * tsz_y == count)\
-	    bdst->FillBlock(buffer);\
-	else if (0 != count)\
-	    AverageByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
-	}\
+        count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
+        if (4 * tsz_x * tsz_y == count)\
+            bdst->FillBlock(buffer);\
+        else if (0 != count)\
+            AverageByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
+        }\
     if (0 == count)\
-	AverageByFour((T *)buffer, tsz_x, tsz_y);\
+        AverageByFour((T *)buffer, tsz_x, tsz_y);\
     break;
 
-		    switch (eDataType) {
-		    case GDT_Byte:	resample(GByte);
-		    case GDT_UInt16:    resample(GUInt16);
-		    case GDT_Int16:     resample(GInt16);
-		    case GDT_UInt32:    resample(GUInt32);
-		    case GDT_Int32:     resample(GInt32);
-		    case GDT_Float32:   resample(float);
-		    case GDT_Float64:   resample(double);
+                    switch (eDataType) {
+                    case GDT_Byte:      resample(GByte);
+                    case GDT_UInt16:    resample(GUInt16);
+                    case GDT_Int16:     resample(GInt16);
+                    case GDT_UInt32:    resample(GUInt32);
+                    case GDT_Int32:     resample(GInt32);
+                    case GDT_Float32:   resample(float);
+                    case GDT_Float64:   resample(double);
                     default: CPLAssert(FALSE); break;
-		    }
+                    }
 #undef resample
 
-		}
-		else if (sampling_mode == SAMPLING_Near) {
+                }
+                else if (sampling_mode == SAMPLING_Near) {
 
 #define resample(T)\
     if (hasNoData) {\
-	count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
-	if (4 * tsz_x * tsz_y == count)\
-	    bdst->FillBlock(buffer);\
-	else if (0 != count)\
-	    NearByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
-    	}\
+        count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
+        if (4 * tsz_x * tsz_y == count)\
+            bdst->FillBlock(buffer);\
+        else if (0 != count)\
+            NearByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
+        }\
     if (0 == count)\
-	NearByFour((T *)buffer, tsz_x, tsz_y);\
+        NearByFour((T *)buffer, tsz_x, tsz_y);\
     break;
-		    switch (eDataType) {
-		    case GDT_Byte:	resample(GByte);
-		    case GDT_UInt16:    resample(GUInt16);
-		    case GDT_Int16:     resample(GInt16);
-		    case GDT_UInt32:    resample(GUInt32);
-		    case GDT_Int32:     resample(GInt32);
-		    case GDT_Float32:   resample(float);
-		    case GDT_Float64:   resample(double);
+                    switch (eDataType) {
+                    case GDT_Byte:      resample(GByte);
+                    case GDT_UInt16:    resample(GUInt16);
+                    case GDT_Int16:     resample(GInt16);
+                    case GDT_UInt32:    resample(GUInt32);
+                    case GDT_Int32:     resample(GInt32);
+                    case GDT_Float32:   resample(float);
+                    case GDT_Float64:   resample(double);
                     default: CPLAssert(FALSE); break;
-		    }
+                    }
 #undef resample
 
-		}
+                }
 
-		// Done filling the buffer
-		// Argh, still need to clip the output to the band size on the right and bottom
-		// The offset should be fine, just the size might need adjustments
-		sz_x = tsz_x;
-		sz_y = tsz_y ;
+                // Done filling the buffer
+                // Argh, still need to clip the output to the band size on the right and bottom
+                // The offset should be fine, just the size might need adjustments
+                sz_x = tsz_x;
+                sz_y = tsz_y ;
 
-		if ( bdst->GetXSize() < dst_offset_x * sz_x + sz_x )
-		    sz_x = bdst->GetXSize() - dst_offset_x * sz_x;
-		if ( bdst->GetYSize() < dst_offset_y * sz_y + sz_y )
-		    sz_y = bdst->GetYSize() - dst_offset_y * sz_y;
+                if ( bdst->GetXSize() < dst_offset_x * sz_x + sz_x )
+                    sz_x = bdst->GetXSize() - dst_offset_x * sz_x;
+                if ( bdst->GetYSize() < dst_offset_y * sz_y + sz_y )
+                    sz_y = bdst->GetYSize() - dst_offset_y * sz_y;
 
-		eErr = bdst->RasterIO( GF_Write,
-		    dst_offset_x*tsz_x, dst_offset_y*tsz_y, // offset in output image
-		    sz_x, sz_y, // Size in output image
-		    buffer, sz_x, sz_y, // Buffer and size in buffer
-		    eDataType, // Requested type
-		    pixel_size, line_size
+                eErr = bdst->RasterIO( GF_Write,
+                    dst_offset_x*tsz_x, dst_offset_y*tsz_y, // offset in output image
+                    sz_x, sz_y, // Size in output image
+                    buffer, sz_x, sz_y, // Buffer and size in buffer
+                    eDataType, // Requested type
+                    pixel_size, line_size
 #if GDAL_VERSION_MAJOR >= 2
                     ,NULL
 #endif
@@ -434,21 +434,21 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     // TODO ?
                     CPLError(CE_Failure, CPLE_AppDefined, "RasterIO() failed");
                 }
-	    }
+            }
 
-	    // Mark the input data as no longer needed, saves RAM
-	    for (int band=0; band<bands; band++)
-		src_b[band]->FlushCache();
-	}
+            // Mark the input data as no longer needed, saves RAM
+            for (int band=0; band<bands; band++)
+                src_b[band]->FlushCache();
+        }
     }
 
     CPLFree(buffer);
 
     for (int band=0; band<bands; band++)
-	dst_b[band]->FlushCache(); // Commit the output to disk
+        dst_b[band]->FlushCache(); // Commit the output to disk
 
     if (!recursive)
-	return CE_None;
+        return CE_None;
     return PatchOverview( BlockXOut, BlockYOut, WidthOut, HeightOut, srcLevel+1, true);
 }
 

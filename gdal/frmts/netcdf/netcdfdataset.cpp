@@ -114,7 +114,7 @@ class netCDFRasterBand : public GDALPamRasterBand
     bool        bSignedData;
     bool        bCheckLongitude;
 
-    CPLErr	    CreateBandMetadata( const int *paDimIds );
+    CPLErr          CreateBandMetadata( const int *paDimIds );
     template <class T> void CheckData ( void * pImage, void * pImageNC,
                                         size_t nTmpBlockXSize, size_t nTmpBlockYSize,
                                         bool bCheckIsNan=false ) ;
@@ -460,7 +460,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             nBlockXSize = (int) chunksize[nZDim-1];
             nBlockYSize = (int) chunksize[nZDim-2];
         }
-	}
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -2357,14 +2357,19 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     poDS->FetchCopyParm( szGridMappingValue,
                                          CF_PP_FALSE_NORTHING, 0.0 );
 
-                oSRS.SetProjCS( "LAEA (WGS84) " );
-
                 bGotCfSRS = true;
                 oSRS.SetLAEA( dfCenterLat, dfCenterLon,
                               dfFalseEasting, dfFalseNorthing );
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
+                
+                if( oSRS.GetAttrValue("DATUM") != NULL &&
+                    EQUAL(oSRS.GetAttrValue("DATUM"), "WGS_1984") )
+                {
+                    oSRS.SetProjCS( "LAEA (WGS84)" );
+                }
+
             }
 
 /* -------------------------------------------------------------------- */
@@ -2984,7 +2989,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 int node_offset = 0;
                 nc_get_att_int (cdfid, NC_GLOBAL, "node_offset", &node_offset);
 
-                double	dummy[2], xMinMax[2], yMinMax[2];
+                double dummy[2], xMinMax[2], yMinMax[2];
 
                 if (!nc_get_att_double (cdfid, nVarDimXID, "actual_range", dummy)) {
                     xMinMax[0] = dummy[0];
@@ -3026,7 +3031,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 /* -------------------------------------------------------------------- */
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
-                if ( !node_offset ) {	// Otherwise its already the pixel center
+                if ( !node_offset ) {   // Otherwise its already the pixel center
                     adfTempGeoTransform[0] -= (adfTempGeoTransform[1] / 2);
                     adfTempGeoTransform[3] -= (adfTempGeoTransform[5] / 2);
                 }
@@ -3172,6 +3177,23 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         }
     }
 
+    // Some netCDF files have a srid attribute (#6613) like urn:ogc:def:crs:EPSG::6931
+    snprintf(szTemp,sizeof(szTemp), "%s#%s", szGridMappingValue,"srid");
+    const char* pszSRID = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+    if( pszSRID != NULL )
+    {
+        oSRS.Clear();
+        if( oSRS.SetFromUserInput(pszSRID) == OGRERR_NONE )
+        {
+            char* pszWKTExport = NULL;
+            CPLDebug( "GDAL_netCDF", "Got SRS from %s", szTemp);
+            oSRS.exportToWkt( &pszWKTExport );
+            SetProjection( pszWKTExport );
+            CPLFree(pszWKTExport);
+        }
+    }    
+    
+    
     // Set GeoTransform if we got a complete one - after projection has been set
     if ( bGotCfGT || bGotGdalGT ) {
         SetGeoTransform( adfTempGeoTransform );
@@ -3353,7 +3375,7 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName, int &
 /************************************************************************/
 /*                          SetProjection()                           */
 /************************************************************************/
-CPLErr 	netCDFDataset::SetProjection( const char * pszNewProjection )
+CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -3406,7 +3428,7 @@ CPLErr 	netCDFDataset::SetProjection( const char * pszNewProjection )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr 	netCDFDataset::SetGeoTransform ( double * padfTransform )
+CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -4581,7 +4603,7 @@ CPL_UNUSED
             const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
             if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "cdf")
                      || EQUAL( pszExtension, "nc2") || EQUAL( pszExtension, "nc4")
-					 || EQUAL( pszExtension, "nc3") || EQUAL( pszExtension, "grd") ) )
+                                         || EQUAL( pszExtension, "nc3") || EQUAL( pszExtension, "grd") ) )
                 return NCDF_FORMAT_HDF5;
         }
 #endif
@@ -5355,14 +5377,14 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             osSubdatasetName = papszName[2];
             bTreatAsSubdataset = true;
             CSLDestroy( papszName );
-    	}
+        }
         else if( CSLCount(papszName) == 2 )
         {
             poDS->osFilename = papszName[1];
             osSubdatasetName = "";
             bTreatAsSubdataset = false;
             CSLDestroy( papszName );
-    	}
+        }
         else
         {
             CSLDestroy( papszName );

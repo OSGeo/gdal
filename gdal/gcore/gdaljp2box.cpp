@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                             GDALJP2Box()                             */
 /************************************************************************/
@@ -525,3 +527,5 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
 
     return CreateAsocBox( 2, aoList );
 }
+
+/*! @endcond */

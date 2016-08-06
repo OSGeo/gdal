@@ -1828,6 +1828,7 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 /*                           OGR_G_ExportToJson                         */
 /************************************************************************/
 
+/** Create a OGR geometry from a GeoJSON geometry object */
 OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
 {
     if( NULL == pszJson )

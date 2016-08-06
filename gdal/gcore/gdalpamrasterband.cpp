@@ -50,12 +50,14 @@ GDALPamRasterBand::GDALPamRasterBand()
 /*                         GDALPamRasterBand()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GDALPamRasterBand::GDALPamRasterBand( int bForceCachedIOIn ) :
     GDALRasterBand(bForceCachedIOIn)
 {
     psPam = NULL;
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~GDALPamRasterBand()                         */
@@ -71,6 +73,7 @@ GDALPamRasterBand::~GDALPamRasterBand()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char * /* pszUnused */ )
 {
     if( psPam == NULL )
@@ -660,6 +663,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 
     return CE_None;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            SetMetadata()                             */
@@ -996,6 +1000,7 @@ void GDALPamRasterBand::SetDescription( const char *pszDescription )
 /*                         PamParseHistogram()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int
 PamParseHistogram( CPLXMLNode *psHistItem,
                    double *pdfMin, double *pdfMax,
@@ -1143,6 +1148,7 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
 
     return psXMLHist;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            GetHistogram()                            */

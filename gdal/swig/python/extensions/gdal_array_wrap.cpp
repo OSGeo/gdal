@@ -8,6 +8,10 @@
  * interface file instead.
  * ----------------------------------------------------------------------------- */
 
+// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// since we do not pass -DDEBUG_BOOL when building the bindings
+#define DO_NOT_USE_DEBUG_BOOL
+
 #define SWIGPYTHON
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
@@ -3047,7 +3051,6 @@ namespace swig {
   };
 }
 
-
 #include "gdal.h"
 
 typedef struct
@@ -3624,7 +3627,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
     {
         if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
         {
@@ -6125,4 +6129,3 @@ SWIG_init(void) {
   return;
 #endif
 }
-

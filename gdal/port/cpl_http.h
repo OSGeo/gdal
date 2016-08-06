@@ -64,6 +64,7 @@ typedef struct {
 
     /*! Length of the pabyData buffer */
     int     nDataLen;
+    /*! Allocated size of the pabyData buffer */
     int     nDataAlloc;
 
     /*! Buffer with downloaded data */

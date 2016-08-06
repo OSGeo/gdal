@@ -119,6 +119,7 @@ void RegisterOGROCI()
 "  <Option name='USER' type='string' description='User name'/>"
 "  <Option name='PASSWORD' type='string' description='Password'/>"
 "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
+"  <Option name='WORKSPACE' type='string' description='Workspace'/>"
 "  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of itens for a group INSERT' default='100'/>"
 "  <Option name='FIRST_ID' type='int' description='First id value to be used on append'/>"
 "</OpenOptionList>");

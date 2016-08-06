@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          VRTRawRasterBand                            */
@@ -493,3 +495,5 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
     VRTRasterBand::GetFileList( ppapszFileList, pnSize,
                                 pnMaxSize, hSetFiles);
 }
+
+/*! @endcond */

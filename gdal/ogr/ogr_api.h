@@ -52,17 +52,22 @@ CPL_C_START
 #ifdef DEBUG
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
+/** Opaque type for a geometyr */
 typedef void *OGRGeometryH;
 #endif
 
 #ifndef DEFINED_OGRSpatialReferenceH
+/*! @cond Doxygen_Suppress */
 #define DEFINED_OGRSpatialReferenceH
+/*! @endcond */
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 #else
+/** Opaque type for a spatial reference system */
 typedef void *OGRSpatialReferenceH;
+/** Opaque type for a coordinate transformation object */
 typedef void *OGRCoordinateTransformationH;
 #endif
 
@@ -132,6 +137,7 @@ char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode ) C
 
 char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
+/** Create a OGR geometry from a GeoJSON geometry object */
 OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* ) CPL_WARN_UNUSED_RESULT;
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH,
@@ -183,12 +189,14 @@ int    CPL_DLL OGR_G_IsRing( OGRGeometryH );
 
 OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 
+/*! @cond Doxygen_Suppress */
 /* backward compatibility (non-standard methods) */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Intersects() instead");
 int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Equals() instead");
 OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_SymDifference() instead");
 double CPL_DLL OGR_G_GetArea( OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Area() instead");
 OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Boundary() instead");
+/*! @endcond */
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );
@@ -253,10 +261,12 @@ OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
                                        double dfTolerance,
                                        OGRErr * peErr ) CPL_WARN_UNUSED_RESULT;
 
+/*! @cond Doxygen_Suppress */
 OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER(
     int bGenerate_DB2_V72_BYTE_ORDER );
 
 int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
+/*! @endcond */
 
 void CPL_DLL OGRSetNonLinearGeometriesEnabledFlag(int bFlag);
 int CPL_DLL OGRGetNonLinearGeometriesEnabledFlag(void);
@@ -271,11 +281,16 @@ typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS     *OGRFeatureH;
 typedef struct OGRStyleTableHS *OGRStyleTableH;
 #else
+/** Opaque type for a field definition (OGRFieldDefn) */
 typedef void *OGRFieldDefnH;
+/** Opaque type for a feature definition (OGRFeatureDefn) */
 typedef void *OGRFeatureDefnH;
+/** Opaque type for a feature (OGRFeature) */
 typedef void *OGRFeatureH;
+/** Opaque type for a style table (OGRStyleTable) */
 typedef void *OGRStyleTableH;
 #endif
+/** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
 typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
 
 /* OGRFieldDefn */
@@ -440,8 +455,11 @@ OGRErr CPL_DLL OGR_F_SetFromWithMap( OGRFeatureH, OGRFeatureH, int , int * );
 const char CPL_DLL *OGR_F_GetStyleString( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleString( OGRFeatureH, const char * );
 void   CPL_DLL OGR_F_SetStyleStringDirectly( OGRFeatureH, char * );
+/** Return style table */
 OGRStyleTableH CPL_DLL OGR_F_GetStyleTable( OGRFeatureH );
+/** Set style table and take ownership */
 void   CPL_DLL OGR_F_SetStyleTableDirectly( OGRFeatureH, OGRStyleTableH );
+/** Set style table */
 void   CPL_DLL OGR_F_SetStyleTable( OGRFeatureH, OGRStyleTableH );
 
 const char CPL_DLL *OGR_F_GetNativeData( OGRFeatureH );
@@ -463,8 +481,11 @@ typedef struct OGRLayerHS      *OGRLayerH;
 typedef struct OGRDataSourceHS *OGRDataSourceH;
 typedef struct OGRDriverHS     *OGRSFDriverH;
 #else
+/** Opaque type for a layer (OGRLayer) */
 typedef void *OGRLayerH;
+/** Opaque type for a OGR datasource (OGRDataSource) */
 typedef void *OGRDataSourceH;
+/** Opaque type for a OGR driver (OGRSFDriver) */
 typedef void *OGRSFDriverH;
 #endif
 
@@ -507,15 +528,22 @@ OGRErr CPL_DLL OGR_L_AlterFieldDefn( OGRLayerH, int iField, OGRFieldDefnH hNewFi
 OGRErr CPL_DLL OGR_L_StartTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_CommitTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
+/*! @cond Doxygen_Suppress */
 int    CPL_DLL OGR_L_Reference( OGRLayerH );
 int    CPL_DLL OGR_L_Dereference( OGRLayerH );
 int    CPL_DLL OGR_L_GetRefCount( OGRLayerH );
+/*! @endcond */
 OGRErr CPL_DLL OGR_L_SyncToDisk( OGRLayerH );
+/*! @cond Doxygen_Suppress */
 GIntBig CPL_DLL OGR_L_GetFeaturesRead( OGRLayerH );
+/*! @endcond */
 const char CPL_DLL *OGR_L_GetFIDColumn( OGRLayerH );
 const char CPL_DLL *OGR_L_GetGeometryColumn( OGRLayerH );
+/** Get style table */
 OGRStyleTableH CPL_DLL OGR_L_GetStyleTable( OGRLayerH );
+/** Set style table (and take ownership) */
 void   CPL_DLL OGR_L_SetStyleTableDirectly( OGRLayerH, OGRStyleTableH );
+/** Set style table */
 void   CPL_DLL OGR_L_SetStyleTable( OGRLayerH, OGRStyleTableH );
 OGRErr CPL_DLL OGR_L_SetIgnoredFields( OGRLayerH, const char** );
 OGRErr CPL_DLL OGR_L_Intersection( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
@@ -544,13 +572,19 @@ int    CPL_DLL OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH CPL_DLL OGR_DS_ExecuteSQL( OGRDataSourceH, const char *,
                                      OGRGeometryH, const char * );
 void   CPL_DLL OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
+/*! @cond Doxygen_Suppress */
 int    CPL_DLL OGR_DS_Reference( OGRDataSourceH );
 int    CPL_DLL OGR_DS_Dereference( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetRefCount( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetSummaryRefCount( OGRDataSourceH );
+/*! @endcond */
+/** Flush pending changes to disk. See GDALDataset::FlushCache() */
 OGRErr CPL_DLL OGR_DS_SyncToDisk( OGRDataSourceH );
+/** Get style table */
 OGRStyleTableH CPL_DLL OGR_DS_GetStyleTable( OGRDataSourceH );
+/** Set style table (and take ownership) */
 void   CPL_DLL OGR_DS_SetStyleTableDirectly( OGRDataSourceH, OGRStyleTableH );
+/** Set style table */
 void   CPL_DLL OGR_DS_SetStyleTable( OGRDataSourceH, OGRStyleTableH );
 
 /* OGRSFDriver */
@@ -569,17 +603,22 @@ OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * ) CPL_WARN_UNUSED_RESULT;
 OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * ) CPL_WARN_UNUSED_RESULT;
 OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
+/*! @cond Doxygen_Suppress */
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
 void    CPL_DLL OGRDeregisterDriver( OGRSFDriverH );
+/*! @endcond */
 int     CPL_DLL OGRGetDriverCount(void);
 OGRSFDriverH CPL_DLL OGRGetDriver( int );
 OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
+/*! @cond Doxygen_Suppress */
 int     CPL_DLL OGRGetOpenDSCount(void);
 OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
-
+/*! @endcond */
 
 /* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll(void);
+/** Clean-up all drivers (including raster ones starting with GDAL 2.0.
+ * See GDALDestroyDriverManager() */
 void CPL_DLL OGRCleanupAll(void);
 
 /* -------------------------------------------------------------------- */
@@ -590,7 +629,9 @@ void CPL_DLL OGRCleanupAll(void);
 typedef struct OGRStyleMgrHS *OGRStyleMgrH;
 typedef struct OGRStyleToolHS *OGRStyleToolH;
 #else
+/** Style manager opaque type */
 typedef void *OGRStyleMgrH;
+/** Style tool opaque type */
 typedef void *OGRStyleToolH;
 #endif
 

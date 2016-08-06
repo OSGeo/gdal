@@ -178,23 +178,23 @@ typedef struct
 
 /*****************************************************************/
 
-static int countonbits(GUInt32 dw)
+static int countonbits( GUInt32 dw )
 {
     int r = 0;
-    for(int x = 0; x < 32; x++)
+    for( int x = 0; x < 32; x++ )
     {
-        if((dw & (1 << x)) != 0)
+        if( (dw & (1 << x)) != 0 )
             r++;
     }
     return r;
 }
 
 
-static int findfirstonbit(GUInt32 n)
+static int findfirstonbit( GUInt32 n )
 {
-    for(int x = 0; x < 32; x++)
+    for( int x = 0; x < 32; x++ )
     {
-        if((n & (1 << x)) != 0)
+        if( (n & (1 << x)) != 0 )
             return x;
     }
     return -1;
@@ -264,7 +264,7 @@ class BMPRasterBand : public GDALPamRasterBand
   public:
 
                 BMPRasterBand( BMPDataset *, int );
-                ~BMPRasterBand();
+    virtual    ~BMPRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );
@@ -278,12 +278,13 @@ class BMPRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
-    nScanSize(0)
+    nScanSize(0),
+    iBytesPerPixel(poDSIn->sInfoHeader.iBitCount / 8),
+    pabyScan(NULL)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    iBytesPerPixel = poDSIn->sInfoHeader.iBitCount / 8;
 
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
@@ -291,8 +292,11 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     nBlockYSize = 1;
 
     if (nBlockXSize < (INT_MAX - 31) / poDSIn->sInfoHeader.iBitCount)
+    {
         nScanSize =
-            ((poDS->GetRasterXSize() * poDSIn->sInfoHeader.iBitCount + 31) & ~31) / 8;
+            ((poDS->GetRasterXSize() *
+              poDSIn->sInfoHeader.iBitCount + 31) & ~31) / 8;
+    }
     else
     {
         pabyScan = NULL;
@@ -321,12 +325,12 @@ BMPRasterBand::~BMPRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr BMPRasterBand::IReadBlock( int /* nBlockXOff */,
                                   int nBlockYOff,
                                   void * pImage )
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
-    GUInt32     iScanOffset;
+    GUInt32 iScanOffset = 0;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iOffBits +
@@ -337,7 +341,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
-    // in update state and data for this block will be available later
+        // in update state and data for this block will be available later.
         if( poGDS->eAccess == GA_Update )
         {
             memset( pImage, 0, nBlockXSize );
@@ -347,7 +351,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't seek to offset %ld in input file to read data.",
-                      (long) iScanOffset );
+                      static_cast<long>(iScanOffset) );
             return CE_Failure;
         }
     }
@@ -363,7 +367,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't read from offset %ld in input file.",
-                      (long) iScanOffset );
+                      static_cast<long>(iScanOffset) );
             return CE_Failure;
         }
     }

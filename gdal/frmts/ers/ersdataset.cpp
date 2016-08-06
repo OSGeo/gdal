@@ -47,7 +47,7 @@ class ERSDataset : public RawDataset
 {
     friend class ERSRasterBand;
 
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // Image data file.
     GDALDataset *poDepFile;
 
     int         bGotTransform;
@@ -83,8 +83,8 @@ class ERSDataset : public RawDataset
     virtual int         CloseDependentDatasets();
 
   public:
-    		ERSDataset();
-	       ~ERSDataset();
+                ERSDataset();
+    virtual    ~ERSDataset();
 
     virtual void FlushCache(void);
     virtual CPLErr GetGeoTransform( double * padfTransform );

@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrmutexedlayer.h"
 #include "cpl_multiproc.h"
 
@@ -295,3 +297,5 @@ void OGRRegisterMutexedLayer()
     delete new OGRMutexedLayer(NULL, FALSE, NULL);
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */

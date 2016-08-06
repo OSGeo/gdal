@@ -158,7 +158,7 @@ int main( int argc, char ** argv )
             int nColors;
             double *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen,
-			   &padfBlue, &padfAlpha, &padfBins )
+                           &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
             {
                 for( int j = 0; j < nColors; j++ )
@@ -166,7 +166,7 @@ int main( int argc, char ** argv )
                     printf( "PCT[%d] = %f,%f,%f %f\n",
                             (padfBins != NULL) ? (int) padfBins[j] : j,
                             padfRed[j], padfGreen[j],
-			    padfBlue[j], padfAlpha[j]);
+                            padfBlue[j], padfAlpha[j]);
                 }
             }
 

@@ -118,7 +118,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SAR_CEOSDataset				*/
+/*                              SAR_CEOSDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -134,7 +134,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 
     CeosSARVolume_t sVolume;
 
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
     char        **papszTempMD;
 
@@ -236,7 +236,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int	offset;
+    int offset;
     CalcCeosSARImageFilePosition( &(poGDS->sVolume), nBand,
                                   nBlockYOff + 1, NULL, &offset );
 
@@ -253,7 +253,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     for( int iRecord = 0; iRecord < ImageDesc->RecordsPerLine; iRecord++ )
     {
-        int	nPixelsToRead;
+        int nPixelsToRead;
 
         if( nPixelsRead + ImageDesc->PixelsPerRecord > nBlockXSize )
             nPixelsToRead = nBlockXSize - nPixelsRead;
@@ -305,7 +305,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CCPRasterBand				*/
+/*                              CCPRasterBand                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -463,7 +463,7 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      PALSARRasterBand				*/
+/*                            PALSARRasterBand                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -619,7 +619,7 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SAR_CEOSDataset				*/
+/*                              SAR_CEOSDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -1231,7 +1231,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     }
 /* -------------------------------------------------------------------- */
-/*	Detailed Processing Parameters (Radarsat)                       */
+/*      Detailed Processing Parameters (Radarsat)                       */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
                              CEOS_LEADER_FILE, -1, -1 );
@@ -1346,8 +1346,8 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     }
 /* -------------------------------------------------------------------- */
-/*	Get process-to-raw data coordinate translation values.  These	*/
-/*	are likely specific to Atlantis APP products.			*/
+/*      Get process-to-raw data coordinate translation values.  These   */
+/*      are likely specific to Atlantis APP products.                   */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList,
                              IMAGE_HEADER_RECORD_TC,
@@ -1466,7 +1466,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
 /* -------------------------------------------------------------------- */
 /*      For ERS Standard Format Landsat scenes we pick up the           */
-/*      gain setting from the Scene Header Record.			*/
+/*      gain setting from the Scene Header Record.                      */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x12, 0x12, 0x12, 0x09 ),

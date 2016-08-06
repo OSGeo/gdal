@@ -31,6 +31,8 @@
 #ifndef CPL_AWS_INCLUDED_H
 #define CPL_AWS_INCLUDED_H
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_string.h"
 
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
@@ -132,5 +134,7 @@ class VSIS3UpdateParams
 };
 
 #endif /* HAVE_CURL */
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* CPL_AWS_INCLUDED_H */

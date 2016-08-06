@@ -30,6 +30,8 @@
 #ifndef OGRLAYERPOOL_H_INCLUDED
 #define OGRLAYERPOOL_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrsf_frmts.h"
 
 typedef OGRLayer* (*OpenLayerFunc)(void* user_data);
@@ -158,5 +160,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif // OGRLAYERPOOL_H_INCLUDED

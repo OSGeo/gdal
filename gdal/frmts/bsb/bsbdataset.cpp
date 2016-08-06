@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				BSBDataset				*/
+/*                              BSBDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -63,7 +63,7 @@ class BSBDataset : public GDALPamDataset
 
   public:
                 BSBDataset();
-		~BSBDataset();
+                ~BSBDataset();
 
     BSBInfo     *psInfo;
 
@@ -74,7 +74,7 @@ class BSBDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 
@@ -86,10 +86,10 @@ class BSBDataset : public GDALPamDataset
 
 class BSBRasterBand : public GDALPamRasterBand
 {
-    GDALColorTable	oCT;
+    GDALColorTable      oCT;
 
   public:
-    		BSBRasterBand( BSBDataset * );
+                BSBRasterBand( BSBDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorTable *GetColorTable();
@@ -177,7 +177,7 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				BSBDataset				*/
+/*                              BSBDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -611,7 +611,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
                 pasGCPList[nGCPCount].dfGCPLine = CPLAtof(Tokens[3]);
 
                 CPLFree( pasGCPList[nGCPCount].pszId );
-                char	szName[50];
+                char szName[50];
                 snprintf( szName, sizeof(szName), "GCP_%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
 
@@ -635,7 +635,7 @@ void BSBDataset::ScanForGCPsBSB()
 /* -------------------------------------------------------------------- */
 /*      Collect standalone GCPs.  They look like:                       */
 /*                                                                      */
-/*      REF/1,115,2727,32.346666666667,-60.881666666667			*/
+/*      REF/1,115,2727,32.346666666667,-60.881666666667                 */
 /*      REF/n,pixel,line,lat,long                                       */
 /* -------------------------------------------------------------------- */
     int fileGCPCount=0;
@@ -654,7 +654,7 @@ void BSBDataset::ScanForGCPsBSB()
         if( !STARTS_WITH_CI(psInfo->papszHeader[i], "REF/") )
             continue;
 
-        char	**papszTokens
+        char **papszTokens
             = CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",",
                                         FALSE, FALSE );
 
@@ -913,7 +913,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Prepare initial color table.colortable.                         */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
+    GDALRasterBand      *poBand = poSrcDS->GetRasterBand(1);
     unsigned char       abyPCT[771];
     int                 nPCTSize;
     int                 anRemap[256];
@@ -938,14 +938,14 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else
     {
-        GDALColorTable	*poCT = poBand->GetColorTable();
+        GDALColorTable *poCT = poBand->GetColorTable();
         int nColorTableSize = poCT->GetColorEntryCount();
         if (nColorTableSize > 255)
             nColorTableSize = 255;
 
         for( int iColor = 0; iColor < nColorTableSize; iColor++ )
         {
-            GDALColorEntry	sEntry;
+            GDALColorEntry sEntry;
 
             poCT->GetColorEntryAsRGB( iColor, &sEntry );
 

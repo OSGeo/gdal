@@ -99,6 +99,8 @@ GDALDatasetH GDALCreatePansharpenedVRT( const char* pszXML,
     return reinterpret_cast<GDALDatasetH>( poDS );
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /* ==================================================================== */
 /*                        VRTPansharpenedDataset                        */
@@ -1752,3 +1754,5 @@ GDALRasterBand* VRTPansharpenedRasterBand::GetOverview(int iOvr)
 
     return poGDS->m_apoOverviewDatasets[iOvr]->GetRasterBand(nBand);
 }
+
+/*! @endcond */

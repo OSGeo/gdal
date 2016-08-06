@@ -35,6 +35,8 @@
  *
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 //#define VSI_COUNT_BYTES_READ
 
 // Some unusual filesystems do not work if _FORTIFY_SOURCE in GCC or
@@ -617,8 +619,8 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 /*      If VSI_CACHE is set we want to use a cached reader instead      */
 /*      of more direct io on the underlying file.                       */
 /* -------------------------------------------------------------------- */
-    if( bReadOnly
-        && CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    if( bReadOnly &&
+        CPLTestBool( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
     {
         return VSICreateCachedFile( poHandle );
     }
@@ -822,3 +824,5 @@ void VSIInstallLargeFileHandler()
 }
 
 #endif /* ndef WIN32 */
+
+//! @endcond
