@@ -56,7 +56,7 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 {
     /* Try to open original dataset */
     CPLString filename(poOpenInfo->pszFilename);
-    
+
     /* DERIVED_SUBDATASET should be first domain */
     const size_t dsds_pos = filename.find("DERIVED_SUBDATASET:");
     const size_t nPrefixLen = strlen("DERIVED_SUBDATASET:");

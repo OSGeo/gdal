@@ -3660,7 +3660,7 @@ CPLErr HFADataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
-        if (oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE) == 0.0) 
+        if (oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE) == 0.0)
         {
             sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
             sPro.proName = (char*) "Oblique Mercator (Hotine)";
@@ -3672,7 +3672,7 @@ CPLErr HFADataset::WriteProjection()
             sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
             sPro.proParams[12] = 1.0;
         }
-        else 
+        else
         {
             sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR_VARIANT_A;
             sPro.proName = (char*) "Hotine Oblique Mercator (Variant A)";
