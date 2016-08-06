@@ -374,17 +374,17 @@ void NASAKeywordHandler::SkipWhite()
             // consume till end of line.
             // reduce sensibility to a label error
             while( *pszHeaderNext != '\0'
-            		&& *pszHeaderNext != 10
-            		&& *pszHeaderNext != 13 )
+                   && *pszHeaderNext != 10
+                   && *pszHeaderNext != 13 )
             {
-            	pszHeaderNext++;
+                pszHeaderNext++;
             }
             continue;
         }
 
         // Skip # style comments
         if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
- 	     *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
+             *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
               && pszHeaderNext[1] == '#' )
         {
             pszHeaderNext += 2;

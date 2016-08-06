@@ -61,7 +61,7 @@ static const int GEOTRSFRM_NS_RES = 5;
 
 class RPFTOCDataset : public GDALPamDataset
 {
-  char	    **papszSubDatasets;
+  char      **papszSubDatasets;
   char       *pszProjection;
   int         bGotGeoTransform;
   double      adfGeoTransform[6];
@@ -652,7 +652,7 @@ static const char* MakeTOCEntryName(RPFTocEntry* tocEntry )
 void RPFTOCDataset::AddSubDataset( const char* pszFilename,  RPFTocEntry* tocEntry )
 
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
@@ -1158,8 +1158,8 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 48 )
         return FALSE;

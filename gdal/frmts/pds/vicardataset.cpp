@@ -44,15 +44,15 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       VICARDataset		                */
+/*                             VICARDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class VICARDataset : public RawDataset
 {
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
-    GByte	abyHeader[10000];
+    GByte       abyHeader[10000];
     CPLString   osExternalCube;
 
     VICARKeywordHandler  oKeywords;
@@ -593,7 +593,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand
+        GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
                                  static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
 #ifdef CPL_LSB

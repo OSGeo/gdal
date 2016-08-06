@@ -51,7 +51,7 @@ class ISIS3Dataset;
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       ISISTiledBand		                */
+/*                             ISISTiledBand                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -154,13 +154,13 @@ CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       ISISDataset		                */
+/*                             ISISDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class ISIS3Dataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     CPLString   osExternalCube;
 
@@ -584,7 +584,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
         //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
         if ( ( (EQUAL( map_proj_name, "Stereographic" ) && (fabs(center_lat) == 90)) ) ||
-	           (EQUAL( map_proj_name, "PolarStereographic" )) )
+             (EQUAL( map_proj_name, "PolarStereographic" )) )
          {
             if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
@@ -600,9 +600,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
         else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) ||
-  	               (EQUAL( map_proj_name, "Orthographic" )) ||
-	               (EQUAL( map_proj_name, "Stereographic" )) ||
-	               (EQUAL( map_proj_name, "Sinusoidal" )) ) {
+                  (EQUAL( map_proj_name, "Orthographic" )) ||
+                  (EQUAL( map_proj_name, "Stereographic" )) ||
+                  (EQUAL( map_proj_name, "Sinusoidal" )) ) {
             // ISIS uses the spherical equation for these projections
             // so force a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
@@ -723,7 +723,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand;
+        GDALRasterBand *poBand;
 
         if( EQUAL(szLayout,"Tiled") )
         {

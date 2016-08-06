@@ -5,7 +5,7 @@
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
  *
- * Author:	 David Zwarg, dzwarg@azavea.com
+ * Author:       David Zwarg, dzwarg@azavea.com
  *
  * Last changes: $Id$
  *
@@ -3120,7 +3120,7 @@ CPLErr PostGISRasterDataset::GetGeoTransform(double * padfGeoTransform) {
  *********************************************************/
 char **PostGISRasterDataset::GetFileList()
 {
-	return NULL;
+    return NULL;
 }
 
 /********************************************************

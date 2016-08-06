@@ -50,13 +50,13 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*			ISISDataset	version2	                */
+/*                      ISISDataset     version2                        */
 /* ==================================================================== */
 /************************************************************************/
 
 class ISIS2Dataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE     *fpImage;      // image data file.
     CPLString    osExternalCube;
 
     NASAKeywordHandler  oKeywords;
@@ -98,7 +98,7 @@ public:
     static int WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig iRecord, GUIntBig iLabelRecords, GDALDataType eType, const char * pszInterleaving);
 
     static int WriteLabel(CPLString osFilename, CPLString osRasterFile, CPLString sObjectTag, unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType,
-    						GUIntBig iRecords, const char * pszInterleaving, GUIntBig & iLabelRecords, bool bRelaunch=false);
+                          GUIntBig iRecords, const char * pszInterleaving, GUIntBig & iLabelRecords, bool bRelaunch=false);
     static int WriteQUBE_Information(VSILFILE *fpLabel, unsigned int iLevel, unsigned int & nWritingBytes,
                                      unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType, const char * pszInterleaving);
 
