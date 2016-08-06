@@ -362,9 +362,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Collect any metadata available.                                 */
 /* -------------------------------------------------------------------- */
-    char *pszValue;
-
-    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
+    char *pszValue =
+        DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
     poDS->SetMetadataItem( "DTED_VerticalAccuracy_UHL", pszValue );
     CPLFree( pszValue );
 

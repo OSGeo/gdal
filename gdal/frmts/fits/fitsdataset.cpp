@@ -529,8 +529,6 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
                                   int nBands, GDALDataType eType,
                                   CPL_UNUSED char** papszParmList )
 {
-  FITSDataset* dataset;
-  fitsfile* hFITS;
   int status = 0;
 
   // No creation options are defined. The BSCALE/BZERO options were
@@ -541,6 +539,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
   snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
+  fitsfile* hFITS = NULL;
   fits_create_file(&hFITS, extFilename, &status);
   delete[] extFilename;
   if (status) {
@@ -582,7 +581,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
     return NULL;
   }
 
-  dataset = new FITSDataset();
+  FITSDataset* dataset = new FITSDataset();
   dataset->nRasterXSize = nXSize;
   dataset->nRasterYSize = nYSize;
   dataset->eAccess = GA_Update;

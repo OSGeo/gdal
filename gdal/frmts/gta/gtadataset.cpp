@@ -1003,9 +1003,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTADataset  *poDS;
-
-    poDS = new GTADataset();
+    GTADataset *poDS = new GTADataset();
 
     if( poDS->oGTAIO.open( poOpenInfo->pszFilename,
             poOpenInfo->eAccess == GA_Update ? "r+" : "r" ) != 0 )

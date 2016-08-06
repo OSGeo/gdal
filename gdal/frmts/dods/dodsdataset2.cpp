@@ -138,15 +138,14 @@ get_variable(DDS &dds, const string &n)
 static string StripQuotes( string oInput )
 
 {
-    char *pszResult;
-
     if( oInput.length() < 2 )
         return oInput;
 
     oInput = oInput.substr(1,oInput.length()-2);
 
-    pszResult = CPLUnescapeString( oInput.c_str(), NULL,
-                                   CPLES_BackslashQuotable );
+    char *pszResult =
+        CPLUnescapeString( oInput.c_str(), NULL,
+                           CPLES_BackslashQuotable );
 
     oInput = pszResult;
 
@@ -487,7 +486,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
                                             char **papszResultList )
 
 {
-    Array *poArray;
+    Array *poArray = NULL;
     Grid *poGrid = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1498,7 +1497,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                 + oVarName + string("' from the data source at:\n")
                 + poDODS->GetUrl() );
 
-        Array *poA;
+        Array *poA = NULL;
         switch (poBt->type()) {
           case dods_grid_c:
             poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
@@ -1532,13 +1531,12 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /* -------------------------------------------------------------------- */
         if( bTranspose )
         {
-            GByte *pabyDataCopy;
             int iY;
 
             CPLDebug( "DODS", "Applying transposition" );
 
             // make a copy of the original
-            pabyDataCopy = (GByte *)
+            GByte *pabyDataCopy = (GByte *)
                 CPLMalloc(nBytesPerPixel * nXSize * nYSize);
             memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
             memset( pImage, 0, nBytesPerPixel * nXSize * nYSize );
@@ -1560,13 +1558,12 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /* -------------------------------------------------------------------- */
         if( bFlipX )
         {
-            GByte *pabyDataCopy;
             int iY;
 
             CPLDebug( "DODS", "Applying X flip." );
 
             // make a copy of the original
-            pabyDataCopy = (GByte *)
+            GByte *pabyDataCopy = (GByte *)
                 CPLMalloc(nBytesPerPixel * nXSize * nYSize);
             memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
             memset( pImage, 0, nBytesPerPixel * nXSize * nYSize );
@@ -1588,13 +1585,12 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /* -------------------------------------------------------------------- */
         if( bFlipY )
         {
-            GByte *pabyDataCopy;
             int iY;
 
             CPLDebug( "DODS", "Applying Y flip." );
 
             // make a copy of the original
-            pabyDataCopy = (GByte *)
+            GByte *pabyDataCopy = (GByte *)
                 CPLMalloc(nBytesPerPixel * nXSize * nYSize);
             memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
 

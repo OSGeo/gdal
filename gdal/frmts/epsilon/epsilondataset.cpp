@@ -325,9 +325,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
             int iOtherBand;
             for(iOtherBand=2;iOtherBand<=3;iOtherBand++)
             {
-                GDALRasterBlock *poBlock;
-
-                poBlock = poGDS->GetRasterBand(iOtherBand)->
+                GDALRasterBlock *poBlock = poGDS->GetRasterBand(iOtherBand)->
                     GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
                 if (poBlock == NULL)
                     break;

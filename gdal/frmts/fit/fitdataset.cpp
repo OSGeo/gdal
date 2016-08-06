@@ -264,13 +264,13 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // XXX - should handle status
     // fast path is single component (ll?) - no copy needed
-    char *p;
     int fastpath = FALSE;
 
     if ((poFIT_DS->nBands == 1) && (poFIT_DS->info->space == 1)) // upper left
         fastpath = TRUE;
 
-    size_t nRead;
+    size_t nRead = 0;
+    char *p = NULL;
     if (! fastpath) {
         nRead = VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp );
         // offset to correct component to swap

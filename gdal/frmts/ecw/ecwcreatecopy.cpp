@@ -201,7 +201,6 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
 {
     int    iBand, *panBandMap;
     CPLErr eErr;
-    GByte *pabyLineBuf;
     int nWordSize = GDALGetDataTypeSize( eWorkDT ) / 8;
 
 #ifdef DEBUG_VERBOSE
@@ -212,8 +211,9 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
     for( iBand = 0; iBand < sFileInfo.nBands; iBand++ )
         panBandMap[iBand] = iBand+1;
 
-    pabyLineBuf = (GByte *) CPLMalloc( sFileInfo.nSizeX * sFileInfo.nBands
-                                       * nWordSize );
+    GByte *pabyLineBuf =
+        (GByte *) CPLMalloc( sFileInfo.nSizeX * sFileInfo.nBands
+                             * nWordSize );
 
     eErr = m_poSrcDS->RasterIO( GF_Read, 0, nNextLine, sFileInfo.nSizeX, 1,
                                 pabyLineBuf, sFileInfo.nSizeX, 1,
@@ -1319,7 +1319,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    GDALPamDataset *poDS;
+    GDALPamDataset *poDS = NULL;
 
     if (bIsJPEG2000)
         poDS = (GDALPamDataset*) ECWDatasetOpenJPEG2000(&oOpenInfo);
@@ -1336,7 +1336,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             double dHistMin, dHistMax;
             int nBuckets;
-            GUIntBig *pHistogram;
+            GUIntBig *pHistogram = NULL;
             if (poSrcDS->GetRasterBand(i)->GetDefaultHistogram(&dHistMin, &dHistMax,&nBuckets,&pHistogram, FALSE, NULL, NULL) == CE_None){
                 poDS->GetRasterBand(i)->SetDefaultHistogram(dHistMin, dHistMax, nBuckets, pHistogram);
                 VSIFree(pHistogram);

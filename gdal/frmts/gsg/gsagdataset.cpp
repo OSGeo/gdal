@@ -861,7 +861,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    char *pabyHeader;
+    char *pabyHeader = NULL;
     bool bMustFreeHeader = false;
     if( poOpenInfo->nHeaderBytes >= static_cast<int>(nMAX_HEADER_SIZE) )
     {
@@ -883,7 +883,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const char *szErrorMsg = NULL;
     const char *szStart = pabyHeader + 5;
-    char *szEnd;
+    char *szEnd = NULL;
     double dfTemp;
 
     /* Parse number of X axis grid rows */

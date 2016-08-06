@@ -486,7 +486,7 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
 /*      Process all records into RAT.                                   */
 /* -------------------------------------------------------------------- */
-    AVCField *pasFields;
+    AVCField *pasFields = NULL;
     int iRecord = 0;
 
     while( (pasFields = AVCBinReadNextTableRec(psFile)) != NULL )

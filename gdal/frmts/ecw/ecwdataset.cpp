@@ -2568,9 +2568,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ECWDataset  *poDS;
-
-    poDS = new ECWDataset(bIsJPEG2000);
+    ECWDataset  *poDS = new ECWDataset(bIsJPEG2000);
     poDS->poFileView = poFileView;
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -3440,15 +3438,13 @@ void GDALRegister_ECW()
 
 {
 #ifdef FRMT_ecw
-    GDALDriver *poDriver;
-
     if( !GDAL_CHECK_VERSION( "ECW driver" ) )
         return;
 
     if( GDALGetDriverByName( "ECW" ) != NULL )
         return;
 
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ECW" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

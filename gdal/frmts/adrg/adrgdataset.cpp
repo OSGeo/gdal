@@ -1216,7 +1216,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
 char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
 {
     DDFModule module;
-    DDFRecord * record;
+    DDFRecord *record = NULL;
     int nFilenames = 0;
     char** papszFileNames = NULL;
 
@@ -1320,7 +1320,7 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
 char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
                                       int *pnRecordIndex)
 {
-    DDFRecord * record;
+    DDFRecord *record = NULL;
     int nFilenames = 0;
     char** papszFileNames = NULL;
     int nRecordIndex = -1;

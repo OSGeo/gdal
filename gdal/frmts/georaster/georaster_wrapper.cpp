@@ -600,9 +600,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             int nBlockYSize = nRowBlockSize;
             int nBlockBSize = nBandBlockSize;
 
-            OWStatement* poStmt;
-
-            poStmt = poConnection->CreateStatement(
+            OWStatement* poStmt = poConnection->CreateStatement(
                 "DECLARE\n"
                 "  dimensionSize    sdo_number_array;\n"
                 "  blockSize        sdo_number_array;\n"
@@ -735,7 +733,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     //  Create Georaster Table if needed
     //  -------------------------------------------------------------------
 
-    OWStatement* poStmt;
+    OWStatement* poStmt = NULL;
 
     if( ! bUpdateIn )
     {
@@ -1440,11 +1438,9 @@ bool GeoRasterWrapper::SetStatistics( int nBand,
 
 bool GeoRasterWrapper::HasColorMap( int nBand )
 {
-    CPLXMLNode *psLayers;
-
     int n = 1;
 
-    psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+    CPLXMLNode *psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
     for( ; psLayers; psLayers = psLayers->psNext, n++ )
     {
@@ -1497,11 +1493,9 @@ void GeoRasterWrapper::GetColorMap( int nBand, GDALColorTable* poCT )
 {
     GDALColorEntry oEntry;
 
-    CPLXMLNode* psLayers;
-
     int n = 1;
 
-    psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+    CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
     for( ; psLayers; psLayers = psLayers->psNext, n++ )
     {

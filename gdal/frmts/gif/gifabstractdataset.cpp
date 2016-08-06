@@ -433,7 +433,7 @@ GifRecordType GIFAbstractDataset::FindFirstImage( GifFileType* hGifFile )
         if (RecordType == EXTENSION_RECORD_TYPE)
         {
             int nFunction;
-            GifByteType *pExtData;
+            GifByteType *pExtData = NULL;
             if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
                 break;
             while (pExtData != NULL)

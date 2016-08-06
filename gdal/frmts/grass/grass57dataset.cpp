@@ -490,9 +490,7 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if ( eDataType == GDT_Byte || eDataType == GDT_UInt16 ) {
-        CELL  *cbuf;
-
-        cbuf = G_allocate_c_raster_buf();
+        CELL *cbuf = G_allocate_c_raster_buf();
         G_get_c_raster_row ( hCell, cbuf, nBlockYOff );
 
         /* Reset NULLs */

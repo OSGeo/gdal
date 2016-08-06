@@ -443,8 +443,8 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 {
     CPLString osBAD;
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
     int bSuccess;
     int nSTR;
 
@@ -901,8 +901,8 @@ DDFRecord* SRPDataset::FindRecordInGENForIMG(DDFModule& module,
 
     CPLString osShortIMGFilename = CPLGetFilename(pszIMGFileName);
 
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
 
     /* Now finds the record */
     while( true )
@@ -968,8 +968,8 @@ SRPDataset* SRPDataset::OpenDataset(
     const char* pszGENFileName, const char* pszIMGFileName, DDFRecord* record)
 {
     DDFModule module;
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
 
     if (record == NULL)
     {
@@ -1038,9 +1038,9 @@ SRPDataset* SRPDataset::OpenDataset(
 char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
 {
     DDFModule module;
-    DDFRecord * record;
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFRecord * record = NULL;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
     int nFilenames = 0;
 
     char** papszFileNames = NULL;
@@ -1181,9 +1181,9 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
 void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
 {
     DDFModule module;
-    DDFRecord * record;
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFRecord * record = NULL;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
 
     int bSuccess=0;
     if (!module.Open(pszFileName, TRUE))
@@ -1302,9 +1302,9 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
 char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
                                     int *pnRecordIndex)
 {
-    DDFRecord * record;
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
+    DDFRecord * record = NULL;
+    DDFField* field = NULL;
+    DDFFieldDefn *fieldDefn = NULL;
     int nFilenames = 0;
     char** papszFileNames = NULL;
     int nRecordIndex = -1;
