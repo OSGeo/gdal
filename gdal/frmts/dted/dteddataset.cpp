@@ -200,11 +200,9 @@ CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff,
     {
         panData = (GInt16 *) pImage;
         GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * nBlockYSize);
-        int i;
-        for(i=0;i<nBlockXSize;i++)
+        for( int i = 0; i < nBlockXSize; i++ )
         {
-            int j;
-            for(j=0;j<nBlockYSize;j++)
+            for( int j = 0; j < nBlockYSize; j++ )
             {
                 panBuffer[j] = panData[j * nBlockXSize + i];
             }
