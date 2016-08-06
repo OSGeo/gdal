@@ -443,8 +443,6 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 {
     CPLString osBAD;
-    int i;
-
     DDFField* field;
     DDFFieldDefn *fieldDefn;
     int bSuccess;
@@ -572,7 +570,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         char offset[30]={0};
         offset[nIndexValueWidth] = '\0';
 
-        for(i=0;i<NFL*NFC;i++)
+        for( int i = 0; i < NFL * NFC; i++ )
         {
             strncpy(offset, ptr, nIndexValueWidth);
             ptr += nIndexValueWidth;
@@ -665,7 +663,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
     SetMetadataItem( "SRP_SCA", szValue );
 
     nBands = 1;
-    for( i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBands; i++ )
         SetBand( i+1, new SRPRasterBand( this, i+1 ) );
 
 /* -------------------------------------------------------------------- */
@@ -1043,7 +1041,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
     DDFRecord * record;
     DDFField* field;
     DDFFieldDefn *fieldDefn;
-    int i;
     int nFilenames = 0;
 
     char** papszFileNames = NULL;
@@ -1087,7 +1084,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                 }
 
                 int iFDRFieldInstance = 0;
-                for (i = 2; i < record->GetFieldCount() ; i++)
+                for( int i = 2; i < record->GetFieldCount() ; i++ )
                 {
                     field = record->GetField(i);
                     fieldDefn = field->GetFieldDefn();
@@ -1521,10 +1518,10 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             osIMGFileName = osFileName;
 
-            static const size_t nLeaderSize = 24;
-            int         i;
+            static const int nLeaderSize = 24;
 
-            for( i = 0; i < (int)nLeaderSize; i++ )
+            int i = 0;  // Used after for.
+            for( ; i < nLeaderSize; i++ )
             {
                 if( poOpenInfo->pabyHeader[i] < 32
                     || poOpenInfo->pabyHeader[i] > 126 )
@@ -1589,8 +1586,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         if (nRecordIndex >= 0 &&
             module.Open(osGENFileName.c_str(), TRUE))
         {
-            int i;
-            for(i=0;i<nRecordIndex;i++)
+            for( int i = 0; i < nRecordIndex; i++ )
             {
                 CPLPushErrorHandler( CPLQuietErrorHandler );
                 record = module.ReadRecord();
