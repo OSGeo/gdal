@@ -266,7 +266,7 @@ GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
 CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree,
                                            GDALTransformerFunc *ppfnFunc,
                                            void **ppTransformArg );
-/*! @endond */
+/*! @endcond */
 
 CPLErr CPL_DLL
 GDALTransformGeolocations( GDALRasterBandH hXBand,
