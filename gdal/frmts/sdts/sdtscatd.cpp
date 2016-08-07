@@ -139,7 +139,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      Loop reading CATD records, and adding to our list of entries    */
 /*      for each.                                                       */
 /* ==================================================================== */
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     while( (poRecord = oCATDFile.ReadRecord()) != NULL )
     {
 /* -------------------------------------------------------------------- */

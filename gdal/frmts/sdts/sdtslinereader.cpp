@@ -86,10 +86,8 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
         DDFField        *poField = poRecord->GetField( iField );
-        const char      *pszFieldName;
-
         CPLAssert( poField != NULL );
-        pszFieldName = poField->GetFieldDefn()->GetName();
+        const char *pszFieldName = poField->GetFieldDefn()->GetName();
 
         if( EQUAL(pszFieldName,"LINE") )
             oModId.Set( poField );
@@ -284,7 +282,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
 /*      have as right and left faces.                                   */
 /* ==================================================================== */
     Rewind();
-    SDTSRawLine *poLine;
+    SDTSRawLine *poLine = NULL;
     SDTSPolygonReader *poPolyReader = NULL;
     while( (poLine = reinterpret_cast<SDTSRawLine *>( GetNextFeature()) )
            != NULL )

@@ -100,7 +100,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Read each record, till we find what we want.                    */
 /* -------------------------------------------------------------------- */
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     while( (poRecord = oLDEF.ReadRecord() ) != NULL )
     {
         const char* pszCandidateModule = poRecord->GetStringSubfield("LDEF",0,"CMNM",0);
