@@ -236,7 +236,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType();
+ * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType() const;
  *
  * \brief Fetch geometry type of this field.
  *
@@ -331,7 +331,7 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 /************************************************************************/
 
 /**
- * \fn int OGRGeomFieldDefn::IsIgnored();
+ * \fn int OGRGeomFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *

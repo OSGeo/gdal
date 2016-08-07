@@ -6717,6 +6717,7 @@ int  GDALRasterBand::IGetDataCoverageStatus( int /*nXOff*/,
            GDAL_DATA_COVERAGE_STATUS_DATA;
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                          EnterReadWrite()                            */
 /************************************************************************/
@@ -6737,3 +6738,4 @@ void GDALRasterBand::LeaveReadWrite()
     if( poDS != NULL )
         poDS->LeaveReadWrite();
 }
+//! @endcond

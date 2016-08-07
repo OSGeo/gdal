@@ -691,7 +691,7 @@ int VSIFCloseL( VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Seek()
+ * \fn int VSIVirtualHandle::Seek( vsi_l_offset nOffset, int nWhence )
  * \brief Seek to requested offset.
  *
  * Seek to the desired offset (nOffset) in the indicated file.
@@ -843,7 +843,7 @@ int VSIFFlushL( VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Read()
+ * \fn VSIVirtualHandle::Read( void *pBuffer, size_t nSize, size_t nCount )
  * \brief Read bytes from file.
  *
  * Reads nCount objects of nSize bytes from the indicated file at the
@@ -896,7 +896,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::ReadMultiRange()
+ * \fn VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes )
  * \brief Read several ranges of bytes from file.
  *
  * Reads nRanges objects of panSizes[i] bytes from the indicated file at the
@@ -955,7 +955,7 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Write()
+ * \fn VSIVirtualHandle::Write( const void *pBuffer, size_t nSize,size_t nCount )
  * \brief Write bytes to file.
  *
  * Writess nCount objects of nSize bytes to the indicated file at the
@@ -1052,7 +1052,7 @@ int VSIFEofL( VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Truncate()
+ * \fn VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
  * \brief Truncate/expand the file to the specified size
 
  * This method goes through the VSIFileHandler virtualization and may
@@ -1156,7 +1156,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::GetRangeStatus()
+ * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset, vsi_l_offset nLength )
  * \brief Return if a given file range contains data or holes filled with zeroes
  *
  * This uses the filesystem capabilities of querying which regions of a sparse
