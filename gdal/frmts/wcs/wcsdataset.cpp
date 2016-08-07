@@ -630,15 +630,13 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Pull requested bands from the downloaded dataset.               */
 /* -------------------------------------------------------------------- */
-    int iBand;
-
     eErr = CE_None;
 
-    for( iBand = 0;
+    for( int iBand = 0;
          iBand < nBandCount && eErr == CE_None;
          iBand++ )
     {
-        GDALRasterBand *poTileBand;
+        GDALRasterBand *poTileBand = NULL;
 
         if( strlen(osBandIdentifier) )
             poTileBand = poTileDS->GetRasterBand( iBand + 1 );
@@ -713,16 +711,13 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      URL encode strings that could have questionable characters.     */
 /* -------------------------------------------------------------------- */
-    CPLString osCoverage, osFormat;
-    char *pszEncoded;
+    CPLString osCoverage = CPLGetXMLValue( psService, "CoverageName", "" );
 
-    osCoverage = CPLGetXMLValue( psService, "CoverageName", "" );
-
-    pszEncoded = CPLEscapeString( osCoverage, -1, CPLES_URL );
+    char *pszEncoded = CPLEscapeString( osCoverage, -1, CPLES_URL );
     osCoverage = pszEncoded;
     CPLFree( pszEncoded );
 
-    osFormat = CPLGetXMLValue( psService, "PreferredFormat", "" );
+    CPLString osFormat = CPLGetXMLValue( psService, "PreferredFormat", "" );
 
     pszEncoded = CPLEscapeString( osFormat, -1, CPLES_URL );
     osFormat = pszEncoded;
