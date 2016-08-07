@@ -121,14 +121,13 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                   void * pImage )
 {
     GXFDataset *poGXF_DS = (GXFDataset *) poDS;
-    double *padfBuffer;
     float *pafBuffer = (float *) pImage;
     int i;
     CPLErr eErr;
 
     if( eDataType == GDT_Float32)
     {
-       padfBuffer = (double *) VSIMalloc2(sizeof(double), nBlockXSize);
+       double *padfBuffer = (double *) VSIMalloc2(sizeof(double), nBlockXSize);
        if( padfBuffer == NULL )
            return CE_Failure;
        eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
@@ -271,9 +270,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 #define BIGBUFSIZE 50000
     int nBytesRead, bGotGrid = FALSE;
-    FILE *fp;
-
-    fp = VSIFOpen( poOpenInfo->pszFilename, "rb" );
+    FILE *fp = VSIFOpen( poOpenInfo->pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 

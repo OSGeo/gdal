@@ -9171,8 +9171,6 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                                                  int nOvrBlockYSize)
 {
-    GTiffDataset *poODS;
-
     ScanDirectories();
 
 /* -------------------------------------------------------------------- */
@@ -9216,7 +9214,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                     continue;
                 }
 
-                poODS = new GTiffDataset();
+                GTiffDataset *poODS = new GTiffDataset();
                 if( poODS->OpenOffset( hTIFF, ppoActiveDSRef,
                                        nOverviewOffset, false,
                                        GA_Update ) != CE_None )
@@ -9259,7 +9257,6 @@ CPLErr GTiffDataset::IBuildOverviews(
 
 {
     CPLErr       eErr = CE_None;
-    GTiffDataset *poODS;
 
     ScanDirectories();
 
@@ -9363,8 +9360,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         double dfAcc = 0.0;
         for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
         {
-            void *pScaledProgressData;
-            pScaledProgressData =
+            void *pScaledProgressData =
                 GDALCreateScaledProgress(
                     dfAcc / dfTotal,
                     (dfAcc + padfOvrRasterFactor[i]) / dfTotal,
@@ -9504,7 +9500,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         {
             int    nOvFactor;
 
-            poODS = papoOverviewDS[j];
+            GTiffDataset *poODS = papoOverviewDS[j];
 
             nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
                                              GetRasterXSize(),
@@ -9905,11 +9901,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
     }
     else if( GetGCPCount() > 0 )
     {
-        double *padfTiePoints;
-
         bNeedsRewrite = true;
 
-        padfTiePoints = static_cast<double *>(
+        double *padfTiePoints = static_cast<double *>(
             CPLMalloc( 6 * sizeof(double) * GetGCPCount() ) );
 
         for( int iGCP = 0; iGCP < GetGCPCount(); ++iGCP )
@@ -9943,15 +9937,13 @@ void GTiffDataset::WriteGeoTIFFInfo()
     if( (bHasProjection || bPixelIsPoint)
         && !EQUAL(osProfile,"BASELINE") )
     {
-        GTIF *psGTIF;
-
         bNeedsRewrite = true;
 
         // If we have existing geokeys, try to wipe them
         // by writing a dummy geokey directory. (#2546)
         GTiffWriteDummyGeokeyDirectory(hTIFF);
 
-        psGTIF = GTIFNew( hTIFF );
+        GTIF *psGTIF = GTIFNew( hTIFF );
 
         // set according to coordinate system.
         if( bHasProjection )
@@ -10442,7 +10434,7 @@ void GTiffDataset::PushMetadataToPam()
 {
     for( int nBand = 0; nBand <= GetRasterCount(); ++nBand )
     {
-        GDALMultiDomainMetadata *poSrcMDMD;
+        GDALMultiDomainMetadata *poSrcMDMD = NULL;
         GTiffRasterBand *poBand = NULL;
 
         if( nBand == 0 )
@@ -10559,7 +10551,7 @@ void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
 char** GTiffDatasetReadRPCTag(TIFF* hTIFF)
 
 {
-    double *padfRPCTag;
+    double *padfRPCTag = NULL;
     CPLString osField;
     CPLString osMultiField;
     CPLStringList asMD;
@@ -11065,7 +11057,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
 GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    TIFF *hTIFF;
     bool         bAllowRGBAInterface = true;
     const char  *pszFilename = poOpenInfo->pszFilename;
 
@@ -11125,7 +11116,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     std::vector<GTIFFErrorStruct> aoErrors;
     CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
     CPLSetCurrentErrorHandlerCatchDebug( FALSE );
-    hTIFF =
+    TIFF *hTIFF =
         VSI_TIFFOpen( pszFilename,
                       poOpenInfo->eAccess == GA_ReadOnly ? "rc" : "r+c",
                       poOpenInfo->fpL );
@@ -11245,9 +11236,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS;
-
-    poDS = new GTiffDataset();
+    GTiffDataset *poDS = new GTiffDataset();
     poDS->SetDescription( pszFilename );
     poDS->osFilename = pszFilename;
     poDS->poActiveDS = poDS;
@@ -11470,12 +11459,10 @@ void GTiffDataset::LookForProjection()
 /* -------------------------------------------------------------------- */
 /*      Capture the GeoTIFF projection, if available.                   */
 /* -------------------------------------------------------------------- */
-    GTIF *hGTIF;
-
     CPLFree( pszProjection );
     pszProjection = NULL;
 
-    hGTIF = GTIFNew(hTIFF);
+    GTIF *hGTIF = GTIFNew(hTIFF);
 
     if( !hGTIF )
     {
@@ -11484,12 +11471,10 @@ void GTiffDataset::LookForProjection()
     }
     else
     {
-        GTIFDefn      *psGTIFDefn;
-
 #if LIBGEOTIFF_VERSION >= 1410
-        psGTIFDefn = GTIFAllocDefn();
+        GTIFDefn *psGTIFDefn = GTIFAllocDefn();
 #else
-        psGTIFDefn = (GTIFDefn *) CPLCalloc(1,sizeof(GTIFDefn));
+        GTIFDefn *psGTIFDefn = (GTIFDefn *) CPLCalloc(1,sizeof(GTIFDefn));
 #endif
 
         if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
@@ -11805,9 +11790,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS;
-
-    poDS = new GTiffDataset();
+    GTiffDataset *poDS = new GTiffDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->osFilename = poOpenInfo->pszFilename;
     poDS->poActiveDS = poDS;
@@ -14468,7 +14451,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 TIFFSetField( hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
                               pJPEGTable);
 
-            float *ref;
+            float *ref = NULL;
             if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
                 TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
 
@@ -14669,17 +14652,16 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
                                    char **papszParmList )
 
 {
-    GTiffDataset *poDS;
-    TIFF *hTIFF;
     VSILFILE* fpL = NULL;
     CPLString           osTmpFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Create the underlying TIFF file.                                */
 /* -------------------------------------------------------------------- */
-    hTIFF = CreateLL( pszFilename,
-                      nXSize, nYSize, nBands,
-                      eType, 0, papszParmList, &fpL, osTmpFilename );
+    TIFF *hTIFF = CreateLL(
+        pszFilename,
+        nXSize, nYSize, nBands,
+        eType, 0, papszParmList, &fpL, osTmpFilename );
     const bool bStreaming = !osTmpFilename.empty();
 
     if( hTIFF == NULL )
@@ -14688,7 +14670,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the new GTiffDataset object.                             */
 /* -------------------------------------------------------------------- */
-    poDS = new GTiffDataset();
+    GTiffDataset *poDS = new GTiffDataset();
     poDS->hTIFF = hTIFF;
     poDS->fpL = fpL;
     if( bStreaming )

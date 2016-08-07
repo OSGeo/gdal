@@ -270,9 +270,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Read the whole record info memory.                              */
 /* -------------------------------------------------------------------- */
-    char        *pachRecord;
-
-    pachRecord = (char *) CPLMalloc(_recLength);
+    char *pachRecord = (char *) CPLMalloc(_recLength);
     memcpy( pachRecord, achLeader, nLeaderSize );
 
     if( (int)VSIFReadL( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
@@ -309,7 +307,6 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         char    szTag[128];
         int     nEntryOffset = nLeaderSize + i*nFieldEntryWidth;
         int     nFieldLength, nFieldPos;
-        DDFFieldDefn *poFDefn;
 
         strncpy( szTag, pachRecord+nEntryOffset, _sizeFieldTag );
         szTag[_sizeFieldTag] = '\0';
@@ -332,7 +329,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
             return FALSE;
         }
 
-        poFDefn = new DDFFieldDefn();
+        DDFFieldDefn *poFDefn = new DDFFieldDefn();
         if( poFDefn->Initialize( this, szTag, nFieldLength,
                                  pachRecord+_fieldAreaStart+nFieldPos ) )
             AddField( poFDefn );
@@ -475,10 +472,10 @@ int DDFModule::Create( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write out the field descriptions themselves.                    */
 /* -------------------------------------------------------------------- */
-    for( iField=0; iField < nFieldDefnCount; iField++ )
+    for( iField = 0; iField < nFieldDefnCount; iField++ )
     {
-        char *pachData;
-        int nLength;
+        char *pachData = NULL;
+        int nLength = 0;
 
         papoFieldDefns[iField]->GenerateDDREntry( this, &pachData, &nLength );
         bRet &= VSIFWriteL( pachData, nLength, 1, fpDDF ) > 0;

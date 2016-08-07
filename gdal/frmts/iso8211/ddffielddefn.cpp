@@ -550,10 +550,9 @@ int DDFFieldDefn::BuildSubfields()
 char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 
 {
-    int         nBracket=0, i;
-    char        *pszReturn;
-
-    for( i = 0;
+    int nBracket = 0;
+    int i = 0;
+    for( ;
          pszSrc[i] != '\0' && (nBracket > 0 || pszSrc[i] != ',');
          i++ )
     {
@@ -563,6 +562,7 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
             nBracket--;
     }
 
+    char *pszReturn = NULL;
     if( pszSrc[0] == '(' )
     {
         pszReturn = CPLStrdup( pszSrc + 1 );
@@ -684,9 +684,6 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 int DDFFieldDefn::ApplyFormats()
 
 {
-    char        *pszFormatList;
-    char        **papszFormatItems;
-
 /* -------------------------------------------------------------------- */
 /*      Verify that the format string is contained within brackets.     */
 /* -------------------------------------------------------------------- */
@@ -705,12 +702,12 @@ int DDFFieldDefn::ApplyFormats()
 /*      Duplicate the string, and strip off the brackets.               */
 /* -------------------------------------------------------------------- */
 
-    pszFormatList = ExpandFormat( _formatControls );
+    char *pszFormatList = ExpandFormat( _formatControls );
 
 /* -------------------------------------------------------------------- */
 /*      Tokenize based on commas.                                       */
 /* -------------------------------------------------------------------- */
-    papszFormatItems =
+    char **papszFormatItems =
         CSLTokenizeStringComplex(pszFormatList, ",", FALSE, FALSE );
 
     CPLFree( pszFormatList );

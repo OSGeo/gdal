@@ -306,9 +306,7 @@ const char *DDFField::GetInstanceData( int nInstance,
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining1 = 0, nBytesRemaining2 = 0;
-    DDFSubfieldDefn *poFirstSubfield;
-
-    poFirstSubfield = poDefn->GetSubfield(0);
+    DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
 
     pachWrkData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
                                nInstance);
@@ -321,11 +319,11 @@ const char *DDFField::GetInstanceData( int nInstance,
 /* -------------------------------------------------------------------- */
     if( pnInstanceSize != NULL )
     {
-        DDFSubfieldDefn *poLastSubfield;
         int              nLastSubfieldWidth = 0;
         const char          *pachLastData;
 
-        poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
+        DDFSubfieldDefn *poLastSubfield =
+            poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
 
         pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2,
                                         nInstance );

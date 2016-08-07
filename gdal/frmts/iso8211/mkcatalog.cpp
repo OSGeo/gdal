@@ -30,23 +30,21 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                               mk_s57()                               */
 /************************************************************************/
 
-void mk_s57()
+static void mk_s57()
 
 {
     DDFModule  oModule;
-    DDFFieldDefn *poFDefn;
 
     oModule.Initialize();
 
 /* -------------------------------------------------------------------- */
 /*      Create the '0000' definition.                                   */
 /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    DDFFieldDefn *poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0000", "", "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT", dsc_elementary, dtc_char_string );
 
@@ -210,9 +208,7 @@ void mk_s57()
 /*      Create a record.                                                */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = new DDFRecord( &oModule );
-    DDFField *poField;
-
-    poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
+    DDFField *poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\1\0\036", 3 );
 
     poField = poRec->AddField( oModule.FindFieldDefn( "DSID" ) );
@@ -311,18 +307,18 @@ void mk_s57()
 /*                             mk_catalog()                             */
 /************************************************************************/
 
+#if 0
 void mk_catalog()
 
 {
     DDFModule  oModule;
-    DDFFieldDefn *poFDefn;
 
     oModule.Initialize();
 
 /* -------------------------------------------------------------------- */
 /*      Create the '0000' definition.                                   */
 /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    DDFFieldDefn *poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0000", "", "0001CATD",
                      dsc_elementary,
@@ -372,9 +368,7 @@ void mk_catalog()
 /*      Create a record.                                                */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = new DDFRecord( &oModule );
-    DDFField *poField;
-
-    poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
+    DDFField *poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\0\0\036", 3 );
 
     poField = poRec->AddField( oModule.FindFieldDefn( "CATD" ) );
@@ -410,12 +404,13 @@ void mk_catalog()
     poRec->Write();
     delete poRec;
 }
+#endif // mk_catalog not used.
 
 /* **********************************************************************/
 /*                                main()                                */
 /* **********************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+int main( int /* nArgc */, char ** /* papszArgv */ )
 
 {
     mk_s57();

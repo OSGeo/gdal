@@ -91,7 +91,6 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Dump header, and all records.                                   */
 /* -------------------------------------------------------------------- */
-    DDFRecord       *poRecord;
     if( bXML )
     {
         printf("<DDFModule");
@@ -196,8 +195,10 @@ int main( int nArgc, char ** papszArgv )
             printf("</DDFFieldDefn>\n");
         }
 
-        for( poRecord = oModule.ReadRecord();
-             poRecord != NULL; poRecord = oModule.ReadRecord() )
+        // DDFRecord       *poRecord;
+        for( DDFRecord *poRecord = oModule.ReadRecord();
+             poRecord != NULL;
+             poRecord = oModule.ReadRecord() )
         {
             printf("<DDFRecord");
             if( bAllDetails )
@@ -304,8 +305,9 @@ int main( int nArgc, char ** papszArgv )
         long nStartLoc;
 
         nStartLoc = VSIFTellL( oModule.GetFP() );
-        for( poRecord = oModule.ReadRecord();
-            poRecord != NULL; poRecord = oModule.ReadRecord() )
+        for( DDFRecord *poRecord = oModule.ReadRecord();
+             poRecord != NULL;
+             poRecord = oModule.ReadRecord() )
         {
             printf( "File Offset: %ld\n", nStartLoc );
             poRecord->Dump( stdout );

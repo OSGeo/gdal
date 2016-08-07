@@ -69,9 +69,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-        DDFRecord       *poRecord;
-        int             nRecordCount = 0;
-        int             nFieldCount = 0;
+        DDFRecord *poRecord = NULL;
+        int nRecordCount = 0;
+        int nFieldCount = 0;
 
         while( (poRecord = oModule.ReadRecord()) != NULL )
         {
@@ -80,7 +80,7 @@ int main( int nArgc, char ** papszArgv )
             /* ------------------------------------------------------------ */
             for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
             {
-                DDFField        *poField = poRecord->GetField( iField );
+                DDFField *poField = poRecord->GetField( iField );
 
                 ViewRecordField( poField );
 
