@@ -1835,7 +1835,7 @@ static double doubleConv(const char* s)
 
     if (strlen(begin) == 0) return rUNDEF;
     errno = 0;
-    char *endptr;
+    char *endptr = NULL;
     const double r = CPLStrtod(begin, &endptr);
     if ((0 == *endptr) && (errno==0))
         return r;

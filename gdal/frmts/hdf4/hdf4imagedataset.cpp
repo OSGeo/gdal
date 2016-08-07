@@ -951,7 +951,6 @@ const GDAL_GCP *HDF4ImageDataset::GetGCPs()
 void HDF4ImageDataset::FlushCache()
 
 {
-    char        *pszName;
     const char  *pszValue;
 
     CPLMutexHolderD(&hHDF4Mutex);
@@ -991,7 +990,7 @@ void HDF4ImageDataset::FlushCache()
 
         while ( *papszMeta )
         {
-            pszName = NULL;
+            char *pszName = NULL;
             pszValue = CPLParseNameValue( *papszMeta++, &pszName );
             if ( pszName != NULL && (SDsetattr( hSD, pszName, DFNT_CHAR8,
                              static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
@@ -1012,7 +1011,7 @@ void HDF4ImageDataset::FlushCache()
 
         if ( poBand->bNoDataSet )
         {
-            pszName = CPLStrdup( CPLSPrintf( "NoDataValue%d", iBand ) );
+            char *pszName = CPLStrdup( CPLSPrintf( "NoDataValue%d", iBand ) );
             pszValue = CPLSPrintf( "%f", poBand->dfNoDataValue );
             if ( (SDsetattr( hSD, pszName, DFNT_CHAR8,
                              static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
@@ -1032,7 +1031,7 @@ void HDF4ImageDataset::FlushCache()
         HDF4ImageRasterBand *poBand =
             reinterpret_cast<HDF4ImageRasterBand *>( GetRasterBand(iBand) );
 
-        pszName = CPLStrdup( CPLSPrintf( "BandDesc%d", iBand ) );
+        char *pszName = CPLStrdup( CPLSPrintf( "BandDesc%d", iBand ) );
         pszValue = poBand->GetDescription();
         if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
         {

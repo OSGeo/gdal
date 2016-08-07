@@ -2487,7 +2487,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     char **papszRef = CSLLoad( pszFName );
     CSLSetNameValueSeparator( papszRef, ":" );
 
-    char *pszGeorefName;
+    char *pszGeorefName = NULL;
 
     const char* pszREF_SYSTEM = CSLFetchNameValue( papszRef, refREF_SYSTEM );
     if( pszREF_SYSTEM != NULL && EQUAL( pszREF_SYSTEM, "" ) == FALSE )
@@ -3027,7 +3027,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     double dfStdP1              = 0.0;
     double dfStdP2              = 0.0;
     char *pszAngularUnit        = CPLStrdup( oSRS.GetAttrValue( "GEOGCS|UNIT" ) );
-    char *pszLinearUnit;
+    char *pszLinearUnit = NULL;
 
     if( oSRS.IsProjected() )
     {

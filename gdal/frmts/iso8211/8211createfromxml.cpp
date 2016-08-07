@@ -215,7 +215,6 @@ int main(int nArgc, char* papszArgv[])
                 if( psSubIter->eType == CXT_Element &&
                     strcmp(psSubIter->pszValue, "DDFField") == 0 )
                 {
-                    DDFField *poField;
                     const char* pszFieldName = CPLGetXMLValue(psSubIter, "name", "");
                     DDFFieldDefn* poFieldDefn = oModule.FindFieldDefn( pszFieldName );
                     if( poFieldDefn == NULL )
@@ -227,7 +226,7 @@ int main(int nArgc, char* papszArgv[])
                     int nFieldOcc = oMapField[pszFieldName];
                     oMapField[pszFieldName] ++ ;
 
-                    poField = poRec->AddField( poFieldDefn );
+                    DDFField *poField = poRec->AddField( poFieldDefn );
                     const char* pszValue = CPLGetXMLValue(psSubIter, "value", NULL);
                     if( pszValue != NULL && STARTS_WITH(pszValue, "0x") )
                     {

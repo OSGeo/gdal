@@ -84,8 +84,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord   *poRecord;
-    int         iRecord = 0;
+    DDFRecord *poRecord = NULL;
+    int iRecord = 0;
 
     while( (poRecord = oModule.ReadRecord()) != NULL )
     {

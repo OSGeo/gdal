@@ -1378,7 +1378,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
                            GTIFFKeysFlavorEnum eFlavor )
 {
-    OGRSpatialReference *poSRS;
     int nPCS = KvUserDefined;
     OGRErr eErr = OGRERR_NONE;
     OGRBoolean peStrStored = FALSE;
@@ -1390,7 +1389,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /*      Create an OGRSpatialReference object corresponding to the       */
 /*      string.                                                         */
 /* -------------------------------------------------------------------- */
-    poSRS = new OGRSpatialReference();
+    OGRSpatialReference *poSRS = new OGRSpatialReference();
     if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
     {
         delete poSRS;
