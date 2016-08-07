@@ -129,7 +129,7 @@ OGRGeometry* OGRTriangulatedSurface::clone() const
 
     for( int i = 0; i < oMP.nGeomCount; i++ )
     {
-        if( (poNewTIN->oMP).addGeometry( oMP.papoGeoms[i] ) != OGRERR_NONE )
+        if( (poNewTIN->oMP)._addGeometry( oMP.papoGeoms[i] ) != OGRERR_NONE )
         {
             delete poNewTIN;
             return NULL;
