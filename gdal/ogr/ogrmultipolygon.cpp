@@ -205,7 +205,7 @@ OGRErr OGRMultiPolygon::_addGeometry( const OGRGeometry * poNewGeom )
 
 OGRErr OGRMultiPolygon::_addGeometryDirectly( OGRGeometry * poNewGeom )
 {
-    if ( !wkbFlatten(poNewGeom->getGeometryType()) == wkbTriangle)
+    if ( wkbFlatten(poNewGeom->getGeometryType()) != wkbTriangle)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     if( poNewGeom->Is3D() && !Is3D() )
