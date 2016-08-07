@@ -802,11 +802,11 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
     for(int xBand = 0; xBand < nBandCount; xBand ++)
     {
-        void* pDstBuffer;
         GDALRasterBlock *poBlock = NULL;
         int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
         int bPromoteTo8Bit = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
 
+        void* pDstBuffer = NULL;
         if (iBand == nBand)
             pDstBuffer = pImage;
         else
@@ -1494,9 +1494,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
 
 
-    opj_codec_t* pCodec;
-
-    pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    opj_codec_t* pCodec = opj_create_decompress(OPJ_CODEC_J2K);
     if( pCodec == NULL )
         return NULL;
 
@@ -3304,11 +3302,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
     else
     {
-        opj_stream_t * pStream;
         JP2OpenJPEGFile sJP2OpenJPEGFile;
         sJP2OpenJPEGFile.fp = fp;
         sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
-        pStream = opj_stream_create(1024*1024, FALSE);
+        opj_stream_t * pStream = opj_stream_create(1024*1024, FALSE);
         opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
         opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
         opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
@@ -3334,7 +3331,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
 
         GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
-        GByte* pTempBuffer;
+        GByte* pTempBuffer = NULL;
         if( nTileSize > UINT_MAX )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
