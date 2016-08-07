@@ -841,8 +841,7 @@ start_idx = end_idx;
 
     CPLXMLNode *DataValues = CPLGetXMLNode(defimage, "DataValues");
     if (NULL != DataValues) {
-        const char *pszValue;
-        pszValue = CPLGetXMLValue(DataValues, "NoData", NULL);
+        const char *pszValue = CPLGetXMLValue(DataValues, "NoData", NULL);
         if (pszValue) ds->SetNoDataValue(pszValue);
         pszValue = CPLGetXMLValue(DataValues, "min", NULL);
         if (pszValue) ds->SetMinValue(pszValue);
@@ -1564,9 +1563,7 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     CPLStringList opt(papszOptions, FALSE);
     ILImage &img(full);
 
-    const char *val;
-
-    val = opt.FetchNameValue("COMPRESS");
+    const char *val = opt.FetchNameValue("COMPRESS");
     if (val && IL_ERR_COMP == (img.comp = CompToken(val)))
         throw CPLString("GDAL MRF: Error setting compression");
 

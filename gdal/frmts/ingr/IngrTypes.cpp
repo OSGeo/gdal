@@ -1436,7 +1436,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
 void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderOne* pLSBHeaderOne;
+    INGR_HeaderOne* pLSBHeaderOne = NULL;
 #if defined(CPL_MSB)
     pLSBHeaderOne = (INGR_HeaderOne* )CPLMalloc(sizeof(INGR_HeaderOne));
     memcpy(pLSBHeaderOne, pHeaderOne, sizeof(INGR_HeaderOne));
@@ -1554,7 +1554,7 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, const GBy
 void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderTwoA* pLSBHeaderTwo;
+    INGR_HeaderTwoA* pLSBHeaderTwo = NULL;
 #if defined(CPL_MSB)
     pLSBHeaderTwo = (INGR_HeaderTwoA* )CPLMalloc(sizeof(INGR_HeaderTwoA));
     memcpy(pLSBHeaderTwo, pHeaderTwo, sizeof(INGR_HeaderTwoA));
