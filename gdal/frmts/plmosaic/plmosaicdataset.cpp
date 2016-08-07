@@ -451,7 +451,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
                                          int bQuiet404Error)
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
-    CPLHTTPResult * psResult;
+    CPLHTTPResult *psResult = NULL;
     if( STARTS_WITH(osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
     {
@@ -584,7 +584,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->pszFilename+strlen("PLMosaic:"), ",", TRUE, FALSE );
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
     {
-        char* pszKey;
+        char* pszKey = NULL;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
         if( pszValue != NULL )
         {
@@ -1368,7 +1368,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         {
             CPLXMLNode* psQuad = CPLCreateXMLNode(psRoot, CXT_Element, "Quad");
             OGRLayer* poLayer = poDS->GetLayer(0);
-            OGRFeature* poFeat;
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
@@ -1426,7 +1426,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
             CPLXMLNode* psScenes = NULL;
             OGRLayer* poLayer = poDS->GetLayer(0);
             poLayer->SetSpatialFilterRect(x,y,x,y);
-            OGRFeature* poFeat;
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 OGRGeometry* poGeom = poFeat->GetGeometryRef();

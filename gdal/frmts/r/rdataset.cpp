@@ -542,7 +542,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( poDS->bASCII )
             poBand = new RRasterBand( poDS, iBand+1,
