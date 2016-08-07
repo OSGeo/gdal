@@ -123,9 +123,8 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut )
 {
     GUInt32         nCount = TABSIZE - 256;
-    GUInt32         iCode, iOldCode, iInCode;
+    GUInt32         iInCode;
     GByte           iFinChar, bLastChar=FALSE;
-    LZWStringTab    *poCodeTab;
     int             bBitsleft;
 
     if ( pabyIn == NULL ||
@@ -135,17 +134,19 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
         return 0;
 
     // Allocate space for the new table and pre-fill it
-    poCodeTab = (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
+    LZWStringTab *poCodeTab =
+        (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
     if ( !poCodeTab )
         return 0;
     memset( poCodeTab, 0, TABSIZE * sizeof(LZWStringTab) );
-    for ( iCode = 0; iCode < 256; iCode++ )
+    GUInt32 iCode = 0;
+    for ( ; iCode < 256; iCode++ )
         LZWUpdateTab( poCodeTab, NO_PRED, (char)iCode );
 
     // The first code is always known
     iCode = (*pabyIn++ << 4) & 0xFF0; nSizeIn--;
     iCode += (*pabyIn >> 4) & 0x00F;
-    iOldCode = iCode;
+    GUInt32 iOldCode = iCode;
     bBitsleft = TRUE;
 
     *pabyOut++ = iFinChar = poCodeTab[iCode].iFollower; nSizeOut--;

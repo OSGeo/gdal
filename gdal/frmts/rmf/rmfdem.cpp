@@ -107,8 +107,6 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut )
 {
     GUInt32 nCount;             // Number of encoded data elements to read
-    char* pabyTempIn;
-    GInt32* paiOut;
     GInt32 nType;               // The encoding type
     GInt32 iPrev = 0;           // The last data value decoded
     GInt32 nCode;
@@ -119,8 +117,8 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
          nSizeIn < 2 )
         return 0;
 
-    pabyTempIn  = (char*)pabyIn;
-    paiOut = (GInt32*)pabyOut;
+    char* pabyTempIn  = (char*)pabyIn;
+    GInt32* paiOut = (GInt32*)pabyOut;
     nSizeOut /= sizeof(GInt32);
 
     while ( nSizeIn > 0 )
