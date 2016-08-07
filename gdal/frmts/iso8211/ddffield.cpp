@@ -284,7 +284,6 @@ const char *DDFField::GetInstanceData( int nInstance,
 
 {
     int nRepeatCount = GetRepeatCount();
-    const char *pachWrkData;
 
     if( nInstance < 0 || nInstance >= nRepeatCount )
         return NULL;
@@ -295,7 +294,7 @@ const char *DDFField::GetInstanceData( int nInstance,
 /* -------------------------------------------------------------------- */
     if( poDefn->GetSubfieldCount() == 0 )
     {
-        pachWrkData = GetData();
+        const char *pachWrkData = GetData();
         if( pnInstanceSize != NULL )
             *pnInstanceSize = GetDataSize();
         return pachWrkData;
@@ -305,11 +304,12 @@ const char *DDFField::GetInstanceData( int nInstance,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    int         nBytesRemaining1 = 0, nBytesRemaining2 = 0;
+    int nBytesRemaining1 = 0;
+    int nBytesRemaining2 = 0;
     DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
 
-    pachWrkData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
-                               nInstance);
+    const char *pachWrkData =
+        GetSubfieldData(poFirstSubfield, &nBytesRemaining1, nInstance);
     if( pachWrkData == NULL )
         return NULL;
 
@@ -319,17 +319,15 @@ const char *DDFField::GetInstanceData( int nInstance,
 /* -------------------------------------------------------------------- */
     if( pnInstanceSize != NULL )
     {
-        int              nLastSubfieldWidth = 0;
-        const char          *pachLastData;
-
         DDFSubfieldDefn *poLastSubfield =
             poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
 
-        pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2,
-                                        nInstance );
+        const char *pachLastData =
+            GetSubfieldData( poLastSubfield, &nBytesRemaining2, nInstance );
         if( pachLastData == NULL )
             return NULL;
 
+        int nLastSubfieldWidth = 0;
         poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2,
                                        &nLastSubfieldWidth );
 

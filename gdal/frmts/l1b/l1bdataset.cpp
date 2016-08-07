@@ -1786,10 +1786,10 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 /* -------------------------------------------------------------------- */
 /*      Set fetched information as metadata records                     */
 /* -------------------------------------------------------------------- */
-    const char *pszText;
 
-    SetMetadataItem( "DATASET_NAME",  szDatasetName );
+    SetMetadataItem( "DATASET_NAME", szDatasetName );
 
+    const char *pszText = NULL;
     switch( eSpacecraftID )
     {
         case TIROSN:
@@ -3100,7 +3100,7 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    GDALDataset* poOutDS;
+    GDALDataset* poOutDS = NULL;
     VSILFILE* fp = NULL;
     CPLString osFilename = poOpenInfo->pszFilename;
     int bAskGeolocationDS = FALSE;
@@ -3117,7 +3117,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
          STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_CLOUDS:") )
     {
         GByte abyHeader[1024];
-        const char* pszFilename;
+        const char* pszFilename = NULL;
         if( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") )
         {
             bAskGeolocationDS = TRUE;

@@ -286,7 +286,6 @@ bool MBTilesDataset::HasNonEmptyGrids()
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
 
     if (poMainDS)
         return poMainDS->HasNonEmptyGrids();
@@ -299,7 +298,7 @@ bool MBTilesDataset::HasNonEmptyGrids()
     if (OGR_DS_GetLayerByName(hDS, "grids") == NULL)
         return false;
 
-    pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
+    const char* pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr == NULL)
@@ -366,16 +365,15 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
 
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
     json_object* poGrid = NULL;
     int i;
 
     /* See https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md */
     /* for the explanation of the following process */
-
-    pszSQL = CPLSPrintf("SELECT grid FROM grids WHERE "
-                        "zoom_level = %d AND tile_column = %d AND tile_row = %d",
-                        m_nZoomLevel, nTileColumn, nTileRow);
+    const char* pszSQL =
+        CPLSPrintf("SELECT grid FROM grids WHERE "
+                   "zoom_level = %d AND tile_column = %d AND tile_row = %d",
+                   m_nZoomLevel, nTileColumn, nTileRow);
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr == NULL)
@@ -639,13 +637,13 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
             if (OGR_DS_GetLayerByName(poGDS->hDS, "grid_data") != NULL &&
                 strchr(pszKey, '\'') == NULL)
             {
-                const char* pszSQL;
                 OGRLayerH hSQLLyr;
                 OGRFeatureH hFeat;
 
-                pszSQL = CPLSPrintf("SELECT key_json FROM keymap WHERE "
-                                    "key_name = '%s'",
-                                    pszKey);
+                const char* pszSQL =
+                    CPLSPrintf("SELECT key_json FROM keymap WHERE "
+                               "key_name = '%s'",
+                               pszKey);
                 CPLDebug("MBTILES", "%s", pszSQL);
                 hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
                 if (hSQLLyr)
@@ -1243,13 +1241,13 @@ static
 int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                                 int &nMinLevel, int &nMaxLevel)
 {
-    const char* pszSQL;
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
     int bHasMinMaxLevel = FALSE;
 
-    pszSQL = "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
-             "SELECT value FROM metadata WHERE name = 'maxzoom'";
+    const char* pszSQL =
+        "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
+        "SELECT value FROM metadata WHERE name = 'maxzoom'";
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr)
@@ -1388,14 +1386,13 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
                      double& minX, double& minY,
                      double& maxX, double& maxY)
 {
-    const char* pszSQL;
     bool bHasBounds = false;
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
 
     if( bUseBounds )
     {
-        pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
+        const char* pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
         CPLDebug("MBTILES", "%s", pszSQL);
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
         if (hSQLLyr)
@@ -1443,9 +1440,10 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
 
     if (!bHasBounds)
     {
-        pszSQL = CPLSPrintf("SELECT min(tile_column), max(tile_column), "
-                            "min(tile_row), max(tile_row) FROM tiles "
-                            "WHERE zoom_level = %d", nMaxLevel);
+        const char* pszSQL =
+            CPLSPrintf("SELECT min(tile_column), max(tile_column), "
+                       "min(tile_row), max(tile_row) FROM tiles "
+                       "WHERE zoom_level = %d", nMaxLevel);
         CPLDebug("MBTILES", "%s", pszSQL);
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
         if (hSQLLyr == NULL)
@@ -1604,7 +1602,6 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
     VSILFILE* fpCURLOGR = NULL;
     int bFirstSelect = TRUE;
 
@@ -1636,11 +1633,12 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         }
     }
 
-    pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                            "tile_column = %d AND tile_row = %d AND zoom_level = %d",
-                            (nMinTileCol  + nMaxTileCol) / 2,
-                            (nMinTileRow  + nMaxTileRow) / 2,
-                            nMaxLevel);
+    const char* pszSQL =
+        CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                   "tile_column = %d AND tile_row = %d AND zoom_level = %d",
+                   (nMinTileCol  + nMaxTileCol) / 2,
+                   (nMinTileRow  + nMaxTileRow) / 2,
+                   nMaxLevel);
     CPLDebug("MBTILES", "%s", pszSQL);
 
     if (fpCURLOGR)
@@ -2110,11 +2108,9 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
         return false;
     }
 
-    char* pszSQL;
-
     const char* pszName = CSLFetchNameValueDef(papszOptions, "NAME",
                                                CPLGetBasename(pszFilename));
-    pszSQL = sqlite3_mprintf(
+    char* pszSQL = sqlite3_mprintf(
         "INSERT INTO metadata (name, value) VALUES ('name', '%q')", pszName );
     sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
     sqlite3_free(pszSQL);

@@ -338,12 +338,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszAccess;
-
-    if( poOpenInfo->eAccess == GA_Update )
-        pszAccess = "r+b";
-    else
-        pszAccess = "rb";
+    const char *pszAccess = poOpenInfo->eAccess == GA_Update ? "r+b" : "rb";
 
     ELASDataset *poDS = new ELASDataset();
 

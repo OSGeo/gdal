@@ -43,19 +43,16 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
 int main( int nArgc, char ** papszArgv )
 
 {
-    DDFModule   oModule;
-    const char  *pszFilename;
-    int         i;
-
-    if( nArgc > 1 )
-        pszFilename = papszArgv[1];
-    else
+    if( nArgc < 2 )
     {
         printf( "Usage: 8211view filename\n" );
         exit( 1 );
     }
 
-    for( i = 0; i < 40; i++ )
+    const char  *pszFilename = papszArgv[1];
+    DDFModule oModule;
+
+    for( int i = 0; i < 40; i++ )
     {
 /* -------------------------------------------------------------------- */
 /*      Open the file.  Note that by default errors are reported to     */
@@ -105,41 +102,34 @@ int main( int nArgc, char ** papszArgv )
 static void ViewRecordField( DDFField * poField )
 
 {
-    int         nBytesRemaining;
-    const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
 
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
 
-    pachFieldData = poField->GetData();
-    nBytesRemaining = poField->GetDataSize();
+    const char  *pachFieldData = poField->GetData();
+    int nBytesRemaining = poField->GetDataSize();
 
     /* -------------------------------------------------------- */
     /*      Loop over the repeat count for this fields          */
     /*      subfields.  The repeat count will almost            */
     /*      always be one.                                      */
     /* -------------------------------------------------------- */
-    int         iRepeat, nRepeatCount;
 
-    nRepeatCount = poField->GetRepeatCount();
+    int nRepeatCount = poField->GetRepeatCount();
 
-    for( iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
+    for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
 
         /* -------------------------------------------------------- */
         /*   Loop over all the subfields of this field, advancing   */
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
-        int     iSF;
-
-        for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
+        for( int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
-            int         nBytesConsumed;
-
-            nBytesConsumed = ViewSubfield( poSFDefn, pachFieldData,
-                                           nBytesRemaining );
+            int nBytesConsumed =
+                ViewSubfield( poSFDefn, pachFieldData, nBytesRemaining );
 
             nBytesRemaining -= nBytesConsumed;
             pachFieldData += nBytesConsumed;

@@ -951,8 +951,6 @@ const GDAL_GCP *HDF4ImageDataset::GetGCPs()
 void HDF4ImageDataset::FlushCache()
 
 {
-    const char  *pszValue;
-
     CPLMutexHolderD(&hHDF4Mutex);
 
     GDALDataset::FlushCache();
@@ -960,11 +958,12 @@ void HDF4ImageDataset::FlushCache()
     if( eAccess == GA_ReadOnly )
         return;
 
-    // Write out transformation matrix
-    pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
-                                   adfGeoTransform[0], adfGeoTransform[1],
-                                   adfGeoTransform[2], adfGeoTransform[3],
-                                   adfGeoTransform[4], adfGeoTransform[5] );
+    // Write out transformation matrix.
+    const char *pszValue =
+        CPLSPrintf( "%f, %f, %f, %f, %f, %f",
+                    adfGeoTransform[0], adfGeoTransform[1],
+                    adfGeoTransform[2], adfGeoTransform[3],
+                    adfGeoTransform[4], adfGeoTransform[5] );
     if ( (SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8,
                      static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
     {

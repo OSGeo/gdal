@@ -565,7 +565,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     const char *extension = CPLGetExtension(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
-    const char *geofile;
+    const char *geofile = NULL;
     if (extension[1] == 'O')
     {
         geofile = CPLResetExtension( pszFilename, "GEO");

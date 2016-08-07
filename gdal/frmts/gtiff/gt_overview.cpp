@@ -767,9 +767,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         // generate the overviews for all the bands block by block, and not
         // band after band, in order to write the block once and not loose
         // space in the TIFF file.
-        GDALRasterBand ***papapoOverviewBands;
-
-        papapoOverviewBands =
+        GDALRasterBand ***papapoOverviewBands =
             static_cast<GDALRasterBand ***>(
                 CPLCalloc(sizeof(void *), nBands) );
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )

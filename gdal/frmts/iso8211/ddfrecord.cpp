@@ -1318,15 +1318,14 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    const char *pachWrkData;
-    int         nInstanceSize;
+    const char *pachWrkData = NULL;
+    int nInstanceSize = 0;
 
     // We special case this to avoid a lot of warnings when initializing
     // the field the first time.
     if( poField->GetDataSize() == 0 )
     {
         pachWrkData = poField->GetData();
-        nInstanceSize = 0;
     }
     else
     {

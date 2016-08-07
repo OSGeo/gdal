@@ -662,16 +662,15 @@ CPLErr KEADataset::SetMetadata(char **papszMetadata, const char *pszDomain)
         return CE_Failure;
 
     int nIndex = 0;
-    char *pszName;
-    const char *pszValue;
     try
     {
         // go through each item
         while( papszMetadata[nIndex] != NULL )
         {
             // get the value/name
-            pszName = NULL;
-            pszValue = CPLParseNameValue( papszMetadata[nIndex], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( papszMetadata[nIndex], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )

@@ -3199,7 +3199,7 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber)
 {
-    const char *pszResult;
+    const char *pszResult = NULL;
     switch (eColorInterpretation){
     case GCI_AlphaBand:
         pszResult = NCS_BANDDESC_AllOpacity;
@@ -3332,7 +3332,7 @@ void ECWInitialize()
 /*      Allow configuration of a local cache based on configuration     */
 /*      options.  Setting the location turns things on.                 */
 /* -------------------------------------------------------------------- */
-    const char *pszOpt;
+    const char *pszOpt = NULL;
 
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
