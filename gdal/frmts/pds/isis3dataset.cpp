@@ -715,15 +715,14 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
-    int bNativeOrder = !(chByteOrder == 'M');
+    const bool bNativeOrder = chByteOrder != 'M';
 #else
-    int bNativeOrder = (chByteOrder == 'M');
+    const bool bNativeOrder = chByteOrder == 'M';
 #endif
-
 
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand *poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( EQUAL(szLayout,"Tiled") )
         {

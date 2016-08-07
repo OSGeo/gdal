@@ -512,7 +512,7 @@ static const char* BuildFullName(const char* pszTOCFilename,
                                  const char* pszFramePath,
                                  const char* pszFrameName)
 {
-    char* pszPath;
+    char* pszPath = NULL;
     if (pszFramePath[0] == '.' &&
         (pszFramePath[1] == '/' ||pszFramePath[1] == '\\'))
         pszPath = CPLStrdup(pszFramePath + 2);

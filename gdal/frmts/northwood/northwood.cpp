@@ -446,11 +446,10 @@ void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
 
 NWT_GRID *nwtOpenGrid( char *filename )
 {
-    NWT_GRID *pGrd;
     char nwtHeader[1024];
-    VSILFILE *fp;
+    VSILFILE *fp = VSIFOpenL( filename, "rb" );
 
-    if( (fp = VSIFOpenL( filename, "rb" )) == NULL )
+    if( fp == NULL )
     {
         fprintf( stderr, "\nCan't open %s\n", filename );
         return NULL;
@@ -465,7 +464,7 @@ NWT_GRID *nwtOpenGrid( char *filename )
         nwtHeader[3] != 'C' )
           return NULL;
 
-    pGrd = reinterpret_cast<NWT_GRID *>(
+    NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(
         calloc( sizeof(NWT_GRID), 1 ) );
 
     if( nwtHeader[4] == '1' )

@@ -928,12 +928,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             fpHDR = VSIFOpenL( pszHDR, "rt" );
         }
 
-        char **papszLines;
 
         if( fpHDR != NULL )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpHDR ));
-            papszLines=CSLLoad2(pszHDR, 16, 200, NULL);
+            char **papszLines = CSLLoad2(pszHDR, 16, 200, NULL);
             if (CSLCount(papszLines) == 16)
             {
 
@@ -2783,8 +2782,8 @@ void NITFDataset::InitializeTREMetadata()
 /* -------------------------------------------------------------------- */
     for( int nTRESrc = 0; nTRESrc < 2; nTRESrc++ )
     {
-        int nTREBytes;
-        char *pszTREData;
+        int nTREBytes = 0;
+        char *pszTREData = NULL;
 
         if( nTRESrc == 0 )
         {
@@ -3675,7 +3674,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char* EXTENSION, const c
 static const char *GDALToNITFDataType( GDALDataType eType )
 
 {
-    const char *pszPVType;
+    const char *pszPVType = NULL;
 
     switch( eType )
     {
@@ -4591,9 +4590,7 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Do we need to copy a colortable or other metadata?              */
 /* -------------------------------------------------------------------- */
-            GDALColorTable *poCT;
-
-            poCT = poSrcBand->GetColorTable();
+            GDALColorTable *poCT = poSrcBand->GetColorTable();
             if( poCT != NULL )
                 poDstBand->SetColorTable( poCT );
 
