@@ -290,7 +290,7 @@ bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, int b, int level)
 
 {
-    GDALMRFRasterBand *bnd;
+    GDALMRFRasterBand *bnd = NULL;
     switch(pDS->current.comp)
     {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
@@ -576,62 +576,61 @@ NAMESPACE_MRF_END
 
 USING_NAMESPACE_MRF
 
-void GDALRegister_mrf(void)
+void GDALRegister_mrf()
 
 {
-    GDALDriver *driver;
+    if( GDALGetDriverByName("MRF") != NULL )
+        return;
 
-    if (GDALGetDriverByName("MRF") == NULL) {
-        driver = new GDALDriver();
-        driver->SetDescription("MRF");
-        driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
-        driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
-        driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    GDALDriver *driver = new GDALDriver();
+    driver->SetDescription("MRF");
+    driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
+    driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
+    driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
 #if GDAL_VERSION_MAJOR >= 2
-        driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
 #endif
 
-        // These will need to be revisited, do we support complex data types too?
-        driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-            "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
+    // These will need to be revisited, do we support complex data types too?
+    driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                            "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
 
-        driver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
-            "<CreationOptionList>"
-            "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
-            "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
-            "       <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
+    driver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
+        "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
+        "       <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
 #if defined(LERC)
-            "       <Value>LERC</Value>"
+        "       <Value>LERC</Value>"
 #endif
-            "   </Option>"
-            "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
-            "       <Value>PIXEL</Value>"
-            "       <Value>BAND</Value>"
-            "   </Option>\n"
-            "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
-            "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
-            "   <Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
-            "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
-            "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
-            "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
-            "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
-            "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
-            "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
-            "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
-            "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
-            "       <Value>MULTISPECTRAL</Value>"
-            "       <Value>RGB</Value>"
-            "       <Value>YCC</Value>"
-            "   </Option>\n"
-            "</CreationOptionList>\n"
-            );
+        "   </Option>"
+        "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
+        "       <Value>PIXEL</Value>"
+        "       <Value>BAND</Value>"
+        "   </Option>\n"
+        "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
+        "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
+        "   <Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
+        "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
+        "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
+        "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
+        "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
+        "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
+        "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
+        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
+        "       <Value>MULTISPECTRAL</Value>"
+        "       <Value>RGB</Value>"
+        "       <Value>YCC</Value>"
+        "   </Option>\n"
+        "</CreationOptionList>\n");
 
-        driver->pfnOpen = GDALMRFDataset::Open;
-        driver->pfnIdentify = GDALMRFDataset::Identify;
-        driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
-        driver->pfnCreate = GDALMRFDataset::Create;
-        driver->pfnDelete = GDALMRFDataset::Delete;
-        GetGDALDriverManager()->RegisterDriver(driver);
-    }
+    driver->pfnOpen = GDALMRFDataset::Open;
+    driver->pfnIdentify = GDALMRFDataset::Identify;
+    driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
+    driver->pfnCreate = GDALMRFDataset::Create;
+    driver->pfnDelete = GDALMRFDataset::Delete;
+    GetGDALDriverManager()->RegisterDriver(driver);
 }
