@@ -493,7 +493,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = nDataSize * poGDS->nBands;
     GUInt32     iInPixel, iOutPixel, nCurBlockYSize;
-    GByte       *pabyTile;
 
     CPLAssert( poGDS != NULL
                && nBlockXOff >= 0
@@ -556,7 +555,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     nTileBytes *= nCurBlockYSize;
 
-    pabyTile = reinterpret_cast<GByte *>( VSICalloc( nTileBytes, 1 ) );
+    GByte *pabyTile = static_cast<GByte *>( VSICalloc( nTileBytes, 1 ) );
     if ( !pabyTile )
     {
         CPLError( CE_Failure, CPLE_FileIO,
