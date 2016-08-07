@@ -272,9 +272,8 @@ const char *SDEDataset::GetProjectionRef()
     }
     SE_coordref_free(coordref);
 
-    OGRSpatialReference *poSRS;
     CPLDebug ("SDERASTER", "SDE says the coordinate system is: %s'", szWKT);
-    poSRS = new OGRSpatialReference(szWKT);
+    OGRSpatialReference *poSRS = new OGRSpatialReference(szWKT);
     poSRS->morphFromESRI();
 
     poSRS->exportToWkt(&pszWKT);
@@ -392,9 +391,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    SDEDataset *poDS;
-
-    poDS = new SDEDataset();
+    SDEDataset *poDS = new SDEDataset();
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
