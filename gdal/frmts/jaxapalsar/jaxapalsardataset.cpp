@@ -553,40 +553,36 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     int nBandNum = 1;
 
     /* HH */
-    VSILFILE *fpHH;
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpHH = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpHH = VSIFOpenL( pszImgFile, "rb" );
     if (fpHH != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 0, fpHH ) );
         nBandNum++;
     }
 
     /* HV */
-    VSILFILE *fpHV;
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpHV = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpHV = VSIFOpenL( pszImgFile, "rb" );
     if (fpHV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 1, fpHV ) );
         nBandNum++;
     }
 
     /* VH */
-    VSILFILE *fpVH;
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpVH = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpVH = VSIFOpenL( pszImgFile, "rb" );
     if (fpVH != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 2, fpVH ) );
         nBandNum++;
     }
 
     /* VV */
-    VSILFILE *fpVV;
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpVV = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpVV = VSIFOpenL( pszImgFile, "rb" );
     if (fpVV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 3, fpVV ) );
         nBandNum++;

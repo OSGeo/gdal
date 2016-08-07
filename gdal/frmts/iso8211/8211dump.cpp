@@ -113,7 +113,7 @@ int main( int nArgc, char ** papszArgv )
         for( int i = 0; i < nFieldDefnCount; i++ )
         {
             DDFFieldDefn* poFieldDefn = oModule.GetField(i);
-            const char* pszDataStructCode;
+            const char* pszDataStructCode = NULL;
             switch( poFieldDefn->GetDataStructCode() )
             {
                 case dsc_elementary:
@@ -137,7 +137,7 @@ int main( int nArgc, char ** papszArgv )
                     break;
             }
 
-            const char* pszDataTypeCode;
+            const char* pszDataTypeCode = NULL;
             switch( poFieldDefn->GetDataTypeCode() )
             {
                 case dtc_char_string:

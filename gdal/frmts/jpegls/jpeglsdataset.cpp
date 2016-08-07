@@ -446,10 +446,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPEGLSDataset     *poDS;
-    int                 iBand;
-
-    poDS = new JPEGLSDataset();
+    JPEGLSDataset *poDS = new JPEGLSDataset();
     poDS->osFilename = poOpenInfo->pszFilename;
     poDS->nRasterXSize = sParams.width;
     poDS->nRasterYSize = sParams.height;
@@ -460,7 +457,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEGLSRasterBand( poDS, iBand) );
 

@@ -827,8 +827,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
-    int                 iBand;
-    GDALRasterBand      *poBand;
 
     if( nBands == 0 )
     {
@@ -847,6 +845,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
+    // TODO(schwehr): Localize these vars.
+    int iBand;
+    GDALRasterBand  *poBand = NULL;
     for ( iBand = 0; iBand < nBands; iBand++ )
     {
         poBand = poSrcDS->GetRasterBand( iBand + 1);
@@ -984,11 +985,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*       Read compression parameters and encode the image.              */
 /* -------------------------------------------------------------------- */
-    int             i, j;
-    const int       OPTSMAX = 4096;
-    const char      *pszFormatName;
-    char            pszOptionBuf[OPTSMAX + 1];
-
     const char  *apszComprOptions[]=
     {
         "imgareatlx",
@@ -1018,27 +1014,29 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         NULL
     };
 
-    pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
+    const char *pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
     if ( !pszFormatName ||
          (!STARTS_WITH_CI(pszFormatName, "jp2") &&
           !STARTS_WITH_CI(pszFormatName, "jpc") ) )
         pszFormatName = "jp2";
 
-    pszOptionBuf[0] = '\0';
+    // TODO(schwehr): Move pszOptionBuf off the stack.
+    const int OPTSMAX = 4096;
+    char pszOptionBuf[OPTSMAX + 1] = {};
+
     if ( papszOptions )
     {
         CPLDebug( "JPEG2000", "User supplied parameters:" );
-        for ( i = 0; papszOptions[i] != NULL; i++ )
+        for ( int i = 0; papszOptions[i] != NULL; i++ )
         {
             CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
-            for ( j = 0; apszComprOptions[j] != NULL; j++ )
+            for ( int j = 0; apszComprOptions[j] != NULL; j++ )
                 if( EQUALN( apszComprOptions[j], papszOptions[i],
                             strlen(apszComprOptions[j]) ) )
                 {
-                    int m, n;
-
-                    n = static_cast<int>(strlen( pszOptionBuf ));
-                    m = n + static_cast<int>(strlen( papszOptions[i] )) + 1;
+                    const int n = static_cast<int>(strlen( pszOptionBuf ));
+                    const int m =
+                        n + static_cast<int>(strlen( papszOptions[i] )) + 1;
                     if ( m > OPTSMAX )
                         break;
                     if ( n > 0 )

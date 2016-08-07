@@ -327,15 +327,14 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
     int nIndex = 0;
-    char *pszName;
-    const char *pszValue;
     try
     {
         // iterate through each one
         while( papszMetadata[nIndex] != NULL )
         {
-            pszName = NULL;
-            pszValue = CPLParseNameValue( papszMetadata[nIndex], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( papszMetadata[nIndex], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )

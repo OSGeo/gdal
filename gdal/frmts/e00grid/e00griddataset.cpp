@@ -815,7 +815,7 @@ void E00GRIDDataset::ReadMetadata()
             return;
     }
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     bool bPRJFound = false;
     bool bStatsFound = false;
     while((pszLine = ReadLine()) != NULL)

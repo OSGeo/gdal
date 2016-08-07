@@ -876,10 +876,6 @@ ADRGDataset* ADRGDataset::OpenDataset(
     int TIF;
     int* TILEINDEX = NULL;
 
-    DDFField* field;
-    DDFFieldDefn *fieldDefn;
-    DDFSubfieldDefn* subfieldDefn;
-
     if (record == NULL)
     {
         record = FindRecordInGENForIMG(module, pszGENFileName, pszIMGFileName);
@@ -887,10 +883,10 @@ ADRGDataset* ADRGDataset::OpenDataset(
             return NULL;
     }
 
-    field = record->GetField(1);
+    DDFField* field = record->GetField(1);
     if( field == NULL )
         return NULL;
-    fieldDefn = field->GetFieldDefn();
+    DDFFieldDefn *fieldDefn = field->GetFieldDefn();
 
     if (!(strcmp(fieldDefn->GetName(), "DSI") == 0 &&
           fieldDefn->GetSubfieldCount() == 2))
@@ -1035,7 +1031,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     }
     CPLDebug("ADRG", "BAD=%s", osBAD.c_str());
 
-    subfieldDefn = fieldDefn->GetSubfield(14);
+    DDFSubfieldDefn* subfieldDefn = fieldDefn->GetSubfield(14);
     if (!(strcmp(subfieldDefn->GetName(), "TIF") == 0 &&
             (subfieldDefn->GetFormat())[0] == 'A'))
     {
@@ -1398,7 +1394,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             }
             else
             {
-                char** papszDirContent;
+                char** papszDirContent = NULL;
                 if (strcmp(osGENDir.c_str(), "/vsimem") == 0)
                 {
                     CPLString osTmp = osGENDir + "/";

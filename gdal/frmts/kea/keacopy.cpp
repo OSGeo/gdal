@@ -311,13 +311,12 @@ static void KEACopyMetadata( GDALMajorObject *pObject, kealib::KEAImageIO *pImag
     char **ppszMetadata = pObject->GetMetadata();
     if( ppszMetadata != NULL )
     {
-        char *pszName;
-        const char *pszValue;
         int nCount = 0;
         while( ppszMetadata[nCount] != NULL )
         {
-            pszName = NULL;
-            pszValue = CPLParseNameValue( ppszMetadata[nCount], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( ppszMetadata[nCount], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )

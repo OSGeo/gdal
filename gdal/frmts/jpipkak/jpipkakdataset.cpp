@@ -1435,8 +1435,7 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
         // using cpl_http for the connection
         if  (CPLHTTPEnabled() == TRUE)
         {
-            JPIPKAKDataset *poDS;
-            poDS = new JPIPKAKDataset();
+            JPIPKAKDataset *poDS = new JPIPKAKDataset();
             if (poDS->Initialize(poOpenInfo->pszFilename,FALSE))
             {
                 poDS->SetDescription( poOpenInfo->pszFilename );

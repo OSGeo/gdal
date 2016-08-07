@@ -995,7 +995,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Scan for all datasets matching the reference dataset.           */
 /* -------------------------------------------------------------------- */
     int num_dsr2, dsr_size2, iBand = 0;
-    const char *pszDSName;
+    const char *pszDSName = NULL;
     char szBandName[128];
     bool bMiltiChannel;
 

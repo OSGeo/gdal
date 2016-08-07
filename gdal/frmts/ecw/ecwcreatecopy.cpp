@@ -548,7 +548,6 @@ CPLErr GDALECWCompressor::Initialize(
     GDALDataset* poSrcDS )
 
 {
-     const char *pszOption;
 /* -------------------------------------------------------------------- */
 /*      For 4.x and beyond you need a license key to compress data.     */
 /*      Check for it as a configuration option or a creation option.    */
@@ -625,6 +624,7 @@ CPLErr GDALECWCompressor::Initialize(
 /*      Create and initialize compressor.                               */
 /* -------------------------------------------------------------------- */
     NCSFileViewFileInfoEx    *psClient = &(sFileInfo);
+    const char *pszOption = NULL;
 #if ECWSDK_VERSION >= 50
     if( bIsJPEG2000 == FALSE )
     {
@@ -1866,9 +1866,7 @@ CPLErr ECWWriteDataset::FlushLine()
     if( nLoadedLine != -1 )
     {
 
-        void **papOutputLine;
-
-        papOutputLine = (void **) CPLMalloc(sizeof(void*) * nBands);
+        void **papOutputLine = (void **) CPLMalloc(sizeof(void*) * nBands);
         for( int i = 0; i < nBands; i++ )
             papOutputLine[i] =
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);

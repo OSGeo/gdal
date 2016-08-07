@@ -9609,14 +9609,12 @@ CPLErr GTiffDataset::IBuildOverviews(
         // trigger cascading overview regeneration even in the presence
         // of an alpha band.
 
-        GDALRasterBand ***papapoOverviewBands;
-        GDALRasterBand  **papoBandList;
-
         int nNewOverviews = 0;
 
-        papapoOverviewBands =
+        GDALRasterBand ***papapoOverviewBands =
             (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBandsIn);
-        papoBandList = (GDALRasterBand **) CPLCalloc(sizeof(void*),nBandsIn);
+        GDALRasterBand  **papoBandList =
+            (GDALRasterBand **) CPLCalloc(sizeof(void*),nBandsIn);
         for( int iBand = 0; iBand < nBandsIn; ++iBand )
         {
             GDALRasterBand* poBand = GetRasterBand( panBandList[iBand] );
@@ -9683,9 +9681,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
     else
     {
-        GDALRasterBand **papoOverviewBands;
-
-        papoOverviewBands = static_cast<GDALRasterBand **>(
+        GDALRasterBand **papoOverviewBands = static_cast<GDALRasterBand **>(
             CPLCalloc(sizeof(void*), nOverviews) );
 
         for( int iBand = 0; iBand < nBandsIn && eErr == CE_None; ++iBand )
@@ -10450,9 +10446,7 @@ void GTiffDataset::PushMetadataToPam()
 /* -------------------------------------------------------------------- */
 /*      Loop over the available domains.                                */
 /* -------------------------------------------------------------------- */
-        char **papszDomainList;
-
-        papszDomainList = poSrcMDMD->GetDomainList();
+        char **papszDomainList = poSrcMDMD->GetDomainList();
         for( int iDomain = 0;
              papszDomainList && papszDomainList[iDomain];
              ++iDomain )
