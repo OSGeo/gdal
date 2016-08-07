@@ -1169,7 +1169,7 @@ void OWStatement::Free( OCILobLocator** pphLocator, int nCount )
 int OWStatement::GetElement( OCIArray** ppoData, int nIndex, int* pnResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     ub4            element_type;
 
     *pnResult = 0;
@@ -1205,7 +1205,7 @@ double OWStatement::GetElement( OCIArray** ppoData,
                                int nIndex, double* pdfResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     double         element_type;
 
     *pdfResult = 0.0;
