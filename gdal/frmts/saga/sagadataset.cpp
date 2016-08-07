@@ -439,7 +439,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     char szByteOrderBig[10] = "FALSE";
     char szTopToBottom[10] = "FALSE";
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
