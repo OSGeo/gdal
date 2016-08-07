@@ -822,10 +822,9 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
 /*      Try to fetch the record.                                        */
 /* -------------------------------------------------------------------- */
-    CeosRecord_t *record;
-
-    record = FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
-                             -1, nRecordIndex );
+    CeosRecord_t *record =
+        FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
+                        -1, nRecordIndex );
 
     if( record == NULL )
         return NULL;
@@ -2075,8 +2074,6 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
     int                CurrentBodyLength = 0;
     int                CurrentType = 0;
     int                CurrentSequence = 0;
-    Link_t             *TheLink;
-    CeosRecord_t       *record;
     int                iThisRecord = 0;
 
     while(max_records != 0 && max_bytes != 0)
@@ -2092,7 +2089,8 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             CPLFree(temp_body);
             return CE_Failure;
         }
-        record = (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
+        CeosRecord_t *record =
+            (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
         record->Length = DetermineCeosRecordBodyLength( temp_buffer );
 
         CeosToNative( &(record->Sequence), temp_buffer, 4, 4 );
@@ -2172,7 +2170,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
         record->FileId = fileid;
 
-        TheLink = ceos2CreateLink( record );
+        Link_t *TheLink = ceos2CreateLink( record );
 
         if( sar->RecordList == NULL )
             sar->RecordList = TheLink;
