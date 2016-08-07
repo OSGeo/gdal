@@ -628,9 +628,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const char  *pszPrjFile = CPLResetExtension( poOpenInfo->pszFilename,
                                                      "prj" );
-        VSILFILE *fp;
-
-        fp = VSIFOpenL( pszPrjFile, "rt" );
+        VSILFILE *fp = VSIFOpenL( pszPrjFile, "rt" );
         if( fp != NULL )
         {
             char *pszBuffer, *pszBufPtr;

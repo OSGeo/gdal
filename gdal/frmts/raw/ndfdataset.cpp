@@ -180,10 +180,10 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (fp == NULL)
         return NULL;
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     const int nHeaderMax = 1000;
     int nHeaderLines = 0;
-    char **papszHeader = reinterpret_cast<char **>(
+    char **papszHeader = static_cast<char **>(
         CPLMalloc( sizeof(char *) * (nHeaderMax+1) ) );
 
     while( nHeaderLines < nHeaderMax

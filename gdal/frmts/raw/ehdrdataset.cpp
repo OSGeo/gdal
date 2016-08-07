@@ -1132,7 +1132,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfMin = 0;
     double dfMax = 0;
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
