@@ -1320,7 +1320,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         VSILFILE* fp = VSIFOpenL(pszMETFilename, "rb");
         if (fp)
         {
-            const char* pszLine;
+            const char* pszLine = NULL;
             int nCountLine = 0;
             int nUTMZone = 0;
             int bWGS84 = FALSE;
@@ -1430,9 +1430,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
 
     if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
     {
-        const char *pszExtension;
-
-        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        const char *pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
 
         if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k")
             && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx")
@@ -1481,10 +1479,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MrSIDDataset    *poDS;
     LT_STATUS       eStat;
 
-    poDS = new MrSIDDataset(bIsJP2);
+    MrSIDDataset *poDS = new MrSIDDataset(bIsJP2);
 
     // try the LTIOFileStream first, since it uses filesystem caching
     eStat = poDS->oLTIStream.initialize( poOpenInfo->pszFilename, "rb" );
@@ -2697,11 +2694,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
     if( psDefnIn->Model == ModelTypeProjected )
     {
-        char    *pszPCSName;
         int     bPCSNameSet = FALSE;
 
         if( psDefnIn->PCS != KvUserDefined )
         {
+            char *pszPCSName = NULL;
 
             if( GTIFGetPCSInfo( psDefnIn->PCS, &pszPCSName, NULL, NULL, NULL ) )
                 bPCSNameSet = TRUE;
@@ -2968,10 +2965,9 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
 /*      Return the WKT serialization of the object.                     */
 /* -------------------------------------------------------------------- */
-    char        *pszWKT;
-
     oSRS.FixupOrdering();
 
+    char *pszWKT = NULL;
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
         return pszWKT;
     else
