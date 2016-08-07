@@ -197,10 +197,9 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
 /* -------------------------------------------------------------------- */
 /*      Scan the file.                                                  */
 /* -------------------------------------------------------------------- */
-
     poModule->Rewind();
 
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     char **papszModnList = NULL;
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {

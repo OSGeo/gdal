@@ -1841,7 +1841,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     for(int nBand=1;nBand<=nBands;nBand++)
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -1905,12 +1905,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        GDALProxyPoolDataset* proxyDS;
-        proxyDS = new GDALProxyPoolDataset(         osTile,
-                                                    poDS->nRasterXSize,
-                                                    poDS->nRasterYSize,
-                                                    GA_ReadOnly,
-                                                    TRUE);
+        GDALProxyPoolDataset* proxyDS =
+            new GDALProxyPoolDataset( osTile,
+                                      poDS->nRasterXSize,
+                                      poDS->nRasterYSize,
+                                      GA_ReadOnly,
+                                      TRUE );
         proxyDS->AddSrcBandDescription(eDT, 128, 128);
 
         if( nBand != nAlphaBand )
@@ -2934,9 +2934,9 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
     std::map<CPLString, GDALProxyPoolDataset*> oMapPVITile;
 
-    for(int nBand=1;nBand<=nBands;nBand++)
+    for( int nBand = 1; nBand <= nBands; nBand++ )
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -3006,7 +3006,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
                 continue;
             }
 
-            GDALProxyPoolDataset* proxyDS;
+            GDALProxyPoolDataset* proxyDS = NULL;
             if( bIsPreview )
             {
                 proxyDS = oMapPVITile[osTile];

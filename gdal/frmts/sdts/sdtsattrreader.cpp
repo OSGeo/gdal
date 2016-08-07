@@ -196,7 +196,7 @@ SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
 
 {
     SDTSModId   oModId;
-    DDFRecord   *poRawRecord;
+    DDFRecord   *poRawRecord = NULL;
 
     DDFField *poATTRField = GetNextRecord( &oModId, &poRawRecord, TRUE );
 

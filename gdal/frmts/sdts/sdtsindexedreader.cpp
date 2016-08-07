@@ -178,13 +178,12 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-
     if( nIndexSize != 0 )
         return;
 
     Rewind();
 
-    SDTSFeature *poFeature;
+    SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextRawFeature()) != NULL )
     {
         const int iRecordId = poFeature->oModId.nRecord;

@@ -616,7 +616,7 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
 /* -------------------------------------------------------------------- */
     Rewind();
 
-    SDTSFeature *poFeature;
+    SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         SDTSRawPolygon  *poPoly
