@@ -1109,7 +1109,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     /* -------------------------------------------------------------------- */
     /*      Collect information from the POLYLINE object itself.            */
     /* -------------------------------------------------------------------- */
-    
+
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
         switch( nCode )
@@ -1231,7 +1231,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             OGRLinearRing *poLR = new OGRLinearRing();
             int iPoint = 0;
             int startPoint = -1;
-            if (vertexIndex71 != -1)
+            if (vertexIndex71 > 0 && vertexIndex71 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex71-1;
@@ -1239,7 +1239,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex71 = -1;
             }
-            if (vertexIndex72 != -1)
+            if (vertexIndex72 > 0 && vertexIndex72 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex72-1;
@@ -1247,7 +1247,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex72 = -1;
             }
-            if (vertexIndex73 != -1)
+            if (vertexIndex73 > 0 && vertexIndex73 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex73-1;
@@ -1255,7 +1255,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex73 = -1;
             }
-            if (vertexIndex74 != -1)
+            if (vertexIndex74 > 0 && vertexIndex74 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex74-1;
@@ -1294,20 +1294,18 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
-    if (poPS->getNumGeometries() > 0)
+    // delete the list of points
+    if( papoPoints != NULL )
     {
-        // delete the list of points
-        if( papoPoints != NULL )
-        {
-            for (int i = 0; i < nPoints; i++)
-            {
-                delete papoPoints[i];
-            }
-            OGRFree(papoPoints);
-        }
+        for (int i = 0; i < nPoints; i++)
+            delete papoPoints[i];
+        OGRFree(papoPoints);
         nPoints = 0;
         papoPoints = NULL;
+    }
 
+    if (poPS->getNumGeometries() > 0)
+    {
         poFeature->SetGeometryDirectly((OGRGeometry *)poPS);
         return poFeature;
     }
