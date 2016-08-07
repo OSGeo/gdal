@@ -54,7 +54,8 @@ gdalwarp [--help-general] [--formats]
     [-te xmin ymin xmax ymax] [-te_srs srs_def]
     [-tr xres yres] [-tap] [-ts width height]
     [-ovr level|AUTO|AUTO-n|NONE] [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
+    [-srcalpha|-nosrcalpha] [-dstalpha]
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
@@ -167,6 +168,10 @@ as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
 file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=1.11).
 If this argument is not used then nodata values will be copied from the source dataset (GDAL>=1.11).</dd>
+<dt> <b>-srcalpha</b>:</dt><dd> Force the last band of a source image to be
+considered as a source alpha band. </dd>
+<dt> <b>-nosrcalpha</b>:</dt><dd> Prevent the alpha band of a source image to be
+considered as such (it will be warped as a regular band) (GDAL>=2.2). </dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify
 nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
