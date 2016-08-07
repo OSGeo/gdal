@@ -1934,9 +1934,12 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     if( eErr == CE_None
         && oWK.pafUnifiedSrcDensity == NULL
+        && oWK.panUnifiedSrcValid == NULL
         && psOptions->nSrcAlphaBand <= 0
-        && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) &&
-        nSrcXSize > 0 && nSrcYSize > 0 )
+        && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET)
+        // Need to double check for -nosrcalpha case
+        && !(GDALGetMaskFlags(hSrcBand) & GMF_ALPHA)
+        && nSrcXSize > 0 && nSrcYSize > 0 )
 
     {
         eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcValid" );

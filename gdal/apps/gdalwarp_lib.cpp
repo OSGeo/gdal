@@ -98,9 +98,11 @@ struct GDALWarpAppOptions
         when set to true */
     bool bEnableDstAlpha;
 
-    /*! forces the last band of an input file to be considered as alpha band.
-     * Undocumented option */
+    /*! forces the last band of an input file to be considered as alpha band. */
     bool bEnableSrcAlpha;
+
+    /*! Prevent a source alpha band from being considered as such */
+    bool bDisableSrcAlpha;
 
     /*! output format. The default is GeoTIFF (GTiff). Use the short format name. */
     char *pszFormat;
@@ -638,7 +640,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
     if( hDstDS == NULL )
     {
-        if( nSrcCount == 1 && pahSrcDS[0] != NULL )
+        if( nSrcCount == 1 && pahSrcDS[0] != NULL && !psOptions->bDisableSrcAlpha )
         {
             if( GDALGetRasterCount(pahSrcDS[0]) > 0 &&
                 GDALGetRasterColorInterpretation(
@@ -652,7 +654,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                             GDALGetRasterCount(pahSrcDS[0]) );
             }
         }
-      
+
         hDstDS = GDALWarpCreateOutput( nSrcCount, pahSrcDS, pszDest,psOptions->pszFormat,
                                        psOptions->papszTO, &psOptions->papszCreateOptions,
                                        psOptions->eOutputType, &hUniqueTransformArg,
@@ -702,7 +704,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         && GDALGetRasterCount(hDstDS)
         && GDALGetRasterColorInterpretation(
             GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS)))
-        == GCI_AlphaBand )
+        == GCI_AlphaBand && !psOptions->bDisableSrcAlpha )
     {
         if( !psOptions->bQuiet )
             printf( "Using band %d of destination image as alpha.\n",
@@ -756,7 +758,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if( GDALGetRasterColorInterpretation(
                 GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) )
             == GCI_AlphaBand
-            && !bEnableSrcAlpha )
+            && !bEnableSrcAlpha && !psOptions->bDisableSrcAlpha )
         {
             bEnableSrcAlpha = true;
             if( !psOptions->bQuiet )
@@ -1681,8 +1683,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 
             for(int iBand = 0; iBand < nDstBandCount; iBand++)
             {
-                apeColorInterpretations.push_back(
-                    GDALGetRasterColorInterpretation(GDALGetRasterBand(pahSrcDS[iSrc],iBand+1)) );
+                GDALColorInterp eInterp =
+                    GDALGetRasterColorInterpretation(GDALGetRasterBand(pahSrcDS[iSrc],iBand+1));
+                apeColorInterpretations.push_back( eInterp );
             }
         }
 
@@ -2009,7 +2012,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                                                "PHOTOMETRIC", "RGB");
         bSetColorInterpretation = true;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
@@ -2504,6 +2507,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
     psOptions->pProgressData = NULL;
     psOptions->bEnableDstAlpha = false;
     psOptions->bEnableSrcAlpha = false;
+    psOptions->bDisableSrcAlpha = false;
     psOptions->pszFormat = CPLStrdup("GTiff");
     psOptions->bCreateOutput = FALSE;
     psOptions->papszWarpOptions = NULL;
@@ -2573,6 +2577,10 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-srcalpha") )
         {
             psOptions->bEnableSrcAlpha = true;
+        }
+        else if( EQUAL(papszArgv[i],"-nosrcalpha") )
+        {
+            psOptions->bDisableSrcAlpha = true;
         }
         else if( EQUAL(papszArgv[i],"-of") && i+1 < argc )
         {
@@ -2910,6 +2918,14 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
                 psOptionsForBinary->papszSrcFiles = CSLAddString( psOptionsForBinary->papszSrcFiles, papszArgv[i] );
             }
         }
+    }
+
+    if( psOptions->bEnableSrcAlpha && psOptions->bDisableSrcAlpha )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "-srcalpha and -nosrcalpha cannot be used together");
+        GDALWarpAppOptionsFree(psOptions);
+        return NULL;
     }
 
     if( psOptionsForBinary )

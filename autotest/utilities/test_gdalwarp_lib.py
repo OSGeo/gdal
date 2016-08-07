@@ -1107,7 +1107,7 @@ def test_gdalwarp_lib_130():
     src_ds.GetRasterBand(3).Fill(3)
     src_ds.GetRasterBand(4).Fill(4)
     src_ds.GetRasterBand(5).Fill(255)
-  
+
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_130_dst.tif', src_ds)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('bad color interpretation')
@@ -1145,6 +1145,35 @@ def test_gdalwarp_lib_130():
 
     gdal.Unlink('/vsimem/test_gdalwarp_lib_130.tif')
     gdal.Unlink('/vsimem/test_gdalwarp_lib_130_dst.tif')
+
+    return 'success'
+
+###############################################################################
+# Test -nosrcalpha
+
+def test_gdalwarp_lib_131():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/test_gdalwarp_lib_131.tif', 1, 1, 2)
+    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(1).Fill(1)
+    src_ds.GetRasterBand(2).Fill(0)
+
+    ds = gdal.Warp('/vsimem/test_gdalwarp_lib_131_dst.tif', src_ds, options = '-nosrcalpha')
+    expected_val = [1,0]
+    for i in range(2):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+    src_ds = None
+    ds = None
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml')
 
     return 'success'
 
@@ -1227,6 +1256,7 @@ gdaltest_list = [
     test_gdalwarp_lib_128,
     test_gdalwarp_lib_129,
     test_gdalwarp_lib_130,
+    test_gdalwarp_lib_131,
     test_gdalwarp_lib_cleanup,
     ]
 
