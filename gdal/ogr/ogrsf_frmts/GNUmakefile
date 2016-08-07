@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= \
-	cad generic avc bna csv dgn geojson gml gmt mem kml \
+	generic avc bna csv dgn geojson gml gmt mem kml \
 	mitab ntf gpx rec s57 sdts shape tiger vrt \
 	geoconcept xplane georss gtm dxf pgdump gpsbabel \
 	sua openair pds htf aeronavfaa edigeo svg idrisi \
@@ -10,6 +10,7 @@ SUBDIRS-yes	:= \
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
+SUBDIRS-$(HAVE_CAD)	+= cad
 SUBDIRS-$(HAVE_FME)	+= fme
 SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_IDB)	+= idb

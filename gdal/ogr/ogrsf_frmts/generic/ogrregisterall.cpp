@@ -163,7 +163,7 @@ void OGRRegisterAllInternal()
 #ifdef DXF_ENABLED
     RegisterOGRDXF();
 #endif
-#ifdef CAD_ENABLED 
+#ifdef CAD_ENABLED
     RegisterOGRCAD();
 #endif
 #ifdef GRASS_ENABLED
