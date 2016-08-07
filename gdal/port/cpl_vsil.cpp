@@ -577,11 +577,11 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
     return VSIFOpenExL(pszFilename, pszAccess, false);
 }
 
-//! @cond Doxygen_Suppress
-
 /************************************************************************/
 /*                               Open()                                 */
 /************************************************************************/
+
+#ifndef DOXYGEN_SKIP
 
 VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
                                           const char *pszAccess )
@@ -589,7 +589,7 @@ VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
     return Open(pszFilename, pszAccess, false);
 }
 
-//! @endcond
+#endif
 
 /************************************************************************/
 /*                             VSIFOpenExL()                              */
@@ -1456,7 +1456,7 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 /* ==================================================================== */
 /************************************************************************/
 
-//! @cond Doxygen_Suppress
+#ifndef DOXYGEN_SKIP
 
 /*
 ** Notes on Multithreading:
@@ -1689,4 +1689,5 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
     return nRet;
 }
 
-//! @endcond
+#endif /* #ifndef DOXYGEN_SKIP */
+
