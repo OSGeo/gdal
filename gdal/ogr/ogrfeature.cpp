@@ -942,7 +942,7 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::GetFieldCount();
+ * \fn int OGRFeature::GetFieldCount() const;
  *
  * \brief Fetch number of fields on this feature.
  * This will always be the same
@@ -981,7 +981,7 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 /************************************************************************/
 
 /**
- * \fn OGRFieldDefn *OGRFeature::GetFieldDefnRef( int iField );
+ * \fn OGRFieldDefn *OGRFeature::GetFieldDefnRef( int iField ) const;
  *
  * \brief Fetch definition for this field.
  *
@@ -1072,7 +1072,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::GetGeomFieldCount();
+ * \fn int OGRFeature::GetGeomFieldCount() const;
  *
  * \brief Fetch number of geometry fields on this feature.
  * This will always be the same
@@ -1208,8 +1208,6 @@ int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::IsFieldSet( int iField ) const;
- *
  * \brief Test if a field has ever been assigned a value or not.
  *
  * This method is the same as the C function OGR_F_IsFieldSet().
@@ -4557,7 +4555,7 @@ void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 /************************************************************************/
 
 /**
- * \fn GIntBig OGRFeature::GetFID();
+ * \fn GIntBig OGRFeature::GetFID() const;
  *
  * \brief Get feature identifier.
  *

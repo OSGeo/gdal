@@ -944,7 +944,9 @@ PREDEFINED             = HAVE_DLFCN_H \
                          UNUSED_IF_NO_GEOS= \
                          isinf \
                          HAVE_LIBXML2 \
-                         HAVE_RECENT_LIBXML2
+                         HAVE_RECENT_LIBXML2 \
+                         HAVE_LONG_LONG=1 \
+                         HAVE_SC_PHYS_PAGES=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

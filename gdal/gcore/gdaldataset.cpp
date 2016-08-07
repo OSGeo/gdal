@@ -5368,6 +5368,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
     return ExecuteSQL(pszStatement, poSpatialFilter, pszDialect, NULL);
 }
 
+//! @cond Doxygen_Suppress
 OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect,
@@ -5527,6 +5528,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                 papoSrcLayers,
                                 TRUE);
 }
+//! @endcond
 
 /************************************************************************/
 /*                        BuildLayerFromSelectInfo()                    */

@@ -1750,6 +1750,8 @@ void OGR_ST_SetUnit( OGRStyleToolH hST, OGRSTUnitId eUnit,
 /************************************************************************/
 /*                               Parse()                                */
 /************************************************************************/
+
+//! @cond Doxygen_Suppress
 GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
                           OGRStyleValue *pasValue,
                           int nCount)
@@ -1922,6 +1924,7 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
 
     return TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                   SetInternalInputUnitFromParam()                    */

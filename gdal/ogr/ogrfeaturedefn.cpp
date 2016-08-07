@@ -1267,7 +1267,7 @@ void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /************************************************************************/
 
 /**
- * \fn int OGRFeatureDefn::IsStyleIgnored();
+ * \fn int OGRFeatureDefn::IsStyleIgnored() const;
  *
  * \brief Determine whether the style can be omitted when fetching features
  *
