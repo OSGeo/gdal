@@ -464,10 +464,9 @@ CPLErr NWT_GRDDataset::SetGeoTransform(double *padfTransform) {
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 const char *NWT_GRDDataset::GetProjectionRef() {
-    const char *pszProjection;
 
     // First try getting it from the PAM dataset
-    pszProjection = GDALPamDataset::GetProjectionRef();
+    const char *pszProjection = GDALPamDataset::GetProjectionRef();
 
     // If that isn't possible, read it from the GRD file. This may be a less
     //  complete projection string.
@@ -541,10 +540,9 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    NWT_GRDDataset *poDS;
-    int nBandsToCreate;
+    int nBandsToCreate = 0;
 
-    poDS = new NWT_GRDDataset();
+    NWT_GRDDataset *poDS = new NWT_GRDDataset();
 
     if (poOpenInfo->eAccess == GA_Update) {
         poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
@@ -823,8 +821,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
                 "Float32 is the only supported data type");
         return NULL;
     }
-    NWT_GRDDataset *poDS;
-    poDS = new NWT_GRDDataset();
+    NWT_GRDDataset *poDS = new NWT_GRDDataset();
     poDS->eAccess = GA_Update;
     poDS->pGrd = reinterpret_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
 

@@ -556,7 +556,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         {
             char* baseDir = CPLStrdup(CPLGetDirname(pszFilename));
             VSIStatBufL sStatBuf;
-            char* subdir;
+            char* subdir = NULL;
             if (CPLIsFilenameRelative(frameEntry->directory) == FALSE)
                 subdir = CPLStrdup(frameEntry->directory);
             else if (frameEntry->directory[0] == '.' && frameEntry->directory[1] == 0)

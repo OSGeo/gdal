@@ -106,7 +106,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
         if( nBytesRead < 512 )
             break;
 
-        const char *pszCheck;
+        const char *pszCheck = NULL;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
