@@ -293,9 +293,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         CSLFetchNameValue( psWInfo->papszOptions, "TEMPLATE" );
     if( pszTemplate != NULL )
     {
-        VSILFILE *fpTemplate;
-
-        fpTemplate = VSIFOpenL( pszTemplate, "rb" );
+        VSILFILE *fpTemplate = VSIFOpenL( pszTemplate, "rb" );
         if( fpTemplate == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -852,7 +850,7 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /*                      USGSDEM_LookupNTSByLoc()                        */
 /************************************************************************/
 
-static int
+static bool
 USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
                         char *pszTile, char *pszName )
 
@@ -867,7 +865,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -878,8 +876,8 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /* -------------------------------------------------------------------- */
 /*      Find desired sheet.                                             */
 /* -------------------------------------------------------------------- */
-    int  bGotHit = FALSE;
-    char **papszTokens;
+    bool bGotHit = false;
+    char **papszTokens = NULL;
 
     while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
@@ -893,7 +891,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
         if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01
             && ABS(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
         {
-            bGotHit = TRUE;
+            bGotHit = true;
             strncpy( pszTile, papszTokens[0], 7 );
             if( pszName != NULL )
                 strncpy( pszName, papszTokens[1], 100 );
@@ -911,7 +909,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /*                      USGSDEM_LookupNTSByTile()                       */
 /************************************************************************/
 
-static int
+static bool
 USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
                          double *pdfULLong, double *pdfULLat )
 
@@ -920,14 +918,12 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
 /*      Access NTS 1:50k sheet CSV file.                                */
 /* -------------------------------------------------------------------- */
     const char *pszNTSFilename = CSVFilename( "NTS-50kindex.csv" );
-    FILE *fpNTS;
-
-    fpNTS = VSIFOpen( pszNTSFilename, "rb" );
+    FILE *fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -939,7 +935,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
 /*      Find desired sheet.                                             */
 /* -------------------------------------------------------------------- */
     bool bGotHit = false;
-    char **papszTokens;
+    char **papszTokens = NULL;
 
     while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
