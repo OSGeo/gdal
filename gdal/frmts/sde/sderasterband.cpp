@@ -460,18 +460,13 @@ void SDERasterBand::ComputeColorTable(void)
     SE_COLORMAP_DATA_TYPE eCMap_DataType;
 
     LONG nCMapEntries;
-    void * phSDEColormapData;
-
-    unsigned char* puszSDECMapData;
-    unsigned short* pushSDECMapData;
-
-    long nSDEErr;
-
-    nSDEErr = SE_rasbandinfo_get_colormap(  *poBand,
-                                            &eCMap_Type,
-                                            &eCMap_DataType,
-                                            &nCMapEntries,
-                                            &phSDEColormapData);
+    void *phSDEColormapData = NULL;
+    long nSDEErr =
+        SE_rasbandinfo_get_colormap( *poBand,
+                                     &eCMap_Type,
+                                     &eCMap_DataType,
+                                     &nCMapEntries,
+                                     &phSDEColormapData );
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_colormap" );
@@ -480,8 +475,8 @@ void SDERasterBand::ComputeColorTable(void)
     // Assign both the short and char pointers
     // to the void*, and we'll switch and read based
     // on the eCMap_DataType
-    puszSDECMapData = (unsigned char*) phSDEColormapData;
-    pushSDECMapData = (unsigned short*) phSDEColormapData;
+    unsigned char* puszSDECMapData = (unsigned char*) phSDEColormapData;
+    unsigned short* pushSDECMapData = (unsigned short*) phSDEColormapData;
 
     poColorTable = new GDALColorTable(GPI_RGB);
 
