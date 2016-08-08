@@ -613,7 +613,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
          * index exist.
          **/
         CPLString osCommand;
-        PGresult * poResult;
 
         CPLString osRasterToFetch;
         if (bAllBandCaching)
@@ -675,7 +674,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             osCommand += ")";
         }
 
-        poResult = PQexec(poRDS->poConn, osCommand.c_str());
+        PGresult * poResult = PQexec(poRDS->poConn, osCommand.c_str());
 
 #ifdef DEBUG_QUERY
         CPLDebug("PostGIS_Raster",
