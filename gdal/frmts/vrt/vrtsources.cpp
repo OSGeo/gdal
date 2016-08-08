@@ -619,7 +619,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         papszOpenOptions =
             CSLSetNameValue(papszOpenOptions, "ROOT_PATH", pszVRTPath);
 
-    GDALDataset *poSrcDS;
+    GDALDataset *poSrcDS = NULL;
     if( nRasterXSize == 0 || nRasterYSize == 0 ||
         eDataType == static_cast<GDALDataType>(-1) ||
         nBlockXSize == 0 || nBlockYSize == 0 )
