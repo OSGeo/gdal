@@ -72,11 +72,10 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /* -------------------------------------------------------------------- */
 /*      Copy in the temporary file contents.                            */
 /* -------------------------------------------------------------------- */
-            const char *pszLine;
-
             VSIFCloseL(fpTemp);
             fpTemp = VSIFOpenL( osTempFilename, "r" );
 
+            const char *pszLine = NULL;
             while( (pszLine = CPLReadLineL(fpTemp)) != NULL )
             {
                 VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
@@ -512,24 +511,22 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 
 int OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 {
-    OGRDXFReader oReader;
-    VSILFILE *l_fp;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file and setup a reader.                               */
 /* -------------------------------------------------------------------- */
-    l_fp = VSIFOpenL( osTrailerFile, "r" );
+    VSILFILE *l_fp = VSIFOpenL( osTrailerFile, "r" );
 
     if( l_fp == NULL )
         return FALSE;
 
+    OGRDXFReader oReader;
     oReader.Initialize( l_fp );
 
 /* -------------------------------------------------------------------- */
 /*      Scan ahead to find the OBJECTS section.                         */
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
 
     while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )
     {
@@ -843,24 +840,22 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
                                       const char *pszTarget )
 
 {
-    OGRDXFReader oReader;
-    VSILFILE *l_fp;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file and setup a reader.                               */
 /* -------------------------------------------------------------------- */
-    l_fp = VSIFOpenL( pszFilename, "r" );
+    VSILFILE *l_fp = VSIFOpenL( pszFilename, "r" );
 
     if( l_fp == NULL )
         return;
 
+    OGRDXFReader oReader;
     oReader.Initialize( l_fp );
 
 /* -------------------------------------------------------------------- */
 /*      Add every code "5" line to our entities list.                   */
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
     const char *pszPortion = "HEADER";
 
     while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )

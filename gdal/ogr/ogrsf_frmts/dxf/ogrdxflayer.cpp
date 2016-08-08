@@ -524,7 +524,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-    OGRPoint* poGeom;
+    OGRPoint* poGeom = NULL;
     if( bHaveZ )
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
@@ -694,7 +694,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-    OGRPoint* poGeom;
+    OGRPoint* poGeom = NULL;
     if( bHaveZ )
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
@@ -868,7 +868,7 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-    OGRPoint* poGeom;
+    OGRPoint* poGeom = NULL;
     if( bHaveZ )
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else

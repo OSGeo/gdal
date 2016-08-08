@@ -163,9 +163,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Translate the feature.                                          */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = TranslateFeature( pFeature );
+    OGRFeature *poFeature = TranslateFeature( pFeature );
     if( poFeature == NULL )
         return NULL;
 

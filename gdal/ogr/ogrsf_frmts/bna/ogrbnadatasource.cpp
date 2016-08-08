@@ -161,7 +161,6 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp)
     {
-        BNARecord* record;
         int curLine = 0;
         static const char* const layerRadixName[]
             = { "points", "polygons", "lines", "ellipses"};
@@ -169,7 +168,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
             = { wkbPoint, wkbMultiPolygon, wkbLineString, wkbPolygon };
 
 #if defined(BNA_FAST_DS_OPEN)
-        record = BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
+        BNARecord* record = BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
         BNA_FreeRecord(record);
 
         if (ok)
@@ -191,6 +190,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
         int nIDs[4] = {0, 0, 0, 0};
         int partialIndexTable = TRUE;
 
+        BNARecord* record = NULL;
         while(1)
         {
             int offset = static_cast<int>( VSIFTellL(fp) );

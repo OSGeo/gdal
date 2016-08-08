@@ -154,8 +154,8 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
         CPLString osFirstX, osFirstY;
         CPLString osLastX, osLastY;
         int bIs3D = FALSE;
-        const char* pszLine;
-        while((pszLine = CPLReadLine2L(fp,256,NULL)) != NULL)
+        const char* pszLine = NULL;
+        while( (pszLine = CPLReadLine2L(fp,256,NULL)) != NULL )
         {
             nLineNumber ++;
             if (nLineNumber == 2)

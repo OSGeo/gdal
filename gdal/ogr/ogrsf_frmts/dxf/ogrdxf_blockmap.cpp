@@ -83,7 +83,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
         // we aggregate the geometries of the features into a multi-geometry,
         // but throw away other stuff attached to the features.
 
-        OGRFeature *poFeature;
+        OGRFeature *poFeature = NULL;
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
         std::vector<OGRFeature*> apoFeatures;
 
