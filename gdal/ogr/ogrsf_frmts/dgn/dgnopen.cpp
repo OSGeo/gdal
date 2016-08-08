@@ -95,16 +95,10 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
 DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp;
-
-    if( bUpdate )
-        fp = VSIFOpen( pszFilename, "rb+" );
-    else
-        fp = VSIFOpen( pszFilename, "rb" );
+    FILE *fp = VSIFOpen( pszFilename, bUpdate ? "rb+" : "rb");
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,

@@ -654,9 +654,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           for( int iChild = 0; iChild < psHdr->numelems; iChild++ )
           {
               OGRFeature *poChildFeature = NULL;
-              DGNElemCore *psChildElement;
-
-              psChildElement = DGNReadElement( hDGN );
+              DGNElemCore *psChildElement = DGNReadElement( hDGN );
               // should verify complex bit set, not another header.
 
               if( psChildElement != NULL )
@@ -668,9 +666,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               if( poChildFeature != NULL
                   && poChildFeature->GetGeometryRef() != NULL )
               {
-                  OGRGeometry *poGeom;
-
-                  poGeom = poChildFeature->GetGeometryRef();
+                  OGRGeometry *poGeom = poChildFeature->GetGeometryRef();
                   if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
                       oChildren.addGeometry( poGeom );
               }
