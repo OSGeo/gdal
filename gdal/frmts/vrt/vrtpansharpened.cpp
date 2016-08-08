@@ -1463,9 +1463,7 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( iOtherBand == nBand )
                 continue;
 
-            GDALRasterBlock *poBlock;
-
-            poBlock = poGDS->GetRasterBand(iOtherBand)->
+            GDALRasterBlock *poBlock = poGDS->GetRasterBand(iOtherBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock == NULL)
             {

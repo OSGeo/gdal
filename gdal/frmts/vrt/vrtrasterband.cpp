@@ -645,8 +645,8 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLXMLNode *psOVR_XML = CPLCreateXMLNode( psTree, CXT_Element,
                                                  "Overview" );
 
-        int              bRelativeToVRT;
-        const char      *pszRelativePath;
+        int bRelativeToVRT = FALSE;
+        const char *pszRelativePath = NULL;
         VSIStatBufL sStat;
 
         if( VSIStatExL( m_apoOverviews[iOvr].osFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )

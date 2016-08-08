@@ -954,7 +954,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         if( CSLFetchNameValue(papszOptions, "ByteOrder") != NULL )
             pszByteOrder = CSLFetchNameValue(papszOptions, "ByteOrder");
 
-        const char *pszFilename;
+        const char *pszFilename = NULL;
         if( CSLFetchNameValue(papszOptions, "SourceFilename") != NULL )
             pszFilename = CSLFetchNameValue(papszOptions, "SourceFilename");
         else
