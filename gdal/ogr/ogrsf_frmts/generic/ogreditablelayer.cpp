@@ -120,14 +120,14 @@ void OGREditableLayer::DetectNextFID()
         return;
     m_nNextFID = 0;
     m_poDecoratedLayer->ResetReading();
-    OGRFeature* poFeat;
+    OGRFeature* poFeat = NULL;
     while( (poFeat = m_poDecoratedLayer->GetNextFeature()) != NULL )
     {
         if( poFeat->GetFID() > m_nNextFID )
             m_nNextFID = poFeat->GetFID();
         delete poFeat;
     }
-    m_nNextFID ++;
+    m_nNextFID++;
 }
 
 /************************************************************************/
@@ -297,7 +297,7 @@ OGRFeature *OGREditableLayer::GetFeature( GIntBig nFID )
 {
     if( !m_poDecoratedLayer ) return NULL;
 
-    OGRFeature* poSrcFeature;
+    OGRFeature* poSrcFeature = NULL;
     bool bHideDeletedFields = true;
     if( m_oSetCreated.find(nFID) != m_oSetCreated.end() ||
         m_oSetEdited.find(nFID) != m_oSetEdited.end() )

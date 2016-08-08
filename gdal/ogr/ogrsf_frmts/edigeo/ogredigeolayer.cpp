@@ -92,11 +92,10 @@ void OGREDIGEOLayer::ResetReading()
 
 OGRFeature *OGREDIGEOLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
 
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -107,8 +106,8 @@ OGRFeature *OGREDIGEOLayer::GetNextFeature()
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 
