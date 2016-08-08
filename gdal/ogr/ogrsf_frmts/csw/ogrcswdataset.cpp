@@ -862,11 +862,9 @@ CPLHTTPResult* OGRCSWDataSource::SendGetCapabilities()
     osURL = CPLURLAddKVP(osURL, "SERVICE", "CSW");
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
 
-    CPLHTTPResult* psResult;
-
     CPLDebug("CSW", "%s", osURL.c_str());
 
-    psResult = HTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
