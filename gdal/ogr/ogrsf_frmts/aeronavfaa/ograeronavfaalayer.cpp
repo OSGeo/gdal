@@ -87,14 +87,12 @@ void OGRAeronavFAALayer::ResetReading()
 
 OGRFeature *OGRAeronavFAALayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
         if (bEOF)
             return NULL;
 
-        poFeature = GetNextRawFeature();
+            OGRFeature  *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -225,12 +223,11 @@ int OGRAeronavFAADOFLayer::GetLatLon(const char* pszLat, const char* pszLon, dou
 
 OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
 {
-    const char* pszLine;
     char szBuffer[130];
 
     while( true )
     {
-        pszLine = CPLReadLine2L(fpAeronavFAA, 130, NULL);
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 130, NULL);
         if (pszLine == NULL)
         {
             bEOF = TRUE;
@@ -331,12 +328,11 @@ int OGRAeronavFAANAVAIDLayer::GetLatLon(const char* pszLat, const char* pszLon, 
 
 OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
 {
-    const char* pszLine;
     char szBuffer[134];
 
     while( true )
     {
-        pszLine = CPLReadLine2L(fpAeronavFAA, 134, NULL);
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 134, NULL);
         if (pszLine == NULL)
         {
             bEOF = TRUE;
@@ -431,12 +427,12 @@ int OGRAeronavFAARouteLayer::GetLatLon(const char* pszLat, const char* pszLon, d
 
 OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 {
-    const char* pszLine;
     OGRFeature* poFeature = NULL;
     OGRLineString* poLS = NULL;
 
     while( true )
     {
+        const char* pszLine = NULL;
         if (osLastReadLine.size() != 0)
             pszLine = osLastReadLine.c_str();
         else
@@ -630,13 +626,12 @@ int OGRAeronavFAAIAPLayer::GetLatLon(const char* pszLat, const char* pszLon, dou
 
 OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
 {
-    const char* pszLine;
     char szBuffer[87];
     int nCountUnderscoreLines = 0;
 
     while( true )
     {
-        pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
         if (pszLine == NULL)
         {
             bEOF = TRUE;
