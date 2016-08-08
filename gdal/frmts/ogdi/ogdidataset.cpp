@@ -134,13 +134,11 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
                                 int nComponentIn )
 
 {
-    ecs_Result *psResult;
-
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eFamily = eFamilyIn;
-    this->pszLayerName = CPLStrdup(pszName);
-    this->nComponent = nComponentIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eFamily = eFamilyIn;
+    pszLayerName = CPLStrdup(pszName);
+    nComponent = nComponentIn;
     poCT = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -153,7 +151,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
 /* -------------------------------------------------------------------- */
 /*      Get the raster info.                                            */
 /* -------------------------------------------------------------------- */
-    psResult = cln_GetRasterInfo( poDSIn->nClientID );
+    ecs_Result *psResult = cln_GetRasterInfo( poDSIn->nClientID );
     if( ECSERROR(psResult) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -272,12 +270,10 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 
     for( iScanline = 0; iScanline < nBufYSize; iScanline++ )
     {
-        ecs_Result      *psResult;
-        void            *pLineData;
-        pLineData = ((unsigned char *) pData) + iScanline * nLineSpace;
+        void *pLineData = ((unsigned char *) pData) + iScanline * nLineSpace;
 
         poODS->nCurrentIndex++;
-        psResult = cln_GetNextObject( poODS->nClientID );
+        ecs_Result *psResult = cln_GetNextObject( poODS->nClientID );
 
         if( ECSERROR(psResult) )
         {
@@ -359,7 +355,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                                         int nBufXSize, int nBufYSize )
 
 {
-    ecs_Result   *psResult;
+    ecs_Result   *psResult = NULL;
     OGDIDataset  *poODS = (OGDIDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
@@ -579,7 +575,6 @@ char **OGDIDataset::GetMetadata( const char *pszDomain )
 GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    ecs_Result *psResult;
     int nClientID;
     char        **papszImages=NULL, **papszMatrices=NULL;
 
@@ -643,7 +638,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-    psResult = cln_CreateClient( &nClientID, pszURL );
+    ecs_Result *psResult = cln_CreateClient( &nClientID, pszURL );
 
     if( ECSERROR(psResult) )
     {
@@ -714,9 +709,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    OGDIDataset *poDS;
-
-    poDS = new OGDIDataset();
+    OGDIDataset *poDS = new OGDIDataset();
 
     poDS->nClientID = nClientID;
     poDS->SetDescription( poOpenInfo->pszFilename );
@@ -821,10 +814,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int i=0; papszImages != NULL && papszImages[i] != NULL; i++)
     {
-        OGDIRasterBand *poBand;
-
-        poBand = new OGDIRasterBand( poDS, poDS->GetRasterCount()+1,
-                                     papszImages[i], Image, 0 );
+        OGDIRasterBand *poBand =
+            new OGDIRasterBand( poDS, poDS->GetRasterCount() + 1,
+                                papszImages[i], Image, 0 );
 
         poDS->SetBand( poDS->GetRasterCount()+1, poBand );
 
@@ -879,10 +871,9 @@ CPLErr OGDIDataset::CollectLayers( int nClientID,
                                    char ***ppapszMatrices )
 
 {
-    const ecs_LayerCapabilities *psLayer;
-    int iLayer;
+    const ecs_LayerCapabilities *psLayer = NULL;
 
-    for( iLayer = 0;
+    for( int iLayer = 0;
          (psLayer = cln_GetLayerCapabilities(nClientID,iLayer)) != NULL;
          iLayer++ )
     {
@@ -910,10 +901,9 @@ CPLErr OGDIDataset::OverrideGlobalInfo( OGDIDataset *poDS,
                                         const char *pszLayer )
 
 {
-    const ecs_LayerCapabilities *psLayer;
-    int iLayer;
+    const ecs_LayerCapabilities *psLayer = NULL;
 
-    for( iLayer = 0;
+    for( int iLayer = 0;
          (psLayer = cln_GetLayerCapabilities(poDS->nClientID,iLayer)) != NULL;
          iLayer++ )
     {
