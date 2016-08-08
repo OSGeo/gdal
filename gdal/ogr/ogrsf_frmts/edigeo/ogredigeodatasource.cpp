@@ -124,7 +124,7 @@ int OGREDIGEODataSource::GetLayerCount()
 
 int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
@@ -225,8 +225,8 @@ int OGREDIGEODataSource::ReadGEO()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    const char* pszLine = NULL;
+    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -284,9 +284,10 @@ int OGREDIGEODataSource::ReadGEN()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osCM1, osCM2;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    const char* pszLine = NULL;
+    CPLString osCM1;
+    CPLString osCM2;
+    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -332,8 +333,11 @@ int OGREDIGEODataSource::ReadDIC()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osRTY, osRID, osLAB, osTYP;
+    const char* pszLine = NULL;
+    CPLString osRTY;
+    CPLString osRID;
+    CPLString osLAB;
+    CPLString osTYP;
     while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -391,7 +395,7 @@ int OGREDIGEODataSource::ReadSCD()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     CPLString osRTY, osRID, osNameRID, osKND;
     strListType aosAttrRID;
     int nWidth = 0;
@@ -500,9 +504,11 @@ int OGREDIGEODataSource::ReadQAL()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osRTY, osRID;
-    int nODA = 0, nUDA = 0;
+    const char* pszLine = NULL;
+    CPLString osRTY;
+    CPLString osRID;
+    int nODA = 0;
+    int nUDA = 0;
     while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -635,7 +641,7 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     CPLString osRTY, osRID;
     xyPairListType aXY;
     CPLString osLnkStartType, osLnkStartName, osLnkEndType, osLnkEndName;
@@ -1352,20 +1358,20 @@ int OGREDIGEODataSource::Open( const char * pszFilename )
     if (fpTHF == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     int i = 0;
-    int bIsEDIGEO = FALSE;
-    while(i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, NULL)) != NULL)
+    bool bIsEDIGEO = false;
+    while( i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, NULL)) != NULL )
     {
         if (strcmp(pszLine, "RTYSA03:GTS") == 0)
         {
-            bIsEDIGEO = TRUE;
+            bIsEDIGEO = true;
             break;
         }
         i++;
     }
 
-    if (!bIsEDIGEO)
+    if( !bIsEDIGEO )
     {
         VSIFCloseL(fpTHF);
         fpTHF = NULL;
@@ -1509,9 +1515,9 @@ void OGREDIGEODataSource::CreateLabelLayers()
 
     std::map<CPLString, OGREDIGEOLayer*> mapLayerNameToLayer;
 
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
-    while((poFeature = poLayer->GetNextFeature()) != NULL)
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         const char* pszBelongingLayerName =
             poFeature->GetFieldAsString(iOBJ_LNK_LAYER);
@@ -1520,7 +1526,7 @@ void OGREDIGEODataSource::CreateLabelLayers()
             CPLString osBelongingLayerName = pszBelongingLayerName;
             std::map<CPLString, OGREDIGEOLayer*>::iterator it =
                         mapLayerNameToLayer.find(osBelongingLayerName);
-            OGREDIGEOLayer* poLabelLayer;
+            OGREDIGEOLayer* poLabelLayer = NULL;
 
             if (it == mapLayerNameToLayer.end())
             {

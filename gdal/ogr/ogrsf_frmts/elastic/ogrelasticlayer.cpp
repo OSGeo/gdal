@@ -423,7 +423,6 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
         int nAlreadyQueried = 0;
         while( true )
         {
-            json_object* poResponse;
             CPLString osRequest, osPostData;
             if( bFirst )
             {
@@ -449,7 +448,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
 
             if( m_bAddPretty )
                 osRequest += "&pretty";
-            poResponse = m_poDS->RunRequest(osRequest, osPostData);
+            json_object* poResponse = m_poDS->RunRequest(osRequest, osPostData);
             if( poResponse == NULL )
             {
                 break;
@@ -809,9 +808,7 @@ OGRFeature *OGRElasticLayer::GetNextFeature()
 
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -2280,12 +2277,12 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
+GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
 {
     if( m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount(bForce);
 
-    json_object* poResponse;
+    json_object* poResponse = NULL;
     if( m_osESSearch.size() )
     {
         poResponse = m_poDS->RunRequest(
@@ -2484,12 +2481,12 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( !m_abIsGeoPoint[iGeomField] )
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
 
-    json_object* poResponse;
     CPLString osFilter = CPLSPrintf("{ \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
-    poResponse = m_poDS->RunRequest(
+    json_object* poResponse = m_poDS->RunRequest(
         CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty",
-                    m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+                   m_poDS->GetURL(), m_osIndexName.c_str(),
+                   m_osMappingName.c_str()),
         osFilter.c_str());
 
     json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
