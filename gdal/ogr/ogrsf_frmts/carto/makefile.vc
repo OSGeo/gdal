@@ -1,5 +1,5 @@
 
-OBJ	=	ogrcartodbdriver.obj ogrcartodbdatasource.obj ogrcartodblayer.obj ogrcartodbtablelayer.obj ogrcartodbresultlayer.obj
+OBJ	=	ogrcartodriver.obj ogrcartodatasource.obj ogrcartolayer.obj ogrcartotablelayer.obj ogrcartoresultlayer.obj
 
 EXTRAFLAGS =	-I.. -I..\.. -I..\geojson\libjson -I..\pgdump 
 

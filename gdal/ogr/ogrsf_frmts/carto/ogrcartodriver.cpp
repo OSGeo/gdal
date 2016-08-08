@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  CartoDB Translator
- * Purpose:  Implements OGRCARTODBDriver.
+ * Project:  Carto Translator
+ * Purpose:  Implements OGRCARTODriver.
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
@@ -27,34 +26,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_cartodb.h"
+#include "ogr_carto.h"
 
-// g++ -g -Wall -fPIC -shared -o ogr_CARTODB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/cartodb ogr/ogrsf_frmts/cartodb/*.c* -L. -lgdal -Iogr/ogrsf_frmts/geojson/libjson
+// g++ -g -Wall -fPIC -shared -o ogr_CARTO.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/carto ogr/ogrsf_frmts/carto/*.c* -L. -lgdal -Iogr/ogrsf_frmts/geojson/libjson
 
 CPL_CVSID("$Id$");
 
-extern "C" void RegisterOGRCartoDB();
+extern "C" void RegisterOGRCarto();
 
 /************************************************************************/
-/*                        OGRCartoDBDriverIdentify()                    */
+/*                        OGRCartoDriverIdentify()                    */
 /************************************************************************/
 
-static int OGRCartoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRCartoDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    return STARTS_WITH_CI(poOpenInfo->pszFilename, "CARTODB:");
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "CARTO:") ||
+           STARTS_WITH_CI(poOpenInfo->pszFilename, "CARTODB:");
 }
 
 /************************************************************************/
-/*                           OGRCartoDBDriverOpen()                     */
+/*                           OGRCartoDriverOpen()                     */
 /************************************************************************/
 
-static GDALDataset *OGRCartoDBDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRCartoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !OGRCartoDBDriverIdentify(poOpenInfo) )
+    if( !OGRCartoDriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRCARTODBDataSource   *poDS = new OGRCARTODBDataSource();
+    OGRCARTODataSource   *poDS = new OGRCARTODataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
                      poOpenInfo->eAccess == GA_Update ) )
@@ -67,10 +67,10 @@ static GDALDataset *OGRCartoDBDriverOpen( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                      OGRCartoDBDriverCreate()                        */
+/*                      OGRCartoDriverCreate()                        */
 /************************************************************************/
 
-static GDALDataset *OGRCartoDBDriverCreate( const char * pszName,
+static GDALDataset *OGRCartoDriverCreate( const char * pszName,
                                             CPL_UNUSED int nBands,
                                             CPL_UNUSED int nXSize,
                                             CPL_UNUSED int nYSize,
@@ -78,13 +78,13 @@ static GDALDataset *OGRCartoDBDriverCreate( const char * pszName,
                                             CPL_UNUSED char **papszOptions )
 
 {
-    OGRCARTODBDataSource   *poDS = new OGRCARTODBDataSource();
+    OGRCARTODataSource   *poDS = new OGRCARTODataSource();
 
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "CartoDB driver doesn't support database creation." );
+                  "Carto driver doesn't support database creation." );
         return NULL;
     }
 
@@ -92,25 +92,25 @@ static GDALDataset *OGRCartoDBDriverCreate( const char * pszName,
 }
 
 /************************************************************************/
-/*                         RegisterOGRCARTODB()                         */
+/*                         RegisterOGRCARTO()                         */
 /************************************************************************/
 
-void RegisterOGRCartoDB()
+void RegisterOGRCarto()
 
 {
-    if( GDALGetDriverByName( "CartoDB" ) != NULL )
+    if( GDALGetDriverByName( "Carto" ) != NULL )
       return;
 
     GDALDriver* poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "CartoDB" );
+    poDriver->SetDescription( "Carto" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                  "CartoDB" );
+                                  "Carto" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                    "drv_cartodb.html" );
+                                    "drv_carto.html" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CARTODB:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CARTO:" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
     "<OpenOptionList>"
@@ -126,7 +126,7 @@ void RegisterOGRCartoDB()
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
     "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
     "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
-    "  <Option name='CARTODBFY' alias='CARTODBIFY' type='boolean' description='Whether the created layer should be \"CartoDBifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
+    "  <Option name='CARTODBFY' alias='CARTODBIFY' type='boolean' description='Whether the created layer should be \"Cartodbifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
     "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
@@ -134,9 +134,9 @@ void RegisterOGRCartoDB()
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-    poDriver->pfnOpen = OGRCartoDBDriverOpen;
-    poDriver->pfnIdentify = OGRCartoDBDriverIdentify;
-    poDriver->pfnCreate = OGRCartoDBDriverCreate;
+    poDriver->pfnOpen = OGRCartoDriverOpen;
+    poDriver->pfnIdentify = OGRCartoDriverIdentify;
+    poDriver->pfnCreate = OGRCartoDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

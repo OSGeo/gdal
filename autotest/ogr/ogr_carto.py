@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  CartoDB driver testing.
+# Purpose:  Carto driver testing.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
 #
 ###############################################################################
@@ -43,16 +43,16 @@ from osgeo import osr
 ###############################################################################
 # Test if driver is available
 
-def ogr_cartodb_init():
+def ogr_carto_init():
 
-    ogrtest.cartodb_drv = None
+    ogrtest.carto_drv = None
 
     try:
-        ogrtest.cartodb_drv = ogr.GetDriverByName('CartoDB')
+        ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     except:
         pass
 
-    if ogrtest.cartodb_drv is None:
+    if ogrtest.carto_drv is None:
         return 'skip'
 
     return 'success'
@@ -61,167 +61,167 @@ def ogr_cartodb_init():
 ###############################################################################
 #
 
-def ogr_cartodb_vsimem():
-    if ogrtest.cartodb_drv is None:
+def ogr_carto_vsimem():
+    if ogrtest.carto_drv is None:
         return 'skip'
 
-    ogrtest.cartodb_api_key_ori = gdal.GetConfigOption('CARTODB_API_KEY')
-    gdal.SetConfigOption('CARTODB_API_URL', '/vsimem/cartodb')
+    ogrtest.carto_api_key_ori = gdal.GetConfigOption('CARTO_API_KEY')
+    gdal.SetConfigOption('CARTO_API_URL', '/vsimem/carto')
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT postgis_version() LIMIT 500 OFFSET 0&api_key=foo',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT postgis_version() LIMIT 500 OFFSET 0&api_key=foo',
 """{"rows":[{"postgis_version":"2.1 USE_GEOS=1 USE_PROJ=1 USE_STATS=1"}],"time":0.001,"fields":{"postgis_version":{"type":"string"}},"total_rows":1}""")
 
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """Content-Type: text/html\r
 
 Error""")
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None or gdal.GetLastErrorMsg().find('HTML error page') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{""")
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None or gdal.GetLastErrorMsg().find('JSON parsing error') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """ "not_expected_json" """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "error" : [ "bla"] }""")
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None or gdal.GetLastErrorMsg().find('Error returned by server : bla') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : null } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : "invalid" } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : {} } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": "invalid" } } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": {} } } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": { "type" : null } } } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": { "type" : {} } } } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{ "fields" : { "foo": { "type" : "string" } } } """)
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[ {"field1": "foo", "field2": "bar"} ],"fields":{"field1":{"type":"string"}, "field2":{"type":"string"}}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[],"fields":{"current_schema":{"type":"string"}}}""")
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0',
 """{"rows":[{"current_schema":"public"}],"fields":{"current_schema":{"type":"unknown(19)"}}}""")
     gdal.PushErrorHandler()
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0',
 """{"rows":[{"cdb_usertables":"table1"}],"fields":{"cdb_usertables":{"type":"string"}}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds is None or ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
@@ -236,16 +236,16 @@ Error""")
         return 'fail'
 
     # Empty layer
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
 """{"rows":[],"fields":{}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetFieldCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 500 OFFSET 0',
 """{"rows":[{}],"fields":{}}}""")
     f = lyr.GetNextFeature()
     if f.GetFID() != 0:
@@ -254,9 +254,9 @@ Error""")
         return 'fail'
 
     # Layer without geometry or primary key
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
 """{"rows":[],"fields":{"strfield":{"type":"string"}, "realfield":{"type":"number"}, "boolfield":{"type":"boolean"}, "datefield":{"type":"date"}}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetFieldCount() != 4:
@@ -280,7 +280,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT "strfield", "realfield", "boolfield", "datefield" FROM "table1" LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT "strfield", "realfield", "boolfield", "datefield" FROM "table1" LIMIT 500 OFFSET 0',
 """{"rows":[{ "strfield": "foo", "realfield": 1.23, "boolfield": true, "datefield": "2015-04-24T12:34:56.123Z" }],"fields":{"strfield":{"type":"string"}, "realfield":{"type":"number"}, "boolfield":{"type":"boolean"}, "datefield":{"type":"date"}}}""")
     f = lyr.GetNextFeature()
     if f['strfield'] != 'foo' or f['realfield'] != 1.23 or f['boolfield'] != 1 or \
@@ -289,12 +289,12 @@ Error""")
         f.DumpReadable()
         return 'fail'
 
-    gdal.SetConfigOption('CARTODB_API_KEY', 'foo')
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
+    gdal.SetConfigOption('CARTO_API_KEY', 'foo')
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
 """{"rows":[{"current_schema":"public"}],"fields":{"current_schema":{"type":"unknown(19)"}}}""")
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
 """{"rows":[{"cdb_usertables":"table1"}],"fields":{"cdb_usertables":{"type":"string"}}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PushErrorHandler()
     lyr_defn = ds.GetLayer(0).GetLayerDefn()
     gdal.PopErrorHandler()
@@ -302,9 +302,9 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    get_full_details_fields_url = """/vsimem/cartodb&POSTFIELDS=q=SELECT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, i.indisprimary, pg_get_expr(def.adbin, c.oid) AS defaultexpr, postgis_typmod_dims(a.atttypmod) dim, postgis_typmod_srid(a.atttypmod) srid, postgis_typmod_type(a.atttypmod)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = 'table1' JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= 'public' LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
+    get_full_details_fields_url = """/vsimem/carto&POSTFIELDS=q=SELECT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, i.indisprimary, pg_get_expr(def.adbin, c.oid) AS defaultexpr, postgis_typmod_dims(a.atttypmod) dim, postgis_typmod_srid(a.atttypmod) srid, postgis_typmod_type(a.atttypmod)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = 'table1' JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= 'public' LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
     gdal.FileFromMemBuffer(get_full_details_fields_url, '')
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     gdal.PushErrorHandler()
     lyr_defn = ds.GetLayer(0).GetLayerDefn()
     gdal.PopErrorHandler()
@@ -314,7 +314,7 @@ Error""")
 
     gdal.FileFromMemBuffer(get_full_details_fields_url,
     """{"rows":[{"attname":"foo"}], "fields":{"attname":{"type":"string"}}}""")
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
@@ -355,7 +355,7 @@ Error""")
                   "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetFieldCount() != 5:
@@ -387,7 +387,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{}""")
     gdal.PushErrorHandler()
     fc = lyr.GetFeatureCount()
@@ -396,7 +396,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{"rows":[{"foo":1}],
             "fields":{"foo":{"type":"number"}}}""")
     gdal.PushErrorHandler()
@@ -406,7 +406,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{"rows":[{"count":9876543210}],
             "fields":{"count":{"type":"number"}}}""")
     if lyr.GetFeatureCount() != 9876543210:
@@ -420,7 +420,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"foo":1}],
             "fields":{"foo":{"type":"number"}}}""")
 
@@ -431,7 +431,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":""}],
             "fields":{"st_extent":{"type":"string"}}}""")
     gdal.ErrorReset()
@@ -442,7 +442,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":"("}],
             "fields":{"st_extent":{"type":"string"}}}""")
     gdal.ErrorReset()
@@ -453,7 +453,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":"BOX()"}],
             "fields":{"st_extent":{"type":"string"}}}""")
     gdal.ErrorReset()
@@ -464,7 +464,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":"BOX(0,1,2,3)"}],
             "fields":{"st_extent":{"type":"string"}}}""")
     if lyr.GetExtent() != (0.0, 2.0, 1.0, 3.0):
@@ -479,7 +479,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
         """""")
 
     gdal.PushErrorHandler()
@@ -489,7 +489,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
         """{"rows":[{"st_extent":"BOX(0,1,2,3)"}],
             "fields":{"st_extent":{"type":"string"}}}""")
 
@@ -498,7 +498,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
 
@@ -515,7 +515,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 500&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 500&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -530,8 +530,8 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.SetConfigOption('CARTODB_PAGE_SIZE', '2')
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.SetConfigOption('CARTO_PAGE_SIZE', '2')
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":0},{"cartodb_id":10}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -544,7 +544,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 11 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 11 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":12}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     f = lyr.GetNextFeature()
@@ -566,7 +566,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -574,7 +574,7 @@ Error""")
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 1 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 1 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     gdal.ErrorReset()
@@ -583,7 +583,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE (strfield is NULL)&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE (strfield is NULL)&api_key=foo""",
         """{"rows":[{"count":9876543210}],
             "fields":{"count":{"type":"number"}}}""")
     if lyr.GetFeatureCount() != 9876543210:
@@ -599,7 +599,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":20, "my_geom": "010100000000000000000000400000000000804840" }],
             "fields":{"cartodb_id":{"type":"numeric"}, "my_geom":{"type":"string"}}}""")
 
@@ -616,7 +616,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL)&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL)&api_key=foo""",
         """{"rows":[{"count":9876543210}],
             "fields":{"count":{"type":"number"}}}""")
     if lyr.GetFeatureCount() != 9876543210:
@@ -637,10 +637,10 @@ Error""")
 
     ds = None
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE (attname TEXT, typname TEXT, attlen INT, format_type TEXT, attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ SELECT a.attname::text, t.typname::text, a.attlen::int, format_type(a.atttypid,a.atttypmod)::text, a.attnum::int, a.attnotnull::boolean, i.indisprimary::boolean, pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = $2 AND c.relname IN (SELECT CDB_UserTables())JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum $$ LANGUAGE SQL&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE (attname TEXT, typname TEXT, attlen INT, format_type TEXT, attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ SELECT a.attname::text, t.typname::text, a.attlen::int, format_type(a.atttypid,a.atttypmod)::text, a.attnum::int, a.attnotnull::boolean, i.indisprimary::boolean, pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = $2 AND c.relname IN (SELECT CDB_UserTables())JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum $$ LANGUAGE SQL&api_key=foo""",
     """""""")
-    gdal.SetConfigOption('CARTODB_PAGE_SIZE', None)
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    gdal.SetConfigOption('CARTO_PAGE_SIZE', None)
+    ds = ogr.Open('CARTO:foo', update = 1)
     lyr = ds.CreateLayer('MY_LAYER')
 
     gdal.ErrorReset()
@@ -651,14 +651,14 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     ds = None
-    gdal.Unlink("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
+    gdal.Unlink("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
 
-    ds = ogr.Open('CARTODB:foo', update = 1)
-    gdal.SetConfigOption('CARTODB_MAX_CHUNK_SIZE', '0')
+    ds = ogr.Open('CARTO:foo', update = 1)
+    gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', '0')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('MY_LAYER', srs = sr)
@@ -668,7 +668,7 @@ Error""")
     fld_defn.SetWidth(20)
     lyr.CreateField(fld_defn)
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "my_layer" ( cartodb_id SERIAL,the_geom GEOMETRY(GEOMETRY, 4326),"strfield" VARCHAR NOT NULL DEFAULT 'DEFAULT VAL',PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "my_layer_cartodb_id_seq" CASCADE;CREATE SEQUENCE "my_layer_cartodb_id_seq" START 1;ALTER SEQUENCE "my_layer_cartodb_id_seq" OWNED BY "my_layer".cartodb_id;ALTER TABLE "my_layer" ALTER COLUMN cartodb_id SET DEFAULT nextval('"my_layer_cartodb_id_seq"')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "my_layer" ( cartodb_id SERIAL,the_geom GEOMETRY(GEOMETRY, 4326),"strfield" VARCHAR NOT NULL DEFAULT 'DEFAULT VAL',PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "my_layer_cartodb_id_seq" CASCADE;CREATE SEQUENCE "my_layer_cartodb_id_seq" START 1;ALTER SEQUENCE "my_layer_cartodb_id_seq" OWNED BY "my_layer".cartodb_id;ALTER TABLE "my_layer" ALTER COLUMN cartodb_id SET DEFAULT nextval('"my_layer_cartodb_id_seq"')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
 
@@ -689,7 +689,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "intfield" INTEGER&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "intfield" INTEGER&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     if lyr.CreateField(fld_defn) != 0:
@@ -699,7 +699,7 @@ Error""")
     fld_defn = ogr.FieldDefn('boolfield', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     if lyr.CreateField(fld_defn) != 0:
@@ -718,7 +718,7 @@ Error""")
             gdaltest.post_reason('fail')
             return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" DROP COLUMN "boolfield"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" DROP COLUMN "boolfield"&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     fld_pos = lyr.GetLayerDefn().GetFieldIndex(fld_defn.GetName())
@@ -726,7 +726,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     if lyr.CreateField(fld_defn) != 0:
@@ -746,7 +746,7 @@ Error""")
     f.SetField('intfield', 1)
     f.SetField('boolfield', 1)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=INSERT INTO "my_layer" ("strfield", "intfield", "boolfield", "the_geom") VALUES ('foo', 1, 't', '0101000020E610000000000000000000400000000000804840') RETURNING "cartodb_id"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=INSERT INTO "my_layer" ("strfield", "intfield", "boolfield", "the_geom") VALUES ('foo', 1, 't', '0101000020E610000000000000000000400000000000804840') RETURNING "cartodb_id"&api_key=foo""",
         """{"rows":[ {"cartodb_id": 1} ],
             "fields":{"cartodb_id":{"type":"integer"}}}""")
     ret = lyr.CreateFeature(f)
@@ -770,14 +770,14 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
         """{"total_rows": 0}""")
     ret = lyr.SetFeature(f)
     if ret != ogr.OGRERR_NON_EXISTING_FEATURE:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
         """{"total_rows": 1}""")
     ret = lyr.SetFeature(f)
     if ret != 0:
@@ -792,7 +792,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=INSERT INTO "my_layer" DEFAULT VALUES RETURNING "cartodb_id"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=INSERT INTO "my_layer" DEFAULT VALUES RETURNING "cartodb_id"&api_key=foo""",
         """{"rows":[ {"cartodb_id": 4} ],
             "fields":{"cartodb_id":{"type":"integer"}}}""")
     ret = lyr.CreateFeature(f)
@@ -807,29 +807,29 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
         """{"total_rows": 0}""")
     ret = lyr.DeleteFeature(0)
     if ret != ogr.OGRERR_NON_EXISTING_FEATURE:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
         """{"total_rows": 1}""")
     ret = lyr.DeleteFeature(0)
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     ds = None
 
-    gdal.SetConfigOption('CARTODB_MAX_CHUNK_SIZE', None)
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
+    ds = ogr.Open('CARTO:foo', update = 1)
     lyr = ds.GetLayer(0)
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq') AS nextid&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq') AS nextid&api_key=foo""",
         """{"rows":[{"nextid":11}],"fields":{"nextid":{"type":"number"}}}""")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -841,7 +841,7 @@ Error""")
 
     f = ogr.Feature(lyr.GetLayerDefn())
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES ('foo', 11);INSERT INTO "table1" DEFAULT VALUES;COMMIT;&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES ('foo', 11);INSERT INTO "table1" DEFAULT VALUES;COMMIT;&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     ret = lyr.CreateFeature(f)
@@ -876,9 +876,9 @@ Error""")
                   "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update = 1)
     lyr = ds.GetLayer(0)
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq') AS nextid&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq') AS nextid&api_key=foo""",
         """{"rows":[{"nextid":11}],"fields":{"nextid":{"type":"number"}}}""")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -902,7 +902,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES ('foo', 11);INSERT INTO "table1" ("strfield", "intfield", "doublefield", "boolfield", "datetimefield", "my_geom") VALUES ('bar', NULL, NULL, NULL, NULL, NULL), ('baz', NULL, NULL, NULL, NULL, NULL);COMMIT;&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES ('foo', 11);INSERT INTO "table1" ("strfield", "intfield", "doublefield", "boolfield", "datetimefield", "my_geom") VALUES ('bar', NULL, NULL, NULL, NULL, NULL), ('baz', NULL, NULL, NULL, NULL, NULL);COMMIT;&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     gdal.ErrorReset()
@@ -914,7 +914,7 @@ Error""")
 
 
 
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update = 1)
 
     gdal.PushErrorHandler()
     lyr = ds.CreateLayer('table1')
@@ -923,13 +923,13 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     lyr = ds.CreateLayer('table1', geom_type = ogr.wkbPolygon, options = ['OVERWRITE=YES', 'CARTODBFY=NO'])
-    gdal.Unlink("""/vsimem/cartodb&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""")
+    gdal.Unlink("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""")
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -938,7 +938,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("the_geom") VALUES ('0106000020E61000000100000001030000000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000');COMMIT;&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("the_geom") VALUES ('0106000020E61000000100000001030000000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000');COMMIT;&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     gdal.ErrorReset()
@@ -947,7 +947,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update = 1)
 
     gdal.PushErrorHandler()
     ret = ds.DeleteLayer(0)
@@ -956,9 +956,9 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTODB:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update = 1)
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
     gdal.ErrorReset()
@@ -967,14 +967,14 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
 """{"rows":[{"current_schema":"my_schema"}],"fields":{"current_schema":{"type":"unknown(19)"}}}""")
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
+    gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
 """{"rows":[],"fields":{"cdb_usertables":{"type":"string"}}}""")
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT c.relname FROM pg_class c, pg_namespace n WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = 'my_schema' LIMIT 500 OFFSET 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT c.relname FROM pg_class c, pg_namespace n WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = 'my_schema' LIMIT 500 OFFSET 0&api_key=foo""",
 """{"rows":[{"relname": "a_layer"}],"fields":{"relname":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTODB:foo')
+    ds = ogr.Open('CARTO:foo')
     if ds.GetLayerByName('a_layer') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -984,15 +984,15 @@ Error""")
 ###############################################################################
 #
 
-def ogr_cartodb_vsimem_cleanup():
-    if ogrtest.cartodb_drv is None:
+def ogr_carto_vsimem_cleanup():
+    if ogrtest.carto_drv is None:
         return 'skip'
 
-    gdal.SetConfigOption('CARTODB_API_URL', None)
+    gdal.SetConfigOption('CARTO_API_URL', None)
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-    gdal.SetConfigOption('CARTODB_PAGE_SIZE', None)
-    gdal.SetConfigOption('CARTODB_MAX_CHUNK_SIZE', None)
-    gdal.SetConfigOption('CARTODB_API_KEY', ogrtest.cartodb_api_key_ori)
+    gdal.SetConfigOption('CARTO_PAGE_SIZE', None)
+    gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
+    gdal.SetConfigOption('CARTO_API_KEY', ogrtest.carto_api_key_ori)
 
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
@@ -1002,22 +1002,22 @@ def ogr_cartodb_vsimem_cleanup():
 ###############################################################################
 #  Run test_ogrsf
 
-def ogr_cartodb_test_ogrsf():
-    if ogrtest.cartodb_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
+def ogr_carto_test_ogrsf():
+    if ogrtest.carto_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
         return 'skip'
 
-    ogrtest.cartodb_test_server = 'https://gdalautotest2.cartodb.com'
+    ogrtest.carto_test_server = 'https://gdalautotest2.carto.com'
 
-    if gdaltest.gdalurlopen(ogrtest.cartodb_test_server) is None:
-        print('cannot open %s' % ogrtest.cartodb_test_server)
-        ogrtest.cartodb_drv = None
+    if gdaltest.gdalurlopen(ogrtest.carto_test_server) is None:
+        print('cannot open %s' % ogrtest.carto_test_server)
+        ogrtest.carto_drv = None
         return 'skip'
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTODB_HTTPS NO --config CARTODB_PAGE_SIZE 300 -ro "CARTODB:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTO_HTTPS NO --config CARTO_PAGE_SIZE 300 -ro "CARTO:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
@@ -1028,24 +1028,24 @@ def ogr_cartodb_test_ogrsf():
 ###############################################################################
 # Test if driver is available
 
-def ogr_cartodb_rw_init():
+def ogr_carto_rw_init():
 
-    ogrtest.cartodb_drv = None
+    ogrtest.carto_drv = None
 
-    ogrtest.cartodb_connection = gdal.GetConfigOption('CARTODB_CONNECTION')
-    if ogrtest.cartodb_connection is None:
-        print('CARTODB_CONNECTION missing')
+    ogrtest.carto_connection = gdal.GetConfigOption('CARTO_CONNECTION')
+    if ogrtest.carto_connection is None:
+        print('CARTO_CONNECTION missing')
         return 'skip'
-    if gdal.GetConfigOption('CARTODB_API_KEY') is None:
-        print('CARTODB_API_KEY missing')
+    if gdal.GetConfigOption('CARTO_API_KEY') is None:
+        print('CARTO_API_KEY missing')
         return 'skip'
 
     try:
-        ogrtest.cartodb_drv = ogr.GetDriverByName('CartoDB')
+        ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     except:
         pass
 
-    if ogrtest.cartodb_drv is None:
+    if ogrtest.carto_drv is None:
         return 'skip'
 
     return 'success'
@@ -1053,12 +1053,12 @@ def ogr_cartodb_rw_init():
 ###############################################################################
 # Read/write/update test
 
-def ogr_cartodb_rw_1():
+def ogr_carto_rw_1():
 
-    if ogrtest.cartodb_drv is None:
+    if ogrtest.carto_drv is None:
         return 'skip'
 
-    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update = 1)
     if ds is None:
         return 'fail'
 
@@ -1113,7 +1113,7 @@ def ogr_cartodb_rw_1():
 
     ds = None
 
-    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update = 1)
     lyr_name = "layer_" + a_uuid
     found = False
     for lyr in ds:
@@ -1169,7 +1169,7 @@ def ogr_cartodb_rw_1():
 
     ds = None
 
-    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update = 1)
 
     sql_lyr = ds.ExecuteSQL('SELECT ST_AsText(the_geom_webmercator) AS foo FROM ' + lyr_name)
     f = sql_lyr.GetNextFeature()
@@ -1205,7 +1205,7 @@ def ogr_cartodb_rw_1():
 
     ds = None
 
-    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update = 1)
 
     lyr = ds.GetLayerByName(lyr_name)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('nullable')).IsNullable() != 1:
@@ -1234,23 +1234,23 @@ def ogr_cartodb_rw_1():
     return 'success'
 
 gdaltest_list = [
-    ogr_cartodb_init,
-    ogr_cartodb_vsimem,
-    ogr_cartodb_vsimem_cleanup,
-    ogr_cartodb_test_ogrsf
+    ogr_carto_init,
+    ogr_carto_vsimem,
+    ogr_carto_vsimem_cleanup,
+    ogr_carto_test_ogrsf
     ]
 
 
 gdaltest_rw_list = [
-    ogr_cartodb_rw_init,
-    ogr_cartodb_rw_1,
+    ogr_carto_rw_init,
+    ogr_carto_rw_1,
 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_cartodb' )
+    gdaltest.setup_run( 'ogr_carto' )
 
-    if gdal.GetConfigOption('CARTODB_CONNECTION') is None:
+    if gdal.GetConfigOption('CARTO_CONNECTION') is None:
         gdaltest.run_tests( gdaltest_list )
     else:
         gdaltest.run_tests( gdaltest_rw_list )

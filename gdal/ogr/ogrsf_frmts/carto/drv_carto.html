@@ -1,28 +1,28 @@
 <html>
 <head>
-<title>CartoDB</title>
+<title>Carto</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>CartoDB</h1>
+<h1>Carto</h1>
 
 (GDAL/OGR &gt;= 1.11)<p>
 
-This driver can connect to the services implementing the CartoDB API.
+This driver can connect to the services implementing the Carto API.
 GDAL/OGR must be built with Curl support in order for the
-CartoDB driver to be compiled.<p>
+Carto driver to be compiled.<p>
 
 The driver supports read and write operations.<p>
 
 <h2>Dataset name syntax</h2>
 
-The minimal syntax to open a CartoDB datasource is : <pre>CartoDB:[connection_name]</pre><p>
+The minimal syntax to open a Carto datasource is : <pre>Carto:[connection_name]</pre><p>
 
 For single-user accounts, connection name is the account name.
 For multi-user accounts, connection_name must be the user name, not the account name.
 
-Additionnal optional parameters can be specified after the ':' sign.
+Additional optional parameters can be specified after the ':' sign.
 Currently the following one is supported :<p>
 
 <ul>
@@ -36,11 +36,11 @@ If several parameters are specified, they must be separated by a space.<p>
 
 The following configuration options are available :
 <ul>
-<li>CARTODB_API_URL: defaults to https://[account_name].cartodb.com/api/v2/sql.
+<li>CARTO_API_URL: defaults to https://[account_name].carto.com/api/v2/sql.
 Can be used to point to another server.</li>
-<li>CARTODB_HTTPS: can be set to NO to use http:// protocol instead of
-https:// (only if CARTODB_API_URL is not defined).</li>
-<li>CARTODB_API_KEY: see following paragraph.</li>
+<li>CARTO_HTTPS: can be set to NO to use http:// protocol instead of
+https:// (only if CARTO_API_URL is not defined).</li>
+<li>CARTO_API_KEY: see following paragraph.</li>
 </ul>
 
 
@@ -50,8 +50,8 @@ Most operations, in particular write operations, require an authenticated
 access. The only exception is read-only access to public tables.<p>
 
 Authenticated access is obtained by specifying the API key given in the
-management interface of the CartoDB service. It is specified with the
-CARTODB_API_KEY configuration option.<p>
+management interface of the Carto service. It is specified with the
+CARTO_API_KEY configuration option.<p>
 
 <h2>Geometry</h2>
 
@@ -67,7 +67,7 @@ filters set with SetAttributeFilter().<p>
 <h2>Paging</h2>
 
 Features are retrieved from the server by chunks of 500 by default.
-This number can be altered with the CARTODB_PAGE_SIZE
+This number can be altered with the CARTO_PAGE_SIZE
 configuration option.<p>
 
 <h2>Write support</h2>
@@ -76,7 +76,7 @@ Table creation and deletion is possible.<p>
 
 Write support is only enabled when the datasource is opened in update mode.<p>
 
-The mapping between the operations of the CartoDB service and the OGR concepts is the following :
+The mapping between the operations of the Carto service and the OGR concepts is the following :
 <ul>
 <li>OGRFeature::CreateFeature() &lt;==&gt; INSERT operation</li>
 <li>OGRFeature::SetFeature() &lt;==&gt; UPDATE operation</li>
@@ -92,9 +92,9 @@ The above operations are by default issued to the server synchronously with the 
 can cause performance penalties when issuing a lot of commands due to many client/server exchanges.<p>
 
 So, on a newly created layer, the INSERT of CreateFeature() operations are grouped together
-in chunks until they reach 15 MB (can be changed with the CARTODB_MAX_CHUNK_SIZE
+in chunks until they reach 15 MB (can be changed with the CARTO_MAX_CHUNK_SIZE
 configuration option, with a value in MB), at which point they are transferred
-to the server. By setting CARTODB_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
+to the server. By setting CARTO_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
 
 <h2>SQL</h2>
 
@@ -120,7 +120,7 @@ layer name to be created. Defaults to NO.</li>
 <li><b>GEOMETRY_NULLABLE</b>=YES/NO: Whether the values of the geometry column
 can be NULL. Defaults to YES.</li>
 
-<li><b>CARTODBFY</b>=YES/NO: Whether the created layer should be "CartoDBifi'ed"
+<li><b>CARTODBFY</b>=YES/NO: Whether the created layer should be "Cartodbifi'ed"
  (i.e. registered in dashboard). Defaults to YES.</li>
 
 <li> <b>LAUNDER</b>=YES/NO: This may be "YES" to force new fields created on this
@@ -137,21 +137,21 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 <li>
 Acceccing data from a public table:
 <pre>
-ogrinfo -ro "CartoDB:gdalautotest2 tables=tm_world_borders_simpl_0_3"
+ogrinfo -ro "Carto:gdalautotest2 tables=tm_world_borders_simpl_0_3"
 </pre>
 <p>
 
 <li>
 Creating and populating a table from a shapefile:
 <pre>
-ogr2ogr --config CARTODB_API_KEY abcdefghijklmnopqrstuvw -f CartoDB "CartoDB:myaccount" myshapefile.shp
+ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" myshapefile.shp
 </pre>
 <p>
 
 <h2>See Also</h2>
 
 <ul>
-<li> <a href="http://docs.cartodb.com/cartodb-platform.html">CartoDB API overview</a><p>
+<li> <a href="https://carto.com/docs/">Carto API overview</a><p>
 </ul>
 
 </body>
