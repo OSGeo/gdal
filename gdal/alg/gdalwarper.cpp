@@ -896,7 +896,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         }
 
         // rescale.
-        const float inv_alpha_max =  static_cast<float>(CPLAtof(
+        const float inv_alpha_max =  static_cast<float>(1.0 / CPLAtof(
             CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
                                   "255" ) ));
 #if (defined(__x86_64) || defined(_M_X64))
