@@ -365,13 +365,12 @@ void ImdReader::ReadModel(const char *pszFilename) {
     ClassesMap oClasses;
     NodeCountMap oAxisCount;
     NodeVector oArcLineTypes;
-    const char *modelName;
 
     /* Fill TID lookup map and IliClasses lookup map */
     CPLXMLNode* psModel = psSectionNode->psChild;
     while( psModel != NULL )
     {
-        modelName = CPLGetXMLValue( psModel, "BID", NULL );
+        const char *modelName = CPLGetXMLValue( psModel, "BID", NULL );
 #ifdef DEBUG_VERBOSE
         CPLDebug( "OGR_ILI", "Model: '%s'", modelName);
 #endif

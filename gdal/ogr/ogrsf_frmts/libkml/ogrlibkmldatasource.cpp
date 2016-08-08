@@ -626,7 +626,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
     char *pszID = NULL;
     char *pszFile = NULL;
     char *pszSchemaName = NULL;
-    char *pszPound;
+    char *pszPound = NULL;
     DocumentPtr poKmlDocument = NULL;
     SchemaPtr poKmlSchemaResult = NULL;
 
