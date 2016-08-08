@@ -997,7 +997,6 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     CPLString osCommand;
     CPLString osSpatialFilter;
     CPLString osIDsToFetch;
-    PGresult * poResult;
 
     int bFetchAll = FALSE;
     if( nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize && nYSize == nRasterYSize )
@@ -1028,6 +1027,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     int bLoadRasters = FALSE;
     int bAllBandCaching = FALSE;
 
+    PGresult *poResult = NULL;
     if( m_nTiles > 0 && !bFetchAll )
     {
         osCommand.Printf("SELECT %s FROM %s.%s",
@@ -1881,23 +1881,18 @@ const char * pszValidConnectionString)
 
     // Subdatasets identified by upper left pixel
     else {
-
-        char * pszRes;
-        char * pszFilteredRes;
-        char ** papszParams;
-
-        for(i = 0; i < l_nTiles; i++) {
-
-            pszRes = CPLStrdup(PQgetvalue(poResult, i, 0));
+        for(i = 0; i < l_nTiles; i++)
+        {
+            char * pszRes = CPLStrdup(PQgetvalue(poResult, i, 0));
 
             // Skip first "("
-            pszFilteredRes = pszRes + 1;
+            char * pszFilteredRes = pszRes + 1;
 
             // Skip last ")"
             pszFilteredRes[strlen(pszFilteredRes)-1] = '\0';
 
             // Tokenize
-            papszParams =
+            char ** papszParams =
                 CSLTokenizeString2(pszFilteredRes, ",",
                     CSLT_HONOURSTRINGS);
 
@@ -2739,7 +2734,6 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
     char ** ppszSchema, char ** ppszTable, char ** ppszColumn,
     char ** ppszWhere, WorkingMode * nMode, GBool * bBrowseDatabase)
 {
-    PostGISRasterDriver * poDriver;
     PGconn * poConn = NULL;
     char * pszDbname = NULL;
     char * pszHost = NULL;
@@ -2754,7 +2748,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         /**************************************************************
          * Open a new database connection
          **************************************************************/
-        poDriver =
+        PostGISRasterDriver * poDriver =
             (PostGISRasterDriver *)GDALGetDriverByName("PostGISRaster");
 
         poConn = poDriver->GetConnection(*ppszConnectionString,
@@ -2951,7 +2945,6 @@ char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
  *****************************************************/
 const char* PostGISRasterDataset::GetProjectionRef() {
     CPLString osCommand;
-    PGresult* poResult;
 
     if (nSrid == -1)
         return "";
@@ -2964,7 +2957,7 @@ const char* PostGISRasterDataset::GetProjectionRef() {
      ********************************************************/
     osCommand.Printf("SELECT srtext FROM spatial_ref_sys where SRID=%d",
             nSrid);
-    poResult = PQexec(this->poConn, osCommand.c_str());
+    PGresult* poResult = PQexec(this->poConn, osCommand.c_str());
     if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
             && PQntuples(poResult) > 0) {
         pszProjection = CPLStrdup(PQgetvalue(poResult, 0, 0));
@@ -2984,9 +2977,7 @@ CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
     VALIDATE_POINTER1(pszProjectionRef, "SetProjection", CE_Failure);
 
     CPLString osCommand;
-    PGresult * poResult;
     int nFetchedSrid = -1;
-
 
     /*****************************************************************
      * Check if the dataset allows updating
@@ -3004,7 +2995,7 @@ CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
     // First, WKT text
     osCommand.Printf("SELECT srid FROM spatial_ref_sys where srtext='%s'",
             pszProjectionRef);
-    poResult = PQexec(poConn, osCommand.c_str());
+    PGresult * poResult = PQexec(poConn, osCommand.c_str());
 
     if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
             && PQntuples(poResult) > 0) {
@@ -3141,7 +3132,6 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     GBool bBrowseDatabase = false;
     WorkingMode nMode;
     char* pszConnectionString = NULL;
-    const char* pszSubdatasetName;
     PGconn * poConn = NULL;
     PGresult * poResult = NULL;
     CPLString osCommand;
@@ -3157,7 +3147,6 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     // Now we can do the cast
     PostGISRasterDataset *poSrcDS = (PostGISRasterDataset *)poGSrcDS;
-    PostGISRasterDataset *poSubDS;
 
     // Check connection string
     if (pszFilename == NULL ||
@@ -3297,6 +3286,8 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     PQclear(poResult);
 
+    const char* pszSubdatasetName = NULL;
+    PostGISRasterDataset *poSubDS = NULL;
     if (poSrcDS->nMode == ONE_RASTER_PER_TABLE) {
         // one raster per table
 
