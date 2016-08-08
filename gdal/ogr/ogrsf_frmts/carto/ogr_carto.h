@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  CARTODB Translator
- * Purpose:  Definition of classes for OGR CartoDB driver.
+ * Project:  CARTO Translator
+ * Purpose:  Definition of classes for OGR Carto driver.
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef OGR_CARTODB_H_INCLUDED
-#define OGR_CARTODB_H_INCLUDED
+#ifndef OGR_CARTO_H_INCLUDED
+#define OGR_CARTO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -36,34 +36,34 @@
 #include <vector>
 #include <json.h>
 
-json_object* OGRCARTODBGetSingleRow(json_object* poObj);
-CPLString OGRCARTODBEscapeIdentifier(const char* pszStr);
-CPLString OGRCARTODBEscapeLiteral(const char* pszStr);
+json_object* OGRCARTOGetSingleRow(json_object* poObj);
+CPLString OGRCARTOEscapeIdentifier(const char* pszStr);
+CPLString OGRCARTOEscapeLiteral(const char* pszStr);
 
 /************************************************************************/
-/*                      OGRCartoDBGeomFieldDefn                         */
+/*                      OGRCartoGeomFieldDefn                         */
 /************************************************************************/
 
-class OGRCartoDBGeomFieldDefn: public OGRGeomFieldDefn
+class OGRCartoGeomFieldDefn: public OGRGeomFieldDefn
 {
     public:
         int nSRID;
 
-        OGRCartoDBGeomFieldDefn(const char* pszNameIn, OGRwkbGeometryType eType) :
+        OGRCartoGeomFieldDefn(const char* pszNameIn, OGRwkbGeometryType eType) :
                 OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
         {
         }
 };
 
 /************************************************************************/
-/*                           OGRCARTODBLayer                            */
+/*                           OGRCARTOLayer                            */
 /************************************************************************/
-class OGRCARTODBDataSource;
+class OGRCARTODataSource;
 
-class OGRCARTODBLayer : public OGRLayer
+class OGRCARTOLayer : public OGRLayer
 {
 protected:
-    OGRCARTODBDataSource* poDS;
+    OGRCARTODataSource* poDS;
 
     OGRFeatureDefn      *poFeatureDefn;
     CPLString            osBaseSQL;
@@ -84,8 +84,8 @@ protected:
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
   public:
-                         OGRCARTODBLayer(OGRCARTODBDataSource* poDS);
-                        ~OGRCARTODBLayer();
+                         OGRCARTOLayer(OGRCARTODataSource* poDS);
+                        ~OGRCARTOLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -98,7 +98,9 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("CARTODB_PAGE_SIZE", "500")); }
+    int                         GetFeaturesToFetch() {
+        return atoi(CPLGetConfigOption("CARTO_PAGE_SIZE",
+                        CPLGetConfigOption("CARTODB_PAGE_SIZE", "500"))); }
 };
 
 typedef enum
@@ -109,10 +111,10 @@ typedef enum
 } InsertState;
 
 /************************************************************************/
-/*                        OGRCARTODBTableLayer                          */
+/*                        OGRCARTOTableLayer                          */
 /************************************************************************/
 
-class OGRCARTODBTableLayer : public OGRCARTODBLayer
+class OGRCARTOTableLayer : public OGRCARTOLayer
 {
     CPLString           osName;
     CPLString           osQuery;
@@ -127,7 +129,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     GIntBig             nNextFID;
 
     int                 bDeferredCreation;
-    int                 bCartoDBify;
+    int                 bCartodbfy;
     int                 nMaxChunkSize;
 
     void                BuildWhere();
@@ -135,8 +137,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
 
   public:
-                         OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS, const char* pszName);
-                        ~OGRCARTODBTableLayer();
+                         OGRCARTOTableLayer(OGRCARTODataSource* poDS, const char* pszName);
+                        ~OGRCARTOTableLayer();
 
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
@@ -170,29 +172,29 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     void                SetDeferredCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
                                             int bGeomNullable,
-                                            int bCartoDBify);
+                                            int bCartodbfy);
     OGRErr              RunDeferredCreationIfNecessary();
     int                 GetDeferredCreation() const { return bDeferredCreation; }
-    void                CancelDeferredCreation() { bDeferredCreation = FALSE; bCartoDBify = FALSE; }
+    void                CancelDeferredCreation() { bDeferredCreation = FALSE; bCartodbfy = FALSE; }
 
     OGRErr              FlushDeferredInsert(bool bReset = true);
-    void                RunDeferredCartoDBfy();
+    void                RunDeferredCartofy();
 };
 
 /************************************************************************/
-/*                       OGRCARTODBResultLayer                          */
+/*                       OGRCARTOResultLayer                          */
 /************************************************************************/
 
-class OGRCARTODBResultLayer : public OGRCARTODBLayer
+class OGRCARTOResultLayer : public OGRCARTOLayer
 {
     OGRFeature          *poFirstFeature;
 
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
 
   public:
-                        OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
+                        OGRCARTOResultLayer( OGRCARTODataSource* poDS,
                                                const char * pszRawStatement );
-    virtual             ~OGRCARTODBResultLayer();
+    virtual             ~OGRCARTOResultLayer();
 
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn);
     virtual OGRFeature  *GetNextRawFeature();
@@ -201,15 +203,15 @@ class OGRCARTODBResultLayer : public OGRCARTODBLayer
 };
 
 /************************************************************************/
-/*                           OGRCARTODBDataSource                       */
+/*                           OGRCARTODataSource                       */
 /************************************************************************/
 
-class OGRCARTODBDataSource : public OGRDataSource
+class OGRCARTODataSource : public OGRDataSource
 {
     char*               pszName;
     char*               pszAccount;
 
-    OGRCARTODBTableLayer**  papoLayers;
+    OGRCARTOTableLayer**  papoLayers;
     int                 nLayers;
 
     int                 bReadWrite;
@@ -229,8 +231,8 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 nPostGISMinor;
 
   public:
-                        OGRCARTODBDataSource();
-                        ~OGRCARTODBDataSource();
+                        OGRCARTODataSource();
+                        ~OGRCARTODataSource();
 
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions,
@@ -276,4 +278,4 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                         GetPostGISMinor() const { return nPostGISMinor; }
 };
 
-#endif /* ndef OGR_CARTODB_H_INCLUDED */
+#endif /* ndef OGR_CARTO_H_INCLUDED */

@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  CartoDB Translator
- * Purpose:  Implements OGRCARTODBLayer class.
+ * Project:  Carto Translator
+ * Purpose:  Implements OGRCARTOLayer class.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -27,16 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_cartodb.h"
+#include "ogr_carto.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                         OGRCARTODBLayer()                            */
+/*                         OGRCARTOLayer()                            */
 /************************************************************************/
 
-OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDSIn) :
+OGRCARTOLayer::OGRCARTOLayer(OGRCARTODataSource* poDSIn) :
     poDS(poDSIn),
     poFeatureDefn(NULL),
     poCachedObj(NULL)
@@ -45,10 +44,10 @@ OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDSIn) :
 }
 
 /************************************************************************/
-/*                         ~OGRCARTODBLayer()                           */
+/*                         ~OGRCARTOLayer()                           */
 /************************************************************************/
 
-OGRCARTODBLayer::~OGRCARTODBLayer()
+OGRCARTOLayer::~OGRCARTOLayer()
 
 {
     if( poCachedObj != NULL )
@@ -62,7 +61,7 @@ OGRCARTODBLayer::~OGRCARTODBLayer()
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRCARTODBLayer::ResetReading()
+void OGRCARTOLayer::ResetReading()
 
 {
     if( poCachedObj != NULL )
@@ -78,7 +77,7 @@ void OGRCARTODBLayer::ResetReading()
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn * OGRCARTODBLayer::GetLayerDefn()
+OGRFeatureDefn * OGRCARTOLayer::GetLayerDefn()
 {
     return GetLayerDefnInternal(NULL);
 }
@@ -87,13 +86,13 @@ OGRFeatureDefn * OGRCARTODBLayer::GetLayerDefn()
 /*                           BuildFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
+OGRFeature *OGRCARTOLayer::BuildFeature(json_object* poRowObj)
 {
     OGRFeature* poFeature = NULL;
     if( poRowObj != NULL &&
         json_object_get_type(poRowObj) == json_type_object )
     {
-        //CPLDebug("CartoDB", "Row: %s", json_object_to_json_string(poRowObj));
+        //CPLDebug("Carto", "Row: %s", json_object_to_json_string(poRowObj));
         poFeature = new OGRFeature(poFeatureDefn);
 
         if( osFIDColName.size() )
@@ -167,7 +166,7 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRCARTODBLayer::FetchNewFeatures(GIntBig iNextIn)
+json_object* OGRCARTOLayer::FetchNewFeatures(GIntBig iNextIn)
 {
     CPLString osSQL = osBaseSQL;
     if( osSQL.ifind("SELECT") != std::string::npos &&
@@ -185,7 +184,7 @@ json_object* OGRCARTODBLayer::FetchNewFeatures(GIntBig iNextIn)
 /*                        GetNextRawFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
+OGRFeature *OGRCARTOLayer::GetNextRawFeature()
 {
     if( bEOF )
         return NULL;
@@ -248,7 +247,7 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRCARTODBLayer::GetNextFeature()
+OGRFeature *OGRCARTOLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
@@ -274,7 +273,7 @@ OGRFeature *OGRCARTODBLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTODBLayer::TestCapability( const char * pszCap )
+int OGRCARTOLayer::TestCapability( const char * pszCap )
 
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
@@ -286,7 +285,7 @@ int OGRCARTODBLayer::TestCapability( const char * pszCap )
 /*                          EstablishLayerDefn()                        */
 /************************************************************************/
 
-void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
+void OGRCARTOLayer::EstablishLayerDefn(const char* pszLayerName,
                                          json_object* poObjIn)
 {
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
@@ -341,7 +340,7 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
             if( poType != NULL && json_object_get_type(poType) == json_type_string )
             {
                 const char* pszType = json_object_get_string(poType);
-                CPLDebug("CARTODB", "%s : %s", pszColName, pszType);
+                CPLDebug("CARTO", "%s : %s", pszColName, pszType);
                 if( EQUAL(pszType, "string") ||
                     EQUAL(pszType, "unknown(19)") /* name */ )
                 {
@@ -371,8 +370,8 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
                 {
                     if( !EQUAL(pszColName, "the_geom_webmercator") )
                     {
-                        OGRCartoDBGeomFieldDefn *poFieldDefn =
-                            new OGRCartoDBGeomFieldDefn(pszColName, wkbUnknown);
+                        OGRCartoGeomFieldDefn *poFieldDefn =
+                            new OGRCartoGeomFieldDefn(pszColName, wkbUnknown);
                         poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
                         OGRSpatialReference* l_poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
                         if( l_poSRS != NULL )
@@ -391,7 +390,7 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
                 }
                 else
                 {
-                    CPLDebug("CARTODB", "Unhandled type: %s. Defaulting to string", pszType);
+                    CPLDebug("CARTO", "Unhandled type: %s. Defaulting to string", pszType);
                     OGRFieldDefn oFieldDefn(pszColName, OFTString);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
@@ -399,8 +398,8 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
             else if( poType != NULL && json_object_get_type(poType) == json_type_int )
             {
                 /* FIXME? manual creations of geometry columns return integer types */
-                OGRCartoDBGeomFieldDefn *poFieldDefn =
-                    new OGRCartoDBGeomFieldDefn(pszColName, wkbUnknown);
+                OGRCartoGeomFieldDefn *poFieldDefn =
+                    new OGRCartoGeomFieldDefn(pszColName, wkbUnknown);
                 poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
                 OGRSpatialReference* l_poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
                 if( l_poSRS != NULL )
@@ -420,11 +419,11 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
 /*                               GetSRS()                               */
 /************************************************************************/
 
-OGRSpatialReference* OGRCARTODBLayer::GetSRS(const char* pszGeomCol,
+OGRSpatialReference* OGRCARTOLayer::GetSRS(const char* pszGeomCol,
                                              int *pnSRID)
 {
     json_object* poObj = poDS->RunSQL(GetSRS_SQL(pszGeomCol));
-    json_object* poRowObj = OGRCARTODBGetSingleRow(poObj);
+    json_object* poRowObj = OGRCARTOGetSingleRow(poObj);
     if( poRowObj == NULL )
     {
         if( poObj != NULL )
