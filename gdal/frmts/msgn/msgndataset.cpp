@@ -161,8 +161,6 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     // invert y position
     int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
 
-    char       *pszRecord;
-
     unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
     unsigned int data_offset = 0;
 
@@ -179,7 +177,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( VSIFSeek( poGDS->fp, data_offset, SEEK_SET ) != 0 )
         return CE_Failure;
 
-    pszRecord = (char *) CPLMalloc(data_length);
+    char *pszRecord = (char *) CPLMalloc(data_length);
     size_t nread = VSIFRead( pszRecord, 1, data_length, poGDS->fp );
 
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
@@ -389,7 +387,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MSGNDataset        *poDS;
     FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
     if( fp == NULL ) {
         if (open_info != poOpenInfo) {
@@ -398,7 +395,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS = new MSGNDataset();
+    MSGNDataset *poDS = new MSGNDataset();
 
     poDS->fp = fp;
 
