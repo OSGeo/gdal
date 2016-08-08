@@ -560,7 +560,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
     const bool bGeomNullable =
-        CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", true);
+        CPLFetchBool(const_cast<const char**>(papszOptions), "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
