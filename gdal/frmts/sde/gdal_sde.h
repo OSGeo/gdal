@@ -3,9 +3,6 @@
 
 #include "gdal_pam.h"
 
-
-CPL_CVSID("$Id$");
-
 CPL_C_START
 void GDALRegister_SDE();
 CPL_C_END
