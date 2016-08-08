@@ -46,7 +46,7 @@ bool netCDFWriterConfiguration::SetNameValue(CPLXMLNode* psNode,
 
 bool netCDFWriterConfiguration::Parse(const char* pszFilename)
 {
-    CPLXMLNode* psRoot;
+    CPLXMLNode* psRoot = NULL;
     if( STARTS_WITH(pszFilename, "<Configuration") )
         psRoot = CPLParseXMLString(pszFilename);
     else
