@@ -92,9 +92,9 @@ Perl module maintainer to make a CPAN release.
 10) Create a snapshot of the documentation.
 
  i.e. On www.gdal.org:
- % cd /osgeo/gdal
+ % cd /var/www/gdal
  % ./gdal-web-refresh.sh
- % zip -r gdal180doc.zip gdal-web/*.* gdal-web/ogr gdal-web/java 
+ % zip -r ~/gdal210doc.zip gdal-web/*.* gdal-web/java gdal-web/python
 
 11) Create a snapshot of autotest suite:
 
@@ -103,7 +103,7 @@ Perl module maintainer to make a CPAN release.
   zip -r gdalautotest-1.6.0.zip gdalautotest-1.6.0
 
 11.5) If changes have been made in the frmts/grass or ogr/ogrsf_frmts/grass dir,
-      generate an up-to-date gdal-grass snapshot (let's not forget do it for GDAL 1.7.0 !):
+      generate an up-to-date gdal-grass snapshot:
 
   % cd frmts/grass
   % make dist
