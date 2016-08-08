@@ -704,7 +704,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 32 )
       return NULL;
 
-   CPLXMLNode *pxmlPCView;
+   CPLXMLNode *pxmlPCView = NULL;
 
    // do something sensible for .sid files without a .view
    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
