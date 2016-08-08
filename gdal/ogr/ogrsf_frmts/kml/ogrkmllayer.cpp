@@ -515,7 +515,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             while( *pszRaw == ' ' )
                 pszRaw++;
 
-            char *pszEscaped;
+            char *pszEscaped = NULL;
             if (poFeatureDefn_->GetFieldDefn(iField)->GetType() == OFTReal)
             {
                 pszEscaped = CPLStrdup( pszRaw );

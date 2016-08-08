@@ -97,13 +97,11 @@ void OGRILI1Layer::ResetReading()
 
 OGRFeature *OGRILI1Layer::GetNextFeature()
 {
-    OGRFeature *poFeature;
-
     if (!bGeomsJoined) JoinGeomLayers();
 
     while(nFeatureIdx < nFeatures)
     {
-        poFeature = GetNextFeatureRef();
+        OGRFeature *poFeature = GetNextFeatureRef();
         if (poFeature)
             return poFeature->Clone();
     }
@@ -132,9 +130,9 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
 OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 {
-    OGRFeature *poFeature;
-
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeatureRef()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
@@ -147,9 +145,9 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 OGRFeature *OGRILI1Layer::GetFeatureRef( const char *fid )
 
 {
-    OGRFeature *poFeature;
-
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeatureRef()) != NULL )
     {
         if( !strcmp( poFeature->GetFieldAsString(0), fid ) )
@@ -503,7 +501,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
-        OGRFeature *feature;
+        OGRFeature *feature = NULL;
         if (poFeatureDefn->GetFieldDefn(0)->GetType() == OFTString)
         {
           feature = GetFeatureRef(linefeature->GetFieldAsString(1));

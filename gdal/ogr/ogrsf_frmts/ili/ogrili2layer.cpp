@@ -277,7 +277,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
 
 OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     char szTempBuffer[80];
-    const char* tid;
+    const char* tid = NULL;
     int iField = 0;
     if( poFeatureDefn->GetFieldCount() &&
         EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "TID") )
