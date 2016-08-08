@@ -531,12 +531,11 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
     CPLString osDef;
     OGRStylePen *poPen = (OGRStylePen *) poTool;
     GBool  bDefault;
-    const char *pszPattern;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch pattern.                                                  */
 /* -------------------------------------------------------------------- */
-    pszPattern = poPen->Pattern( bDefault );
+    const char *pszPattern = poPen->Pattern( bDefault );
     if( bDefault || strlen(pszPattern) == 0 )
         return "";
 
@@ -544,18 +543,17 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
 /*      Split into pen up / pen down bits.                              */
 /* -------------------------------------------------------------------- */
     char **papszTokens = CSLTokenizeString(pszPattern);
-    int i;
     double dfTotalLength = 0;
 
-    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
         const char *pszToken = papszTokens[i];
-        const char *pszUnit;
         CPLString osAmount;
         CPLString osDXFEntry;
 
         // Split amount and unit.
-        for( pszUnit = pszToken;
+        const char *pszUnit = pszToken;  // Used after for.
+        for( ;
              strchr( "0123456789.", *pszUnit) != NULL;
              pszUnit++ ) {}
 
@@ -1031,7 +1029,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
     for( int iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
     {
-        OGRLinearRing *poLR;
+        OGRLinearRing *poLR = NULL;
 
         if( iRing == -1 )
             poLR = poPoly->getExteriorRing();

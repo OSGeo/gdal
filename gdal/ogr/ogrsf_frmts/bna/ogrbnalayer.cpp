@@ -234,9 +234,8 @@ OGRFeature *OGRBNALayer::GetNextFeature()
 /*                      WriteFeatureAttributes()                        */
 /************************************************************************/
 
-void OGRBNALayer::WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature )
+void OGRBNALayer::WriteFeatureAttributes( VSILFILE* fp, OGRFeature *poFeature )
 {
-    OGRFieldDefn *poFieldDefn;
     int nbOutID = poDS->GetNbOutId();
     if (nbOutID < 0)
         nbOutID = poFeatureDefn->GetFieldCount();
@@ -244,7 +243,7 @@ void OGRBNALayer::WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature )
     {
         if (i < poFeatureDefn->GetFieldCount())
         {
-            poFieldDefn = poFeatureDefn->GetFieldDefn( i );
+            OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
             if( poFeature->IsFieldSet( i ) )
             {
                 if (poFieldDefn->GetType() == OFTReal)
