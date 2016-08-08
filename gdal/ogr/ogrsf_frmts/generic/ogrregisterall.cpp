@@ -260,8 +260,8 @@ void OGRRegisterAllInternal()
 #ifdef WALK_ENABLED
     RegisterOGRWalk();
 #endif
-#ifdef CARTODB_ENABLED
-    RegisterOGRCartoDB();
+#ifdef CARTO_ENABLED
+    RegisterOGRCarto();
 #endif
 #ifdef AMIGOCLOUD_ENABLED
     RegisterOGRAmigoCloud();
