@@ -182,7 +182,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     VSIFSeekL(fp, nLastStartXRef, SEEK_SET);
 
     /* And skip to trailer */
-    const char* pszLine;
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLineL(fp)) != NULL)
     {
         if (STARTS_WITH(pszLine, "trailer"))
@@ -4329,13 +4329,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     int nBlockXSize = nWidth;
     int nBlockYSize = nHeight;
-    const char* pszValue;
 
     const bool bTiled = CPLFetchBool( papszOptions, "TILED", false );
     if( bTiled )
         nBlockXSize = nBlockYSize = 256;
 
-    pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
+    const char* pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
     if( pszValue != NULL )
     {
         nBlockXSize = atoi( pszValue );
