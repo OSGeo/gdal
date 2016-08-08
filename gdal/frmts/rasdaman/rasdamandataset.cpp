@@ -388,11 +388,13 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLDebug("rasdaman", "Extents (%d, %d).", extentX, extentY);
 
     r_Point access = base;
-    char *resultPtr;
 
-    for(int y = y_lo; y < y_hi; ++y) {
-      for(int x = x_lo; x < x_hi; ++x) {
-        resultPtr = (char*)pImage + ((y - y_lo) * nBlockXSize + x - x_lo) * typeSize;
+    for( int y = y_lo; y < y_hi; ++y )
+    {
+      for( int x = x_lo; x < x_hi; ++x )
+      {
+        char *resultPtr =
+            (char*)pImage + ((y - y_lo) * nBlockXSize + x - x_lo) * typeSize;
         //resultPtr = (char*) pImage
         access[xPos] = x;// base[xPos] + offsetX; TODO: check if required
         access[yPos] = y;// base[yPos] + offsetY;
