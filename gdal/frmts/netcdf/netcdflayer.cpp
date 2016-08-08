@@ -1063,7 +1063,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
 
         if( !bXIsNoData && !bYIsNoData )
         {
-            OGRPoint* poPoint;
+            OGRPoint* poPoint = NULL;
             if( m_nZVarID >= 0 && m_osProfileDimName.size() == 0 )
             {
                 bool bZIsNoData = false;
@@ -1165,9 +1165,7 @@ OGRFeature* netCDFLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
