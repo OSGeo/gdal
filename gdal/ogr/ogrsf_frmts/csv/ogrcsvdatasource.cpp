@@ -169,7 +169,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         }
     }
 
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     poEditableLayer->ResetReading();
     while( eErr == OGRERR_NONE &&
            (poFeature = poEditableLayer->GetNextFeature()) != NULL )
