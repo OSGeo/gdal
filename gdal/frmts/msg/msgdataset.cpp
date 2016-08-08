@@ -197,8 +197,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    MSGDataset   *poDS;
-    poDS = new MSGDataset();
+    MSGDataset *poDS = new MSGDataset();
     poDS->command = command; // copy it
 
 /* -------------------------------------------------------------------- */
@@ -282,11 +281,10 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*   Create a transformer to LatLon (only for Reflectance calculation)  */
 /* -------------------------------------------------------------------- */
 
-    char *pszLLTemp;
-    char *pszLLTemp_bak;
+    char *pszLLTemp = NULL;
 
     (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
-    pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
+    char *pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
     poDS->oLL.importFromWkt(&pszLLTemp);
     CPLFree( pszLLTemp_bak );
 
