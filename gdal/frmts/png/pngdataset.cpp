@@ -1207,8 +1207,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nColorType == PNG_COLOR_TYPE_PALETTE )
     {
-        png_color *pasPNGPalette;
-        int nColorCount;
+        png_color *pasPNGPalette = NULL;
+        int nColorCount = 0;
 
         if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo,
                           &pasPNGPalette, &nColorCount ) == 0 )
