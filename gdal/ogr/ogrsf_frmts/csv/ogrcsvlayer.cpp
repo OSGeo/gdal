@@ -1298,7 +1298,7 @@ char** OGRCSVLayer::GetNextLineTokens()
 /* -------------------------------------------------------------------- */
 /*      Read the CSV record.                                            */
 /* -------------------------------------------------------------------- */
-    char **papszTokens;
+    char **papszTokens = NULL;
 
     while( true )
     {
@@ -1356,9 +1356,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Set attributes for any indicated attribute records.             */
@@ -1961,19 +1959,17 @@ OGRErr OGRCSVLayer::WriteHeader()
 
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
-            char *pszEscaped;
-
             if( iField > 0 || bHiddenWKTColumn )
             {
                 if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
                 if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
 
-            pszEscaped =
+            char *pszEscaped =
                 CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
                                  -1, CPLES_CSV );
 
-            if (fpCSV)
+            if( fpCSV )
             {
                 int bAddDoubleQuote = FALSE;
                 if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
@@ -2191,7 +2187,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        char *pszEscaped;
+        char *pszEscaped = NULL;
 
         if( iField > 0 || bHiddenWKTColumn )
             bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
@@ -2213,7 +2209,9 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 pszEscaped = pszNew;
             }
             else
+            {
                 pszEscaped = CPLStrdup("");
+            }
         }
         else if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
         {
