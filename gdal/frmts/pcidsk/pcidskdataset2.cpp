@@ -1769,7 +1769,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /*      Create band objects for bitmap segments.                        */
 /* -------------------------------------------------------------------- */
         int nLastBitmapSegment = 0;
-        PCIDSKSegment *poBitSeg;
+        PCIDSKSegment *poBitSeg = NULL;
 
         while( (poBitSeg = poFile->GetSegment( SEG_BIT, "",
                                                nLastBitmapSegment)) != NULL )
