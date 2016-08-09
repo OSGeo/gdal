@@ -119,11 +119,11 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
     SetDescription( poDefn->GetName() );
-    char           **papszRow;
 
     poDefn->Reference();
     poDefn->SetGeomType( wkbNone );
 
+    char **papszRow = NULL;
     while( (papszRow = oStatement.GetRow()) != NULL )
     {
         CPLString       osFieldName = papszRow[0];
@@ -362,15 +362,12 @@ void OGRIngresTableLayer::ResetReading()
 char *OGRIngresTableLayer::BuildFields()
 
 {
-    int         i, nSize;
-    char        *pszFieldList;
+    int nSize = 25 + osGeomColumn.size() + osFIDColumn.size();
 
-    nSize = 25 + osGeomColumn.size() + osFIDColumn.size();
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
 
-    pszFieldList = (char *) CPLMalloc(nSize);
+    char *pszFieldList = (char *) CPLMalloc(nSize);
     pszFieldList[0] = '\0';
 
     if( osFIDColumn.size()
@@ -384,17 +381,18 @@ char *OGRIngresTableLayer::BuildFields()
 
         if( poDS->IsNewIngres() )
         {
-			sprintf( pszFieldList+strlen(pszFieldList),
-					 "ASBINARY(%s) %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
+            sprintf( pszFieldList+strlen(pszFieldList),
+                     "ASBINARY(%s) %s", osGeomColumn.c_str(),
+                     osGeomColumn.c_str() );
         }
         else
         {
-			sprintf( pszFieldList+strlen(pszFieldList),
-					 "%s %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
+            sprintf( pszFieldList+strlen(pszFieldList),
+                     "%s %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
         }
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
@@ -1175,14 +1173,11 @@ OGRFeature *OGRIngresTableLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Fetch the result record.                                        */
 /* -------------------------------------------------------------------- */
-    char **papszRow;
-    unsigned long *panLengths;
-
-    papszRow = ingres_fetch_row( hResultSet );
+    char **papszRow = ingres_fetch_row( hResultSet );
     if( papszRow == NULL )
         return NULL;
 
-    panLengths = ingres_fetch_lengths( hResultSet );
+    unsigned long *panLengths = ingres_fetch_lengths( hResultSet );
 
 /* -------------------------------------------------------------------- */
 /*      Transform into a feature.                                       */
@@ -1225,11 +1220,9 @@ GIntBig OGRIngresTableLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Issue the appropriate select command.                           */
 /* -------------------------------------------------------------------- */
-    INGRES_RES    *hResult;
-    const char         *pszCommand;
-
-    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM %s %s",
-                             poFeatureDefn->GetName(), pszWHERE );
+    const char *pszCommand =
+        CPLSPrintf( "SELECT COUNT(*) FROM %s %s",
+                    poFeatureDefn->GetName(), pszWHERE );
 
     if( ingres_query( poDS->GetConn(), pszCommand ) )
     {
@@ -1237,7 +1230,7 @@ GIntBig OGRIngresTableLayer::GetFeatureCount( int bForce )
         return FALSE;
     }
 
-    hResult = ingres_store_result( poDS->GetConn() );
+    INGRES_RES *hResult = ingres_store_result( poDS->GetConn() );
     if( hResult == NULL )
     {
         poDS->ReportError( "ingres_store_result() failed on SELECT COUNT(*)." );

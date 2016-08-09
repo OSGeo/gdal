@@ -317,7 +317,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
         if( oStmt.ExecuteSQL( "select table_name from iitables where system_use = 'U' and table_name not like 'iietab_%'" ) )
         {
-            char **papszFields;
+            char **papszFields = NULL;
             while( (papszFields = oStmt.GetRow()) )
             {
                 CPLString osTableName = papszFields[0];
@@ -355,11 +355,8 @@ int OGRIngresDataSource::OpenTable( const char *pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRIngresTableLayer  *poLayer;
-    OGRErr eErr;
-
-    poLayer = new OGRIngresTableLayer( this, pszNewName, bUpdate );
-    eErr = poLayer->Initialize(pszNewName);
+    OGRIngresTableLayer  *poLayer = new OGRIngresTableLayer( this, pszNewName, bUpdate );
+    OGRErr eErr = poLayer->Initialize(pszNewName);
     if (eErr == OGRERR_FAILURE)
         return FALSE;
 
@@ -415,7 +412,6 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
 {
 #ifdef notdef
     char            szCommand[1024];
-    INGRES_RES       *hResult;
     OGRErr	    eErr = OGRERR_NONE;
 
     sprintf( szCommand, "DESCRIBE geometry_columns" );
@@ -440,7 +436,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     }
 
     // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( GetConn() );
+    INGRES_RES *hResult = ingres_store_result( GetConn() );
     if( hResult != NULL )
     {
         ingres_free_result( hResult );
@@ -488,8 +484,6 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
 
 OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 {
-    char         szCommand[1024];
-    char           **papszRow;
     OGRIngresStatement oStatement(GetConn());
 
     if( nId < 0 )
@@ -504,9 +498,7 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      First, we look through our SRID cache, is it there?             */
 /* -------------------------------------------------------------------- */
-    int  i;
-
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( panSRID[i] == nId )
             return papoSRS[i];
@@ -514,17 +506,16 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 
     OGRSpatialReference *poSRS = NULL;
 
+    char szCommand[1024] = {};
     sprintf( szCommand,
-         "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
-         nId );
+             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+             nId );
 
     oStatement.ExecuteSQL(szCommand);
 
-    char    *pszWKT = NULL;
-    papszRow = NULL;
+    char *pszWKT = NULL;
 
-
-    papszRow = oStatement.GetRow();
+    char **papszRow = oStatement.GetRow();
 
     if( papszRow != NULL)
     {
@@ -566,22 +557,20 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    char            **papszRow;
-    char            szCommand[10000];
-    char            *pszWKT = NULL;
-    char            *pszProj4 = NULL;
-    const char      *pszAuthName;
-    const char      *pszAuthID;
-    int             nSRSId;
-
     if( poSRS == NULL )
         return -1;
 
+    char **papszRow = NULL;
+    char szCommand[10000] = {};
+    char *pszWKT = NULL;
+    char *pszProj4 = NULL;
+    int nSRSId = 0;
+
     /* -------------------------------------------------------------------- */
-    /*  If it is a EPSG	Spatial Reference, search with special type			*/
+    /*  If it is a EPSG	Spatial Reference, search with special type.        */
     /* -------------------------------------------------------------------- */
-    pszAuthName = poSRS->GetAuthorityName(NULL);
-    pszAuthID = poSRS->GetAuthorityCode(NULL);
+    const char *pszAuthName = poSRS->GetAuthorityName(NULL);
+    const char *pszAuthID = poSRS->GetAuthorityCode(NULL);
 
     if (pszAuthName && pszAuthID && EQUAL(pszAuthName, "EPSG"))
     {
@@ -726,8 +715,8 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /************************************************************************/
 
 OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
-                                        OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect )
+                                            OGRGeometry *poSpatialFilter,
+                                            const char *pszDialect )
 
 {
 /* -------------------------------------------------------------------- */
@@ -853,19 +842,14 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 
 OGRLayer *
 OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
-                              OGRSpatialReference *poSRS,
-                              OGRwkbGeometryType eType,
-                              char ** papszOptions )
+                                   OGRSpatialReference *poSRS,
+                                   OGRwkbGeometryType eType,
+                                   char ** papszOptions )
 
 {
-    const char          *pszGeometryType = NULL;
-    const char		*pszGeomColumnName;
-    const char 		*pszExpectedFIDName;
-
-    char                *pszLayerName;
     int                 nDimension = 3; // Ingres only supports 2d currently
 
-
+    char *pszLayerName = NULL;
     if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
@@ -908,11 +892,13 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      What do we want to use for geometry and FID columns?            */
 /* -------------------------------------------------------------------- */
-    pszGeomColumnName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
+    const char *pszGeomColumnName =
+        CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if (!pszGeomColumnName)
-        pszGeomColumnName="SHAPE";
+        pszGeomColumnName = "SHAPE";
 
-    pszExpectedFIDName = CSLFetchNameValue( papszOptions, "INGRES_FID" );
+    const char *pszExpectedFIDName =
+        CSLFetchNameValue( papszOptions, "INGRES_FID" );
     if (!pszExpectedFIDName)
         pszExpectedFIDName="OGR_FID";
 
@@ -922,14 +908,17 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      What sort of geometry column do we want to create?              */
 /* -------------------------------------------------------------------- */
-    pszGeometryType = CSLFetchNameValue( papszOptions, "GEOMETRY_TYPE" );
+    const char *pszGeometryType =
+        CSLFetchNameValue( papszOptions, "GEOMETRY_TYPE" );
 
     if( pszGeometryType != NULL )
+    {
         /* user selected type */;
-
+    }
     else if( wkbFlatten(eType) == wkbPoint )
+    {
         pszGeometryType = "POINT";
-
+    }
     else if( wkbFlatten(eType) == wkbLineString)
     {
     	if( IsNewIngres() )
@@ -1045,11 +1034,9 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRIngresTableLayer     *poLayer;
-    OGRErr                  eErr;
-
-    poLayer = new OGRIngresTableLayer( this, pszLayerName, TRUE, nSRSId );
-    eErr = poLayer->Initialize(pszLayerName);
+    OGRIngresTableLayer *poLayer =
+        new OGRIngresTableLayer( this, pszLayerName, TRUE, nSRSId );
+    OGRErr eErr = poLayer->Initialize(pszLayerName);
     if (eErr == OGRERR_FAILURE)
     {
         delete poLayer;

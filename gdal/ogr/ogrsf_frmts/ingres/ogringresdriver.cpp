@@ -71,11 +71,9 @@ OGRDataSource *OGRIngresDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRIngresDataSource     *poDS = NULL;
+    OGRIngresDataSource *poDS = NULL;
     char **papszOptions = ParseWrappedName( pszFilename );
-    const char *pszDriver;
-
-    pszDriver = CSLFetchNameValue( papszOptions, "driver" );
+    const char *pszDriver = CSLFetchNameValue( papszOptions, "driver" );
     if( pszDriver != NULL && EQUAL(pszDriver,"ingres") )
     {
         poDS = new OGRIngresDataSource();
@@ -101,13 +99,11 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
                                                   char ** /* papszOptions */ )
 
 {
-    OGRIngresDataSource     *poDS = NULL;
-    char **papszOpenOptions;
-    const char *pszDriver;
+    OGRIngresDataSource *poDS = NULL;
 
-    papszOpenOptions = ParseWrappedName( pszName );
+    char **papszOpenOptions = ParseWrappedName( pszName );
 
-    pszDriver = CSLFetchNameValue( papszOpenOptions, "driver" );
+    const char *pszDriver = CSLFetchNameValue( papszOpenOptions, "driver" );
 
     if( pszDriver != NULL && EQUAL(pszDriver,"ingres") )
     {
