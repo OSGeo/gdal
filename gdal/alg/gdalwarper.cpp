@@ -1001,16 +1001,6 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
 /* -------------------------------------------------------------------- */
     else
     {
-        /* The VRT warper will pass destination sizes that may exceed */
-        /* the size of the raster for the partial blocks at the right */
-        /* and bottom of the band. So let's adjust the size */
-        int nDstXSize = nXSize;
-        if (nXOff + nXSize > GDALGetRasterBandXSize(hAlphaBand))
-            nDstXSize = GDALGetRasterBandXSize(hAlphaBand) - nXOff;
-        int nDstYSize = nYSize;
-        if (nYOff + nYSize > GDALGetRasterBandYSize(hAlphaBand))
-            nDstYSize = GDALGetRasterBandYSize(hAlphaBand) - nYOff;
-
         GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
         const float cst_alpha_max = static_cast<float>(CPLAtof(
             CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
@@ -1072,8 +1062,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             // Write data.
             // Assumes little endianness here
             eErr = GDALRasterIO( hAlphaBand, GF_Write,
-                                nXOff, nYOff, nDstXSize, nDstYSize,
-                                pafMask, nDstXSize, nDstYSize, eDT,
+                                nXOff, nYOff, nXSize, nYSize,
+                                pafMask, nXSize, nYSize, eDT,
                                 (int)sizeof(int), (int)sizeof(int) * nXSize );
         }
         else
@@ -1092,8 +1082,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             // Write data.
 
             eErr = GDALRasterIO( hAlphaBand, GF_Write,
-                                nXOff, nYOff, nDstXSize, nDstYSize,
-                                pafMask, nDstXSize, nDstYSize, GDT_Float32,
+                                nXOff, nYOff, nXSize, nYSize,
+                                pafMask, nXSize, nYSize, GDT_Float32,
                                 0, (int)sizeof(float) * nXSize );
         }
         return eErr;
