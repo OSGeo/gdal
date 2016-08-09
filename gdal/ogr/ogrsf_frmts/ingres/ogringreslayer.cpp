@@ -100,9 +100,7 @@ OGRFeature *OGRIngresLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -548,23 +546,26 @@ OGRFeature *OGRIngresLayer::GetFeature( GIntBig nFeatureId )
 int OGRIngresLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    return FALSE;
+
+#if 0
+    if( EQUAL(pszCap, OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if( EQUAL(pszCap, OLCFastFeatureCount) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCTransactions) )
+    else if( EQUAL(pszCap, OLCTransactions) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    else if( EQUAL(pszCap, OLCFastGetExtent) )
         return FALSE;
 
-    else
-        return FALSE;
+    return FALSE;
+#endif
 }
 
 
@@ -608,10 +609,9 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
 /* -------------------------------------------------------------------- */
     if( nSRSId == -2 )
     {
-        char         szCommand[1024];
-        char           **papszRow;
         OGRIngresStatement oStatement(poDS->GetConn());
 
+        char szCommand[1024] = {};
         sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_geometry_column = '%s'",
@@ -620,7 +620,7 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
 
         oStatement.ExecuteSQL(szCommand);
 
-        papszRow = oStatement.GetRow();
+        char **papszRow = oStatement.GetRow();
 
         if( papszRow != NULL && papszRow[0] != NULL )
         {
