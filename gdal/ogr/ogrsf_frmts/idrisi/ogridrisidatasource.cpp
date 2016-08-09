@@ -140,7 +140,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
                                     &pszWTKString);
     }
 
-    GByte chType;
+    GByte chType = 0;
     if (VSIFReadL(&chType, 1, 1, fpVCT) != 1)
     {
         VSIFCloseL(fpVCT);

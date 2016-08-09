@@ -73,13 +73,13 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
     poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
     VSIFSeekL( fp, 1, SEEK_SET );
-    if (VSIFReadL( &nTotalFeatures, sizeof(unsigned int), 1, fp ) != 1)
+    if( VSIFReadL( &nTotalFeatures, sizeof(unsigned int), 1, fp ) != 1 )
         nTotalFeatures = 0;
     CPL_LSBPTR32(&nTotalFeatures);
 
-    if (nTotalFeatures != 0)
+    if( nTotalFeatures != 0 )
     {
-        if (!Detect_AVL_ADC(pszFilename))
+        if( !Detect_AVL_ADC(pszFilename) )
         {
             if( fpAVL != NULL )
                 VSIFCloseL( fpAVL );
@@ -112,21 +112,21 @@ OGRIdrisiLayer::~OGRIdrisiLayer()
 /*                           Detect_AVL_ADC()                           */
 /************************************************************************/
 
-int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
+bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
 {
 // --------------------------------------------------------------------
 //      Look for .adc file
 // --------------------------------------------------------------------
     const char* pszADCFilename = CPLResetExtension(pszFilename, "adc");
     VSILFILE* fpADC = VSIFOpenL(pszADCFilename, "rb");
-    if (fpADC == NULL)
+    if( fpADC == NULL )
     {
         pszADCFilename = CPLResetExtension(pszFilename, "ADC");
         fpADC = VSIFOpenL(pszADCFilename, "rb");
     }
 
     char** papszADC = NULL;
-    if (fpADC != NULL)
+    if( fpADC != NULL )
     {
         VSIFCloseL(fpADC);
         fpADC = NULL;
@@ -137,8 +137,8 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
         CPLErrorReset();
     }
 
-    if (papszADC == NULL)
-        return FALSE;
+    if( papszADC == NULL )
+        return false;
 
     CSLSetNameValueSeparator( papszADC, ":" );
 
@@ -146,7 +146,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     if( pszVersion == NULL || !EQUAL( pszVersion, "IDRISI Values A.1" ) )
     {
         CSLDestroy( papszADC );
-        return FALSE;
+        return false;
     }
 
     const char *pszFileType = CSLFetchNameValue( papszADC, "file type   " );
@@ -154,7 +154,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     {
         CPLDebug("IDRISI", ".adc file found, but file type != ascii");
         CSLDestroy( papszADC );
-        return FALSE;
+        return false;
     }
 
     const char* pszRecords = CSLFetchNameValue( papszADC, "records     " );
@@ -163,7 +163,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
         CPLDebug("IDRISI", ".adc file found, but 'records' not found or not "
                  "consistent with feature number declared in .vdc");
         CSLDestroy( papszADC );
-        return FALSE;
+        return false;
     }
 
     const char* pszFields = CSLFetchNameValue( papszADC, "fields      " );
@@ -172,7 +172,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
         CPLDebug( "IDRISI",
                   ".adc file found, but 'fields' not found or invalid" );
         CSLDestroy( papszADC );
-        return FALSE;
+        return false;
     }
 
 // --------------------------------------------------------------------
@@ -188,7 +188,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     if (fpAVL == NULL)
     {
         CSLDestroy( papszADC );
-        return FALSE;
+        return false;
     }
 
 // --------------------------------------------------------------------
@@ -200,7 +200,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     snprintf(szKey, sizeof(szKey), "field %d ", iCurField);
 
     char** papszIter = papszADC;
-    const char* pszLine;
+    const char* pszLine = NULL;
     bool bFieldFound = false;
     CPLString osFieldName;
     while((pszLine = *papszIter) != NULL)
@@ -227,7 +227,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
             if( iCurField == 0 && oFieldDefn.GetType() != OFTInteger )
             {
                 CSLDestroy( papszADC );
-                return FALSE;
+                return false;
             }
 
             if( iCurField != 0 )
@@ -242,7 +242,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
 
     CSLDestroy(papszADC);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -271,21 +271,21 @@ OGRFeature *OGRIdrisiLayer::GetNextFeature()
             return NULL;
 
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
+        if( poFeature == NULL )
         {
             bEOF = true;
             return NULL;
         }
 
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 
@@ -296,10 +296,10 @@ OGRFeature *OGRIdrisiLayer::GetNextFeature()
 int OGRIdrisiLayer::TestCapability( const char * pszCap )
 
 {
-    if (EQUAL(pszCap, OLCFastFeatureCount))
+    if( EQUAL(pszCap, OLCFastFeatureCount) )
         return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
 
-    if (EQUAL(pszCap, OLCFastGetExtent))
+    if( EQUAL(pszCap, OLCFastGetExtent) )
         return bExtentValid;
 
     return FALSE;
@@ -315,9 +315,9 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
     {
         if (eGeomType == wkbPoint)
         {
-            double dfId;
-            double dfX;
-            double dfY;
+            double dfId = 0.0;
+            double dfX = 0.0;
+            double dfY = 0.0;
             if (VSIFReadL(&dfId, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfX, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfY, sizeof(double), 1, fp) != 1)
@@ -350,18 +350,17 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
         }
         else if (eGeomType == wkbLineString)
         {
-            double dfId;
-            double dfMinXShape;
-            double dfMaxXShape;
-            double dfMinYShape;
-            double dfMaxYShape;
-            unsigned int nNodes;
+            double dfId = 0.0;
+            double dfMinXShape = 0.0;
+            double dfMaxXShape = 0.0;
+            double dfMinYShape = 0.0;
+            double dfMaxYShape = 0.0;
 
-            if (VSIFReadL(&dfId, sizeof(double), 1, fp) != 1 ||
+            if( VSIFReadL(&dfId, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMinXShape, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMaxXShape, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMinYShape, sizeof(double), 1, fp) != 1 ||
-                VSIFReadL(&dfMaxYShape, sizeof(double), 1, fp) != 1)
+                VSIFReadL(&dfMaxYShape, sizeof(double), 1, fp) != 1 )
             {
                 return NULL;
             }
@@ -371,22 +370,23 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             CPL_LSBPTR64(&dfMinYShape);
             CPL_LSBPTR64(&dfMaxYShape);
 
-            if (VSIFReadL(&nNodes, sizeof(unsigned int), 1, fp) != 1)
+            unsigned int nNodes = 0;
+            if( VSIFReadL(&nNodes, sizeof(unsigned int), 1, fp) != 1 )
             {
                 return NULL;
             }
             CPL_LSBPTR32(&nNodes);
 
-            if (nNodes > 100 * 1000 * 1000)
+            if( nNodes > 100 * 1000 * 1000 )
                 return NULL;
 
-            if (m_poFilterGeom != NULL &&
+            if( m_poFilterGeom != NULL &&
                 (dfMaxXShape < m_sFilterEnvelope.MinX ||
                  dfMinXShape > m_sFilterEnvelope.MaxX ||
                  dfMaxYShape < m_sFilterEnvelope.MinY ||
-                 dfMinYShape > m_sFilterEnvelope.MaxY))
+                 dfMinYShape > m_sFilterEnvelope.MaxY) )
             {
-                nNextFID ++;
+                nNextFID++;
                 VSIFSeekL(fp, sizeof(OGRRawPoint) * nNodes, SEEK_CUR);
                 continue;
             }
@@ -398,15 +398,15 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 return NULL;
             }
 
-            if (static_cast<unsigned int>(VSIFReadL(
-                    poRawPoints, sizeof(OGRRawPoint), nNodes, fp)) != nNodes)
+            if( static_cast<unsigned int>(VSIFReadL(
+                    poRawPoints, sizeof(OGRRawPoint), nNodes, fp)) != nNodes )
             {
                 VSIFree(poRawPoints);
                 return NULL;
             }
 
 #if defined(CPL_MSB)
-            for(unsigned int iNode=0; iNode<nNodes; iNode++)
+            for( unsigned int iNode=0; iNode<nNodes; iNode++ )
             {
                 CPL_LSBPTR64(&poRawPoints[iNode].x);
                 CPL_LSBPTR64(&poRawPoints[iNode].y);
@@ -418,7 +418,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
 
             VSIFree(poRawPoints);
 
-            if (poSRS)
+            if( poSRS )
                 poGeom->assignSpatialReference(poSRS);
             OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
             poFeature->SetField(0, dfId);
@@ -427,15 +427,13 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             ReadAVLLine(poFeature);
             return poFeature;
         }
-        else /* if (eGeomType == wkbPolygon) */
+        else  // if (eGeomType == wkbPolygon)
         {
-            double dfId;
-            double dfMinXShape;
-            double dfMaxXShape;
-            double dfMinYShape;
-            double dfMaxYShape;
-            unsigned int nParts;
-            unsigned int nTotalNodes;
+            double dfId = 0.0;
+            double dfMinXShape = 0.0;
+            double dfMaxXShape = 0.0;
+            double dfMinYShape = 0.0;
+            double dfMaxYShape = 0.0;
 
             if (VSIFReadL(&dfId, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMinXShape, sizeof(double), 1, fp) != 1 ||
@@ -450,6 +448,8 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             CPL_LSBPTR64(&dfMaxXShape);
             CPL_LSBPTR64(&dfMinYShape);
             CPL_LSBPTR64(&dfMaxYShape);
+            unsigned int nParts = 0;
+            unsigned int nTotalNodes = 0;
             if (VSIFReadL(&nParts, sizeof(unsigned int), 1, fp) != 1 ||
                 VSIFReadL(&nTotalNodes, sizeof(unsigned int), 1, fp) != 1)
             {
@@ -500,7 +500,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             }
             else
             {
-                unsigned int nNodes;
+                unsigned int nNodes = 0;
                 if (VSIFReadL(&nNodes, sizeof(unsigned int) * nParts, 1, fp) != 1)
                 {
                     VSIFree(poRawPoints);
@@ -519,10 +519,10 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             {
                 unsigned int nNodes
                     = (nParts > 1) ? panNodesCount[iPart] : nTotalNodes;
-                if (nNodes > nTotalNodes ||
+                if( nNodes > nTotalNodes ||
                     static_cast<unsigned int>(
                         VSIFReadL(poRawPoints, sizeof(OGRRawPoint), nNodes, fp))
-                    != nNodes)
+                    != nNodes )
                 {
                     VSIFree(poRawPoints);
                     VSIFree(panNodesCount);
@@ -531,7 +531,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 }
 
 #if defined(CPL_MSB)
-                for(unsigned int iNode=0; iNode<nNodes; iNode++)
+                for( unsigned int iNode=0; iNode<nNodes; iNode++ )
                 {
                     CPL_LSBPTR64(&poRawPoints[iNode].x);
                     CPL_LSBPTR64(&poRawPoints[iNode].y);
@@ -546,7 +546,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             VSIFree(poRawPoints);
             VSIFree(panNodesCount);
 
-            if (poSRS)
+            if( poSRS )
                 poGeom->assignSpatialReference(poSRS);
             OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
             poFeature->SetField(0, dfId);
@@ -564,20 +564,20 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
 
 void OGRIdrisiLayer::ReadAVLLine(OGRFeature* poFeature)
 {
-    if (fpAVL == NULL)
+    if( fpAVL == NULL )
         return;
 
     const char* pszLine = CPLReadLineL(fpAVL);
-    if (pszLine == NULL)
+    if( pszLine == NULL )
         return;
 
     char** papszTokens = CSLTokenizeStringComplex(pszLine, "\t", TRUE, TRUE);
-    if (CSLCount(papszTokens) == poFeatureDefn->GetFieldCount())
+    if( CSLCount(papszTokens) == poFeatureDefn->GetFieldCount() )
     {
         const int nID = atoi(papszTokens[0]);
-        if (nID == poFeature->GetFID())
+        if( nID == poFeature->GetFID() )
         {
-            for(int i=1;i<poFeatureDefn->GetFieldCount();i++)
+            for( int i = 1; i < poFeatureDefn->GetFieldCount(); i++ )
             {
                 poFeature->SetField(i, papszTokens[i]);
             }
@@ -594,10 +594,10 @@ void OGRIdrisiLayer::SetExtent( double dfMinXIn, double dfMinYIn,
                                 double dfMaxXIn, double dfMaxYIn )
 {
     bExtentValid = true;
-    this->dfMinX = dfMinXIn;
-    this->dfMinY = dfMinYIn;
-    this->dfMaxX = dfMaxXIn;
-    this->dfMaxY = dfMaxYIn;
+    dfMinX = dfMinXIn;
+    dfMinY = dfMinYIn;
+    dfMaxX = dfMaxXIn;
+    dfMaxY = dfMaxYIn;
 }
 
 /************************************************************************/
@@ -622,7 +622,7 @@ OGRErr OGRIdrisiLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 GIntBig OGRIdrisiLayer::GetFeatureCount( int bForce )
 {
-    if (nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if( nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return nTotalFeatures;
 
     return OGRLayer::GetFeatureCount(bForce);
