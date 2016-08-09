@@ -373,7 +373,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             oFDefn.SetType( OFTString );
             break;
         }
@@ -1206,7 +1206,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
             break;
 
             default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return "";
             }
         }
@@ -1218,7 +1218,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
             return CPLSPrintf("\"%s\"", poSecondaryFieldDefn->GetNameRef());
         }
 
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return "";
     }
 
@@ -1902,7 +1902,6 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     for( int iKey = 0; iKey < nOrderItems; iKey++ )
     {
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
-        OGRFieldDefn *poFDefn;
 
         if ( psKeyDef->field_index >= iFIDFieldIndex &&
             psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
@@ -1919,8 +1918,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             continue;
         }
 
-        poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
-            psKeyDef->field_index );
+        OGRFieldDefn *poFDefn =
+            poSrcLayer->GetLayerDefn()->GetFieldDefn( psKeyDef->field_index );
 
         if( poFDefn->GetType() == OFTString )
         {
@@ -1974,13 +1973,13 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
     GIntBig nSecondGroup = nEntries - nFirstGroup;
     GIntBig nSecondStart = nStart + nFirstGroup;
     GIntBig iMerge = 0;
-    GIntBig *panMerged;
 
     if( !SortIndexSection( pasIndexFields, nFirstStart, nFirstGroup ) ||
         !SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup ) )
         return FALSE;
 
-    panMerged = (GIntBig *) VSI_MALLOC_VERBOSE( sizeof(GIntBig) * (size_t)nEntries );
+    GIntBig *panMerged = (GIntBig *)
+        VSI_MALLOC_VERBOSE( sizeof(GIntBig) * (size_t)nEntries );
     if( panMerged == NULL )
     {
         return FALSE;
@@ -1988,7 +1987,7 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
 
     while( iMerge < nEntries )
     {
-        int  nResult;
+        int  nResult = 0;
 
         if( nFirstGroup == 0 )
             nResult = -1;
@@ -2034,11 +2033,11 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
     for( iKey = 0; nResult == 0 && iKey < psSelectInfo->order_specs; iKey++ )
     {
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
-        OGRFieldDefn *poFDefn;
+        OGRFieldDefn *poFDefn = NULL;
 
         if( psKeyDef->field_index >= iFIDFieldIndex + SPECIAL_FIELD_COUNT )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return 0;
         }
         else if( psKeyDef->field_index >= iFIDFieldIndex )
@@ -2084,7 +2083,7 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 nResult = 0;
             }
         }

@@ -765,7 +765,7 @@ GByte *OGRMIAttrIndex::BuildKey( OGRField *psKey )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
 
         return NULL;
     }
