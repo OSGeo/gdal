@@ -1149,7 +1149,7 @@ static void kmldatetime2ogr( OGRFeature* poOgrFeat,
                              const char* pszOGRField,
                              const std::string& osKmlDateTime )
 {
-    int iField = poOgrFeat->GetFieldIndex( pszOGRField );
+    const int iField = poOgrFeat->GetFieldIndex( pszOGRField );
 
     if( iField > -1 )
     {
@@ -1551,7 +1551,7 @@ SimpleFieldPtr FieldDef2kml(
     OGRFieldDefn * poOgrFieldDef,
     KmlFactory * poKmlFactory )
 {
-    /***** get the field config *****/
+    /***** Get the field config. *****/
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
 
