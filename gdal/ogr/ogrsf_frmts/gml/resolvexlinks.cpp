@@ -51,8 +51,9 @@ static const char* GetID( CPLXMLNode * psNode )
     if( psNode == NULL )
         return NULL;
 
-    CPLXMLNode *psChild;
-    for( psChild = psNode->psChild; psChild != NULL; psChild = psChild->psNext )
+    for( CPLXMLNode *psChild = psNode->psChild;
+         psChild != NULL;
+         psChild = psChild->psNext )
     {
         if( psChild->eType == CXT_Attribute
             && EQUAL(psChild->pszValue, "gml:id") )
@@ -93,8 +94,9 @@ static std::vector<CPLXMLNode*> BuildIDIndex( CPLXMLNode* psNode,
                                    std::vector<CPLXMLNode*> &apsNode )
 
 {
-    CPLXMLNode *psSibling;
-    for( psSibling = psNode; psSibling != NULL; psSibling = psSibling->psNext )
+    for( CPLXMLNode *psSibling = psNode;
+         psSibling != NULL;
+         psSibling = psSibling->psNext )
     {
         if( GetID( psSibling ) != NULL )
             apsNode.push_back( psSibling );
@@ -117,10 +119,10 @@ static CPLXMLNode *FindElementByID( CPLXMLNode * psRoot,
     if( psRoot == NULL )
         return NULL;
 
-    CPLXMLNode *psSibling, *psReturn = NULL;
-
-// check for id attribute
-    for( psSibling = psRoot; psSibling != NULL; psSibling = psSibling->psNext)
+    // Check for id attribute.
+    for( CPLXMLNode *psSibling = psRoot;
+         psSibling != NULL;
+         psSibling = psSibling->psNext )
     {
         if( psSibling->eType == CXT_Element )
         {
@@ -131,12 +133,14 @@ static CPLXMLNode *FindElementByID( CPLXMLNode * psRoot,
         }
     }
 
-// search the child elements of all the psRoot's siblings
-    for( psSibling = psRoot; psSibling != NULL; psSibling = psSibling->psNext)
+    // Search the child elements of all the psRoot's siblings.
+    for( CPLXMLNode *psSibling = psRoot;
+         psSibling != NULL;
+         psSibling = psSibling->psNext )
     {
         if( psSibling->eType == CXT_Element )
         {
-            psReturn = FindElementByID( psSibling->psChild, pszID );
+            CPLXMLNode *psReturn = FindElementByID( psSibling->psChild, pszID );
             if( psReturn != NULL )
                 return psReturn;
         }
@@ -248,13 +252,12 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
     {
     //href has a different url
         size_t nLen;
-        char *pszNew;
         if( psChild->psChild->pszValue[0] == '#' )
         {
         //empty URL: prepend the given URL
             nLen = CPLStrnlen( pszURL, 1024 ) +
                    CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
-            pszNew = (char *)CPLMalloc( nLen * sizeof(char));
+            char *pszNew = (char *)CPLMalloc( nLen * sizeof(char));
             CPLStrlcpy( pszNew, pszURL, nLen );
             CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
             CPLSetXMLValue( psRoot, "#xlink:href", pszNew );
@@ -284,9 +287,8 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
                     //relative URL: prepend the path of pszURL
                     nLen = nPathLen +
                            CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
-                    pszNew = (char *)CPLMalloc( nLen * sizeof(char));
-                    size_t i;
-                    for( i = 0; i < nPathLen; i++ )
+                    char *pszNew = (char *)CPLMalloc( nLen * sizeof(char));
+                    for( size_t i = 0; i < nPathLen; i++ )
                         pszNew[i] = pszURL[i];
                     pszNew[nPathLen] = '\0';
                     CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
@@ -319,18 +321,17 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
     if( *ppapsRoot == NULL || ppapszResourceHREF == NULL )
         return NULL;
 
-//if found in ppapszResourceHREF
-    int i, nItems;
-    char *pszLocation;
+    // If found in ppapszResourceHREF.
+    int i = 0;
     if( ( i = CSLFindString( *ppapszResourceHREF, pszURL )) >= 0 )
     {
-    //return corresponding psRoot
+        // Return corresponding psRoot.
         return (*ppapsRoot)[i];
     }
     else
     {
-        CPLXMLNode *psSrcTree = NULL, *psSibling;
-        pszLocation = CPLStrdup( pszURL );
+        CPLXMLNode *psSrcTree = NULL;
+        char *pszLocation = CPLStrdup( pszURL );
         //if it is part of filesystem
         if( CPLCheckForFile( pszLocation, NULL) )
         {//filesystem
@@ -359,15 +360,15 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode *** ppapsRoot,
 /*      In the external GML resource we will only need elements         */
 /*      identified by a "gml:id". So trim them.                         */
 /************************************************************************/
-        psSibling = psSrcTree;
+        CPLXMLNode *psSibling = psSrcTree;
         while( psSibling != NULL )
         {
             TrimTree( psSibling );
             psSibling = psSibling->psNext;
         }
 
-    //update to lists
-        nItems = CSLCount(*ppapszResourceHREF);
+        // Update to lists.
+        int nItems = CSLCount(*ppapszResourceHREF);
         *ppapszResourceHREF = CSLAddString( *ppapszResourceHREF, pszURL );
         *ppapsRoot = (CPLXMLNode**)CPLRealloc(*ppapsRoot,
                                             (nItems+2)*sizeof(CPLXMLNode*));
@@ -431,11 +432,11 @@ static CPLErr Resolve( CPLXMLNode * psNode,
                           psChild->psChild->pszValue );
             }
 
-            char **papszTokens;
-            papszTokens = CSLTokenizeString2( psChild->psChild->pszValue, "#",
-                                              CSLT_ALLOWEMPTYTOKENS |
-                                              CSLT_STRIPLEADSPACES |
-                                              CSLT_STRIPENDSPACES );
+            char **papszTokens =
+                CSLTokenizeString2( psChild->psChild->pszValue, "#",
+                                    CSLT_ALLOWEMPTYTOKENS |
+                                    CSLT_STRIPLEADSPACES |
+                                    CSLT_STRIPENDSPACES );
             if( CSLCount( papszTokens ) != 2 || strlen(papszTokens[1]) <= 0 )
             {
                 CPLError( bStrict ? CE_Failure : CE_Warning,
@@ -545,8 +546,8 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file into a XML Node tree.                     */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode **papsSrcTree;
-    papsSrcTree = (CPLXMLNode **)CPLCalloc( 2, sizeof(CPLXMLNode *));
+    CPLXMLNode **papsSrcTree =
+        (CPLXMLNode **)CPLCalloc( 2, sizeof(CPLXMLNode *));
     papsSrcTree[0] = CPLParseXMLFile( m_pszFilename );
 
     if( papsSrcTree[0] == NULL )

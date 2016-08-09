@@ -153,7 +153,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
             if (bWriteGlobalSRS && sBoundingRect.IsInit()  && IsGML3Output())
             {
                 bool bCoordSwap = false;
-                char* pszSRSName;
+                char* pszSRSName = NULL;
                 if (poWriteGlobalSRS)
                     pszSRSName = GML_GetSRSName(poWriteGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
                 else
@@ -303,7 +303,6 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
 bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
 {
-    VSILFILE   *fp;
     char        szHeader[4096];
     GIntBig     nNumberOfFeatures = 0;
     CPLString   osWithVsiGzip;
@@ -331,6 +330,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
     VSILFILE* fpToClose = NULL;
+    VSILFILE *fp = NULL;
     if( poOpenInfo->fpL != NULL )
     {
         fp = poOpenInfo->fpL;
@@ -338,9 +338,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
     else
     {
-        fpToClose = fp = VSIFOpenL( pszFilename, "r" );
+        fp = VSIFOpenL( pszFilename, "r" );
         if( fp == NULL )
             return false;
+        fpToClose = fp;
     }
 
     bool bExpatCompatibleEncoding = false;
@@ -1363,8 +1364,6 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
 {
-    OGRGMLLayer *poLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
@@ -1441,8 +1440,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         }
     }
 
-
-    poLayer = new OGRGMLLayer( poClass->GetName(), false, this );
+    OGRGMLLayer *poLayer = new OGRGMLLayer( poClass->GetName(), false, this );
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
@@ -1806,9 +1804,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRGMLLayer *poLayer;
-
-    poLayer = new OGRGMLLayer( pszCleanLayerName, true, this );
+    OGRGMLLayer *poLayer = new OGRGMLLayer( pszCleanLayerName, true, this );
     poLayer->GetLayerDefn()->SetGeomType(eType);
     if( eType != wkbNone )
     {
@@ -1889,7 +1885,6 @@ void OGRGMLDataSource::GrowExtents( OGREnvelope3D *psGeomBounds, int nCoordDimen
 void OGRGMLDataSource::InsertHeader()
 
 {
-    VSILFILE        *fpSchema;
     int         nSchemaStart = 0;
 
     if( bFpOutputSingleFile )
@@ -1907,6 +1902,7 @@ void OGRGMLDataSource::InsertHeader()
     if( pszSchemaURI != NULL )
         return;
 
+    VSILFILE *fpSchema = NULL;
     if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
     {
         const char *pszXSDFilename = CPLResetExtension( pszName, "xsd" );

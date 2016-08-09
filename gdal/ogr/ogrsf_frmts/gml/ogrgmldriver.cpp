@@ -96,15 +96,13 @@ static int OGRGMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRGMLDataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update )
         return NULL;
 
     if( OGRGMLDriverIdentify( poOpenInfo ) == FALSE )
         return NULL;
 
-    poDS = new OGRGMLDataSource();
+    OGRGMLDataSource *poDS = new OGRGMLDataSource();
 
     if( !poDS->Open(  poOpenInfo ) )
     {

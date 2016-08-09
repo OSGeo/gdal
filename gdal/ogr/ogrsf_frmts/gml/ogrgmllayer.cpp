@@ -730,7 +730,6 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
         if( poGeom != NULL && !poGeom->IsEmpty())
         {
-            char    *pszGeometry;
             OGREnvelope3D sGeomBounds;
 
             int nCoordDimension = poGeom->getCoordinateDimension();
@@ -784,6 +783,8 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                         CPLSPrintf("GMLID=%s.geom." CPL_FRMT_GIB,
                                    poFeatureDefn->GetName(), poFeature->GetFID()));
             }
+
+            char *pszGeometry = NULL;
             if( !bIsGML3Output && OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
             {
                 OGRGeometry* poGeomTmp = OGRGeometryFactory::forceTo(
