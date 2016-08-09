@@ -293,7 +293,7 @@ CPLErr      OGRMutexedLayer::SetMetadataItem( const char * pszName,
 void OGRRegisterMutexedLayer();
 void OGRRegisterMutexedLayer()
 {
-    CPLAssert(FALSE); // Never call this function: it will segfault
+    CPLAssert(false); // Never call this function: it will segfault
     delete new OGRMutexedLayer(NULL, FALSE, NULL);
 }
 #endif
