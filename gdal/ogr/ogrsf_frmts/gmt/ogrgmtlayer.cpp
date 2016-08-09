@@ -631,7 +631,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                   break;
 
                   default:
-                    CPLAssert( FALSE );
+                    CPLAssert( false );
                 }
             }
         }

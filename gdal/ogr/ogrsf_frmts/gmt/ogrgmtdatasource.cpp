@@ -110,7 +110,7 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Establish the geometry type.  Note this logic                   */
 /* -------------------------------------------------------------------- */
-    const char *pszGeom;
+    const char *pszGeom = NULL;
 
     switch( wkbFlatten(eType) )
     {

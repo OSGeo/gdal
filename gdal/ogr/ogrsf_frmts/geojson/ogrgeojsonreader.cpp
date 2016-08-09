@@ -1589,7 +1589,7 @@ OGRMultiLineString* OGRGeoJSONReadMultiLineString( json_object* poObj )
             json_object* poObjLine = NULL;
             poObjLine = json_object_array_get_idx( poObjLines, i );
 
-            OGRLineString* poLine;
+            OGRLineString* poLine = NULL;
             if (poObjLine != NULL)
                 poLine = OGRGeoJSONReadLineString( poObjLine , true );
             else
