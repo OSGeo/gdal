@@ -489,10 +489,10 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Do we have a user provided version override?                    */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "TIGER_VERSION", NULL ) != NULL )
-    {
-        const char *pszRequestedVersion =
+    const char *pszRequestedVersion =
             CPLGetConfigOption( "TIGER_VERSION", NULL );
+    if( pszRequestedVersion != NULL )
+    {
 
         if( STARTS_WITH_CI(pszRequestedVersion, "TIGER_") )
         {
