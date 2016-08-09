@@ -1854,7 +1854,7 @@ def ogr_mitab_35():
                       'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
                       #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
                       'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
-                      #'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5', # alias of 20
+                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                       'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                       'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:

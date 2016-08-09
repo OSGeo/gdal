@@ -1178,7 +1178,6 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Stereographic
          *-------------------------------------------------------------*/
       case 20:
-      case 31: /* this is called Double Stereographic, whats the diff? */
         poSpatialRef->SetStereographic( sTABProj.adProjParams[1],
                                           sTABProj.adProjParams[0],
                                           sTABProj.adProjParams[2],
@@ -1223,6 +1222,17 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
                                sTABProj.adProjParams[0],
                                sTABProj.adProjParams[2],
                                sTABProj.adProjParams[3] );
+        break;
+
+        /*--------------------------------------------------------------
+         * Oblique Stereographic
+         *-------------------------------------------------------------*/
+      case 31:
+        poSpatialRef->SetOS( sTABProj.adProjParams[1],
+                                          sTABProj.adProjParams[0],
+                                          sTABProj.adProjParams[2],
+                                          sTABProj.adProjParams[3],
+                                          sTABProj.adProjParams[4] );
         break;
 
      /*--------------------------------------------------------------
@@ -1788,6 +1798,17 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        nParmCount = 5;
+    }
+
+    else if (EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC))
+    {
+        sTABProj.nProjId = 31;
+        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
         nParmCount = 5;
     }
 
