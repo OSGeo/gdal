@@ -139,8 +139,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     /* Some files might have no header but begin directly with a TABLES section */
     else if( EQUAL(szLineBuf,"TABLES") )
     {
-        if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
-            osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
+        osEncoding = CPLGetConfigOption( "DXF_ENCODING", osEncoding );
 
         if( !ReadTablesSection() )
             return FALSE;
