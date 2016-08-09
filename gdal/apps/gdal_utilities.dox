@@ -1663,6 +1663,7 @@ Usage:
 \verbatim
 
 gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeight]
+               [-overlap val_in_pixel]
                [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
                       CInt16/CInt32/CFloat32/CFloat64}]'
                [ -tileIndex tileIndexName [-tileIndexField tileIndexFieldName]]
@@ -1705,6 +1706,9 @@ Force the output image bands to have a specific type. Use type names (i.e. Byte,
 </dd>
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified, 256 x 256 is the default
+</dd>
+<dt> <b>-overlap</b> <i>val_in_pixel</i>:</dt><dd> (GDAL &gt;= 2.2) Overlap in
+pixels between consecutive tiles. If not specified, 0 is the default
 </dd>
 <dt> <b>-levels</b> <i>numberOfLevels</i>:</dt><dd>
 Number of pyramids levels to build.
