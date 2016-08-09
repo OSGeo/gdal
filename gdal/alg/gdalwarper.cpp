@@ -358,6 +358,40 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 }
 
 /************************************************************************/
+/*                       GDALWarpNoDataMaskerT()                        */
+/************************************************************************/
+
+template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
+                                                       int nPixels,
+                                                       const T *pData ,
+                                                       GUInt32 *panValidityMask,
+                                                       int* pbOutAllValid )
+{
+    // nothing to do if value is out of range.
+    if( padfNoData[0] < std::numeric_limits<T>::min() ||
+        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001
+        || padfNoData[1] != 0.0 )
+    {
+        *pbOutAllValid = TRUE;
+        return CE_None;
+    }
+
+    const int nNoData = (int) floor(padfNoData[0] + 0.000001);
+    int bAllValid = TRUE;
+    for( int iOffset = 0; iOffset < nPixels; ++iOffset )
+    {
+        if( pData[iOffset] == nNoData )
+        {
+            bAllValid = FALSE;
+            panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+        }
+    }
+    *pbOutAllValid = bAllValid;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                        GDALWarpNoDataMasker()                        */
 /*                                                                      */
 /*      GDALMaskFunc for establishing a validity mask for a source      */
@@ -371,8 +405,8 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                       int bMaskIsFloat, void *pValidityMask, int* pbOutAllValid )
 
 {
-    double *padfNoData = (double *) pMaskFuncArg;
-    GUInt32 *panValidityMask = (GUInt32 *) pValidityMask;
+    const double *padfNoData = reinterpret_cast<const double*>(pMaskFuncArg);
+    GUInt32 *panValidityMask = reinterpret_cast<GUInt32 *>(pValidityMask);
 
     *pbOutAllValid = FALSE;
 
@@ -386,92 +420,25 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     switch( eType )
     {
       case GDT_Byte:
-      {
-          int nNoData = (int) padfNoData[0];
-          GByte *pabyData = (GByte *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < 0.0 || padfNoData[0] > 255.000001
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( pabyData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return GDALWarpNoDataMaskerT( padfNoData, nXSize * nYSize,
+                                        reinterpret_cast<const GByte*>(*ppImageData),
+                                        panValidityMask, pbOutAllValid );
 
       case GDT_Int16:
-      {
-          int nNoData = (int) padfNoData[0];
-          GInt16 *panData = (GInt16 *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < -32768 || padfNoData[0] > 32767
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( panData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return GDALWarpNoDataMaskerT( padfNoData, nXSize * nYSize,
+                                        reinterpret_cast<const GInt16*>(*ppImageData),
+                                        panValidityMask, pbOutAllValid );
 
       case GDT_UInt16:
-      {
-          int nNoData = (int) padfNoData[0];
-          GUInt16 *panData = (GUInt16 *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < 0 || padfNoData[0] > 65535
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( panData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return GDALWarpNoDataMaskerT( padfNoData, nXSize * nYSize,
+                                        reinterpret_cast<const GUInt16*>(*ppImageData),
+                                        panValidityMask, pbOutAllValid );
 
       case GDT_Float32:
       {
-          float fNoData = (float) padfNoData[0];
-          float *pafData = (float *) *ppImageData;
-          int iOffset;
-          int bIsNoDataNan = CPLIsNan(fNoData);
+          const float fNoData = static_cast<float>(padfNoData[0]);
+          const float *pafData = reinterpret_cast<const float*>(*ppImageData);
+          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
 
           // nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
@@ -481,10 +448,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           }
 
           int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          for( int iOffset = 0; iOffset < nXSize*nYSize; ++iOffset )
           {
               float fVal = pafData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(fVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
+              if( (bIsNoDataNan && CPLIsNan(fVal)) ||
+                  (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
               {
                   bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
@@ -496,10 +464,9 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
       case GDT_Float64:
       {
-          double dfNoData = padfNoData[0];
-          double *padfData = (double *) *ppImageData;
-          int iOffset;
-          int bIsNoDataNan = CPLIsNan(dfNoData);
+          const double dfNoData = padfNoData[0];
+          const double *padfData = reinterpret_cast<const double*>(*ppImageData);
+          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
 
           // nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
@@ -509,10 +476,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           }
 
           int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          for( int iOffset = 0; iOffset < nXSize*nYSize; ++iOffset )
           {
               double dfVal = padfData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(dfVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
+              if( (bIsNoDataNan && CPLIsNan(dfVal)) ||
+                  (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
               {
                   bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
@@ -525,26 +493,27 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
       default:
       {
           double  *padfWrk;
-          int     iLine, iPixel;
           const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-          int bIsNoDataRealNan = CPLIsNan(padfNoData[0]);
-          int bIsNoDataImagNan = CPLIsNan(padfNoData[1]);
+          const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+          const bool bIsNoDataImagNan = CPL_TO_BOOL(CPLIsNan(padfNoData[1]));
 
           padfWrk = (double *) CPLMalloc(nXSize * sizeof(double) * 2);
           int bAllValid = TRUE;
-          for( iLine = 0; iLine < nYSize; iLine++ )
+          for( int iLine = 0; iLine < nYSize; iLine++ )
           {
-              GDALCopyWords( ((GByte *) *ppImageData)+nWordSize*iLine*nXSize,
+              GDALCopyWords( (*ppImageData)+nWordSize*iLine*nXSize,
                              eType, nWordSize,
                              padfWrk, GDT_CFloat64, 16, nXSize );
 
-              for( iPixel = 0; iPixel < nXSize; iPixel++ )
+              for( int iPixel = 0; iPixel < nXSize; ++iPixel )
               {
                   if( ((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel*2])) ||
-                       (!bIsNoDataRealNan && ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0])))
+                       (!bIsNoDataRealNan &&
+                         ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0])))
                       && ((bIsNoDataImagNan && CPLIsNan(padfWrk[iPixel*2+1])) ||
-                          (!bIsNoDataImagNan && ARE_REAL_EQUAL(padfWrk[iPixel*2+1], padfNoData[1]))) )
+                          (!bIsNoDataImagNan &&
+                           ARE_REAL_EQUAL(padfWrk[iPixel*2+1], padfNoData[1]))) )
                   {
                       int iOffset = iPixel + iLine * nXSize;
 
