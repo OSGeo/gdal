@@ -322,7 +322,7 @@ int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 

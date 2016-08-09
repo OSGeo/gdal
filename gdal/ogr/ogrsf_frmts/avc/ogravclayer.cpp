@@ -595,7 +595,7 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
         }
         else
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return FALSE;
         }
     }

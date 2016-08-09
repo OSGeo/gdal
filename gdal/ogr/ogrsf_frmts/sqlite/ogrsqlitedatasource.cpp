@@ -2641,7 +2641,7 @@ OGRErr OGRSQLiteBaseDataSource::SoftCommitTransaction()
 
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return OGRERR_FAILURE;
     }
 
@@ -2670,7 +2670,7 @@ OGRErr OGRSQLiteBaseDataSource::SoftRollbackTransaction()
 
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return OGRERR_FAILURE;
     }
 

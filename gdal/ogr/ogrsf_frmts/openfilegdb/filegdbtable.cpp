@@ -367,7 +367,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
             case FGFT_UUID_2: nRequiredLength += UUID_SIZE_IN_BYTES; break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
     }
@@ -442,7 +442,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                 case FGFT_UUID_2: nRequiredLength += UUID_SIZE_IN_BYTES; break;
 
                 default:
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     break;
             }
             if( nRequiredLength > nRowBlobLength )
@@ -1400,7 +1400,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             case FGFT_UUID_2: nLength = UUID_SIZE_IN_BYTES; break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
 
@@ -1620,7 +1620,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
         }
 
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             break;
     }
 
