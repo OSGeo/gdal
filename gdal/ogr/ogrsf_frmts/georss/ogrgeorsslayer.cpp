@@ -1160,10 +1160,11 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
         if ( ! poFeatureIn->IsFieldSet( i ) )
             continue;
 
-        char* pszElementName;
-        char* pszNumber;
-        char* pszAttributeName;
-        OGRGeoRSSLayerSplitComposedField(pszName, &pszElementName, &pszNumber, &pszAttributeName);
+        char* pszElementName = NULL;
+        char* pszNumber = NULL;
+        char* pszAttributeName = NULL;
+        OGRGeoRSSLayerSplitComposedField(pszName, &pszElementName, &pszNumber,
+                                         &pszAttributeName);
 
         int bWillSkip = FALSE;
         /* Handle Atom entries with elements with sub-elements like */
@@ -1285,15 +1286,14 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
                  (STARTS_WITH(pszName, "content") ||
                   STARTS_WITH(pszName, "summary")))
         {
-            char* pszFieldName;
-            int iIndex;
             if (strchr(pszName, '_') == NULL)
             {
                 VSIFPrintfL(fp, "      <%s", pszName);
 
                 int bIsXHTML = FALSE;
-                pszFieldName = CPLStrdup(CPLSPrintf("%s_%s", pszName, "type"));
-                iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
+                char* pszFieldName =
+                    CPLStrdup(CPLSPrintf("%s_%s", pszName, "type"));
+                int iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
                 if (iIndex != -1 && poFeatureIn->IsFieldSet( iIndex ))
                 {
                     bIsXHTML = strcmp(poFeatureIn->GetFieldAsString( iIndex ), "xhtml") == 0;
@@ -1341,14 +1341,13 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
         }
         else if (STARTS_WITH(pszName, "dc_subject"))
         {
-            char* pszFieldName;
-            int iIndex;
             if (strchr(pszName+strlen("dc_subject"), '_') == NULL)
             {
                 VSIFPrintfL(fp, "      <%s", "dc:subject");
 
-                pszFieldName = CPLStrdup(CPLSPrintf("%s_%s", pszName, "xml_lang"));
-                iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
+                char* pszFieldName =
+                    CPLStrdup(CPLSPrintf("%s_%s", pszName, "xml_lang"));
+                int iIndex = poFeatureDefn->GetFieldIndex(pszFieldName);
                 if (iIndex != -1 && poFeatureIn->IsFieldSet( iIndex ))
                 {
                     char* pszValue =
@@ -1903,7 +1902,7 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
             char* pszAttrCompatibleName =
                     OGRGeoRSS_GetOGRCompatibleTagName(CPLSPrintf("%s_%s", pszSubElementName, ppszAttr[i]));
             iField = poFeatureDefn->GetFieldIndex(pszAttrCompatibleName);
-            OGRFieldDefn* currentAttrFieldDefn;
+            OGRFieldDefn* currentAttrFieldDefn = NULL;
             if (iField >= 0)
             {
                 currentAttrFieldDefn = poFeatureDefn->GetFieldDefn(iField);

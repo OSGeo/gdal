@@ -409,11 +409,11 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature, int nSignificantF
         OGRFieldType eType = poFieldDefn->GetType();
         OGRFieldSubType eSubType = poFieldDefn->GetSubType();
 
-        json_object* poObjProp;
+        json_object* poObjProp = NULL;
 
         if( !poFeature->IsFieldSet(nField) )
         {
-            poObjProp = NULL;
+            // poObjProp = NULL;
         }
         else if( OFTInteger == eType )
         {

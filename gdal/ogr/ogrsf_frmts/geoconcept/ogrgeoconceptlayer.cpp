@@ -517,10 +517,10 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField,
 
     {
       /* check whether field exists ... */
-      GCField* theField;
       char* pszName = OGRGeoconceptLayer_GetCompatibleFieldName(poField->GetNameRef());
 
-      if( !(theField= FindFeatureField_GCIO(_gcFeature,pszName)) )
+      GCField* theField = FindFeatureField_GCIO(_gcFeature,pszName);
+      if( !theField )
       {
         if( GetFeatureCount(TRUE) > 0 )
         {

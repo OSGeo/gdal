@@ -174,7 +174,7 @@ void OGRGeoJSONLayer::DetectGeometryType()
     ResetReading();
     bool bFirstGeometry = true;
     OGRwkbGeometryType eLayerGeomType = wkbUnknown;
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();
