@@ -158,9 +158,7 @@ void OGRDODSLayer::ResetReading()
 OGRFeature *OGRDODSLayer::GetNextFeature()
 
 {
-    OGRFeature *poFeature;
-
-    for( poFeature = GetFeature( iNextShapeId++ );
+    for( OGRFeature *poFeature = GetFeature( iNextShapeId++ );
          poFeature != NULL;
          poFeature = GetFeature( iNextShapeId++ ) )
     {

@@ -636,7 +636,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -732,7 +732,7 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
     if( psElement->raw_data == NULL
         || psElement->raw_bytes < 36 )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 
