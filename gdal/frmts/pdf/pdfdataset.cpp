@@ -6637,8 +6637,6 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
         }
         else
         {
-            if (pszValue == NULL)
-                pszValue = "";
             if( EQUAL(pszName, "AUTHOR") ||
                 EQUAL(pszName, "PRODUCER") ||
                 EQUAL(pszName, "CREATOR") ||
@@ -6647,11 +6645,11 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
                 EQUAL(pszName, "TITLE") ||
                 EQUAL(pszName, "KEYWORDS") )
             {
+                if (pszValue == NULL)
+                    pszValue = "";
                 const char* pszOldValue = oMDMD.GetMetadataItem(pszName, pszDomain);
-                if( (pszValue == NULL && pszOldValue != NULL) ||
-                    (pszValue != NULL && pszOldValue == NULL) ||
-                    (pszValue != NULL && pszOldValue != NULL &&
-                    strcmp(pszValue, pszOldValue) != 0) )
+                if( pszOldValue == NULL ||
+                    strcmp(pszValue, pszOldValue) != 0 )
                 {
                     bInfoDirty = TRUE;
                 }
