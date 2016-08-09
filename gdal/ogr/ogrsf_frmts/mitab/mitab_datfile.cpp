@@ -2559,7 +2559,7 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
         // __TODO__  (see bug #1844)
         // Indexing on DateTime Fields not currently supported, that will
         // require passing the 8 bytes datetime value to BuildKey() here...
-        CPLAssert(FALSE);
+        CPLAssert(false);
         GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
                                                      nMonth * 0x100 + nDay));
         if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)

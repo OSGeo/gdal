@@ -282,7 +282,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
                         psEnvelope->MinY = MIN(psEnvelope->MaxY, cy - R);
                         break;
                     default:
-                        CPLAssert(FALSE);
+                        CPLAssert(false);
                         break;
                 }
             }

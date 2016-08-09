@@ -588,7 +588,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return NULL;
             }
 
@@ -633,7 +633,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 

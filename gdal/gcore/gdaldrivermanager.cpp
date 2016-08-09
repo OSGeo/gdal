@@ -416,7 +416,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
             }
         }
 
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
 /* -------------------------------------------------------------------- */

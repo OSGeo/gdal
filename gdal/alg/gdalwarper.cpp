@@ -593,13 +593,13 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL || psWO->nSrcAlphaBand < 1 )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -775,13 +775,13 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     if( bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -807,7 +807,7 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 
     if( hMaskBand == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -865,13 +865,13 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL || psWO->nDstAlphaBand < 1 )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 

@@ -1344,7 +1344,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return 0;
     }
 

@@ -1384,7 +1384,7 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
         || nStartVertex >= nOtherLineNumPoints
         || nEndVertex >= nOtherLineNumPoints )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return;
     }
 

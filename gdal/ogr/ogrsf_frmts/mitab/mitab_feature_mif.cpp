@@ -925,13 +925,13 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
                 {
-                    CPLAssert(FALSE); // Just in case OGR is modified
+                    CPLAssert(false); // Just in case OGR is modified
                 }
             }
             poMultiLine->getEnvelope(&sEnvelope);
             if (SetGeometryDirectly(poMultiLine) != OGRERR_NONE)
             {
-                CPLAssert(FALSE); // Just in case OGR is modified
+                CPLAssert(false); // Just in case OGR is modified
             }
             SetMBR(sEnvelope.MinX, sEnvelope.MinY,
                    sEnvelope.MaxX,sEnvelope.MaxY);
@@ -2263,7 +2263,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         poPoint = new OGRPoint(dfX, dfY);
         if ( poMultiPoint->addGeometryDirectly( poPoint ) != OGRERR_NONE)
         {
-            CPLAssert(FALSE); // Just in case OGR is modified
+            CPLAssert(false); // Just in case OGR is modified
         }
 
         // Set center
@@ -2277,7 +2277,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     poMultiPoint->getEnvelope(&sEnvelope);
     if( SetGeometryDirectly( poMultiPoint ) != OGRERR_NONE)
     {
-        CPLAssert(FALSE); // Just in case OGR is modified
+        CPLAssert(false); // Just in case OGR is modified
     }
 
     SetMBR(sEnvelope.MinX, sEnvelope.MinY,

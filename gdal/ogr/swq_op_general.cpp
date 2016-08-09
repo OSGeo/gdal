@@ -393,7 +393,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -533,7 +533,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -760,7 +760,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;

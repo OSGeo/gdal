@@ -403,7 +403,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
     return psAxisXML;

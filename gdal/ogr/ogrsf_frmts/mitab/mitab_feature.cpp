@@ -2345,7 +2345,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                 poGeometry = poLine;
             else if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
             {
-                CPLAssert(FALSE); // Just in case lower-level lib is modified
+                CPLAssert(false); // Just in case lower-level lib is modified
             }
             poLine = NULL;
         }
@@ -6582,7 +6582,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
             if (poMultiPoint->addGeometryDirectly(poPoint) != OGRERR_NONE)
             {
-                CPLAssert(FALSE); // Just in case lower-level lib is modified
+                CPLAssert(false); // Just in case lower-level lib is modified
             }
         }
 

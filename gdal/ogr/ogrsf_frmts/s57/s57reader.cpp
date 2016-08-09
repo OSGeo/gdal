@@ -1175,7 +1175,7 @@ OGRFeature *S57Reader::ReadDSID()
 
     if( poFDefn == NULL )
     {
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return NULL;
     }
 
@@ -1323,7 +1323,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -1348,7 +1348,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
     if( poFDefn == NULL )
     {
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return NULL;
     }
 
@@ -2606,7 +2606,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                   poTarget->GetIntSubfield( pszKey, 0, "RCNM", 0 ),
                   poTarget->GetIntSubfield( pszKey, 0, "RCID", 0 ) );
 
-        // CPLAssert( FALSE );
+        // CPLAssert( false );
         return FALSE;
     }
 
@@ -2617,7 +2617,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
     if( poKey == NULL )
     {
-        // CPLAssert( FALSE );
+        // CPLAssert( false );
         return FALSE;
     }
 
@@ -2643,7 +2643,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( (poSrcFSPT == NULL && nFSUI != 2) || poDstFSPT == NULL )
         {
-            // CPLAssert( FALSE );
+            // CPLAssert( false );
             return FALSE;
         }
 
@@ -2733,7 +2733,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( (poSrcVRPT == NULL && nVPUI != 2) || poDstVRPT == NULL )
         {
-            //CPLAssert( FALSE );
+            // CPLAssert( false );
             return FALSE;
         }
 
@@ -2834,7 +2834,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         if( (poSrcSG2D == NULL && nCCUI != 2)
             || (poDstSG2D == NULL && nCCUI != 1) )
         {
-            //CPLAssert( FALSE );
+            // CPLAssert( false );
             return FALSE;
         }
 
@@ -2843,7 +2843,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
             poDstSG2D = poTarget->FindField("SG2D");
             if (poDstSG2D == NULL) {
-                //CPLAssert( FALSE );
+                // CPLAssert( false );
                 return FALSE;
             }
 
@@ -2941,7 +2941,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             || (poDstFFPT == NULL && nFFUI != 1) )
         {
             CPLDebug( "S57", "Missing source or target FFPT applying update.");
-            //CPLAssert( FALSE );
+            // CPLAssert( false );
             return FALSE;
         }
 
@@ -2952,7 +2952,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             poTarget->AddField(poTarget->GetModule()->FindFieldDefn("FFPT"));
             poDstFFPT = poTarget->FindField("FFPT");
             if (poDstFFPT == NULL) {
-                //CPLAssert( FALSE );
+                // CPLAssert( false );
                 return FALSE;
             }
 
@@ -3158,7 +3158,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                     break;
 
                   default:
-                    //CPLAssert( FALSE );
+                    // CPLAssert( false );
                     return FALSE;
                     break;
                 }

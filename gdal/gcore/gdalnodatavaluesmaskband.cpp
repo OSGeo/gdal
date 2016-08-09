@@ -116,7 +116,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         eWrkDT = GDT_Float64;
         break;
     }

@@ -292,13 +292,13 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL || psWO->hCutline == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -318,7 +318,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     if( wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbPolygon
         && wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbMultiPolygon )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
