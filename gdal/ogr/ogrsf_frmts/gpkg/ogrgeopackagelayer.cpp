@@ -47,8 +47,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
     iFIDCol(-1),
     iGeomCol(-1),
     panFieldOrdinals(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                      ~OGRGeoPackageLayer()                           */
@@ -104,8 +103,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 {
     for( ; true; )
     {
-        OGRFeature      *poFeature;
-
         if( m_poQueryStatement == NULL )
         {
             ResetStatement();
@@ -118,9 +115,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
     /* -------------------------------------------------------------------- */
         if( bDoStep )
         {
-            int rc;
-
-            rc = sqlite3_step( m_poQueryStatement );
+            int rc = sqlite3_step( m_poQueryStatement );
             if( rc != SQLITE_ROW )
             {
                 if ( rc != SQLITE_DONE )
@@ -139,7 +134,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
         else
             bDoStep = TRUE;
 
-        poFeature = TranslateFeature(m_poQueryStatement);
+        OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
         if( poFeature == NULL )
             return NULL;
 
@@ -160,7 +155,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */

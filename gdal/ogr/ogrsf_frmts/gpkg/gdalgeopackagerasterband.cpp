@@ -57,9 +57,22 @@ GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
     m_nZLevel(6),
     m_nQuality(75),
     m_bDither(false),
-    m_poParentDS(NULL)
+    m_poCT(NULL),
+    m_bTriedEstablishingCT(false),
+    m_pabyHugeColorArray(NULL),
+#ifdef HAVE_SQLITE_VFS
+  m_pMyVFS(NULL),
+#endif
+    m_hTempDB(NULL),
+    m_nLastSpaceCheckTimestamp(0),
+    m_bForceTempDBCompaction(
+        CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO"))),
+    m_nAge(0),
+    m_nTileInsertionCount(0),
+    m_poParentDS(NULL),
+    m_bInWriteTile(false)
 {
-    for(int i=0;i<4;i++)
+    for( int i = 0; i < 4; i++ )
     {
         m_asCachedTilesDesc[i].nRow = -1;
         m_asCachedTilesDesc[i].nCol = -1;
@@ -69,18 +82,6 @@ GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
         m_asCachedTilesDesc[i].abBandDirty[2] = FALSE;
         m_asCachedTilesDesc[i].abBandDirty[3] = FALSE;
     }
-    m_bTriedEstablishingCT = false;
-    m_pabyHugeColorArray = NULL;
-    m_poCT = NULL;
-    m_bInWriteTile = false;
-#ifdef HAVE_SQLITE_VFS
-    m_pMyVFS = NULL;
-#endif
-    m_hTempDB = NULL;
-    m_nTileInsertionCount = 0;
-    m_nLastSpaceCheckTimestamp = 0;
-    m_nAge = 0;
-    m_bForceTempDBCompaction = CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO"));
 }
 
 /************************************************************************/
@@ -95,7 +96,7 @@ GDALGPKGMBTilesLikePseudoDataset::~GDALGPKGMBTilesLikePseudoDataset()
         m_hTempDB = NULL;
         VSIUnlink(m_osTempDBFilename);
 #ifdef HAVE_SQLITE_VFS
-        if (m_pMyVFS)
+        if( m_pMyVFS )
         {
             sqlite3_vfs_unregister(m_pMyVFS);
             CPLFree(m_pMyVFS->pAppData);
@@ -113,8 +114,8 @@ GDALGPKGMBTilesLikePseudoDataset::~GDALGPKGMBTilesLikePseudoDataset()
 /************************************************************************/
 
 GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
-    GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight)
-    : m_poTPD(poTPD)
+    GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight) :
+    m_poTPD(poTPD)
 {
     eDataType = GDT_Byte;
     nBlockXSize = nTileWidth;
@@ -169,93 +170,93 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
 
 GDALColorTable* GDALGPKGMBTilesLikeRasterBand::GetColorTable()
 {
-    if( poDS->GetRasterCount() == 1 )
+    if( poDS->GetRasterCount() != 1 )
+        return NULL;
+
+    if( !m_poTPD->m_bTriedEstablishingCT )
     {
-        if( !m_poTPD->m_bTriedEstablishingCT )
+        m_poTPD->m_bTriedEstablishingCT = true;
+        if( m_poTPD->m_poParentDS != NULL )
         {
-            m_poTPD->m_bTriedEstablishingCT = true;
-            if( m_poTPD->m_poParentDS != NULL )
-            {
-                m_poTPD->m_poCT
-                    = m_poTPD->m_poParentDS->IGetRasterBand(1)->GetColorTable();
-                if( m_poTPD->m_poCT )
-                    m_poTPD->m_poCT = m_poTPD->m_poCT->Clone();
-                return m_poTPD->m_poCT;
-            }
-
-            for( int i=0;i<2;i++)
-            {
-                bool bRetry = false;
-                char* pszSQL;
-                if( i == 0 )
-                {
-                    pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
-                        "WHERE zoom_level = %d LIMIT 1",
-                        m_poTPD->m_osRasterTable.c_str(), m_poTPD->m_nZoomLevel);
-                }
-                else
-                {
-                    // Try a tile in the middle of the raster
-                    pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
-                        "WHERE zoom_level = %d AND tile_column = %d AND tile_row = %d",
-                        m_poTPD->m_osRasterTable.c_str(), m_poTPD->m_nZoomLevel,
-                        m_poTPD->m_nShiftXTiles + nRasterXSize / 2 / nBlockXSize,
-                        m_poTPD->GetRowFromIntoTopConvention(m_poTPD->m_nShiftYTiles + nRasterYSize / 2 / nBlockYSize));
-                }
-                sqlite3_stmt* hStmt = NULL;
-                int rc = sqlite3_prepare(m_poTPD->IGetDB(), pszSQL, -1, &hStmt, NULL);
-                if ( rc == SQLITE_OK )
-                {
-                    rc = sqlite3_step( hStmt );
-                    if( rc == SQLITE_ROW
-                        && sqlite3_column_type( hStmt, 0 ) == SQLITE_BLOB )
-                    {
-                        const int nBytes = sqlite3_column_bytes( hStmt, 0 );
-                        GByte* pabyRawData = reinterpret_cast<GByte *>(
-                            const_cast<void *>( sqlite3_column_blob( hStmt, 0 ) ) );
-                        CPLString osMemFileName;
-                        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
-                        VSILFILE *fp = VSIFileFromMemBuffer( osMemFileName.c_str(),
-                                                            pabyRawData,
-                                                            nBytes, FALSE);
-                        VSIFCloseL(fp);
-
-                        /* Only PNG can have color table. */
-                        const char* apszDrivers[] = { "PNG", NULL };
-                        GDALDataset* poDSTile = reinterpret_cast<GDALDataset *>(
-                            GDALOpenEx( osMemFileName.c_str(),
-                                        GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                        apszDrivers, NULL, NULL ) );
-                        if( poDSTile != NULL )
-                        {
-                            if( poDSTile->GetRasterCount() == 1 )
-                            {
-                                m_poTPD->m_poCT
-                                    = poDSTile->GetRasterBand(1)->GetColorTable();
-                                if( m_poTPD->m_poCT != NULL )
-                                    m_poTPD->m_poCT = m_poTPD->m_poCT->Clone();
-                            }
-                            else
-                                bRetry = true;
-                            GDALClose( poDSTile );
-                        }
-                        else
-                            bRetry = true;
-
-                        VSIUnlink(osMemFileName);
-                    }
-                }
-                sqlite3_free(pszSQL);
-                sqlite3_finalize(hStmt);
-                if( !bRetry )
-                    break;
-            }
+            m_poTPD->m_poCT
+                = m_poTPD->m_poParentDS->IGetRasterBand(1)->GetColorTable();
+            if( m_poTPD->m_poCT )
+                m_poTPD->m_poCT = m_poTPD->m_poCT->Clone();
+            return m_poTPD->m_poCT;
         }
 
-        return m_poTPD->m_poCT;
+        for( int i = 0; i < 2; i++ )
+        {
+            bool bRetry = false;
+            char* pszSQL = NULL;
+            if( i == 0 )
+            {
+                pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
+                    "WHERE zoom_level = %d LIMIT 1",
+                    m_poTPD->m_osRasterTable.c_str(), m_poTPD->m_nZoomLevel);
+            }
+            else
+            {
+                // Try a tile in the middle of the raster
+                pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
+                    "WHERE zoom_level = %d AND tile_column = %d AND tile_row = %d",
+                    m_poTPD->m_osRasterTable.c_str(), m_poTPD->m_nZoomLevel,
+                    m_poTPD->m_nShiftXTiles + nRasterXSize / 2 / nBlockXSize,
+                    m_poTPD->GetRowFromIntoTopConvention(m_poTPD->m_nShiftYTiles + nRasterYSize / 2 / nBlockYSize));
+            }
+            sqlite3_stmt* hStmt = NULL;
+            int rc = sqlite3_prepare(m_poTPD->IGetDB(), pszSQL, -1, &hStmt, NULL);
+            if( rc == SQLITE_OK )
+            {
+                rc = sqlite3_step( hStmt );
+                if( rc == SQLITE_ROW
+                    && sqlite3_column_type( hStmt, 0 ) == SQLITE_BLOB )
+                {
+                    const int nBytes = sqlite3_column_bytes( hStmt, 0 );
+                    GByte* pabyRawData = reinterpret_cast<GByte *>(
+                        const_cast<void *>( sqlite3_column_blob( hStmt, 0 ) ) );
+                    CPLString osMemFileName;
+                    osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                    VSILFILE *fp = VSIFileFromMemBuffer( osMemFileName.c_str(),
+                                                        pabyRawData,
+                                                        nBytes, FALSE);
+                    VSIFCloseL(fp);
+
+                    // Only PNG can have color table.
+                    const char* apszDrivers[] = { "PNG", NULL };
+                    GDALDataset* poDSTile = reinterpret_cast<GDALDataset *>(
+                        GDALOpenEx( osMemFileName.c_str(),
+                                    GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                    apszDrivers, NULL, NULL ) );
+                    if( poDSTile != NULL )
+                    {
+                        if( poDSTile->GetRasterCount() == 1 )
+                        {
+                            m_poTPD->m_poCT
+                                = poDSTile->GetRasterBand(1)->GetColorTable();
+                            if( m_poTPD->m_poCT != NULL )
+                                m_poTPD->m_poCT = m_poTPD->m_poCT->Clone();
+                        }
+                        else
+                        {
+                            bRetry = true;
+                        }
+                        GDALClose( poDSTile );
+                    }
+                    else
+                        bRetry = true;
+
+                    VSIUnlink(osMemFileName);
+                }
+            }
+            sqlite3_free(pszSQL);
+            sqlite3_finalize(hStmt);
+            if( !bRetry )
+                break;
+        }
     }
 
-    return NULL;
+    return m_poTPD->m_poCT;
 }
 
 /************************************************************************/
