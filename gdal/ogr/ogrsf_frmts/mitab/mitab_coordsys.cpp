@@ -140,7 +140,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
-    char        *pszWKT;
+    char *pszWKT = NULL;
 
     poSR->exportToWkt( &pszWKT );
     if( pszWKT != NULL )
@@ -303,12 +303,11 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
                                   double &dXMax, double &dYMax )
 
 {
-    char        **papszFields;
-
     if( pszCoordSys == NULL )
         return FALSE;
 
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
 
     int iBounds = CSLFindString( papszFields, "Bounds" );
 
@@ -337,8 +336,6 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
 
 {
-    char        **papszFields;
-
     // Set all fields to zero, equivalent of NonEarth Units "mi"
     memset(psProj, 0, sizeof(TABProjInfo));
 
@@ -352,12 +349,13 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
 
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
 
     /*-----------------------------------------------------------------
      * Clip off Bounds information.
      *----------------------------------------------------------------*/
-    int         iBounds = CSLFindString( papszFields, "Bounds" );
+    int iBounds = CSLFindString( papszFields, "Bounds" );
 
     while( iBounds != -1 && papszFields[iBounds] != NULL )
     {
@@ -369,7 +367,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Fetch the projection.
      *----------------------------------------------------------------*/
-    char        **papszNextField;
+    char **papszNextField = NULL;
 
     if( CSLCount( papszFields ) >= 3
         && EQUAL(papszFields[0],"Earth")

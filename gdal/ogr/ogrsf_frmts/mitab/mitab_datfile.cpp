@@ -2003,14 +2003,12 @@ int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth, int *nDay
  **********************************************************************/
 double TABDATFile::ReadDecimalField(int nWidth)
 {
-    const char *pszVal;
-
     // If current record has been deleted, then return an acceptable
     // default value.
     if (m_bCurRecordDeletedFlag)
         return 0.0;
 
-    pszVal = ReadCharField(nWidth);
+    const char *pszVal = ReadCharField(nWidth);
 
     return CPLAtof(pszVal);
 }
@@ -2215,7 +2213,6 @@ int TABDATFile::WriteLogicalField(const char *pszValue,
 int TABDATFile::WriteDateField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo)
 {
-    int nDay, nMonth, nYear;
     char **papszTok = NULL;
 
     /*-----------------------------------------------------------------
@@ -2227,6 +2224,9 @@ int TABDATFile::WriteDateField(const char *pszValue,
      * Try to automagically detect date format, one of:
      * "YYYY/MM/DD", "DD/MM/YYYY", or "YYYYMMDD"
      *----------------------------------------------------------------*/
+    int nDay;
+    int nMonth;
+    int nYear;
 
     if (strlen(pszValue) == 8)
     {
@@ -2586,10 +2586,9 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
                                   TABINDFile *poINDFile, int nIndexNo)
 {
     char szFormat[10];
-    const char *pszVal;
 
     snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth, nPrec);
-    pszVal = CPLSPrintf(szFormat, dValue);
+    const char *pszVal = CPLSPrintf(szFormat, dValue);
     if ((int)strlen(pszVal) > nWidth)
         pszVal += strlen(pszVal) - nWidth;
 
