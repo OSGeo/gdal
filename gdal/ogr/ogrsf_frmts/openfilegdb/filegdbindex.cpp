@@ -925,7 +925,7 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx,
         }
 
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             break;
     }
 
@@ -1096,7 +1096,7 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             }
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 nComp = 0;
                 break;
         }
@@ -1163,7 +1163,7 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
         if( bStop )
@@ -1386,7 +1386,7 @@ int FileGDBIndexIterator::GetNextRow()
                 }
 
                 default:
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     nComp = 0;
                     break;
             }
@@ -1431,7 +1431,7 @@ int FileGDBIndexIterator::GetNextRow()
                     break;
 
                 default:
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     break;
             }
         }
@@ -1662,7 +1662,7 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
         }
 
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             break;
     }
     return NULL;
@@ -1809,7 +1809,7 @@ int FileGDBIndexIterator::GetMinMaxSumCount(double& dfMin, double& dfMax,
             break;
         }
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             break;
     }
 

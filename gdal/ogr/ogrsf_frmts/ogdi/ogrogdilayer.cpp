@@ -340,7 +340,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
     }
     else
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 
 /* -------------------------------------------------------------------- */
