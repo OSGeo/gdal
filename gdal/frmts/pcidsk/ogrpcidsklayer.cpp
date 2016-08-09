@@ -99,7 +99,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
 
@@ -680,7 +680,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
               break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
         }

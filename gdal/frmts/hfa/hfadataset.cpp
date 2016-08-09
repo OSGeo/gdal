@@ -2194,7 +2194,7 @@ void HFARasterBand::ReadAuxMetadata()
           }
           break;
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
         }
     }
 }

@@ -358,7 +358,7 @@ void HFAField::Dump( FILE * fp )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         pszTypeName = "Unknown";
     }
 
@@ -520,7 +520,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -796,14 +796,14 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             }
             else
             {
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return CE_Failure;
             }
         }
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
         break;
     }
@@ -1298,7 +1298,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 }

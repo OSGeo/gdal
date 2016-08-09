@@ -634,7 +634,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
                     {
-                        CPLAssert( FALSE );
+                        CPLAssert( false );
                     }
                 }
 

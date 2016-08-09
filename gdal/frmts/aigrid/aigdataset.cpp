@@ -932,7 +932,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
 
         if( !EQUALN(papszFileList[i],osOldPath,strlen(osOldPath)) )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return CE_Failure;
         }
 

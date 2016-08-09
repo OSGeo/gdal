@@ -249,7 +249,7 @@ CPLErr SAFERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   GDT_Byte,
                                   1, NULL, 1, nBlockXSize, 0, NULL );
 
-    CPLAssert( FALSE );
+    CPLAssert( false );
     return CE_Failure;
 }
 

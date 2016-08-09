@@ -1107,7 +1107,7 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
     if( iTarget == nFieldCount )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 

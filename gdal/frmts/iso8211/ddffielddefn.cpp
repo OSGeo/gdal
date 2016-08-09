@@ -425,7 +425,7 @@ void DDFFieldDefn::Dump( FILE * fp )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         pszValue = "(unknown)";
     }
 
@@ -462,7 +462,7 @@ void DDFFieldDefn::Dump( FILE * fp )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         pszValue = "(unknown)";
         break;
     }
@@ -821,7 +821,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
 {
     if( i < 0 || i >= nSubfieldCount )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -874,7 +874,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
         if( !papoSubfields[iSubfield]->GetDefaultValue(
                 pachData + nOffset, nTotalSize - nOffset, &nSubfieldSize ) )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return NULL;
         }
 

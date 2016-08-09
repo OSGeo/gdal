@@ -420,7 +420,7 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDSIn, int nBandIn )
                  break;
 
              case LTI_DATATYPE_INVALID:
-                 CPLAssert( FALSE );
+                 CPLAssert( false );
                  break;
          }
          bNoDataSet = TRUE;
