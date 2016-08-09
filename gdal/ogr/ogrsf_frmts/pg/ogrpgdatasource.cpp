@@ -2594,7 +2594,7 @@ OGRErr OGRPGDataSource::SoftCommitTransaction()
 
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return OGRERR_FAILURE;
     }
 
@@ -2627,7 +2627,7 @@ OGRErr OGRPGDataSource::SoftRollbackTransaction()
 
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return OGRERR_FAILURE;
     }
 
@@ -2713,7 +2713,7 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
 
     virtual OGRFeature *GetNextFeature();
 
-    virtual CPLString   GetFromClauseForGetExtent() { CPLAssert(FALSE); return ""; }
+    virtual CPLString   GetFromClauseForGetExtent() { CPLAssert(false); return ""; }
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) { poGFldDefn->nSRSId = -1; }
 };
 
