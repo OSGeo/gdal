@@ -2328,9 +2328,6 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
 int TABDATFile::WriteTimeField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo)
 {
-    int nHour, nMin, nSec, nMS;
-    char **papszTok = NULL;
-
     /*-----------------------------------------------------------------
      * Get rid of leading spaces.
      *----------------------------------------------------------------*/
@@ -2340,6 +2337,10 @@ int TABDATFile::WriteTimeField(const char *pszValue,
      * Try to automagically detect time format, one of:
      * "HH:MM:SS", or "HHMMSSmmm"
      *----------------------------------------------------------------*/
+    int nHour;
+    int nMin;
+    int nSec;
+    int nMS;
 
     if (strlen(pszValue) == 8)
     {
@@ -2387,10 +2388,8 @@ int TABDATFile::WriteTimeField(const char *pszValue,
                  "Invalid time field value `%s'.  Time field values must "
                  "be in the format `HH:MM:SS', or `HHMMSSmmm'",
                  pszValue);
-        CSLDestroy(papszTok);
         return -1;
     }
-    CSLDestroy(papszTok);
 
     return WriteTimeField(nHour, nMin, nSec, nMS, poINDFile, nIndexNo);
 }
@@ -2447,9 +2446,6 @@ d by 1 byte for the month, and 2 bytes for the year.
 int TABDATFile::WriteDateTimeField(const char *pszValue,
                                    TABINDFile *poINDFile, int nIndexNo)
 {
-    int nDay, nMonth, nYear, nHour, nMin, nSec, nMS;
-    char **papszTok = NULL;
-
     /*-----------------------------------------------------------------
      * Get rid of leading spaces.
      *----------------------------------------------------------------*/
@@ -2459,6 +2455,8 @@ int TABDATFile::WriteDateTimeField(const char *pszValue,
      * Try to automagically detect date format, one of:
      * "YYYY/MM/DD HH:MM:SS", "DD/MM/YYYY HH:MM:SS", or "YYYYMMDDhhmmssmmm"
      *----------------------------------------------------------------*/
+    int nDay, nMonth, nYear, nHour, nMin, nSec, nMS;
+    char **papszTok = NULL;
 
     if (strlen(pszValue) == 17)
     {

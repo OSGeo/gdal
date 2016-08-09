@@ -2726,7 +2726,6 @@ const char *TABPolyline::GetStyleString()
  **********************************************************************/
 void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
     OGRMultiLineString *poMultiLine = NULL;
     OGRLineString *poLine = NULL;
     int i, numPoints;
@@ -2737,7 +2736,7 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
     {
         /*-------------------------------------------------------------
@@ -2812,10 +2811,9 @@ int TABPolyline::GetCenter(double &dX, double &dY)
 {
     if (!m_bCenterIsSet)
     {
-        OGRGeometry     *poGeom;
-        OGRLineString   *poLine = NULL;
+        OGRLineString *poLine = NULL;
 
-        poGeom = GetGeometryRef();
+        OGRGeometry *poGeom = GetGeometryRef();
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
         {
             poLine = (OGRLineString *)poGeom;
@@ -2960,12 +2958,10 @@ TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  **********************************************************************/
 TABGeomType TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
     {
@@ -3016,10 +3012,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                        GBool bCoordBlockDataOnly /*=FALSE*/,
                                        TABMAPCoordBlock **ppoCoordBlock/*=NULL*/)
 {
-    double              dX, dY, dXMin, dYMin, dXMax, dYMax;
-    OGRGeometry         *poGeometry;
-    OGRLinearRing       *poRing;
-    TABMAPCoordBlock    *poCoordBlock = NULL;
+    double dX, dY, dXMin, dYMin, dXMax, dYMax;
+    OGRGeometry *poGeometry = NULL;
+    TABMAPCoordBlock *poCoordBlock = NULL;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -3036,12 +3031,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*=============================================================
          * REGION (Similar to PLINE MULTIPLE)
          *============================================================*/
-        int     i, iSection;
-        GInt32  nCoordBlockPtr, numLineSections;
-        GInt32  /* nCoordDataSize, */ numPointsTotal, *panXY;
+        GInt32  /* nCoordDataSize, */ numPointsTotal;
         OGRMultiPolygon         *poMultiPolygon = NULL;
         OGRPolygon              *poPolygon = NULL;
-        TABMAPCoordSecHdr       *pasSecHdrs;
         GBool                   bComprCoord = poObjHdr->IsCompressedType();
         int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
 
@@ -3050,9 +3042,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          *------------------------------------------------------------*/
         TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
-        nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
+        GInt32 nCoordBlockPtr = poPLineHdr->m_nCoordBlockPtr;
         /* nCoordDataSize  = poPLineHdr->m_nCoordDataSize; */
-        numLineSections = poPLineHdr->m_numLineSections;
+        GInt32 numLineSections = poPLineHdr->m_numLineSections;
         m_bSmooth       = poPLineHdr->m_bSmooth;
 
         // Centroid/label point
@@ -3081,8 +3073,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read data from the coord. block
          *------------------------------------------------------------*/
-        pasSecHdrs = (TABMAPCoordSecHdr*)VSI_MALLOC2_VERBOSE(numLineSections,
-                                                   sizeof(TABMAPCoordSecHdr));
+        TABMAPCoordSecHdr *pasSecHdrs = (TABMAPCoordSecHdr*)
+            VSI_MALLOC2_VERBOSE(numLineSections, sizeof(TABMAPCoordSecHdr));
         if( pasSecHdrs == NULL )
             return -1;
 
@@ -3106,7 +3098,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             return -1;
         }
 
-        panXY = (GInt32*)VSI_MALLOC2_VERBOSE(numPointsTotal,2*sizeof(GInt32));
+        GInt32 *panXY = (GInt32*)
+            VSI_MALLOC2_VERBOSE(numPointsTotal,2*sizeof(GInt32));
         if( panXY == NULL )
         {
             CPLFree(pasSecHdrs);
@@ -3138,7 +3131,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * be lost.
          *------------------------------------------------------------*/
         int numOuterRings = 0;
-        for(iSection=0; iSection<numLineSections; iSection++)
+        for( int iSection=0; iSection<numLineSections; iSection++ )
         {
             // Count this as an outer ring.
             numOuterRings++;
@@ -3156,10 +3149,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          *------------------------------------------------------------*/
         int numHolesToRead = 0;
         poPolygon = NULL;
-        for(iSection=0; iSection<numLineSections; iSection++)
+        for( int iSection=0; iSection<numLineSections; iSection++ )
         {
-            GInt32 *pnXYPtr;
-            int     numSectionVertices;
 
             if (poPolygon == NULL)
                 poPolygon = new OGRPolygon();
@@ -3169,13 +3160,13 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             else
                 numHolesToRead--;
 
-            numSectionVertices = pasSecHdrs[iSection].numVertices;
-            pnXYPtr = panXY + (pasSecHdrs[iSection].nVertexOffset * 2);
+            int numSectionVertices = pasSecHdrs[iSection].numVertices;
+            GInt32 *pnXYPtr = panXY + (pasSecHdrs[iSection].nVertexOffset * 2);
 
-            poRing = new OGRLinearRing();
+            OGRLinearRing *poRing = new OGRLinearRing();
             poRing->setNumPoints(numSectionVertices);
 
-            for(i=0; i<numSectionVertices; i++)
+            for( int i = 0; i < numSectionVertices; i++ )
             {
                 poMapFile->Int2Coordsys(*pnXYPtr, *(pnXYPtr+1), dX, dY);
                 poRing->setPoint(i, dX, dY);
@@ -3244,10 +3235,6 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                       GBool bCoordBlockDataOnly /*=FALSE*/,
                                       TABMAPCoordBlock **ppoCoordBlock/*=NULL*/)
 {
-    GInt32              nX, nY;
-    OGRGeometry         *poGeom;
-    TABMAPCoordBlock    *poCoordBlock=NULL;
-
     /*-----------------------------------------------------------------
      * We assume that ValidateMapInfoType() was called already and that
      * the type in poObjHdr->m_nType is valid.
@@ -3257,7 +3244,8 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    TABMAPCoordBlock *poCoordBlock=NULL;
 
     if ((m_nMapInfoType == TAB_GEOM_REGION ||
          m_nMapInfoType == TAB_GEOM_REGION_C ||
@@ -3274,11 +3262,6 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
          * We accept both OGRPolygons (with one or multiple rings) and
          * OGRMultiPolygons as input.
          *============================================================*/
-        int     nStatus=0, i, iRing;
-        int     numRingsTotal;
-        GUInt32 nCoordDataSize;
-        GInt32  nCoordBlockPtr;
-        TABMAPCoordSecHdr       *pasSecHdrs = NULL;
         GBool   bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
@@ -3289,7 +3272,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         else
             poCoordBlock = poMapFile->GetCurCoordBlock();
         poCoordBlock->StartNewFeature();
-        nCoordBlockPtr = poCoordBlock->GetCurAddress();
+        GInt32  nCoordBlockPtr = poCoordBlock->GetCurAddress();
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
 #ifdef TABDUMP
@@ -3300,23 +3283,23 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
          * Fetch total number of rings and build array of coord
          * sections headers.
          *------------------------------------------------------------*/
-        numRingsTotal = ComputeNumRings(&pasSecHdrs, poMapFile);
-        if (numRingsTotal == 0)
-            nStatus = -1;
+        TABMAPCoordSecHdr *pasSecHdrs = NULL;
+        int numRingsTotal = ComputeNumRings(&pasSecHdrs, poMapFile);
+        int nStatus = numRingsTotal == 0 ? -1 : 0;
 
         /*-------------------------------------------------------------
          * Write the Coord. Section Header
          *------------------------------------------------------------*/
-        int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
+        const int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
 
-        if (nStatus == 0)
+        if( nStatus == 0 )
             nStatus = poCoordBlock->WriteCoordSecHdrs(nVersion, numRingsTotal,
                                                       pasSecHdrs, bCompressed);
 
         CPLFree(pasSecHdrs);
         pasSecHdrs = NULL;
 
-        if (nStatus != 0)
+        if( nStatus != 0 )
             return nStatus;  // Error has already been reported.
 
         /*-------------------------------------------------------------
@@ -3324,11 +3307,10 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
          * to write the coordinates themselves...
          *------------------------------------------------------------*/
 
-        for(iRing=0; iRing < numRingsTotal; iRing++)
+        GInt32 nX, nY;
+        for( int iRing=0; iRing < numRingsTotal; iRing++ )
         {
-            OGRLinearRing       *poRing;
-
-            poRing = GetRingRef(iRing);
+            OGRLinearRing *poRing = GetRingRef(iRing);
             if (poRing == NULL)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -3338,7 +3320,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
             int numPoints = poRing->getNumPoints();
 
-            for(i=0; nStatus == 0 && i<numPoints; i++)
+            for( int i=0; nStatus == 0 && i<numPoints; i++ )
             {
                 poMapFile->Coordsys2Int(poRing->getX(i), poRing->getY(i),
                                         nX, nY);
@@ -3351,7 +3333,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             }
         }/* for iRing*/
 
-        nCoordDataSize = poCoordBlock->GetFeatureDataSize();
+        GUInt32 nCoordDataSize = poCoordBlock->GetFeatureDataSize();
 
         /*-------------------------------------------------------------
          * ... and finally copy info to poObjHdr
@@ -3431,12 +3413,13 @@ int TABRegion::GetNumRings()
 int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
                                TABMAPFile *poMapFile)
 {
-    OGRGeometry         *poGeom;
-    int                 numRingsTotal = 0, iLastSect = 0;
+    int numRingsTotal = 0;
+    int iLastSect = 0;
 
     if (ppasSecHdrs)
         *ppasSecHdrs = NULL;
-    poGeom = GetGeometryRef();
+
+    OGRGeometry *poGeom = GetGeometryRef();
 
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
@@ -3529,20 +3512,19 @@ int TABRegion::AppendSecHdrs(OGRPolygon *poPolygon,
                              TABMAPFile *poMapFile,
                              int &iLastRing)
 {
-    int iRing, numRingsInPolygon;
     /*-------------------------------------------------------------
      * Add a pasSecHdrs[] entry for each ring in this polygon.
      * Note that the structs won't be fully initialized.
      *------------------------------------------------------------*/
-    numRingsInPolygon = poPolygon->getNumInteriorRings()+1;
+    int numRingsInPolygon = poPolygon->getNumInteriorRings()+1;
 
     pasSecHdrs = (TABMAPCoordSecHdr*)CPLRealloc(pasSecHdrs,
                                                 (iLastRing+numRingsInPolygon)*
                                                 sizeof(TABMAPCoordSecHdr));
 
-    for(iRing=0; iRing < numRingsInPolygon; iRing++)
+    for( int iRing=0; iRing < numRingsInPolygon; iRing++ )
     {
-        OGRLinearRing   *poRing;
+        OGRLinearRing *poRing = NULL;
         OGREnvelope     sEnvelope;
 
         if (iRing == 0)
@@ -3592,10 +3574,9 @@ int TABRegion::AppendSecHdrs(OGRPolygon *poPolygon,
  **********************************************************************/
 OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
 {
-    OGRGeometry     *poGeom;
     OGRLinearRing   *poRing = NULL;
 
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
 
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
@@ -3623,7 +3604,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         iCurRing = 0;
         for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
         {
-            OGRPolygon      *poPolygon;
+            OGRPolygon *poPolygon = NULL;
             if (poMultiPolygon)
                 poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
             else
@@ -3655,10 +3636,9 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
  **********************************************************************/
 GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 {
-    OGRGeometry     *poGeom;
     OGRLinearRing   *poRing = NULL;
 
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
 
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
@@ -3686,7 +3666,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         iCurRing = 0;
         for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
         {
-            OGRPolygon* poPolygon;
+            OGRPolygon* poPolygon = NULL;
             if (poMultiPolygon)
                 poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
             else
@@ -3744,16 +3724,13 @@ const char *TABRegion::GetStyleString()
  **********************************************************************/
 void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
-    int i, numPoints;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
     {
@@ -3763,15 +3740,13 @@ void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
          * Note that we want to handle both OGRPolygons and OGRMultiPolygons
          * that's why we use the GetNumRings()/GetRingRef() interface.
          *------------------------------------------------------------*/
-        int iRing, numRingsTotal = GetNumRings();
+        int numRingsTotal = GetNumRings();
 
         fprintf(fpOut, "REGION %d\n", numRingsTotal);
 
-        for(iRing=0; iRing < numRingsTotal; iRing++)
+        for( int iRing = 0; iRing < numRingsTotal; iRing++ )
         {
-            OGRLinearRing       *poRing;
-
-            poRing = GetRingRef(iRing);
+            OGRLinearRing *poRing = GetRingRef(iRing);
 
             if (poRing == NULL)
             {
@@ -3780,9 +3755,9 @@ void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
                 return;
             }
 
-            numPoints = poRing->getNumPoints();
+            const int numPoints = poRing->getNumPoints();
             fprintf(fpOut, " %d\n", numPoints);
-            for(i=0; i<numPoints; i++)
+            for( int i = 0;  i < numPoints; i++ )
                 fprintf(fpOut, "%.15g %.15g\n",poRing->getX(i),poRing->getY(i));
         }
     }
@@ -3820,13 +3795,12 @@ int TABRegion::GetCenter(double &dX, double &dY)
          * Calculate label point.  If we have a multipolygon then we use
          * the first OGRPolygon in the feature to calculate the point.
          *------------------------------------------------------------*/
-        OGRPoint        oLabelPoint;
-        OGRPolygon      *poPolygon=NULL;
-        OGRGeometry     *poGeom;
-
-        poGeom = GetGeometryRef();
+        OGRGeometry *poGeom = GetGeometryRef();
         if (poGeom == NULL)
             return -1;
+
+        OGRPoint oLabelPoint;
+        OGRPolygon *poPolygon=NULL;
 
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
         {
@@ -3948,12 +3922,10 @@ TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  **********************************************************************/
 TABGeomType TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
     {
         if (m_bRoundCorners && m_dRoundXRadius!=0.0 && m_dRoundYRadius!=0.0)
@@ -3987,13 +3959,12 @@ TABGeomType TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABRectangle::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
     OGREnvelope sEnvelope;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         poGeom->getEnvelope(&sEnvelope);
     else
@@ -4040,8 +4011,6 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                           TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     double              dXMin, dYMin, dXMax, dYMax;
-    OGRPolygon          *poPolygon;
-    OGRLinearRing       *poRing;
 
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
     if (bCoordBlockDataOnly)
@@ -4117,8 +4086,8 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Create and fill geometry object
      *----------------------------------------------------------------*/
-    poPolygon = new OGRPolygon;
-    poRing = new OGRLinearRing();
+    OGRPolygon *poPolygon = new OGRPolygon;
+    OGRLinearRing *poRing = new OGRLinearRing();
     if (m_bRoundCorners && m_dRoundXRadius != 0.0 && m_dRoundYRadius != 0.0)
     {
         /*-------------------------------------------------------------
@@ -4179,7 +4148,6 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                          GBool bCoordBlockDataOnly /*=FALSE*/,
                                          TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
-
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
     if (bCoordBlockDataOnly)
         return 0;
@@ -4266,10 +4234,6 @@ const char *TABRectangle::GetStyleString()
  **********************************************************************/
 void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
-    OGRPolygon    *poPolygon = NULL;
-    int i, numPoints;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -4288,21 +4252,20 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
     {
         /*-------------------------------------------------------------
          * Generate rectangle output as a region
          * We could also output as a RECT or ROUNDRECT in a real MIF generator
          *------------------------------------------------------------*/
-        int iRing, numIntRings;
-        poPolygon = (OGRPolygon*)poGeom;
-        numIntRings = poPolygon->getNumInteriorRings();
+        OGRPolygon *poPolygon = (OGRPolygon*)poGeom;
+        int numIntRings = poPolygon->getNumInteriorRings();
         fprintf(fpOut, "REGION %d\n", numIntRings+1);
         // In this loop, iRing=-1 for the outer ring.
-        for(iRing=-1; iRing < numIntRings; iRing++)
+        for( int iRing = -1; iRing < numIntRings; iRing++ )
         {
-            OGRLinearRing       *poRing;
+            OGRLinearRing *poRing = NULL;
 
             if (iRing == -1)
                 poRing = poPolygon->getExteriorRing();
@@ -4316,9 +4279,9 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
                 return;
             }
 
-            numPoints = poRing->getNumPoints();
+            const int numPoints = poRing->getNumPoints();
             fprintf(fpOut, " %d\n", numPoints);
-            for(i=0; i<numPoints; i++)
+            for( int i = 0; i < numPoints; i++ )
                 fprintf(fpOut, "%.15g %.15g\n",poRing->getX(i),poRing->getY(i));
         }
     }
@@ -4411,12 +4374,10 @@ TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  **********************************************************************/
 TABGeomType TABEllipse::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ) ||
          (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint ) )
     {
@@ -4448,7 +4409,6 @@ TABGeomType TABEllipse::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABEllipse::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
     OGREnvelope sEnvelope;
 
     /*-----------------------------------------------------------------
@@ -4457,7 +4417,7 @@ int TABEllipse::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
      * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really an ellipse.
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ) ||
          (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )  )
         poGeom->getEnvelope(&sEnvelope);
@@ -4513,10 +4473,6 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                         GBool bCoordBlockDataOnly /*=FALSE*/,
                                         TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
-    double              dXMin, dYMin, dXMax, dYMax;
-    OGRPolygon          *poPolygon;
-    OGRLinearRing       *poRing;
-
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
     if (bCoordBlockDataOnly)
         return 0;
@@ -4542,6 +4498,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     // An ellipse is defined by its MBR
 
+    double dXMin, dYMin, dXMax, dYMax;
     poMapFile->Int2Coordsys(poRectHdr->m_nMinX, poRectHdr->m_nMinY,
                             dXMin, dYMin);
     poMapFile->Int2Coordsys(poRectHdr->m_nMaxX, poRectHdr->m_nMaxY,
@@ -4569,9 +4526,8 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Create and fill geometry object
      *----------------------------------------------------------------*/
-    poPolygon = new OGRPolygon;
-    poRing = new OGRLinearRing();
-
+    OGRPolygon *poPolygon = new OGRPolygon;
+    OGRLinearRing *poRing = new OGRLinearRing();
 
     /*-----------------------------------------------------------------
      * For the OGR geometry, we generate an ellipse with 2 degrees line
@@ -4687,10 +4643,6 @@ const char *TABEllipse::GetStyleString()
  **********************************************************************/
 void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
-    OGRPolygon    *poPolygon = NULL;
-    int i, numPoints;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -4704,21 +4656,20 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
     {
         /*-------------------------------------------------------------
          * Generate ellipse output as a region
          * We could also output as an ELLIPSE in a real MIF generator
          *------------------------------------------------------------*/
-        int iRing, numIntRings;
-        poPolygon = (OGRPolygon*)poGeom;
-        numIntRings = poPolygon->getNumInteriorRings();
+        OGRPolygon *poPolygon = (OGRPolygon*)poGeom;
+        int numIntRings = poPolygon->getNumInteriorRings();
         fprintf(fpOut, "REGION %d\n", numIntRings+1);
         // In this loop, iRing=-1 for the outer ring.
-        for(iRing=-1; iRing < numIntRings; iRing++)
+        for( int iRing=-1; iRing < numIntRings; iRing++ )
         {
-            OGRLinearRing       *poRing;
+            OGRLinearRing *poRing = NULL;
 
             if (iRing == -1)
                 poRing = poPolygon->getExteriorRing();
@@ -4732,9 +4683,9 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
                 return;
             }
 
-            numPoints = poRing->getNumPoints();
+            int numPoints = poRing->getNumPoints();
             fprintf(fpOut, " %d\n", numPoints);
-            for(i=0; i<numPoints; i++)
+            for( int i = 0; i < numPoints; i++ )
                 fprintf(fpOut, "%.15g %.15g\n",poRing->getX(i),poRing->getY(i));
         }
     }
@@ -4825,12 +4776,10 @@ TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  **********************************************************************/
 TABGeomType TABArc::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString ) ||
          (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint ) )
     {
@@ -4862,10 +4811,9 @@ TABGeomType TABArc::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
     OGREnvelope sEnvelope;
 
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString ) )
     {
         /*-------------------------------------------------------------
@@ -4946,7 +4894,6 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     double              dXMin, dYMin, dXMax, dYMax;
-    OGRLineString       *poLine;
     int                 numPts;
 
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -5083,7 +5030,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      * For the OGR geometry, we generate an arc with 2 degrees line
      * segments.
      *----------------------------------------------------------------*/
-    poLine = new OGRLineString;
+    OGRLineString *poLine = new OGRLineString;
 
     if (m_dEndAngle < m_dStartAngle)
         numPts = (int) ABS( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1;
@@ -5221,10 +5168,6 @@ const char *TABArc::GetStyleString()
  **********************************************************************/
 void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
-    OGRLineString *poLine = NULL;
-    int i, numPoints;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -5239,17 +5182,17 @@ void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
     {
         /*-------------------------------------------------------------
          * Generate arc output as a simple polyline
          * We could also output as an ELLIPSE in a real MIF generator
          *------------------------------------------------------------*/
-        poLine = (OGRLineString*)poGeom;
-        numPoints = poLine->getNumPoints();
+        OGRLineString *poLine = (OGRLineString*)poGeom;
+        const int numPoints = poLine->getNumPoints();
         fprintf(fpOut, "PLINE %d\n", numPoints);
-        for(i=0; i<numPoints; i++)
+        for( int i = 0; i < numPoints; i++ )
             fprintf(fpOut, "%.15g %.15g\n", poLine->getX(i), poLine->getY(i));
     }
     else
@@ -5363,12 +5306,10 @@ TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  **********************************************************************/
 TABGeomType TABText::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
     {
         m_nMapInfoType = TAB_GEOM_TEXT;
@@ -5408,7 +5349,6 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                      TABMAPCoordBlock **ppoCoordBlock/*=NULL*/)
 {
     double              dXMin, dYMin, dXMax, dYMax;
-    OGRGeometry         *poGeometry;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -5495,7 +5435,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     if (nStringLen > 0)
     {
-        TABMAPCoordBlock        *poCoordBlock;
+        TABMAPCoordBlock *poCoordBlock = NULL;
 
         if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
             poCoordBlock = *ppoCoordBlock;
@@ -5565,7 +5505,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         dY = dYMax - m_dHeight * dCos;
     }
 
-    poGeometry = new OGRPoint(dX, dY);
+    OGRGeometry *poGeometry = new OGRPoint(dX, dY);
 
     SetGeometryDirectly(poGeometry);
 
@@ -5618,11 +5558,6 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                     TABMAPCoordBlock **ppoCoordBlock/*=NULL*/)
 {
     GInt32              nX, nY, nXMin, nYMin, nXMax, nYMax;
-    OGRGeometry         *poGeom;
-    OGRPoint            *poPoint;
-    GInt32              nCoordBlockPtr;
-    TABMAPCoordBlock    *poCoordBlock;
-    int                 nStringLen;
 
     /*-----------------------------------------------------------------
      * We assume that ValidateMapInfoType() was called already and that
@@ -5633,7 +5568,8 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRPoint *poPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
@@ -5651,17 +5587,18 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      * that we have to keep like that for the MAP file.
      * See MapTools bug 1107 for more details.
      *----------------------------------------------------------------*/
+    TABMAPCoordBlock *poCoordBlock = NULL;
     if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
         poCoordBlock = *ppoCoordBlock;
     else
         poCoordBlock = poMapFile->GetCurCoordBlock();
     poCoordBlock->StartNewFeature();
-    nCoordBlockPtr = poCoordBlock->GetCurAddress();
+    GInt32 nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
     // This string was escaped before 20050714
     char *pszTmpString = m_pszString;
 
-    nStringLen = static_cast<int>(strlen(pszTmpString));
+    int nStringLen = static_cast<int>(strlen(pszTmpString));
 
     if (nStringLen > 0)
     {
@@ -5889,15 +5826,12 @@ void TABText::SetTextLineEndPoint(double dX, double dY)
  **********************************************************************/
 int TABText::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-    OGRPoint *poPoint=NULL;
-
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
     {
         double dSin, dCos, dX0, dY0, dX1, dY1;
         double dX[4], dY[4];
-        poPoint = (OGRPoint *)poGeom;
+        OGRPoint *poPoint = (OGRPoint *)poGeom;
 
         dX0 = poPoint->getX();
         dY0 = poPoint->getY();
@@ -6241,15 +6175,15 @@ const char *TABText::GetLabelStyleString()
                 pszTextString[i] = (char)toupper(pszTextString[i]);
 
     /* Escape the double quote chars and expand the text */
-    char *pszTmpTextString;
-    int j = 0;
+    char *pszTmpTextString = NULL;
 
     if  (QueryFontStyle(TABFSExpanded))
         pszTmpTextString = (char*)CPLMalloc(((nStringLen*4)+1)*sizeof(char));
     else
         pszTmpTextString = (char*)CPLMalloc(((nStringLen*2)+1)*sizeof(char));
 
-    for (int i =0; i < nStringLen; ++i,++j)
+    int j = 0;
+    for( int i = 0; i < nStringLen; ++i,++j )
     {
         if (pszTextString[i] == '"')
         {
@@ -6319,22 +6253,19 @@ const char *TABText::GetStyleString()
  **********************************************************************/
 void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry   *poGeom;
-    OGRPoint      *poPoint = NULL;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
     {
         /*-------------------------------------------------------------
          * Generate output for text object
          *------------------------------------------------------------*/
-        poPoint = (OGRPoint*)poGeom;
+        OGRPoint *poPoint = (OGRPoint*)poGeom;
 
         fprintf(fpOut, "TEXT \"%s\" %.15g %.15g\n", m_pszString?m_pszString:"",
                 poPoint->getX(), poPoint->getY());
@@ -6432,12 +6363,10 @@ TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  **********************************************************************/
 TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
         OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
@@ -6529,8 +6458,8 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read Point Coordinates
          *------------------------------------------------------------*/
-        OGRMultiPoint   *poMultiPoint;
-        poGeometry = poMultiPoint = new OGRMultiPoint();
+        OGRMultiPoint   *poMultiPoint = new OGRMultiPoint();
+        poGeometry = poMultiPoint;
 
         if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
             poCoordBlock = *ppoCoordBlock;
@@ -6607,8 +6536,6 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                           TABMAPCoordBlock **ppoCoordBlock/*=NULL*/)
 {
     GInt32              nX, nY;
-    OGRGeometry         *poGeom;
-    OGRMultiPoint       *poMPoint;
 
     /*-----------------------------------------------------------------
      * We assume that ValidateMapInfoType() was called already and that
@@ -6621,7 +6548,8 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRMultiPoint *poMPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
         poMPoint = (OGRMultiPoint*)poGeom;
     else
@@ -6636,10 +6564,9 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Write data to coordinate block
      *----------------------------------------------------------------*/
-    int iPoint, nStatus;
-    TABMAPCoordBlock *poCoordBlock;
-    GBool   bCompressed = poObjHdr->IsCompressedType();
+    const GBool bCompressed = poObjHdr->IsCompressedType();
 
+    TABMAPCoordBlock *poCoordBlock = NULL;
     if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
         poCoordBlock = *ppoCoordBlock;
     else
@@ -6649,8 +6576,9 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
 
-    for(iPoint=0, nStatus=0;
-        nStatus == 0 && iPoint < poMPointHdr->m_nNumPoints; iPoint++)
+    for( int iPoint=0, nStatus=0;
+         nStatus == 0 && iPoint < poMPointHdr->m_nNumPoints;
+         iPoint++)
     {
         poGeom = poMPoint->getGeometryRef(iPoint);
 
@@ -6727,12 +6655,10 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABMultiPoint::GetXY(int i, double &dX, double &dY)
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
         OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
@@ -6765,12 +6691,10 @@ int TABMultiPoint::GetXY(int i, double &dX, double &dY)
  **********************************************************************/
 int TABMultiPoint::GetNumPoints()
 {
-    OGRGeometry *poGeom;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
         OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
@@ -6852,16 +6776,14 @@ void TABMultiPoint::SetCenter(double dX, double dY)
  **********************************************************************/
 void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
 {
-    OGRGeometry *poGeom;
-    OGRMultiPoint *poMPoint;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRMultiPoint *poMPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
         poMPoint = (OGRMultiPoint*)poGeom;
     else
@@ -7005,14 +6927,13 @@ TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  **********************************************************************/
 TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
-    OGRGeometry *poGeom;
     int nRegionType=TAB_GEOM_NONE, nPLineType=TAB_GEOM_NONE,
         nMPointType=TAB_GEOM_NONE, nVersion = 650;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
         m_nMapInfoType = TAB_GEOM_COLLECTION;
@@ -7222,8 +7143,6 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 {
     double              dXMin, dYMin, dXMax, dYMax;
     GBool               bComprCoord = poObjHdr->IsCompressedType();
-    TABMAPCoordBlock*   poCoordBlock = NULL;
-    int                 nCurCoordBlockPtr;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -7262,7 +7181,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
-    nCurCoordBlockPtr = poCollHdr->m_nCoordBlockPtr;
+    int nCurCoordBlockPtr = poCollHdr->m_nCoordBlockPtr;
+    TABMAPCoordBlock* poCoordBlock = NULL;
     if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
         poCoordBlock = *ppoCoordBlock;
     else
@@ -7512,13 +7432,13 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      * ForceCoordTypeAndCoordOrigin() so the objects are ready to have
      * their respective WriteGeometryToMapFile() called.
      *----------------------------------------------------------------*/
-    TABMAPCoordBlock *poCoordBlock;
-    GBool   bCompressed = poObjHdr->IsCompressedType();
+    const GBool   bCompressed = poObjHdr->IsCompressedType();
     // TODO: ??? Do we need to track overall collection coord data size???
     int     nTotalFeatureDataSize = 0;
 
-    int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
+    const int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
 
+    TABMAPCoordBlock *poCoordBlock = NULL;
     if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
         poCoordBlock = *ppoCoordBlock;
     else
@@ -7849,7 +7769,7 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
                                                 GBool bSyncMpoint)
 {
     OGRGeometry         *poThisGeom = GetGeometryRef();
-    OGRGeometryCollection *poGeomColl;
+    OGRGeometryCollection *poGeomColl = NULL;
 
     // poGeometry is defined in the OGRFeature class
     if (poThisGeom == NULL)
@@ -8081,16 +8001,13 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                              GBool /*bCoordBlockDataOnly=FALSE*/,
                                              TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
-    TABMAPObjectBlock   *poObjBlock;
-    TABMAPHeaderBlock   *poHeader;
-
     /*-----------------------------------------------------------------
      * Fetch geometry type
      *----------------------------------------------------------------*/
     m_nMapInfoType = poObjHdr->m_nType;
 
-    poObjBlock = poMapFile->GetCurObjBlock();
-    poHeader = poMapFile->GetHeaderBlock();
+    TABMAPObjectBlock *poObjBlock = poMapFile->GetCurObjBlock();
+    TABMAPHeaderBlock *poHeader = poMapFile->GetHeaderBlock();
 
     /*-----------------------------------------------------------------
      * If object type has coords in a type 3 block, then its position
@@ -8426,15 +8343,11 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     int numParts, i;
     GBool bIsNull = 0;
 
-    const char *pszPenName, *pszPenPattern;
-
     double nPenWidth;
 
     GInt32 nPenColor;
-    const char *pszPenColor;
 
     int   nPenId;
-    const char* pszPenId;
 
     // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
@@ -8482,7 +8395,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     poPenStyle->SetUnit(OGRSTUPoints, 1);
 
     // Get the Pen Id or pattern
-    pszPenName = poPenStyle->Id(bIsNull);
+    const char *pszPenName = poPenStyle->Id(bIsNull);
     if (bIsNull) pszPenName = NULL;
 
     // Set the width
@@ -8497,7 +8410,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
 
     //Set the color
-    pszPenColor = poPenStyle->Color(bIsNull);
+    const char *pszPenColor = poPenStyle->Color(bIsNull);
     if(pszPenColor != NULL)
     {
         if(pszPenColor[0] == '#')
@@ -8506,6 +8419,9 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         nPenColor = static_cast<int>(strtol(pszPenColor, NULL, 16));
         SetPenColor(nPenColor);
     }
+
+    const char *pszPenPattern = NULL;
+    const char* pszPenId = NULL;
 
     // Set the Id of the Pen, use Pattern if necessary.
     if(pszPenName &&
@@ -8689,10 +8605,8 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     int numParts, i;
     GBool bIsNull = 0;
 
-    const char *pszBrushId;
     int nBrushId;
 
-    const char *pszBrushColor;
     int nBrushColor;
 
     // Use the Style Manager to retrieve all the information we need.
@@ -8731,7 +8645,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
 
     // Set the Brush Id (FillPattern)
-    pszBrushId = poBrushStyle->Id(bIsNull);
+    const char *pszBrushId = poBrushStyle->Id(bIsNull);
     if(bIsNull) pszBrushId = NULL;
 
     if(pszBrushId &&
@@ -8753,7 +8667,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     }
 
     // Set the BackColor, if not set, then it's transparent
-    pszBrushColor = poBrushStyle->BackColor(bIsNull);
+    const char *pszBrushColor = poBrushStyle->BackColor(bIsNull);
     if(bIsNull) pszBrushColor = NULL;
 
     if(pszBrushColor)
@@ -8957,10 +8871,8 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     int numParts, i;
     GBool bIsNull = 0;
 
-    const char *pszSymbolId;
     int nSymbolId;
 
-    const char *pszSymbolColor;
     int nSymbolColor;
 
     double dSymbolSize;
@@ -9010,7 +8922,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     poSymbolStyle->SetUnit(OGRSTUPoints, (72.0 * 39.37));
 
     // Set the Symbol Id (SymbolNo)
-    pszSymbolId = poSymbolStyle->Id(bIsNull);
+    const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
     if(bIsNull) pszSymbolId = NULL;
 
     if(pszSymbolId &&
@@ -9075,7 +8987,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     }
 
     // Set Symbol Color
-    pszSymbolColor = poSymbolStyle->Color(bIsNull);
+    const char *pszSymbolColor = poSymbolStyle->Color(bIsNull);
     if(pszSymbolColor)
     {
         if(pszSymbolColor[0] == '#')
