@@ -398,7 +398,8 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Now copy over elements according to options in effect.          */
 /* -------------------------------------------------------------------- */
-    DGNElemCore *psSrcElement, *psDstElement;
+    DGNElemCore *psSrcElement = NULL;
+    DGNElemCore *psDstElement = NULL;
 
     while( (psSrcElement = DGNReadElement( psSeed )) != NULL )
     {
@@ -461,15 +462,12 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else if( psSrcElement->stype == DGNST_MULTIPOINT )
     {
-        DGNElemMultiPoint *psMP, *psSrcMP;
-        size_t             nSize;
+        DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *) psSrcElement;
 
-        psSrcMP = (DGNElemMultiPoint *) psSrcElement;
-
-        nSize = sizeof(DGNElemMultiPoint)
+        const size_t nSize = sizeof(DGNElemMultiPoint)
             + sizeof(DGNPoint) * (psSrcMP->num_vertices-2);
 
-        psMP = (DGNElemMultiPoint *) CPLMalloc( nSize );
+        DGNElemMultiPoint *psMP = (DGNElemMultiPoint *) CPLMalloc( nSize );
         memcpy( psMP, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psMP;
@@ -483,13 +481,10 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else if( psSrcElement->stype == DGNST_TEXT )
     {
-        DGNElemText       *psText, *psSrcText;
-        size_t             nSize;
+        DGNElemText *psSrcText = (DGNElemText *) psSrcElement;
+        const size_t nSize = sizeof(DGNElemText) + strlen(psSrcText->string);
 
-        psSrcText = (DGNElemText *) psSrcElement;
-        nSize = sizeof(DGNElemText) + strlen(psSrcText->string);
-
-        psText = (DGNElemText *) CPLMalloc( nSize );
+        DGNElemText *psText = (DGNElemText *) CPLMalloc( nSize );
         memcpy( psText, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psText;
@@ -602,34 +597,31 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_BOUNDARY )
     {
-        DGNElemBSplineSurfaceBoundary *psBSB, *psSrcBSB;
-        size_t             nSize;
+        DGNElemBSplineSurfaceBoundary *psSrcBSB =
+            (DGNElemBSplineSurfaceBoundary *) psSrcElement;
 
-        psSrcBSB = (DGNElemBSplineSurfaceBoundary *) psSrcElement;
-
-        nSize = sizeof(DGNElemBSplineSurfaceBoundary)
+        const size_t nSize = sizeof(DGNElemBSplineSurfaceBoundary)
             + sizeof(DGNPoint) * (psSrcBSB->numverts-1);
 
-        psBSB = (DGNElemBSplineSurfaceBoundary *) CPLMalloc( nSize );
+        DGNElemBSplineSurfaceBoundary *psBSB =
+            (DGNElemBSplineSurfaceBoundary *) CPLMalloc( nSize );
         memcpy( psBSB, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psBSB;
     }
     else if( psSrcElement->stype == DGNST_KNOT_WEIGHT )
     {
-        DGNElemKnotWeight *psArray /* , *psSrcArray*/;
-        size_t             nSize;
-        int                numelems;
-
         // FIXME: Is it OK to assume that the # of elements corresponds
         // directly to the element size? kintel 20051218.
-        numelems = (psSrcElement->size - 36 - psSrcElement->attr_bytes)/4;
+        const int numelems =
+            (psSrcElement->size - 36 - psSrcElement->attr_bytes)/4;
 
-        /* psSrcArray = (DGNElemKnotWeight *) psSrcElement; */
+        /* DGNElemKnotWeight *psSrcArray = (DGNElemKnotWeight *) psSrcElement; */
 
-        nSize = sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
+        const size_t nSize =
+            sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
 
-        psArray = (DGNElemKnotWeight *) CPLMalloc( nSize );
+        DGNElemKnotWeight *psArray = (DGNElemKnotWeight *) CPLMalloc( nSize );
         memcpy( psArray, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psArray;
