@@ -520,7 +520,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 // To make Coverity happy. Should not happen by design.
                 if( pabyDstBlock == NULL )
                 {
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     eErr = CE_Failure;
                     break;
                 }
@@ -668,7 +668,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 // To make Coverity happy.  Should not happen by design.
                 if( pabySrcBlock == NULL )
                 {
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     eErr = CE_Failure;
                     break;
                 }
@@ -2147,7 +2147,7 @@ inline void GDALCopyWordsFromT( const T* const CPL_RESTRICT pSrcData,
         break;
     case GDT_Unknown:
     default:
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 }
 
@@ -2592,7 +2592,7 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData,
         break;
     case GDT_Unknown:
     default:
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 }
 

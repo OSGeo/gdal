@@ -273,7 +273,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             return GDALGMLJP2Expr(osXMLRes);
         }
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             return GDALGMLJP2Expr("");
     }
 }

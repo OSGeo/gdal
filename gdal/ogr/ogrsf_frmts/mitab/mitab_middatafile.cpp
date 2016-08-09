@@ -229,7 +229,7 @@ const char *MIDDATAFile::GetLine()
     }
     else
     {
-      CPLAssert(FALSE);
+      CPLAssert(false);
     }
     return NULL;
 }
@@ -248,7 +248,7 @@ const char *MIDDATAFile::GetLastLine()
     }
 
     // We should never get here (Read/Write mode not implemented)
-    CPLAssert(FALSE);
+    CPLAssert(false);
     return NULL;
 }
 
@@ -266,7 +266,7 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     }
     else
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 }
 

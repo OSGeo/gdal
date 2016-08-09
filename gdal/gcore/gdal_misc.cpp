@@ -913,7 +913,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                     break;
                   }
                   default:
-                    CPLAssert( FALSE );
+                    CPLAssert( false );
                 }
 
                 if( bGotNoDataValue && dfValue == dfNoDataValue )
@@ -3586,7 +3586,7 @@ const char* GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
         case GRIORA_Gauss:
             return "Gauss";
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             return "Unknown";
     }
 }

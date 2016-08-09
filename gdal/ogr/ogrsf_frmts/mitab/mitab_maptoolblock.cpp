@@ -421,7 +421,7 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
         nBytesToWrite = 13;
         break;
       default:
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 
     if (GetNumUnusedBytes() < nBytesToWrite)

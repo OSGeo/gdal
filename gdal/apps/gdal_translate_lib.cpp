@@ -1238,7 +1238,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                             nDstMax = 0x7FFFFFFF;
                             break;
                         default:
-                            CPLAssert(FALSE);
+                            CPLAssert(false);
                             break;
                     }
 

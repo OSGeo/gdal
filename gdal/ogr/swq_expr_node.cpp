@@ -537,7 +537,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 
     if( poOp == NULL && nOperation != SWQ_CUSTOM_FUNC )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return osExpr;
     }
 

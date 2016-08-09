@@ -289,7 +289,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
         if( CSLCount(papszTokens) < 5 )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             continue;
         }
 
