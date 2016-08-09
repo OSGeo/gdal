@@ -235,8 +235,6 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
  **********************************************************************/
 int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 {
-    const char       *pszLine;
-    char            **papszToken;
     int               nFields,i;
     OGRFieldDefn        *poFDefn = NULL;
 #ifdef MITAB_USE_OFTDATETIME
@@ -246,7 +244,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 
     nFields = GetFieldCount();
 
-    pszLine = fp->GetLastLine();
+    const char *pszLine = fp->GetLastLine();
 
     if (pszLine == NULL)
     {
@@ -255,7 +253,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
         return -1;
     }
 
-    papszToken = MIDTokenize( pszLine, fp->GetDelimiter() );
+    char **papszToken = MIDTokenize( pszLine, fp->GetDelimiter() );
 
     // Ensure that a blank line in a mid file is treated as one field
     // containing an empty string.
@@ -468,7 +466,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    const char *pszLine;
+    const char *pszLine = NULL;
 
     /* Go to the first line of the next feature */
 
@@ -507,13 +505,9 @@ int TABFeature::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeometry;
-
-    char               **papszToken;
-    const char *pszLine;
     double dfX,dfY;
-    papszToken = CSLTokenizeString2(fp->GetSavedLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetSavedLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=3)
     {
@@ -528,7 +522,7 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     papszToken = NULL;
 
     // Read optional SYMBOL line...
-    pszLine = fp->GetLastLine();
+    const char *pszLine = fp->GetLastLine();
     if( pszLine != NULL )
         papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
                                               TRUE,FALSE);
@@ -550,7 +544,7 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         pszLine = fp->GetLine();
     }
 
-    poGeometry = new OGRPoint(dfX, dfY);
+    OGRGeometry *poGeometry = new OGRPoint(dfX, dfY);
 
     SetGeometryDirectly(poGeometry);
 
@@ -565,13 +559,11 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGRPoint            *poPoint;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRPoint *poPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
@@ -593,13 +585,9 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeometry;
-
-    char               **papszToken;
-    const char *pszLine;
     double dfX,dfY;
-    papszToken = CSLTokenizeString2(fp->GetSavedLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetSavedLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=3)
     {
@@ -630,7 +618,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     CSLDestroy(papszToken);
 
-    poGeometry = new OGRPoint(dfX, dfY);
+    OGRGeometry *poGeometry = new OGRPoint(dfX, dfY);
 
     SetGeometryDirectly(poGeometry);
 
@@ -638,6 +626,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     /* Go to the first line of the next feature */
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
       ;
@@ -649,13 +638,11 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGRPoint            *poPoint;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRPoint *poPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
@@ -679,15 +666,8 @@ int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeometry;
-
-    char               **papszToken;
-    const char          *pszLine;
-    double               dfX,dfY;
-
-    papszToken = CSLTokenizeString2(fp->GetSavedLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
-
+    char **papszToken =
+        CSLTokenizeString2(fp->GetSavedLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=3)
     {
@@ -695,8 +675,8 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
-    dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
+    double dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
+    double dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
 
     CSLDestroy(papszToken);
 
@@ -716,7 +696,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     CSLDestroy(papszToken);
 
-    poGeometry = new OGRPoint(dfX, dfY);
+    OGRGeometry *poGeometry = new OGRPoint(dfX, dfY);
 
     SetGeometryDirectly(poGeometry);
 
@@ -724,6 +704,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     /* Go to the first line of the next feature */
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
       ;
@@ -737,13 +718,11 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGRPoint            *poPoint;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRPoint *poPoint = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
@@ -766,23 +745,24 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    const char          *pszLine;
-    char               **papszToken;
-    OGRLineString       *poLine;
-    OGRMultiLineString  *poMultiLine;
-    GBool                bMultiple = FALSE;
-    int                  nNumPoints=0,nNumSec=0,i,j;
-    OGREnvelope          sEnvelope;
-
-
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) < 1)
     {
         CSLDestroy(papszToken);
         return -1;
     }
+
+    const char          *pszLine = NULL;
+    OGRLineString       *poLine = NULL;
+    OGRMultiLineString  *poMultiLine = NULL;
+    GBool bMultiple = FALSE;
+    int nNumPoints=0;
+    int nNumSec=0;
+    int i;
+    int j;
+    OGREnvelope sEnvelope;
 
     if (STARTS_WITH_CI(papszToken[0], "LINE"))
     {
@@ -1025,16 +1005,14 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry   *poGeom;
     OGRMultiLineString *poMultiLine = NULL;
     OGRLineString *poLine = NULL;
     int nNumPoints,i;
 
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
     {
         /*-------------------------------------------------------------
@@ -1116,27 +1094,19 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    double               dX, dY;
-    OGRLinearRing       *poRing;
-    OGRGeometry         *poGeometry = NULL;
-    OGRPolygon          **tabPolygons = NULL;
-    int                  i,iSection, numLineSections=0;
-    char               **papszToken;
-    const char          *pszLine;
-    OGREnvelope          sEnvelope;
-
     m_bSmooth = FALSE;
+
     /*=============================================================
      * REGION (Similar to PLINE MULTIPLE)
      *============================================================*/
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
-    if (CSLCount(papszToken) ==2)
-      numLineSections = atoi(papszToken[1]);
+    int numLineSections = (CSLCount(papszToken) == 2) ? atoi(papszToken[1]) : 0;
     CSLDestroy(papszToken);
     papszToken = NULL;
 
+    OGRPolygon **tabPolygons = NULL;
     if (numLineSections > 0)
     {
         tabPolygons = static_cast<OGRPolygon**>(
@@ -1144,6 +1114,13 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         if( tabPolygons == NULL )
             return -1;
     }
+
+    OGRLinearRing *poRing = NULL;
+    double               dX, dY;
+    OGRGeometry         *poGeometry = NULL;
+    int                  i,iSection;
+    const char          *pszLine = NULL;
+    OGREnvelope          sEnvelope;
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
@@ -1312,9 +1289,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
 
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon ) )
@@ -1333,9 +1308,7 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
         for(iRing=0; iRing < numRingsTotal; iRing++)
         {
-            OGRLinearRing       *poRing;
-
-            poRing = GetRingRef(iRing);
+            OGRLinearRing *poRing = GetRingRef(iRing);
             if (poRing == NULL)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1390,14 +1363,8 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    const char          *pszLine;
-    char               **papszToken;
-    double               dXMin, dYMin, dXMax, dYMax;
-    OGRPolygon          *poPolygon;
-    OGRLinearRing       *poRing;
-
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) <  5)
     {
@@ -1405,10 +1372,10 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    dXMin = fp->GetXTrans(CPLAtof(papszToken[1]));
-    dXMax = fp->GetXTrans(CPLAtof(papszToken[3]));
-    dYMin = fp->GetYTrans(CPLAtof(papszToken[2]));
-    dYMax = fp->GetYTrans(CPLAtof(papszToken[4]));
+    double dXMin = fp->GetXTrans(CPLAtof(papszToken[1]));
+    double dXMax = fp->GetXTrans(CPLAtof(papszToken[3]));
+    double dYMin = fp->GetYTrans(CPLAtof(papszToken[2]));
+    double dYMax = fp->GetYTrans(CPLAtof(papszToken[4]));
 
     /*-----------------------------------------------------------------
      * Call SetMBR() and GetMBR() now to make sure that min values are
@@ -1442,8 +1409,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * Create and fill geometry object
      *----------------------------------------------------------------*/
 
-    poPolygon = new OGRPolygon;
-    poRing = new OGRLinearRing();
+    OGRPolygon *poPolygon = new OGRPolygon;
+    OGRLinearRing *poRing = new OGRLinearRing();
     if (m_bRoundCorners && m_dRoundXRadius != 0.0 && m_dRoundYRadius != 0.0)
     {
         /*-------------------------------------------------------------
@@ -1485,10 +1452,10 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
 
-
-   while (((pszLine = fp->GetLine()) != NULL) &&
-          fp->IsValidFeature(pszLine) == FALSE)
-   {
+    const char *pszLine = NULL;
+    while (((pszLine = fp->GetLine()) != NULL) &&
+           fp->IsValidFeature(pszLine) == FALSE)
+    {
        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
                                              TRUE,FALSE);
 
@@ -1532,14 +1499,11 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGRPolygon          *poPolygon;
-    OGREnvelope         sEnvelope;
-
-     /*-----------------------------------------------------------------
+    /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
+    OGRPolygon *poPolygon = NULL;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         poPolygon = (OGRPolygon*)poGeom;
     else
@@ -1553,6 +1517,7 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really a rectangle.
      *----------------------------------------------------------------*/
+    OGREnvelope sEnvelope;
     poPolygon->getEnvelope(&sEnvelope);
 
     if (m_bRoundCorners == TRUE)
@@ -1589,14 +1554,8 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    const char *pszLine;
-    char **papszToken;
-    double              dXMin, dYMin, dXMax, dYMax;
-    OGRPolygon          *poPolygon;
-    OGRLinearRing       *poRing;
-
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) != 5)
     {
@@ -1604,10 +1563,10 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    dXMin = fp->GetXTrans(CPLAtof(papszToken[1]));
-    dXMax = fp->GetXTrans(CPLAtof(papszToken[3]));
-    dYMin = fp->GetYTrans(CPLAtof(papszToken[2]));
-    dYMax = fp->GetYTrans(CPLAtof(papszToken[4]));
+    double dXMin = fp->GetXTrans(CPLAtof(papszToken[1]));
+    double dXMax = fp->GetXTrans(CPLAtof(papszToken[3]));
+    double dYMin = fp->GetYTrans(CPLAtof(papszToken[2]));
+    double dYMax = fp->GetYTrans(CPLAtof(papszToken[4]));
 
     CSLDestroy(papszToken);
     papszToken = NULL;
@@ -1625,8 +1584,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /*-----------------------------------------------------------------
      * Create and fill geometry object
      *----------------------------------------------------------------*/
-    poPolygon = new OGRPolygon;
-    poRing = new OGRLinearRing();
+    OGRPolygon *poPolygon = new OGRPolygon;
+    OGRLinearRing *poRing = new OGRLinearRing();
 
     /*-----------------------------------------------------------------
      * For the OGR geometry, we generate an ellipse with 2 degrees line
@@ -1641,6 +1600,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
     {
@@ -1686,10 +1646,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABEllipse::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGREnvelope         sEnvelope;
-
-    poGeom = GetGeometryRef();
+    OGREnvelope sEnvelope;
+    OGRGeometry *poGeom = GetGeometryRef();
     if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ) ||
          (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )  )
         poGeom->getEnvelope(&sEnvelope);
@@ -1724,12 +1682,10 @@ int TABEllipse::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    const char          *pszLine;
-    OGRLineString       *poLine;
-    char               **papszToken;
-    double               dXMin,dXMax, dYMin,dYMax;
-    int                  numPts;
+    double dXMin,dXMax, dYMin,dYMax;
+    int    numPts;
 
+    char **papszToken;
     papszToken = CSLTokenizeString2(fp->GetLastLine(),
                                     " \t", CSLT_HONOURSTRINGS);
 
@@ -1797,7 +1753,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * For the OGR geometry, we generate an arc with 2 degrees line
      * segments.
      *----------------------------------------------------------------*/
-    poLine = new OGRLineString;
+    OGRLineString *poLine = new OGRLineString;
 
     if (m_dEndAngle < m_dStartAngle)
         numPts = (int) ABS( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1;
@@ -1813,6 +1769,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetMBR(dXMin, dYMin, dXMax, dYMax);
     SetGeometryDirectly(poLine);
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
     {
@@ -1870,17 +1827,12 @@ int TABArc::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    double               dXMin, dYMin, dXMax, dYMax;
-    OGRGeometry         *poGeometry;
-    const char          *pszLine;
-    char               **papszToken;
-    const char          *pszString;
-    char                *pszTmpString;
-    int                  bXYBoxRead = 0;
-    int                  tokenLen;
+    const char *pszString = NULL;
+    int bXYBoxRead = 0;
+    int tokenLen;
 
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
     if (CSLCount(papszToken) == 1)
     {
         CSLDestroy(papszToken);
@@ -1921,7 +1873,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * sstore them in memory in the UnEscaped form to be OGR
      * compliant. See Maptools bug 1107 for more details.
      *------------------------------------------------------------*/
-    pszTmpString = CPLStrdup(pszString);
+    char *pszTmpString = CPLStrdup(pszString);
     m_pszString = TABUnEscapeString(pszTmpString, TRUE);
     if (pszTmpString != m_pszString)
         CPLFree(pszTmpString);
@@ -1933,6 +1885,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                         " \t", CSLT_HONOURSTRINGS);
     }
 
+    double dXMin, dYMin, dXMax, dYMax;
     if (CSLCount(papszToken) != 4)
     {
         CSLDestroy(papszToken);
@@ -1963,6 +1916,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetMBR(dXMin, dYMin, dXMax, dYMax);
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
     {
@@ -2098,8 +2052,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         dY = dYMax - m_dHeight * dCos;
     }
 
-
-    poGeometry = new OGRPoint(dX, dY);
+    OGRGeometry *poGeometry = new OGRPoint(dX, dY);
 
     SetGeometryDirectly(poGeometry);
 
@@ -2140,16 +2093,13 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    double dXMin,dYMin,dXMax,dYMax;
-    char   *pszTmpString;
-
     /*-------------------------------------------------------------
      * Note: The text string may contain unescaped "\n" chars or
      * "\\" chars and we expect to receive them in an unescaped
      * form. Those characters are unescaped in memory to be like
      * other OGR drivers. See MapTools bug 1107 for more details.
      *------------------------------------------------------------*/
-    pszTmpString = TABEscapeString(m_pszString);
+    char *pszTmpString = TABEscapeString(m_pszString);
     if(pszTmpString == NULL)
         fp->WriteLine("Text \"\"\n" );
     else
@@ -2158,6 +2108,7 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
         CPLFree(pszTmpString);
 
     //    UpdateTextMBR();
+    double dXMin,dYMin,dXMax,dYMax;
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     fp->WriteLine("    %.15g %.15g %.15g %.15g\n",dXMin, dYMin,dXMax, dYMax);
 
@@ -2223,16 +2174,8 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    OGRPoint            *poPoint;
-    OGRMultiPoint       *poMultiPoint;
-    char                **papszToken;
-    const char          *pszLine;
-    int                 nNumPoint, i;
-    double              dfX,dfY;
-    OGREnvelope         sEnvelope;
-
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=2)
     {
@@ -2240,14 +2183,14 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    nNumPoint = atoi(papszToken[1]);
-    poMultiPoint = new OGRMultiPoint;
+    int nNumPoint = atoi(papszToken[1]);
+    OGRMultiPoint *poMultiPoint = new OGRMultiPoint;
 
     CSLDestroy(papszToken);
     papszToken = NULL;
 
     // Get each point and add them to the multipoint feature
-    for(i=0; i<nNumPoint; i++)
+    for( int i = 0; i<nNumPoint; i++ )
     {
         papszToken = CSLTokenizeString2(fp->GetLine(),
                                         " \t", CSLT_HONOURSTRINGS);
@@ -2258,9 +2201,9 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             return -1;
         }
 
-        dfX = fp->GetXTrans(CPLAtof(papszToken[0]));
-        dfY = fp->GetXTrans(CPLAtof(papszToken[1]));
-        poPoint = new OGRPoint(dfX, dfY);
+        const double dfX = fp->GetXTrans(CPLAtof(papszToken[0]));
+        const double dfY = fp->GetXTrans(CPLAtof(papszToken[1]));
+        OGRPoint *poPoint = new OGRPoint(dfX, dfY);
         if ( poMultiPoint->addGeometryDirectly( poPoint ) != OGRERR_NONE)
         {
             CPLAssert(false); // Just in case OGR is modified
@@ -2274,6 +2217,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         CSLDestroy(papszToken);
     }
 
+    OGREnvelope sEnvelope;
     poMultiPoint->getEnvelope(&sEnvelope);
     if( SetGeometryDirectly( poMultiPoint ) != OGRERR_NONE)
     {
@@ -2285,6 +2229,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     // Read optional SYMBOL line...
 
+    const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&
            fp->IsValidFeature(pszLine) == FALSE)
     {
@@ -2307,23 +2252,18 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
-    OGRGeometry         *poGeom;
-    OGRPoint            *poPoint;
-    OGRMultiPoint       *poMultiPoint;
-    int                 nNumPoints, iPoint;
-
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
-    poGeom = GetGeometryRef();
+    OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
-        poMultiPoint = (OGRMultiPoint*)poGeom;
-        nNumPoints = poMultiPoint->getNumGeometries();
+        OGRMultiPoint *poMultiPoint = (OGRMultiPoint*)poGeom;
+        const int nNumPoints = poMultiPoint->getNumGeometries();
 
         fp->WriteLine("MultiPoint %d\n", nNumPoints);
 
-        for(iPoint=0; iPoint < nNumPoints; iPoint++)
+        for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
         {
             /*------------------------------------------------------------
              * Validate each point
@@ -2331,7 +2271,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
             poGeom = poMultiPoint->getGeometryRef(iPoint);
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
             {
-                poPoint = (OGRPoint*)poGeom;
+                OGRPoint *poPoint = (OGRPoint*)poGeom;
                 fp->WriteLine("%.15g %.15g\n",poPoint->getX(),poPoint->getY());
             }
             else
@@ -2355,16 +2295,11 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    char                **papszToken;
-    const char          *pszLine;
-    int                 numParts, i;
-    OGREnvelope         sEnvelope;
-
     /*-----------------------------------------------------------------
      * Fetch number of parts in "COLLECTION %d" line
      *----------------------------------------------------------------*/
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=2)
     {
@@ -2372,19 +2307,19 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    numParts = atoi(papszToken[1]);
+    int numParts = atoi(papszToken[1]);
     CSLDestroy(papszToken);
     papszToken = NULL;
 
     // Make sure collection is empty
     EmptyCollection();
 
-    pszLine = fp->GetLine();
+    const char *pszLine = fp->GetLine();
 
     /*-----------------------------------------------------------------
      * Read each part and add them to the feature
      *----------------------------------------------------------------*/
-    for (i=0; i < numParts; i++)
+    for( int i=0; i < numParts; i++ )
     {
         if (pszLine == NULL)
         {
@@ -2469,6 +2404,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if(m_poMpoint && m_poMpoint->GetGeometryRef() != NULL)
         poGeomColl->addGeometry(m_poMpoint->GetGeometryRef());
 
+    OGREnvelope sEnvelope;
     poGeomColl->getEnvelope(&sEnvelope);
     this->SetGeometryDirectly(poGeomColl);
 
@@ -2514,23 +2450,24 @@ int TABCollection::WriteGeometryToMIFFile(MIDDATAFile *fp)
 /**********************************************************************
  *
  **********************************************************************/
-int TABDebugFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
+int TABDebugFeature::ReadGeometryFromMIFFile( MIDDATAFile *fp )
 {
-   const char *pszLine;
+    // Go to the first line of the next feature.
+    printf("%s\n", fp->GetLastLine());
 
+    const char *pszLine = NULL;
+    while (((pszLine = fp->GetLine()) != NULL) &&
+           fp->IsValidFeature(pszLine) == FALSE)
+    {}
 
-  /* Go to the first line of the next feature */
-   printf("%s\n", fp->GetLastLine());
-
-   while (((pszLine = fp->GetLine()) != NULL) &&
-          fp->IsValidFeature(pszLine) == FALSE)
-     ;
-
-   return 0;
+    return 0;
 }
 
 
 /**********************************************************************
  *
  **********************************************************************/
-int TABDebugFeature::WriteGeometryToMIFFile(CPL_UNUSED MIDDATAFile *fp){ return -1; }
+int TABDebugFeature::WriteGeometryToMIFFile( MIDDATAFile */* fp */ )
+{
+    return -1;
+}
