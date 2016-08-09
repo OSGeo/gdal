@@ -244,7 +244,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField("scale_y", 3)
     feat.SetField("scale_z", 4)
     feat.SetField("altitudeMode", "relativeToGround")
-    feat.SetField("model", "http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae")
+    feat.SetField("model", "http://even.rouault.free.fr/kml/gdal_2.1/dummy.dae")
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -337,7 +337,7 @@ def generate_libkml_update(filename):
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options = ['UPDATE_TARGETHREF=test_ogrlibkml.kml'])
+        options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)
