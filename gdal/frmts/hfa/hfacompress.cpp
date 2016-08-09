@@ -125,7 +125,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
     CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n",
           m_eDataType,
           m_nDataTypeNumBits );
-    CPLAssert( FALSE );
+    CPLAssert( false );
   }
 
   return val;

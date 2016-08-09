@@ -2019,7 +2019,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return NULL;
             }
 

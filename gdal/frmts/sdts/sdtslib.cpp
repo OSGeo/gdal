@@ -53,7 +53,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
         = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
     if( poMODN == NULL )
     {
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return;
     }
 

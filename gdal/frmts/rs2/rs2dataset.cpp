@@ -255,7 +255,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   GDT_Byte,
                                   1, NULL, 1, nBlockXSize, 0, NULL );
 
-    CPLAssert( FALSE );
+    CPLAssert( false );
     return CE_Failure;
 }
 
@@ -488,7 +488,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLFree(pnImageTmp);
     }
     else {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
     return eErr;

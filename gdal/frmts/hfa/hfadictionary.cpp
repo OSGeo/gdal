@@ -241,7 +241,7 @@ int HFADictionary::GetItemSize( char chType )
         return 0;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
     return 0;

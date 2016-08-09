@@ -377,7 +377,7 @@ class digital_axis
             return m_d[1 - m_fixedEnd] * (pixels-1);
 
         }
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return 0.0;
     }
 

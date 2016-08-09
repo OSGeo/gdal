@@ -564,7 +564,7 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, EPTType * peDataType,
 {
     if( nBand < 0 || nBand > hHFA->nBands )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -608,7 +608,7 @@ int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
 {
     if( nBand < 0 || nBand > hHFA->nBands )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -636,7 +636,7 @@ CPLErr HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue )
 {
     if ( nBand < 0 || nBand > hHFA->nBands )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -656,7 +656,7 @@ int HFAGetOverviewCount( HFAHandle hHFA, int nBand )
 
     if( nBand < 0 || nBand > hHFA->nBands )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -680,7 +680,7 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
 
     if( nBand < 0 || nBand > hHFA->nBands )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -689,7 +689,7 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
 
     if( iOverview < 0 || iOverview >= poBand->nOverviews )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
     poBand = poBand->papoOverviews[iOverview];
@@ -865,7 +865,7 @@ int HFAGetDataTypeBits( EPTType eDataType )
         return 128;
     }
 
-    CPLAssert(FALSE);
+    CPLAssert(false);
     return 1;
 }
 
@@ -918,7 +918,7 @@ const char *HFAGetDataTypeName( EPTType eDataType )
         return "c128";
 
       default:
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return "unknown";
     }
 }
@@ -2315,7 +2315,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         chBandType = 'M';
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         chBandType = 'c';
     }
 
@@ -2739,7 +2739,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     /* To please Clang Static Analyzer */
     if( poNode == NULL )
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return CE_Failure;
     }
 #endif
@@ -2827,7 +2827,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
               }
               break;
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
             }
         }
         else if ( STARTS_WITH_CI( pszKey, "STATISTICS_HISTOBINVALUES" ) )

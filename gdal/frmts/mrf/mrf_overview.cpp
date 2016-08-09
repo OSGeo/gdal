@@ -376,7 +376,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     case GDT_Int32:     resample(GInt32);
                     case GDT_Float32:   resample(float);
                     case GDT_Float64:   resample(double);
-                    default: CPLAssert(FALSE); break;
+                    default: CPLAssert(false); break;
                     }
 #undef resample
 
@@ -402,7 +402,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     case GDT_Int32:     resample(GInt32);
                     case GDT_Float32:   resample(float);
                     case GDT_Float64:   resample(double);
-                    default: CPLAssert(FALSE); break;
+                    default: CPLAssert(false); break;
                     }
 #undef resample
 

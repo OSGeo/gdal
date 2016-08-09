@@ -1303,7 +1303,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
         pszCellType = "IEEE8ByteReal";
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
 /* -------------------------------------------------------------------- */

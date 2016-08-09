@@ -690,7 +690,7 @@ void DDFModule::RemoveCloneRecord( DDFRecord * poRecordIn )
         }
     }
 
-    CPLAssert( FALSE );
+    CPLAssert( false );
 }
 
 /************************************************************************/

@@ -320,7 +320,7 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
         case 4:
             return GCI_AlphaBand;
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             return GCI_GrayIndex;
     }
 }

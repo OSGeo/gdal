@@ -1121,7 +1121,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
     }
     else
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
     if( psOptions->nWeightCount )
     {

@@ -507,7 +507,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   return( *((GUInt32 *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
@@ -520,7 +520,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   return( *((GInt32 *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
@@ -531,14 +531,14 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   return( *((double *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
             case NotBinary:
             case FPReal:
             case FloatComplex:
-              //CPLAssert( FALSE );
+              // CPLAssert( false );
               return 0.0;
           }
           break;
@@ -546,11 +546,11 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
       }
 
       default:
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return 0.0;
     }
 
-    //CPLAssert( FALSE );
+    // CPLAssert( false );
     return 0.0;
 }
 
@@ -643,7 +643,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   return( *((GUInt16 *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
@@ -656,7 +656,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   return( *((GInt16 *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
@@ -667,14 +667,14 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   return( (int) *((double *) pabyData) );
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
             case NotBinary:
             case FPReal:
             case FloatComplex:
-              //CPLAssert( FALSE );
+              // CPLAssert( false );
               return 0;
           }
           break;
@@ -682,11 +682,11 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
       }
 
       default:
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return 0;
     }
 
-    //CPLAssert( FALSE );
+    // CPLAssert( false );
     return 0;
 }
 
@@ -949,11 +949,11 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
             break;
 
           case FloatReal:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             break;
         }
     }
@@ -1019,7 +1019,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
         }
         else
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             /* implement me */
         }
     }

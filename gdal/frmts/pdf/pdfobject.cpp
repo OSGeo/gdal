@@ -1988,7 +1988,7 @@ GDALPDFObjectType GDALPDFObjectPdfium::GetType()
         case PDFOBJ_DICTIONARY:               return PDFObjectType_Dictionary;
         case PDFOBJ_STREAM:                   return PDFObjectType_Dictionary;
         default:
-          CPLAssert(FALSE);
+          CPLAssert(false);
           return PDFObjectType_Unknown;
     }
 }
