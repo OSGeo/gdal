@@ -33,6 +33,8 @@
 #include "ogr_api.h"
 #include "gdal_priv.h"
 
+#include <limits.h>
+
 #if (defined(__x86_64) || defined(_M_X64))
 #include <emmintrin.h>
 #endif
