@@ -118,7 +118,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
                 break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
 

@@ -315,7 +315,7 @@ static int FGdbLayerSortATX(const void* _pa, const void* _pb)
         return -1;
     else if( a > b )
         return 1;
-    CPLAssert(FALSE);
+    CPLAssert(false);
     return 0;
 }
 
@@ -332,7 +332,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
                             int& bInvalidateIndex)
 {
     GByte abyBuffer[4096];
-    
+
     VSIFSeekL(fp, (nThisPage - 1) * 4096, SEEK_SET);
 
     if( nDepth == 1 )

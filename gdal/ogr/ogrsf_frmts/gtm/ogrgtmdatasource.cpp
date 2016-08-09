@@ -321,7 +321,7 @@ int OGRGTMDataSource::Create( const char* pszFilename,
 
     if( fpOutput != NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 
