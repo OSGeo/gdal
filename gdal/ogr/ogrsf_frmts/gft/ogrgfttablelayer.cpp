@@ -757,7 +757,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
                 osCommand += "''";
             else
             {
-                char* pszKML;
+                char* pszKML = NULL;
                 if (poGeom->getSpatialReference() != NULL &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {
@@ -941,7 +941,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
                 osCommand += "''";
             else
             {
-                char* pszKML;
+                char* pszKML = NULL;
                 if (poGeom->getSpatialReference() != NULL &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {

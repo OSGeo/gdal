@@ -598,22 +598,14 @@ void GTM::rewindTrack()
 
 Track* GTM::fetchNextTrack()
 {
-    unsigned short stringSize;
-
-    char* pszName;
-    unsigned char type;
-    int color;
-
-
     /* Point to the actual track offset */
     if ( VSIFSeekL(pGTMFile, actualTrackOffset, SEEK_SET) != 0)
         return NULL;
 
-
     /* Read string length */
-    stringSize = readUShort(pGTMFile);
+    const unsigned short stringSize = readUShort(pGTMFile);
     /* Read name string */
-    pszName = (char*) VSI_MALLOC2_VERBOSE(sizeof(char), stringSize+1);
+    char* pszName = (char*) VSI_MALLOC2_VERBOSE(sizeof(char), stringSize+1);
     if( pszName == NULL )
         return NULL;
     if ( stringSize != 0 && !readFile( pszName, 1, sizeof(char) * stringSize ) )
@@ -624,10 +616,10 @@ Track* GTM::fetchNextTrack()
     pszName[stringSize] = '\0';
 
     /* Read type */
-    type = readUChar(pGTMFile);
+    const unsigned char type = readUChar(pGTMFile);
 
     /* Read color */
-    color = readInt(pGTMFile);
+    const int color = readInt(pGTMFile);
 
     Track* poTrack = new Track(pszName, type, color);
 

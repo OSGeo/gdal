@@ -84,7 +84,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return;
     }
 
@@ -450,9 +450,7 @@ OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Create the feature being read.                                  */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
     m_nFeaturesRead++;
 
@@ -557,7 +555,7 @@ int OGRDODSGridLayer::ProvideDataDDS()
         }
         else
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return FALSE;
         }
 

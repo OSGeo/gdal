@@ -84,9 +84,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /*      expression.                                                     */
 /* -------------------------------------------------------------------- */
     char *pszWrkURL = CPLStrdup( pszNewName + 5 );
-    char *pszFound;
-
-    pszFound = strstr(pszWrkURL,"&");
+    char *pszFound = strstr(pszWrkURL, "&");
     if( pszFound )
     {
         oConstraints = pszFound;

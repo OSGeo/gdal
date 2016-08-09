@@ -103,7 +103,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone,
     poFeatureDefn->SetGeomType( wkbPoint  );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     bool bSoundingHeader = false;
     while( fpHTF != NULL &&
            (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
@@ -257,7 +257,7 @@ void OGRHTFPolygonLayer::ResetReading()
     OGRHTFLayer::ResetReading();
     if (fpHTF)
     {
-        const char* pszLine;
+        const char* pszLine = NULL;
         while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
         {
             if (strcmp(pszLine, "POLYGON DATA") == 0)
@@ -281,7 +281,7 @@ void OGRHTFSoundingLayer::ResetReading()
     OGRHTFLayer::ResetReading();
     if (fpHTF)
     {
-        const char* pszLine;
+        const char* pszLine = NULL;
         while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
         {
             if (strcmp(pszLine, "SOUNDING DATA") == 0)
@@ -333,8 +333,6 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    const char* pszLine;
-
     OGRLinearRing oLR;
     bool bHasFirstCoord = false;
     double dfFirstEasting = 0;
@@ -344,6 +342,7 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
     bool bInIsland = false;
     OGRPolygon* poPoly = new OGRPolygon();
 
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')
@@ -455,10 +454,10 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
 
 OGRFeature *OGRHTFSoundingLayer::GetNextRawFeature()
 {
-    const char* pszLine;
 
     OGRLinearRing oLR;
 
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')
@@ -532,7 +531,7 @@ GIntBig OGRHTFSoundingLayer::GetFeatureCount(int bForce)
         return 0;
 
     int nCount = 0;
-    const char* pszLine;
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')

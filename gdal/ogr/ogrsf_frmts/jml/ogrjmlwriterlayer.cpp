@@ -309,16 +309,24 @@ OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
     if( !bAddRGBField && strcmp( poFieldDefn->GetNameRef(), "R_G_B" ) == 0 )
         return OGRERR_FAILURE;
 
-    const char* pszType;
+    const char* pszType = NULL;
     OGRFieldType eType = poFieldDefn->GetType();
     if( eType == OFTInteger )
+    {
         pszType = "INTEGER";
+    }
     else if( eType == OFTInteger64 )
+    {
         pszType = "OBJECT";
+    }
     else if( eType == OFTReal )
+    {
         pszType = "DOUBLE";
+    }
     else if( eType == OFTDate || eType == OFTDateTime )
+    {
         pszType = "DATE";
+    }
     else
     {
         if( eType != OFTString )
