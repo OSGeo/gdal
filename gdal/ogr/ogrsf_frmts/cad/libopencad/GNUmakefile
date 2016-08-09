@@ -23,7 +23,7 @@ CPPFLAGS	:=	-I. -I.. -I../.. $(CPPFLAGS) -std=c++11
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):	%.cpp
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean: $(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f *.o $(O_OBJ)

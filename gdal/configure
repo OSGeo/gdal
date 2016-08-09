@@ -688,9 +688,9 @@ SDE_ENABLED
 IDB_LIB
 IDB_INC
 HAVE_IDB
+CAD_ENABLED
 DWGDIRECT
 DWG_PLT
-CAD_ENABLED
 HAVE_PCRE
 SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE
@@ -832,6 +832,7 @@ CFLAGS_NOFTRAPV
 HAVE_LIBTOOL
 SO_EXT
 LD_SHARED
+CXX11_SUPPORT
 CXXCPP
 CPP
 OTOOL64
@@ -901,6 +902,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1093,6 +1095,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1345,6 +1348,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1482,7 +1494,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1635,6 +1647,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -4808,40 +4821,6 @@ ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-CAD_ENABLED=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if C++ compiler supports C++11 extension" >&5
-$as_echo_n "checking if C++ compiler supports C++11..." >&6; }
-if ${ax_cv_cpp11_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CXXFLAGS
-  CXXFLAGS="$CXXFLAGS -std=c++11"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int 
-main()
-{
-  #if __cplusplus <= 199711L
-    #error This library needs at least a C++11 compliant compiler
-  #endif
-
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO:"; then :
-  ax_cv_cpp11_flag=yes
-  CAD_ENABLED=yes
-else
-  ax_cv_cpp11_flag=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CXXFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_cpp11_flag" >&5
-$as_echo "$ax_cv_cpp11_flag" >&6; }
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wunused-private-field" >&5
 $as_echo_n "checking whether C++ compiler accepts -Werror -Wunused-private-field... " >&6; }
@@ -16902,6 +16881,41 @@ if test "x$CXX" == x ; then
   as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
 fi
 
+CXX11_SUPPORT=no
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#if __cplusplus > 199711L
+    #error "-std=c++11 extension is not supported"
+    #endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  CXX11_SUPPORT=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+CXX11_SUPPORT=$CXX11_SUPPORT
+
+
 
 # Check whether --with-libtool was given.
 if test "${with_libtool+set}" = set; then :
@@ -24898,9 +24912,6 @@ OPT_GDAL_FORMATS=$OPT_GDAL_FORMATS
 
 
 
-OGR_ENABLED=yes
-
-
 GNM_ENABLED=no
 
 
@@ -28276,6 +28287,9 @@ fi
     DWGDIRECT=$with_dwgdirect
     HAVE_DWGDIRECT=yes
 fi
+
+
+
 
 
 
@@ -34398,7 +34412,8 @@ echo "  C compiler:                ${CC} ${CFLAGS}"
 
 echo "  C++ compiler:              ${CXX} ${CXXFLAGS}"
 
-echo "  C++ compiler -std=c++11:   ${ax_cv_cpp11_flag}"
+
+echo "  C++11 support:             ${CXX11_SUPPORT}"
 
 
 echo ""
