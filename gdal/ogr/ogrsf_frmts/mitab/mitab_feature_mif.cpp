@@ -2467,7 +2467,7 @@ int TABDebugFeature::ReadGeometryFromMIFFile( MIDDATAFile *fp )
 /**********************************************************************
  *
  **********************************************************************/
-int TABDebugFeature::WriteGeometryToMIFFile( MIDDATAFile */* fp */ )
+int TABDebugFeature::WriteGeometryToMIFFile( MIDDATAFile * /* fp */ )
 {
     return -1;
 }
