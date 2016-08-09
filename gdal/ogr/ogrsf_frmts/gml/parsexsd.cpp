@@ -169,18 +169,17 @@ bool LookForSimpleType(CPLXMLNode *psSchemaNode,
                       int *pnWidth,
                       int *pnPrecision)
 {
-    CPLXMLNode *psThis;
-    for( psThis = psSchemaNode->psChild;
-         psThis != NULL; psThis = psThis->psNext )
+    CPLXMLNode *psThis = psSchemaNode->psChild;
+    for( ; psThis != NULL; psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element
-           && EQUAL(psThis->pszValue,"simpleType")
-           && EQUAL(CPLGetXMLValue(psThis,"name",""),pszStrippedNSType) )
+            && EQUAL(psThis->pszValue,"simpleType")
+            && EQUAL(CPLGetXMLValue(psThis,"name",""),pszStrippedNSType) )
         {
             break;
         }
     }
-    if (psThis == NULL)
+    if( psThis == NULL )
         return false;
 
     return GetSimpleTypeProperties(psThis, pGMLType, pnWidth, pnPrecision);
@@ -195,15 +194,14 @@ bool LookForSimpleType(CPLXMLNode *psSchemaNode,
 static
 CPLXMLNode* GetSingleChildElement(CPLXMLNode* psNode, const char* pszExpectedValue)
 {
-    CPLXMLNode* psChild = NULL;
-    CPLXMLNode* psIter;
-
     if( psNode == NULL )
         return NULL;
 
-    psIter = psNode->psChild;
+    CPLXMLNode* psIter = psNode->psChild;
     if( psIter == NULL )
         return NULL;
+
+    CPLXMLNode* psChild = NULL;
     while( psIter != NULL )
     {
         if( psIter->eType == CXT_Element )
@@ -304,9 +302,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType)
 {
-    CPLXMLNode *psThis;
-    for( psThis = psSchemaNode->psChild;
-         psThis != NULL; psThis = psThis->psNext )
+    CPLXMLNode *psThis = psSchemaNode->psChild;
+    for( ; psThis != NULL; psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element
            && EQUAL(psThis->pszValue,"complexType")
@@ -315,7 +312,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             break;
         }
     }
-    if (psThis == NULL)
+    if( psThis == NULL )
         return NULL;
 
     return GMLParseFeatureType(psSchemaNode, pszName, psThis);
@@ -350,14 +347,12 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 /*      Loop over each of the attribute elements being defined for      */
 /*      this feature class.                                             */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psAttrDef;
     int nAttributeIndex = 0;
 
     bool bGotUnrecognizedType = false;
 
-    for( psAttrDef = psAttrSeq->psChild;
-            psAttrDef != NULL;
-            psAttrDef = psAttrDef->psNext )
+    CPLXMLNode *psAttrDef = psAttrSeq->psChild;
+    for( ; psAttrDef != NULL; psAttrDef = psAttrDef->psNext )
     {
         if( strcmp(psAttrDef->pszValue,"group") == 0 )
         {
@@ -787,12 +782,11 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
     bool bTryAgain;
     do
     {
-        CPLXMLNode *psThis;
         CPLXMLNode *psLast = NULL;
         bTryAgain = false;
 
-        for( psThis = psSchemaNode->psChild;
-            psThis != NULL; psThis = psThis->psNext )
+        CPLXMLNode *psThis = psSchemaNode->psChild;
+        for( ; psThis != NULL; psThis = psThis->psNext )
         {
             if( psThis->eType == CXT_Element &&
                 EQUAL(psThis->pszValue,"include") )
@@ -909,10 +903,8 @@ bool GMLParseXSD( const char *pszFile,
 /* ==================================================================== */
 /*      Process each feature class definition.                          */
 /* ==================================================================== */
-    CPLXMLNode *psThis;
-
-    for( psThis = psSchemaNode->psChild;
-         psThis != NULL; psThis = psThis->psNext )
+    CPLXMLNode *psThis = psSchemaNode->psChild;
+    for( ; psThis != NULL; psThis = psThis->psNext )
     {
 /* -------------------------------------------------------------------- */
 /*      Check for <xs:element> node.                                    */
@@ -940,9 +932,7 @@ bool GMLParseXSD( const char *pszFile,
 /* -------------------------------------------------------------------- */
 /*      Get name                                                        */
 /* -------------------------------------------------------------------- */
-        const char *pszName;
-
-        pszName = CPLGetXMLValue( psThis, "name", NULL );
+        const char *pszName = CPLGetXMLValue( psThis, "name", NULL );
         if( pszName == NULL )
         {
             continue;
@@ -951,9 +941,7 @@ bool GMLParseXSD( const char *pszFile,
 /* -------------------------------------------------------------------- */
 /*      Get type and verify relationship with name.                     */
 /* -------------------------------------------------------------------- */
-        const char *pszType;
-
-        pszType = CPLGetXMLValue( psThis, "type", NULL );
+        const char *pszType = CPLGetXMLValue( psThis, "type", NULL );
         if (pszType == NULL)
         {
             CPLXMLNode *psComplexType = CPLGetXMLNode( psThis, "complexType" );

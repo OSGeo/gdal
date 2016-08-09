@@ -132,9 +132,7 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
 void GMLXercesHandler::fatalError( const SAXParseException &exception)
 
 {
-    char *pszErrorMessage;
-
-    pszErrorMessage = tr_strdup( exception.getMessage() );
+    char *pszErrorMessage = tr_strdup( exception.getMessage() );
     CPLError( CE_Failure, CPLE_AppDefined,
               "XML Parsing Error: %s at line %d, column %d\n",
               pszErrorMessage, (int)exception.getLineNumber(), (int)exception.getColumnNumber() );
@@ -1284,7 +1282,7 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
     int nClassIndex;
-    const char* pszFilteredClassName;
+    const char* pszFilteredClassName = NULL;
 
     if( nLenName == 9 && strcmp(pszName, "boundedBy") == 0 )
     {

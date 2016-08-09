@@ -724,9 +724,8 @@ void GMLReader::PushFeature( const char *pszElement,
 /* -------------------------------------------------------------------- */
 /*      Create and push a new read state.                               */
 /* -------------------------------------------------------------------- */
-    GMLReadState *poState;
-
-    poState = m_poRecycledState ? m_poRecycledState : new GMLReadState();
+    GMLReadState *poState =
+        m_poRecycledState ? m_poRecycledState : new GMLReadState();
     m_poRecycledState = NULL;
     poState->m_poFeature = poFeature;
     PushState( poState );
@@ -970,9 +969,7 @@ void GMLReader::PopState()
         }
 #endif
 
-        GMLReadState *poParent;
-
-        poParent = m_poState->m_poParentState;
+        GMLReadState *poParent = m_poState->m_poParentState;
 
         delete m_poRecycledState;
         m_poRecycledState = m_poState;
@@ -1193,11 +1190,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
-    VSILFILE       *fp;
-    int         nLength;
-    char        *pszWholeText;
-
-    fp = VSIFOpenL( pszFile, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszFile, "rb" );
 
     if( fp == NULL )
     {
@@ -1207,10 +1200,10 @@ bool GMLReader::LoadClasses( const char *pszFile )
     }
 
     VSIFSeekL( fp, 0, SEEK_END );
-    nLength = (int) VSIFTellL( fp );
+    int nLength = (int) VSIFTellL( fp );
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    pszWholeText = (char *) VSIMalloc(nLength+1);
+    char *pszWholeText = (char *) VSIMalloc(nLength+1);
     if( pszWholeText == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1245,9 +1238,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Convert to XML parse tree.                                      */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot;
-
-    psRoot = CPLParseXMLString( pszWholeText );
+    CPLXMLNode *psRoot = CPLParseXMLString( pszWholeText );
     VSIFree( pszWholeText );
 
     // We assume parser will report errors via CPL.
@@ -1271,16 +1262,14 @@ bool GMLReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Extract feature classes for all definitions found.              */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psThis;
-
-    for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
+    for( CPLXMLNode *psThis = psRoot->psChild;
+         psThis != NULL;
+         psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element
             && EQUAL(psThis->pszValue,"GMLFeatureClass") )
         {
-            GMLFeatureClass   *poClass;
-
-            poClass = new GMLFeatureClass();
+            GMLFeatureClass *poClass = new GMLFeatureClass();
 
             if( !poClass->InitializeFromXML( psThis ) )
             {
@@ -1316,9 +1305,8 @@ bool GMLReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Create in memory schema tree.                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot;
-
-    psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
+    CPLXMLNode *psRoot =
+        CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
 
     if (m_nHasSequentialLayers != -1 && m_nClassCount > 1)
     {
@@ -1334,14 +1322,13 @@ bool GMLReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Serialize to disk.                                              */
 /* -------------------------------------------------------------------- */
-    VSILFILE        *fp;
-    bool         bSuccess = true;
-    char        *pszWholeText = CPLSerializeXMLTree( psRoot );
+    char *pszWholeText = CPLSerializeXMLTree( psRoot );
 
     CPLDestroyXMLNode( psRoot );
 
-    fp = VSIFOpenL( pszFile, "wb" );
+    VSILFILE *fp = VSIFOpenL( pszFile, "wb" );
 
+    bool bSuccess = true;
     if( fp == NULL )
         bSuccess = false;
     else if( VSIFWriteL( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
@@ -1368,8 +1355,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                                  bool bOnlyDetectSRS )
 
 {
-    GMLFeature  *poFeature;
-
     if( m_pszFilename == NULL )
         return false;
 
@@ -1392,6 +1377,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
     std::string osWork;
 
+    GMLFeature *poFeature = NULL;
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
@@ -1550,7 +1536,7 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
 {
     if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
     {
-        const char* pszVertCS_EPSG;
+        const char* pszVertCS_EPSG = NULL;
         if( STARTS_WITH(pszGlobalSRSName, "EPSG:") &&
             (pszVertCS_EPSG = strstr(pszGlobalSRSName, ", EPSG:")) != NULL )
         {

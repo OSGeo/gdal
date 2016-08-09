@@ -172,7 +172,7 @@ bool GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
 bool GMLReader::PrescanForTemplate ()
 {
     int iCount = 0;
-    GMLFeature      *poFeature;
+    GMLFeature *poFeature = NULL;
     GFSTemplateList *pCC = new GFSTemplateList();
 
     /* processing GML features */
@@ -225,7 +225,7 @@ GFSTemplateList::GFSTemplateList( void )
 
 GFSTemplateList::~GFSTemplateList()
 {
-    GFSTemplateItem *pNext;
+    GFSTemplateItem *pNext = NULL;
     GFSTemplateItem *pItem = pFirst;
     while ( pItem != NULL )
     {
@@ -241,8 +241,7 @@ GFSTemplateList::~GFSTemplateList()
 
 GFSTemplateItem *GFSTemplateList::Insert( const char *pszName )
 {
-    GFSTemplateItem *pItem;
-    pItem = new GFSTemplateItem( pszName );
+    GFSTemplateItem *pItem = new GFSTemplateItem( pszName );
 
     /* inserting into the linked list */
     if( pFirst == NULL )
@@ -259,7 +258,7 @@ GFSTemplateItem *GFSTemplateList::Insert( const char *pszName )
 
 void GFSTemplateList::Update( const char *pszName, int bHasGeom )
 {
-    GFSTemplateItem *pItem;
+    GFSTemplateItem *pItem = NULL;
 
     if( pFirst == NULL )
     {
@@ -301,9 +300,7 @@ void GFSTemplateList::Update( const char *pszName, int bHasGeom )
 int GFSTemplateList::GetClassCount( )
 {
     int iCount = 0;
-    GFSTemplateItem *pItem;
-
-    pItem = pFirst;
+    GFSTemplateItem *pItem = pFirst;
     while( pItem != NULL )
     {
         iCount++;
