@@ -1075,7 +1075,6 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                 int bOnlyUserTable)
 {
     GBool bFound = FALSE;
-    const MapInfoBoundsInfo *psList;
 
     /*-----------------------------------------------------------------
     * Try to load the user defined table if not loaded yet .
@@ -1164,7 +1163,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
             }
         }
 
-        psList = gasBoundsList;
+        const MapInfoBoundsInfo *psList = gasBoundsList;
         for( ; !bOnlyUserTable && !bFound && psList->sProj.nProjId!=0xff; psList++)
         {
             const TABProjInfo *p = &(psList->sProj);
@@ -1226,22 +1225,27 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
  **********************************************************************/
 int MITABLoadCoordSysTable(const char *pszFname)
 {
-    VSILFILE *fp;
-    int nStatus = 0, iLine = 0;
+    int nStatus = 0;
+    int iLine = 0;
 
     MITABFreeCoordSysTable();
 
-    if ((fp = VSIFOpenL(pszFname, "rt")) != NULL)
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
+    if( fp != NULL )
     {
-        const char *pszLine;
-        int         iEntry=0, numEntries=100;
+        int iEntry=0;
+        int numEntries=100;
 
         gpasExtBoundsList = (MapInfoRemapProjInfo *)CPLMalloc(numEntries*
                                                   sizeof(MapInfoRemapProjInfo));
 
+        const char *pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
-            double dXMin, dYMin, dXMax, dYMax;
+            double dXMin;
+            double dYMin;
+            double dXMax;
+            double dYMax;
             int bHasProjIn = FALSE;
             TABProjInfo sProjIn;
             TABProjInfo sProj;
