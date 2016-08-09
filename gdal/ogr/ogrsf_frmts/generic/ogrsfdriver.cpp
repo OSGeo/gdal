@@ -210,9 +210,8 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
     }
 
     GDALDataset *poSrcDS = (GDALDataset*) hSrcDS;
-    GDALDataset *poODS;
-
-    poODS = poDriver->Create( pszNewName, 0, 0, 0, GDT_Unknown, papszOptions );
+    GDALDataset *poODS =
+        poDriver->Create( pszNewName, 0, 0, 0, GDT_Unknown, papszOptions );
     if( poODS == NULL )
         return NULL;
 

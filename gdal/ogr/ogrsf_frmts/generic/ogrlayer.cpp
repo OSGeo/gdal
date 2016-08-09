@@ -170,13 +170,13 @@ int OGR_L_GetRefCount( OGRLayerH hLayer )
 GIntBig OGRLayer::GetFeatureCount( int bForce )
 
 {
-    OGRFeature     *poFeature;
-    GIntBig         nFeatureCount = 0;
-
     if( !bForce )
         return -1;
 
     ResetReading();
+
+    GIntBig nFeatureCount = 0;
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         nFeatureCount++;
@@ -227,7 +227,6 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce )
 OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce )
 
 {
-    OGRFeature  *poFeature;
     OGREnvelope oEnv;
     GBool       bExtentSet = FALSE;
 
@@ -263,6 +262,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
 /*      the features to collect geometries and build extents.           */
 /* -------------------------------------------------------------------- */
     ResetReading();
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iGeomField);
@@ -449,8 +449,6 @@ OGRErr OGR_L_SetAttributeFilter( OGRLayerH hLayer, const char *pszQuery )
 OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
 
 {
-    OGRFeature *poFeature;
-
     /* Save old attribute and spatial filters */
     char* pszOldFilter = m_pszAttrQueryString ? CPLStrdup(m_pszAttrQueryString) : NULL;
     OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
@@ -460,6 +458,8 @@ OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
     SetSpatialFilter(0, NULL);
 
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
@@ -501,12 +501,12 @@ OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId )
 OGRErr OGRLayer::SetNextByIndex( GIntBig nIndex )
 
 {
-    OGRFeature *poFeature;
-
     if( nIndex < 0 )
         return OGRERR_FAILURE;
 
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( nIndex-- > 0 )
     {
         poFeature = GetNextFeature();

@@ -1723,9 +1723,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-    GIntBig      i;
     int nOrderItems = psSelectInfo->order_specs;
-    GIntBig *panFIDList;
 
     if( ! (psSelectInfo->order_specs > 0
            && psSelectInfo->query_mode == SWQM_RECORDSET
@@ -1747,18 +1745,17 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     panFIDIndex = NULL;
     OGRField *pasIndexFields = (OGRField *)
         CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc);
-    panFIDList = (GIntBig *) CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc);
+    GIntBig *panFIDList = (GIntBig *)
+        CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc);
 
 /* -------------------------------------------------------------------- */
 /*      Read in all the key values.                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poSrcFeat;
+    OGRFeature *poSrcFeat = NULL;
     nIndexSize = 0;
 
     while( (poSrcFeat = poSrcLayer->GetNextFeature()) != NULL )
     {
-        int iKey;
-
         if ((size_t)nIndexSize == nFeaturesAlloc)
         {
             GIntBig nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
@@ -1801,13 +1798,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             nFeaturesAlloc = (size_t)nNewFeaturesAlloc;
         }
 
-        for( iKey = 0; iKey < nOrderItems; iKey++ )
+        for( int iKey = 0; iKey < nOrderItems; iKey++ )
         {
             swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
-            OGRFieldDefn *poFDefn;
-            OGRField *psSrcField, *psDstField;
-
-            psDstField = pasIndexFields + nIndexSize * nOrderItems + iKey;
+            OGRField *psDstField = pasIndexFields + nIndexSize * nOrderItems + iKey;
 
             if ( psKeyDef->field_index >= iFIDFieldIndex)
             {
@@ -1832,10 +1826,11 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 continue;
             }
 
-            poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
+            OGRFieldDefn *poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
                 psKeyDef->field_index );
 
-            psSrcField = poSrcFeat->GetRawFieldRef( psKeyDef->field_index );
+            OGRField *psSrcField =
+                poSrcFeat->GetRawFieldRef( psKeyDef->field_index );
 
             if( poFDefn->GetType() == OFTInteger
                 || poFDefn->GetType() == OFTInteger64
@@ -1872,7 +1867,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         nIndexSize = 0;
         return;
     }
-    for( i = 0; i < nIndexSize; i++ )
+    for( int i = 0; i < nIndexSize; i++ )
         panFIDIndex[i] = i;
 
 /* -------------------------------------------------------------------- */
@@ -1892,7 +1887,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /*      Rework the FID map to map to real FIDs.                         */
 /* -------------------------------------------------------------------- */
     int bAlreadySorted = TRUE;
-    for( i = 0; i < nIndexSize; i++ )
+    for( int i = 0; i < nIndexSize; i++ )
     {
         if (panFIDIndex[i] != i)
             bAlreadySorted = FALSE;
@@ -1915,7 +1910,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             /* warning: only special fields of type string should be deallocated */
             if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
             {
-                for( i = 0; i < nIndexSize; i++ )
+                for( int i = 0; i < nIndexSize; i++ )
                 {
                     OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
                     CPLFree( psField->String );
@@ -1929,7 +1924,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         if( poFDefn->GetType() == OFTString )
         {
-            for( i = 0; i < nIndexSize; i++ )
+            for( int i = 0; i < nIndexSize; i++ )
             {
                 OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
 

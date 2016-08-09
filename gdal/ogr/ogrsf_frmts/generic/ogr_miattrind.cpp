@@ -238,20 +238,16 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 /* -------------------------------------------------------------------- */
 /*      Process each attrindex.                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psAttrIndex;
-
-    for( psAttrIndex = psRoot->psChild;
+    for( CPLXMLNode *psAttrIndex = psRoot->psChild;
          psAttrIndex != NULL;
          psAttrIndex = psAttrIndex->psNext )
     {
-        int iField, iIndexIndex;
-
         if( psAttrIndex->eType != CXT_Element
             || !EQUAL(psAttrIndex->pszValue,"OGRMIAttrIndex") )
             continue;
 
-        iField = atoi(CPLGetXMLValue(psAttrIndex,"FieldIndex","-1"));
-        iIndexIndex = atoi(CPLGetXMLValue(psAttrIndex,"IndexIndex","-1"));
+        int iField = atoi(CPLGetXMLValue(psAttrIndex,"FieldIndex","-1"));
+        int iIndexIndex = atoi(CPLGetXMLValue(psAttrIndex,"IndexIndex","-1"));
 
         if( iField == -1 || iIndexIndex == -1 )
         {
@@ -275,16 +271,12 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 
 OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 {
-    VSILFILE *fp;
-    vsi_l_offset  nXMLSize;
-    char *pszRawXML;
-
     CPLAssert( poINDFile == NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Read the XML file.                                              */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszMetadataFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszMetadataFilename, "rb" );
     if( fp == NULL )
         return OGRERR_FAILURE;
 
@@ -293,7 +285,7 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
         VSIFCloseL(fp);
         return OGRERR_FAILURE;
     }
-    nXMLSize = VSIFTellL( fp );
+    const vsi_l_offset nXMLSize = VSIFTellL( fp );
     if( nXMLSize > 10 * 1024 * 1024 ||
         VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
     {
@@ -301,7 +293,7 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
         return OGRERR_FAILURE;
     }
 
-    pszRawXML = (char *) CPLMalloc((size_t)nXMLSize+1);
+    char *pszRawXML = (char *) CPLMalloc((size_t)nXMLSize+1);
     pszRawXML[nXMLSize] = '\0';
     if( VSIFReadL( pszRawXML, (size_t)nXMLSize, 1, fp ) != 1 )
     {
@@ -330,9 +322,8 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 /* -------------------------------------------------------------------- */
 /*      Create the XML tree corresponding to this layer.                */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot;
-
-    psRoot = CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
+    CPLXMLNode *psRoot =
+        CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
 
     CPLCreateXMLElementAndValue( psRoot, "MIIDFilename",
                                  CPLGetFilename( pszMIINDFilename ) );
@@ -340,9 +331,8 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
     for( int i = 0; i < nIndexCount; i++ )
     {
         OGRMIAttrIndex *poAI = papoIndexList[i];
-        CPLXMLNode *psIndex;
-
-        psIndex = CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
+        CPLXMLNode *psIndex =
+            CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
 
         CPLCreateXMLElementAndValue( psIndex, "FieldIndex",
                                      CPLSPrintf( "%d", poAI->iField ) );
@@ -359,11 +349,10 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 /*      Save it.                                                        */
 /* -------------------------------------------------------------------- */
     char *pszRawXML = CPLSerializeXMLTree( psRoot );
-    FILE *fp;
 
     CPLDestroyXMLNode( psRoot );
 
-    fp = VSIFOpen( pszMetadataFilename, "wb" );
+    FILE *fp = VSIFOpen( pszMetadataFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -388,13 +377,12 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int iField )
 
 {
-    OGRFeature *poFeature;
-
     poLayer->ResetReading();
 
+    OGRFeature *poFeature = NULL;
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
-        OGRErr eErr = AddToIndex( poFeature, iField );
+        const OGRErr eErr = AddToIndex( poFeature, iField );
 
         delete poFeature;
 
