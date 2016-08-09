@@ -130,10 +130,9 @@ void    DGN2IEEEDouble(void * dbl)
 void    IEEE2DGNDouble(void * dbl)
 
 {
-    double64_t  dt;
-    GInt32      exponent;
-    GInt32      sign;
-    GByte       *src,*dest;
+    double64_t dt;
+    GByte  *src = NULL;
+    GByte *dest = NULL;
 
 #ifdef CPL_LSB
     src  = (GByte *) dbl;
@@ -151,8 +150,8 @@ void    IEEE2DGNDouble(void * dbl)
     memcpy( &dt, dbl, 8 );
 #endif
 
-    sign         = dt.hi & 0x80000000;
-    exponent = dt.hi >> 20;
+    GInt32 sign = dt.hi & 0x80000000;
+    GInt32 exponent = dt.hi >> 20;
     exponent = exponent & 0x000007ff;
 
 /* -------------------------------------------------------------------- */
