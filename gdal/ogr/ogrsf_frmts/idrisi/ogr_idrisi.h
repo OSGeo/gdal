@@ -57,16 +57,16 @@ protected:
 
     unsigned int       nTotalFeatures;
 
-    int                Detect_AVL_ADC(const char* pszFilename);
-    void               ReadAVLLine(OGRFeature* poFeature);
+    bool               Detect_AVL_ADC( const char* pszFilename );
+    void               ReadAVLLine( OGRFeature* poFeature );
 
     virtual OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRIdrisiLayer(const char* pszFilename,
-                                       const char* pszLayerName, VSILFILE* fp,
-                                       OGRwkbGeometryType eGeomType, const char* pszWTKString);
-                        ~OGRIdrisiLayer();
+    OGRIdrisiLayer( const char* pszFilename,
+                    const char* pszLayerName, VSILFILE* fp,
+                    OGRwkbGeometryType eGeomType, const char* pszWTKString );
+    virtual ~OGRIdrisiLayer();
 
 
     virtual void                ResetReading();
@@ -76,9 +76,9 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    void SetExtent( double dfMinX, double dfMinY, double dfMaxX, double dfMaxY );
+    virtual OGRErr GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
+    virtual OGRErr GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual GIntBig         GetFeatureCount( int bForce = TRUE );
@@ -96,8 +96,8 @@ class OGRIdrisiDataSource : public OGRDataSource
     int                 nLayers;
 
   public:
-                        OGRIdrisiDataSource();
-                        ~OGRIdrisiDataSource();
+    OGRIdrisiDataSource();
+    virtual ~OGRIdrisiDataSource();
 
     int                 Open( const char * pszFilename );
 
@@ -116,12 +116,11 @@ class OGRIdrisiDataSource : public OGRDataSource
 class OGRIdrisiDriver : public OGRSFDriver
 {
   public:
-                ~OGRIdrisiDriver();
+    virtual ~OGRIdrisiDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
 };
 
-
-#endif /* ndef OGR_IDRISI_H_INCLUDED */
+#endif // ndef OGR_IDRISI_H_INCLUDED
