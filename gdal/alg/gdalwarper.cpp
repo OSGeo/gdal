@@ -619,7 +619,9 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
     bool bOutAllOpaque = true;
 #if (defined(__x86_64) || defined(_M_X64))
     GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
-    if( eDT == GDT_Byte || eDT == GDT_UInt16 )
+    // Make sure that pafMask is at least 8-byte aligned, which should
+    // normally be always the case if being a ptr returned by malloc()
+    if( (eDT == GDT_Byte || eDT == GDT_UInt16) && ((size_t)pafMask & 0x7) == 0 )
     {
         // Read data.
         eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
@@ -630,6 +632,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
             return eErr;
 
         // Make sure we have the correct alignment before doing SSE
+        // On Linux x86_64, the alignment should be always correct due
+        // the alignment of malloc() being 16 byte
         const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
         if( ((size_t)pafMask & 0xf) != 0 )
         {
@@ -901,7 +905,10 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                                   "255" ) ));
 #if (defined(__x86_64) || defined(_M_X64))
         GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
-        if( eDT == GDT_Byte || eDT == GDT_UInt16 )
+        // Make sure that pafMask is at least 8-byte aligned, which should
+        // normally be always the case if being a ptr returned by malloc()
+        if( (eDT == GDT_Byte || eDT == GDT_UInt16) &&
+            ((size_t)pafMask & 0x7) == 0 )
         {
             // Read data.
             eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
@@ -912,6 +919,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 return eErr;
 
             // Make sure we have the correct alignment before doing SSE
+            // On Linux x86_64, the alignment should be always correct due
+            // the alignment of malloc() being 16 byte
             const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
             if( ((size_t)pafMask & 0xf) != 0 )
             {
@@ -1008,11 +1017,16 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             (( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
                eDT == GDT_Int32 || eDT == GDT_UInt32 ) ?
                 0.1f : 0.0f);
-        
+
 #if (defined(__x86_64) || defined(_M_X64))
-        if( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 )
+        // Make sure that pafMask is at least 8-byte aligned, which should
+        // normally be always the case if being a ptr returned by malloc()
+        if( (eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+            ((size_t)pafMask & 0x7) == 0 )
         {
             // Make sure we have the correct alignment before doing SSE
+            // On Linux x86_64, the alignment should be always correct due
+            // the alignment of malloc() being 16 byte
             if( ((size_t)pafMask & 0xf) != 0 )
             {
                 ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_alpha_max );
