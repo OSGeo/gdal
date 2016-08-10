@@ -46,7 +46,7 @@ typedef struct ELASHeader {
     GInt32      IE;     /* initial element (pixel), normally 1 */
     GInt32      LE;     /* last element (pixel) */
     GInt32      NC;     /* number of channels (bands) */
-    GInt32      H4321;  /* header record identifier - always 4321. */
+    GUInt32     H4321;  /* header record identifier - always 4321. */
     char        YLabel[4]; /* Should be "NOR" for UTM */
     GInt32      YOffset;/* topleft pixel center northing */
     char        XLabel[4]; /* Should be "EAS" for UTM */
