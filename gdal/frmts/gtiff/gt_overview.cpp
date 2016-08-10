@@ -35,6 +35,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
