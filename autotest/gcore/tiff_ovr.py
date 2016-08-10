@@ -2016,6 +2016,68 @@ def tiff_ovr_51():
 
     return 'success'
 
+###############################################################################
+# Test unsorted external overview building (#6617)
+
+def tiff_ovr_52():
+
+    src_ds = gdal.Open('data/byte.tif')
+    if src_ds is None:
+        return 'skip'
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_52.tif', src_ds)
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
+    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+    ds.BuildOverviews('NEAR', [4])
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+
+    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 328:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
+
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_52.tif', src_ds)
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
+    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+    ds.BuildOverviews('NEAR', [4, 2])
+    ds = None
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+
+    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 328:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -2132,7 +2194,8 @@ for item in gdaltest_list_internal:
         gdaltest_list.append( (item, item.__name__ + '_inverted') )
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
-gdaltest_list += [ tiff_ovr_51 ]
+gdaltest_list += [ tiff_ovr_51,
+                   tiff_ovr_52 ]
 
 if __name__ == '__main__':
 
