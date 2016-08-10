@@ -802,7 +802,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     {
     case JPEGRGB:
         nJPGComponents = 3;
-        // fallthrough
+        CPL_FALLTHROUGH
     case JPEGGRAY:
         {
             GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );

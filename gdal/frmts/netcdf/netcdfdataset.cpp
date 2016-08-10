@@ -569,11 +569,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 nc_datatype = NC_USHORT;
                 break;
             }
+            CPL_FALLTHROUGH
         case GDT_UInt32:
             if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 ) {
                 nc_datatype = NC_UINT;
                 break;
             }
+            CPL_FALLTHROUGH
 #endif
         default:
             if( nBand == 1 )

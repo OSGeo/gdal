@@ -195,6 +195,7 @@ ElementPtr geom2kml(
 
             break;
         }
+        CPL_FALLTHROUGH
 
       /***** fallthrough *****/
 
