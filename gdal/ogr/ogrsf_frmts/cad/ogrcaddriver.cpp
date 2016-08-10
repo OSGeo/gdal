@@ -127,7 +127,8 @@ void RegisterOGRCAD()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='MODE' type='int' min='1' max='3' description='Open mode. 1 - read all data (slow), 2 - read main data (fast), 3 - read less data' default='2'/>"
+"  <Option name='MODE' type='string' description='Open mode. READ_ALL - read all data (slow), READ_FAST - read main data (fast), READ_FASTEST - read less data' default='READ_FAST'/>"
+"  <Option name='ADD_UNSUPPORTED_GEOMETRIES_DATA' type='string' description='Add unsupported geometries data (color, attributes) to the layer (YES/NO). They will have no geometrical representation.' default='NO'/>"
 "</OpenOptionList>"); 
 
 
