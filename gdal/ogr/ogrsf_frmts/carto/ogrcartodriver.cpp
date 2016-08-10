@@ -140,3 +140,9 @@ void RegisterOGRCarto()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
+
+// Just kept for C ABI stability
+void RegisterOGRCartoDB()
+{
+    RegisterOGRCarto();
+}

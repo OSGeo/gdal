@@ -413,6 +413,7 @@ void CPL_DLL RegisterOGRElastic();
 void CPL_DLL RegisterOGRGeoPackage();
 void CPL_DLL RegisterOGRWalk();
 void CPL_DLL RegisterOGRCarto();
+void CPL_DLL RegisterOGRCartoDB(); // Just kept for C ABI stability
 void CPL_DLL RegisterOGRAmigoCloud();
 void CPL_DLL RegisterOGRSXF();
 void CPL_DLL RegisterOGROpenFileGDB();
