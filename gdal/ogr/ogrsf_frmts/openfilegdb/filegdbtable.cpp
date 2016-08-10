@@ -48,9 +48,9 @@ CPL_CVSID("$Id$");
 #define ZEROES_AFTER_END_OF_BUFFER      4
 
 
-static const int EXT_SHAPE_Z_FLAG     = 0x80000000;
-static const int EXT_SHAPE_M_FLAG     = 0x40000000;
-static const int EXT_SHAPE_CURVE_FLAG = 0x20000000;
+static const GUInt32 EXT_SHAPE_Z_FLAG     = 0x80000000U;
+static const GUInt32 EXT_SHAPE_M_FLAG     = 0x40000000U;
+static const GUInt32 EXT_SHAPE_CURVE_FLAG = 0x20000000U;
 
 static const GUInt32 EXT_SHAPE_SEGMENT_ARC = 1;
 static const GUInt32 EXT_SHAPE_SEGMENT_BEZIER = 4;
