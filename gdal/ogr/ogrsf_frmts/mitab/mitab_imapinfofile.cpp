@@ -231,13 +231,12 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * .TAB file ... is it a TABFileView or a TABFile?
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
-        VSILFILE *fp;
-        const char *pszLine;
         char *pszAdjFname = CPLStrdup(pszFname);
         GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
-        fp = VSIFOpenL(pszAdjFname, "r");
+        VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
+        const char *pszLine = NULL;
         while(fp && (pszLine = CPLReadLineL(fp)) != NULL)
         {
             while (isspace((unsigned char)*pszLine))  pszLine++;
@@ -290,13 +289,12 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    OGRFeature *poFeatureRef;
-    OGRGeometry *poGeom;
-    GIntBig nFeatureId;
+    GIntBig nFeatureId = 0;
 
     while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
     {
-        poFeatureRef = GetFeatureRef(nFeatureId);
+        OGRGeometry *poGeom = NULL;
+        OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
         if (poFeatureRef == NULL)
             return NULL;
         else if( (m_poFilterGeom == NULL ||
@@ -324,8 +322,8 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 
 TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRGeometry   *poGeom;
+    TABFeature *poTABFeature = NULL;
+    OGRGeometry   *poGeom = NULL;
     OGRwkbGeometryType eGType;
     TABPoint *poTABPointFeature = NULL;
     TABRegion *poTABRegionFeature = NULL;
@@ -437,14 +435,11 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
  **********************************************************************/
 OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRErr  eErr;
-
-    poTABFeature = CreateTABFeature(poFeature);
+    TABFeature *poTABFeature = CreateTABFeature(poFeature);
     if( poTABFeature == NULL ) /* MultiGeometry */
         return OGRERR_NONE;
 
-    eErr = CreateFeature(poTABFeature);
+    OGRErr eErr = CreateFeature(poTABFeature);
     if( eErr == OGRERR_NONE )
         poFeature->SetFID(poTABFeature->GetFID());
 
@@ -462,11 +457,9 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 {
-    OGRFeature *poFeatureRef;
-
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 
-    poFeatureRef = GetFeatureRef(nFeatureId);
+    OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)
     {
         // Avoid cloning feature... return the copy owned by the class

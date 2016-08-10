@@ -447,16 +447,15 @@ char *TABGetBasename(const char *pszFname)
  **********************************************************************/
 char **TAB_CSLLoad(const char *pszFname)
 {
-    VSILFILE    *fp;
-    const char  *pszLine;
-    char        **papszStrList=NULL;
+    char **papszStrList = NULL;
 
-    fp = VSIFOpenL(pszFname, "rt");
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
 
-    if (fp)
+    if( fp )
     {
         while(!VSIFEofL(fp))
         {
+            const char *pszLine = NULL;
             if ( (pszLine = CPLReadLineL(fp)) != NULL )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
@@ -613,10 +612,8 @@ char *TABEscapeString(char *pszString)
  **********************************************************************/
 char *TABCleanFieldName(const char *pszSrcName)
 {
-    char *pszNewName;
-    int numInvalidChars = 0;
 
-    pszNewName = CPLStrdup(pszSrcName);
+    char *pszNewName = CPLStrdup(pszSrcName);
 
     if (strlen(pszNewName) > 31)
     {
@@ -649,7 +646,8 @@ char *TABCleanFieldName(const char *pszSrcName)
      * It was also verified that extended chars with accents are also
      * accepted.
      *----------------------------------------------------------------*/
-    for(int i=0; pszSrcName && pszSrcName[i] != '\0'; i++)
+    int numInvalidChars = 0;
+    for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
         if ( pszSrcName[i]=='#' )
 	{
@@ -721,9 +719,7 @@ static const MapInfoUnitsInfo gasUnitsList[] =
  **********************************************************************/
 const char *TABUnitIdToString(int nId)
 {
-    const MapInfoUnitsInfo *psList;
-
-    psList = gasUnitsList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     while(psList->nUnitId != -1)
     {
@@ -744,9 +740,7 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    const MapInfoUnitsInfo *psList;
-
-    psList = gasUnitsList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     if( pszName == NULL )
         return 13;

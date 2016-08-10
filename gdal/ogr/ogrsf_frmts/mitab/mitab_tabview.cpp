@@ -666,8 +666,6 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
  **********************************************************************/
 int TABView::WriteTABFile()
 {
-    VSILFILE *fp;
-
     CPLAssert(m_eAccessMode == TABWrite);
     CPLAssert(m_numTABFiles == 2);
     CPLAssert(GetLayerDefn());
@@ -676,7 +674,8 @@ int TABView::WriteTABFile()
     char *pszTable1 = TABGetBasename(m_papszTABFnames[0]);
     char *pszTable2 = TABGetBasename(m_papszTABFnames[1]);
 
-    if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
+    VSILFILE *fp = VSIFOpenL(m_pszFname, "wt");
+    if( fp != NULL )
     {
         // Version is always 100, no matter what the sub-table's version is
         VSIFPrintfL(fp, "!Table\n");
@@ -1379,10 +1378,8 @@ int  TABRelation::Init(const char *pszViewName,
         return -1;
 
     // We'll need the feature Defn later...
-    OGRFeatureDefn *poMainDefn, *poRelDefn;
-
-    poMainDefn = poMainTable->GetLayerDefn();
-    poRelDefn = poRelTable->GetLayerDefn();
+    OGRFeatureDefn *poMainDefn = poMainTable->GetLayerDefn();
+    OGRFeatureDefn *poRelDefn = poRelTable->GetLayerDefn();
 
     /*-----------------------------------------------------------------
      * Keep info for later use about source tables, etc.
@@ -1464,8 +1461,8 @@ int  TABRelation::Init(const char *pszViewName,
      * Create new FeatureDefn and copy selected fields definitions
      * while updating the appropriate field maps.
      *----------------------------------------------------------------*/
-    int nIndex;
-    OGRFieldDefn *poFieldDefn;
+    int nIndex = 0;
+    OGRFieldDefn *poFieldDefn = NULL;
 
     m_poDefn = new OGRFeatureDefn(pszViewName);
     // Ref count defaults to 0... set it to 1
@@ -1559,10 +1556,8 @@ int  TABRelation::CreateRelFields()
     /*-----------------------------------------------------------------
      * Update field maps
      *----------------------------------------------------------------*/
-    OGRFeatureDefn *poMainDefn, *poRelDefn;
-
-    poMainDefn = m_poMainTable->GetLayerDefn();
-    poRelDefn = m_poRelTable->GetLayerDefn();
+    OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+    OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
     m_panMainTableFieldMap = (int*)CPLRealloc(m_panMainTableFieldMap,
                                       poMainDefn->GetFieldCount()*sizeof(int));
@@ -1602,9 +1597,6 @@ int  TABRelation::CreateRelFields()
  **********************************************************************/
 TABFeature *TABRelation::GetFeature(int nFeatureId)
 {
-    TABFeature *poMainFeature;
-    TABFeature *poCurFeature;
-
     /*-----------------------------------------------------------------
      * Make sure init() has been called
      *----------------------------------------------------------------*/
@@ -1618,14 +1610,15 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
     /*-----------------------------------------------------------------
      * Read main feature and create a new one of the right type
      *----------------------------------------------------------------*/
-    if ((poMainFeature = m_poMainTable->GetFeatureRef(nFeatureId)) == NULL)
+    TABFeature *poMainFeature = m_poMainTable->GetFeatureRef(nFeatureId);
+    if( poMainFeature == NULL )
     {
         // Feature cannot be read from main table...
         // an error has already been reported.
         return NULL;
     }
 
-    poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
+    TABFeature *poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
 
     /*-----------------------------------------------------------------
      * Keep track of FID and copy the geometry
@@ -1634,8 +1627,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
 
     if (poCurFeature->GetFeatureClass() != TABFCNoGeomFeature)
     {
-        OGRGeometry *poGeom;
-        poGeom = poMainFeature->GetGeometryRef();
+        OGRGeometry *poGeom = poMainFeature->GetGeometryRef();
         poCurFeature->SetGeometry(poGeom);
     }
 
@@ -1996,10 +1988,8 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     CPLAssert(m_poMainTable && m_poRelTable);
 
     // We'll need the feature Defn later...
-    OGRFeatureDefn *poMainDefn, *poRelDefn;
-
-    poMainDefn = m_poMainTable->GetLayerDefn();
-    poRelDefn = m_poRelTable->GetLayerDefn();
+    OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+    OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
     /*-----------------------------------------------------------------
      * Create one feature for each table
@@ -2009,8 +1999,7 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 
     if (poFeature->GetFeatureClass() != TABFCNoGeomFeature)
     {
-        OGRGeometry *poGeom;
-        poGeom = poFeature->GetGeometryRef();
+        OGRGeometry *poGeom = poFeature->GetGeometryRef();
         poMainFeature->SetGeometry(poGeom);
     }
 

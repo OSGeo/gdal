@@ -128,16 +128,14 @@ OGRTABDataSource::~OGRTABDataSource()
 int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 
 {
-    VSIStatBufL  sStat;
-    const char *pszOpt;
-
     CPLAssert( m_pszName == NULL );
 
     m_pszName = CPLStrdup( pszName );
     m_papszOptions = CSLDuplicate( papszOptions );
     m_bUpdate = TRUE;
 
-    if( (pszOpt=CSLFetchNameValue(papszOptions,"FORMAT")) != NULL
+    const char *pszOpt = CSLFetchNameValue(papszOptions,"FORMAT");
+    if( pszOpt != NULL
         && EQUAL(pszOpt, "MIF") )
         m_bCreateMIF = TRUE;
     else if( EQUAL(CPLGetExtension(pszName),"mif")
@@ -157,6 +155,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create a new empty directory.                                   */
 /* -------------------------------------------------------------------- */
+    VSIStatBufL sStat;
+
     if( strlen(CPLGetExtension(pszName)) == 0 )
     {
         if( VSIStatL( pszName, &sStat ) == 0 )
@@ -189,7 +189,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 /* -------------------------------------------------------------------- */
     else
     {
-        IMapInfoFile    *poFile;
+        IMapInfoFile *poFile = NULL;
 
         if( m_bCreateMIF )
         {
@@ -241,9 +241,8 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( !poOpenInfo->bIsDirectory )
     {
-        IMapInfoFile    *poFile;
-
-        poFile = IMapInfoFile::SmartOpen( m_pszName, m_bUpdate, bTestOpen );
+        IMapInfoFile *poFile =
+            IMapInfoFile::SmartOpen( m_pszName, m_bUpdate, bTestOpen );
         if( poFile == NULL )
             return FALSE;
 
@@ -273,17 +272,16 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
              papszFileList != NULL && papszFileList[iFile] != NULL;
              iFile++ )
         {
-            IMapInfoFile *poFile;
             const char  *pszExtension = CPLGetExtension(papszFileList[iFile]);
-            char        *pszSubFilename;
 
             if( !EQUAL(pszExtension,"tab") && !EQUAL(pszExtension,"mif") )
                 continue;
 
-            pszSubFilename = CPLStrdup(
+            char *pszSubFilename = CPLStrdup(
                 CPLFormFilename( m_pszDirectory, papszFileList[iFile], NULL ));
 
-            poFile = IMapInfoFile::SmartOpen( pszSubFilename, m_bUpdate, bTestOpen );
+            IMapInfoFile *poFile =
+                IMapInfoFile::SmartOpen( pszSubFilename, m_bUpdate, bTestOpen );
             CPLFree( pszSubFilename );
 
             if( poFile == NULL )
@@ -347,15 +345,11 @@ OGRLayer *OGRTABDataSource::GetLayer( int iLayer )
 
 OGRLayer *
 OGRTABDataSource::ICreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRSIn,
-                               OGRwkbGeometryType /* eGeomTypeIn */,
-                               char ** papszOptions )
+                                OGRSpatialReference *poSRSIn,
+                                OGRwkbGeometryType /* eGeomTypeIn */,
+                                char ** papszOptions )
 
 {
-    IMapInfoFile        *poFile;
-    char                *pszFullFilename;
-    const char          *pszOpt = NULL;
-
     if( !m_bUpdate )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -368,6 +362,9 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
 /*      instantiated the low level layer.   We would just need to       */
 /*      reset the coordinate system and (potentially) bounds.           */
 /* -------------------------------------------------------------------- */
+    IMapInfoFile *poFile = NULL;
+    char *pszFullFilename = NULL;
+
     if( m_bSingleFile )
     {
         if( m_bSingleLayerAlreadyCreated )
@@ -436,6 +433,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
     }
 
     // Pull out the bounds if supplied
+    const char *pszOpt = NULL;
     if( (pszOpt=CSLFetchNameValue(papszOptions, "BOUNDS")) != NULL ) {
         double dfBounds[4];
         if( CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0],
