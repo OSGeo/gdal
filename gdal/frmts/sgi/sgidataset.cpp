@@ -771,8 +771,8 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     GInt32 nIntValue = CPL_MSBWORD32(0);
     memcpy( abyHeader + 12, &nIntValue, 4 );
 
-    nIntValue = CPL_MSBWORD32(255);
-    memcpy( abyHeader + 16, &nIntValue, 4 );
+    GUInt32 nUIntValue = CPL_MSBWORD32(255);
+    memcpy( abyHeader + 16, &nUIntValue, 4 );
 
     VSIFWriteL( abyHeader, 1, 512, fp );
 
