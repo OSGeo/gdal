@@ -73,7 +73,7 @@ install:
 # that it helps gcc 4.1 generating correct code here...
 parser:
 	bison -p swq -d -oswq_parser.cpp swq_parser.y
-	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" > swq_parser.cpp.tmp
+	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" | sed "s/            \/\* Fall through\.  \*\//            CPL_FALLTHROUGH/" > swq_parser.cpp.tmp
 	mv swq_parser.cpp.tmp swq_parser.cpp
 
 # The sed hack is to please MSVC

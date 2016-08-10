@@ -913,6 +913,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #ifndef __has_attribute
   #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
 #endif
+
 /*! @endcond */
 
 #if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
@@ -1020,7 +1021,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if defined(__clang__)
+#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)) && HAVE_CXX11
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
