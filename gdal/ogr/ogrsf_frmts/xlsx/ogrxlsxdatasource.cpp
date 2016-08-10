@@ -375,7 +375,7 @@ void OGRXLSXDataSource::dataHandlerCbk(const char *data, int nLen)
         case STATE_SHEETDATA:   break;
         case STATE_ROW:     break;
         case STATE_CELL:    break;
-        case STATE_TEXTV:   dataHandlerTextV(data, nLen);
+        case STATE_TEXTV:   dataHandlerTextV(data, nLen); break;
         default:            break;
     }
 }
