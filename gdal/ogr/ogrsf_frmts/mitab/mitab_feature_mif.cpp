@@ -1685,9 +1685,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double dXMin,dXMax, dYMin,dYMax;
     int    numPts;
 
-    char **papszToken;
-    papszToken = CSLTokenizeString2(fp->GetLastLine(),
-                                    " \t", CSLT_HONOURSTRINGS);
+    char **papszToken =
+        CSLTokenizeString2(fp->GetLastLine(), " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) == 5)
     {

@@ -414,9 +414,6 @@ TABPenDef *TABToolDefTable::GetPenDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
 {
-    int i, nNewPenIndex = 0;
-    TABPenDef *poDef;
-
     if (poNewPenDef == NULL)
         return -1;
 
@@ -429,9 +426,10 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
     /*-----------------------------------------------------------------
      * Start by searching the list of existing pens
      *----------------------------------------------------------------*/
-    for (i=0; nNewPenIndex == 0 && i<m_numPen; i++)
+    int nNewPenIndex = 0;
+    for( int i = 0; nNewPenIndex == 0 && i<m_numPen; i++ )
     {
-        poDef = m_papsPen[i];
+        TABPenDef *poDef = m_papsPen[i];
         if (poDef->nPixelWidth == poNewPenDef->nPixelWidth &&
             poDef->nLinePattern == poNewPenDef->nLinePattern &&
             poDef->nPointWidth == poNewPenDef->nPointWidth &&
@@ -504,9 +502,6 @@ TABBrushDef *TABToolDefTable::GetBrushDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
 {
-    int i, nNewBrushIndex = 0;
-    TABBrushDef *poDef;
-
     if (poNewBrushDef == NULL)
         return -1;
 
@@ -519,9 +514,10 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Brushs
      *----------------------------------------------------------------*/
-    for (i=0; nNewBrushIndex == 0 && i<m_numBrushes; i++)
+    int nNewBrushIndex = 0;
+    for( int i = 0; nNewBrushIndex == 0 && i<m_numBrushes; i++ )
     {
-        poDef = m_papsBrush[i];
+        TABBrushDef *poDef = m_papsBrush[i];
         if (poDef->nFillPattern == poNewBrushDef->nFillPattern &&
             poDef->bTransparentFill == poNewBrushDef->bTransparentFill &&
             poDef->rgbFGColor == poNewBrushDef->rgbFGColor &&
@@ -595,18 +591,16 @@ TABFontDef *TABToolDefTable::GetFontDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
 {
-    int i, nNewFontIndex = 0;
-    TABFontDef *poDef;
-
     if (poNewFontDef == NULL)
         return -1;
 
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Fonts
      *----------------------------------------------------------------*/
-    for (i=0; nNewFontIndex == 0 && i<m_numFonts; i++)
+    int nNewFontIndex = 0;
+    for( int i = 0; nNewFontIndex == 0 && i<m_numFonts; i++ )
     {
-        poDef = m_papsFont[i];
+        TABFontDef *poDef = m_papsFont[i];
         if (EQUAL(poDef->szFontName, poNewFontDef->szFontName))
         {
             nNewFontIndex = i+1; // Fount it!
@@ -678,18 +672,16 @@ TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
 {
-    int i, nNewSymbolIndex = 0;
-    TABSymbolDef *poDef;
-
     if (poNewSymbolDef == NULL)
         return -1;
 
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Symbols
      *----------------------------------------------------------------*/
-    for (i=0; nNewSymbolIndex == 0 && i<m_numSymbols; i++)
+    int nNewSymbolIndex = 0;
+    for( int i = 0; nNewSymbolIndex == 0 && i<m_numSymbols; i++ )
     {
-        poDef = m_papsSymbol[i];
+        TABSymbolDef *poDef = m_papsSymbol[i];
         if (poDef->nSymbolNo == poNewSymbolDef->nSymbolNo &&
             poDef->nPointSize == poNewSymbolDef->nPointSize &&
             poDef->_nUnknownValue_ == poNewSymbolDef->_nUnknownValue_ &&

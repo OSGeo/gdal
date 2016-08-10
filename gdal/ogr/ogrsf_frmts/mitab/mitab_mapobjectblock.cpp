@@ -762,20 +762,18 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
     if (bDetails)
     {
         /* We need the mapfile's header block */
-        TABRawBinBlock *poBlock;
-        TABMAPHeaderBlock *poHeader;
-        TABMAPObjHdr *poObjHdr;
-
-        poBlock = TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
+        TABRawBinBlock *poBlock =
+            TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Failed reading header block.");
             return;
         }
-        poHeader = (TABMAPHeaderBlock *)poBlock;
+        TABMAPHeaderBlock *poHeader = (TABMAPHeaderBlock *)poBlock;
 
         Rewind();
+        TABMAPObjHdr *poObjHdr = NULL;
         while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
         {
             fprintf(fpOut,

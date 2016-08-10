@@ -826,9 +826,9 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     /*-----------------------------------------------------------------
      * Fetch the parameters from the header.
      *----------------------------------------------------------------*/
-    TABMAPHeaderBlock *poHeader;
-    TABProjInfo     sTABProj;
+    TABProjInfo sTABProj;
 
+    TABMAPHeaderBlock *poHeader = NULL;
     if ((poHeader = m_poMAPFile->GetHeaderBlock()) == NULL ||
         poHeader->GetProjInfo( &sTABProj ) != 0)
     {
@@ -850,8 +850,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Get the units name, and translation factor.
      *----------------------------------------------------------------*/
-    const char *pszUnitsName;
-    const char *pszUnitsConv;
+    const char *pszUnitsName = NULL;
+    const char *pszUnitsConv = NULL;
     /* double      dfConv = 1.0; */
 
     switch( sTABProj.nUnitsId )
@@ -1589,10 +1589,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     /*-----------------------------------------------------------------
      * Get the linear units and conversion.
      *----------------------------------------------------------------*/
-    char        *pszLinearUnits;
-    double      dfLinearConv;
-
-    dfLinearConv = poSpatialRef->GetLinearUnits( &pszLinearUnits );
+    char *pszLinearUnits = NULL;
+    double dfLinearConv = poSpatialRef->GetLinearUnits( &pszLinearUnits );
     if( dfLinearConv == 0.0 )
         dfLinearConv = 1.0;
 
@@ -1945,10 +1943,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
              && atoi(pszWKTDatum+4) != 999
              && atoi(pszWKTDatum+4) != 9999 )
     {
-        int     i;
-
         int nDatum = atoi(pszWKTDatum+4);
-        for( i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
+        for( int i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
         {
             if( nDatum == asDatumInfoList[i].nMapInfoDatumID )
             {
@@ -1971,10 +1967,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( STARTS_WITH_CI(pszWKTDatum, "MIF ")
              && (atoi(pszWKTDatum+4) == 999 || atoi(pszWKTDatum+4) == 9999) )
     {
-        char **papszFields;
-
         sTABProj.nDatumId = static_cast<GInt16>(atoi(pszWKTDatum+4));
-        papszFields =
+        char **papszFields =
             CSLTokenizeStringComplex( pszWKTDatum+4, ",", FALSE, TRUE);
 
         if( CSLCount(papszFields) >= 5 )
@@ -2080,9 +2074,9 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     }
 
     // Google Merc
-    const char* pszAuthorityName;
-    const char* pszAuthorityCode;
-    const char* pszExtension;
+    const char* pszAuthorityName = NULL;
+    const char* pszAuthorityCode = NULL;
+    const char* pszExtension = NULL;
     if( ((pszAuthorityName = poSpatialRef->GetAuthorityName(NULL)) != NULL &&
         EQUAL(pszAuthorityName, "EPSG") &&
         (pszAuthorityCode = poSpatialRef->GetAuthorityCode(NULL)) != NULL &&

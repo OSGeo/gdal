@@ -780,9 +780,7 @@ int TABMAPFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
 TABRawBinBlock *TABMAPFile::PushBlock( int nFileOffset )
 
 {
-    TABRawBinBlock *poBlock;
-
-    poBlock = GetIndexObjectBlock( nFileOffset );
+    TABRawBinBlock *poBlock = GetIndexObjectBlock( nFileOffset );
     if( poBlock == NULL )
         return NULL;
 
@@ -885,7 +883,6 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
         m_poSpIndexLeaf->SetCurChildRef( NULL, ++iEntry );
 
         TABMAPIndexEntry *psEntry = m_poSpIndexLeaf->GetEntry( iEntry );
-        TABRawBinBlock *poBlock;
 
         if( psEntry->XMax < m_XMinFilter
             || psEntry->YMax < m_YMinFilter
@@ -893,7 +890,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
             || psEntry->YMin > m_YMaxFilter )
             continue;
 
-        poBlock = PushBlock( psEntry->nBlockPtr );
+        TABRawBinBlock *poBlock = PushBlock( psEntry->nBlockPtr );
         if( poBlock == NULL )
             return FALSE;
         else if( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK )
@@ -2693,7 +2690,7 @@ TABRawBinBlock *TABMAPFile::GetIndexObjectBlock( int nFileOffset )
 /*      Create and initialize depending on the block type.              */
 /* -------------------------------------------------------------------- */
     int nBlockType = pabyData[0];
-    TABRawBinBlock *poBlock;
+    TABRawBinBlock *poBlock = NULL;
 
     if( nBlockType == TABMAP_INDEX_BLOCK )
     {
@@ -2745,9 +2742,7 @@ int TABMAPFile::InitDrawingTools()
     if ((m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) &&
         m_poHeader->m_nFirstToolBlock != 0)
     {
-        TABMAPToolBlock *poBlock;
-
-        poBlock = new TABMAPToolBlock(TABRead);
+        TABMAPToolBlock *poBlock = new TABMAPToolBlock(TABRead);
         poBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize);
 
         /*-------------------------------------------------------------
@@ -2805,9 +2800,7 @@ int TABMAPFile::CommitDrawingTools()
     /*-------------------------------------------------------------
      * Create a new TABMAPToolBlock and update header fields
      *------------------------------------------------------------*/
-    TABMAPToolBlock *poBlock;
-
-    poBlock = new TABMAPToolBlock(m_eAccessMode);
+    TABMAPToolBlock *poBlock = new TABMAPToolBlock(m_eAccessMode);
     if( m_poHeader->m_nFirstToolBlock != 0 )
         poBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize, m_poHeader->m_nFirstToolBlock);
     else
@@ -2848,11 +2841,10 @@ int TABMAPFile::CommitDrawingTools()
  **********************************************************************/
 int   TABMAPFile::ReadPenDef(int nPenIndex, TABPenDef *psDef)
 {
-    TABPenDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABPenDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetPenDefRef(nPenIndex)) != NULL)
     {
@@ -2905,11 +2897,10 @@ int   TABMAPFile::WritePenDef(TABPenDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadBrushDef(int nBrushIndex, TABBrushDef *psDef)
 {
-    TABBrushDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABBrushDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetBrushDefRef(nBrushIndex)) != NULL)
     {
@@ -2962,11 +2953,10 @@ int   TABMAPFile::WriteBrushDef(TABBrushDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadFontDef(int nFontIndex, TABFontDef *psDef)
 {
-    TABFontDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABFontDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetFontDefRef(nFontIndex)) != NULL)
     {
@@ -3018,11 +3008,10 @@ int   TABMAPFile::WriteFontDef(TABFontDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadSymbolDef(int nSymbolIndex, TABSymbolDef *psDef)
 {
-    TABSymbolDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABSymbolDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetSymbolDefRef(nSymbolIndex)) != NULL)
     {
@@ -3243,9 +3232,8 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
     {
         if (m_poHeader && m_poHeader->m_nFirstIndexBlock != 0)
         {
-            TABRawBinBlock *poBlock;
-
-            poBlock = GetIndexObjectBlock(m_poHeader->m_nFirstIndexBlock);
+            TABRawBinBlock *poBlock =
+                GetIndexObjectBlock(m_poHeader->m_nFirstIndexBlock);
             if (poBlock && poBlock->GetBlockType() == TABMAP_INDEX_BLOCK)
                 poNode = (TABMAPIndexBlock *)poBlock;
         }
@@ -3288,8 +3276,7 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
         {
             TABMAPIndexEntry *psEntry = poNode->GetEntry(i);
 
-            TABRawBinBlock *poBlock;
-            poBlock = GetIndexObjectBlock( psEntry->nBlockPtr );
+            TABRawBinBlock *poBlock = GetIndexObjectBlock( psEntry->nBlockPtr );
             if( poBlock == NULL )
                 continue;
 

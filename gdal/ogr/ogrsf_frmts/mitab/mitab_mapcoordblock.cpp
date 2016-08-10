@@ -470,8 +470,6 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
                                            TABMAPCoordSecHdr *pasHdrs,
                                            GInt32    &numVerticesTotal)
 {
-    int i, nTotalHdrSizeUncompressed;
-
     CPLErrorReset();
 
     /*-------------------------------------------------------------
@@ -492,11 +490,11 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
                  "Invalid numSections");
         return -1;
     }
-    nTotalHdrSizeUncompressed = nSectionSize * numSections;
+    int nTotalHdrSizeUncompressed = nSectionSize * numSections;
 
     numVerticesTotal = 0;
 
-    for(i=0; i<numSections; i++)
+    for( int i = 0;  i < numSections; i++ )
     {
         /*-------------------------------------------------------------
          * Read the coord. section header blocks
@@ -564,7 +562,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
 #endif
     }
 
-    for(i=0; i<numSections; i++)
+    for( int i = 0; i < numSections; i++ )
     {
         /*-------------------------------------------------------------
          * Make sure all coordinates are grouped together
@@ -608,11 +606,9 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
                                             TABMAPCoordSecHdr *pasHdrs,
                                             GBool bCompressed /*=FALSE*/)
 {
-    int i;
-
     CPLErrorReset();
 
-    for(i=0; i<numSections; i++)
+    for( int i = 0; i < numSections; i++ )
     {
         /*-------------------------------------------------------------
          * Write the coord. section header blocks

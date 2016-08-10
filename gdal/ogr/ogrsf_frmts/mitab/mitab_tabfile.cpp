@@ -690,9 +690,6 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
  **********************************************************************/
 int TABFile::ParseTABFileFields()
 {
-    int         iLine, numLines=0, numTok, nStatus;
-    char        **papszTok=NULL;
-    OGRFieldDefn *poFieldDefn;
 
     if (m_eAccessMode == TABWrite)
     {
@@ -710,8 +707,13 @@ int TABFile::ParseTABFileFields()
     /*-------------------------------------------------------------
      * Scan for fields.
      *------------------------------------------------------------*/
-    numLines = CSLCount(m_papszTABFile);
-    for(iLine=0; iLine<numLines; iLine++)
+    OGRFieldDefn *poFieldDefn = NULL;
+    char **papszTok = NULL;
+
+    const int numLines = CSLCount(m_papszTABFile);
+    int numTok = 0;
+    int nStatus = 0;
+    for( int iLine=0; iLine<numLines; iLine++ )
     {
         /*-------------------------------------------------------------
          * Tokenize the next .TAB line, and check first keyword
@@ -725,8 +727,8 @@ int TABFile::ParseTABFileFields()
             /*---------------------------------------------------------
              * We found the list of table fields
              *--------------------------------------------------------*/
-            int iField, numFields;
-            numFields = atoi(pszStr+7);
+            int iField = 0;
+            int numFields = atoi(pszStr+7);
             if (numFields < 1 || numFields > 2048 ||
                 iLine+numFields >= numLines)
             {
@@ -964,8 +966,6 @@ int TABFile::ParseTABFileFields()
  **********************************************************************/
 int TABFile::WriteTABFile()
 {
-    VSILFILE *fp;
-
     if (!m_bNeedTABRewrite )
     {
         return 0;
@@ -982,7 +982,8 @@ int TABFile::WriteTABFile()
     int nMapObjVersion = m_poMAPFile->GetMinTABFileVersion();
     m_nVersion = MAX(m_nVersion, nMapObjVersion);
 
-    if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
+    VSILFILE *fp = VSIFOpenL(m_pszFname, "wt");
+    if( fp != NULL )
     {
         VSIFPrintfL(fp, "!table\n");
         VSIFPrintfL(fp, "!version %d\n", m_nVersion);
@@ -991,17 +992,14 @@ int TABFile::WriteTABFile()
 
         if (m_poDefn && m_poDefn->GetFieldCount() > 0)
         {
-            int iField;
-            OGRFieldDefn *poFieldDefn;
-            const char *pszFieldType;
-
             VSIFPrintfL(fp, "Definition Table\n");
             VSIFPrintfL(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
             VSIFPrintfL(fp, "  Fields %d\n", m_poDefn->GetFieldCount());
 
-            for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
+            for( int iField = 0; iField < m_poDefn->GetFieldCount(); iField++ )
             {
-                poFieldDefn = m_poDefn->GetFieldDefn(iField);
+                const char *pszFieldType = NULL;
+                OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
                 switch(GetNativeFieldType(iField))
                 {
                   case TABFChar:
@@ -1835,11 +1833,6 @@ OGRFeatureDefn *TABFile::GetLayerDefn()
 int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                          TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
 {
-    int           iField, numFields;
-    OGRFieldDefn *poFieldDefn;
-    TABFieldType eMapInfoType = TABFUnknown;
-    int nStatus = 0;
-
     if (m_eAccessMode != TABWrite)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1870,10 +1863,12 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
         return -1;
     }
 
-    numFields = poFeatureDefn->GetFieldCount();
-    for(iField=0; nStatus==0 && iField < numFields; iField++)
+    const int numFields = poFeatureDefn->GetFieldCount();
+    TABFieldType eMapInfoType = TABFUnknown;
+    int nStatus = 0;
+    for( int iField = 0; nStatus==0 && iField < numFields; iField++ )
     {
-        poFieldDefn = m_poDefn->GetFieldDefn(iField);
+        OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
 
         /*-------------------------------------------------------------
          * Make sure field name is valid... check for special chars, etc.
@@ -1953,12 +1948,6 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
                             GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/, int bApproxOK)
 {
-    OGRFieldDefn *poFieldDefn;
-    int nStatus = 0;
-    char *pszCleanName = NULL;
-    char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
-    int nRenameNum = 1;
-
     if (m_eAccessMode == TABRead || m_poDATFile == NULL)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1991,7 +1980,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      * Make sure field name is valid... check for special chars, etc.
      * (pszCleanName will have to be freed.)
      *----------------------------------------------------------------*/
-    pszCleanName = TABCleanFieldName(pszName);
+    char *pszCleanName = TABCleanFieldName(pszName);
 
     if( !bApproxOK &&
         ( m_poDefn->GetFieldIndex(pszCleanName) >= 0 ||
@@ -2002,9 +1991,11 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                   pszName );
     }
 
+    char szNewFieldName[31+1];  // 31 is the max characters for a field name.
     strncpy(szNewFieldName, pszCleanName, 31);
     szNewFieldName[31] = '\0';
 
+    int nRenameNum = 1;
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
       snprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
 
@@ -2029,7 +2020,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
      *----------------------------------------------------------------*/
-    poFieldDefn = NULL;
+    OGRFieldDefn *poFieldDefn = NULL;
 
     switch(eMapInfoType)
     {
@@ -2132,8 +2123,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * ... and pass field info to the .DAT file.
      *----------------------------------------------------*/
-    nStatus = m_poDATFile->AddField(szNewFieldName, eMapInfoType,
-                                    nWidth, nPrecision);
+    int nStatus = m_poDATFile->AddField(szNewFieldName, eMapInfoType,
+                                        nWidth, nPrecision);
 
     /*-----------------------------------------------------------------
      * Extend the array to keep track of indexed fields (default=NOT indexed)
@@ -2393,7 +2384,7 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
                        double &dXMax, double &dYMax,
                        GBool /*bForce = TRUE*/)
 {
-    TABMAPHeaderBlock *poHeader;
+    TABMAPHeaderBlock *poHeader = NULL;
 
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
@@ -2437,7 +2428,7 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
                            CPL_UNUSED int bForce)
 {
-    TABMAPHeaderBlock *poHeader;
+    TABMAPHeaderBlock *poHeader = NULL;
 
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
@@ -2484,7 +2475,7 @@ int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
                                    int &numRegions, int &numTexts,
                                    GBool /* bForce = TRUE*/ )
 {
-    TABMAPHeaderBlock *poHeader;
+    TABMAPHeaderBlock *poHeader = NULL;
 
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
@@ -2527,9 +2518,8 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
      *----------------------------------------------------------------*/
     if (m_poMAPFile && m_nLastFeatureId < 1)
     {
-        OGRSpatialReference *poSpatialRef;
-
-        poSpatialRef = MITABCoordSys2SpatialRef( pszMIFCoordSys );
+        OGRSpatialReference *poSpatialRef =
+            MITABCoordSys2SpatialRef( pszMIFCoordSys );
 
         if (poSpatialRef)
         {
@@ -2861,7 +2851,7 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "... end of TABLE file dump.\n\n");
         if( GetSpatialRef() != NULL )
         {
-            char        *pszWKT;
+            char *pszWKT = NULL;
 
             GetSpatialRef()->exportToWkt( &pszWKT );
             fprintf( fpOut, "SRS = %s\n", pszWKT );

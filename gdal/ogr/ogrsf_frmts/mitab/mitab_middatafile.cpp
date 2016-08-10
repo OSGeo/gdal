@@ -203,12 +203,9 @@ int MIDDATAFile::Close()
 
 const char *MIDDATAFile::GetLine()
 {
-    const char *pszLine;
-
     if (m_eAccessMode == TABRead)
     {
-
-        pszLine = CPLReadLineL(m_fp);
+        const char *pszLine = CPLReadLineL(m_fp);
 
         if (pszLine == NULL)
         {

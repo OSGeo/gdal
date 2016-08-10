@@ -123,8 +123,6 @@ TABRawBinBlock::~TABRawBinBlock()
 int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
                                      int nSize)
 {
-    GByte *pabyBuf;
-
     if (fpSrc == NULL || nSize == 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -144,7 +142,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
 
     /*----------------------------------------------------------------
      * Read from the file
@@ -1031,10 +1029,9 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     GInt32      anVal[2];
     GInt16      n16Val1, n16Val2;
     float       fValue;
-    char        *pcValue;
     double      dValue;
 
-    pcValue = (char*)&nValue;
+    char *pcValue = (char*)&nValue;
     memcpy(&fValue, &nValue, 4);
 
     memcpy(&n16Val1, pcValue + 2, sizeof(GInt16));
@@ -1083,9 +1080,6 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
                                           GBool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
 {
-    TABRawBinBlock *poBlock = NULL;
-    GByte *pabyBuf;
-
     if (fpSrc == NULL || nSize == 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1096,7 +1090,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
 
     /*----------------------------------------------------------------
      * Read from the file
@@ -1116,6 +1110,8 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
      * Header block is different: it does not start with the object
      * type byte but it is always the first block in a file
      *---------------------------------------------------------------*/
+    TABRawBinBlock *poBlock = NULL;
+
     if (nOffset == 0)
     {
         poBlock = new TABMAPHeaderBlock(eAccessMode);
